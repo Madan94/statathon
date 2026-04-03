@@ -1,0 +1,15 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - ./storage:/app/storage
+      - ./model/cache:/app/model/cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
