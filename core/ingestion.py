@@ -1,31 +1,59 @@
 import os
+import hashlib
+import uuid
 import pandas as pd
-from typing import Any
+from sqlalchemy import create_engine
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-def load_file(path: str) -> pd.DataFrame:
-    ext = os.path.splitext(path)[1].lower()
-    if ext == ".csv":
-        return pd.read_csv(path)
-    if ext in (".xlsx", ".xls"):
-        return pd.read_excel(path, engine="openpyxl")
-    raise ValueError(f"Unsupported format: {ext}")
+class Settings(BaseSettings):
+    DATABASE_URL: str
+    model_config = SettingsConfigDict(env_file='.env', extra = 'ignore')
 
-def infer_schema(df: pd.DataFrame) -> dict[str, str]:
-    out = {}
-    for c in df.columns:
-        s = df[c]
-        if pd.api.types.is_numeric_dtype(s):
-            out[c] = "numeric"
-        elif pd.api.types.is_datetime64_any_dtype(s):
-            out[c] = "datetime"
-        else:
-            out[c] = "categorical"
-    return out
+settings = Settings()
+engine = create_engine(settings.DATABASE_URL)
 
-def health_summary(df: pd.DataFrame) -> dict[str, Any]:
+upload_dir = os.path.join(os.getcwd(), 'data', 'raw_uploads')
+os.makedirs(upload_dir, exist_ok=True)
+
+async def load_raw_data(f_stream, original_filename: str):
+    session_id = f'sess_{uuid.uuid4().hex[:8]}'
+    safe_filename = f'{session_id}_{original_filename}'
+    file_path = os.path.join(upload_dir, safe_filename)
+
+    sha256 = hashlib.sha256()
+
+    with open(file_path, 'wb') as buffer:
+        while chunk := await f_stream.read(8192):
+            buffer.write(chunk)
+            sha256.update(chunk)
+    
+    genesis_hash = sha256.hexdigest()
+
+    df = pd.read_csv(file_path, dtype=str)
+    
+    dynamic_table_name = f'survey_raw_{session_id}'
+
+    df.to_sql(
+        name=dynamic_table_name,
+        con=engine,
+        if_exists='replace',
+        index=False,
+        chunksize=10000
+    )
+
+    raw_cols = df.columns.tolist()
+    tot_rows = len(df)
+
+    schema_map = run_schema_mapping(raw_cols, df)
+
     return {
-        "rows": len(df),
-        "columns": len(df.columns),
-        "missing_per_column": df.isna().sum().astype(int).to_dict(),
-        "duplicate_rows": int(df.duplicated().sum()),
+        'session_id': session_id,
+        'genesis_hash': genesis_hash,
+        'dynamic_table_name': dynamic_table_name,
+        'total_rows': tot_rows,
+        'file_path': file_path,
+        'raw_columns': raw_cols
     }
+
+def run_schema_mapping(raw_cols: list, df: pd.DataFrame) -> dict:
+    return {}

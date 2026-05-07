@@ -3,3 +3,4 @@ __pycache__/
 model/storage/vector_cache/
 model/audit_log.json
 model/phase2_output.json
+.venv/
