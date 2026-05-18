@@ -1,48 +1,56 @@
 {
   "domains": {
     "identifier": {
-      "description": "unique identifier key code primary key reference number serial number person id household id survey id record number",
-      "keywords": ["id", "key", "code", "serial", "reference", "number", "uid", "pk"]
+      "description": "unique identifier key code primary key reference number serial person id household id survey id sample psu stratum uid",
+      "keywords": ["id", "key", "code", "serial", "reference", "number", "uid", "pk", "psu", "stratum", "sample"]
     },
     "demographic": {
-      "description": "demographic characteristics age gender sex marital status ethnicity race religion caste nationality birth date age group population segment",
-      "keywords": ["age", "gender", "sex", "marital", "ethnicity", "race", "religion", "caste", "birth", "nationality"]
+      "description": "demographic characteristics age gender sex marital status ethnicity race religion caste nationality birth date age group population roster",
+      "keywords": ["age", "gender", "sex", "marital", "ethnicity", "race", "religion", "caste", "birth", "nationality", "roster"]
     },
     "education": {
-      "description": "education level degree schooling literacy qualification academic education student years of schooling enrollment graduation diploma university college school",
-      "keywords": ["education", "school", "degree", "literacy", "qualification", "enrollment", "graduation", "academic"]
+      "description": "education level degree schooling literacy qualification academic enrollment graduation diploma university college attendance",
+      "keywords": ["education", "school", "degree", "literacy", "qualification", "enrollment", "graduation", "academic", "attendance"]
     },
     "employment": {
-      "description": "employment occupation job profession work role career job title employment status labor force workforce sector industry employer employee working hours",
+      "description": "employment occupation job profession workforce labor sector industry employer employee casual formal working hours",
       "keywords": ["occupation", "employment", "job", "profession", "work", "labor", "workforce", "sector", "industry"]
     },
     "income": {
-      "description": "income salary earnings wages monthly payment compensation financial earnings personal income household income annual income revenue expenditure tax amount",
-      "keywords": ["income", "salary", "wage", "earning", "payment", "compensation", "revenue", "expenditure", "tax"]
+      "description": "income salary wages earnings household income expenditure tax transfers pensions benefits compensation",
+      "keywords": ["income", "salary", "wage", "earning", "payment", "compensation", "expenditure", "tax", "pension", "benefit"]
     },
     "health": {
-      "description": "health medical insurance hospital disease illness treatment vaccination healthcare doctor medicine health expense disability chronic condition mortality morbidity",
-      "keywords": ["health", "medical", "insurance", "hospital", "disease", "treatment", "vaccination", "disability", "mortality"]
+      "description": "health medical insurance hospital disease treatment vaccination disability mortality maternal nutrition screening outpatient inpatient",
+      "keywords": ["health", "medical", "insurance", "hospital", "disease", "treatment", "vaccination", "disability", "mortality", "nutrition"]
     },
     "household": {
-      "description": "household family members family size number of children dependents dwelling housing type household head residence living arrangement",
-      "keywords": ["household", "family", "children", "dependents", "dwelling", "housing", "residence"]
+      "description": "household family members children dependents dwelling housing residence consumption assets amenities",
+      "keywords": ["household", "family", "children", "dependents", "dwelling", "housing", "residence", "consumption", "asset"]
     },
     "geography": {
-      "description": "geography district region state country location urban rural area city village town block ward tehsil taluk pin code postal zone latitude longitude address",
-      "keywords": ["district", "region", "state", "country", "city", "village", "urban", "rural", "location", "area", "zone", "postal", "address"]
+      "description": "district region state urban rural village city ward block tehsil postal address enumeration area gps location",
+      "keywords": ["district", "region", "state", "city", "village", "urban", "rural", "location", "postal", "address", "enumeration"]
     },
     "population": {
-      "description": "population density total population growth rate birth rate death rate migration census count headcount inhabitants residents",
-      "keywords": ["population", "density", "growth", "birth rate", "death rate", "migration", "census", "count"]
+      "description": "population density growth migration census vital statistics birth death headcount inhabitants projections",
+      "keywords": ["population", "density", "growth", "migration", "census", "count", "birth", "death", "vital"]
     },
     "infrastructure": {
-      "description": "infrastructure access internet mobile phone electricity water sanitation road transport bank school hospital facility connectivity digital access amenities",
-      "keywords": ["internet", "mobile", "electricity", "water", "sanitation", "road", "transport", "bank", "facility", "connectivity"]
+      "description": "electricity water sanitation road transport connectivity internet mobile bank facility distance nearest access",
+      "keywords": ["internet", "mobile", "electricity", "water", "sanitation", "road", "transport", "facility", "connectivity", "distance"]
     },
     "survey_metadata": {
-      "description": "survey metadata year month wave round date period questionnaire form version interviewer response collection batch schedule timestamp",
-      "keywords": ["survey", "year", "month", "wave", "round", "date", "period", "questionnaire", "version", "batch", "timestamp"]
+      "description": "survey wave round questionnaire version interviewer batch timestamp sampling weights replicate calibration period",
+      "keywords": ["survey", "year", "month", "wave", "round", "questionnaire", "version", "batch", "timestamp", "weight", "replicate"]
+    },
+    "agriculture": {
+      "description": "crop livestock irrigation land holding yield cultivation fertilizer season horticulture fishery MSP mandi hectare acre rainfall tenancy cooperative Kisan",
+      "keywords": ["crop", "livestock", "farm", "irrigation", "hectare", "acre", "yield", "mandi", "msp", "fertilizer", "rainfall", "kisan", "tenancy"]
+    },
+    "economic": {
+      "description": "GDP GVA national accounts investment consumption CPI WPI inflation credit banking fiscal deficit enterprise establishment informal sector exports imports forex productivity ASI",
+      "keywords": ["gdp", "gva", "cpi", "wpi", "investment", "consumption", "trade", "enterprise", "credit", "bank", "subsidy", "fiscal", "inflation", "export", "import", "forex", "asi"]
     }
   }
 }

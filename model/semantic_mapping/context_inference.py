@@ -60,3 +60,14 @@ class ContextInference:
                 + 0.10 * max(emb, kw)
             )
         return combined
+
+    def archetype_keyword_overlap(self, column_tokens: list[str], archetype: str) -> float:
+        """Deterministic overlap between column tokens and dataset archetype prototype text."""
+        from semantic_mapping.dataset_context_inferencer import DatasetContextInferencer
+
+        proto = DatasetContextInferencer.CONTEXT_PROTOTYPES.get(archetype, "")
+        if not proto or not column_tokens:
+            return 0.0
+        proto_tokens = set(proto.lower().split())
+        hits = sum(1 for t in column_tokens if t.lower() in proto_tokens)
+        return min(hits / max(len(column_tokens), 1), 1.0)

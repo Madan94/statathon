@@ -1,22 +1,65 @@
+from pipelines.model_path import ensure_paths
+
+ensure_paths()
+
 from core.ingestion import load_file, infer_schema, health_summary
-from core.semantic_engine import map_columns_semantic, priority_graph
-from core.rule_validator import single_column_rules, normalize_schema
-from core.outlier_engine import zscore_outliers, iqr_outliers, risk_bucket
+from core.rule_validator import normalize_schema
+from core.outlier_engine import zscore_outliers, iqr_outliers
 from core.imputation_engine import knn_impute_numeric
 from reports.ingestion_reporter import write_ingestion_report
 from reports.math_vault import write_math_vault
 from reports.narrative_generator import narrative_from_stats
 from reports.tamper_proof import write_tamper_proof_pdf
-import pandas as pd
+from pipelines.semantic_runner import run_semantic_pipeline
+from pipelines.semantic_adapter import build_analysis_state
+from services.semantic_persistence_service import SemanticPersistenceService
+from repositories.dataset_repository import DatasetRepository
+from database.models import Analysis
+
 import os
 
-def run_pipeline(storage_path: str, report_dir: str, analysis_id: int) -> dict:
+import pandas as pd
+from sqlalchemy.orm import Session
+
+
+def run_pipeline(
+    storage_path: str,
+    report_dir: str,
+    analysis_id: int,
+    dataset_id: int,
+    db: Session,
+) -> dict:
     df = load_file(storage_path)
     schema = infer_schema(df)
     health = health_summary(df)
-    semantic = map_columns_semantic(list(df.columns))
-    priorities = {c: float(i) / max(len(df.columns), 1) for i, c in enumerate(df.columns)}
-    graph = priority_graph(list(df.columns), priorities)
+
+    DatasetRepository(db).update_dimensions(dataset_id, len(df), len(df.columns), health)
+
+    semantic_bundle = run_semantic_pipeline(list(df.columns))
+    state = build_analysis_state(
+        dataset_id=dataset_id,
+        analysis_id=analysis_id,
+        pipeline_out=semantic_bundle,
+        profiling_summary={"health": health, "schema": schema},
+        dataset_metadata={
+            "storage_path": storage_path,
+            "columns": list(df.columns),
+        },
+    )
+    SemanticPersistenceService(db).persist_state(state)
+
+    analysis_row = db.query(Analysis).filter(Analysis.id == analysis_id).first()
+    if analysis_row:
+        analysis_row.checkpoint = state.to_api_payload()
+
+    db.flush()
+
+    semantic_labels = {}
+    for col in df.columns:
+        meta = semantic_bundle.get("semantic_mapping", {}).get(col)
+        if isinstance(meta, dict):
+            semantic_labels[col] = meta.get("domain")
+
     df2 = normalize_schema(df, schema)
     outliers = {}
     for c in df2.columns:
@@ -34,4 +77,10 @@ def run_pipeline(storage_path: str, report_dir: str, analysis_id: int) -> dict:
         narrative.split("; "),
         {"analysis_id": analysis_id},
     )
-    return {"health": health, "semantic": semantic, "graph": graph, "outliers": outliers, "content_hash": h}
+    return {
+        "health": health,
+        "semantic": semantic_labels,
+        "semantic_intelligence": state.to_api_payload(),
+        "outliers": outliers,
+        "content_hash": h,
+    }

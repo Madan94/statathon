@@ -1,0 +1,43 @@
+{
+  "layout": "one_shot",
+  "health": {
+    "rows": 2,
+    "columns": 10,
+    "missing_per_column": {
+      "household_id": 0,
+      "psu_code": 0,
+      "respondent_age": 0,
+      "gender": 0,
+      "female_headed_hh": 0,
+      "monthly_wage_inr": 0,
+      "schooling_years": 0,
+      "village_name": 0,
+      "malaria_rdt_positive": 0,
+      "survey_wave_year": 0
+    },
+    "dtypes": {
+      "household_id": "str",
+      "psu_code": "str",
+      "respondent_age": "int64",
+      "gender": "int64",
+      "female_headed_hh": "int64",
+      "monthly_wage_inr": "int64",
+      "schooling_years": "int64",
+      "village_name": "str",
+      "malaria_rdt_positive": "int64",
+      "survey_wave_year": "int64"
+    }
+  },
+  "schema": {
+    "household_id": "string",
+    "psu_code": "string",
+    "respondent_age": "numeric",
+    "gender": "numeric",
+    "female_headed_hh": "numeric",
+    "monthly_wage_inr": "numeric",
+    "schooling_years": "numeric",
+    "village_name": "string",
+    "malaria_rdt_positive": "numeric",
+    "survey_wave_year": "numeric"
+  }
+}

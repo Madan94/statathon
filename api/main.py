@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from database.database import Base, engine, SessionLocal
+import database.models  # noqa: F401 — register metadata for semantic tables
+
 from auth.routes import router as auth_router
 from datasets.routes import router as datasets_router
 from analysis.routes import router as analysis_router

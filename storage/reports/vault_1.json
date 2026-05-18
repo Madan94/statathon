@@ -1,0 +1,12 @@
+{
+  "stats": {
+    "respondent_age": 31.5,
+    "gender": 1.5,
+    "female_headed_hh": 0.5,
+    "monthly_wage_inr": 20250.0,
+    "schooling_years": 11.0,
+    "malaria_rdt_positive": 0.5,
+    "survey_wave_year": 2024.0
+  },
+  "integrity": "93194170e903e5e58ccab4a5c20e094dd7882cf3b6fdae89784bbfe258975f51"
+}
