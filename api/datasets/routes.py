@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 from database.database import SessionLocal
-from database.models import User
-from auth.utils import decode_token  # add if you use Bearer
 from .services import save_upload
 import os
 

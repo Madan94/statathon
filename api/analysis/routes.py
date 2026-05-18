@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database.database import SessionLocal
 from database.models import Dataset, Analysis, Report
-from pipelines.orchestrator import run_pipeline
 import os
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
@@ -25,6 +24,8 @@ def analyze(dataset_id: int, db: Session = Depends(get_db)):
     db.refresh(an)
     report_dir = os.getenv("REPORT_STORAGE_PATH", "./storage/reports")
     try:
+        from pipelines.orchestrator import run_pipeline
+
         result = run_pipeline(ds.storage_path, report_dir, an.id)
         an.status = "complete"
         r = Report(analysis_id=an.id, report_type="tamper_proof", storage_path=os.path.join(report_dir, f"report_{an.id}.pdf"), content_hash=result.get("content_hash"))

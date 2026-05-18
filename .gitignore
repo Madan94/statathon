@@ -1,3 +1,4 @@
+.env
 __pycache__/
 *.pyc
 model/storage/vector_cache/
