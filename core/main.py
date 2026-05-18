@@ -52,6 +52,10 @@ def create_dummy_user():
         db.commit()
     db.close()
 
+@app.get("/")
+def greet():
+    return {'application' : 'asi_gen', 'status' : 'running'}
+
 # --- The Updated Upload Route ---
 @app.post("/api/v1/upload")
 async def upload_survey(file: UploadFile = File(...), db: Session = Depends(get_db)):
