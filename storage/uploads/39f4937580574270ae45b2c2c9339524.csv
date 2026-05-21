@@ -1,3 +1,0 @@
-household_id,psu_code,respondent_age,gender,female_headed_hh,monthly_wage_inr,schooling_years,village_name,malaria_rdt_positive,survey_wave_year
-H001,PSU42,34,1,0,18500,10,Village_A,0,2024
-H002,PSU42,29,2,1,22000,12,Village_B,1,2024

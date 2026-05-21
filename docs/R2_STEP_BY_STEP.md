@@ -298,6 +298,6 @@ Expect **green**.
 | `503` “Object storage…” on `/datasets/upload-url` | Missing **`S3_BUCKET`** / keys / **`pip install boto3`** |
 | `403` on PUT | **`Content-Type`** must match **`upload-url`** request |
 | `SignatureDoesNotMatch` | **`S3_ENDPOINT_URL`** typo; keys wrong; clock skew rare |
-| Import **`storage`** error | **`PYTHONPATH`** must include **repo root** |
+| **`storage.vector_store`** / semantic import errors | The S3 adapter lives in **`object_storage/`** (top-level), so **`model/storage/`** stays available for embeddings — pull latest code and restart |
 
 For policy details always confirm on [Cloudflare R2 docs](https://developers.cloudflare.com/r2/).

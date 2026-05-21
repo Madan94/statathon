@@ -55,10 +55,18 @@ def put_presigned(upload_url: str, body: bytes, content_type: str) -> tuple[int,
         return e.code, e.reason
 
 
+def _semantic_mapping_len(body: dict) -> int:
+    sem = body.get("semantic_mapping") or []
+    if isinstance(sem, list):
+        return len(sem)
+    if isinstance(sem, dict):
+        return len(sem)
+    return 0
+
+
 def main() -> int:
     from dotenv import load_dotenv
 
-    # Load repo-root `.env` before checking storage vars (imports alone may run later).
     load_dotenv(_REPO / ".env")
     os.chdir(_API)
 
@@ -136,7 +144,7 @@ def main() -> int:
     print("dataset_id:", ds_id, "analysis_id:", an_id)
 
     md = client.get(f"/datasets/{ds_id}")
-    print("GET /datasets:", md.status_code, md.json() if md.ok else md.text)
+    print("GET /datasets:", md.status_code, md.json() if md.status_code == 200 else md.text)
 
     max_wait = int(os.getenv("SMOKE_POLL_SECONDS", "900"))
     deadline = time.monotonic() + max_wait
@@ -148,7 +156,7 @@ def main() -> int:
         if ar.status_code == 200:
             body = ar.json()
             clusters = len(body.get("clusters") or [])
-            mapping_n = len(body.get("semantic_mapping") or [])
+            mapping_n = _semantic_mapping_len(body)
             print("SUCCESS semantic payload:", "clusters=", clusters, "semantic_mapping_items=", mapping_n)
             return 0
         last_txt = ar.text

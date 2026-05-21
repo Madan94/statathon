@@ -6,3 +6,8 @@ model/audit_log.json
 model/phase2_output.json
 .venv/
 data/raw_uploads
+
+# Running uvicorn from `api/` drops caches/logs here — do not commit
+api/audit_log.json
+api/model/
+api/storage/

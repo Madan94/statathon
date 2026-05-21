@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from database.database import SessionLocal
 from database.models import Analysis, Dataset, Report
 from pipelines.orchestrator import run_pipeline
-from storage.object_store import try_build_default_store
+from object_storage.object_store import try_build_default_store
 
 _logger = logging.getLogger(__name__)
 

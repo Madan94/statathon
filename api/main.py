@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-# Repo root — needed for imports like storage/, pipelines/ when cwd is api/
+# Repo root — needed for imports like object_storage/, pipelines/ when cwd is api/
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))

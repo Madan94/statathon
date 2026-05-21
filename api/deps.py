@@ -1,6 +1,6 @@
 """FastAPI dependency providers."""
 
-from storage.object_store import ObjectStore, build_default_store, StorageConfigError
+from object_storage.object_store import ObjectStore, StorageConfigError, build_default_store
 
 
 def get_object_store() -> ObjectStore:

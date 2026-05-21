@@ -7,7 +7,7 @@ Statathon hackathon backend (FastAPI) with semantic profiling and optional **S3-
 ```bash
 cd api
 pip install -r ../requirements-windows.txt   # Windows-friendly
-export PYTHONPATH="$(dirname "$PWD")"       # repo root — required for `storage/` imports
+export PYTHONPATH="$(dirname "$PWD")"       # repo root — required for `object_storage/` + `pipelines/`
 uvicorn main:app --reload
 ```
 

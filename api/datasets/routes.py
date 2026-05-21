@@ -10,7 +10,7 @@ from database.models import Analysis, Dataset
 from deps import get_object_store
 from repositories.dataset_repository import DatasetRepository
 from services.analysis_runner import execute_registered_analysis_job
-from storage.object_store import ObjectStore, StorageConfigError
+from object_storage.object_store import ObjectStore, StorageConfigError
 
 from .schemas import RegisterDatasetRequest, UploadUrlRequest
 from .services import save_upload
