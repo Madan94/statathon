@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from semantic_mapping.column_preprocessor import ColumnPreprocessor
@@ -58,9 +59,10 @@ class SemanticPipeline:
         self.audit.log("column_normalization", {"columns": normalized}, step=1)
 
         column_embeddings = self.embedder.embed_dict(normalized)
+        embedding_dim = len(next(iter(column_embeddings.values()))) if column_embeddings else 0
         self.audit.log(
             "embedding_generation",
-            {"columns_embedded": list(column_embeddings.keys()), "embedding_dim": len(next(iter(column_embeddings.values())))},
+            {"columns_embedded": list(column_embeddings.keys()), "embedding_dim": embedding_dim},
             step=2,
         )
 
@@ -68,6 +70,21 @@ class SemanticPipeline:
         structured_ctx = self.dataset_inferencer.infer(column_texts)
         dataset_context_scores = structured_ctx.domain_scores
         archetype = structured_ctx.dataset_type
+
+        if not columns:
+            return {
+                "dataset_context": {
+                    "dataset_type": archetype,
+                    "domain_scores": {k: round(v, 4) for k, v in dataset_context_scores.items()},
+                    "legacy_alignment_context": _ARCHETYPE_TO_LEGACY_CONTEXT.get(archetype, "socioeconomic"),
+                },
+                "semantic_mapping": {},
+                "clusters": [],
+                "priority_dependencies": {},
+                "schema_graph": {"nodes": [], "edges": []},
+                "column_cluster_map": {},
+                "audit_records": list(self.audit.records),
+            }
 
         self.audit.log(
             "dataset_context_inferencer",
@@ -265,3 +282,25 @@ class SemanticPipeline:
             return apply_gemini_domain_adjustment(column_name=column, scores=combined_scores, archetype=archetype)
         except Exception:
             return None
+
+    def print_audit_log(self, event_type=None, limit=None):
+        records = self.audit.get_records(event_type)
+        if limit is not None:
+            records = records[:limit]
+
+        print("=== Audit log records ===")
+        for record in records:
+            step = record.get("step", "n/a")
+            data = json.dumps(record["data"], default=str, indent=2)
+            print(f"[step {step}] event={record['event']}\n{data}\n")
+
+    def print_domain_predictions(self, result: dict):
+        mapping = result.get("semantic_mapping", {})
+        print("=== Domain predictions ===")
+        for column, details in mapping.items():
+            scores = details.get("top_domain_scores", {})
+            score_text = ", ".join(f"{domain}:{score:.3f}" for domain, score in scores.items())
+            print(
+                f"{column}: domain={details.get('domain')} confidence={details.get('confidence', 0.0):.4f} "
+                f"normalized='{details.get('normalized_name')}' top_scores=[{score_text}]"
+            )
