@@ -2,7 +2,7 @@ from pipelines.model_path import ensure_paths
 
 ensure_paths()
 
-from core.ingestion import load_file, infer_schema, health_summary
+from core.ingestion import dataframe_for_uploaded_dataset, infer_schema, health_summary
 from core.rule_validator import normalize_schema
 from core.outlier_engine import zscore_outliers, iqr_outliers
 from core.imputation_engine import knn_impute_numeric
@@ -23,13 +23,19 @@ from sqlalchemy.orm import Session
 
 
 def run_pipeline(
-    storage_path: str,
+    *,
+    storage_path: str | None,
+    filename: str,
+    object_key: str | None,
     report_dir: str,
     analysis_id: int,
     dataset_id: int,
     db: Session,
+    object_store=None,
 ) -> dict:
-    df = load_file(storage_path)
+    df = dataframe_for_uploaded_dataset(
+        storage_path, object_key, filename, object_store
+    )
     schema = infer_schema(df)
     health = health_summary(df)
 
@@ -43,6 +49,8 @@ def run_pipeline(
         profiling_summary={"health": health, "schema": schema},
         dataset_metadata={
             "storage_path": storage_path,
+            "object_key": object_key,
+            "filename": filename,
             "columns": list(df.columns),
         },
     )

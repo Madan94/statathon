@@ -1,3 +1,4 @@
+import io
 import os
 import hashlib
 import uuid
@@ -30,6 +31,39 @@ def load_file(path: str) -> pd.DataFrame:
     if ext in (".xlsx", ".xls"):
         return pd.read_excel(path)
     raise ValueError(f"Unsupported file type: {ext}")
+
+
+def load_dataframe_from_object_bytes(filename: str, body: bytes) -> pd.DataFrame:
+    """Parse CSV/XLS/XLSX from in-memory upload (presigned PUT flow)."""
+    ext = os.path.splitext(filename)[1].lower()
+    bio = io.BytesIO(body)
+    if ext == ".csv":
+        return pd.read_csv(bio)
+    if ext in (".xlsx", ".xls"):
+        return pd.read_excel(bio)
+    raise ValueError(f"Unsupported file type: {ext}")
+
+
+def dataframe_for_uploaded_dataset(
+    dataset_storage_path: str | None,
+    dataset_object_key: str | None,
+    filename: str,
+    object_store: object | None,
+) -> pd.DataFrame:
+    """
+    Load a DataFrame from local disk or object storage.
+
+    Exactly one source must be populated: ``storage_path`` (local ingest) or
+    ``object_key`` (presigned PUT to S3/R2/etc.).
+    """
+    if dataset_object_key and object_store is None:
+        raise ValueError("object_key present but ObjectStore unavailable (configure env / boto3)")
+    if dataset_object_key:
+        raw = object_store.download_object_body(dataset_object_key)
+        return load_dataframe_from_object_bytes(filename, raw)
+    if dataset_storage_path:
+        return load_file(dataset_storage_path)
+    raise ValueError("Dataset has neither storage_path nor object_key")
 
 
 def infer_schema(df: pd.DataFrame) -> dict[str, str]:

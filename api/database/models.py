@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import (
-    Column, Integer, String, Float, DateTime, Text, ForeignKey, JSON,
+    Column, Integer, String, Float, BigInteger, DateTime, Text, ForeignKey, JSON,
 )
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -19,7 +19,16 @@ class Dataset(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     filename = Column(String, nullable=False)
-    storage_path = Column(String, nullable=False)
+    # Local path after multipart upload; nullable when using object storage only.
+    storage_path = Column(String, nullable=True)
+    # S3-compatible key after presigned PUT flow.
+    object_key = Column(String(1024), nullable=True, unique=True, index=True)
+    storage_provider = Column(String(32), nullable=False, default="local", server_default="local")
+    storage_url = Column(String(2048), nullable=True)
+    file_size = Column(BigInteger, nullable=True)
+    checksum = Column(String(128), nullable=True)
+    upload_status = Column(String(32), nullable=True, index=True)
+
     row_count = Column(Integer, default=0)
     column_count = Column(Integer, default=0)
     status = Column(String(32), default="pending")
