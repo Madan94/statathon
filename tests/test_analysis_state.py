@@ -1,4 +1,3 @@
-import pytest
 
 
 def test_analysis_state_api_payload_structure():
@@ -24,6 +23,8 @@ def test_analysis_state_api_payload_structure():
     assert payload["semantic_mapping"][0]["column"] == "age"
     assert payload["clusters"][0]["cluster_id"] == "cluster_0"
     assert isinstance(payload["priority_dependencies"], list)
+    assert "column_profiles" in payload and "dataset_profile" in payload
+    assert "knowledge_graph" in payload
 
 
 def test_semantic_adapter_injects_cluster_ids():

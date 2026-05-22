@@ -1,6 +1,15 @@
 from datetime import datetime
 from sqlalchemy import (
-    Column, Integer, String, Float, BigInteger, DateTime, Text, ForeignKey, JSON,
+    Column,
+    Integer,
+    String,
+    Float,
+    BigInteger,
+    DateTime,
+    Text,
+    ForeignKey,
+    JSON,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -70,6 +79,35 @@ class Analysis(Base):
     schema_graph_edges_rel = relationship("SchemaGraphEdge", back_populates="analysis", cascade="all, delete-orphan")
     priority_dependencies_rel = relationship("PriorityDependency", back_populates="analysis", cascade="all, delete-orphan")
     dataset_contexts_rel = relationship("DatasetContextRecord", back_populates="analysis", cascade="all, delete-orphan")
+
+
+class DatasetIntelligenceRecord(Base):
+    """Dataset-level profiling rollup snapshot (relational complement to checkpoint JSON)."""
+
+    __tablename__ = "dataset_intelligence_records"
+    __table_args__ = (UniqueConstraint("analysis_id", name="uq_dataset_intel_analysis"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    rollup_json = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ColumnIntelligenceProfile(Base):
+    """Per-column profiling JSON for an analysis."""
+
+    __tablename__ = "column_intelligence_profiles"
+    __table_args__ = (
+        UniqueConstraint("analysis_id", "column_name", name="uq_column_intel_analysis_name"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    column_name = Column(String(512), nullable=False)
+    profile_json = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class ValidationResult(Base):

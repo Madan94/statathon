@@ -12,6 +12,12 @@ from reports.narrative_generator import narrative_from_stats
 from reports.tamper_proof import write_tamper_proof_pdf
 from pipelines.semantic_runner import run_semantic_pipeline
 from pipelines.semantic_adapter import build_analysis_state
+from graph.neo4j_sync import try_sync_analysis_to_neo4j
+from profiling import (
+    build_dataset_intelligence_profiles,
+    column_profile_embedding_snippet,
+    load_default_ontology,
+)
 from services.semantic_persistence_service import SemanticPersistenceService
 from repositories.dataset_repository import DatasetRepository
 from database.models import Analysis
@@ -41,12 +47,30 @@ def run_pipeline(
 
     DatasetRepository(db).update_dimensions(dataset_id, len(df), len(df.columns), health)
 
-    semantic_bundle = run_semantic_pipeline(list(df.columns))
+    ontology = load_default_ontology()
+    ontology_dict = ontology if isinstance(ontology, dict) else {}
+    column_profiles, dataset_profile = build_dataset_intelligence_profiles(
+        df, ontology_dict if ontology_dict else None
+    )
+
+    enrichment: dict[str, str] = {}
+    for c in df.columns:
+        snippet = column_profile_embedding_snippet(column_profiles.get(str(c)))
+        if snippet:
+            enrichment[str(c)] = snippet
+
+    semantic_bundle = run_semantic_pipeline(
+        list(df.columns),
+        column_enrichment=enrichment or None,
+    )
     state = build_analysis_state(
         dataset_id=dataset_id,
         analysis_id=analysis_id,
         pipeline_out=semantic_bundle,
         profiling_summary={"health": health, "schema": schema},
+        column_profiles=column_profiles,
+        dataset_profile=dataset_profile,
+        static_domains=ontology_dict,
         dataset_metadata={
             "storage_path": storage_path,
             "object_key": object_key,
@@ -54,6 +78,13 @@ def run_pipeline(
             "columns": list(df.columns),
         },
     )
+    try_sync_analysis_to_neo4j(state)
+    if isinstance(state.schema_blueprint, dict) and state.knowledge_graph:
+        state.schema_blueprint = {
+            **state.schema_blueprint,
+            "neo4j_sync_summary": dict(state.knowledge_graph),
+        }
+
     SemanticPersistenceService(db).persist_state(state)
 
     analysis_row = db.query(Analysis).filter(Analysis.id == analysis_id).first()

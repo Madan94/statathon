@@ -1,8 +1,10 @@
 .env
 __pycache__/
 *.pyc
+# --- Local data / caches (optional: keep large caches out of git) ---
+model/cache/hub/
+model/cache/.locks/
 model/storage/vector_cache/
-model/audit_log.json
 model/phase2_output.json
 .venv/
 data/raw_uploads

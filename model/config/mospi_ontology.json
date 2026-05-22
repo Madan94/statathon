@@ -1,0 +1,141 @@
+{
+  "version": "2026.1",
+  "description": "Static government-statistical macro-types and domain vocabulary (Phase 2 — MOSPI-aligned baseline). Subdomains extend as nested slugs.",
+  "dataset_types": {
+    "census": {
+      "label": "Census Dataset",
+      "domains": [
+        "demographic",
+        "household",
+        "population",
+        "migration",
+        "literacy",
+        "occupation",
+        "income",
+        "housing",
+        "geography",
+        "identity"
+      ],
+      "subdomains": {
+        "demographic": ["age", "sex", "marital_status", "birth_place", "caste_ethnic_group"],
+        "household": ["dwelling_unit", "household_size", "head_of_household", "amenities"],
+        "population": ["total_population", "urban_rural", "density"],
+        "migration": ["place_of_previous_residence", "duration_residence", "reason_migration"],
+        "literacy": ["literacy_rate", "educational_attainment_snapshot"],
+        "occupation": ["main_activity_status", "industry_classification"],
+        "income": ["household_income", "consumption_proxy", "welfare_indicator"],
+        "housing": ["tenure_status", "rooms", "structure_type"],
+        "geography": ["state", "district", "village_ward_code", "administrative_unit"],
+        "identity": ["household_number", "person_id", "serial_number"]
+      }
+    },
+    "health": {
+      "label": "Health Dataset",
+      "domains": [
+        "patient",
+        "hospital",
+        "insurance",
+        "disease",
+        "treatment",
+        "nutrition",
+        "mortality",
+        "medical_cost",
+        "vaccination",
+        "healthcare_access"
+      ],
+      "subdomains": {
+        "patient": ["patient_id", "episode_id", "admission_discharge_dates", "severity_score"],
+        "hospital": ["facility_code", "bed_count", "specialty_unit", "geographic_zone"],
+        "insurance": ["policy_id", "claim_amount", "copay", "premium_band"],
+        "disease": ["icd_code", "diagnosis_text", "chronic_acute_flag", "co_morbidity"],
+        "treatment": ["procedure_code", "therapy_type", "length_of_stay"],
+        "nutrition": ["bmi_band", "diet_indicator", "child_stunting_underweight_flag"],
+        "mortality": ["cause_of_death", "neonatal_indicator", "maternal_indicator"],
+        "medical_cost": ["total_billed", "reimbursed_amount", "out_of_pocket"],
+        "vaccination": ["vaccine_type", "dose_number", "immunisation_coverage"],
+        "healthcare_access": ["distance_facility_km", "transport_mode", "scheme_enrolment"]
+      }
+    },
+    "education": {
+      "label": "Education Dataset",
+      "domains": [
+        "student",
+        "attendance",
+        "enrollment",
+        "literacy",
+        "institution",
+        "teacher",
+        "performance",
+        "dropout",
+        "scholarship",
+        "curriculum"
+      ],
+      "subdomains": {
+        "student": ["student_id", "grade_level", "sex", "socioeconomic_index"],
+        "attendance": ["days_present", "days_absent", "attendance_rate"],
+        "enrollment": ["enrollment_status", "new_admission", "repeater_flag"],
+        "literacy": ["reading_proficiency_score", "language_medium"],
+        "institution": ["school_code", "school_type_rural_urban", "management_type"],
+        "teacher": ["teacher_count", "pupil_teacher_ratio", "qualification_level"],
+        "performance": ["test_score", "grade_point", "achievement_band"],
+        "dropout": ["dropout_grade", "reason_dropout", "reentry_indicator"],
+        "scholarship": ["scheme_code", "stipend_amount"],
+        "curriculum": ["subject_stream", "textbook_scheme", "assessment_wave"]
+      }
+    },
+    "labor": {
+      "label": "Labor Dataset",
+      "domains": [
+        "employment",
+        "salary",
+        "workforce",
+        "industry",
+        "occupation",
+        "hours_worked",
+        "labor_mobility",
+        "benefits",
+        "retirement",
+        "unemployment"
+      ],
+      "subdomains": {
+        "employment": ["employed_flag", "formal_informal", "contract_type", "establishment_size"],
+        "salary": ["monthly_wage", "bonus", "overtime_pay", "real_nominal_indicator"],
+        "workforce": ["labor_force_participation", "usual_activity_role"],
+        "industry": ["nic_code_division", "sector_public_private"],
+        "occupation": ["nco_skill_level", "managerial_blue_collar"],
+        "hours_worked": ["usual_hours_week", "overtime_hours"],
+        "labor_mobility": ["interdistrict_worker", "commute_distance_band"],
+        "benefits": ["paid_leave_indicator", "pension_subscription", "insurance_via_employer"],
+        "retirement": ["superannuation", "years_service"],
+        "unemployment": ["duration_unemployment_weeks", "seeking_training_flag"]
+      }
+    },
+    "agriculture": {
+      "label": "Agriculture Dataset",
+      "domains": [
+        "crop",
+        "yield",
+        "land",
+        "soil",
+        "irrigation",
+        "fertilizer",
+        "livestock",
+        "climate",
+        "market",
+        "agri_income"
+      ],
+      "subdomains": {
+        "crop": ["crop_name_code", "sowing_month", "harvest_month"],
+        "yield": ["production_quintal", "productivity_band"],
+        "land": ["land_holding_hectares", "tenancy_status"],
+        "soil": ["soil_health_index", "soil_texture_class"],
+        "irrigation": ["irrigated_area_share", "source_canal_well_rainfed"],
+        "fertilizer": ["npk_dose_band", "organic_input_flag"],
+        "livestock": ["species_count_band", "dairy_yield_proxy"],
+        "climate": ["rainfall_dummy", "drought_dummy", "temperature_band"],
+        "market": ["mandi_distance_km", "msp_received_flag", "marketing_channel"],
+        "agri_income": ["farm_receipts", "input_cost_share", "net_income_estimate"]
+      }
+    }
+  }
+}

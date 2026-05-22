@@ -27,8 +27,13 @@ class AnalysisState:
     dependency_graph: dict[str, Any] = field(default_factory=dict)
     audit_logs: list[dict[str, Any]] = field(default_factory=list)
     profiling_summary: dict[str, Any] = field(default_factory=dict)
+    column_profiles: dict[str, Any] = field(default_factory=dict)
+    dataset_profile: dict[str, Any] = field(default_factory=dict)
+    static_domains: dict[str, Any] = field(default_factory=dict)
+    schema_blueprint: dict[str, Any] = field(default_factory=dict)
     inferred_dataset_context: dict[str, Any] = field(default_factory=dict)
     embedding_cache_refs: dict[str, Any] = field(default_factory=dict)
+    knowledge_graph: dict[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=_utc_now_iso)
     updated_at: str = field(default_factory=_utc_now_iso)
 
@@ -53,9 +58,14 @@ class AnalysisState:
             "schema_graph": self._normalize_graph(),
             "priority_dependencies": self._normalize_dependencies(),
             "profiling_summary": self.profiling_summary,
+            "column_profiles": self.column_profiles,
+            "dataset_profile": self.dataset_profile,
+            "static_domains": self.static_domains,
+            "schema_blueprint": self.schema_blueprint,
             "audit_logs": self.audit_logs,
             "embedding_cache_refs": self.embedding_cache_refs,
             "dataset_metadata": self.dataset_metadata,
+            "knowledge_graph": self.knowledge_graph,
             "meta": {
                 "dataset_id": self.dataset_id,
                 "analysis_id": self.analysis_id,

@@ -50,11 +50,17 @@ class SemanticPipeline:
         self.dynamic_gen = DynamicDomainGenerator()
         self.audit = AuditLogger()
 
-    def run(self, columns: list[str]) -> dict:
+    def run(self, columns: list[str], column_enrichment: dict[str, str] | None = None) -> dict:
         self.audit.clear()
         self.domain_repo.clear_runtime()
 
         normalized = self.preprocessor.normalize_columns(columns)
+        if column_enrichment:
+            for col in columns:
+                extra = (column_enrichment.get(col) or "").strip()
+                if extra:
+                    base = normalized.get(col) or ""
+                    normalized[col] = f"{base}. Profile signals: {extra}"
         column_tokens = {col: self.preprocessor.extract_tokens(col) for col in columns}
         self.audit.log("column_normalization", {"columns": normalized}, step=1)
 

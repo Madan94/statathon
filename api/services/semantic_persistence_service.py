@@ -4,6 +4,7 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from core.state import AnalysisState
+from repositories.intelligence_repository import DatasetIntelligenceRepository
 from repositories.semantic_repository import (
     DatasetContextRepository,
     PriorityDependencyRepository,
@@ -21,6 +22,7 @@ class SemanticPersistenceService:
         self.graph = SchemaGraphRepository(db)
         self.priority = PriorityDependencyRepository(db)
         self.context = DatasetContextRepository(db)
+        self.intel = DatasetIntelligenceRepository(db)
 
     def persist_state(self, state: AnalysisState) -> None:
         dataset_id = state.dataset_id
@@ -101,7 +103,18 @@ class SemanticPersistenceService:
                     )
         self.priority.replace_for_analysis(dataset_id, analysis_id, prio_rows)
 
+        self.intel.replace_for_analysis(
+            dataset_id,
+            analysis_id,
+            state.dataset_profile,
+            state.column_profiles,
+        )
+
         ctx = state.inferred_dataset_context or {}
+        prof = dict(state.profiling_summary or {})
+        prof["dataset_profile"] = state.dataset_profile
+        prof["column_profiles"] = state.column_profiles
+
         self.context.replace_for_analysis(
             dataset_id,
             analysis_id,
@@ -110,8 +123,14 @@ class SemanticPersistenceService:
                 "domain_scores": ctx.get("domain_scores") or {},
                 "semantic_summary": {
                     "legacy_alignment_context": ctx.get("legacy_alignment_context"),
-                    "profiling_summary": state.profiling_summary,
+                    "ontology_macro_type_best_hint": ctx.get("ontology_macro_type_best_hint"),
+                    "profiling_summary": prof,
                     "dataset_metadata": state.dataset_metadata,
+                    "column_profiles": state.column_profiles,
+                    "dataset_profile": state.dataset_profile,
+                    "static_domains": state.static_domains,
+                    "schema_blueprint": state.schema_blueprint,
+                    "knowledge_graph": state.knowledge_graph,
                 },
             },
         )
