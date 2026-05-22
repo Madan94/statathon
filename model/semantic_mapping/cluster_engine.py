@@ -12,8 +12,41 @@ class ClusterEngine:
         self.similarity_threshold = similarity_threshold
         self.min_cluster_size = min_cluster_size
 
+    def _effective_linkage_similarity(self, n_columns: int) -> float:
+        """
+        For tiny tables, use a higher cosine bar so hierarchical linkage splits more cleanly
+        (avoids one mega-cluster after semantic merge passes). Controlled by env.
+        """
+        try:
+            base = float(os.getenv("STATATHON_LINKAGE_SIMILARITY", str(self.similarity_threshold)))
+        except ValueError:
+            base = self.similarity_threshold
+        base = max(0.05, min(base, 0.92))
+
+        try:
+            small_max = int(os.getenv("STATATHON_SMALL_DATASET_MAX_COLS", "24"))
+        except ValueError:
+            small_max = 24
+
+        if n_columns <= small_max and n_columns >= 2:
+            try:
+                bump = float(os.getenv("STATATHON_LINKAGE_SIMILARITY_SMALL", "0.58"))
+            except ValueError:
+                bump = 0.58
+            bump = max(0.05, min(bump, 0.92))
+            merged = max(base, bump)
+        else:
+            merged = base
+        try:
+            cap = float(os.getenv("STATATHON_LINKAGE_SIMILARITY_CAP", "0.88"))
+            merged = min(merged, cap)
+        except ValueError:
+            merged = min(merged, 0.88)
+        return merged
+
     def build_similarity_graph(self, embeddings: dict) -> dict:
         columns = list(embeddings.keys())
+        thr = self._effective_linkage_similarity(len(columns))
         vecs = np.array([embeddings[c] for c in columns])
         sim_matrix = cosine_similarity(vecs)
 
@@ -21,17 +54,34 @@ class ClusterEngine:
         for i, col1 in enumerate(columns):
             graph[col1] = {}
             for j, col2 in enumerate(columns):
-                if i != j and sim_matrix[i][j] >= self.similarity_threshold:
+                if i != j and sim_matrix[i][j] >= thr:
                     graph[col1][col2] = float(sim_matrix[i][j])
         return graph
 
     def _cluster_hdbscan(self, columns: list[str], vecs: np.ndarray) -> dict[str, list[str]]:
         import hdbscan
 
-        min_sz = max(
-            self.min_cluster_size,
-            min(12, max(2, len(columns) // max(len(columns) // 25, 1))),
-        )
+        n = len(columns)
+        try:
+            small_max = int(os.getenv("STATATHON_SMALL_DATASET_MAX_COLS", "24"))
+        except ValueError:
+            small_max = 24
+
+        # Tiny datasets: favour smaller minimum cluster sizes so columns can split logically.
+        if n <= small_max:
+            default_floor = max(2, min(5, max(2, (n + 2) // 4)))
+            try:
+                min_sz = max(
+                    self.min_cluster_size,
+                    int(os.getenv("STATATHON_HDBSCAN_MIN_CLUSTER_SMALL", str(default_floor))),
+                )
+            except ValueError:
+                min_sz = max(self.min_cluster_size, default_floor)
+        else:
+            min_sz = max(
+                self.min_cluster_size,
+                min(12, max(2, n // max(n // 25, 1))),
+            )
         clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_sz,
             min_samples=max(1, min_sz // 3),
@@ -77,8 +127,9 @@ class ClusterEngine:
                 condensed.append(distance_matrix[i][j])
         condensed = np.array(condensed)
 
+        thr = self._effective_linkage_similarity(n)
         Z = linkage(condensed, method="average")
-        labels = fcluster(Z, t=1.0 - self.similarity_threshold, criterion="distance")
+        labels = fcluster(Z, t=1.0 - thr, criterion="distance")
 
         clusters = {}
         for col, label in zip(columns, labels):

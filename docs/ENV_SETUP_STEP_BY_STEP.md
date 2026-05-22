@@ -131,6 +131,8 @@ If unused, leave empty.
 
 If `hdbscan` is missing, the pipeline falls back to hierarchical.
 
+**Skinny CSVs (few columns):** Defaults now use a **`STATATHON_LINKAGE_SIMILARITY_SMALL`** floor and **`STATATHON_SKIP_CLUSTER_MERGE_SMALL`** so HTTP upload benchmarks do not collapse into one cluster. Tune in `.env` (listed next to `STATATHON_CLUSTERING` in `.env.example`).
+
 ---
 
 ## 10. Neo4j (`NEO4J_*`) *(optional knowledge-graph sync)*

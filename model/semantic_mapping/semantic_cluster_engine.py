@@ -3,6 +3,7 @@ Semantic clustering with domain and similarity reinforcement beyond raw cosine b
 """
 from __future__ import annotations
 
+import os
 from typing import Any
 
 import numpy as np
@@ -31,8 +32,23 @@ class SemanticClusterEngine:
         column_domains: dict[str, str],
         domain_scores_all: dict[str, dict[str, float]],
     ) -> tuple[dict[str, list[str]], dict[str, dict[str, Any]]]:
+        n = len(column_embeddings)
+        try:
+            small_max = int(os.getenv("STATATHON_SMALL_DATASET_MAX_COLS", "24"))
+        except ValueError:
+            small_max = 24
+
+        skip_merge_small = (
+            os.getenv("STATATHON_SKIP_CLUSTER_MERGE_SMALL", "true").strip().lower()
+            not in {"0", "false", "no", "off"}
+        )
+
         clusters = self._base.cluster_columns(column_embeddings)
-        clusters = self._refine_clusters(column_embeddings, clusters, column_domains)
+        if skip_merge_small and n <= small_max:
+            # Cross-cluster coherence merge destroys separation on skinny survey tables (~10 cols).
+            pass
+        else:
+            clusters = self._refine_clusters(column_embeddings, clusters, column_domains)
         cluster_info = self._assign_with_support(clusters, column_domains, domain_scores_all)
         return clusters, cluster_info
 
