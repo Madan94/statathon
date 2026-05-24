@@ -1,17 +1,25 @@
 import os
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database.database import SessionLocal
 from database.models import Analysis, Dataset
 from services.analysis_runner import (
+    execute_dataset_analysis_job,
     finalize_successful_analysis,
     mark_dataset_upload_status,
     persist_analysis_failure,
     run_semantic_analysis_pipeline,
 )
-from services.analysis_results_service import resolve_semantic_analysis_payload
+from services.apply_service import apply_analysis_decisions
+from analysis.schemas import AnalysisDecisionsRequest
+from deps import get_current_user_id
+from services.analysis_results_service import (
+    enrich_payload_for_dashboard,
+    resolve_semantic_analysis_payload,
+)
+from services.decision_service import DecisionService
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
@@ -67,7 +75,45 @@ def get_analysis_results(analysis_id: int, db: Session = Depends(get_db)):
     payload = resolve_semantic_analysis_payload(db, analysis_id)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
-    return payload
+    return enrich_payload_for_dashboard(db, analysis_id, payload)
+
+
+@router.get("/{analysis_id}/status")
+def get_analysis_status(analysis_id: int, db: Session = Depends(get_db)):
+    an = db.query(Analysis).filter(Analysis.id == analysis_id).first()
+    if not an:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    return {
+        "analysis_id": an.id,
+        "dataset_id": an.dataset_id,
+        "status": an.status,
+        "error_message": an.error_message,
+        "completed_at": an.completed_at.isoformat() if an.completed_at else None,
+    }
+
+
+@router.post("/{analysis_id}/apply")
+def apply_decisions(analysis_id: int, db: Session = Depends(get_db)):
+    try:
+        return apply_analysis_decisions(db, analysis_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.post("/{analysis_id}/decisions")
+def submit_analysis_decisions(
+    analysis_id: int,
+    body: AnalysisDecisionsRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _ = user_id
+    _analysis_meta_or_raise(analysis_id, db)
+    try:
+        result = DecisionService(db).save_column_decisions(analysis_id, body.decisions)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return result
 
 
 @router.get("/{analysis_id}/summary")
@@ -162,6 +208,23 @@ def get_analysis_blueprint(analysis_id: int, db: Session = Depends(get_db)):
     }
 
 
+@router.post("/{dataset_id}/analyze-async")
+def analyze_async(
+    dataset_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    ds = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+    if not ds:
+        raise HTTPException(404, "Dataset not found")
+    an = Analysis(dataset_id=dataset_id, status="pending")
+    db.add(an)
+    db.commit()
+    db.refresh(an)
+    background_tasks.add_task(execute_dataset_analysis_job, dataset_id, an.id)
+    return {"analysis_id": an.id, "id": an.id, "dataset_id": dataset_id, "status": "pending"}
+
+
 @router.post("/{dataset_id}/analyze")
 def analyze(dataset_id: int, db: Session = Depends(get_db)):
     ds = db.query(Dataset).filter(Dataset.id == dataset_id).first()
@@ -172,7 +235,8 @@ def analyze(dataset_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(an)
 
-    if ds.object_key:
+    uses_object_storage = bool(ds.object_key)
+    if uses_object_storage:
         mark_dataset_upload_status(dataset_id, "PROCESSING")
 
     try:
@@ -190,7 +254,8 @@ def analyze(dataset_id: int, db: Session = Depends(get_db)):
             "report_storage_path": os.path.join(report_dir, f"report_{an.id}.pdf"),
         }
     except Exception as e:
-        if ds.object_key:
+        db.rollback()
+        if uses_object_storage:
             mark_dataset_upload_status(dataset_id, "FAILED")
         persist_analysis_failure(an.id, str(e))
         raise HTTPException(status_code=500, detail=str(e))

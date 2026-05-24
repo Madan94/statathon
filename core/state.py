@@ -41,6 +41,8 @@ class AnalysisState:
     imputation_results: list[dict[str, Any]] = field(default_factory=list)
     imputation_candidates: list[dict[str, Any]] = field(default_factory=list)
     user_decisions: dict[str, Any] = field(default_factory=dict)
+    weighted_profile: dict[str, Any] = field(default_factory=dict)
+    derived_dataset_path: str | None = None
     created_at: str = field(default_factory=_utc_now_iso)
     updated_at: str = field(default_factory=_utc_now_iso)
 
@@ -73,6 +75,8 @@ class AnalysisState:
             "embedding_cache_refs": self.embedding_cache_refs,
             "dataset_metadata": self.dataset_metadata,
             "knowledge_graph": self.knowledge_graph,
+            "weighted_profile": self.weighted_profile,
+            "derived_dataset_path": self.derived_dataset_path,
             "phase3": {
                 "validation_results": self.validation_results,
                 "validation_candidates": self.validation_candidates,

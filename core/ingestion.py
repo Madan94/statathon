@@ -23,13 +23,27 @@ upload_dir = os.path.join(os.getcwd(), 'data', 'raw_uploads')
 os.makedirs(upload_dir, exist_ok=True)
 
 
+def _read_excel(source, ext: str) -> pd.DataFrame:
+    """`.xlsx` via openpyxl; legacy `.xls` via xlrd (see requirements)."""
+    if ext == ".xlsx":
+        return pd.read_excel(source, engine="openpyxl")
+    if ext == ".xls":
+        try:
+            return pd.read_excel(source, engine="xlrd")
+        except ImportError as e:
+            raise ImportError(
+                "Reading .xls requires xlrd. Install with: pip install xlrd>=2.0.1"
+            ) from e
+    raise ValueError(f"Unsupported Excel extension: {ext}")
+
+
 def load_file(path: str) -> pd.DataFrame:
     """Load CSV or Excel for `pipelines.orchestrator`."""
     ext = os.path.splitext(path)[1].lower()
     if ext == ".csv":
         return pd.read_csv(path)
     if ext in (".xlsx", ".xls"):
-        return pd.read_excel(path)
+        return _read_excel(path, ext)
     raise ValueError(f"Unsupported file type: {ext}")
 
 
@@ -40,7 +54,7 @@ def load_dataframe_from_object_bytes(filename: str, body: bytes) -> pd.DataFrame
     if ext == ".csv":
         return pd.read_csv(bio)
     if ext in (".xlsx", ".xls"):
-        return pd.read_excel(bio)
+        return _read_excel(bio, ext)
     raise ValueError(f"Unsupported file type: {ext}")
 
 

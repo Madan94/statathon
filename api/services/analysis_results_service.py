@@ -10,7 +10,9 @@ from database.models import (
     ColumnIntelligenceProfile,
     DatasetContextRecord,
     DatasetIntelligenceRecord,
+    Phase3AnomalyIntel,
     PriorityDependency,
+    Report,
     SchemaGraphEdge,
     SemanticCluster,
     SemanticProfile,
@@ -165,3 +167,92 @@ def resolve_semantic_analysis_payload(db: Session, analysis_id: int) -> dict | N
     if isinstance(an.checkpoint, dict) and an.checkpoint:
         return an.checkpoint
     return build_semantic_results_from_db(db, analysis_id)
+
+
+def _outliers_map_from_phase3(phase3: dict) -> dict[str, dict]:
+    """Group anomaly candidates by column for dashboard OutlierCard."""
+    outliers: dict[str, dict] = {}
+    candidates = phase3.get("anomaly_candidates") if isinstance(phase3, dict) else []
+    if not isinstance(candidates, list):
+        return outliers
+    for cand in candidates:
+        if not isinstance(cand, dict):
+            continue
+        col = cand.get("column")
+        if not col:
+            continue
+        col = str(col)
+        bucket = outliers.setdefault(
+            col,
+            {"column": col, "zscore": [], "iqr": [], "confidence": 0.5, "risk": "medium"},
+        )
+        row_idx = cand.get("row")
+        if row_idx is None:
+            continue
+        method = str(cand.get("method") or "").upper()
+        conf = float(cand.get("confidence") or 0.5)
+        bucket["confidence"] = max(bucket["confidence"], conf)
+        if method == "Z_SCORE":
+            bucket["zscore"].append(int(row_idx))
+        elif method == "ISOLATION_FOREST":
+            bucket.setdefault("isolation", []).append(int(row_idx))
+            bucket["iqr"].append(int(row_idx))
+        else:
+            bucket["iqr"].append(int(row_idx))
+        sev = str(cand.get("severity") or "").upper()
+        if sev in ("HIGH", "CRITICAL"):
+            bucket["risk"] = "high"
+        elif sev == "MEDIUM" and bucket["risk"] != "high":
+            bucket["risk"] = "medium"
+    return outliers
+
+
+def enrich_payload_for_dashboard(db: Session, analysis_id: int, payload: dict) -> dict:
+    """Add legacy-friendly fields (health, semantic map, outliers, content_hash) for the UI."""
+    enriched = dict(payload)
+    profiling = payload.get("profiling_summary") if isinstance(payload.get("profiling_summary"), dict) else {}
+    enriched["health"] = profiling.get("health") or payload.get("health")
+    enriched["schema"] = profiling.get("schema")
+
+    mapping = payload.get("semantic_mapping") or []
+    semantic: dict[str, str] = {}
+    if isinstance(mapping, list):
+        for row in mapping:
+            if isinstance(row, dict) and row.get("column"):
+                semantic[str(row["column"])] = str(row.get("domain") or row.get("semantic_domain") or "")
+    elif isinstance(mapping, dict):
+        for col, meta in mapping.items():
+            if isinstance(meta, dict):
+                semantic[str(col)] = str(meta.get("domain") or meta.get("semantic_domain") or "")
+            else:
+                semantic[str(col)] = str(meta)
+    enriched["semantic"] = semantic
+
+    phase3 = payload.get("phase3")
+    if not isinstance(phase3, dict):
+        intel = db.query(Phase3AnomalyIntel).filter(Phase3AnomalyIntel.analysis_id == analysis_id).first()
+        if intel and isinstance(intel.payload, dict):
+            phase3 = intel.payload
+        else:
+            phase3 = {}
+    enriched["phase3"] = phase3
+    enriched["outliers"] = _outliers_map_from_phase3(phase3)
+
+    report_row = (
+        db.query(Report)
+        .filter(Report.analysis_id == analysis_id, Report.report_type == "tamper_proof")
+        .order_by(Report.id.desc())
+        .first()
+    )
+    if report_row and report_row.content_hash:
+        enriched["content_hash"] = report_row.content_hash
+
+    meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
+    enriched["analysis_id"] = meta.get("analysis_id") or analysis_id
+    if payload.get("weighted_profile"):
+        enriched["weighted_profile"] = payload.get("weighted_profile")
+    if payload.get("derived_dataset") or (payload.get("derived_dataset_path")):
+        enriched["derived_dataset"] = payload.get("derived_dataset") or {
+            "derived_path": payload.get("derived_dataset_path"),
+        }
+    return enriched

@@ -1,8 +1,10 @@
+import os
+
 import bcrypt
 from jose import jwt
 from datetime import datetime, timedelta
 
-SECRET_KEY = "supersecret"
+SECRET_KEY = os.getenv("SECRET_KEY", "supersecret")
 ALGORITHM = "HS256"
 
 

@@ -101,6 +101,11 @@ def finalize_successful_analysis(
         mark_dataset_upload_status(dataset_id, "ANALYZED")
 
 
+def execute_dataset_analysis_job(dataset_id: int, analysis_id: int) -> None:
+    """Background analysis (multipart or object storage)."""
+    execute_registered_analysis_job(dataset_id, analysis_id)
+
+
 def execute_registered_analysis_job(dataset_id: int, analysis_id: int) -> None:
     """
     Runs after `/datasets/register` (BackgroundTasks). Uses a fresh DB session.

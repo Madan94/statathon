@@ -245,6 +245,7 @@ def try_sync_analysis_to_neo4j(state: AnalysisState) -> dict[str, Any]:
     try:
         driver = neo4j_driver(cfg)
         try:
+            driver.verify_connectivity()
             with driver.session(database=cfg.database) as session:
                 session.execute_write(work)
         finally:

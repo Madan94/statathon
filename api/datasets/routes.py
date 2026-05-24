@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from database.database import SessionLocal
 from database.models import Analysis, Dataset
-from deps import get_object_store
+from deps import get_current_user_id, get_object_store
 from repositories.dataset_repository import DatasetRepository
 from services.analysis_runner import execute_registered_analysis_job
 from object_storage.object_store import ObjectStore, StorageConfigError
@@ -31,11 +31,14 @@ SIZE_TOLERANCE = int(os.getenv("REGISTER_SIZE_TOLERANCE_BYTES", "8"))
 
 
 @router.post("/upload")
-def upload(file: UploadFile = File(...), db: Session = Depends(get_db)):
+def upload(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
     upload_dir = os.getenv("UPLOAD_STORAGE_PATH", "./storage/uploads")
-    # TODO: resolve user_id from JWT
-    ds = save_upload(file, upload_dir, user_id=1, db=db)
-    return {"dataset_id": ds.id, "filename": ds.filename}
+    ds = save_upload(file, upload_dir, user_id=user_id, db=db)
+    return {"dataset_id": ds.id, "id": ds.id, "filename": ds.filename}
 
 
 @router.post("/upload-url")
@@ -58,8 +61,8 @@ def register_dataset_after_presigned_upload(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     store: ObjectStore = Depends(get_object_store),
+    user_id: int = Depends(get_current_user_id),
 ):
-    # TODO: resolve user_id from JWT
     try:
         meta = store.get_object_metadata(body.object_key)
     except ClientError as e:
@@ -82,7 +85,7 @@ def register_dataset_after_presigned_upload(
     repo = DatasetRepository(db)
     try:
         ds = repo.create_from_object_registration(
-            user_id=1,
+            user_id=user_id,
             filename=body.filename,
             object_key=body.object_key,
             file_size=body.file_size,

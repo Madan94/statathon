@@ -1,38 +1,65 @@
-# Statathon Dashboard
+# BharatStat Dashboard
 
-Next.js frontend for the Statathon statistical analysis platform.
+Next.js frontend for **BharatStat** — audit-ready survey data intelligence (MoSPI-inspired institutional UI).
 
 ## Setup
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Copy environment variables:
+
 ```bash
 cp .env.local.example .env.local
 ```
 
-3. Update `.env.local` with your API URL (default: `http://localhost:8000`)
+3. Set `NEXT_PUBLIC_API_URL` in `.env.local` (default: `http://localhost:8000`)
 
-4. Run development server:
+4. Run the development server:
+
 ```bash
 npm run dev
 ```
 
-The app will be available at `http://localhost:3000`
+Open [http://localhost:3000](http://localhost:3000).
 
-## Features
+## Workflow
 
-- **Upload Page** (`/upload`): Drag-and-drop CSV/Excel file upload
-- **Dataset View** (`/datasets/[id]`): Dataset overview and analysis trigger
-- **Analysis Results** (`/analysis/[id]`): Outlier detection, semantic mapping, and decision interface
-- **Report Viewer** (`/reports/[id]`): PDF report preview and download
+1. **Home** (`/`) — product overview and trust features
+2. **Upload** (`/upload`) — drag-and-drop CSV/Excel (optional R2 presigned upload)
+3. **Dataset** (`/datasets/[id]`) — profile KPIs and async analysis
+4. **Analysis** (`/analysis/[id]`) — tabbed workspace (overview, semantic, validation, outliers, imputation, report)
+5. **Report** (`/reports/[id]`) — PDF preview, metadata sidebar, download
+
+## UI stack
+
+- Tailwind CSS v4 design tokens (navy + saffron accent)
+- `lucide-react` icons
+- `sonner` toasts (no browser `alert()`)
+- App shell with sidebar (desktop) and mobile drawer
 
 ## Components
 
-- `DataTable`: Paginated data grid with column insights
-- `OutlierCard`: Outlier visualization with decision buttons (keep/delete/normalize)
-- `ConfidenceScore`: Visual confidence indicators
-- `ReportPreview`: Embedded PDF viewer with react-pdf
+| Area | Components |
+|------|------------|
+| Layout | `AppShell`, `Sidebar`, `TopBar`, `WorkflowStepper`, `PageHeader` |
+| UI | `Button`, `Card`, `Badge`, `Tabs`, `StatCard`, `Alert`, `EmptyState`, `Skeleton` |
+| Analysis | `HealthSummary`, `SemanticTable`, `ValidationTable`, `ImputationList`, `OutlierGrid` |
+| Upload | `FileDropzone` |
+
+## Screenshots checklist (for demos)
+
+- [ ] Landing hero with BharatStat wordmark
+- [ ] Upload with workflow stepper
+- [ ] Dataset KPI row + analysis progress
+- [ ] Analysis tabs (semantic + outliers)
+- [ ] Report split layout with hash sidebar
+
+## Accessibility
+
+- Focus rings on interactive controls
+- `aria` labels on tabs, dropzone, and toolbar
+- `prefers-reduced-motion` respected in global CSS

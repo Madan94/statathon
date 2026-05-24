@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 
 interface OutlierCardProps {
   column: string;
@@ -13,10 +16,10 @@ interface OutlierCardProps {
 export default function OutlierCard({ column, indices, confidence, risk, onDecision }: OutlierCardProps) {
   const [decision, setDecision] = useState<'keep' | 'delete' | 'normalize' | null>(null);
 
-  const riskColors = {
-    low: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    high: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  const riskVariant = {
+    low: 'success' as const,
+    medium: 'warning' as const,
+    high: 'danger' as const,
   };
 
   const handleDecision = (d: 'keep' | 'delete' | 'normalize') => {
@@ -25,59 +28,42 @@ export default function OutlierCard({ column, indices, confidence, risk, onDecis
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{column}</h3>
-        <div className="flex items-center gap-2">
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${riskColors[risk]}`}>
-            {risk.toUpperCase()} RISK
-          </span>
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            Confidence: {(confidence * 100).toFixed(1)}%
-          </span>
+    <Card>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <h3 className="font-semibold text-text font-mono">{column}</h3>
+        <div className="flex items-center gap-2 shrink-0">
+          <Badge variant={riskVariant[risk]}>{risk} risk</Badge>
+          <span className="text-xs text-text-muted">{(confidence * 100).toFixed(0)}%</span>
         </div>
       </div>
-      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-        Found {indices.length} outlier{indices.length !== 1 ? 's' : ''} at row{indices.length !== 1 ? 's' : ''}:{' '}
-        {indices.slice(0, 10).join(', ')}
-        {indices.length > 10 && ` +${indices.length - 10} more`}
+      <p className="text-sm text-text-muted mb-4">
+        {indices.length} outlier{indices.length !== 1 ? 's' : ''} at row
+        {indices.length !== 1 ? 's' : ''}: {indices.slice(0, 8).join(', ')}
+        {indices.length > 8 && ` +${indices.length - 8} more`}
       </p>
-      <div className="flex gap-2">
-        <button
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant={decision === 'keep' ? 'primary' : 'outline'}
           onClick={() => handleDecision('keep')}
-          disabled={decision === 'keep'}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            decision === 'keep'
-              ? 'bg-green-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-          }`}
         >
           Keep
-        </button>
-        <button
+        </Button>
+        <Button
+          size="sm"
+          variant={decision === 'delete' ? 'destructive' : 'outline'}
           onClick={() => handleDecision('delete')}
-          disabled={decision === 'delete'}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            decision === 'delete'
-              ? 'bg-red-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-          }`}
         >
           Delete
-        </button>
-        <button
+        </Button>
+        <Button
+          size="sm"
+          variant={decision === 'normalize' ? 'secondary' : 'outline'}
           onClick={() => handleDecision('normalize')}
-          disabled={decision === 'normalize'}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            decision === 'normalize'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-          }`}
         >
           Normalize
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }
-

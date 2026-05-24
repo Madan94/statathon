@@ -3,6 +3,7 @@ from pipelines.model_path import ensure_paths
 ensure_paths()
 
 from core.ingestion import dataframe_for_uploaded_dataset, infer_schema, health_summary
+from core.json_safe import make_json_safe
 from core.rule_validator import normalize_schema
 from reports.ingestion_reporter import write_ingestion_report
 from reports.math_vault import write_math_vault
@@ -20,6 +21,7 @@ from profiling import (
 from repositories.dataset_repository import DatasetRepository
 from services.phase3_persistence_service import Phase3PersistenceService
 from services.semantic_persistence_service import SemanticPersistenceService
+from weights.survey_weights import compute_survey_weight_profile
 from database.models import Analysis
 
 import os
@@ -86,12 +88,17 @@ def run_pipeline(
         }
 
     run_phase3_intel(df, schema, state)
+    analysis_cfg_row = db.query(Analysis).filter(Analysis.id == analysis_id).first()
+    weight_col = None
+    if analysis_cfg_row and isinstance(analysis_cfg_row.config, dict):
+        weight_col = analysis_cfg_row.config.get("weight_column")
+    state.weighted_profile = compute_survey_weight_profile(df, schema, weight_column=weight_col)
     SemanticPersistenceService(db).persist_state(state)
     Phase3PersistenceService(db).persist_state(state)
 
     analysis_row = db.query(Analysis).filter(Analysis.id == analysis_id).first()
     if analysis_row:
-        analysis_row.checkpoint = state.to_api_payload()
+        analysis_row.checkpoint = make_json_safe(state.to_api_payload())
 
     db.flush()
 

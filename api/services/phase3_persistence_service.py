@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
+from core.json_safe import make_json_safe
 from core.state import AnalysisState
 from database.models import (
     Phase3AnomalyIntel,
@@ -36,16 +37,18 @@ class Phase3PersistenceService:
                     row_index=(int(cand["row"]) if cand.get("row") is not None else None),
                     severity=(str(cand["severity"]) if cand.get("severity") is not None else None),
                     candidate_action=str(cand.get("candidate_action") or "REVIEW"),
-                    detail=cand,
+                    detail=make_json_safe(cand),
                 )
             )
         if batch:
             self.db.add_all(batch)
         ar = self.db.query(Phase3AnomalyIntel).filter(Phase3AnomalyIntel.analysis_id == analysis_id).first()
-        anomaly_payload = {
-            "anomaly_results": state.anomaly_results,
-            "anomaly_candidates": state.anomaly_candidates,
-        }
+        anomaly_payload = make_json_safe(
+            {
+                "anomaly_results": state.anomaly_results,
+                "anomaly_candidates": state.anomaly_candidates,
+            }
+        )
         if ar:
             ar.payload = anomaly_payload
             ar.dataset_id = dataset_id
@@ -61,11 +64,13 @@ class Phase3PersistenceService:
         ir = (
             self.db.query(Phase3ImputationIntel).filter(Phase3ImputationIntel.analysis_id == analysis_id).first()
         )
-        imputation_payload = {
-            "imputation_results": state.imputation_results,
-            "imputation_candidates": state.imputation_candidates,
-            "user_decisions": state.user_decisions,
-        }
+        imputation_payload = make_json_safe(
+            {
+                "imputation_results": state.imputation_results,
+                "imputation_candidates": state.imputation_candidates,
+                "user_decisions": state.user_decisions,
+            }
+        )
         if ir:
             ir.payload = imputation_payload
             ir.dataset_id = dataset_id
