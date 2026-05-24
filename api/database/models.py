@@ -73,6 +73,25 @@ class Analysis(Base):
     completed_at = Column(DateTime, nullable=True)
     dataset = relationship("Dataset", back_populates="analyses")
     validation_results = relationship("ValidationResult", back_populates="analysis", cascade="all, delete-orphan")
+    phase3_validation_candidates = relationship(
+        "Phase3ValidationCandidate", back_populates="analysis", cascade="all, delete-orphan"
+    )
+    anomaly_intel = relationship(
+        "Phase3AnomalyIntel", back_populates="analysis", uselist=False, cascade="all, delete-orphan"
+    )
+
+    anomaly_decisions = relationship(
+        "Phase3AnomalyDecision", back_populates="analysis", cascade="all, delete-orphan"
+    )
+
+
+    imputation_intel = relationship(
+        "Phase3ImputationIntel", back_populates="analysis", uselist=False, cascade="all, delete-orphan"
+    )
+    imputation_decisions = relationship(
+        "Phase3ImputationDecision", back_populates="analysis", cascade="all, delete-orphan"
+    )
+
     reports = relationship("Report", back_populates="analysis", cascade="all, delete-orphan")
     semantic_profiles = relationship("SemanticProfile", back_populates="analysis", cascade="all, delete-orphan")
     semantic_clusters_rel = relationship("SemanticCluster", back_populates="analysis", cascade="all, delete-orphan")
@@ -197,3 +216,72 @@ class DatasetContextRecord(Base):
     semantic_summary = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     analysis = relationship("Analysis", back_populates="dataset_contexts_rel")
+
+
+# --- Phase 3: validation / anomalies / imputation (candidates-first; relational mirror) ---
+
+
+class Phase3ValidationCandidate(Base):
+    __tablename__ = "validation_candidates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    kind = Column(String(64), nullable=False)
+    column_name = Column(String(512), nullable=True)
+    row_index = Column(Integer, nullable=True)
+    severity = Column(String(32), nullable=True)
+    candidate_action = Column(String(64), nullable=False)
+    detail = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    analysis = relationship("Analysis", back_populates="phase3_validation_candidates")
+
+
+class Phase3AnomalyIntel(Base):
+    __tablename__ = "anomaly_results"
+    __table_args__ = (UniqueConstraint("analysis_id", name="uq_phase3_anomaly_intel_analysis"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    payload = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    analysis = relationship("Analysis", back_populates="anomaly_intel")
+
+
+class Phase3AnomalyDecision(Base):
+    __tablename__ = "anomaly_decisions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    payload = Column(JSON, nullable=False)
+    status = Column(String(32), nullable=False, default="pending")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    analysis = relationship("Analysis", back_populates="anomaly_decisions")
+
+
+class Phase3ImputationIntel(Base):
+    __tablename__ = "imputation_results"
+    __table_args__ = (UniqueConstraint("analysis_id", name="uq_phase3_imputation_intel_analysis"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    payload = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    analysis = relationship("Analysis", back_populates="imputation_intel")
+
+
+class Phase3ImputationDecision(Base):
+    __tablename__ = "imputation_decisions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    payload = Column(JSON, nullable=False)
+    status = Column(String(32), nullable=False, default="pending")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    analysis = relationship("Analysis", back_populates="imputation_decisions")

@@ -6,6 +6,8 @@ For **how to obtain each `.env.example` value** (Neon, R2, Gemini, Neo4j, etc.),
 
 **Full pytest + benchmark workflow, measured accuracy examples, troubleshooting:** **[TESTING_FULL_GUIDE.md](TESTING_FULL_GUIDE.md)**.
 
+**Phase 3 — rule validation, outlier scoring, imputation scoring (detect → candidates → human decision; no auto-destructive edits):** **[PHASE3_PIPELINE.md](PHASE3_PIPELINE.md)**.
+
 ## Minimum to run analyses
 
 | Input | Purpose |

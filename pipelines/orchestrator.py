@@ -4,22 +4,22 @@ ensure_paths()
 
 from core.ingestion import dataframe_for_uploaded_dataset, infer_schema, health_summary
 from core.rule_validator import normalize_schema
-from core.outlier_engine import zscore_outliers, iqr_outliers
-from core.imputation_engine import knn_impute_numeric
 from reports.ingestion_reporter import write_ingestion_report
 from reports.math_vault import write_math_vault
 from reports.narrative_generator import narrative_from_stats
 from reports.tamper_proof import write_tamper_proof_pdf
 from pipelines.semantic_runner import run_semantic_pipeline
 from pipelines.semantic_adapter import build_analysis_state
+from pipelines.phase3_pipeline import run_phase3_intel
 from graph.neo4j_sync import try_sync_analysis_to_neo4j
 from profiling import (
     build_dataset_intelligence_profiles,
     column_profile_embedding_snippet,
     load_default_ontology,
 )
-from services.semantic_persistence_service import SemanticPersistenceService
 from repositories.dataset_repository import DatasetRepository
+from services.phase3_persistence_service import Phase3PersistenceService
+from services.semantic_persistence_service import SemanticPersistenceService
 from database.models import Analysis
 
 import os
@@ -85,7 +85,9 @@ def run_pipeline(
             "neo4j_sync_summary": dict(state.knowledge_graph),
         }
 
+    run_phase3_intel(df, schema, state)
     SemanticPersistenceService(db).persist_state(state)
+    Phase3PersistenceService(db).persist_state(state)
 
     analysis_row = db.query(Analysis).filter(Analysis.id == analysis_id).first()
     if analysis_row:
@@ -100,12 +102,12 @@ def run_pipeline(
             semantic_labels[col] = meta.get("domain")
 
     df2 = normalize_schema(df, schema)
-    outliers = {}
+    stats = {}
     for c in df2.columns:
-        if schema.get(c) == "numeric":
-            outliers[c] = {"zscore": zscore_outliers(df2[c]), "iqr": iqr_outliers(df2[c])}
-    df3 = knn_impute_numeric(df2, list(df2.columns))
-    stats = {c: float(df3[c].mean()) for c in df3.columns if pd.api.types.is_numeric_dtype(df3[c])}
+        if pd.api.types.is_numeric_dtype(df2[c]):
+            s = df2[c].dropna()
+            if not s.empty:
+                stats[c] = float(s.astype(float).mean())
     os.makedirs(report_dir, exist_ok=True)
     write_ingestion_report(os.path.join(report_dir, f"ingestion_{analysis_id}.json"), health, schema)
     write_math_vault(os.path.join(report_dir, f"vault_{analysis_id}.json"), stats)
@@ -120,6 +122,5 @@ def run_pipeline(
         "health": health,
         "semantic": semantic_labels,
         "semantic_intelligence": state.to_api_payload(),
-        "outliers": outliers,
         "content_hash": h,
     }

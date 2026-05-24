@@ -34,6 +34,13 @@ class AnalysisState:
     inferred_dataset_context: dict[str, Any] = field(default_factory=dict)
     embedding_cache_refs: dict[str, Any] = field(default_factory=dict)
     knowledge_graph: dict[str, Any] = field(default_factory=dict)
+    validation_results: dict[str, Any] = field(default_factory=dict)
+    validation_candidates: list[dict[str, Any]] = field(default_factory=list)
+    anomaly_results: list[dict[str, Any]] = field(default_factory=list)
+    anomaly_candidates: list[dict[str, Any]] = field(default_factory=list)
+    imputation_results: list[dict[str, Any]] = field(default_factory=list)
+    imputation_candidates: list[dict[str, Any]] = field(default_factory=list)
+    user_decisions: dict[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=_utc_now_iso)
     updated_at: str = field(default_factory=_utc_now_iso)
 
@@ -66,6 +73,15 @@ class AnalysisState:
             "embedding_cache_refs": self.embedding_cache_refs,
             "dataset_metadata": self.dataset_metadata,
             "knowledge_graph": self.knowledge_graph,
+            "phase3": {
+                "validation_results": self.validation_results,
+                "validation_candidates": self.validation_candidates,
+                "anomaly_results": self.anomaly_results,
+                "anomaly_candidates": self.anomaly_candidates,
+                "imputation_results": self.imputation_results,
+                "imputation_candidates": self.imputation_candidates,
+                "user_decisions": self.user_decisions,
+            },
             "meta": {
                 "dataset_id": self.dataset_id,
                 "analysis_id": self.analysis_id,

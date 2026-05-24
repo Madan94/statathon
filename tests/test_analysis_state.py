@@ -25,6 +25,8 @@ def test_analysis_state_api_payload_structure():
     assert isinstance(payload["priority_dependencies"], list)
     assert "column_profiles" in payload and "dataset_profile" in payload
     assert "knowledge_graph" in payload
+    p3 = payload.get("phase3") or {}
+    assert "validation_candidates" in p3
 
 
 def test_semantic_adapter_injects_cluster_ids():
