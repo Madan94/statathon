@@ -285,3 +285,70 @@ class Phase3ImputationDecision(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     analysis = relationship("Analysis", back_populates="imputation_decisions")
+
+
+# -----------------------------------------------------------------------------
+# Report Builder — full 6-phase architecture state
+# -----------------------------------------------------------------------------
+
+
+class ReportTemplate(Base):
+    """Phase 0: Immutable blueprint extracted from a historical/government PDF.
+
+    `source_hash` is SHA256 of the original PDF for auditability.
+    `ast_json` is the hierarchical AST (SGLang-style) describing the report skeleton:
+      [{"section":"executive_summary","kind":"narrative","required":true,...}, ...]
+    """
+
+    __tablename__ = "report_templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    name = Column(String(256), nullable=False)
+    description = Column(Text, nullable=True)
+    source_filename = Column(String(512), nullable=True)
+    source_storage_path = Column(String(1024), nullable=True)
+    source_hash = Column(String(128), nullable=True, index=True)
+    ast_json = Column(JSON, nullable=False)
+    extraction_method = Column(String(64), nullable=True)  # "pdfplumber+gemini_vision" / "manual"
+    page_count = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ReportJob(Base):
+    """A single Report Builder run: analysis_id + template_id -> rendered blocks + PDF."""
+
+    __tablename__ = "report_jobs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    template_id = Column(Integer, ForeignKey("report_templates.id"), nullable=True, index=True)
+    status = Column(String(32), nullable=False, default="pending", index=True)
+    # 'pending' | 'running' | 'awaiting_verification' | 'verified' | 'exported' | 'failed'
+    stage = Column(String(64), nullable=True)  # last phase reached (debug)
+    error_message = Column(Text, nullable=True)
+    blocks_json = Column(JSON, nullable=True)  # full block tree (Phase 5 AGUI snapshot)
+    verifier_report = Column(JSON, nullable=True)  # Phase 4 firewall result
+    kg_export_path = Column(String(1024), nullable=True)  # Phase 1 RDF/Turtle artifact
+    final_pdf_path = Column(String(1024), nullable=True)  # Phase 6 PDF output
+    content_hash = Column(String(128), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ReportCorrection(Base):
+    """Phase 2 LTM 'Reflection Ledger' — captures human corrections to learn from.
+
+    Stored in Postgres now (Qdrant adapter wires later via the same schema).
+    """
+
+    __tablename__ = "report_corrections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(Integer, ForeignKey("report_jobs.id"), nullable=False, index=True)
+    block_id = Column(String(128), nullable=False)
+    correction_kind = Column(String(64), nullable=False)  # 'narrative_edit' | 'verify_fail' | 'regenerate'
+    before_text = Column(Text, nullable=True)
+    after_text = Column(Text, nullable=True)
+    diagnostics = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)

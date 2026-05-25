@@ -13,3 +13,12 @@ data/raw_uploads
 api/audit_log.json
 api/model/
 api/storage/
+
+# Report Builder runtime artifacts (generated PDFs, uploaded templates, KG exports)
+storage/reports/
+storage/templates/
+storage/derived/
+storage/uploads/
+
+# Local-only requirements workarounds
+requirements-windows-noxlrd.txt

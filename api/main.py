@@ -24,6 +24,7 @@ from auth.oauth_routes import router as oauth_router
 from datasets.routes import router as datasets_router
 from analysis.routes import router as analysis_router
 from reports.routes import router as reports_router
+from report_builder_api.routes import router as report_builder_router
 
 app = FastAPI(title="Statathon")
 
@@ -45,6 +46,7 @@ app.include_router(oauth_router)
 app.include_router(datasets_router)
 app.include_router(analysis_router)
 app.include_router(reports_router)
+app.include_router(report_builder_router)
 
 
 @app.get("/health")

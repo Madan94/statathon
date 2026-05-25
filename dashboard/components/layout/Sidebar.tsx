@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Upload, FileBarChart } from 'lucide-react';
+import { Home, Upload, FileBarChart, FileText } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/upload', label: 'Upload', icon: Upload },
+  { href: '/report-builder', label: 'Report Builder', icon: FileText },
 ];
 
 export default function Sidebar() {

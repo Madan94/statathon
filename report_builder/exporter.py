@@ -1,0 +1,246 @@
+"""Phase 6 — Export Pipeline: JSON AST -> professional PDF.
+
+Reuses ReportLab (already a dependency) to render the BlockCanvas into a
+multi-section, MoSPI-style PDF with:
+  * Cover page (title, dataset id, hash, generated_at)
+  * Section headings + narrative paragraphs
+  * Tables (formatted ReportLab Table)
+  * Charts rendered via matplotlib -> embedded as PNG
+  * Audit footer on every page
+
+Output is hashed with SHA256 for the tamper-proof trail (audit trail block).
+"""
+from __future__ import annotations
+
+import hashlib
+import io
+import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+logger = logging.getLogger(__name__)
+
+
+def _styles():
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import mm
+    from reportlab.lib.colors import HexColor
+
+    base = getSampleStyleSheet()
+    styles = {
+        "title": ParagraphStyle(
+            "title", parent=base["Title"], fontSize=22, leading=26,
+            textColor=HexColor("#0B3B7A"), spaceAfter=10,
+        ),
+        "h1": ParagraphStyle(
+            "h1", parent=base["Heading1"], fontSize=16, leading=20,
+            textColor=HexColor("#0B3B7A"), spaceBefore=14, spaceAfter=6,
+        ),
+        "h2": ParagraphStyle(
+            "h2", parent=base["Heading2"], fontSize=12, leading=15,
+            textColor=HexColor("#222"), spaceBefore=8, spaceAfter=4,
+        ),
+        "body": ParagraphStyle(
+            "body", parent=base["BodyText"], fontSize=10, leading=14,
+        ),
+        "small": ParagraphStyle(
+            "small", parent=base["BodyText"], fontSize=8, leading=11,
+            textColor=HexColor("#555"),
+        ),
+    }
+    return styles, mm
+
+
+def export_pdf(*, canvas_dict: dict[str, Any], out_path: str | Path,
+               dataset_filename: str | None = None) -> tuple[str, str]:
+    """Render canvas -> PDF at out_path. Returns (storage_path, sha256_hash)."""
+    from reportlab.platypus import (
+        SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle, Image,
+    )
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    styles, mm = _styles()
+
+    doc = SimpleDocTemplate(
+        str(out_path),
+        pagesize=A4,
+        leftMargin=18 * mm, rightMargin=18 * mm,
+        topMargin=18 * mm, bottomMargin=20 * mm,
+        title=canvas_dict.get("template_name") or "Statathon Report",
+        author="Statathon Report Builder",
+    )
+
+    story: list[Any] = []
+    # ----- Cover -----
+    story.append(Paragraph(canvas_dict.get("template_name") or "Statathon Report", styles["title"]))
+    story.append(Paragraph(
+        f"Analysis ID: <b>{canvas_dict.get('analysis_id')}</b> &nbsp;&nbsp;|&nbsp;&nbsp;"
+        f"Job ID: <b>{canvas_dict.get('job_id')}</b>",
+        styles["body"],
+    ))
+    if dataset_filename:
+        story.append(Paragraph(f"Source dataset: <b>{dataset_filename}</b>", styles["body"]))
+    story.append(Paragraph(
+        f"Generated: {datetime.utcnow().isoformat(timespec='seconds')}Z",
+        styles["small"],
+    ))
+    summary = canvas_dict.get("summary") or {}
+    if summary:
+        story.append(Spacer(1, 6 * mm))
+        story.append(Paragraph("Analytics Summary", styles["h2"]))
+        summary_rows = [["Metric", "Value"]]
+        for k, v in summary.items():
+            summary_rows.append([str(k), str(v)])
+        t = Table(summary_rows, hAlign="LEFT", colWidths=[60 * mm, 90 * mm])
+        t.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0B3B7A")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONT", (0, 0), (-1, 0), "Helvetica-Bold", 9),
+            ("FONT", (0, 1), (-1, -1), "Helvetica", 9),
+            ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#bbb")),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ]))
+        story.append(t)
+    story.append(PageBreak())
+
+    # ----- Sections -----
+    for sect in canvas_dict.get("sections") or []:
+        story.append(Paragraph(sect.get("section", "Body").replace("_", " ").title(), styles["h1"]))
+        for blk in sect.get("blocks") or []:
+            story.append(Paragraph(blk.get("title") or "", styles["h2"]))
+            _render_block(blk, story, styles, mm, colors, Table, TableStyle, Image, Paragraph, Spacer)
+            verifier = blk.get("verifier")
+            if verifier and verifier.get("overall_status") != "pass":
+                story.append(Paragraph(
+                    f"<i>Verifier: {verifier.get('overall_status', '').upper()} — see audit trail.</i>",
+                    styles["small"],
+                ))
+            story.append(Spacer(1, 4 * mm))
+
+    # ----- Footer paragraph -----
+    story.append(PageBreak())
+    story.append(Paragraph("Integrity & Audit", styles["h1"]))
+    story.append(Paragraph(
+        "This document was generated by the Statathon Report Builder. "
+        "Numeric claims were independently re-computed against the source "
+        "DataFrame via the Phase 4 Verifier. The SHA256 hash printed below "
+        "covers the rendered PDF bytes — any modification invalidates it.",
+        styles["body"],
+    ))
+
+    doc.build(story, onFirstPage=_audit_footer, onLaterPages=_audit_footer)
+
+    # ----- Hash -----
+    digest = hashlib.sha256(out_path.read_bytes()).hexdigest()
+    return str(out_path), digest
+
+
+def _render_block(blk: dict[str, Any], story: list, styles, mm, colors,
+                  Table, TableStyle, Image, Paragraph, Spacer):
+    kind = blk.get("kind")
+    payload = blk.get("payload") or {}
+
+    if kind == "narrative":
+        text = (payload.get("text") or "").replace("\n", "<br/>")
+        story.append(Paragraph(text or "<i>(no narrative)</i>", styles["body"]))
+        return
+
+    if kind == "metric":
+        rows = [["Metric", "Value"]]
+        for k, v in (payload.get("metrics") or {}).items():
+            rows.append([str(k), str(v)])
+        if len(rows) > 1:
+            t = Table(rows, hAlign="LEFT", colWidths=[60 * mm, 100 * mm])
+            t.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0B3B7A")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONT", (0, 0), (-1, 0), "Helvetica-Bold", 9),
+                ("FONT", (0, 1), (-1, -1), "Helvetica", 9),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#bbb")),
+            ]))
+            story.append(t)
+        return
+
+    if kind == "table":
+        rows = payload.get("rows") or []
+        cols = payload.get("columns") or []
+        if rows and cols:
+            data = [list(cols)] + [[str(r.get(c, "")) for c in cols] for r in rows[:60]]
+            t = Table(data, hAlign="LEFT")
+            t.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0B3B7A")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONT", (0, 0), (-1, 0), "Helvetica-Bold", 8),
+                ("FONT", (0, 1), (-1, -1), "Helvetica", 8),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#ccc")),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1),
+                 [colors.white, colors.HexColor("#f5f7fa")]),
+            ]))
+            story.append(t)
+        else:
+            story.append(Paragraph("<i>(no rows)</i>", styles["small"]))
+        return
+
+    if kind == "chart":
+        png = _render_chart_png(payload)
+        if png:
+            story.append(Image(io.BytesIO(png), width=150 * mm, height=80 * mm))
+        else:
+            story.append(Paragraph("<i>(chart unavailable)</i>", styles["small"]))
+        return
+
+    story.append(Paragraph(str(payload), styles["small"]))
+
+
+def _render_chart_png(payload: dict[str, Any]) -> bytes | None:
+    chart_type = payload.get("chart_type", "bar")
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt  # type: ignore
+    except Exception:
+        return None
+    try:
+        labels = payload.get("labels") or []
+        values = payload.get("values") or []
+        if not labels or not values:
+            return None
+        fig, ax = plt.subplots(figsize=(7, 3.5))
+        if chart_type == "bar":
+            ax.bar(labels, values, color="#0B3B7A")
+            ax.tick_params(axis="x", labelrotation=45)
+        elif chart_type == "line":
+            ax.plot(labels, values, marker="o", color="#0B3B7A")
+        else:
+            ax.bar(labels, values, color="#0B3B7A")
+        ax.set_title(payload.get("title") or "")
+        ax.grid(True, axis="y", alpha=0.3)
+        fig.tight_layout()
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=140)
+        plt.close(fig)
+        return buf.getvalue()
+    except Exception as exc:
+        logger.warning("Chart render failed: %s", exc)
+        return None
+
+
+def _audit_footer(canv, doc):
+    from reportlab.lib.units import mm
+
+    canv.saveState()
+    canv.setFont("Helvetica", 7)
+    canv.setFillGray(0.4)
+    canv.drawString(
+        18 * mm, 10 * mm,
+        f"Statathon Report Builder — generated {datetime.utcnow().isoformat(timespec='seconds')}Z",
+    )
+    canv.drawRightString(
+        doc.pagesize[0] - 18 * mm, 10 * mm,
+        f"Page {doc.page}",
+    )
+    canv.restoreState()

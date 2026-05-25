@@ -268,4 +268,208 @@ export const reportsApi = {
   },
 };
 
+// ---------------- Report Builder (6-phase architecture) ----------------
+
+export interface ReportTemplate {
+  id: number;
+  name: string;
+  description?: string | null;
+  page_count?: number | null;
+  extraction_method?: string | null;
+  block_count: number;
+  source_hash?: string | null;
+  created_at?: string | null;
+}
+
+export interface ReportTemplateWithAst extends ReportTemplate {
+  ast: Record<string, unknown>;
+}
+
+export interface ReportJob {
+  id: number;
+  analysis_id: number;
+  template_id?: number | null;
+  status: string;
+  stage?: string | null;
+  content_hash?: string | null;
+  final_pdf_path?: string | null;
+  kg_export_path?: string | null;
+  error_message?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface VerifierCheck {
+  claim: string;
+  claimed_value: number;
+  computed_value?: number | null;
+  tolerance: number;
+  status: 'pass' | 'fail' | 'unverified';
+  note: string;
+}
+
+export interface VerifierVerdict {
+  block_id: string;
+  overall_status: 'pass' | 'warn' | 'fail';
+  checks: VerifierCheck[];
+}
+
+export interface RenderedBlock {
+  block_id: string;
+  kind: 'narrative' | 'table' | 'chart' | 'metric' | 'heading' | 'list';
+  title: string;
+  section: string;
+  payload: Record<string, unknown>;
+  verifier?: VerifierVerdict | null;
+  route?: { engine: string; rationale: string } | null;
+  version: number;
+  generated_at: string;
+}
+
+export interface BlockCanvas {
+  job_id: number;
+  analysis_id: number;
+  template_name: string;
+  summary: Record<string, unknown>;
+  sections: Array<{ section: string; blocks: RenderedBlock[] }>;
+}
+
+export interface JobCanvasResponse extends ReportJob {
+  canvas?: BlockCanvas | null;
+  verifier_report?: { blocks: VerifierVerdict[] } | null;
+}
+
+export interface ChatTurn {
+  role: 'user' | 'assistant';
+  text: string;
+  block?: RenderedBlock | null;
+  route?: { engine: string; rationale: string } | null;
+  verifier?: VerifierVerdict | null;
+  created_at: string;
+}
+
+export const reportBuilderApi = {
+  listTemplates: async (): Promise<ReportTemplate[]> => {
+    const { data } = await api.get('/report-builder/templates');
+    return data;
+  },
+  uploadTemplate: async (
+    name: string,
+    file: File,
+    description?: string
+  ): Promise<ReportTemplateWithAst> => {
+    const form = new FormData();
+    form.append('name', name);
+    if (description) form.append('description', description);
+    form.append('file', file);
+    const { data } = await api.post('/report-builder/templates/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  },
+  getTemplate: async (id: number) => {
+    const { data } = await api.get(`/report-builder/templates/${id}`);
+    return data;
+  },
+  deleteTemplate: async (id: number) => {
+    await api.delete(`/report-builder/templates/${id}`);
+  },
+  defaultPreview: async (): Promise<Record<string, unknown>> => {
+    const { data } = await api.get('/report-builder/templates/default/preview');
+    return data;
+  },
+  generate: async (analysisId: number, templateId?: number | null): Promise<ReportJob> => {
+    const { data } = await api.post('/report-builder/generate', {
+      analysis_id: analysisId,
+      template_id: templateId ?? null,
+    });
+    return data;
+  },
+  listJobs: async (analysisId?: number): Promise<ReportJob[]> => {
+    const params = analysisId ? { analysis_id: analysisId } : {};
+    const { data } = await api.get('/report-builder/jobs', { params });
+    return data;
+  },
+  getJob: async (jobId: number): Promise<ReportJob> => {
+    const { data } = await api.get(`/report-builder/jobs/${jobId}`);
+    return data;
+  },
+  getCanvas: async (jobId: number): Promise<JobCanvasResponse> => {
+    const { data } = await api.get(`/report-builder/jobs/${jobId}/canvas`);
+    return data;
+  },
+  downloadPdf: async (jobId: number): Promise<Blob> => {
+    const { data } = await api.get(`/report-builder/jobs/${jobId}/download`, {
+      responseType: 'blob',
+    });
+    return data;
+  },
+  regenerateBlock: async (jobId: number, blockId: string): Promise<RenderedBlock> => {
+    const { data } = await api.post(
+      `/report-builder/jobs/${jobId}/blocks/${blockId}/regenerate`
+    );
+    return data;
+  },
+  recordCorrection: async (
+    jobId: number,
+    blockId: string,
+    payload: { before?: string; after: string; kind?: string }
+  ) => {
+    const { data } = await api.post(
+      `/report-builder/jobs/${jobId}/blocks/${blockId}/correction`,
+      { ...payload, kind: payload.kind || 'narrative_edit' }
+    );
+    return data;
+  },
+  chat: async (jobId: number, query: string): Promise<ChatTurn> => {
+    const { data } = await api.post(`/report-builder/jobs/${jobId}/chat`, { query });
+    return data;
+  },
+  chatHistory: async (jobId: number): Promise<{ turns: ChatTurn[] }> => {
+    const { data } = await api.get(`/report-builder/jobs/${jobId}/chat/history`);
+    return data;
+  },
+  insertBlock: async (
+    jobId: number,
+    payload: { section: string; block: Record<string, unknown>; position?: number | null }
+  ): Promise<RenderedBlock> => {
+    const { data } = await api.post(
+      `/report-builder/jobs/${jobId}/blocks/insert`,
+      payload
+    );
+    return data;
+  },
+  moveBlock: async (
+    jobId: number,
+    payload: { block_id: string; target_section: string; target_position?: number | null }
+  ) => {
+    const { data } = await api.post(`/report-builder/jobs/${jobId}/blocks/move`, payload);
+    return data;
+  },
+  deleteBlock: async (jobId: number, blockId: string) => {
+    const { data } = await api.delete(`/report-builder/jobs/${jobId}/blocks/${blockId}`);
+    return data;
+  },
+  reExport: async (jobId: number) => {
+    const { data } = await api.post(`/report-builder/jobs/${jobId}/re-export`);
+    return data;
+  },
+  pollJobUntilDone: async (
+    jobId: number,
+    onTick?: (j: ReportJob) => void,
+    intervalMs = 2000,
+    maxAttempts = 180
+  ): Promise<ReportJob> => {
+    for (let i = 0; i < maxAttempts; i++) {
+      const j = await reportBuilderApi.getJob(jobId);
+      onTick?.(j);
+      if (j.status === 'exported' || j.status === 'failed' || j.status === 'verified') {
+        return j;
+      }
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+    throw new Error('Report builder job timed out');
+  },
+};
+
 export default api;
