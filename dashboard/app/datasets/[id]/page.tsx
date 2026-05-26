@@ -41,7 +41,7 @@ export default function DatasetPage() {
   const id = Number(params.id);
 
   const [dataset, setDataset] = useState<Dataset & {
-    health_summary?: unknown;
+    health_summary?: Record<string, unknown> | null;
     file_size?: number;
     checksum?: string;
     storage_provider?: string;

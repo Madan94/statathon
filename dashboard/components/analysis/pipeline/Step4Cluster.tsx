@@ -192,9 +192,9 @@ export default function Step4Cluster({ results, analysisId, onProceed, onBack }:
                     <td className="px-4 py-2 font-mono text-xs">{cl.cluster_id}</td>
                     <td className="px-4 py-2 text-xs font-semibold text-primary">{cl.domain}</td>
                     <td className="px-4 py-2 text-xs text-text-muted">{cl.columns.join(', ')}</td>
-                    <td className="px-4 py-2 w-24">{scoreBar(cl.domain_purity ?? cl.support)}</td>
+                    <td className="px-4 py-2 w-24">{scoreBar(cl.domain_purity ?? cl.support ?? 0)}</td>
                     <td className="px-4 py-2 w-24">{scoreBar(cl.embedding_coherence ?? 1)}</td>
-                    <td className="px-4 py-2 w-24">{scoreBar(cl.support_score)}</td>
+                    <td className="px-4 py-2 w-24">{scoreBar(cl.support_score ?? 0)}</td>
                   </tr>
                 ))}
               </tbody>

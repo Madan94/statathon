@@ -4,13 +4,14 @@ import { useState } from 'react';
 import type { AnalysisResult, AnomalyCandidate, ImputationCandidate, ColumnProfile } from '@/lib/api';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/cn';
-import { Search, ChevronLeft, TrendingUp, Minus } from 'lucide-react';
+import { Search, ChevronLeft, TrendingUp, Minus, CheckCircle2 } from 'lucide-react';
 
 interface Props {
   results: AnalysisResult;
   selectedColumn: string | null;
   onSelectColumn: (col: string) => void;
   onBack: () => void;
+  reviewedColumns?: Set<string>;
 }
 
 function columnRisk(
@@ -46,7 +47,7 @@ const riskDot: Record<string, string> = {
   none: 'bg-success',
 };
 
-export default function ColumnNav({ results, selectedColumn, onSelectColumn, onBack }: Props) {
+export default function ColumnNav({ results, selectedColumn, onSelectColumn, onBack, reviewedColumns }: Props) {
   const [query, setQuery] = useState('');
 
   const health = results.health as {
@@ -111,6 +112,9 @@ export default function ColumnNav({ results, selectedColumn, onSelectColumn, onB
           >
             {col}
           </span>
+          {reviewedColumns?.has(col) && (
+            <CheckCircle2 className="h-3 w-3 text-success shrink-0" />
+          )}
         </div>
         <div className="flex items-center gap-1.5 mt-1 ml-4">
           {anomalyCount > 0 && (

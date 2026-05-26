@@ -132,6 +132,12 @@ export interface GraphPayload {
   dataset_metadata?: Record<string, unknown>;
 }
 
+export interface AnomalyExplain {
+  primary_method?: string;
+  metric?: number | null;
+  isolation_forest?: boolean;
+}
+
 export interface AnomalyCandidate {
   row: number;
   column: string;
@@ -141,7 +147,7 @@ export interface AnomalyCandidate {
   severity: string;
   candidate_action: string;
   alternate_actions?: string[];
-  explain?: string;
+  explain?: string | AnomalyExplain;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

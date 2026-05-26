@@ -69,13 +69,17 @@ function DomainRegistryPanel({ registry, mappingRows, localOverrides }: {
 
   const archetype = registry.active_archetype ?? '—';
   const staticOntology = registry.static_ontology ?? {};
-  // Collect all static domains from all archetype entries (in case registry spans multiple tiers)
   const archetypeEntry = staticOntology[archetype];
-  const staticDomains = archetypeEntry?.domains?.length
+  const rawStaticDomains = archetypeEntry?.domains?.length
     ? archetypeEntry.domains
     : Object.values(staticOntology).flatMap(e => e.domains ?? []);
   const dynamicDomains = registry.dynamic_domains ?? {};
-  const universalDomains = registry.universal_domains ?? [];
+  const rawUniversalDomains = registry.universal_domains ?? [];
+
+  // Deduplicate across tabs so the same domain key never appears twice in any list
+  const seen = new Set<string>();
+  const staticDomains = rawStaticDomains.filter(d => { if (seen.has(d)) return false; seen.add(d); return true; });
+  const universalDomains = rawUniversalDomains.filter(d => { if (seen.has(d)) return false; seen.add(d); return true; });
 
   const tabCls = (t: string) => cn(
     'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',

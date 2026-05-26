@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FileText, Upload as UploadIcon, Loader2, Trash2, RefreshCw } from 'lucide-react';
 
 import PageHeader from '@/components/layout/PageHeader';
@@ -17,7 +17,16 @@ import {
 } from '@/lib/api';
 
 export default function ReportBuilderLanding() {
+  return (
+    <Suspense fallback={<div className="p-8 text-sm text-text-muted">Loading Report Builder…</div>}>
+      <ReportBuilderContent />
+    </Suspense>
+  );
+}
+
+function ReportBuilderContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [jobs, setJobs] = useState<ReportJob[]>([]);
   const [analysisId, setAnalysisId] = useState<string>('');
@@ -49,6 +58,13 @@ export default function ReportBuilderLanding() {
   useEffect(() => {
     refresh();
   }, []);
+
+  useEffect(() => {
+    const fromQuery = searchParams.get('analysisId');
+    if (fromQuery && !Number.isNaN(Number(fromQuery))) {
+      setAnalysisId(fromQuery);
+    }
+  }, [searchParams]);
 
   const onUpload = async (e: React.FormEvent) => {
     e.preventDefault();

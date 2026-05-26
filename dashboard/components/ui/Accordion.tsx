@@ -9,7 +9,7 @@ export interface AccordionItem {
   trigger: ReactNode;
   badge?: ReactNode;
   content: ReactNode;
-  variant?: 'default' | 'danger' | 'warning' | 'success';
+  variant?: 'default' | 'danger' | 'warning' | 'success' | 'muted';
   defaultOpen?: boolean;
 }
 
@@ -24,18 +24,21 @@ const borderMap: Record<string, string> = {
   danger: 'border-danger/40',
   warning: 'border-warning/40',
   success: 'border-success/40',
+  muted: 'border-border/60',
 };
 const bgMap: Record<string, string> = {
   default: 'bg-surface-card',
   danger: 'bg-danger/5',
   warning: 'bg-warning/5',
   success: 'bg-success/5',
+  muted: 'bg-surface',
 };
 const headerMap: Record<string, string> = {
   default: 'hover:bg-black/[0.03]',
   danger: 'hover:bg-danger/10',
   warning: 'hover:bg-warning/10',
   success: 'hover:bg-success/10',
+  muted: 'hover:bg-black/[0.02]',
 };
 
 export function Accordion({ items, allowMultiple = true, className }: AccordionProps) {

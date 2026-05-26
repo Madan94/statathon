@@ -82,7 +82,7 @@ export default function AnalysisPage() {
 
   // Column analysis is a full-screen mode (step 6)
   if (step === 6) {
-    return <ColumnAnalysisLayout results={results} onBack={() => setStep(5)} />;
+    return <ColumnAnalysisLayout results={results} analysisId={analysisId} onBack={() => setStep(5)} />;
   }
 
   const header = STEP_HEADERS[step];
