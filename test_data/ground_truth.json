@@ -1,0 +1,14 @@
+{
+  "mospi_mock_survey_data.csv": {
+    "survey_id": "identifier",
+    "state_code": "identifier",
+    "district_code": "identifier",
+    "sector": "geography",
+    "hh_size": "household",
+    "sal": "employment",
+    "exp_total": "salary",
+    "primary_occupation_code": "identifier",
+    "is_beneficiary": "socioeconomic",
+    "survey_date": "survey_metadata"
+  }
+}

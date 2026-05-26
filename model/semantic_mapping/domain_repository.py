@@ -18,9 +18,23 @@ class DomainRepository:
         self.load_domains()
 
     def load_domains(self) -> None:
+        """Loads and flattens the Unified JSON for legacy downstream engines."""
         with open(self.config_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        self._base_domains = deepcopy(data.get("domains", {}))
+
+        self._base_domains = {}
+        
+        # Parse the new "dataset_types" structure
+        if "dataset_types" in data:
+            for arch_name, arch_data in data["dataset_types"].items():
+                for sub_name, keywords in arch_data.get("subdomains", {}).items():
+                    # Create a flat, deduplicated dictionary for downstream engines
+                    if sub_name not in self._base_domains:
+                        self._base_domains[sub_name] = {
+                            "description": f"{sub_name.replace('_', ' ').title()} statistical domain.",
+                            "keywords": keywords
+                        }
+
         self._runtime_domains = {}
 
     def get_base_domain_names(self) -> list[str]:
@@ -75,6 +89,10 @@ class DomainRepository:
         }
 
     def save_base_to_disk(self) -> None:
-        """Persist only base domains from JSON path (runtime domains are never written)."""
-        with open(self.config_path, "w", encoding="utf-8") as f:
-            json.dump({"domains": self._base_domains}, f, indent=2)
+        """
+        WARNING: Disabled to protect hierarchical JSON structure.
+        """
+        raise NotImplementedError(
+            "save_base_to_disk is disabled because it would overwrite the new hierarchical "
+            "domain_definitions.json with a flat dictionary. Base domains should now be updated manually."
+        )

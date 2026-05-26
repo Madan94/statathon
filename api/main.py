@@ -16,9 +16,9 @@ from pipelines.model_path import ensure_huggingface_hub_cache
 
 ensure_huggingface_hub_cache(_REPO_ROOT)
 
-from auth.routes import router as auth_router
-from datasets.routes import router as datasets_router
-from analysis.routes import router as analysis_router
+from api.auth.routes import router as auth_router
+from api.datasets.routes import router as datasets_router
+from api.analysis.routes import router as analysis_router
 
 app = FastAPI(title="Statathon")
 Base.metadata.create_all(bind=engine)

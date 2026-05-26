@@ -20,5 +20,5 @@ engine = create_engine(
     pool_recycle=280 if not _is_sqlite else -1,
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 Base = declarative_base()

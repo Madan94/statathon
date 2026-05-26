@@ -1,10 +1,17 @@
 .env
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.cache/
 # --- Local data / caches (optional: keep large caches out of git) ---
-model/cache/hub/
-model/cache/.locks/
+model/cache/
 model/storage/vector_cache/
+model/weights/
 model/phase2_output.json
 .venv/
 data/raw_uploads

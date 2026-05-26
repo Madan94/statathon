@@ -35,6 +35,8 @@ class DynamicDomainGenerator:
         normalized_columns: dict[str, str],
         column_embeddings: dict[str, np.ndarray],
         provisional_domains: dict[str, str],
+        schema_graph=None,
+        dataset_domain: str | None = None,
     ) -> dict[str, dict[str, Any]]:
         columns = list(normalized_columns.keys())
         if not columns:
@@ -48,8 +50,11 @@ class DynamicDomainGenerator:
         if n == 1:
             labels = np.array([0])
         else:
+            # 🚨 FIX: Do not force n_clusters. Use a strict distance_threshold.
+            # 0.25 cosine distance means they must be at least 75% similar to cluster.
             clustering = AgglomerativeClustering(
-                n_clusters=min(k, n),
+                n_clusters=None,
+                distance_threshold=0.25, 
                 metric="cosine",
                 linkage="average",
             )
@@ -81,8 +86,12 @@ class DynamicDomainGenerator:
             slug = _slug_tokens(members)
             domain_key = f"dyn_{parent_mode}_{slug}"
             member_labels = [normalized_columns[m] for m in members]
+            
+            # --- CONTEXT ENRICHMENT ---
+            # Inject context prefix if the user provided one
+            context_prefix = f"[{dataset_domain}] " if dataset_domain else ""
             desc = (
-                f"Official statistics variables grouped under dataset archetype '{dataset_type}' "
+                f"{context_prefix}Official statistics variables grouped under dataset archetype '{dataset_type}' "
                 f"with provisional theme '{parent_mode}'. "
                 f"Co-occurring measures: {', '.join(member_labels[:12])}"
                 f"{' …' if len(member_labels) > 12 else ''}. "
@@ -103,5 +112,4 @@ class DynamicDomainGenerator:
                     "cohort_label": lab,
                 },
             }
-
         return runtime
