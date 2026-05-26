@@ -41,6 +41,103 @@ export const storeAuthToken = (token: string) => {
   persistToken(token);
 };
 
+// ─── Column / analysis-pipeline types ───────────────────────────────────────
+
+export interface ColumnProfile {
+  datatype: string;
+  missing_ratio: number;
+  missing_count?: number;
+  cardinality: number;
+  unique_ratio?: number;
+  entropy?: number;
+  skewness?: number;
+  top_values?: Array<[string, number]>;
+  sample_values?: unknown[];
+  semantic_hints?: string[];
+  mean_std?: { mean: number; std: number };
+  min_max?: { min: number; max: number };
+}
+
+export interface AnalysisSummaryPayload {
+  meta: Record<string, unknown>;
+  dataset_context: Record<string, unknown>;
+  dataset_profile: Record<string, unknown>;
+  dataset_name: string;
+  column_profiles_keys: string[];
+  profiling_summary: {
+    health?: {
+      rows: number;
+      columns: number;
+      missing_per_column?: Record<string, number>;
+      dtypes?: Record<string, string>;
+    };
+    schema?: Record<string, string>;
+  };
+}
+
+export interface DomainInfo {
+  description?: string;
+  examples?: string[];
+  sub_domains?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export interface DomainsPayload {
+  meta: Record<string, unknown>;
+  dataset_context: Record<string, unknown>;
+  static_domains_taxonomy: Record<string, DomainInfo>;
+  ontology_macro_type_best_hint?: string;
+}
+
+export interface ClusterGroup {
+  cluster_id: string;
+  domain: string;
+  support_score: number;
+  support?: number;
+  columns: string[];
+  domain_distribution?: Record<string, number>;
+}
+
+export interface ClustersPayload {
+  meta: Record<string, unknown>;
+  clusters: ClusterGroup[];
+}
+
+export interface GraphNode {
+  name: string;
+  [key: string]: unknown;
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+  weight?: number;
+  relationship_type?: string;
+  semantic_reason?: string;
+}
+
+export interface GraphPayload {
+  meta: Record<string, unknown>;
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  priority_dependencies?: unknown;
+  dataset_metadata?: Record<string, unknown>;
+}
+
+export interface AnomalyCandidate {
+  row: number;
+  column: string;
+  value: unknown;
+  method: string;
+  confidence: number;
+  severity: string;
+  candidate_action: string;
+  alternate_actions?: string[];
+  explain?: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface UploadResponse {
   dataset_id: number;
   id: number;
@@ -179,6 +276,14 @@ export const authApi = {
   },
 };
 
+/** MIME type sent to presigned-URL signer and R2 PUT (must stay in sync). */
+function datasetPresignedContentType(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  if (ext === 'csv') return 'text/csv';
+  if (ext === 'xls') return 'application/vnd.ms-excel';
+  return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+}
+
 export const datasetsApi = {
   upload: async (file: File): Promise<UploadResponse> => {
     const formData = new FormData();
@@ -189,20 +294,35 @@ export const datasetsApi = {
     return data;
   },
   presignedUpload: async (file: File): Promise<UploadResponse> => {
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    const contentType =
-      ext === 'csv'
-        ? 'text/csv'
-        : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const contentType = datasetPresignedContentType(file.name);
     const { data: urlData } = await api.post<PresignedUploadResponse>('/datasets/upload-url', {
       filename: file.name,
       content_type: contentType,
     });
-    await fetch(urlData.upload_url, {
-      method: 'PUT',
-      body: file,
-      headers: { 'Content-Type': contentType },
-    });
+    let uploadResp: Response;
+    try {
+      uploadResp = await fetch(urlData.upload_url, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': contentType },
+      });
+    } catch (e: unknown) {
+      const hint =
+        typeof window !== 'undefined'
+          ? ' Ensure R2 CORS AllowedOrigins include both http://localhost:3000 and http://127.0.0.1:3000 (must match address bar exactly) — see docs/R2_STEP_BY_STEP.md Step 5.'
+          : '';
+      const msg =
+        e instanceof Error
+          ? `${e.message}${hint}`
+          : `R2/direct upload failed${hint}`;
+      throw new Error(msg);
+    }
+    if (!uploadResp.ok) {
+      throw new Error(
+        `Object storage returned ${uploadResp.status} ${uploadResp.statusText}. ` +
+          'Check bucket policy and that Content-Type matches the presigned signature.'
+      );
+    }
     const { data: reg } = await api.post('/datasets/register', {
       object_key: urlData.object_key,
       filename: file.name,
@@ -255,6 +375,26 @@ export const analysisApi = {
   },
   applyDecisions: async (id: number) => {
     const { data } = await api.post(`/analysis/${id}/apply`);
+    return data;
+  },
+  getSummary: async (id: number): Promise<AnalysisSummaryPayload> => {
+    const { data } = await api.get(`/analysis/${id}/summary`);
+    return data;
+  },
+  getDomains: async (id: number): Promise<DomainsPayload> => {
+    const { data } = await api.get(`/analysis/${id}/domains`);
+    return data;
+  },
+  getClusters: async (id: number): Promise<ClustersPayload> => {
+    const { data } = await api.get(`/analysis/${id}/clusters`);
+    return data;
+  },
+  getGraph: async (id: number): Promise<GraphPayload> => {
+    const { data } = await api.get(`/analysis/${id}/graph`);
+    return data;
+  },
+  getKnowledgeGraph: async (id: number): Promise<{ meta: Record<string, unknown>; knowledge_graph: Record<string, unknown> }> => {
+    const { data } = await api.get(`/analysis/${id}/knowledge-graph`);
     return data;
   },
 };

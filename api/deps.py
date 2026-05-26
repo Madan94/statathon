@@ -7,13 +7,17 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
 from auth.utils import ALGORITHM, SECRET_KEY
-from object_storage.object_store import ObjectStore, build_default_store
+from object_storage.object_store import ObjectStore, StorageConfigError, build_default_store
 
 _bearer = HTTPBearer(auto_error=False)
 
 
 def get_object_store() -> ObjectStore:
-    return build_default_store()
+    """Expose object storage to routes; turns config gaps into HTTP 503 (not Depends 500)."""
+    try:
+        return build_default_store()
+    except StorageConfigError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
 
 
 def get_current_user_id(

@@ -90,15 +90,20 @@ For a **SPA** uploading from another origin:
   {
     "AllowedOrigins": [
       "http://localhost:3000",
+      "http://127.0.0.1:3000",
       "https://your-production-domain.com"
     ],
     "AllowedMethods": ["GET", "PUT", "HEAD"],
-    "AllowedHeaders": ["Content-Type"],
+    "AllowedHeaders": ["*"],
     "ExposeHeaders": ["ETag", "Content-Length"],
     "MaxAgeSeconds": 3600
   }
 ]
 ```
+
+**Important:** `AllowedOrigins` must match the **exact** frontend origin shown in your browser address bar. If you open the app at `http://127.0.0.1:3000`, **`http://localhost:3000` alone does not qualify** — add both origins (as above) or always use one URL.
+
+`AllowedHeaders: ["*"]` avoids flaky “preflight succeeded but PUT blocked” behaviour when extra headers slip in beside `Content-Type`.
 
 **How you know it worked**
 

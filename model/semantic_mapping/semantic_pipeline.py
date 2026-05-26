@@ -79,10 +79,10 @@ class SemanticPipeline:
         elif default_weights.exists():
             model_path = str(default_weights)
         else:
-            print("⚠️ WARNING: Custom MoSPI weights not found. Falling back to base model.")
+            print("WARNING: Custom MoSPI weights not found. Falling back to base model.")
             model_path = "sentence-transformers/all-MiniLM-L6-v2"
 
-        print(f"🚀 Loading Bi-Encoder from: {model_path}")
+        print(f"Loading Bi-Encoder from: {model_path}")
         self.encoder_model = SentenceTransformer(model_path)
         
         self.embedder = BertEmbedder(model=self.encoder_model, vector_store=self.vector_store)
