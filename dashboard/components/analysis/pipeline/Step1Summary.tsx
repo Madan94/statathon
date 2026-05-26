@@ -41,6 +41,24 @@ function typeVariant(t: string): 'default' | 'muted' {
   return t === 'numeric' || t === 'float64' || t === 'int64' ? 'default' : 'muted';
 }
 
+/** Backend sends [{ value, count }] — tolerate legacy [value, count] tuples too. */
+function formatTopValues(raw: ColumnProfile['top_values']): string {
+  if (!raw?.length) return '—';
+  return raw
+    .slice(0, 3)
+    .map((entry) => {
+      if (Array.isArray(entry)) {
+        const [v, n] = entry;
+        return `${v} (${n})`;
+      }
+      if (entry && typeof entry === 'object' && 'value' in entry && 'count' in entry) {
+        return `${entry.value} (${entry.count})`;
+      }
+      return String(entry);
+    })
+    .join(', ');
+}
+
 export default function Step1Summary({ results, onProceed }: Props) {
   const health = results.health as {
     rows?: number;
@@ -148,20 +166,13 @@ export default function Step1Summary({ results, onProceed }: Props) {
       {/* Column profiles table */}
       <Card
         title="Column profiles"
-        description="Every column in the uploaded file — type, completeness, cardinality and top values."
+        description="Every column in the uploaded file — type, completeness, cardinality and sample values. Domain mapping happens in Step 3."
       >
         <div className="overflow-x-auto -mx-6">
-          <table className="w-full text-sm min-w-[720px]">
+          <table className="w-full text-sm min-w-[660px]">
             <thead>
               <tr className="border-b border-border">
-                {[
-                  'Column',
-                  'Type',
-                  'Missing',
-                  'Cardinality',
-                  'Range / top values',
-                  'Semantic domain',
-                ].map((h) => (
+                {['Column', 'Type', 'Missing', 'Cardinality', 'Range / top values'].map((h) => (
                   <th
                     key={h}
                     className="px-4 pb-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted"
@@ -178,19 +189,22 @@ export default function Step1Summary({ results, onProceed }: Props) {
                 const ratio =
                   totalRows > 0 ? missing / totalRows : profile?.missing_ratio ?? 0;
                 const colType = schema[col] ?? profile?.datatype ?? '—';
-                const semRow = results.semantic_mapping?.find((r) => r.column === col);
 
+                // Human-readable stats
                 let sampleStr = '—';
                 if (profile?.mean_std) {
-                  sampleStr = `μ=${profile.mean_std.mean.toFixed(2)}, σ=${profile.mean_std.std.toFixed(2)}`;
+                  const mean = profile.mean_std.mean;
+                  const std = profile.mean_std.std;
+                  const fmt = (n: number) =>
+                    Math.abs(n) >= 1000
+                      ? n.toLocaleString('en-IN', { maximumFractionDigits: 0 })
+                      : n.toFixed(2);
+                  sampleStr = `μ=${fmt(mean)}, σ=${fmt(std)}`;
                   if (profile.min_max) {
-                    sampleStr += ` [${profile.min_max.min}, ${profile.min_max.max}]`;
+                    sampleStr += ` [${fmt(profile.min_max.min)}, ${fmt(profile.min_max.max)}]`;
                   }
                 } else if (profile?.top_values?.length) {
-                  sampleStr = profile.top_values
-                    .slice(0, 3)
-                    .map(([v, n]) => `${v} (${n})`)
-                    .join(', ');
+                  sampleStr = formatTopValues(profile.top_values);
                 }
 
                 return (
@@ -227,15 +241,8 @@ export default function Step1Summary({ results, onProceed }: Props) {
                     <td className="px-4 py-3 text-xs text-text-muted">
                       {profile?.cardinality?.toLocaleString() ?? '—'}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-muted max-w-[220px] truncate">
-                      {sampleStr}
-                    </td>
-                    <td className="px-4 py-3">
-                      {semRow?.domain ? (
-                        <span className="text-xs font-semibold text-primary">{semRow.domain}</span>
-                      ) : (
-                        <span className="text-xs text-text-muted">—</span>
-                      )}
+                    <td className="px-4 py-3 text-xs text-text-muted max-w-[260px]">
+                      <span className="truncate block" title={sampleStr}>{sampleStr}</span>
                     </td>
                   </tr>
                 );

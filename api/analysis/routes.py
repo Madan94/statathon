@@ -140,13 +140,43 @@ def get_analysis_domains(analysis_id: int, db: Session = Depends(get_db)):
     payload = resolve_semantic_analysis_payload(db, analysis_id)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
+
+    ctx = payload.get("dataset_context") or {}
+    archetype = ctx.get("dataset_type") or ctx.get("ontology_macro_type_best_hint") or "unknown"
+    ontology_macro = ctx.get("ontology_macro_type_best_hint")
+
+    # Prefer full domain_registry emitted by the new pipeline
+    domain_registry = payload.get("domain_registry") or {}
+
+    # Fallback: build from static_domains (raw ontology) filtered for this archetype
+    if not domain_registry and payload.get("static_domains"):
+        sd = payload["static_domains"]
+        archetype_entry = sd.get(archetype) or sd.get("dataset_types", {}).get(archetype, {})
+        subdomains = {}
+        for k, v in (archetype_entry.get("subdomains") or {}).items():
+            subdomains[k] = {"description": f"{k} domain for {archetype}", "keywords": list(v or [])[:8]}
+        domain_registry = {
+            "active_archetype": archetype,
+            "universal_domains": ["identifier", "survey_metadata", "geography", "demographic", "household", "uncorrelated_metadata"],
+            "static_ontology": {archetype: {"label": archetype_entry.get("label", archetype), "domains": list(subdomains.keys()), "keywords_sample": {k: v["keywords"] for k, v in subdomains.items()}}},
+            "dynamic_domains": {},
+        }
+
+    # Legacy flat format: static_domains_taxonomy for old frontends
+    static_taxonomy: dict = {}
+    for tier_name, tier_data in (domain_registry.get("static_ontology") or {}).items():
+        for dom in (tier_data.get("domains") or []):
+            kws = (tier_data.get("keywords_sample") or {}).get(dom, [])
+            static_taxonomy[dom] = {"description": f"{dom} — {tier_name} dataset domain", "keywords": kws}
+    for dom in (domain_registry.get("universal_domains") or []):
+        static_taxonomy[dom] = {"description": f"Universal: {dom}", "keywords": []}
+
     return {
         "meta": {"analysis_id": analysis_id},
-        "dataset_context": payload.get("dataset_context"),
-        "static_domains_taxonomy": payload.get("static_domains"),
-        "ontology_macro_type_best_hint": (payload.get("dataset_context") or {}).get(
-            "ontology_macro_type_best_hint"
-        ),
+        "dataset_context": ctx,
+        "domain_registry": domain_registry,
+        "static_domains_taxonomy": static_taxonomy,
+        "ontology_macro_type_best_hint": ontology_macro or archetype,
     }
 
 

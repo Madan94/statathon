@@ -213,6 +213,10 @@ def enrich_payload_for_dashboard(db: Session, analysis_id: int, payload: dict) -
     profiling = payload.get("profiling_summary") if isinstance(payload.get("profiling_summary"), dict) else {}
     enriched["health"] = profiling.get("health") or payload.get("health")
     enriched["schema"] = profiling.get("schema")
+    if payload.get("domain_registry"):
+        enriched["domain_registry"] = payload["domain_registry"]
+    if payload.get("column_normalization"):
+        enriched["column_normalization"] = payload["column_normalization"]
 
     mapping = payload.get("semantic_mapping") or []
     semantic: dict[str, str] = {}

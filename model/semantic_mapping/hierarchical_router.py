@@ -65,6 +65,10 @@ class HierarchicalDomainRouter:
     def cosine_similarity(self, vec_a, vec_b):
         return float(np.dot(vec_a, vec_b) / (norm(vec_a) * norm(vec_b)))
 
+    @staticmethod
+    def _humanize_label(text: str) -> str:
+        return " ".join(w.capitalize() for w in text.replace("_", " ").replace("-", " ").split())
+
     def predict_domain(self, column_name: str, column_vector: np.ndarray, archetype: str | None = None) -> dict:
         """Executes tier routing followed by contextually pruned sub-domain routing."""
         
@@ -82,6 +86,9 @@ class HierarchicalDomainRouter:
                 "pass_1_score": 1.0,
                 "pass_2_score": 1.0,
                 "is_locked": True,
+                "match_method": "schema_suffix_lock",
+                "matched_keyword": col_lower,
+                "display_label": self._humanize_label(column_name),
             }
 
         # ==========================================
@@ -113,6 +120,9 @@ class HierarchicalDomainRouter:
                     "pass_1_score": 1.0,
                     "pass_2_score": 1.0,
                     "is_locked": True,
+                    "match_method": "rapidfuzz_ontology",
+                    "matched_keyword": matched_keyword,
+                    "display_label": self._humanize_label(matched_keyword),
                 }
 
         # ==========================================
@@ -120,7 +130,17 @@ class HierarchicalDomainRouter:
         # ==========================================
         tier_scores = {name: self.cosine_similarity(column_vector, vec) for name, vec in self.tier_vectors.items()}
         if not tier_scores:
-            return {"predicted_domain": "unknown", "macro_tier": archetype or "unknown", "confidence": 0.0, "pass_1_score": 0.0, "pass_2_score": 0.0, "is_locked": False}
+            return {
+                "predicted_domain": "unknown",
+                "macro_tier": archetype or "unknown",
+                "confidence": 0.0,
+                "pass_1_score": 0.0,
+                "pass_2_score": 0.0,
+                "is_locked": False,
+                "match_method": "embedding_similarity",
+                "matched_keyword": None,
+                "display_label": self._humanize_label(column_name),
+            }
 
         if archetype and archetype in self.tier_vectors:
             winning_tier = archetype
@@ -149,6 +169,9 @@ class HierarchicalDomainRouter:
                 "pass_1_score": float(macro_confidence),
                 "pass_2_score": float(macro_confidence),
                 "is_locked": False,
+                "match_method": "embedding_similarity",
+                "matched_keyword": active_tier,
+                "display_label": self._humanize_label(active_tier),
             }
 
         # Calculate scores ONLY against this pruned dictionary
@@ -171,6 +194,9 @@ class HierarchicalDomainRouter:
             "pass_1_score": float(macro_confidence),
             "pass_2_score": float(micro_confidence),
             "is_locked": False,
+            "match_method": "embedding_similarity",
+            "matched_keyword": winning_domain,
+            "display_label": self._humanize_label(winning_domain),
         }
 
     def _best_tier(self, column_vector: np.ndarray) -> str:

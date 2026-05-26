@@ -47,31 +47,56 @@ class SchemaGraph:
                 if edge_weight < self.edge_threshold:
                     continue
 
+                d1 = column_domains.get(col1, "unknown")
+                d2 = column_domains.get(col2, "unknown")
+
                 if same_cl and emb_sim >= 0.35:
-                    rel = "co_cluster_semantic"
+                    if d1 == d2:
+                        rel = "co_cluster_semantic"
+                        owl_type = "owl:equivalentProperty"
+                        owl_label = "Equivalent measure"
+                    else:
+                        rel = "co_cluster_semantic"
+                        owl_type = "owl:ObjectProperty"
+                        owl_label = "Co-cluster semantic link"
                     reason = (
                         f"High embedding similarity ({emb_sim:.3f}) within same cluster; "
                         f"coherence bonus {cluster_bonus:.3f}."
                     )
                 elif cross_domain:
                     rel = "cross_domain_linkage"
+                    owl_type = "owl:ObjectProperty"
+                    owl_label = "Cross-domain linkage"
                     reason = (
-                        f"Cross-domain statistical linkage: {column_domains.get(col1)} ↔ "
-                        f"{column_domains.get(col2)}; similarity={emb_sim:.3f}, graph_bonus={domain_bonus:.3f}."
+                        f"Cross-domain statistical linkage: {d1} ↔ {d2}; "
+                        f"similarity={emb_sim:.3f}, graph_bonus={domain_bonus:.3f}."
+                    )
+                elif d1 == d2 and emb_sim >= 0.55:
+                    rel = "intra_domain_association"
+                    owl_type = "rdfs:subPropertyOf"
+                    owl_label = "Intra-domain sub-property"
+                    reason = (
+                        f"Same domain ({d1}), similarity={emb_sim:.3f}; "
+                        "potential redundant or complementary measures."
                     )
                 else:
                     rel = "intra_domain_association"
+                    owl_type = "rdfs:seeAlso"
+                    owl_label = "Related measure"
                     reason = (
-                        f"Same domain ({column_domains.get(col1)}), similarity={emb_sim:.3f}; "
-                        "potential redundant or complementary measures."
+                        f"Same domain ({d1}), similarity={emb_sim:.3f}."
                     )
 
                 payload = {
                     "weight": round(edge_weight, 4),
                     "relationship_type": rel,
+                    "owl_type": owl_type,
+                    "owl_label": owl_label,
                     "semantic_reason": reason,
                     "embedding_similarity": round(emb_sim, 4),
                     "cluster_adjacency": same_cl,
+                    "source_domain": d1,
+                    "target_domain": d2,
                 }
                 self.edges[col1][col2] = payload
 
@@ -136,7 +161,11 @@ class SchemaGraph:
                         "target": tgt,
                         "weight": w,
                         "relationship_type": rel,
+                        "owl_type": data.get("owl_type", "owl:ObjectProperty") if isinstance(data, dict) else "owl:ObjectProperty",
+                        "owl_label": data.get("owl_label", "") if isinstance(data, dict) else "",
                         "semantic_reason": reason,
+                        "source_domain": data.get("source_domain", "") if isinstance(data, dict) else "",
+                        "target_domain": data.get("target_domain", "") if isinstance(data, dict) else "",
                     }
                 )
         return {

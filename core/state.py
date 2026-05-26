@@ -28,12 +28,14 @@ class AnalysisState:
     audit_logs: list[dict[str, Any]] = field(default_factory=list)
     profiling_summary: dict[str, Any] = field(default_factory=dict)
     column_profiles: dict[str, Any] = field(default_factory=dict)
+    column_normalization: list[dict[str, Any]] = field(default_factory=list)
     dataset_profile: dict[str, Any] = field(default_factory=dict)
     static_domains: dict[str, Any] = field(default_factory=dict)
     schema_blueprint: dict[str, Any] = field(default_factory=dict)
     inferred_dataset_context: dict[str, Any] = field(default_factory=dict)
     embedding_cache_refs: dict[str, Any] = field(default_factory=dict)
     knowledge_graph: dict[str, Any] = field(default_factory=dict)
+    domain_registry: dict[str, Any] = field(default_factory=dict)
     validation_results: dict[str, Any] = field(default_factory=dict)
     validation_candidates: list[dict[str, Any]] = field(default_factory=list)
     anomaly_results: list[dict[str, Any]] = field(default_factory=list)
@@ -68,6 +70,8 @@ class AnalysisState:
             "priority_dependencies": self._normalize_dependencies(),
             "profiling_summary": self.profiling_summary,
             "column_profiles": self.column_profiles,
+            "column_normalization": self.column_normalization,
+            "domain_registry": self.domain_registry,
             "dataset_profile": self.dataset_profile,
             "static_domains": self.static_domains,
             "schema_blueprint": self.schema_blueprint,

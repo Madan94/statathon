@@ -64,6 +64,7 @@ def run_pipeline(
     semantic_bundle = run_semantic_pipeline(
         list(df.columns),
         column_enrichment=enrichment or None,
+        column_profiles=column_profiles,
     )
     state = build_analysis_state(
         dataset_id=dataset_id,

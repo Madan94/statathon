@@ -1,10 +1,22 @@
 import sys
 from pathlib import Path
 
+# Windows consoles often use cp1252; force UTF-8 so pipeline logs never crash analysis.
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # Repo root — needed for imports like object_storage/, pipelines/ when cwd is api/
-_REPO_ROOT = Path(__file__).resolve().parent.parent
+_API_DIR = Path(__file__).resolve().parent
+_REPO_ROOT = _API_DIR.parent
+# api/ must come before repo root so local `datasets` beats HuggingFace `datasets` package.
+if str(_API_DIR) not in sys.path:
+    sys.path.insert(0, str(_API_DIR))
 if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+    sys.path.insert(1, str(_REPO_ROOT))
 
 import os
 
@@ -21,7 +33,7 @@ ensure_huggingface_hub_cache(_REPO_ROOT)
 
 from auth.routes import router as auth_router
 from auth.oauth_routes import router as oauth_router
-from datasets.routes import router as datasets_router
+from dataset_api.routes import router as datasets_router
 from analysis.routes import router as analysis_router
 from reports.routes import router as reports_router
 from report_builder_api.routes import router as report_builder_router

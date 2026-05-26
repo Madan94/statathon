@@ -67,39 +67,61 @@ class ClusterEngine:
         except ValueError:
             small_max = 24
 
-        # Tiny datasets: favour smaller minimum cluster sizes so columns can split logically.
+        # For small datasets use min_cluster_size=2 so nothing is left as outlier
         if n <= small_max:
-            default_floor = max(2, min(5, max(2, (n + 2) // 4)))
-            try:
-                min_sz = max(
-                    self.min_cluster_size,
-                    int(os.getenv("STATATHON_HDBSCAN_MIN_CLUSTER_SMALL", str(default_floor))),
-                )
-            except ValueError:
-                min_sz = max(self.min_cluster_size, default_floor)
+            min_sz = 2
         else:
             min_sz = max(
                 self.min_cluster_size,
-                min(12, max(2, n // max(n // 25, 1))),
+                min(8, max(2, n // max(n // 25, 1))),
             )
+
         clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_sz,
-            min_samples=max(1, min_sz // 3),
+            min_samples=1,              # allow singletons to attach to clusters
             metric="euclidean",
-            cluster_selection_method="eom",
+            cluster_selection_method="leaf",   # leaf gives finer-grained clusters
+            cluster_selection_epsilon=0.15,    # pull outliers into nearest cluster
+            allow_single_cluster=False,
         )
         labels = clusterer.fit_predict(vecs)
+
         clusters: dict[str, list[str]] = {}
-        for col, lbl in zip(columns, labels):
+        outlier_indices: list[int] = []
+
+        for i, (col, lbl) in enumerate(zip(columns, labels)):
             if int(lbl) < 0:
-                key = "hdbscan_outlier_" + str(col).replace(" ", "_")[:240]
-                clusters[key] = [col]
-                continue
-            key = f"cluster_hdbscan_{int(lbl)}"
-            clusters.setdefault(key, []).append(col)
+                outlier_indices.append(i)
+            else:
+                key = f"cluster_hdbscan_{int(lbl)}"
+                clusters.setdefault(key, []).append(col)
+
+        # Absorb outliers into the nearest existing cluster by cosine similarity
+        if outlier_indices:
+            cluster_keys = list(clusters.keys())
+            if not cluster_keys:
+                # All outliers — put everything in one cluster
+                clusters["cluster_hdbscan_0"] = list(columns)
+            else:
+                # Compute centroid of each cluster
+                centroids = {}
+                col_idx = {c: i for i, c in enumerate(columns)}
+                for k, members in clusters.items():
+                    mv = np.stack([vecs[col_idx[m]] for m in members])
+                    centroids[k] = mv.mean(axis=0)
+
+                for oi in outlier_indices:
+                    col = columns[oi]
+                    best_key = max(
+                        centroids.keys(),
+                        key=lambda k: float(
+                            cosine_similarity(vecs[oi : oi + 1], centroids[k].reshape(1, -1))[0][0]
+                        ),
+                    )
+                    clusters[best_key].append(col)
+
         for k in list(clusters.keys()):
-            if k.startswith("cluster_hdbscan_"):
-                clusters[k] = sorted(clusters[k])
+            clusters[k] = sorted(clusters[k])
         return clusters
 
     def cluster_columns(self, embeddings: dict) -> dict:
@@ -109,12 +131,12 @@ class ClusterEngine:
 
         vecs = np.array([embeddings[c] for c in columns])
 
-        mode = (os.getenv("STATATHON_CLUSTERING") or "hierarchical").strip().lower()
+        mode = (os.getenv("STATATHON_CLUSTERING") or "hdbscan").strip().lower()
         if mode == "hdbscan":
             try:
                 return self._cluster_hdbscan(columns, vecs.astype(float))
-            except ImportError:
-                pass
+            except (ImportError, Exception):
+                pass  # gracefully fall through to hierarchical
 
         distance_matrix = 1.0 - cosine_similarity(vecs)
         np.fill_diagonal(distance_matrix, 0.0)

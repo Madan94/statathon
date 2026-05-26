@@ -8,7 +8,25 @@ import Card from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/cn';
-import { ChevronLeft, Layers, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, Layers, CheckCircle2, Info } from 'lucide-react';
+
+interface ExtendedCluster extends ClusterGroup {
+  embedding_coherence?: number;
+  domain_purity?: number;
+  avg_domain_confidence?: number;
+}
+
+function miniBar(val: number, label: string, color: string) {
+  return (
+    <div className="flex items-center gap-1">
+      <span className="text-[10px] opacity-70 w-[72px] shrink-0">{label}</span>
+      <div className="flex-1 h-1 rounded-full bg-black/20 overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${Math.min(val * 100, 100)}%`, backgroundColor: color }} />
+      </div>
+      <span className="text-[10px] font-mono opacity-70 w-7 text-right">{(val * 100).toFixed(0)}</span>
+    </div>
+  );
+}
 
 interface Props {
   results: AnalysisResult;
@@ -58,11 +76,10 @@ export default function Step4Cluster({ results, analysisId, onProceed, onBack }:
       .finally(() => setLoading(false));
   }, [analysisId]);
 
-  // Fall back to embedded clusters from results
   const rawClusters =
     (payload?.clusters ??
       (results.clusters as ClusterGroup[] | undefined) ??
-      []) as ClusterGroup[];
+      []) as ExtendedCluster[];
 
   return (
     <div className="space-y-6">
@@ -96,10 +113,13 @@ export default function Step4Cluster({ results, analysisId, onProceed, onBack }:
                     <Badge variant="muted">{cluster.cluster_id}</Badge>
                   </div>
 
-                  {/* Support score */}
-                  <div>
-                    <p className="text-xs opacity-70 mb-1">Support score</p>
-                    {scoreBar(cluster.support_score)}
+                  {/* Score breakdown */}
+                  <div className="space-y-1">
+                    <p className="text-xs opacity-70 mb-1">Accuracy signals</p>
+                    {miniBar(cluster.support_score, 'Overall', '#ffffff')}
+                    {cluster.domain_purity != null && miniBar(cluster.domain_purity, 'Domain purity', '#22c55e')}
+                    {cluster.avg_domain_confidence != null && miniBar(cluster.avg_domain_confidence, 'Confidence', '#6366f1')}
+                    {cluster.embedding_coherence != null && miniBar(cluster.embedding_coherence, 'Coherence', '#14b8a6')}
                   </div>
 
                   {/* Columns */}
@@ -148,17 +168,21 @@ export default function Step4Cluster({ results, analysisId, onProceed, onBack }:
       {/* Summary table */}
       {rawClusters.length > 0 && (
         <Card title="Clustering summary">
+          <div className="flex items-start gap-2 mb-4 text-xs text-text-muted bg-primary/5 border border-primary/20 rounded-lg p-3">
+            <Info className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary" />
+            <div>
+              <strong className="text-text">How cluster accuracy is computed: </strong>
+              Overall support = 40% domain purity + 35% avg domain confidence + 25% embedding coherence.
+              Purity = fraction of cluster members sharing the winning domain.
+              Coherence = mean pairwise cosine similarity of member embeddings.
+            </div>
+          </div>
           <div className="overflow-x-auto -mx-6">
-            <table className="w-full text-sm min-w-[500px]">
+            <table className="w-full text-sm min-w-[700px]">
               <thead>
                 <tr className="border-b border-border">
-                  {['Cluster ID', 'Domain', 'Columns', 'Support'].map((h) => (
-                    <th
-                      key={h}
-                      className="px-4 pb-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted"
-                    >
-                      {h}
-                    </th>
+                  {['Cluster ID', 'Domain', 'Columns', 'Purity', 'Coherence', 'Overall'].map((h) => (
+                    <th key={h} className="px-4 pb-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -168,7 +192,9 @@ export default function Step4Cluster({ results, analysisId, onProceed, onBack }:
                     <td className="px-4 py-2 font-mono text-xs">{cl.cluster_id}</td>
                     <td className="px-4 py-2 text-xs font-semibold text-primary">{cl.domain}</td>
                     <td className="px-4 py-2 text-xs text-text-muted">{cl.columns.join(', ')}</td>
-                    <td className="px-4 py-2 w-32">{scoreBar(cl.support_score)}</td>
+                    <td className="px-4 py-2 w-24">{scoreBar(cl.domain_purity ?? cl.support)}</td>
+                    <td className="px-4 py-2 w-24">{scoreBar(cl.embedding_coherence ?? 1)}</td>
+                    <td className="px-4 py-2 w-24">{scoreBar(cl.support_score)}</td>
                   </tr>
                 ))}
               </tbody>

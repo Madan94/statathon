@@ -87,4 +87,6 @@ def build_analysis_state(
         schema_blueprint=blueprint,
         inferred_dataset_context=cmap,
         embedding_cache_refs=embedding_cache_refs or {"vector_store": "model/storage/vector_cache"},
+        column_normalization=pipeline_out.get("column_normalization") or [],
+        domain_registry=pipeline_out.get("domain_registry") or {},
     )

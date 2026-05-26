@@ -51,7 +51,7 @@ export interface ColumnProfile {
   unique_ratio?: number;
   entropy?: number;
   skewness?: number;
-  top_values?: Array<[string, number]>;
+  top_values?: Array<[string, number] | { value: unknown; count: number }>;
   sample_values?: unknown[];
   semantic_hints?: string[];
   mean_std?: { mean: number; std: number };
@@ -86,6 +86,7 @@ export interface DomainsPayload {
   meta: Record<string, unknown>;
   dataset_context: Record<string, unknown>;
   static_domains_taxonomy: Record<string, DomainInfo>;
+  domain_registry?: DomainRegistry;
   ontology_macro_type_best_hint?: string;
 }
 
@@ -96,6 +97,9 @@ export interface ClusterGroup {
   support?: number;
   columns: string[];
   domain_distribution?: Record<string, number>;
+  embedding_coherence?: number;
+  domain_purity?: number;
+  avg_domain_confidence?: number;
 }
 
 export interface ClustersPayload {
@@ -113,7 +117,11 @@ export interface GraphEdge {
   target: string;
   weight?: number;
   relationship_type?: string;
+  owl_type?: string;
+  owl_label?: string;
   semantic_reason?: string;
+  source_domain?: string;
+  target_domain?: string;
 }
 
 export interface GraphPayload {
@@ -181,7 +189,38 @@ export interface SemanticMappingRow {
   domain?: string;
   confidence?: number;
   cluster_id?: string;
+  normalized_name?: string;
+  routing_path?: string;
+  matched_keyword?: string;
+  dynamic_cohesion?: number;
+  cluster_support?: number;
+  graph_consistency?: number;
+  explainability?: {
+    matching_reason?: string;
+    dataset_archetype?: string;
+    match_method?: string;
+    is_locked?: boolean;
+  };
+  top_domain_scores?: Record<string, number>;
   [key: string]: unknown;
+}
+
+export interface DomainRegistryEntry {
+  label?: string;
+  domains?: string[];
+  keywords_sample?: Record<string, string[]>;
+  parent_theme?: string;
+  members?: string[];
+  cohesion?: number;
+  keywords?: string[];
+  is_dynamic?: boolean;
+}
+
+export interface DomainRegistry {
+  active_archetype?: string;
+  universal_domains?: string[];
+  static_ontology?: Record<string, DomainRegistryEntry>;
+  dynamic_domains?: Record<string, DomainRegistryEntry>;
 }
 
 export interface ValidationCandidate {
@@ -217,12 +256,26 @@ export interface WeightedProfile {
   reason?: string;
 }
 
+export interface ColumnNormalizationRow {
+  original_name: string;
+  normalized_name: string;
+  display_name: string;
+  domain?: string;
+  match_method?: string;
+  match_confidence?: number;
+  matching_reason?: string;
+  semantic_hints?: string[];
+  [key: string]: unknown;
+}
+
 export interface AnalysisResult {
   analysis_id?: number;
   health?: Record<string, unknown>;
   schema?: Record<string, string>;
   semantic?: Record<string, string>;
   semantic_mapping?: SemanticMappingRow[];
+  column_normalization?: ColumnNormalizationRow[];
+  domain_registry?: DomainRegistry;
   dataset_context?: Record<string, unknown>;
   clusters?: Array<Record<string, unknown>>;
   schema_graph?: { nodes?: unknown[]; edges?: unknown[] };

@@ -1,6 +1,8 @@
 import json
+import logging
 import os
 from pathlib import Path
+from typing import Any
 
 from semantic_mapping.column_preprocessor import ColumnPreprocessor
 from semantic_mapping.bert_embedder import BertEmbedder
@@ -15,9 +17,12 @@ from semantic_mapping.dataset_context_inferencer import DatasetContextInferencer
 from semantic_mapping.dynamic_domain_generator import DynamicDomainGenerator
 from semantic_mapping.semantic_cluster_engine import SemanticClusterEngine
 from semantic_mapping.hierarchical_router import HierarchicalDomainRouter
+from semantic_mapping.column_normalization_engine import ColumnNormalizationEngine
 from storage.vector_store import VectorStore
 from audit.audit_logger import AuditLogger
 from sentence_transformers import SentenceTransformer
+
+logger = logging.getLogger(__name__)
 
 # ==========================================
 # THE LOCAL HIERARCHY MAP (Replaces Neo4j Macro-Routing)
@@ -79,10 +84,10 @@ class SemanticPipeline:
         elif default_weights.exists():
             model_path = str(default_weights)
         else:
-            print("WARNING: Custom MoSPI weights not found. Falling back to base model.")
+            logger.warning("Custom MoSPI weights not found. Falling back to base model.")
             model_path = "sentence-transformers/all-MiniLM-L6-v2"
 
-        print(f"Loading Bi-Encoder from: {model_path}")
+        logger.info("Loading Bi-Encoder from: %s", model_path)
         self.encoder_model = SentenceTransformer(model_path)
         
         self.embedder = BertEmbedder(model=self.encoder_model, vector_store=self.vector_store)
@@ -117,7 +122,13 @@ class SemanticPipeline:
         # 3. Final Fallback
         return dataset_archetype or domain_name
 
-    def run(self, columns: list[str], dataset_domain: str = None, column_enrichment: dict[str, str] | None = None) -> dict:
+    def run(
+        self,
+        columns: list[str],
+        dataset_domain: str = None,
+        column_enrichment: dict[str, str] | None = None,
+        column_profiles: dict[str, Any] | None = None,
+    ) -> dict:
         self.audit.clear()
         self.domain_repo.clear_runtime()
 
@@ -150,7 +161,8 @@ class SemanticPipeline:
             return {
                 "dataset_context": {"dataset_type": archetype, "domain_scores": dataset_context_scores},
                 "semantic_mapping": {}, "clusters": [], "priority_dependencies": {},
-                "schema_graph": {"nodes": [], "edges": []}, "column_cluster_map": {}, "audit_records": list(self.audit.records),
+                "schema_graph": {"nodes": [], "edges": []}, "column_cluster_map": {},
+                "column_normalization": [], "audit_records": list(self.audit.records),
             }
 
         self.audit.log("dataset_context_inferencer", {"dataset_type": archetype}, step=3)
@@ -159,6 +171,7 @@ class SemanticPipeline:
         column_domains: dict[str, str] = {}
         domain_scores_all: dict[str, dict[str, float]] = {}
         column_metadata: dict[str, dict[str, object]] = {}
+        routing_by_column: dict[str, dict[str, object]] = {}
         
         locked_columns = []
         unknown_columns = []
@@ -172,6 +185,7 @@ class SemanticPipeline:
             emb = column_embeddings[col]
             
             prediction = self.hierarchical_router.predict_domain(col, emb, archetype)
+            routing_by_column[col] = dict(prediction)
             static_domain = prediction["predicted_domain"]
             static_score = prediction.get("confidence", 0.0)
             is_locked = bool(prediction.get("is_locked", False))
@@ -202,15 +216,20 @@ class SemanticPipeline:
                 dataset_type=archetype,
                 normalized_columns=unknown_normalized,
                 column_embeddings=unknown_embeddings,
-                provisional_domains={}, # Empty to force intrinsic naming
+                provisional_domains={},
                 dataset_domain=dataset_domain,
             )
             self.domain_repo.merge_runtime(dynamic_specs)
 
-            dyn_mapping = {}
+            # Build column → domain AND column → real cohesion confidence
+            dyn_mapping: dict[str, str] = {}
+            dyn_confidence: dict[str, float] = {}
             for dom_key, spec in dynamic_specs.items():
-                for member in spec.get("metadata", {}).get("members", []):
+                meta = spec.get("metadata", {})
+                cohesion = float(meta.get("cohesion", 0.75))
+                for member in meta.get("members", []):
                     dyn_mapping[member] = dom_key
+                    dyn_confidence[member] = cohesion
 
             # ==========================================
             # PHASE 3: THE UNCORRELATED SINK
@@ -218,17 +237,31 @@ class SemanticPipeline:
             for col in unknown_columns:
                 new_domain = dyn_mapping.get(col)
                 if new_domain:
-                    # Dynamic Assignment Success
+                    real_conf = dyn_confidence.get(col, 0.75)
                     final_domain = self.resolve_macro_domain(new_domain, archetype)
                     column_domains[col] = final_domain
                     column_metadata[col]["predicted_domain"] = final_domain
-                    domain_scores_all[col][final_domain] = 0.80 # Assign dynamic baseline confidence
-                    self.audit.log("dynamic_routing", {"column": col, "status": "dynamic_cluster", "domain": final_domain}, step=5)
+                    domain_scores_all[col][final_domain] = real_conf
+                    routing_by_column[col] = {
+                        **routing_by_column.get(col, {}),
+                        "match_method": "dynamic_cluster",
+                        "predicted_domain": final_domain,
+                        "display_label": final_domain.replace("_", " ").title(),
+                        "is_locked": False,
+                        "dynamic_cohesion": round(real_conf, 4),
+                    }
+                    self.audit.log("dynamic_routing", {"column": col, "status": "dynamic_cluster", "domain": final_domain, "cohesion": round(real_conf, 4)}, step=5)
                 else:
-                    # Safety Net Failure
                     column_domains[col] = "uncorrelated"
                     column_metadata[col]["predicted_domain"] = "uncorrelated"
                     domain_scores_all[col]["uncorrelated"] = 1.0
+                    routing_by_column[col] = {
+                        **routing_by_column.get(col, {}),
+                        "match_method": "dynamic_cluster",
+                        "predicted_domain": "uncorrelated",
+                        "display_label": col.replace("_", " ").title(),
+                        "is_locked": False,
+                    }
                     self.audit.log("dynamic_routing", {"column": col, "status": "uncorrelated_sink"}, step=5)
 
         self.audit.log("domain_prediction", {col: {"domain": column_domains[col]} for col in columns}, step=6)
@@ -254,7 +287,11 @@ class SemanticPipeline:
         # Build Explainability Output
         results: dict[str, dict] = {}
         for col in columns:
-            if column_metadata.get(col, {}).get("is_locked", False):
+            routing = routing_by_column.get(col, {})
+            match_method = routing.get("match_method", "embedding_similarity")
+            is_locked = bool(column_metadata.get(col, {}).get("is_locked", False))
+
+            if is_locked:
                 locked_domain = column_metadata[col]["predicted_domain"]
                 results[col] = {
                     "normalized_name": normalized[col],
@@ -263,34 +300,72 @@ class SemanticPipeline:
                     "top_domain_scores": {locked_domain: 1.0},
                     "cluster_support": 1.0,
                     "graph_consistency": 1.0,
+                    "routing_path": match_method,
+                    "matched_keyword": routing.get("matched_keyword"),
                     "explainability": {
-                        "matching_reason": f"Assigned '{locked_domain}' by Gatekeeper Phase 1 (Static Ontology Lock).",
+                        "matching_reason": (
+                            f"Assigned '{locked_domain}' by Gatekeeper Phase 1 "
+                            f"via {match_method.replace('_', ' ')} "
+                            f"(keyword: {routing.get('matched_keyword', 'n/a')})."
+                        ),
                         "dataset_archetype": archetype,
+                        "match_method": match_method,
+                        "is_locked": True,
                     },
                 }
                 continue
 
             cluster_support = self.conf_engine.compute_cluster_support(col, column_domains[col], column_domains, clusters)
             graph_consistency = self.conf_engine.compute_graph_consistency(col, column_domains[col], self.schema_graph.edges, column_domains)
-            
+
             scores = domain_scores_all.get(col, {})
             best_d = column_domains[col]
             top_entries = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:3]
-            
+            real_conf = float(scores.get(best_d, 0.0))
+
+            # Ensemble confidence: domain score + cluster support + graph consistency
+            ensemble_conf = round(
+                0.50 * real_conf + 0.30 * cluster_support + 0.20 * graph_consistency, 4
+            )
+
             results[col] = {
                 "normalized_name": normalized[col],
                 "domain": best_d,
-                "confidence": round(float(scores.get(best_d, 0.8)), 4),
+                "confidence": ensemble_conf,
                 "top_domain_scores": dict(top_entries),
                 "cluster_support": round(cluster_support, 4),
                 "graph_consistency": round(graph_consistency, 4),
+                "routing_path": match_method,
+                "matched_keyword": routing.get("matched_keyword"),
+                "dynamic_cohesion": routing.get("dynamic_cohesion"),
                 "explainability": {
-                    "matching_reason": f"Assigned '{best_d}' by Gatekeeper Phase 2 (Dynamic Fallback).",
+                    "matching_reason": (
+                        f"Assigned '{best_d}' via {match_method.replace('_', ' ')} "
+                        f"(cohesion={routing.get('dynamic_cohesion', 'n/a')}, "
+                        f"cluster_support={cluster_support:.3f})."
+                    ),
                     "dataset_archetype": archetype,
+                    "match_method": match_method,
+                    "is_locked": False,
                 },
             }
 
         dependencies = self.priority_mapper.compute_priority(column_embeddings, self.schema_graph, clusters)
+
+        norm_engine = ColumnNormalizationEngine()
+        column_normalization = norm_engine.build_plan(
+            columns=columns,
+            normalized_map=normalized,
+            semantic_results=results,
+            routing_by_column=routing_by_column,
+            column_profiles=column_profiles,
+            dataset_archetype=archetype,
+        )
+        self.audit.log(
+            "column_normalization_plan",
+            {"rows": column_normalization},
+            step=7,
+        )
 
         cluster_output = []
         column_cluster_map: dict[str, str] = {}
@@ -298,20 +373,70 @@ class SemanticPipeline:
             for m in info["members"]:
                 column_cluster_map[m] = cluster_id
             cluster_output.append({
-                "cluster_id": cluster_id, "domain": info["domain"],
+                "cluster_id": cluster_id,
+                "domain": info["domain"],
                 "support_score": round(float(info.get("support_score", info["support"])), 4),
-                "support": round(float(info["support"]), 4), "columns": info["members"],
+                "support": round(float(info["support"]), 4),
+                "embedding_coherence": round(float(info.get("embedding_coherence", 1.0)), 4),
+                "domain_purity": round(float(info.get("domain_purity", info["support"])), 4),
+                "avg_domain_confidence": round(float(info.get("avg_domain_confidence", 0.0)), 4),
+                "columns": info["members"],
                 "domain_distribution": info.get("domain_distribution", {}),
             })
+
+        # Build domain registry for frontend (static ontology + dynamic domains created this run)
+        domain_registry = self._build_domain_registry(archetype, dynamic_specs if unknown_columns else {})
 
         return {
             "dataset_context": {"dataset_type": archetype, "domain_scores": {k: round(v, 4) for k, v in dataset_context_scores.items()}},
             "semantic_mapping": results,
+            "column_normalization": column_normalization,
+            "domain_registry": domain_registry,
             "clusters": cluster_output,
             "priority_dependencies": dependencies,
             "schema_graph": self.schema_graph.to_dict(),
             "column_cluster_map": column_cluster_map,
             "audit_records": list(self.audit.records),
+        }
+
+    def _build_domain_registry(self, archetype: str, dynamic_specs: dict) -> dict:
+        """Produce a structured domain registry merging static ontology + this-run dynamic domains."""
+        repo_root = Path(__file__).resolve().parents[2]
+        json_path = repo_root / "model" / "config" / "domain_definitions.json"
+        try:
+            import json as _json
+            ontology = _json.loads(json_path.read_text(encoding="utf-8"))
+        except Exception:
+            ontology = {}
+
+        static_by_type: dict[str, Any] = {}
+        for tier_name, tier_data in (ontology.get("dataset_types") or {}).items():
+            subdomains = list((tier_data.get("subdomains") or {}).keys())
+            static_by_type[tier_name] = {
+                "label": tier_data.get("label", tier_name),
+                "domains": subdomains,
+                "keywords_sample": {
+                    sd: list(kws)[:6]
+                    for sd, kws in (tier_data.get("subdomains") or {}).items()
+                },
+            }
+
+        dynamic_entries = {}
+        for dom_key, spec in (dynamic_specs or {}).items():
+            meta = spec.get("metadata", {})
+            dynamic_entries[dom_key] = {
+                "parent_theme": meta.get("parent_theme", "unknown"),
+                "members": meta.get("members", []),
+                "cohesion": meta.get("cohesion", 0.0),
+                "keywords": (spec.get("keywords") or [])[:12],
+                "is_dynamic": True,
+            }
+
+        return {
+            "active_archetype": archetype,
+            "static_ontology": static_by_type,
+            "dynamic_domains": dynamic_entries,
+            "universal_domains": ["identifier", "survey_metadata", "geography", "demographic", "household", "uncorrelated_metadata"],
         }
 
     def _optional_gemini_adjust(self, column: str, combined_scores: dict[str, float], archetype: str):

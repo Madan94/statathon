@@ -45,11 +45,10 @@ class SemanticClusterEngine:
 
         clusters = self._base.cluster_columns(column_embeddings)
         if skip_merge_small and n <= small_max:
-            # Cross-cluster coherence merge destroys separation on skinny survey tables (~10 cols).
             pass
         else:
             clusters = self._refine_clusters(column_embeddings, clusters, column_domains)
-        cluster_info = self._assign_with_support(clusters, column_domains, domain_scores_all)
+        cluster_info = self._assign_with_support(clusters, column_domains, domain_scores_all, column_embeddings)
         return clusters, cluster_info
 
     def _refine_clusters(
@@ -105,28 +104,47 @@ class SemanticClusterEngine:
         clusters: dict[str, list[str]],
         column_domains: dict[str, str],
         domain_scores_all: dict[str, dict[str, float]],
+        column_embeddings: dict[str, np.ndarray] | None = None,
     ) -> dict[str, dict[str, Any]]:
         info: dict[str, dict[str, Any]] = {}
+        all_vecs: dict[str, np.ndarray] = column_embeddings or {}
+
         for cluster_id, members in clusters.items():
             votes: dict[str, int] = {}
             for m in members:
                 d = column_domains.get(m, "unknown")
                 votes[d] = votes.get(d, 0) + 1
             best_domain = max(votes, key=votes.get)
-            plurality = votes[best_domain] / max(len(members), 1)
+            # Domain purity: fraction of cluster in the winning domain
+            purity = votes[best_domain] / max(len(members), 1)
 
+            # Avg domain confidence score for best domain
             score_mass = 0.0
             for m in members:
                 scores = domain_scores_all.get(m, {})
                 score_mass += float(scores.get(best_domain, 0.0))
             concentration = score_mass / max(len(members), 1)
 
-            support_score = round(0.6 * plurality + 0.4 * concentration, 4)
+            # Embedding coherence: avg pairwise cosine similarity within cluster
+            coherence = 1.0
+            if all_vecs and len(members) >= 2:
+                member_vecs = [all_vecs[m] for m in members if m in all_vecs]
+                if len(member_vecs) >= 2:
+                    sim = cosine_similarity(np.stack(member_vecs))
+                    n = len(member_vecs)
+                    total = (sim.sum() - n) / max(n * (n - 1), 1)
+                    coherence = float(np.clip(total, 0.0, 1.0))
+
+            # Final support = weighted combination of purity, concentration, coherence
+            support_score = round(0.40 * purity + 0.35 * concentration + 0.25 * coherence, 4)
 
             info[cluster_id] = {
                 "domain": best_domain,
-                "support": plurality,
+                "support": purity,
                 "support_score": support_score,
+                "embedding_coherence": round(coherence, 4),
+                "domain_purity": round(purity, 4),
+                "avg_domain_confidence": round(concentration, 4),
                 "members": members,
                 "domain_distribution": votes,
             }
