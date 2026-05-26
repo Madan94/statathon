@@ -4,8 +4,8 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from core.state import AnalysisState
-from repositories.intelligence_repository import DatasetIntelligenceRepository
-from repositories.semantic_repository import (
+from api.repositories.intelligence_repository import DatasetIntelligenceRepository
+from api.repositories.semantic_repository import (
     DatasetContextRepository,
     PriorityDependencyRepository,
     SchemaGraphRepository,

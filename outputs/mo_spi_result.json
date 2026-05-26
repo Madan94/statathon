@@ -1,0 +1,3199 @@
+{
+  "dataset_context": {
+    "dataset_type": "census",
+    "domain_scores": {
+      "census": 0.4015,
+      "health_survey": 0.205,
+      "labor": 0.2509,
+      "education_statistics": 0.3084,
+      "agriculture": 0.1393,
+      "economic_survey": 0.3069,
+      "infrastructure": 0.0776,
+      "socioeconomic": 0.3894,
+      "survey_metadata": 0.2263
+    },
+    "legacy_alignment_context": "census"
+  },
+  "semantic_mapping": {
+    "year_type": {
+      "normalized_name": "year type",
+      "domain": "dyn_survey_metadata_64e6ca1907",
+      "confidence": 0.5868,
+      "top_domain_scores": {
+        "dyn_survey_metadata_64e6ca1907": 0.4883326172828675,
+        "survey_metadata": 0.21067755818367007,
+        "demographic": 0.16662903428077697
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.4764,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_survey_metadata_64e6ca1907' by fusion of embedding similarity to domain prototypes (top score 0.4883), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (0.0000), cluster cohesion (1.0000), graph consistency (0.4764).",
+        "domain_support": 0.4883,
+        "contextual_support": 0.0,
+        "embedding_similarity": 0.4883,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "year": {
+      "normalized_name": "year",
+      "domain": "dyn_survey_metadata_64e6ca1907",
+      "confidence": 0.5065,
+      "top_domain_scores": {
+        "dyn_survey_metadata_64e6ca1907": 0.4094351932406426,
+        "survey_metadata": 0.32637908980250363,
+        "dyn_employment_f7b16ecea1": 0.07762051820755005
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.4169,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_survey_metadata_64e6ca1907' by fusion of embedding similarity to domain prototypes (top score 0.4094), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (0.0000), cluster cohesion (1.0000), graph consistency (0.4169).",
+        "domain_support": 0.4094,
+        "contextual_support": 0.0,
+        "embedding_similarity": 0.4094,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "frequency": {
+      "normalized_name": "frequency",
+      "domain": "dyn_survey_metadata_2e9089fefc",
+      "confidence": 0.4765,
+      "top_domain_scores": {
+        "dyn_survey_metadata_2e9089fefc": 0.442852932214737,
+        "survey_metadata": 0.17971265316009521,
+        "dyn_survey_metadata_64e6ca1907": 0.11435591876506805
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.0,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_survey_metadata_2e9089fefc' by fusion of embedding similarity to domain prototypes (top score 0.4429), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (0.0000), cluster cohesion (1.0000), graph consistency (0.0000).",
+        "domain_support": 0.4429,
+        "contextual_support": 0.0,
+        "embedding_similarity": 0.4429,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "indicator": {
+      "normalized_name": "indicator",
+      "domain": "dyn_identifier_01e08e4e0d",
+      "confidence": 0.5597,
+      "top_domain_scores": {
+        "dyn_identifier_01e08e4e0d": 0.4668128818273545,
+        "dyn_employment_f7b16ecea1": 0.14314429163932801,
+        "dyn_geography_9d5d7fcf3a": 0.13613659143447876
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.3102,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_identifier_01e08e4e0d' by fusion of embedding similarity to domain prototypes (top score 0.4668), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (0.0000), cluster cohesion (1.0000), graph consistency (0.3102).",
+        "domain_support": 0.4668,
+        "contextual_support": 0.0,
+        "embedding_similarity": 0.4668,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "state": {
+      "normalized_name": "state",
+      "domain": "dyn_geography_507d982d98",
+      "confidence": 0.4781,
+      "top_domain_scores": {
+        "dyn_geography_507d982d98": 0.6238841116428375,
+        "geography": 0.6055464893579483,
+        "dyn_geography_9d5d7fcf3a": 0.2910396635532379
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.0876,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_geography_507d982d98' by fusion of embedding similarity to domain prototypes (top score 0.6239), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (1.0000), cluster cohesion (1.0000), graph consistency (0.0876).",
+        "domain_support": 0.6239,
+        "contextual_support": 1.0,
+        "embedding_similarity": 0.6239,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "gender": {
+      "normalized_name": "gender",
+      "domain": "dyn_demographic_c2302d919e",
+      "confidence": 0.5286,
+      "top_domain_scores": {
+        "demographic": 0.6769437491893768,
+        "dyn_demographic_c2302d919e": 0.6393298506736755,
+        "identifier": 0.2985063880681992
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.25,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_demographic_c2302d919e' by fusion of embedding similarity to domain prototypes (top score 0.6769), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (1.0000), cluster cohesion (1.0000), graph consistency (0.2500).",
+        "domain_support": 0.6393,
+        "contextual_support": 1.0,
+        "embedding_similarity": 0.6769,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "sector": {
+      "normalized_name": "sector",
+      "domain": "dyn_geography_9d5d7fcf3a",
+      "confidence": 0.4359,
+      "top_domain_scores": {
+        "dyn_geography_9d5d7fcf3a": 0.4818971633911133,
+        "employment": 0.4203425899147988,
+        "geography": 0.17816324830055236
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.0,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_geography_9d5d7fcf3a' by fusion of embedding similarity to domain prototypes (top score 0.4819), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (0.0000), cluster cohesion (1.0000), graph consistency (0.0000).",
+        "domain_support": 0.4819,
+        "contextual_support": 0.0,
+        "embedding_similarity": 0.4819,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "AgeGroup": {
+      "normalized_name": "age group",
+      "domain": "dyn_demographic_c2302d919e",
+      "confidence": 0.5623,
+      "top_domain_scores": {
+        "dyn_demographic_c2302d919e": 0.614011162519455,
+        "demographic": 0.4713155478239059,
+        "dyn_survey_metadata_64e6ca1907": 0.2512392163276672
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.3657,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_demographic_c2302d919e' by fusion of embedding similarity to domain prototypes (top score 0.6140), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (0.5000), cluster cohesion (1.0000), graph consistency (0.3657).",
+        "domain_support": 0.614,
+        "contextual_support": 0.5,
+        "embedding_similarity": 0.614,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "weekly_status": {
+      "normalized_name": "weekly status",
+      "domain": "dyn_employment_f7b16ecea1",
+      "confidence": 0.5118,
+      "top_domain_scores": {
+        "dyn_employment_f7b16ecea1": 0.495468157529831,
+        "employment": 0.14358350336551667,
+        "dyn_survey_metadata_64e6ca1907": 0.12060344517230988
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.0,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_employment_f7b16ecea1' by fusion of embedding similarity to domain prototypes (top score 0.4955), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (0.0000), cluster cohesion (1.0000), graph consistency (0.0000).",
+        "domain_support": 0.4955,
+        "contextual_support": 0.0,
+        "embedding_similarity": 0.4955,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "religion": {
+      "normalized_name": "religion",
+      "domain": "dyn_geography_507d982d98",
+      "confidence": 0.4301,
+      "top_domain_scores": {
+        "dyn_geography_507d982d98": 0.428904402256012,
+        "demographic": 0.4224649399518967,
+        "dyn_education_bb9f23c038": 0.06835567653179168
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.1062,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_geography_507d982d98' by fusion of embedding similarity to domain prototypes (top score 0.4289), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (0.0000), cluster cohesion (1.0000), graph consistency (0.1062).",
+        "domain_support": 0.4289,
+        "contextual_support": 0.0,
+        "embedding_similarity": 0.4289,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "socialGroup": {
+      "normalized_name": "social group",
+      "domain": "dyn_demographic_c2302d919e",
+      "confidence": 0.5831,
+      "top_domain_scores": {
+        "dyn_demographic_c2302d919e": 0.4993535161018372,
+        "dyn_education_bb9f23c038": 0.15549588203430176,
+        "dyn_survey_metadata_2e9089fefc": 0.1524653434753418
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.3615,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_demographic_c2302d919e' by fusion of embedding similarity to domain prototypes (top score 0.4994), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (0.0000), cluster cohesion (1.0000), graph consistency (0.3615).",
+        "domain_support": 0.4994,
+        "contextual_support": 0.0,
+        "embedding_similarity": 0.4994,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "General_Education": {
+      "normalized_name": "general education",
+      "domain": "dyn_education_bb9f23c038",
+      "confidence": 0.469,
+      "top_domain_scores": {
+        "dyn_education_bb9f23c038": 0.49613015651702885,
+        "education": 0.3162427186965942,
+        "dyn_geography_9d5d7fcf3a": 0.10045388638973236
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.0,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_education_bb9f23c038' by fusion of embedding similarity to domain prototypes (top score 0.4961), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (0.0000), cluster cohesion (1.0000), graph consistency (0.0000).",
+        "domain_support": 0.4961,
+        "contextual_support": 0.0,
+        "embedding_similarity": 0.4961,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "quarter": {
+      "normalized_name": "quarter",
+      "domain": "dyn_survey_metadata_64e6ca1907",
+      "confidence": 0.5274,
+      "top_domain_scores": {
+        "dyn_survey_metadata_64e6ca1907": 0.38541483432054524,
+        "survey_metadata": 0.09427169859409332,
+        "economic": 0.07478868216276169
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.2913,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_survey_metadata_64e6ca1907' by fusion of embedding similarity to domain prototypes (top score 0.3854), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (0.0000), cluster cohesion (1.0000), graph consistency (0.2913).",
+        "domain_support": 0.3854,
+        "contextual_support": 0.0,
+        "embedding_similarity": 0.3854,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "month": {
+      "normalized_name": "month",
+      "domain": "dyn_survey_metadata_64e6ca1907",
+      "confidence": 0.4893,
+      "top_domain_scores": {
+        "dyn_survey_metadata_64e6ca1907": 0.37857695966959004,
+        "survey_metadata": 0.3489798411726952,
+        "dyn_employment_f7b16ecea1": 0.05132475793361664
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.4362,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_survey_metadata_64e6ca1907' by fusion of embedding similarity to domain prototypes (top score 0.3786), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (0.0000), cluster cohesion (1.0000), graph consistency (0.4362).",
+        "domain_support": 0.3786,
+        "contextual_support": 0.0,
+        "embedding_similarity": 0.3786,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "value": {
+      "normalized_name": "value",
+      "domain": "dyn_identifier_01e08e4e0d",
+      "confidence": 0.5141,
+      "top_domain_scores": {
+        "dyn_identifier_01e08e4e0d": 0.3813851356506348,
+        "identifier": 0.11101284027099609,
+        "economic": 0.07384339123964309
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.2557,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_identifier_01e08e4e0d' by fusion of embedding similarity to domain prototypes (top score 0.3814), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (0.0000), cluster cohesion (1.0000), graph consistency (0.2557).",
+        "domain_support": 0.3814,
+        "contextual_support": 0.0,
+        "embedding_similarity": 0.3814,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    },
+    "unit": {
+      "normalized_name": "unit",
+      "domain": "dyn_identifier_01e08e4e0d",
+      "confidence": 0.5541,
+      "top_domain_scores": {
+        "dyn_identifier_01e08e4e0d": 0.6008740067481995,
+        "identifier": 0.36701875925064087,
+        "dyn_education_bb9f23c038": 0.3078744143247604
+      },
+      "cluster_support": 1.0,
+      "graph_consistency": 0.2269,
+      "explainability": {
+        "matching_reason": "Assigned 'dyn_identifier_01e08e4e0d' by fusion of embedding similarity to domain prototypes (top score 0.6009), keyword overlap (1.0000), dataset archetype 'census' contextual alignment (1.0000), cluster cohesion (1.0000), graph consistency (0.2269).",
+        "domain_support": 0.6009,
+        "contextual_support": 1.0,
+        "embedding_similarity": 0.6009,
+        "keyword_overlap_primary_domain": 1.0,
+        "dataset_archetype": "census"
+      }
+    }
+  },
+  "clusters": [
+    {
+      "cluster_id": "cluster_0",
+      "domain": "dyn_survey_metadata_64e6ca1907",
+      "support_score": 0.7702,
+      "support": 1.0,
+      "columns": [
+        "month",
+        "year",
+        "year_type"
+      ],
+      "domain_distribution": {
+        "dyn_survey_metadata_64e6ca1907": 3
+      }
+    },
+    {
+      "cluster_id": "cluster_1",
+      "domain": "dyn_survey_metadata_2e9089fefc",
+      "support_score": 0.7771,
+      "support": 1.0,
+      "columns": [
+        "frequency"
+      ],
+      "domain_distribution": {
+        "dyn_survey_metadata_2e9089fefc": 1
+      }
+    },
+    {
+      "cluster_id": "cluster_2",
+      "domain": "dyn_education_bb9f23c038",
+      "support_score": 0.7985,
+      "support": 1.0,
+      "columns": [
+        "General_Education"
+      ],
+      "domain_distribution": {
+        "dyn_education_bb9f23c038": 1
+      }
+    },
+    {
+      "cluster_id": "cluster_3",
+      "domain": "dyn_survey_metadata_64e6ca1907",
+      "support_score": 0.7542,
+      "support": 1.0,
+      "columns": [
+        "quarter"
+      ],
+      "domain_distribution": {
+        "dyn_survey_metadata_64e6ca1907": 1
+      }
+    },
+    {
+      "cluster_id": "cluster_4",
+      "domain": "dyn_employment_f7b16ecea1",
+      "support_score": 0.7982,
+      "support": 1.0,
+      "columns": [
+        "weekly_status"
+      ],
+      "domain_distribution": {
+        "dyn_employment_f7b16ecea1": 1
+      }
+    },
+    {
+      "cluster_id": "cluster_5",
+      "domain": "dyn_identifier_01e08e4e0d",
+      "support_score": 0.7965,
+      "support": 1.0,
+      "columns": [
+        "unit",
+        "value"
+      ],
+      "domain_distribution": {
+        "dyn_identifier_01e08e4e0d": 2
+      }
+    },
+    {
+      "cluster_id": "cluster_6",
+      "domain": "dyn_identifier_01e08e4e0d",
+      "support_score": 0.7867,
+      "support": 1.0,
+      "columns": [
+        "indicator"
+      ],
+      "domain_distribution": {
+        "dyn_identifier_01e08e4e0d": 1
+      }
+    },
+    {
+      "cluster_id": "cluster_7",
+      "domain": "dyn_geography_9d5d7fcf3a",
+      "support_score": 0.7928,
+      "support": 1.0,
+      "columns": [
+        "sector"
+      ],
+      "domain_distribution": {
+        "dyn_geography_9d5d7fcf3a": 1
+      }
+    },
+    {
+      "cluster_id": "cluster_8",
+      "domain": "dyn_demographic_c2302d919e",
+      "support_score": 0.6337,
+      "support": 0.6667,
+      "columns": [
+        "AgeGroup",
+        "gender",
+        "socialGroup"
+      ],
+      "domain_distribution": {
+        "dyn_demographic_c2302d919e": 2,
+        "demographic": 1
+      }
+    },
+    {
+      "cluster_id": "cluster_9",
+      "domain": "dyn_geography_507d982d98",
+      "support_score": 0.8496,
+      "support": 1.0,
+      "columns": [
+        "state"
+      ],
+      "domain_distribution": {
+        "dyn_geography_507d982d98": 1
+      }
+    },
+    {
+      "cluster_id": "cluster_10",
+      "domain": "dyn_geography_507d982d98",
+      "support_score": 0.7716,
+      "support": 1.0,
+      "columns": [
+        "religion"
+      ],
+      "domain_distribution": {
+        "dyn_geography_507d982d98": 1
+      }
+    }
+  ],
+  "priority_dependencies": {
+    "year_type": [
+      {
+        "column": "year",
+        "score": 0.6073,
+        "embedding_similarity": 0.7162,
+        "cluster_strength": 0.2,
+        "graph_signal": 0.9462,
+        "dependency_reason": "Influence=0.607: embedding_sim=0.716, cluster_strength=0.200, graph_signal=0.946 (edge_weight=0.946, propagated=0.473)."
+      },
+      {
+        "column": "month",
+        "score": 0.3725,
+        "embedding_similarity": 0.3807,
+        "cluster_strength": 0.2,
+        "graph_signal": 0.6107,
+        "dependency_reason": "Influence=0.372: embedding_sim=0.381, cluster_strength=0.200, graph_signal=0.611 (edge_weight=0.611, propagated=0.305)."
+      },
+      {
+        "column": "AgeGroup",
+        "score": 0.2917,
+        "embedding_similarity": 0.3939,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4739,
+        "dependency_reason": "Influence=0.292: embedding_sim=0.394, cluster_strength=0.000, graph_signal=0.474 (edge_weight=0.474, propagated=0.237)."
+      },
+      {
+        "column": "gender",
+        "score": 0.228,
+        "embedding_similarity": 0.3028,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3828,
+        "dependency_reason": "Influence=0.228: embedding_sim=0.303, cluster_strength=0.000, graph_signal=0.383 (edge_weight=0.383, propagated=0.191)."
+      },
+      {
+        "column": "quarter",
+        "score": 0.2234,
+        "embedding_similarity": 0.3049,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3549,
+        "dependency_reason": "Influence=0.223: embedding_sim=0.305, cluster_strength=0.000, graph_signal=0.355 (edge_weight=0.355, propagated=0.177)."
+      }
+    ],
+    "year": [
+      {
+        "column": "year_type",
+        "score": 0.6073,
+        "embedding_similarity": 0.7162,
+        "cluster_strength": 0.2,
+        "graph_signal": 0.9462,
+        "dependency_reason": "Influence=0.607: embedding_sim=0.716, cluster_strength=0.200, graph_signal=0.946 (edge_weight=0.946, propagated=0.473)."
+      },
+      {
+        "column": "month",
+        "score": 0.5639,
+        "embedding_similarity": 0.6542,
+        "cluster_strength": 0.2,
+        "graph_signal": 0.8842,
+        "dependency_reason": "Influence=0.564: embedding_sim=0.654, cluster_strength=0.200, graph_signal=0.884 (edge_weight=0.884, propagated=0.442)."
+      },
+      {
+        "column": "state",
+        "score": 0.2837,
+        "embedding_similarity": 0.3824,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4624,
+        "dependency_reason": "Influence=0.284: embedding_sim=0.382, cluster_strength=0.000, graph_signal=0.462 (edge_weight=0.462, propagated=0.231)."
+      },
+      {
+        "column": "quarter",
+        "score": 0.2747,
+        "embedding_similarity": 0.3781,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4281,
+        "dependency_reason": "Influence=0.275: embedding_sim=0.378, cluster_strength=0.000, graph_signal=0.428 (edge_weight=0.428, propagated=0.214)."
+      },
+      {
+        "column": "AgeGroup",
+        "score": 0.2723,
+        "embedding_similarity": 0.3662,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4462,
+        "dependency_reason": "Influence=0.272: embedding_sim=0.366, cluster_strength=0.000, graph_signal=0.446 (edge_weight=0.446, propagated=0.223)."
+      }
+    ],
+    "frequency": [
+      {
+        "column": "unit",
+        "score": 0.2108,
+        "embedding_similarity": 0.2783,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3583,
+        "dependency_reason": "Influence=0.211: embedding_sim=0.278, cluster_strength=0.000, graph_signal=0.358 (edge_weight=0.358, propagated=0.179)."
+      },
+      {
+        "column": "value",
+        "score": 0.202,
+        "embedding_similarity": 0.2658,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3458,
+        "dependency_reason": "Influence=0.202: embedding_sim=0.266, cluster_strength=0.000, graph_signal=0.346 (edge_weight=0.346, propagated=0.173)."
+      },
+      {
+        "column": "month",
+        "score": 0.2,
+        "embedding_similarity": 0.2628,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3428,
+        "dependency_reason": "Influence=0.200: embedding_sim=0.263, cluster_strength=0.000, graph_signal=0.343 (edge_weight=0.343, propagated=0.171)."
+      }
+    ],
+    "indicator": [
+      {
+        "column": "value",
+        "score": 0.2941,
+        "embedding_similarity": 0.4058,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4558,
+        "dependency_reason": "Influence=0.294: embedding_sim=0.406, cluster_strength=0.000, graph_signal=0.456 (edge_weight=0.456, propagated=0.228)."
+      },
+      {
+        "column": "unit",
+        "score": 0.286,
+        "embedding_similarity": 0.3943,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4443,
+        "dependency_reason": "Influence=0.286: embedding_sim=0.394, cluster_strength=0.000, graph_signal=0.444 (edge_weight=0.444, propagated=0.222)."
+      },
+      {
+        "column": "state",
+        "score": 0.2217,
+        "embedding_similarity": 0.2938,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3738,
+        "dependency_reason": "Influence=0.222: embedding_sim=0.294, cluster_strength=0.000, graph_signal=0.374 (edge_weight=0.374, propagated=0.187)."
+      },
+      {
+        "column": "quarter",
+        "score": 0.2102,
+        "embedding_similarity": 0.2775,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3575,
+        "dependency_reason": "Influence=0.210: embedding_sim=0.277, cluster_strength=0.000, graph_signal=0.357 (edge_weight=0.357, propagated=0.179)."
+      },
+      {
+        "column": "sector",
+        "score": 0.1999,
+        "embedding_similarity": 0.2628,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3428,
+        "dependency_reason": "Influence=0.200: embedding_sim=0.263, cluster_strength=0.000, graph_signal=0.343 (edge_weight=0.343, propagated=0.171)."
+      }
+    ],
+    "state": [
+      {
+        "column": "year",
+        "score": 0.2837,
+        "embedding_similarity": 0.3824,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4624,
+        "dependency_reason": "Influence=0.284: embedding_sim=0.382, cluster_strength=0.000, graph_signal=0.462 (edge_weight=0.462, propagated=0.231)."
+      },
+      {
+        "column": "unit",
+        "score": 0.2602,
+        "embedding_similarity": 0.3488,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4288,
+        "dependency_reason": "Influence=0.260: embedding_sim=0.349, cluster_strength=0.000, graph_signal=0.429 (edge_weight=0.429, propagated=0.214)."
+      },
+      {
+        "column": "religion",
+        "score": 0.2505,
+        "embedding_similarity": 0.3436,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3936,
+        "dependency_reason": "Influence=0.251: embedding_sim=0.344, cluster_strength=0.000, graph_signal=0.394 (edge_weight=0.394, propagated=0.197)."
+      },
+      {
+        "column": "quarter",
+        "score": 0.2373,
+        "embedding_similarity": 0.3161,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3961,
+        "dependency_reason": "Influence=0.237: embedding_sim=0.316, cluster_strength=0.000, graph_signal=0.396 (edge_weight=0.396, propagated=0.198)."
+      },
+      {
+        "column": "gender",
+        "score": 0.2355,
+        "embedding_similarity": 0.3136,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3936,
+        "dependency_reason": "Influence=0.236: embedding_sim=0.314, cluster_strength=0.000, graph_signal=0.394 (edge_weight=0.394, propagated=0.197)."
+      }
+    ],
+    "gender": [
+      {
+        "column": "AgeGroup",
+        "score": 0.437,
+        "embedding_similarity": 0.4729,
+        "cluster_strength": 0.2,
+        "graph_signal": 0.7029,
+        "dependency_reason": "Influence=0.437: embedding_sim=0.473, cluster_strength=0.200, graph_signal=0.703 (edge_weight=0.703, propagated=0.351)."
+      },
+      {
+        "column": "socialGroup",
+        "score": 0.4074,
+        "embedding_similarity": 0.4306,
+        "cluster_strength": 0.2,
+        "graph_signal": 0.6606,
+        "dependency_reason": "Influence=0.407: embedding_sim=0.431, cluster_strength=0.200, graph_signal=0.661 (edge_weight=0.661, propagated=0.330)."
+      },
+      {
+        "column": "religion",
+        "score": 0.2716,
+        "embedding_similarity": 0.3651,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4451,
+        "dependency_reason": "Influence=0.272: embedding_sim=0.365, cluster_strength=0.000, graph_signal=0.445 (edge_weight=0.445, propagated=0.223)."
+      },
+      {
+        "column": "value",
+        "score": 0.2568,
+        "embedding_similarity": 0.344,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.424,
+        "dependency_reason": "Influence=0.257: embedding_sim=0.344, cluster_strength=0.000, graph_signal=0.424 (edge_weight=0.424, propagated=0.212)."
+      },
+      {
+        "column": "unit",
+        "score": 0.2392,
+        "embedding_similarity": 0.3189,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3989,
+        "dependency_reason": "Influence=0.239: embedding_sim=0.319, cluster_strength=0.000, graph_signal=0.399 (edge_weight=0.399, propagated=0.199)."
+      }
+    ],
+    "sector": [
+      {
+        "column": "unit",
+        "score": 0.2903,
+        "embedding_similarity": 0.3919,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4719,
+        "dependency_reason": "Influence=0.290: embedding_sim=0.392, cluster_strength=0.000, graph_signal=0.472 (edge_weight=0.472, propagated=0.236)."
+      },
+      {
+        "column": "quarter",
+        "score": 0.2698,
+        "embedding_similarity": 0.3626,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4426,
+        "dependency_reason": "Influence=0.270: embedding_sim=0.363, cluster_strength=0.000, graph_signal=0.443 (edge_weight=0.443, propagated=0.221)."
+      },
+      {
+        "column": "state",
+        "score": 0.2271,
+        "embedding_similarity": 0.3016,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3816,
+        "dependency_reason": "Influence=0.227: embedding_sim=0.302, cluster_strength=0.000, graph_signal=0.382 (edge_weight=0.382, propagated=0.191)."
+      },
+      {
+        "column": "value",
+        "score": 0.2266,
+        "embedding_similarity": 0.3009,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3809,
+        "dependency_reason": "Influence=0.227: embedding_sim=0.301, cluster_strength=0.000, graph_signal=0.381 (edge_weight=0.381, propagated=0.190)."
+      },
+      {
+        "column": "socialGroup",
+        "score": 0.2106,
+        "embedding_similarity": 0.278,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.358,
+        "dependency_reason": "Influence=0.211: embedding_sim=0.278, cluster_strength=0.000, graph_signal=0.358 (edge_weight=0.358, propagated=0.179)."
+      }
+    ],
+    "AgeGroup": [
+      {
+        "column": "socialGroup",
+        "score": 0.4916,
+        "embedding_similarity": 0.5509,
+        "cluster_strength": 0.2,
+        "graph_signal": 0.7809,
+        "dependency_reason": "Influence=0.492: embedding_sim=0.551, cluster_strength=0.200, graph_signal=0.781 (edge_weight=0.781, propagated=0.390)."
+      },
+      {
+        "column": "gender",
+        "score": 0.437,
+        "embedding_similarity": 0.4729,
+        "cluster_strength": 0.2,
+        "graph_signal": 0.7029,
+        "dependency_reason": "Influence=0.437: embedding_sim=0.473, cluster_strength=0.200, graph_signal=0.703 (edge_weight=0.703, propagated=0.351)."
+      },
+      {
+        "column": "year_type",
+        "score": 0.2917,
+        "embedding_similarity": 0.3939,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4739,
+        "dependency_reason": "Influence=0.292: embedding_sim=0.394, cluster_strength=0.000, graph_signal=0.474 (edge_weight=0.474, propagated=0.237)."
+      },
+      {
+        "column": "year",
+        "score": 0.2723,
+        "embedding_similarity": 0.3662,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4462,
+        "dependency_reason": "Influence=0.272: embedding_sim=0.366, cluster_strength=0.000, graph_signal=0.446 (edge_weight=0.446, propagated=0.223)."
+      },
+      {
+        "column": "quarter",
+        "score": 0.2096,
+        "embedding_similarity": 0.2766,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3566,
+        "dependency_reason": "Influence=0.210: embedding_sim=0.277, cluster_strength=0.000, graph_signal=0.357 (edge_weight=0.357, propagated=0.178)."
+      }
+    ],
+    "weekly_status": [
+      {
+        "column": "month",
+        "score": 0.3083,
+        "embedding_similarity": 0.4175,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4975,
+        "dependency_reason": "Influence=0.308: embedding_sim=0.418, cluster_strength=0.000, graph_signal=0.497 (edge_weight=0.497, propagated=0.249)."
+      },
+      {
+        "column": "year",
+        "score": 0.238,
+        "embedding_similarity": 0.3171,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3971,
+        "dependency_reason": "Influence=0.238: embedding_sim=0.317, cluster_strength=0.000, graph_signal=0.397 (edge_weight=0.397, propagated=0.199)."
+      },
+      {
+        "column": "indicator",
+        "score": 0.187,
+        "embedding_similarity": 0.2443,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3243,
+        "dependency_reason": "Influence=0.187: embedding_sim=0.244, cluster_strength=0.000, graph_signal=0.324 (edge_weight=0.324, propagated=0.162)."
+      },
+      {
+        "column": "year_type",
+        "score": 0.1822,
+        "embedding_similarity": 0.2374,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3174,
+        "dependency_reason": "Influence=0.182: embedding_sim=0.237, cluster_strength=0.000, graph_signal=0.317 (edge_weight=0.317, propagated=0.159)."
+      },
+      {
+        "column": "quarter",
+        "score": 0.174,
+        "embedding_similarity": 0.2257,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3057,
+        "dependency_reason": "Influence=0.174: embedding_sim=0.226, cluster_strength=0.000, graph_signal=0.306 (edge_weight=0.306, propagated=0.153)."
+      }
+    ],
+    "religion": [
+      {
+        "column": "socialGroup",
+        "score": 0.3032,
+        "embedding_similarity": 0.4103,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4903,
+        "dependency_reason": "Influence=0.303: embedding_sim=0.410, cluster_strength=0.000, graph_signal=0.490 (edge_weight=0.490, propagated=0.245)."
+      },
+      {
+        "column": "gender",
+        "score": 0.2716,
+        "embedding_similarity": 0.3651,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4451,
+        "dependency_reason": "Influence=0.272: embedding_sim=0.365, cluster_strength=0.000, graph_signal=0.445 (edge_weight=0.445, propagated=0.223)."
+      },
+      {
+        "column": "state",
+        "score": 0.2505,
+        "embedding_similarity": 0.3436,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3936,
+        "dependency_reason": "Influence=0.251: embedding_sim=0.344, cluster_strength=0.000, graph_signal=0.394 (edge_weight=0.394, propagated=0.197)."
+      },
+      {
+        "column": "value",
+        "score": 0.2385,
+        "embedding_similarity": 0.3178,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3978,
+        "dependency_reason": "Influence=0.238: embedding_sim=0.318, cluster_strength=0.000, graph_signal=0.398 (edge_weight=0.398, propagated=0.199)."
+      },
+      {
+        "column": "year",
+        "score": 0.2235,
+        "embedding_similarity": 0.2964,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3764,
+        "dependency_reason": "Influence=0.223: embedding_sim=0.296, cluster_strength=0.000, graph_signal=0.376 (edge_weight=0.376, propagated=0.188)."
+      }
+    ],
+    "socialGroup": [
+      {
+        "column": "AgeGroup",
+        "score": 0.4916,
+        "embedding_similarity": 0.5509,
+        "cluster_strength": 0.2,
+        "graph_signal": 0.7809,
+        "dependency_reason": "Influence=0.492: embedding_sim=0.551, cluster_strength=0.200, graph_signal=0.781 (edge_weight=0.781, propagated=0.390)."
+      },
+      {
+        "column": "gender",
+        "score": 0.4074,
+        "embedding_similarity": 0.4306,
+        "cluster_strength": 0.2,
+        "graph_signal": 0.6606,
+        "dependency_reason": "Influence=0.407: embedding_sim=0.431, cluster_strength=0.200, graph_signal=0.661 (edge_weight=0.661, propagated=0.330)."
+      },
+      {
+        "column": "religion",
+        "score": 0.3032,
+        "embedding_similarity": 0.4103,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4903,
+        "dependency_reason": "Influence=0.303: embedding_sim=0.410, cluster_strength=0.000, graph_signal=0.490 (edge_weight=0.490, propagated=0.245)."
+      },
+      {
+        "column": "unit",
+        "score": 0.2444,
+        "embedding_similarity": 0.3263,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4063,
+        "dependency_reason": "Influence=0.244: embedding_sim=0.326, cluster_strength=0.000, graph_signal=0.406 (edge_weight=0.406, propagated=0.203)."
+      },
+      {
+        "column": "sector",
+        "score": 0.2106,
+        "embedding_similarity": 0.278,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.358,
+        "dependency_reason": "Influence=0.211: embedding_sim=0.278, cluster_strength=0.000, graph_signal=0.358 (edge_weight=0.358, propagated=0.179)."
+      }
+    ],
+    "General_Education": [
+      {
+        "column": "gender",
+        "score": 0.2128,
+        "embedding_similarity": 0.2811,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3611,
+        "dependency_reason": "Influence=0.213: embedding_sim=0.281, cluster_strength=0.000, graph_signal=0.361 (edge_weight=0.361, propagated=0.181)."
+      },
+      {
+        "column": "socialGroup",
+        "score": 0.1935,
+        "embedding_similarity": 0.2535,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3335,
+        "dependency_reason": "Influence=0.193: embedding_sim=0.254, cluster_strength=0.000, graph_signal=0.334 (edge_weight=0.334, propagated=0.167)."
+      },
+      {
+        "column": "unit",
+        "score": 0.1915,
+        "embedding_similarity": 0.2507,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3307,
+        "dependency_reason": "Influence=0.191: embedding_sim=0.251, cluster_strength=0.000, graph_signal=0.331 (edge_weight=0.331, propagated=0.165)."
+      },
+      {
+        "column": "sector",
+        "score": 0.1874,
+        "embedding_similarity": 0.2449,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3249,
+        "dependency_reason": "Influence=0.187: embedding_sim=0.245, cluster_strength=0.000, graph_signal=0.325 (edge_weight=0.325, propagated=0.162)."
+      },
+      {
+        "column": "year_type",
+        "score": 0.1752,
+        "embedding_similarity": 0.2275,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3075,
+        "dependency_reason": "Influence=0.175: embedding_sim=0.227, cluster_strength=0.000, graph_signal=0.307 (edge_weight=0.307, propagated=0.154)."
+      }
+    ],
+    "quarter": [
+      {
+        "column": "month",
+        "score": 0.3047,
+        "embedding_similarity": 0.421,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.471,
+        "dependency_reason": "Influence=0.305: embedding_sim=0.421, cluster_strength=0.000, graph_signal=0.471 (edge_weight=0.471, propagated=0.235)."
+      },
+      {
+        "column": "year",
+        "score": 0.2747,
+        "embedding_similarity": 0.3781,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4281,
+        "dependency_reason": "Influence=0.275: embedding_sim=0.378, cluster_strength=0.000, graph_signal=0.428 (edge_weight=0.428, propagated=0.214)."
+      },
+      {
+        "column": "sector",
+        "score": 0.2698,
+        "embedding_similarity": 0.3626,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4426,
+        "dependency_reason": "Influence=0.270: embedding_sim=0.363, cluster_strength=0.000, graph_signal=0.443 (edge_weight=0.443, propagated=0.221)."
+      },
+      {
+        "column": "value",
+        "score": 0.2681,
+        "embedding_similarity": 0.3602,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4402,
+        "dependency_reason": "Influence=0.268: embedding_sim=0.360, cluster_strength=0.000, graph_signal=0.440 (edge_weight=0.440, propagated=0.220)."
+      },
+      {
+        "column": "unit",
+        "score": 0.2522,
+        "embedding_similarity": 0.3375,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4175,
+        "dependency_reason": "Influence=0.252: embedding_sim=0.337, cluster_strength=0.000, graph_signal=0.417 (edge_weight=0.417, propagated=0.209)."
+      }
+    ],
+    "month": [
+      {
+        "column": "year",
+        "score": 0.5639,
+        "embedding_similarity": 0.6542,
+        "cluster_strength": 0.2,
+        "graph_signal": 0.8842,
+        "dependency_reason": "Influence=0.564: embedding_sim=0.654, cluster_strength=0.200, graph_signal=0.884 (edge_weight=0.884, propagated=0.442)."
+      },
+      {
+        "column": "year_type",
+        "score": 0.3725,
+        "embedding_similarity": 0.3807,
+        "cluster_strength": 0.2,
+        "graph_signal": 0.6107,
+        "dependency_reason": "Influence=0.372: embedding_sim=0.381, cluster_strength=0.200, graph_signal=0.611 (edge_weight=0.611, propagated=0.305)."
+      },
+      {
+        "column": "weekly_status",
+        "score": 0.3083,
+        "embedding_similarity": 0.4175,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4975,
+        "dependency_reason": "Influence=0.308: embedding_sim=0.418, cluster_strength=0.000, graph_signal=0.497 (edge_weight=0.497, propagated=0.249)."
+      },
+      {
+        "column": "quarter",
+        "score": 0.3047,
+        "embedding_similarity": 0.421,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.471,
+        "dependency_reason": "Influence=0.305: embedding_sim=0.421, cluster_strength=0.000, graph_signal=0.471 (edge_weight=0.471, propagated=0.235)."
+      },
+      {
+        "column": "unit",
+        "score": 0.2221,
+        "embedding_similarity": 0.2944,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3744,
+        "dependency_reason": "Influence=0.222: embedding_sim=0.294, cluster_strength=0.000, graph_signal=0.374 (edge_weight=0.374, propagated=0.187)."
+      }
+    ],
+    "value": [
+      {
+        "column": "unit",
+        "score": 0.4426,
+        "embedding_similarity": 0.4809,
+        "cluster_strength": 0.2,
+        "graph_signal": 0.7109,
+        "dependency_reason": "Influence=0.443: embedding_sim=0.481, cluster_strength=0.200, graph_signal=0.711 (edge_weight=0.711, propagated=0.355)."
+      },
+      {
+        "column": "indicator",
+        "score": 0.2941,
+        "embedding_similarity": 0.4058,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4558,
+        "dependency_reason": "Influence=0.294: embedding_sim=0.406, cluster_strength=0.000, graph_signal=0.456 (edge_weight=0.456, propagated=0.228)."
+      },
+      {
+        "column": "quarter",
+        "score": 0.2681,
+        "embedding_similarity": 0.3602,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4402,
+        "dependency_reason": "Influence=0.268: embedding_sim=0.360, cluster_strength=0.000, graph_signal=0.440 (edge_weight=0.440, propagated=0.220)."
+      },
+      {
+        "column": "gender",
+        "score": 0.2568,
+        "embedding_similarity": 0.344,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.424,
+        "dependency_reason": "Influence=0.257: embedding_sim=0.344, cluster_strength=0.000, graph_signal=0.424 (edge_weight=0.424, propagated=0.212)."
+      },
+      {
+        "column": "religion",
+        "score": 0.2385,
+        "embedding_similarity": 0.3178,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.3978,
+        "dependency_reason": "Influence=0.238: embedding_sim=0.318, cluster_strength=0.000, graph_signal=0.398 (edge_weight=0.398, propagated=0.199)."
+      }
+    ],
+    "unit": [
+      {
+        "column": "value",
+        "score": 0.4426,
+        "embedding_similarity": 0.4809,
+        "cluster_strength": 0.2,
+        "graph_signal": 0.7109,
+        "dependency_reason": "Influence=0.443: embedding_sim=0.481, cluster_strength=0.200, graph_signal=0.711 (edge_weight=0.711, propagated=0.355)."
+      },
+      {
+        "column": "sector",
+        "score": 0.2903,
+        "embedding_similarity": 0.3919,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4719,
+        "dependency_reason": "Influence=0.290: embedding_sim=0.392, cluster_strength=0.000, graph_signal=0.472 (edge_weight=0.472, propagated=0.236)."
+      },
+      {
+        "column": "indicator",
+        "score": 0.286,
+        "embedding_similarity": 0.3943,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4443,
+        "dependency_reason": "Influence=0.286: embedding_sim=0.394, cluster_strength=0.000, graph_signal=0.444 (edge_weight=0.444, propagated=0.222)."
+      },
+      {
+        "column": "state",
+        "score": 0.2602,
+        "embedding_similarity": 0.3488,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4288,
+        "dependency_reason": "Influence=0.260: embedding_sim=0.349, cluster_strength=0.000, graph_signal=0.429 (edge_weight=0.429, propagated=0.214)."
+      },
+      {
+        "column": "quarter",
+        "score": 0.2522,
+        "embedding_similarity": 0.3375,
+        "cluster_strength": 0.0,
+        "graph_signal": 0.4175,
+        "dependency_reason": "Influence=0.252: embedding_sim=0.337, cluster_strength=0.000, graph_signal=0.417 (edge_weight=0.417, propagated=0.209)."
+      }
+    ]
+  },
+  "schema_graph": {
+    "nodes": [
+      {
+        "name": "year_type",
+        "domain": "dyn_survey_metadata_64e6ca1907",
+        "cluster": "cluster_0"
+      },
+      {
+        "name": "year",
+        "domain": "dyn_survey_metadata_64e6ca1907",
+        "cluster": "cluster_0"
+      },
+      {
+        "name": "frequency",
+        "domain": "dyn_survey_metadata_2e9089fefc",
+        "cluster": "cluster_1"
+      },
+      {
+        "name": "indicator",
+        "domain": "dyn_identifier_01e08e4e0d",
+        "cluster": "cluster_6"
+      },
+      {
+        "name": "state",
+        "domain": "dyn_geography_507d982d98",
+        "cluster": "cluster_9"
+      },
+      {
+        "name": "gender",
+        "domain": "dyn_demographic_c2302d919e",
+        "cluster": "cluster_8"
+      },
+      {
+        "name": "sector",
+        "domain": "dyn_geography_9d5d7fcf3a",
+        "cluster": "cluster_7"
+      },
+      {
+        "name": "AgeGroup",
+        "domain": "dyn_demographic_c2302d919e",
+        "cluster": "cluster_8"
+      },
+      {
+        "name": "weekly_status",
+        "domain": "dyn_employment_f7b16ecea1",
+        "cluster": "cluster_4"
+      },
+      {
+        "name": "religion",
+        "domain": "dyn_geography_507d982d98",
+        "cluster": "cluster_10"
+      },
+      {
+        "name": "socialGroup",
+        "domain": "dyn_demographic_c2302d919e",
+        "cluster": "cluster_8"
+      },
+      {
+        "name": "General_Education",
+        "domain": "dyn_education_bb9f23c038",
+        "cluster": "cluster_2"
+      },
+      {
+        "name": "quarter",
+        "domain": "dyn_survey_metadata_64e6ca1907",
+        "cluster": "cluster_3"
+      },
+      {
+        "name": "month",
+        "domain": "dyn_survey_metadata_64e6ca1907",
+        "cluster": "cluster_0"
+      },
+      {
+        "name": "value",
+        "domain": "dyn_identifier_01e08e4e0d",
+        "cluster": "cluster_5"
+      },
+      {
+        "name": "unit",
+        "domain": "dyn_identifier_01e08e4e0d",
+        "cluster": "cluster_5"
+      }
+    ],
+    "edges": [
+      {
+        "source": "year_type",
+        "target": "year",
+        "weight": 0.9462,
+        "relationship_type": "co_cluster_semantic",
+        "semantic_reason": "High embedding similarity (0.716) within same cluster; coherence bonus 0.180."
+      },
+      {
+        "source": "year_type",
+        "target": "state",
+        "weight": 0.3135,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_geography_507d982d98; similarity=0.234, graph_bonus=0.080."
+      },
+      {
+        "source": "year_type",
+        "target": "gender",
+        "weight": 0.3828,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_demographic_c2302d919e; similarity=0.303, graph_bonus=0.080."
+      },
+      {
+        "source": "year_type",
+        "target": "sector",
+        "weight": 0.3059,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_geography_9d5d7fcf3a; similarity=0.226, graph_bonus=0.080."
+      },
+      {
+        "source": "year_type",
+        "target": "AgeGroup",
+        "weight": 0.4739,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_demographic_c2302d919e; similarity=0.394, graph_bonus=0.080."
+      },
+      {
+        "source": "year_type",
+        "target": "weekly_status",
+        "weight": 0.3174,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_employment_f7b16ecea1; similarity=0.237, graph_bonus=0.080."
+      },
+      {
+        "source": "year_type",
+        "target": "General_Education",
+        "weight": 0.3075,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_education_bb9f23c038; similarity=0.227, graph_bonus=0.080."
+      },
+      {
+        "source": "year_type",
+        "target": "quarter",
+        "weight": 0.3549,
+        "relationship_type": "intra_domain_association",
+        "semantic_reason": "Same domain (dyn_survey_metadata_64e6ca1907), similarity=0.305; potential redundant or complementary measures."
+      },
+      {
+        "source": "year_type",
+        "target": "month",
+        "weight": 0.6107,
+        "relationship_type": "co_cluster_semantic",
+        "semantic_reason": "High embedding similarity (0.381) within same cluster; coherence bonus 0.180."
+      },
+      {
+        "source": "year",
+        "target": "state",
+        "weight": 0.4624,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_geography_507d982d98; similarity=0.382, graph_bonus=0.080."
+      },
+      {
+        "source": "year",
+        "target": "gender",
+        "weight": 0.3851,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_demographic_c2302d919e; similarity=0.305, graph_bonus=0.080."
+      },
+      {
+        "source": "year",
+        "target": "sector",
+        "weight": 0.3117,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_geography_9d5d7fcf3a; similarity=0.232, graph_bonus=0.080."
+      },
+      {
+        "source": "year",
+        "target": "AgeGroup",
+        "weight": 0.4462,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_demographic_c2302d919e; similarity=0.366, graph_bonus=0.080."
+      },
+      {
+        "source": "year",
+        "target": "weekly_status",
+        "weight": 0.3971,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_employment_f7b16ecea1; similarity=0.317, graph_bonus=0.080."
+      },
+      {
+        "source": "year",
+        "target": "religion",
+        "weight": 0.3764,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_geography_507d982d98; similarity=0.296, graph_bonus=0.080."
+      },
+      {
+        "source": "year",
+        "target": "quarter",
+        "weight": 0.4281,
+        "relationship_type": "intra_domain_association",
+        "semantic_reason": "Same domain (dyn_survey_metadata_64e6ca1907), similarity=0.378; potential redundant or complementary measures."
+      },
+      {
+        "source": "year",
+        "target": "month",
+        "weight": 0.8842,
+        "relationship_type": "co_cluster_semantic",
+        "semantic_reason": "High embedding similarity (0.654) within same cluster; coherence bonus 0.180."
+      },
+      {
+        "source": "year",
+        "target": "value",
+        "weight": 0.3813,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_identifier_01e08e4e0d; similarity=0.301, graph_bonus=0.080."
+      },
+      {
+        "source": "year",
+        "target": "unit",
+        "weight": 0.3986,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_identifier_01e08e4e0d; similarity=0.319, graph_bonus=0.080."
+      },
+      {
+        "source": "frequency",
+        "target": "month",
+        "weight": 0.3428,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_2e9089fefc ↔ dyn_survey_metadata_64e6ca1907; similarity=0.263, graph_bonus=0.080."
+      },
+      {
+        "source": "frequency",
+        "target": "value",
+        "weight": 0.3458,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_2e9089fefc ↔ dyn_identifier_01e08e4e0d; similarity=0.266, graph_bonus=0.080."
+      },
+      {
+        "source": "frequency",
+        "target": "unit",
+        "weight": 0.3583,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_2e9089fefc ↔ dyn_identifier_01e08e4e0d; similarity=0.278, graph_bonus=0.080."
+      },
+      {
+        "source": "indicator",
+        "target": "state",
+        "weight": 0.3738,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_identifier_01e08e4e0d ↔ dyn_geography_507d982d98; similarity=0.294, graph_bonus=0.080."
+      },
+      {
+        "source": "indicator",
+        "target": "gender",
+        "weight": 0.3009,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_identifier_01e08e4e0d ↔ dyn_demographic_c2302d919e; similarity=0.221, graph_bonus=0.080."
+      },
+      {
+        "source": "indicator",
+        "target": "sector",
+        "weight": 0.3428,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_identifier_01e08e4e0d ↔ dyn_geography_9d5d7fcf3a; similarity=0.263, graph_bonus=0.080."
+      },
+      {
+        "source": "indicator",
+        "target": "weekly_status",
+        "weight": 0.3243,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_identifier_01e08e4e0d ↔ dyn_employment_f7b16ecea1; similarity=0.244, graph_bonus=0.080."
+      },
+      {
+        "source": "indicator",
+        "target": "socialGroup",
+        "weight": 0.3023,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_identifier_01e08e4e0d ↔ dyn_demographic_c2302d919e; similarity=0.222, graph_bonus=0.080."
+      },
+      {
+        "source": "indicator",
+        "target": "quarter",
+        "weight": 0.3575,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_identifier_01e08e4e0d ↔ dyn_survey_metadata_64e6ca1907; similarity=0.277, graph_bonus=0.080."
+      },
+      {
+        "source": "indicator",
+        "target": "value",
+        "weight": 0.4558,
+        "relationship_type": "intra_domain_association",
+        "semantic_reason": "Same domain (dyn_identifier_01e08e4e0d), similarity=0.406; potential redundant or complementary measures."
+      },
+      {
+        "source": "indicator",
+        "target": "unit",
+        "weight": 0.4443,
+        "relationship_type": "intra_domain_association",
+        "semantic_reason": "Same domain (dyn_identifier_01e08e4e0d), similarity=0.394; potential redundant or complementary measures."
+      },
+      {
+        "source": "state",
+        "target": "gender",
+        "weight": 0.3936,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_507d982d98 ↔ dyn_demographic_c2302d919e; similarity=0.314, graph_bonus=0.080."
+      },
+      {
+        "source": "state",
+        "target": "sector",
+        "weight": 0.3816,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_507d982d98 ↔ dyn_geography_9d5d7fcf3a; similarity=0.302, graph_bonus=0.080."
+      },
+      {
+        "source": "state",
+        "target": "religion",
+        "weight": 0.3936,
+        "relationship_type": "intra_domain_association",
+        "semantic_reason": "Same domain (dyn_geography_507d982d98), similarity=0.344; potential redundant or complementary measures."
+      },
+      {
+        "source": "state",
+        "target": "socialGroup",
+        "weight": 0.3441,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_507d982d98 ↔ dyn_demographic_c2302d919e; similarity=0.264, graph_bonus=0.080."
+      },
+      {
+        "source": "state",
+        "target": "General_Education",
+        "weight": 0.3073,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_507d982d98 ↔ dyn_education_bb9f23c038; similarity=0.227, graph_bonus=0.080."
+      },
+      {
+        "source": "state",
+        "target": "quarter",
+        "weight": 0.3961,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_507d982d98 ↔ dyn_survey_metadata_64e6ca1907; similarity=0.316, graph_bonus=0.080."
+      },
+      {
+        "source": "state",
+        "target": "month",
+        "weight": 0.337,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_507d982d98 ↔ dyn_survey_metadata_64e6ca1907; similarity=0.257, graph_bonus=0.080."
+      },
+      {
+        "source": "state",
+        "target": "value",
+        "weight": 0.3603,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_507d982d98 ↔ dyn_identifier_01e08e4e0d; similarity=0.280, graph_bonus=0.080."
+      },
+      {
+        "source": "state",
+        "target": "unit",
+        "weight": 0.4288,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_507d982d98 ↔ dyn_identifier_01e08e4e0d; similarity=0.349, graph_bonus=0.080."
+      },
+      {
+        "source": "gender",
+        "target": "sector",
+        "weight": 0.3311,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_demographic_c2302d919e ↔ dyn_geography_9d5d7fcf3a; similarity=0.251, graph_bonus=0.080."
+      },
+      {
+        "source": "gender",
+        "target": "AgeGroup",
+        "weight": 0.7029,
+        "relationship_type": "co_cluster_semantic",
+        "semantic_reason": "High embedding similarity (0.473) within same cluster; coherence bonus 0.180."
+      },
+      {
+        "source": "gender",
+        "target": "religion",
+        "weight": 0.4451,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_demographic_c2302d919e ↔ dyn_geography_507d982d98; similarity=0.365, graph_bonus=0.080."
+      },
+      {
+        "source": "gender",
+        "target": "socialGroup",
+        "weight": 0.6606,
+        "relationship_type": "co_cluster_semantic",
+        "semantic_reason": "High embedding similarity (0.431) within same cluster; coherence bonus 0.180."
+      },
+      {
+        "source": "gender",
+        "target": "General_Education",
+        "weight": 0.3611,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_demographic_c2302d919e ↔ dyn_education_bb9f23c038; similarity=0.281, graph_bonus=0.080."
+      },
+      {
+        "source": "gender",
+        "target": "quarter",
+        "weight": 0.3347,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_demographic_c2302d919e ↔ dyn_survey_metadata_64e6ca1907; similarity=0.255, graph_bonus=0.080."
+      },
+      {
+        "source": "gender",
+        "target": "month",
+        "weight": 0.3325,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_demographic_c2302d919e ↔ dyn_survey_metadata_64e6ca1907; similarity=0.253, graph_bonus=0.080."
+      },
+      {
+        "source": "gender",
+        "target": "value",
+        "weight": 0.424,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_demographic_c2302d919e ↔ dyn_identifier_01e08e4e0d; similarity=0.344, graph_bonus=0.080."
+      },
+      {
+        "source": "gender",
+        "target": "unit",
+        "weight": 0.3989,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_demographic_c2302d919e ↔ dyn_identifier_01e08e4e0d; similarity=0.319, graph_bonus=0.080."
+      },
+      {
+        "source": "sector",
+        "target": "AgeGroup",
+        "weight": 0.3005,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_9d5d7fcf3a ↔ dyn_demographic_c2302d919e; similarity=0.220, graph_bonus=0.080."
+      },
+      {
+        "source": "sector",
+        "target": "religion",
+        "weight": 0.3064,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_9d5d7fcf3a ↔ dyn_geography_507d982d98; similarity=0.226, graph_bonus=0.080."
+      },
+      {
+        "source": "sector",
+        "target": "socialGroup",
+        "weight": 0.358,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_9d5d7fcf3a ↔ dyn_demographic_c2302d919e; similarity=0.278, graph_bonus=0.080."
+      },
+      {
+        "source": "sector",
+        "target": "General_Education",
+        "weight": 0.3249,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_9d5d7fcf3a ↔ dyn_education_bb9f23c038; similarity=0.245, graph_bonus=0.080."
+      },
+      {
+        "source": "sector",
+        "target": "quarter",
+        "weight": 0.4426,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_9d5d7fcf3a ↔ dyn_survey_metadata_64e6ca1907; similarity=0.363, graph_bonus=0.080."
+      },
+      {
+        "source": "sector",
+        "target": "value",
+        "weight": 0.3809,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_9d5d7fcf3a ↔ dyn_identifier_01e08e4e0d; similarity=0.301, graph_bonus=0.080."
+      },
+      {
+        "source": "sector",
+        "target": "unit",
+        "weight": 0.4719,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_9d5d7fcf3a ↔ dyn_identifier_01e08e4e0d; similarity=0.392, graph_bonus=0.080."
+      },
+      {
+        "source": "AgeGroup",
+        "target": "religion",
+        "weight": 0.3141,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_demographic_c2302d919e ↔ dyn_geography_507d982d98; similarity=0.234, graph_bonus=0.080."
+      },
+      {
+        "source": "AgeGroup",
+        "target": "socialGroup",
+        "weight": 0.7809,
+        "relationship_type": "co_cluster_semantic",
+        "semantic_reason": "High embedding similarity (0.551) within same cluster; coherence bonus 0.180."
+      },
+      {
+        "source": "AgeGroup",
+        "target": "quarter",
+        "weight": 0.3566,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_demographic_c2302d919e ↔ dyn_survey_metadata_64e6ca1907; similarity=0.277, graph_bonus=0.080."
+      },
+      {
+        "source": "AgeGroup",
+        "target": "month",
+        "weight": 0.3288,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_demographic_c2302d919e ↔ dyn_survey_metadata_64e6ca1907; similarity=0.249, graph_bonus=0.080."
+      },
+      {
+        "source": "AgeGroup",
+        "target": "value",
+        "weight": 0.3539,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_demographic_c2302d919e ↔ dyn_identifier_01e08e4e0d; similarity=0.274, graph_bonus=0.080."
+      },
+      {
+        "source": "weekly_status",
+        "target": "quarter",
+        "weight": 0.3057,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_employment_f7b16ecea1 ↔ dyn_survey_metadata_64e6ca1907; similarity=0.226, graph_bonus=0.080."
+      },
+      {
+        "source": "weekly_status",
+        "target": "month",
+        "weight": 0.4975,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_employment_f7b16ecea1 ↔ dyn_survey_metadata_64e6ca1907; similarity=0.418, graph_bonus=0.080."
+      },
+      {
+        "source": "religion",
+        "target": "socialGroup",
+        "weight": 0.4903,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_507d982d98 ↔ dyn_demographic_c2302d919e; similarity=0.410, graph_bonus=0.080."
+      },
+      {
+        "source": "religion",
+        "target": "General_Education",
+        "weight": 0.3049,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_507d982d98 ↔ dyn_education_bb9f23c038; similarity=0.225, graph_bonus=0.080."
+      },
+      {
+        "source": "religion",
+        "target": "month",
+        "weight": 0.3279,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_507d982d98 ↔ dyn_survey_metadata_64e6ca1907; similarity=0.248, graph_bonus=0.080."
+      },
+      {
+        "source": "religion",
+        "target": "value",
+        "weight": 0.3978,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_507d982d98 ↔ dyn_identifier_01e08e4e0d; similarity=0.318, graph_bonus=0.080."
+      },
+      {
+        "source": "religion",
+        "target": "unit",
+        "weight": 0.3514,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_geography_507d982d98 ↔ dyn_identifier_01e08e4e0d; similarity=0.271, graph_bonus=0.080."
+      },
+      {
+        "source": "socialGroup",
+        "target": "General_Education",
+        "weight": 0.3335,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_demographic_c2302d919e ↔ dyn_education_bb9f23c038; similarity=0.254, graph_bonus=0.080."
+      },
+      {
+        "source": "socialGroup",
+        "target": "value",
+        "weight": 0.3116,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_demographic_c2302d919e ↔ dyn_identifier_01e08e4e0d; similarity=0.232, graph_bonus=0.080."
+      },
+      {
+        "source": "socialGroup",
+        "target": "unit",
+        "weight": 0.4063,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_demographic_c2302d919e ↔ dyn_identifier_01e08e4e0d; similarity=0.326, graph_bonus=0.080."
+      },
+      {
+        "source": "General_Education",
+        "target": "unit",
+        "weight": 0.3307,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_education_bb9f23c038 ↔ dyn_identifier_01e08e4e0d; similarity=0.251, graph_bonus=0.080."
+      },
+      {
+        "source": "quarter",
+        "target": "month",
+        "weight": 0.471,
+        "relationship_type": "intra_domain_association",
+        "semantic_reason": "Same domain (dyn_survey_metadata_64e6ca1907), similarity=0.421; potential redundant or complementary measures."
+      },
+      {
+        "source": "quarter",
+        "target": "value",
+        "weight": 0.4402,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_identifier_01e08e4e0d; similarity=0.360, graph_bonus=0.080."
+      },
+      {
+        "source": "quarter",
+        "target": "unit",
+        "weight": 0.4175,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_identifier_01e08e4e0d; similarity=0.337, graph_bonus=0.080."
+      },
+      {
+        "source": "month",
+        "target": "unit",
+        "weight": 0.3744,
+        "relationship_type": "cross_domain_linkage",
+        "semantic_reason": "Cross-domain statistical linkage: dyn_survey_metadata_64e6ca1907 ↔ dyn_identifier_01e08e4e0d; similarity=0.294, graph_bonus=0.080."
+      },
+      {
+        "source": "value",
+        "target": "unit",
+        "weight": 0.7109,
+        "relationship_type": "co_cluster_semantic",
+        "semantic_reason": "High embedding similarity (0.481) within same cluster; coherence bonus 0.180."
+      }
+    ]
+  },
+  "column_cluster_map": {
+    "month": "cluster_0",
+    "year": "cluster_0",
+    "year_type": "cluster_0",
+    "frequency": "cluster_1",
+    "General_Education": "cluster_2",
+    "quarter": "cluster_3",
+    "weekly_status": "cluster_4",
+    "unit": "cluster_5",
+    "value": "cluster_5",
+    "indicator": "cluster_6",
+    "sector": "cluster_7",
+    "AgeGroup": "cluster_8",
+    "gender": "cluster_8",
+    "socialGroup": "cluster_8",
+    "state": "cluster_9",
+    "religion": "cluster_10"
+  },
+  "audit_records": [
+    {
+      "timestamp": "2026-05-21T12:49:50.643391",
+      "event": "column_normalization",
+      "data": {
+        "columns": {
+          "year_type": "year type",
+          "year": "year",
+          "frequency": "frequency",
+          "indicator": "indicator",
+          "state": "state",
+          "gender": "gender",
+          "sector": "sector",
+          "AgeGroup": "age group",
+          "weekly_status": "weekly status",
+          "religion": "religion",
+          "socialGroup": "social group",
+          "General_Education": "general education",
+          "quarter": "quarter",
+          "month": "month",
+          "value": "value",
+          "unit": "unit"
+        }
+      },
+      "step": 1
+    },
+    {
+      "timestamp": "2026-05-21T12:51:07.331069",
+      "event": "embedding_generation",
+      "data": {
+        "columns_embedded": [
+          "year_type",
+          "year",
+          "frequency",
+          "indicator",
+          "state",
+          "gender",
+          "sector",
+          "AgeGroup",
+          "weekly_status",
+          "religion",
+          "socialGroup",
+          "General_Education",
+          "quarter",
+          "month",
+          "value",
+          "unit"
+        ],
+        "embedding_dim": 384
+      },
+      "step": 2
+    },
+    {
+      "timestamp": "2026-05-21T12:51:07.385806",
+      "event": "dataset_context_inferencer",
+      "data": {
+        "dataset_type": "census",
+        "domain_scores": {
+          "census": 0.4015,
+          "health_survey": 0.205,
+          "labor": 0.2509,
+          "education_statistics": 0.3084,
+          "agriculture": 0.1393,
+          "economic_survey": 0.3069,
+          "infrastructure": 0.0776,
+          "socioeconomic": 0.3894,
+          "survey_metadata": 0.2263
+        }
+      },
+      "step": 3
+    },
+    {
+      "timestamp": "2026-05-21T12:51:07.481724",
+      "event": "dynamic_domains_registered",
+      "data": {
+        "domains": [
+          "dyn_survey_metadata_64e6ca1907",
+          "dyn_survey_metadata_2e9089fefc",
+          "dyn_identifier_01e08e4e0d",
+          "dyn_geography_507d982d98",
+          "dyn_demographic_c2302d919e",
+          "dyn_geography_9d5d7fcf3a",
+          "dyn_employment_f7b16ecea1",
+          "dyn_education_bb9f23c038"
+        ],
+        "count": 8
+      },
+      "step": 4
+    },
+    {
+      "timestamp": "2026-05-21T12:51:07.636597",
+      "event": "domain_prediction",
+      "data": {
+        "year_type": {
+          "domain": "dyn_survey_metadata_64e6ca1907",
+          "scores": {
+            "identifier": 0.08447226583957672,
+            "demographic": 0.16662903428077697,
+            "education": 0.09843784868717194,
+            "employment": 0.10213094651699066,
+            "income": 0.03331393897533417,
+            "health": 0.04070451557636261,
+            "household": 0.04428791105747223,
+            "geography": 0.04590309262275696,
+            "population": 0.13193389177322387,
+            "infrastructure": -0.03611909598112106,
+            "survey_metadata": 0.21067755818367007,
+            "agriculture": 0.026386506110429763,
+            "economic": 0.08787869811058044,
+            "dyn_survey_metadata_64e6ca1907": 0.4883326172828675,
+            "dyn_survey_metadata_2e9089fefc": 0.11241386532783508,
+            "dyn_identifier_01e08e4e0d": 0.12660995721817017,
+            "dyn_geography_507d982d98": 0.11860293745994568,
+            "dyn_demographic_c2302d919e": 0.15315762162208557,
+            "dyn_geography_9d5d7fcf3a": 0.10883429646492004,
+            "dyn_employment_f7b16ecea1": 0.1572078824043274,
+            "dyn_education_bb9f23c038": 0.12275484502315522
+          }
+        },
+        "year": {
+          "domain": "dyn_survey_metadata_64e6ca1907",
+          "scores": {
+            "identifier": 0.046759209036827086,
+            "demographic": 0.060372662544250486,
+            "education": 0.06495147496461869,
+            "employment": -0.030194569379091263,
+            "income": -0.007911603897809982,
+            "health": 0.011080040037631989,
+            "household": 0.033762529492378235,
+            "geography": -0.002582993358373642,
+            "population": 0.07442561835050583,
+            "infrastructure": -0.0412089042365551,
+            "survey_metadata": 0.32637908980250363,
+            "agriculture": 0.024649912118911745,
+            "economic": 0.06239868700504303,
+            "dyn_survey_metadata_64e6ca1907": 0.4094351932406426,
+            "dyn_survey_metadata_2e9089fefc": 0.05367818176746368,
+            "dyn_identifier_01e08e4e0d": 0.048784098029136656,
+            "dyn_geography_507d982d98": 0.04348318129777908,
+            "dyn_demographic_c2302d919e": 0.04641406238079071,
+            "dyn_geography_9d5d7fcf3a": 0.033521687239408494,
+            "dyn_employment_f7b16ecea1": 0.07762051820755005,
+            "dyn_education_bb9f23c038": 0.04126558005809784
+          }
+        },
+        "frequency": {
+          "domain": "dyn_survey_metadata_2e9089fefc",
+          "scores": {
+            "identifier": 0.09775616526603699,
+            "demographic": 0.09210180044174195,
+            "education": 0.004174132458865642,
+            "employment": 0.052277165651321414,
+            "income": -0.01701372116804123,
+            "health": -0.0035413261502981186,
+            "household": -0.0025191297754645348,
+            "geography": 0.0024139548651874064,
+            "population": 0.04709451645612717,
+            "infrastructure": -0.02246241085231304,
+            "survey_metadata": 0.17971265316009521,
+            "agriculture": 0.008232803083956242,
+            "economic": -0.0035105873830616474,
+            "dyn_survey_metadata_64e6ca1907": 0.11435591876506805,
+            "dyn_survey_metadata_2e9089fefc": 0.442852932214737,
+            "dyn_identifier_01e08e4e0d": 0.08649311363697051,
+            "dyn_geography_507d982d98": 0.07802120447158814,
+            "dyn_demographic_c2302d919e": 0.0787969708442688,
+            "dyn_geography_9d5d7fcf3a": 0.05721196979284286,
+            "dyn_employment_f7b16ecea1": 0.10123277306556702,
+            "dyn_education_bb9f23c038": 0.06621291339397431
+          }
+        },
+        "indicator": {
+          "domain": "dyn_identifier_01e08e4e0d",
+          "scores": {
+            "identifier": 0.09464199542999267,
+            "demographic": 0.042662568390369415,
+            "education": 0.04535725861787796,
+            "employment": 0.01620199978351593,
+            "income": 0.007210452295839787,
+            "health": 0.04679729640483856,
+            "household": 0.06100316047668457,
+            "geography": 0.0766349583864212,
+            "population": 0.0377464234828949,
+            "infrastructure": 0.05365290641784668,
+            "survey_metadata": 0.04035050421953201,
+            "agriculture": 0.005563888326287269,
+            "economic": 0.0687038004398346,
+            "dyn_survey_metadata_64e6ca1907": 0.12471534311771393,
+            "dyn_survey_metadata_2e9089fefc": 0.11816239356994629,
+            "dyn_identifier_01e08e4e0d": 0.4668128818273545,
+            "dyn_geography_507d982d98": 0.12220383882522583,
+            "dyn_demographic_c2302d919e": 0.11530726253986359,
+            "dyn_geography_9d5d7fcf3a": 0.13613659143447876,
+            "dyn_employment_f7b16ecea1": 0.14314429163932801,
+            "dyn_education_bb9f23c038": 0.13077767193317413
+          }
+        },
+        "state": {
+          "domain": "dyn_geography_507d982d98",
+          "scores": {
+            "identifier": 0.28609320521354675,
+            "demographic": 0.2802977472543717,
+            "education": 0.2537126660346985,
+            "employment": 0.23730138912796975,
+            "income": 0.15729876309633256,
+            "health": 0.2777009576559067,
+            "household": 0.2697187215089798,
+            "geography": 0.6055464893579483,
+            "population": 0.28569228649139405,
+            "infrastructure": 0.22442119792103768,
+            "survey_metadata": 0.20885783545672895,
+            "agriculture": 0.2191455140709877,
+            "economic": 0.2659853368997574,
+            "dyn_survey_metadata_64e6ca1907": 0.26329901069402695,
+            "dyn_survey_metadata_2e9089fefc": 0.25035694539546965,
+            "dyn_identifier_01e08e4e0d": 0.2711983799934387,
+            "dyn_geography_507d982d98": 0.6238841116428375,
+            "dyn_demographic_c2302d919e": 0.24370398074388505,
+            "dyn_geography_9d5d7fcf3a": 0.2910396635532379,
+            "dyn_employment_f7b16ecea1": 0.2741386264562607,
+            "dyn_education_bb9f23c038": 0.2627237528562546
+          }
+        },
+        "gender": {
+          "domain": "demographic",
+          "scores": {
+            "identifier": 0.2985063880681992,
+            "demographic": 0.6769437491893768,
+            "education": 0.2235397145152092,
+            "employment": 0.23303493335843087,
+            "income": 0.2213541030883789,
+            "health": 0.22821764126420022,
+            "household": 0.2536254495382309,
+            "geography": 0.21457807868719103,
+            "population": 0.20446977168321612,
+            "infrastructure": 0.21487457901239396,
+            "survey_metadata": 0.19695430137217046,
+            "agriculture": 0.20625803619623184,
+            "economic": 0.24731200337409975,
+            "dyn_survey_metadata_64e6ca1907": 0.2724215790629387,
+            "dyn_survey_metadata_2e9089fefc": 0.24837729632854463,
+            "dyn_identifier_01e08e4e0d": 0.25036758482456206,
+            "dyn_geography_507d982d98": 0.2472044199705124,
+            "dyn_demographic_c2302d919e": 0.6393298506736755,
+            "dyn_geography_9d5d7fcf3a": 0.2287546217441559,
+            "dyn_employment_f7b16ecea1": 0.24305377304553988,
+            "dyn_education_bb9f23c038": 0.2528308182954788
+          }
+        },
+        "sector": {
+          "domain": "dyn_geography_9d5d7fcf3a",
+          "scores": {
+            "identifier": 0.09623458385467529,
+            "demographic": 0.05351145565509796,
+            "education": 0.07322030514478683,
+            "employment": 0.4203425899147988,
+            "income": 0.07318824380636216,
+            "health": 0.02945641055703163,
+            "household": 0.10181526839733124,
+            "geography": 0.17816324830055236,
+            "population": 0.07892545759677887,
+            "infrastructure": 0.06937797367572784,
+            "survey_metadata": 0.05245935022830963,
+            "agriculture": 0.12133869230747223,
+            "economic": 0.1548951208591461,
+            "dyn_survey_metadata_64e6ca1907": 0.09971336424350738,
+            "dyn_survey_metadata_2e9089fefc": 0.08115693926811218,
+            "dyn_identifier_01e08e4e0d": 0.09234789311885834,
+            "dyn_geography_507d982d98": 0.1035334289073944,
+            "dyn_demographic_c2302d919e": 0.07986422181129456,
+            "dyn_geography_9d5d7fcf3a": 0.4818971633911133,
+            "dyn_employment_f7b16ecea1": 0.11166146993637086,
+            "dyn_education_bb9f23c038": 0.09517025649547577
+          }
+        },
+        "AgeGroup": {
+          "domain": "dyn_demographic_c2302d919e",
+          "scores": {
+            "identifier": 0.21358650922775269,
+            "demographic": 0.4713155478239059,
+            "education": 0.161380797624588,
+            "employment": 0.13935735821723938,
+            "income": 0.08245085217058659,
+            "health": 0.1399737611413002,
+            "household": 0.2131214141845703,
+            "geography": 0.1775195688009262,
+            "population": 0.2231930732727051,
+            "infrastructure": 0.10358346700668336,
+            "survey_metadata": 0.1773080676794052,
+            "agriculture": 0.07854455187916756,
+            "economic": 0.149339596927166,
+            "dyn_survey_metadata_64e6ca1907": 0.2512392163276672,
+            "dyn_survey_metadata_2e9089fefc": 0.2333358108997345,
+            "dyn_identifier_01e08e4e0d": 0.23152030408382418,
+            "dyn_geography_507d982d98": 0.2026178479194641,
+            "dyn_demographic_c2302d919e": 0.614011162519455,
+            "dyn_geography_9d5d7fcf3a": 0.19806007742881776,
+            "dyn_employment_f7b16ecea1": 0.2156843900680542,
+            "dyn_education_bb9f23c038": 0.2445939898490906
+          }
+        },
+        "weekly_status": {
+          "domain": "dyn_employment_f7b16ecea1",
+          "scores": {
+            "identifier": 0.016660470888018607,
+            "demographic": 0.052991983294487,
+            "education": 0.06364651769399643,
+            "employment": 0.14358350336551667,
+            "income": 0.03173083886504173,
+            "health": 0.10694668292999268,
+            "household": 0.0484515443444252,
+            "geography": 0.06569627970457077,
+            "population": 0.04767031073570251,
+            "infrastructure": 0.02365237846970558,
+            "survey_metadata": 0.08092008233070373,
+            "agriculture": 0.05390041172504425,
+            "economic": 0.047294524312019345,
+            "dyn_survey_metadata_64e6ca1907": 0.12060344517230988,
+            "dyn_survey_metadata_2e9089fefc": 0.09860409200191497,
+            "dyn_identifier_01e08e4e0d": 0.07996142506599427,
+            "dyn_geography_507d982d98": 0.058363839983940125,
+            "dyn_demographic_c2302d919e": 0.05888195335865021,
+            "dyn_geography_9d5d7fcf3a": 0.06322663575410843,
+            "dyn_employment_f7b16ecea1": 0.495468157529831,
+            "dyn_education_bb9f23c038": 0.056574247777462006
+          }
+        },
+        "religion": {
+          "domain": "dyn_geography_507d982d98",
+          "scores": {
+            "identifier": 0.03203395307064057,
+            "demographic": 0.4224649399518967,
+            "education": 0.007153349183499813,
+            "employment": -0.0063885911367833614,
+            "income": -0.03348593786358833,
+            "health": 0.02489026039838791,
+            "household": 0.01451369673013687,
+            "geography": -0.0023578330874443054,
+            "population": 0.03613932430744171,
+            "infrastructure": 0.011426370218396186,
+            "survey_metadata": -0.047063615173101425,
+            "agriculture": 0.049760757386684416,
+            "economic": -0.013326415792107582,
+            "dyn_survey_metadata_64e6ca1907": 0.041650387644767764,
+            "dyn_survey_metadata_2e9089fefc": 0.040702222287654875,
+            "dyn_identifier_01e08e4e0d": 0.051298610866069794,
+            "dyn_geography_507d982d98": 0.428904402256012,
+            "dyn_demographic_c2302d919e": 0.06195454448461533,
+            "dyn_geography_9d5d7fcf3a": 0.04949217438697815,
+            "dyn_employment_f7b16ecea1": 0.04673986583948135,
+            "dyn_education_bb9f23c038": 0.06835567653179168
+          }
+        },
+        "socialGroup": {
+          "domain": "dyn_demographic_c2302d919e",
+          "scores": {
+            "identifier": 0.11177655458450317,
+            "demographic": 0.14073459506034852,
+            "education": 8.22845846414566e-05,
+            "employment": 0.02623324915766716,
+            "income": -0.041318364441394806,
+            "health": 0.031570639461278915,
+            "household": 0.06873950511217117,
+            "geography": 0.05993954837322235,
+            "population": 0.036521836370229724,
+            "infrastructure": 0.042800500988960266,
+            "survey_metadata": 0.035266104340553286,
+            "agriculture": -0.006129821762442589,
+            "economic": 0.01948758065700531,
+            "dyn_survey_metadata_64e6ca1907": 0.14196842908859253,
+            "dyn_survey_metadata_2e9089fefc": 0.1524653434753418,
+            "dyn_identifier_01e08e4e0d": 0.15053157806396483,
+            "dyn_geography_507d982d98": 0.14402847290039061,
+            "dyn_demographic_c2302d919e": 0.4993535161018372,
+            "dyn_geography_9d5d7fcf3a": 0.14140290319919585,
+            "dyn_employment_f7b16ecea1": 0.12391548156738282,
+            "dyn_education_bb9f23c038": 0.15549588203430176
+          }
+        },
+        "General_Education": {
+          "domain": "dyn_education_bb9f23c038",
+          "scores": {
+            "identifier": 0.06166180372238159,
+            "demographic": 0.04755165874958038,
+            "education": 0.3162427186965942,
+            "employment": 0.06413627564907073,
+            "income": -0.0026689209043979645,
+            "health": 0.05650247633457184,
+            "household": 0.03272725045681,
+            "geography": 0.050200138986110684,
+            "population": 0.040889279544353486,
+            "infrastructure": 0.019441889226436616,
+            "survey_metadata": -0.004550212994217873,
+            "agriculture": 0.03200948685407638,
+            "economic": 0.08279706537723541,
+            "dyn_survey_metadata_64e6ca1907": 0.06056782901287079,
+            "dyn_survey_metadata_2e9089fefc": 0.05404408872127533,
+            "dyn_identifier_01e08e4e0d": 0.06775720417499542,
+            "dyn_geography_507d982d98": 0.08931772112846374,
+            "dyn_demographic_c2302d919e": 0.08315195739269257,
+            "dyn_geography_9d5d7fcf3a": 0.10045388638973236,
+            "dyn_employment_f7b16ecea1": 0.07278659641742706,
+            "dyn_education_bb9f23c038": 0.49613015651702885
+          }
+        },
+        "quarter": {
+          "domain": "dyn_survey_metadata_64e6ca1907",
+          "scores": {
+            "identifier": -0.004785658325999975,
+            "demographic": -0.009541511535644531,
+            "education": 0.005195451155304909,
+            "employment": 0.07442931085824966,
+            "income": -0.011347010731697083,
+            "health": 0.027404679358005522,
+            "household": 0.013576117157936097,
+            "geography": 0.05488345474004745,
+            "population": 0.01582588367164135,
+            "infrastructure": 0.054711480438709256,
+            "survey_metadata": 0.09427169859409332,
+            "agriculture": 0.005893147364258766,
+            "economic": 0.07478868216276169,
+            "dyn_survey_metadata_64e6ca1907": 0.38541483432054524,
+            "dyn_survey_metadata_2e9089fefc": 0.03266505002975464,
+            "dyn_identifier_01e08e4e0d": 0.057260236144065856,
+            "dyn_geography_507d982d98": 0.05274789333343506,
+            "dyn_demographic_c2302d919e": 0.04304063469171524,
+            "dyn_geography_9d5d7fcf3a": 0.04341161102056503,
+            "dyn_employment_f7b16ecea1": 0.07345577627420426,
+            "dyn_education_bb9f23c038": 0.016727283596992493
+          }
+        },
+        "month": {
+          "domain": "dyn_survey_metadata_64e6ca1907",
+          "scores": {
+            "identifier": -0.005168052390217781,
+            "demographic": -0.0011280756443738937,
+            "education": 0.007193049788475037,
+            "employment": -0.015234166756272316,
+            "income": -0.02126610279083252,
+            "health": 0.033312030136585236,
+            "household": 0.003927759826183319,
+            "geography": 0.01488366276025772,
+            "population": 0.018928366899490356,
+            "infrastructure": -0.007487115450203419,
+            "survey_metadata": 0.3489798411726952,
+            "agriculture": 0.029906344413757325,
+            "economic": 0.025834038108587264,
+            "dyn_survey_metadata_64e6ca1907": 0.37857695966959004,
+            "dyn_survey_metadata_2e9089fefc": 0.03266878724098206,
+            "dyn_identifier_01e08e4e0d": 0.007746450416743755,
+            "dyn_geography_507d982d98": 0.002982558868825436,
+            "dyn_demographic_c2302d919e": -0.0005506947636604309,
+            "dyn_geography_9d5d7fcf3a": -0.0022568353451788425,
+            "dyn_employment_f7b16ecea1": 0.05132475793361664,
+            "dyn_education_bb9f23c038": -0.00255685206502676
+          }
+        },
+        "value": {
+          "domain": "dyn_identifier_01e08e4e0d",
+          "scores": {
+            "identifier": 0.11101284027099609,
+            "demographic": 0.0694452166557312,
+            "education": 0.042815642058849336,
+            "employment": -0.01006758026778698,
+            "income": 0.030200229585170747,
+            "health": 0.026018477976322174,
+            "household": 0.06133788228034973,
+            "geography": 0.049271884560585025,
+            "population": 0.03635808527469635,
+            "infrastructure": 0.023291659355163575,
+            "survey_metadata": 0.05002316236495972,
+            "agriculture": 0.03974655568599701,
+            "economic": 0.07384339123964309,
+            "dyn_survey_metadata_64e6ca1907": 0.06162922829389572,
+            "dyn_survey_metadata_2e9089fefc": 0.06294780671596527,
+            "dyn_identifier_01e08e4e0d": 0.3813851356506348,
+            "dyn_geography_507d982d98": 0.06851306408643723,
+            "dyn_demographic_c2302d919e": 0.06317859739065171,
+            "dyn_geography_9d5d7fcf3a": 0.05778952986001969,
+            "dyn_employment_f7b16ecea1": 0.06567008793354034,
+            "dyn_education_bb9f23c038": 0.057846289873123166
+          }
+        },
+        "unit": {
+          "domain": "dyn_identifier_01e08e4e0d",
+          "scores": {
+            "identifier": 0.36701875925064087,
+            "demographic": 0.21987616792321207,
+            "education": 0.27475895434618,
+            "employment": 0.2011945402249694,
+            "income": 0.19475611560046674,
+            "health": 0.23538542687892916,
+            "household": 0.2920328587293625,
+            "geography": 0.2800083190202713,
+            "population": 0.2216867819428444,
+            "infrastructure": 0.2555823177099228,
+            "survey_metadata": 0.27384679317474364,
+            "agriculture": 0.25442977249622345,
+            "economic": 0.26023309826850893,
+            "dyn_survey_metadata_64e6ca1907": 0.28686168491840364,
+            "dyn_survey_metadata_2e9089fefc": 0.2856645166873932,
+            "dyn_identifier_01e08e4e0d": 0.6008740067481995,
+            "dyn_geography_507d982d98": 0.2723356634378433,
+            "dyn_demographic_c2302d919e": 0.2712150275707245,
+            "dyn_geography_9d5d7fcf3a": 0.29131390154361725,
+            "dyn_employment_f7b16ecea1": 0.2871758073568344,
+            "dyn_education_bb9f23c038": 0.3078744143247604
+          }
+        }
+      },
+      "step": 5
+    },
+    {
+      "timestamp": "2026-05-21T12:51:07.640442",
+      "event": "clustering",
+      "data": {
+        "clusters": {
+          "cluster_0": {
+            "domain": "dyn_survey_metadata_64e6ca1907",
+            "support": 1.0,
+            "support_score": 0.7702,
+            "members": [
+              "month",
+              "year",
+              "year_type"
+            ],
+            "domain_distribution": {
+              "dyn_survey_metadata_64e6ca1907": 3
+            }
+          },
+          "cluster_1": {
+            "domain": "dyn_survey_metadata_2e9089fefc",
+            "support": 1.0,
+            "support_score": 0.7771,
+            "members": [
+              "frequency"
+            ],
+            "domain_distribution": {
+              "dyn_survey_metadata_2e9089fefc": 1
+            }
+          },
+          "cluster_2": {
+            "domain": "dyn_education_bb9f23c038",
+            "support": 1.0,
+            "support_score": 0.7985,
+            "members": [
+              "General_Education"
+            ],
+            "domain_distribution": {
+              "dyn_education_bb9f23c038": 1
+            }
+          },
+          "cluster_3": {
+            "domain": "dyn_survey_metadata_64e6ca1907",
+            "support": 1.0,
+            "support_score": 0.7542,
+            "members": [
+              "quarter"
+            ],
+            "domain_distribution": {
+              "dyn_survey_metadata_64e6ca1907": 1
+            }
+          },
+          "cluster_4": {
+            "domain": "dyn_employment_f7b16ecea1",
+            "support": 1.0,
+            "support_score": 0.7982,
+            "members": [
+              "weekly_status"
+            ],
+            "domain_distribution": {
+              "dyn_employment_f7b16ecea1": 1
+            }
+          },
+          "cluster_5": {
+            "domain": "dyn_identifier_01e08e4e0d",
+            "support": 1.0,
+            "support_score": 0.7965,
+            "members": [
+              "unit",
+              "value"
+            ],
+            "domain_distribution": {
+              "dyn_identifier_01e08e4e0d": 2
+            }
+          },
+          "cluster_6": {
+            "domain": "dyn_identifier_01e08e4e0d",
+            "support": 1.0,
+            "support_score": 0.7867,
+            "members": [
+              "indicator"
+            ],
+            "domain_distribution": {
+              "dyn_identifier_01e08e4e0d": 1
+            }
+          },
+          "cluster_7": {
+            "domain": "dyn_geography_9d5d7fcf3a",
+            "support": 1.0,
+            "support_score": 0.7928,
+            "members": [
+              "sector"
+            ],
+            "domain_distribution": {
+              "dyn_geography_9d5d7fcf3a": 1
+            }
+          },
+          "cluster_8": {
+            "domain": "dyn_demographic_c2302d919e",
+            "support": 0.6666666666666666,
+            "support_score": 0.6337,
+            "members": [
+              "AgeGroup",
+              "gender",
+              "socialGroup"
+            ],
+            "domain_distribution": {
+              "dyn_demographic_c2302d919e": 2,
+              "demographic": 1
+            }
+          },
+          "cluster_9": {
+            "domain": "dyn_geography_507d982d98",
+            "support": 1.0,
+            "support_score": 0.8496,
+            "members": [
+              "state"
+            ],
+            "domain_distribution": {
+              "dyn_geography_507d982d98": 1
+            }
+          },
+          "cluster_10": {
+            "domain": "dyn_geography_507d982d98",
+            "support": 1.0,
+            "support_score": 0.7716,
+            "members": [
+              "religion"
+            ],
+            "domain_distribution": {
+              "dyn_geography_507d982d98": 1
+            }
+          }
+        },
+        "column_domains_after_reinforcement": {
+          "year_type": "dyn_survey_metadata_64e6ca1907",
+          "year": "dyn_survey_metadata_64e6ca1907",
+          "frequency": "dyn_survey_metadata_2e9089fefc",
+          "indicator": "dyn_identifier_01e08e4e0d",
+          "state": "dyn_geography_507d982d98",
+          "gender": "dyn_demographic_c2302d919e",
+          "sector": "dyn_geography_9d5d7fcf3a",
+          "AgeGroup": "dyn_demographic_c2302d919e",
+          "weekly_status": "dyn_employment_f7b16ecea1",
+          "religion": "dyn_geography_507d982d98",
+          "socialGroup": "dyn_demographic_c2302d919e",
+          "General_Education": "dyn_education_bb9f23c038",
+          "quarter": "dyn_survey_metadata_64e6ca1907",
+          "month": "dyn_survey_metadata_64e6ca1907",
+          "value": "dyn_identifier_01e08e4e0d",
+          "unit": "dyn_identifier_01e08e4e0d"
+        }
+      },
+      "step": 6
+    },
+    {
+      "timestamp": "2026-05-21T12:51:07.642192",
+      "event": "schema_graph",
+      "data": {
+        "node_count": 16,
+        "edge_pairs": 76
+      },
+      "step": 7
+    },
+    {
+      "timestamp": "2026-05-21T12:51:07.644287",
+      "event": "confidence_scoring",
+      "data": {
+        "year_type": {
+          "confidence": 0.5868,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.4764
+        },
+        "year": {
+          "confidence": 0.5065,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.4169
+        },
+        "frequency": {
+          "confidence": 0.4765,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.0
+        },
+        "indicator": {
+          "confidence": 0.5597,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.3102
+        },
+        "state": {
+          "confidence": 0.4781,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.0876
+        },
+        "gender": {
+          "confidence": 0.5286,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.25
+        },
+        "sector": {
+          "confidence": 0.4359,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.0
+        },
+        "AgeGroup": {
+          "confidence": 0.5623,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.3657
+        },
+        "weekly_status": {
+          "confidence": 0.5118,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.0
+        },
+        "religion": {
+          "confidence": 0.4301,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.1062
+        },
+        "socialGroup": {
+          "confidence": 0.5831,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.3615
+        },
+        "General_Education": {
+          "confidence": 0.469,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.0
+        },
+        "quarter": {
+          "confidence": 0.5274,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.2913
+        },
+        "month": {
+          "confidence": 0.4893,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.4362
+        },
+        "value": {
+          "confidence": 0.5141,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.2557
+        },
+        "unit": {
+          "confidence": 0.5541,
+          "cluster_support": 1.0,
+          "graph_consistency": 0.2269
+        }
+      },
+      "step": 8
+    },
+    {
+      "timestamp": "2026-05-21T12:51:07.700543",
+      "event": "dependency_inference",
+      "data": {
+        "year_type": [
+          {
+            "column": "year",
+            "score": 0.6073,
+            "embedding_similarity": 0.7162,
+            "cluster_strength": 0.2,
+            "graph_signal": 0.9462,
+            "dependency_reason": "Influence=0.607: embedding_sim=0.716, cluster_strength=0.200, graph_signal=0.946 (edge_weight=0.946, propagated=0.473)."
+          },
+          {
+            "column": "month",
+            "score": 0.3725,
+            "embedding_similarity": 0.3807,
+            "cluster_strength": 0.2,
+            "graph_signal": 0.6107,
+            "dependency_reason": "Influence=0.372: embedding_sim=0.381, cluster_strength=0.200, graph_signal=0.611 (edge_weight=0.611, propagated=0.305)."
+          },
+          {
+            "column": "AgeGroup",
+            "score": 0.2917,
+            "embedding_similarity": 0.3939,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4739,
+            "dependency_reason": "Influence=0.292: embedding_sim=0.394, cluster_strength=0.000, graph_signal=0.474 (edge_weight=0.474, propagated=0.237)."
+          },
+          {
+            "column": "gender",
+            "score": 0.228,
+            "embedding_similarity": 0.3028,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3828,
+            "dependency_reason": "Influence=0.228: embedding_sim=0.303, cluster_strength=0.000, graph_signal=0.383 (edge_weight=0.383, propagated=0.191)."
+          },
+          {
+            "column": "quarter",
+            "score": 0.2234,
+            "embedding_similarity": 0.3049,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3549,
+            "dependency_reason": "Influence=0.223: embedding_sim=0.305, cluster_strength=0.000, graph_signal=0.355 (edge_weight=0.355, propagated=0.177)."
+          }
+        ],
+        "year": [
+          {
+            "column": "year_type",
+            "score": 0.6073,
+            "embedding_similarity": 0.7162,
+            "cluster_strength": 0.2,
+            "graph_signal": 0.9462,
+            "dependency_reason": "Influence=0.607: embedding_sim=0.716, cluster_strength=0.200, graph_signal=0.946 (edge_weight=0.946, propagated=0.473)."
+          },
+          {
+            "column": "month",
+            "score": 0.5639,
+            "embedding_similarity": 0.6542,
+            "cluster_strength": 0.2,
+            "graph_signal": 0.8842,
+            "dependency_reason": "Influence=0.564: embedding_sim=0.654, cluster_strength=0.200, graph_signal=0.884 (edge_weight=0.884, propagated=0.442)."
+          },
+          {
+            "column": "state",
+            "score": 0.2837,
+            "embedding_similarity": 0.3824,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4624,
+            "dependency_reason": "Influence=0.284: embedding_sim=0.382, cluster_strength=0.000, graph_signal=0.462 (edge_weight=0.462, propagated=0.231)."
+          },
+          {
+            "column": "quarter",
+            "score": 0.2747,
+            "embedding_similarity": 0.3781,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4281,
+            "dependency_reason": "Influence=0.275: embedding_sim=0.378, cluster_strength=0.000, graph_signal=0.428 (edge_weight=0.428, propagated=0.214)."
+          },
+          {
+            "column": "AgeGroup",
+            "score": 0.2723,
+            "embedding_similarity": 0.3662,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4462,
+            "dependency_reason": "Influence=0.272: embedding_sim=0.366, cluster_strength=0.000, graph_signal=0.446 (edge_weight=0.446, propagated=0.223)."
+          }
+        ],
+        "frequency": [
+          {
+            "column": "unit",
+            "score": 0.2108,
+            "embedding_similarity": 0.2783,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3583,
+            "dependency_reason": "Influence=0.211: embedding_sim=0.278, cluster_strength=0.000, graph_signal=0.358 (edge_weight=0.358, propagated=0.179)."
+          },
+          {
+            "column": "value",
+            "score": 0.202,
+            "embedding_similarity": 0.2658,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3458,
+            "dependency_reason": "Influence=0.202: embedding_sim=0.266, cluster_strength=0.000, graph_signal=0.346 (edge_weight=0.346, propagated=0.173)."
+          },
+          {
+            "column": "month",
+            "score": 0.2,
+            "embedding_similarity": 0.2628,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3428,
+            "dependency_reason": "Influence=0.200: embedding_sim=0.263, cluster_strength=0.000, graph_signal=0.343 (edge_weight=0.343, propagated=0.171)."
+          }
+        ],
+        "indicator": [
+          {
+            "column": "value",
+            "score": 0.2941,
+            "embedding_similarity": 0.4058,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4558,
+            "dependency_reason": "Influence=0.294: embedding_sim=0.406, cluster_strength=0.000, graph_signal=0.456 (edge_weight=0.456, propagated=0.228)."
+          },
+          {
+            "column": "unit",
+            "score": 0.286,
+            "embedding_similarity": 0.3943,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4443,
+            "dependency_reason": "Influence=0.286: embedding_sim=0.394, cluster_strength=0.000, graph_signal=0.444 (edge_weight=0.444, propagated=0.222)."
+          },
+          {
+            "column": "state",
+            "score": 0.2217,
+            "embedding_similarity": 0.2938,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3738,
+            "dependency_reason": "Influence=0.222: embedding_sim=0.294, cluster_strength=0.000, graph_signal=0.374 (edge_weight=0.374, propagated=0.187)."
+          },
+          {
+            "column": "quarter",
+            "score": 0.2102,
+            "embedding_similarity": 0.2775,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3575,
+            "dependency_reason": "Influence=0.210: embedding_sim=0.277, cluster_strength=0.000, graph_signal=0.357 (edge_weight=0.357, propagated=0.179)."
+          },
+          {
+            "column": "sector",
+            "score": 0.1999,
+            "embedding_similarity": 0.2628,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3428,
+            "dependency_reason": "Influence=0.200: embedding_sim=0.263, cluster_strength=0.000, graph_signal=0.343 (edge_weight=0.343, propagated=0.171)."
+          }
+        ],
+        "state": [
+          {
+            "column": "year",
+            "score": 0.2837,
+            "embedding_similarity": 0.3824,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4624,
+            "dependency_reason": "Influence=0.284: embedding_sim=0.382, cluster_strength=0.000, graph_signal=0.462 (edge_weight=0.462, propagated=0.231)."
+          },
+          {
+            "column": "unit",
+            "score": 0.2602,
+            "embedding_similarity": 0.3488,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4288,
+            "dependency_reason": "Influence=0.260: embedding_sim=0.349, cluster_strength=0.000, graph_signal=0.429 (edge_weight=0.429, propagated=0.214)."
+          },
+          {
+            "column": "religion",
+            "score": 0.2505,
+            "embedding_similarity": 0.3436,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3936,
+            "dependency_reason": "Influence=0.251: embedding_sim=0.344, cluster_strength=0.000, graph_signal=0.394 (edge_weight=0.394, propagated=0.197)."
+          },
+          {
+            "column": "quarter",
+            "score": 0.2373,
+            "embedding_similarity": 0.3161,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3961,
+            "dependency_reason": "Influence=0.237: embedding_sim=0.316, cluster_strength=0.000, graph_signal=0.396 (edge_weight=0.396, propagated=0.198)."
+          },
+          {
+            "column": "gender",
+            "score": 0.2355,
+            "embedding_similarity": 0.3136,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3936,
+            "dependency_reason": "Influence=0.236: embedding_sim=0.314, cluster_strength=0.000, graph_signal=0.394 (edge_weight=0.394, propagated=0.197)."
+          }
+        ],
+        "gender": [
+          {
+            "column": "AgeGroup",
+            "score": 0.437,
+            "embedding_similarity": 0.4729,
+            "cluster_strength": 0.2,
+            "graph_signal": 0.7029,
+            "dependency_reason": "Influence=0.437: embedding_sim=0.473, cluster_strength=0.200, graph_signal=0.703 (edge_weight=0.703, propagated=0.351)."
+          },
+          {
+            "column": "socialGroup",
+            "score": 0.4074,
+            "embedding_similarity": 0.4306,
+            "cluster_strength": 0.2,
+            "graph_signal": 0.6606,
+            "dependency_reason": "Influence=0.407: embedding_sim=0.431, cluster_strength=0.200, graph_signal=0.661 (edge_weight=0.661, propagated=0.330)."
+          },
+          {
+            "column": "religion",
+            "score": 0.2716,
+            "embedding_similarity": 0.3651,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4451,
+            "dependency_reason": "Influence=0.272: embedding_sim=0.365, cluster_strength=0.000, graph_signal=0.445 (edge_weight=0.445, propagated=0.223)."
+          },
+          {
+            "column": "value",
+            "score": 0.2568,
+            "embedding_similarity": 0.344,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.424,
+            "dependency_reason": "Influence=0.257: embedding_sim=0.344, cluster_strength=0.000, graph_signal=0.424 (edge_weight=0.424, propagated=0.212)."
+          },
+          {
+            "column": "unit",
+            "score": 0.2392,
+            "embedding_similarity": 0.3189,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3989,
+            "dependency_reason": "Influence=0.239: embedding_sim=0.319, cluster_strength=0.000, graph_signal=0.399 (edge_weight=0.399, propagated=0.199)."
+          }
+        ],
+        "sector": [
+          {
+            "column": "unit",
+            "score": 0.2903,
+            "embedding_similarity": 0.3919,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4719,
+            "dependency_reason": "Influence=0.290: embedding_sim=0.392, cluster_strength=0.000, graph_signal=0.472 (edge_weight=0.472, propagated=0.236)."
+          },
+          {
+            "column": "quarter",
+            "score": 0.2698,
+            "embedding_similarity": 0.3626,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4426,
+            "dependency_reason": "Influence=0.270: embedding_sim=0.363, cluster_strength=0.000, graph_signal=0.443 (edge_weight=0.443, propagated=0.221)."
+          },
+          {
+            "column": "state",
+            "score": 0.2271,
+            "embedding_similarity": 0.3016,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3816,
+            "dependency_reason": "Influence=0.227: embedding_sim=0.302, cluster_strength=0.000, graph_signal=0.382 (edge_weight=0.382, propagated=0.191)."
+          },
+          {
+            "column": "value",
+            "score": 0.2266,
+            "embedding_similarity": 0.3009,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3809,
+            "dependency_reason": "Influence=0.227: embedding_sim=0.301, cluster_strength=0.000, graph_signal=0.381 (edge_weight=0.381, propagated=0.190)."
+          },
+          {
+            "column": "socialGroup",
+            "score": 0.2106,
+            "embedding_similarity": 0.278,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.358,
+            "dependency_reason": "Influence=0.211: embedding_sim=0.278, cluster_strength=0.000, graph_signal=0.358 (edge_weight=0.358, propagated=0.179)."
+          }
+        ],
+        "AgeGroup": [
+          {
+            "column": "socialGroup",
+            "score": 0.4916,
+            "embedding_similarity": 0.5509,
+            "cluster_strength": 0.2,
+            "graph_signal": 0.7809,
+            "dependency_reason": "Influence=0.492: embedding_sim=0.551, cluster_strength=0.200, graph_signal=0.781 (edge_weight=0.781, propagated=0.390)."
+          },
+          {
+            "column": "gender",
+            "score": 0.437,
+            "embedding_similarity": 0.4729,
+            "cluster_strength": 0.2,
+            "graph_signal": 0.7029,
+            "dependency_reason": "Influence=0.437: embedding_sim=0.473, cluster_strength=0.200, graph_signal=0.703 (edge_weight=0.703, propagated=0.351)."
+          },
+          {
+            "column": "year_type",
+            "score": 0.2917,
+            "embedding_similarity": 0.3939,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4739,
+            "dependency_reason": "Influence=0.292: embedding_sim=0.394, cluster_strength=0.000, graph_signal=0.474 (edge_weight=0.474, propagated=0.237)."
+          },
+          {
+            "column": "year",
+            "score": 0.2723,
+            "embedding_similarity": 0.3662,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4462,
+            "dependency_reason": "Influence=0.272: embedding_sim=0.366, cluster_strength=0.000, graph_signal=0.446 (edge_weight=0.446, propagated=0.223)."
+          },
+          {
+            "column": "quarter",
+            "score": 0.2096,
+            "embedding_similarity": 0.2766,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3566,
+            "dependency_reason": "Influence=0.210: embedding_sim=0.277, cluster_strength=0.000, graph_signal=0.357 (edge_weight=0.357, propagated=0.178)."
+          }
+        ],
+        "weekly_status": [
+          {
+            "column": "month",
+            "score": 0.3083,
+            "embedding_similarity": 0.4175,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4975,
+            "dependency_reason": "Influence=0.308: embedding_sim=0.418, cluster_strength=0.000, graph_signal=0.497 (edge_weight=0.497, propagated=0.249)."
+          },
+          {
+            "column": "year",
+            "score": 0.238,
+            "embedding_similarity": 0.3171,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3971,
+            "dependency_reason": "Influence=0.238: embedding_sim=0.317, cluster_strength=0.000, graph_signal=0.397 (edge_weight=0.397, propagated=0.199)."
+          },
+          {
+            "column": "indicator",
+            "score": 0.187,
+            "embedding_similarity": 0.2443,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3243,
+            "dependency_reason": "Influence=0.187: embedding_sim=0.244, cluster_strength=0.000, graph_signal=0.324 (edge_weight=0.324, propagated=0.162)."
+          },
+          {
+            "column": "year_type",
+            "score": 0.1822,
+            "embedding_similarity": 0.2374,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3174,
+            "dependency_reason": "Influence=0.182: embedding_sim=0.237, cluster_strength=0.000, graph_signal=0.317 (edge_weight=0.317, propagated=0.159)."
+          },
+          {
+            "column": "quarter",
+            "score": 0.174,
+            "embedding_similarity": 0.2257,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3057,
+            "dependency_reason": "Influence=0.174: embedding_sim=0.226, cluster_strength=0.000, graph_signal=0.306 (edge_weight=0.306, propagated=0.153)."
+          }
+        ],
+        "religion": [
+          {
+            "column": "socialGroup",
+            "score": 0.3032,
+            "embedding_similarity": 0.4103,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4903,
+            "dependency_reason": "Influence=0.303: embedding_sim=0.410, cluster_strength=0.000, graph_signal=0.490 (edge_weight=0.490, propagated=0.245)."
+          },
+          {
+            "column": "gender",
+            "score": 0.2716,
+            "embedding_similarity": 0.3651,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4451,
+            "dependency_reason": "Influence=0.272: embedding_sim=0.365, cluster_strength=0.000, graph_signal=0.445 (edge_weight=0.445, propagated=0.223)."
+          },
+          {
+            "column": "state",
+            "score": 0.2505,
+            "embedding_similarity": 0.3436,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3936,
+            "dependency_reason": "Influence=0.251: embedding_sim=0.344, cluster_strength=0.000, graph_signal=0.394 (edge_weight=0.394, propagated=0.197)."
+          },
+          {
+            "column": "value",
+            "score": 0.2385,
+            "embedding_similarity": 0.3178,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3978,
+            "dependency_reason": "Influence=0.238: embedding_sim=0.318, cluster_strength=0.000, graph_signal=0.398 (edge_weight=0.398, propagated=0.199)."
+          },
+          {
+            "column": "year",
+            "score": 0.2235,
+            "embedding_similarity": 0.2964,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3764,
+            "dependency_reason": "Influence=0.223: embedding_sim=0.296, cluster_strength=0.000, graph_signal=0.376 (edge_weight=0.376, propagated=0.188)."
+          }
+        ],
+        "socialGroup": [
+          {
+            "column": "AgeGroup",
+            "score": 0.4916,
+            "embedding_similarity": 0.5509,
+            "cluster_strength": 0.2,
+            "graph_signal": 0.7809,
+            "dependency_reason": "Influence=0.492: embedding_sim=0.551, cluster_strength=0.200, graph_signal=0.781 (edge_weight=0.781, propagated=0.390)."
+          },
+          {
+            "column": "gender",
+            "score": 0.4074,
+            "embedding_similarity": 0.4306,
+            "cluster_strength": 0.2,
+            "graph_signal": 0.6606,
+            "dependency_reason": "Influence=0.407: embedding_sim=0.431, cluster_strength=0.200, graph_signal=0.661 (edge_weight=0.661, propagated=0.330)."
+          },
+          {
+            "column": "religion",
+            "score": 0.3032,
+            "embedding_similarity": 0.4103,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4903,
+            "dependency_reason": "Influence=0.303: embedding_sim=0.410, cluster_strength=0.000, graph_signal=0.490 (edge_weight=0.490, propagated=0.245)."
+          },
+          {
+            "column": "unit",
+            "score": 0.2444,
+            "embedding_similarity": 0.3263,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4063,
+            "dependency_reason": "Influence=0.244: embedding_sim=0.326, cluster_strength=0.000, graph_signal=0.406 (edge_weight=0.406, propagated=0.203)."
+          },
+          {
+            "column": "sector",
+            "score": 0.2106,
+            "embedding_similarity": 0.278,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.358,
+            "dependency_reason": "Influence=0.211: embedding_sim=0.278, cluster_strength=0.000, graph_signal=0.358 (edge_weight=0.358, propagated=0.179)."
+          }
+        ],
+        "General_Education": [
+          {
+            "column": "gender",
+            "score": 0.2128,
+            "embedding_similarity": 0.2811,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3611,
+            "dependency_reason": "Influence=0.213: embedding_sim=0.281, cluster_strength=0.000, graph_signal=0.361 (edge_weight=0.361, propagated=0.181)."
+          },
+          {
+            "column": "socialGroup",
+            "score": 0.1935,
+            "embedding_similarity": 0.2535,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3335,
+            "dependency_reason": "Influence=0.193: embedding_sim=0.254, cluster_strength=0.000, graph_signal=0.334 (edge_weight=0.334, propagated=0.167)."
+          },
+          {
+            "column": "unit",
+            "score": 0.1915,
+            "embedding_similarity": 0.2507,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3307,
+            "dependency_reason": "Influence=0.191: embedding_sim=0.251, cluster_strength=0.000, graph_signal=0.331 (edge_weight=0.331, propagated=0.165)."
+          },
+          {
+            "column": "sector",
+            "score": 0.1874,
+            "embedding_similarity": 0.2449,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3249,
+            "dependency_reason": "Influence=0.187: embedding_sim=0.245, cluster_strength=0.000, graph_signal=0.325 (edge_weight=0.325, propagated=0.162)."
+          },
+          {
+            "column": "year_type",
+            "score": 0.1752,
+            "embedding_similarity": 0.2275,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3075,
+            "dependency_reason": "Influence=0.175: embedding_sim=0.227, cluster_strength=0.000, graph_signal=0.307 (edge_weight=0.307, propagated=0.154)."
+          }
+        ],
+        "quarter": [
+          {
+            "column": "month",
+            "score": 0.3047,
+            "embedding_similarity": 0.421,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.471,
+            "dependency_reason": "Influence=0.305: embedding_sim=0.421, cluster_strength=0.000, graph_signal=0.471 (edge_weight=0.471, propagated=0.235)."
+          },
+          {
+            "column": "year",
+            "score": 0.2747,
+            "embedding_similarity": 0.3781,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4281,
+            "dependency_reason": "Influence=0.275: embedding_sim=0.378, cluster_strength=0.000, graph_signal=0.428 (edge_weight=0.428, propagated=0.214)."
+          },
+          {
+            "column": "sector",
+            "score": 0.2698,
+            "embedding_similarity": 0.3626,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4426,
+            "dependency_reason": "Influence=0.270: embedding_sim=0.363, cluster_strength=0.000, graph_signal=0.443 (edge_weight=0.443, propagated=0.221)."
+          },
+          {
+            "column": "value",
+            "score": 0.2681,
+            "embedding_similarity": 0.3602,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4402,
+            "dependency_reason": "Influence=0.268: embedding_sim=0.360, cluster_strength=0.000, graph_signal=0.440 (edge_weight=0.440, propagated=0.220)."
+          },
+          {
+            "column": "unit",
+            "score": 0.2522,
+            "embedding_similarity": 0.3375,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4175,
+            "dependency_reason": "Influence=0.252: embedding_sim=0.337, cluster_strength=0.000, graph_signal=0.417 (edge_weight=0.417, propagated=0.209)."
+          }
+        ],
+        "month": [
+          {
+            "column": "year",
+            "score": 0.5639,
+            "embedding_similarity": 0.6542,
+            "cluster_strength": 0.2,
+            "graph_signal": 0.8842,
+            "dependency_reason": "Influence=0.564: embedding_sim=0.654, cluster_strength=0.200, graph_signal=0.884 (edge_weight=0.884, propagated=0.442)."
+          },
+          {
+            "column": "year_type",
+            "score": 0.3725,
+            "embedding_similarity": 0.3807,
+            "cluster_strength": 0.2,
+            "graph_signal": 0.6107,
+            "dependency_reason": "Influence=0.372: embedding_sim=0.381, cluster_strength=0.200, graph_signal=0.611 (edge_weight=0.611, propagated=0.305)."
+          },
+          {
+            "column": "weekly_status",
+            "score": 0.3083,
+            "embedding_similarity": 0.4175,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4975,
+            "dependency_reason": "Influence=0.308: embedding_sim=0.418, cluster_strength=0.000, graph_signal=0.497 (edge_weight=0.497, propagated=0.249)."
+          },
+          {
+            "column": "quarter",
+            "score": 0.3047,
+            "embedding_similarity": 0.421,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.471,
+            "dependency_reason": "Influence=0.305: embedding_sim=0.421, cluster_strength=0.000, graph_signal=0.471 (edge_weight=0.471, propagated=0.235)."
+          },
+          {
+            "column": "unit",
+            "score": 0.2221,
+            "embedding_similarity": 0.2944,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3744,
+            "dependency_reason": "Influence=0.222: embedding_sim=0.294, cluster_strength=0.000, graph_signal=0.374 (edge_weight=0.374, propagated=0.187)."
+          }
+        ],
+        "value": [
+          {
+            "column": "unit",
+            "score": 0.4426,
+            "embedding_similarity": 0.4809,
+            "cluster_strength": 0.2,
+            "graph_signal": 0.7109,
+            "dependency_reason": "Influence=0.443: embedding_sim=0.481, cluster_strength=0.200, graph_signal=0.711 (edge_weight=0.711, propagated=0.355)."
+          },
+          {
+            "column": "indicator",
+            "score": 0.2941,
+            "embedding_similarity": 0.4058,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4558,
+            "dependency_reason": "Influence=0.294: embedding_sim=0.406, cluster_strength=0.000, graph_signal=0.456 (edge_weight=0.456, propagated=0.228)."
+          },
+          {
+            "column": "quarter",
+            "score": 0.2681,
+            "embedding_similarity": 0.3602,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4402,
+            "dependency_reason": "Influence=0.268: embedding_sim=0.360, cluster_strength=0.000, graph_signal=0.440 (edge_weight=0.440, propagated=0.220)."
+          },
+          {
+            "column": "gender",
+            "score": 0.2568,
+            "embedding_similarity": 0.344,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.424,
+            "dependency_reason": "Influence=0.257: embedding_sim=0.344, cluster_strength=0.000, graph_signal=0.424 (edge_weight=0.424, propagated=0.212)."
+          },
+          {
+            "column": "religion",
+            "score": 0.2385,
+            "embedding_similarity": 0.3178,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.3978,
+            "dependency_reason": "Influence=0.238: embedding_sim=0.318, cluster_strength=0.000, graph_signal=0.398 (edge_weight=0.398, propagated=0.199)."
+          }
+        ],
+        "unit": [
+          {
+            "column": "value",
+            "score": 0.4426,
+            "embedding_similarity": 0.4809,
+            "cluster_strength": 0.2,
+            "graph_signal": 0.7109,
+            "dependency_reason": "Influence=0.443: embedding_sim=0.481, cluster_strength=0.200, graph_signal=0.711 (edge_weight=0.711, propagated=0.355)."
+          },
+          {
+            "column": "sector",
+            "score": 0.2903,
+            "embedding_similarity": 0.3919,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4719,
+            "dependency_reason": "Influence=0.290: embedding_sim=0.392, cluster_strength=0.000, graph_signal=0.472 (edge_weight=0.472, propagated=0.236)."
+          },
+          {
+            "column": "indicator",
+            "score": 0.286,
+            "embedding_similarity": 0.3943,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4443,
+            "dependency_reason": "Influence=0.286: embedding_sim=0.394, cluster_strength=0.000, graph_signal=0.444 (edge_weight=0.444, propagated=0.222)."
+          },
+          {
+            "column": "state",
+            "score": 0.2602,
+            "embedding_similarity": 0.3488,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4288,
+            "dependency_reason": "Influence=0.260: embedding_sim=0.349, cluster_strength=0.000, graph_signal=0.429 (edge_weight=0.429, propagated=0.214)."
+          },
+          {
+            "column": "quarter",
+            "score": 0.2522,
+            "embedding_similarity": 0.3375,
+            "cluster_strength": 0.0,
+            "graph_signal": 0.4175,
+            "dependency_reason": "Influence=0.252: embedding_sim=0.337, cluster_strength=0.000, graph_signal=0.417 (edge_weight=0.417, propagated=0.209)."
+          }
+        ]
+      },
+      "step": 9
+    }
+  ]
+}

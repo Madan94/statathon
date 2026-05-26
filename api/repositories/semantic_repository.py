@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from database.models import (
+from api.database.models import (
     DatasetContextRecord,
     PriorityDependency,
     SchemaGraphEdge,

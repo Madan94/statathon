@@ -5,7 +5,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from database.models import ColumnIntelligenceProfile, DatasetIntelligenceRecord
+from api.database.models import ColumnIntelligenceProfile, DatasetIntelligenceRecord
 
 
 class DatasetIntelligenceRepository:
