@@ -1,0 +1,26 @@
+# Exclude local python virtualenv and cache
+data/Lib/
+data/Include/
+data/Scripts/
+data/pyvenv.cfg
+
+# Exclude large model caches
+model/cache/
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor and VCS
+.vscode/
+.idea/
+.git/
+
+# Build metadata
+*.egg-info
+*.dist-info
+
+# Misc
+.env
+.DS_Store

@@ -1,20 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Poppins } from "next/font/google";
+import AuthInit from "@/components/AuthInit";
+import AppShell from "@/components/layout/AppShell";
+import Providers from "@/components/Providers";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Statathon - Statistical Analysis Platform",
-  description: "AI-powered statistical analysis with semantic mapping and intelligent validation",
+  title: "BharatStat — Turn raw data into visual reports",
+  description:
+    "Begin your journey with BharatStat. Upload survey data, verify with OTP, and generate visual reports.",
 };
 
 export default function RootLayout({
@@ -23,11 +24,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <html lang="en" className={`light ${poppins.variable}`} style={{ colorScheme: "light" }}>
+      <body className={`${poppins.className} font-sans antialiased`}>
+        <AuthInit />
+        <Providers />
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

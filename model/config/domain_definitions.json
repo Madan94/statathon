@@ -1,48 +1,153 @@
 {
-  "domains": {
-    "identifier": {
-      "description": "unique identifier key code primary key reference number serial number person id household id survey id record number",
-      "keywords": ["id", "key", "code", "serial", "reference", "number", "uid", "pk"]
-    },
-    "demographic": {
-      "description": "demographic characteristics age gender sex marital status ethnicity race religion caste nationality birth date age group population segment",
-      "keywords": ["age", "gender", "sex", "marital", "ethnicity", "race", "religion", "caste", "birth", "nationality"]
-    },
-    "education": {
-      "description": "education level degree schooling literacy qualification academic education student years of schooling enrollment graduation diploma university college school",
-      "keywords": ["education", "school", "degree", "literacy", "qualification", "enrollment", "graduation", "academic"]
-    },
-    "employment": {
-      "description": "employment occupation job profession work role career job title employment status labor force workforce sector industry employer employee working hours",
-      "keywords": ["occupation", "employment", "job", "profession", "work", "labor", "workforce", "sector", "industry"]
-    },
-    "income": {
-      "description": "income salary earnings wages monthly payment compensation financial earnings personal income household income annual income revenue expenditure tax amount",
-      "keywords": ["income", "salary", "wage", "earning", "payment", "compensation", "revenue", "expenditure", "tax"]
+  "version": "2026.1",
+  "description": "Unified MoSPI Architecture: Archetype Firewalls + Core Socioeconomic Universal Domains.",
+  "dataset_types": {
+    "census": {
+      "label": "Census & Demographic Dataset",
+      "domains": [
+        "population", "migration", "literacy", "occupation", "income", "housing",
+        "identifier", "survey_metadata", "geography", "demographic", "household", "uncorrelated_metadata"
+      ],
+      "subdomains": {
+        "population": ["total_population", "density", "headcount", "vital_statistics", "birth_rate", "death_rate"],
+        "migration": ["place_of_previous_residence", "duration_residence", "reason_migration", "out_migrant"],
+        "literacy": ["literacy_rate", "educational_attainment_snapshot", "highest_education_level"],
+        "occupation": ["main_activity_status", "industry_classification", "nco_code"],
+        "income": ["household_income", "consumption_proxy", "welfare_indicator", "expenditure_decile"],
+        "housing": ["tenure_status", "rooms", "structure_type", "pucca", "kutcha", "latrine_facility"],
+        
+        "identifier": ["id", "key", "code", "serial", "reference", "number", "uid", "psu", "stratum", "fsu", "person_id"],
+        "survey_metadata": ["survey", "year", "quarter", "month", "wave", "round", "questionnaire", "weight", "indicator", "unit", "frequency", "year_type", "multiplier"],
+        "geography": ["district", "region", "state", "city", "village", "urban", "rural", "sector", "zone", "ward", "block"],
+        "demographic": ["age", "agegroup", "gender", "sex", "marital", "religion", "socialgroup", "caste", "ethnicity"],
+        "household": ["household", "hh", "head", "size", "dwelling", "amenity", "ration_card"],
+        "uncorrelated_metadata": ["unknown", "checksum", "null", "empty", "system", "misc", "value", "undefined", "blank"]
+      }
     },
     "health": {
-      "description": "health medical insurance hospital disease illness treatment vaccination healthcare doctor medicine health expense disability chronic condition mortality morbidity",
-      "keywords": ["health", "medical", "insurance", "hospital", "disease", "treatment", "vaccination", "disability", "mortality"]
+      "label": "Health & Morbidity Dataset",
+      "domains": [
+        "patient", "hospital", "insurance", "disease", "treatment", "nutrition", "mortality", "medical_cost", "vaccination", "healthcare_access",
+        "identifier", "survey_metadata", "geography", "demographic", "household", "uncorrelated_metadata"
+      ],
+      "subdomains": {
+        "patient": ["patient_id", "episode_id", "admission_discharge_dates", "severity_score", "ailment_nature"],
+        "hospital": ["facility_code", "bed_count", "specialty_unit", "geographic_zone", "public_private_hospital"],
+        "insurance": ["policy_id", "claim_amount", "copay", "premium_band", "health_scheme"],
+        "disease": ["icd_code", "diagnosis_text", "chronic_acute_flag", "co_morbidity", "malaria", "tuberculosis"],
+        "treatment": ["procedure_code", "therapy_type", "length_of_stay", "surgery_flag", "medicines_prescribed"],
+        "nutrition": ["bmi_band", "diet_indicator", "child_stunting_underweight_flag", "anaemia_level"],
+        "mortality": ["cause_of_death", "neonatal_indicator", "maternal_indicator", "infant_death"],
+        "medical_cost": ["total_billed", "reimbursed_amount", "out_of_pocket", "expenditure_on_medicine", "hospitalisation_cost"],
+        "vaccination": ["vaccine_type", "dose_number", "immunisation_coverage", "polio", "bcg", "measles"],
+        "healthcare_access": ["distance_facility_km", "transport_mode", "scheme_enrolment", "reason_for_not_seeking_care"],
+        
+        "identifier": ["id", "key", "code", "serial", "reference", "number", "uid", "psu", "stratum", "fsu", "person_id"],
+        "survey_metadata": ["survey", "year", "quarter", "month", "wave", "round", "questionnaire", "weight", "indicator", "unit", "frequency", "year_type", "multiplier"],
+        "geography": ["district", "region", "state", "city", "village", "urban", "rural", "sector", "zone", "ward", "block"],
+        "demographic": ["age", "agegroup", "gender", "sex", "marital", "religion", "socialgroup", "caste", "ethnicity"],
+        "household": ["household", "hh", "head", "size", "dwelling", "amenity", "ration_card"],
+        "uncorrelated_metadata": ["unknown", "checksum", "null", "empty", "system", "misc", "value", "undefined", "blank"]
+      }
     },
-    "household": {
-      "description": "household family members family size number of children dependents dwelling housing type household head residence living arrangement",
-      "keywords": ["household", "family", "children", "dependents", "dwelling", "housing", "residence"]
+    "education": {
+      "label": "Education Dataset",
+      "domains": [
+        "student", "attendance", "enrollment", "literacy", "institution", "teacher", "performance", "dropout", "scholarship", "curriculum",
+        "identifier", "survey_metadata", "geography", "demographic", "household", "uncorrelated_metadata"
+      ],
+      "subdomains": {
+        "student": ["student_id", "grade_level", "sex", "socioeconomic_index", "general_education", "technical_education"],
+        "attendance": ["days_present", "days_absent", "attendance_rate"],
+        "enrollment": ["enrollment_status", "new_admission", "repeater_flag", "currently_attending"],
+        "literacy": ["reading_proficiency_score", "language_medium", "can_read_write"],
+        "institution": ["school_code", "school_type_rural_urban", "management_type", "government_private_aided"],
+        "teacher": ["teacher_count", "pupil_teacher_ratio", "qualification_level"],
+        "performance": ["test_score", "grade_point", "achievement_band"],
+        "dropout": ["dropout_grade", "reason_dropout", "reentry_indicator", "never_enrolled"],
+        "scholarship": ["scheme_code", "stipend_amount", "free_textbooks", "mid_day_meal"],
+        "curriculum": ["subject_stream", "textbook_scheme", "assessment_wave"],
+        
+        "identifier": ["id", "key", "code", "serial", "reference", "number", "uid", "psu", "stratum", "fsu", "person_id"],
+        "survey_metadata": ["survey", "year", "quarter", "month", "wave", "round", "questionnaire", "weight", "indicator", "unit", "frequency", "year_type", "multiplier"],
+        "geography": ["district", "region", "state", "city", "village", "urban", "rural", "sector", "zone", "ward", "block"],
+        "demographic": ["age", "agegroup", "gender", "sex", "marital", "religion", "socialgroup", "caste", "ethnicity"],
+        "household": ["household", "hh", "head", "size", "dwelling", "amenity", "ration_card"],
+        "uncorrelated_metadata": ["unknown", "checksum", "null", "empty", "system", "misc", "value", "undefined", "blank"]
+      }
     },
-    "geography": {
-      "description": "geography district region state country location urban rural area city village town block ward tehsil taluk pin code postal zone latitude longitude address",
-      "keywords": ["district", "region", "state", "country", "city", "village", "urban", "rural", "location", "area", "zone", "postal", "address"]
+    "labor": {
+      "label": "Labor & Employment Dataset",
+      "domains": [
+        "employment", "salary", "workforce", "industry", "occupation", "hours_worked", "labor_mobility", "benefits", "retirement", "unemployment",
+        "identifier", "survey_metadata", "geography", "demographic", "household", "uncorrelated_metadata"
+      ],
+      "subdomains": {
+        "employment": ["employed_flag", "formal_informal", "contract_type", "establishment_size", "weekly_status", "principal_status", "subsidiary_status"],
+        "salary": ["monthly_wage", "bonus", "overtime_pay", "real_nominal_indicator", "earnings_inr"],
+        "workforce": ["labor_force_participation", "usual_activity_role", "worker_population_ratio"],
+        "industry": ["nic_code_division", "sector_public_private", "enterprise_type"],
+        "occupation": ["nco_skill_level", "managerial_blue_collar", "profession_code"],
+        "hours_worked": ["usual_hours_week", "overtime_hours", "actual_hours_worked"],
+        "labor_mobility": ["interdistrict_worker", "commute_distance_band"],
+        "benefits": ["paid_leave_indicator", "pension_subscription", "insurance_via_employer", "social_security"],
+        "retirement": ["superannuation", "years_service"],
+        "unemployment": ["duration_unemployment_weeks", "seeking_training_flag", "available_for_work"],
+        
+        "identifier": ["id", "key", "code", "serial", "reference", "number", "uid", "psu", "stratum", "fsu", "person_id"],
+        "survey_metadata": ["survey", "year", "quarter", "month", "wave", "round", "questionnaire", "weight", "indicator", "unit", "frequency", "year_type", "multiplier"],
+        "geography": ["district", "region", "state", "city", "village", "urban", "rural", "sector", "zone", "ward", "block"],
+        "demographic": ["age", "agegroup", "gender", "sex", "marital", "religion", "socialgroup", "caste", "ethnicity"],
+        "household": ["household", "hh", "head", "size", "dwelling", "amenity", "ration_card"],
+        "uncorrelated_metadata": ["unknown", "checksum", "null", "empty", "system", "misc", "value", "undefined", "blank"]
+      }
     },
-    "population": {
-      "description": "population density total population growth rate birth rate death rate migration census count headcount inhabitants residents",
-      "keywords": ["population", "density", "growth", "birth rate", "death rate", "migration", "census", "count"]
+    "agriculture": {
+      "label": "Agriculture Dataset",
+      "domains": [
+        "crop", "yield", "land", "soil", "irrigation", "fertilizer", "livestock", "climate", "market", "agri_income",
+        "identifier", "survey_metadata", "geography", "demographic", "household", "uncorrelated_metadata"
+      ],
+      "subdomains": {
+        "crop": ["crop_name_code", "sowing_month", "harvest_month", "kharif", "rabi", "zaid"],
+        "yield": ["production_quintal", "productivity_band", "quantity_harvested"],
+        "land": ["land_holding_hectares", "tenancy_status", "operational_holding", "leased_in", "leased_out"],
+        "soil": ["soil_health_index", "soil_texture_class"],
+        "irrigation": ["irrigated_area_share", "source_canal_well_rainfed", "tubewell", "surface_water"],
+        "fertilizer": ["npk_dose_band", "organic_input_flag", "urea", "pesticide_cost"],
+        "livestock": ["species_count_band", "dairy_yield_proxy", "cattle", "poultry", "milk_production"],
+        "climate": ["rainfall_dummy", "drought_dummy", "temperature_band"],
+        "market": ["mandi_distance_km", "msp_received_flag", "marketing_channel", "procurement_agency"],
+        "agri_income": ["farm_receipts", "input_cost_share", "net_income_estimate", "value_of_output"],
+        
+        "identifier": ["id", "key", "code", "serial", "reference", "number", "uid", "psu", "stratum", "fsu", "person_id"],
+        "survey_metadata": ["survey", "year", "quarter", "month", "wave", "round", "questionnaire", "weight", "indicator", "unit", "frequency", "year_type", "multiplier"],
+        "geography": ["district", "region", "state", "city", "village", "urban", "rural", "sector", "zone", "ward", "block"],
+        "demographic": ["age", "agegroup", "gender", "sex", "marital", "religion", "socialgroup", "caste", "ethnicity"],
+        "household": ["household", "hh", "head", "size", "dwelling", "amenity", "ration_card"],
+        "uncorrelated_metadata": ["unknown", "checksum", "null", "empty", "system", "misc", "value", "undefined", "blank"]
+      }
     },
-    "infrastructure": {
-      "description": "infrastructure access internet mobile phone electricity water sanitation road transport bank school hospital facility connectivity digital access amenities",
-      "keywords": ["internet", "mobile", "electricity", "water", "sanitation", "road", "transport", "bank", "facility", "connectivity"]
-    },
-    "survey_metadata": {
-      "description": "survey metadata year month wave round date period questionnaire form version interviewer response collection batch schedule timestamp",
-      "keywords": ["survey", "year", "month", "wave", "round", "date", "period", "questionnaire", "version", "batch", "timestamp"]
+    "economic_industry": {
+      "label": "Annual Survey of Industries & Enterprises",
+      "domains": [
+        "enterprise", "production", "financials", "fixed_assets", "raw_materials", "energy", "labor_cost",
+        "identifier", "survey_metadata", "geography", "uncorrelated_metadata"
+      ],
+      "subdomains": {
+        "enterprise": ["enterprise_type", "ownership_code", "year_of_initial_production", "nic_code", "factory_status"],
+        "production": ["gross_value_added", "output_quantity", "product_code", "capacity_utilization"],
+        "financials": ["working_capital", "outstanding_loans", "interest_paid", "net_profit", "gross_revenue"],
+        "fixed_assets": ["opening_balance", "depreciation", "capital_expenditure", "plant_and_machinery"],
+        "raw_materials": ["indigenous_materials", "imported_materials", "consumable_stores", "packing_materials"],
+        "energy": ["electricity_consumed", "coal_consumed", "fuel_cost", "lubricants"],
+        "labor_cost": ["total_emoluments", "wages_paid_to_workers", "pf_contributions", "bonus_paid", "mandays_worked"],
+        
+        "identifier": ["id", "key", "code", "serial", "reference", "number", "uid", "psu", "stratum", "fsu", "dsl_no", "factory_id"],
+        "survey_metadata": ["survey", "year", "quarter", "month", "wave", "round", "questionnaire", "weight", "indicator", "unit", "frequency", "year_type", "multiplier"],
+        "geography": ["district", "region", "state", "city", "village", "urban", "rural", "sector", "zone", "ward", "block"],
+        "uncorrelated_metadata": ["unknown", "checksum", "null", "empty", "system", "misc", "value", "undefined", "blank"]
+      }
     }
   }
 }

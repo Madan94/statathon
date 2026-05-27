@@ -1,98 +1,60 @@
 import json
-import numpy as np
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "model"))
+
 from semantic_mapping.semantic_pipeline import SemanticPipeline
 
 
-class NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, (np.floating, np.float32, np.float64)):
-            return float(obj)
-        if isinstance(obj, (np.integer, np.int32, np.int64)):
-            return int(obj)
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return super().default(obj)
+def main():
+    columns = [
+        "person_id",
+        "age_years",
+        "gender_code",
+        "marital_status",
+        "education_level",
+        "employment_status",
+        "salary_monthly",
+        "annual_income",
+        "district_name",
+        "household_size",
+        "survey_year",
+        "health_insurance",
+        "internet_access",
+    ]
+
+    pipeline = SemanticPipeline()
+    result = pipeline.run(columns)
+
+    print("=== Dataset Context ===")
+    print(json.dumps(result["dataset_context"], indent=2))
+
+    print("\n=== Semantic Mapping ===")
+    for col, info in result["semantic_mapping"].items():
+        print(
+            f"{col}: domain={info['domain']} confidence={info['confidence']:.4f} "
+            f"normalized='{info['normalized_name']}'"
+        )
+
+    print("\n=== Cluster Summary ===")
+    for cluster in result["clusters"]:
+        print(
+            f"{cluster['cluster_id']} domain={cluster['domain']} support={cluster['support']:.4f} "
+            f"columns={cluster['columns']}"
+        )
+
+    print("\n=== Schema Graph ===")
+    print(f"nodes={len(result['schema_graph']['nodes'])}, edges={len(result['schema_graph']['edges'])}")
+
+    print("\n=== Audit Records ===")
+    print(f"{len(result['audit_records'])} records logged")
+    pipeline.print_audit_log(limit=5)
+
+    with open("semantic_pipeline_output.json", "w", encoding="utf-8") as f:
+        json.dump(result, f, indent=2, default=str)
+        print("\nWrote semantic_pipeline_output.json")
 
 
-pipeline = SemanticPipeline()
-
-columns = [
-    "person_id",
-    "age_years",
-    "gender_code",
-    "marital_status",
-
-    "education_level",
-    "education_years",
-
-    "occupation_type",
-    "employment_status",
-
-    "salary_monthly",
-    "annual_income",
-    "household_income",
-
-    "district_name",
-    "district_code",
-    "state_name",
-    "country",
-
-    "household_size",
-    "number_of_children",
-
-    "population_density",
-    "urban_rural_flag",
-
-    "survey_year",
-    "survey_month",
-
-    "health_insurance",
-    "medical_expense",
-
-    "internet_access",
-    "mobile_phone"
-]
-
-result = pipeline.run(columns)
-
-
-# --- Pretty Print ---
-print("=" * 70)
-print("DATASET CONTEXT")
-print("=" * 70)
-ctx = result["dataset_context"]
-print(f"  Inferred type: {ctx['inferred_type']}")
-for k, v in ctx["context_scores"].items():
-    print(f"    {k:20s} : {v:.4f}")
-
-print("\n" + "=" * 70)
-print("SEMANTIC DOMAIN MAPPING")
-print("=" * 70)
-for col, info in result["semantic_mapping"].items():
-    print(f"  {col:25s} -> {info['domain']:20s}  (conf: {info['confidence']:.4f}  cluster: {info['cluster_support']:.2f}  graph: {info['graph_consistency']:.2f})")
-
-print("\n" + "=" * 70)
-print("COLUMN CLUSTERS")
-print("=" * 70)
-for cl in result["clusters"]:
-    print(f"  {cl['cluster_id']:15s} | domain: {cl['domain']:15s} | support: {cl['support']:.2f} | members: {cl['columns']}")
-
-print("\n" + "=" * 70)
-print("PRIORITY DEPENDENCIES (top influencers)")
-print("=" * 70)
-for col, deps in result["priority_dependencies"].items():
-    if deps:
-        dep_str = ", ".join(f"{d['column']}({d['score']:.3f})" for d in deps[:3])
-        print(f"  {col:25s} <- {dep_str}")
-
-print("\n" + "=" * 70)
-print("SCHEMA GRAPH SUMMARY")
-print("=" * 70)
-graph = result["schema_graph"]
-print(f"  Nodes: {len(graph['nodes'])}")
-print(f"  Edges: {len(graph['edges'])}")
-
-# Save full result to JSON
-with open("phase2_output.json", "w") as f:
-    json.dump(result, f, indent=2, cls=NumpyEncoder)
-print("\nFull output saved to phase2_output.json")
+if __name__ == "__main__":
+    main()

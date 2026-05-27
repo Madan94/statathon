@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "rules": [
+    {
+      "id": "demographic_age_range",
+      "domain": "demographic",
+      "subdomain": null,
+      "column_name_pattern": "age",
+      "rule_name": "0<=age<=120",
+      "rule_type": "numeric_between",
+      "params": { "min": 0, "max": 120 },
+      "severity": "high"
+    },
+    {
+      "id": "income_non_negative",
+      "domain": "income",
+      "subdomain": null,
+      "column_name_pattern": "income|salary|wage",
+      "rule_name": "income>=0",
+      "rule_type": "numeric_min",
+      "params": { "min": 0 },
+      "severity": "medium"
+    },
+    {
+      "id": "education_years_bounds",
+      "domain": "education",
+      "subdomain": null,
+      "column_name_pattern": "education_years|schooling_years",
+      "rule_name": "0<=education_years<=30",
+      "rule_type": "numeric_between",
+      "params": { "min": 0, "max": 30 },
+      "severity": "medium"
+    },
+    {
+      "id": "pincode_digits_in",
+      "domain": "geography",
+      "subdomain": null,
+      "column_name_pattern": "pin|postal|zip",
+      "rule_name": "6_digit_pincode_like",
+      "rule_type": "regex_or_null",
+      "params": { "pattern": "^\\s*\\d{6}\\s*$" },
+      "severity": "low"
+    },
+    {
+      "id": "gender_categorical_demo",
+      "domain": "demographic",
+      "subdomain": null,
+      "column_name_pattern": "^gender|^sex",
+      "rule_name": "gender_allowed_values",
+      "rule_type": "categorical_in_set",
+      "params": {
+        "values_ci": ["male", "female", "other", "m", "f", "o", "unknown", "prefer not to say"]
+      },
+      "severity": "low"
+    }
+  ]
+}

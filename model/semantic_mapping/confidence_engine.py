@@ -36,9 +36,10 @@ class ConfidenceEngine:
         col_neighbors = neighbors.get(column, {})
         if not col_neighbors:
             return 0.0
-        consistent = 0
-        total = 0
-        for neighbor, weight in col_neighbors.items():
+        consistent = 0.0
+        total = 0.0
+        for neighbor, edge_data in col_neighbors.items():
+            weight = edge_data["weight"] if isinstance(edge_data, dict) else float(edge_data)
             total += weight
             neighbor_domain = column_domains.get(neighbor, "")
             if neighbor_domain == assigned_domain:

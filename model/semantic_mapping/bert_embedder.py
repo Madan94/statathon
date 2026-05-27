@@ -3,9 +3,9 @@ import numpy as np
 
 class BertEmbedder:
 
-    def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2", vector_store=None):
+    def __init__(self, model=None, model_name="sentence-transformers/all-MiniLM-L6-v2", vector_store=None):
+        self._model = model
         self._model_name = model_name
-        self._model = None               # lazy-loaded
         self._cache = {}            # fast in-memory cache (lives for one process)
         self._store = vector_store   # persistent on-disk cache (survives across runs)
 

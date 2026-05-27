@@ -11,8 +11,6 @@ class PriorityMapper:
         columns = list(embeddings.keys())
         dependencies = {}
 
-        centrality = schema_graph.compute_centrality()
-
         for target in columns:
             scores = []
 
@@ -27,8 +25,13 @@ class PriorityMapper:
 
                 cluster_strength = 0.2 if self._same_cluster(target, source, clusters) else 0.0
 
-                graph_weight = graph_neighbors.get(source, 0.0)
-                prop_weight = propagated.get(source, 0.0)
+                raw_gw = graph_neighbors.get(source)
+                if isinstance(raw_gw, dict):
+                    graph_weight = float(raw_gw.get("weight", 0.0))
+                else:
+                    graph_weight = float(raw_gw or 0.0)
+
+                prop_weight = float(propagated.get(source, 0.0))
                 graph_signal = max(graph_weight, prop_weight)
 
                 influence = (
@@ -38,12 +41,18 @@ class PriorityMapper:
                 )
 
                 if influence > 0.15:
+                    dependency_reason = (
+                        f"Influence={influence:.3f}: embedding_sim={emb_sim:.3f}, "
+                        f"cluster_strength={cluster_strength:.3f}, graph_signal={graph_signal:.3f} "
+                        f"(edge_weight={graph_weight:.3f}, propagated={prop_weight:.3f})."
+                    )
                     scores.append({
                         "column": source,
                         "score": round(float(influence), 4),
                         "embedding_similarity": round(float(emb_sim), 4),
                         "cluster_strength": round(float(cluster_strength), 4),
                         "graph_signal": round(float(graph_signal), 4),
+                        "dependency_reason": dependency_reason,
                     })
 
             scores.sort(key=lambda x: x["score"], reverse=True)

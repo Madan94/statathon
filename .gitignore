@@ -1,5 +1,31 @@
+.env
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.cache/
+# --- Local data / caches (optional: keep large caches out of git) ---
+model/cache/
 model/storage/vector_cache/
-model/audit_log.json
+model/weights/
 model/phase2_output.json
+.venv/
+data/raw_uploads
+
+# Running uvicorn from `api/` drops caches/logs here — do not commit
+api/audit_log.json
+api/model/
+api/storage/
+
+# Report Builder runtime artifacts (generated PDFs, uploaded templates, KG exports)
+storage/reports/
+storage/templates/
+storage/derived/
+storage/uploads/
+
+# Local-only requirements workarounds
+requirements-windows-noxlrd.txt

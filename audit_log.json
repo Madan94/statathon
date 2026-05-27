@@ -1,0 +1,22 @@
+{"timestamp": "2026-05-26T06:26:28.883241", "event": "column_normalization", "data": {"columns": {"year_type": "year type", "year": "year", "frequency": "frequency", "indicator": "indicator", "state": "state", "gender": "gender", "sector": "sector", "AgeGroup": "age group", "weekly_status": "weekly status", "religion": "religion", "socialGroup": "social group", "General_Education": "general education", "quarter": "quarter", "month": "month", "value": "value", "unit": "unit"}}, "step": 1}
+{"timestamp": "2026-05-26T06:26:28.886623", "event": "embedding_generation", "data": {"columns_embedded": ["year_type", "year", "frequency", "indicator", "state", "gender", "sector", "AgeGroup", "weekly_status", "religion", "socialGroup", "General_Education", "quarter", "month", "value", "unit"], "embedding_dim": 384}, "step": 2}
+{"timestamp": "2026-05-26T06:26:28.890518", "event": "dataset_context_inferencer", "data": {"dataset_type": "census"}, "step": 3}
+{"timestamp": "2026-05-26T06:26:28.890945", "event": "gatekeeper", "data": {"column": "year_type", "status": "locked", "domain": "survey_metadata"}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.891273", "event": "gatekeeper", "data": {"column": "year", "status": "locked", "domain": "survey_metadata"}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.891588", "event": "gatekeeper", "data": {"column": "frequency", "status": "locked", "domain": "survey_metadata"}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.891846", "event": "gatekeeper", "data": {"column": "indicator", "status": "locked", "domain": "survey_metadata"}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.892121", "event": "gatekeeper", "data": {"column": "state", "status": "locked", "domain": "geography"}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.892427", "event": "gatekeeper", "data": {"column": "gender", "status": "locked", "domain": "demographic"}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.892734", "event": "gatekeeper", "data": {"column": "sector", "status": "locked", "domain": "geography"}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.892950", "event": "gatekeeper", "data": {"column": "AgeGroup", "status": "locked", "domain": "demographic"}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.893274", "event": "gatekeeper", "data": {"column": "weekly_status", "status": "unknown", "score": 0.26654666662216187}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.893524", "event": "gatekeeper", "data": {"column": "religion", "status": "locked", "domain": "demographic"}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.893747", "event": "gatekeeper", "data": {"column": "socialGroup", "status": "locked", "domain": "demographic"}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.894065", "event": "gatekeeper", "data": {"column": "General_Education", "status": "unknown", "score": 0.20657053589820862}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.894382", "event": "gatekeeper", "data": {"column": "quarter", "status": "locked", "domain": "survey_metadata"}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.894591", "event": "gatekeeper", "data": {"column": "month", "status": "locked", "domain": "survey_metadata"}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.894789", "event": "gatekeeper", "data": {"column": "value", "status": "locked", "domain": "uncorrelated"}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.895078", "event": "gatekeeper", "data": {"column": "unit", "status": "locked", "domain": "survey_metadata"}, "step": 4}
+{"timestamp": "2026-05-26T06:26:28.896457", "event": "dynamic_routing", "data": {"column": "weekly_status", "status": "dynamic_cluster", "domain": "census"}, "step": 5}
+{"timestamp": "2026-05-26T06:26:28.897010", "event": "dynamic_routing", "data": {"column": "General_Education", "status": "dynamic_cluster", "domain": "census"}, "step": 5}
+{"timestamp": "2026-05-26T06:26:28.897381", "event": "domain_prediction", "data": {"year_type": {"domain": "survey_metadata"}, "year": {"domain": "survey_metadata"}, "frequency": {"domain": "survey_metadata"}, "indicator": {"domain": "survey_metadata"}, "state": {"domain": "geography"}, "gender": {"domain": "demographic"}, "sector": {"domain": "geography"}, "AgeGroup": {"domain": "demographic"}, "weekly_status": {"domain": "census"}, "religion": {"domain": "demographic"}, "socialGroup": {"domain": "demographic"}, "General_Education": {"domain": "census"}, "quarter": {"domain": "survey_metadata"}, "month": {"domain": "survey_metadata"}, "value": {"domain": "uncorrelated"}, "unit": {"domain": "survey_metadata"}}, "step": 6}
