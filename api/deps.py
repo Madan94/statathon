@@ -7,13 +7,9 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
 from auth.cookies import ACCESS_COOKIE
-from auth.utils import ALGORITHM, SECRET_KEY
-<<<<<<< Updated upstream
-from object_storage.object_store import ObjectStore, StorageConfigError, build_default_store
-=======
 from auth.token_service import decode_access_token
-from object_storage.object_store import ObjectStore, build_default_store
->>>>>>> Stashed changes
+from auth.utils import ALGORITHM, SECRET_KEY
+from object_storage.object_store import ObjectStore, StorageConfigError, build_default_store
 
 _bearer = HTTPBearer(auto_error=False)
 

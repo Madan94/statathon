@@ -23,6 +23,8 @@ export default function ResendOtpButton({ onResend, cooldownSeconds = 60 }: Rese
     try {
       await onResend();
       setSeconds(cooldownSeconds);
+    } catch {
+      // Parent shows error toast / recovery; do not reset cooldown on failure
     } finally {
       setLoading(false);
     }

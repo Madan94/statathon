@@ -1,18 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authApi } from '@/lib/api';
+import { completeAuthAndRedirect } from '@/lib/authSession';
 import { toast } from '@/lib/toast';
 import AuthWizardLayout from '@/components/auth/AuthWizardLayout';
 import OtpInput from '@/components/auth/OtpInput';
 import ResendOtpButton from '@/components/auth/ResendOtpButton';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
+import PasswordInput from '@/components/ui/PasswordInput';
 
 export default function LoginPage() {
-  const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -55,7 +55,7 @@ export default function LoginPage() {
     try {
       await authApi.loginVerifyOtp(challengeId, otp);
       toast.success('Signed in');
-      router.push('/upload');
+      await completeAuthAndRedirect();
     } catch (err: unknown) {
       const ax = err as { response?: { data?: { detail?: string } } };
       setError(ax.response?.data?.detail || 'Verification failed');
@@ -67,11 +67,12 @@ export default function LoginPage() {
   if (step === 1) {
     return (
       <AuthWizardLayout
+        variant="login"
         title="Sign in"
         subtitle="Enter your email and password to continue."
         step={1}
       >
-        <form onSubmit={handleContinue} className="space-y-4">
+        <form onSubmit={handleContinue} className="space-y-3">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-text mb-1">
               Email
@@ -90,14 +91,12 @@ export default function LoginPage() {
             <label htmlFor="password" className="block text-sm font-medium text-text mb-1">
               Password
             </label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
               required
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/40"
             />
           </div>
           {error && <Alert variant="error">{error}</Alert>}
@@ -105,9 +104,9 @@ export default function LoginPage() {
             {loading ? 'Please wait…' : 'Continue'}
           </Button>
         </form>
-        <p className="mt-6 text-center text-sm text-text-muted">
+        <p className="mt-4 text-center text-xs text-text-muted">
           New officer?{' '}
-          <Link href="/signup" className="text-primary hover:underline">
+          <Link href="/signup" className="text-[#0a1f44] font-medium hover:underline">
             Create an account
           </Link>
         </p>
@@ -117,6 +116,7 @@ export default function LoginPage() {
 
   return (
     <AuthWizardLayout
+      variant="login"
       title="Verify sign-in"
       subtitle={`Enter the code sent to ${email}`}
       step={2}
@@ -129,11 +129,32 @@ export default function LoginPage() {
         </Button>
         <ResendOtpButton
           onResend={async () => {
-            const res = await authApi.loginResendOtp(challengeId);
-            if (res.dev_otp_logged) {
-              toast.info('Check API logs for OTP (dev mode)');
-            } else {
-              toast.success('Code resent');
+            const notifySent = (devLogged?: boolean | null) => {
+              if (devLogged) {
+                toast.info('Check the npm run dev terminal for your 6-digit code.');
+              } else {
+                toast.success('Verification code sent');
+              }
+            };
+            try {
+              const res = await authApi.loginResendOtp(challengeId);
+              notifySent(res.dev_otp_logged);
+            } catch (err: unknown) {
+              const ax = err as { response?: { data?: { detail?: string } } };
+              const detail = ax.response?.data?.detail || '';
+              const restart =
+                detail.toLowerCase().includes('already used') ||
+                detail.toLowerCase().includes('invalid or expired');
+              if (restart && email && password) {
+                const fresh = await authApi.loginStart(email, password);
+                setChallengeId(fresh.challenge_id);
+                setOtp('');
+                setError(null);
+                notifySent(fresh.dev_otp_logged);
+                return;
+              }
+              setError(detail || 'Could not resend code. Go back and try again.');
+              throw err;
             }
           }}
         />

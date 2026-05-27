@@ -1,7 +1,21 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { isAuthRoute, PUBLIC_ROUTES } from './authConfig';
+import { redirectToLogin } from './authSession';
 import { getCsrfToken } from './csrf';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+/** Browser uses same-origin proxy so httpOnly cookies are set on the dashboard host. */
+function resolveApiBase(): string {
+  if (typeof window !== 'undefined') {
+    return '/api/backend';
+  }
+  return (
+    process.env.API_INTERNAL_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'http://127.0.0.1:8000'
+  );
+}
+
+const API_BASE = resolveApiBase();
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -39,7 +53,13 @@ api.interceptors.response.use(
         await api.post('/auth/refresh');
         return api(original);
       } catch {
-        // refresh failed
+        if (typeof window !== 'undefined') {
+          const path = window.location.pathname;
+          const isPublic = (PUBLIC_ROUTES as readonly string[]).includes(path);
+          if (!isPublic && !isAuthRoute(path)) {
+            redirectToLogin(path);
+          }
+        }
       }
     }
     return Promise.reject(error);
@@ -320,6 +340,30 @@ export interface AnalysisResult {
   outliers?: Record<string, OutlierResult>;
   content_hash?: string;
 }
+
+export interface DashboardSummary {
+  datasets_count: number;
+  analyses_count: number;
+  analyses_complete_count: number;
+  reports_count: number;
+  report_jobs_count: number;
+  report_jobs_exported_count: number;
+  latest_datasets: Array<{
+    id: number;
+    filename: string;
+    status: string;
+    row_count: number;
+    column_count: number;
+    created_at: string | null;
+  }>;
+}
+
+export const dashboardApi = {
+  getSummary: async (): Promise<DashboardSummary> => {
+    const { data } = await api.get('/dashboard/summary');
+    return data;
+  },
+};
 
 export const authApi = {
   signupStart: async (payload: {

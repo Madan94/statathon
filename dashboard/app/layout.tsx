@@ -13,9 +13,9 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "BharatStat — Survey data intelligence",
+  title: "BharatStat — Turn raw data into visual reports",
   description:
-    "Audit-ready survey data intelligence with semantic mapping, validation, and tamper-proof reporting",
+    "Begin your journey with BharatStat. Upload survey data, verify with OTP, and generate visual reports.",
 };
 
 export default function RootLayout({

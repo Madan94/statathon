@@ -221,10 +221,10 @@ def verify_login_otp(db: Session, challenge_id: str, otp: str) -> User:
 
 def resend_otp(db: Session, challenge_id: str) -> tuple[int, dict]:
     ch = _get_challenge(db, challenge_id)
-    if not ch or ch.consumed_at:
+    if not ch:
         raise ValueError("Invalid or expired verification session")
-    if ch.expires_at < datetime.utcnow():
-        raise ValueError("Verification session expired. Start again.")
+    if ch.consumed_at:
+        raise ValueError("This code was already used. Sign in again to get a new code.")
 
     otp = _generate_otp()
     ch.code_hash = _hash_otp(otp)
@@ -233,4 +233,6 @@ def resend_otp(db: Session, challenge_id: str) -> tuple[int, dict]:
     db.commit()
 
     mail_meta = send_otp_email(ch.email, otp, ch.purpose)
+    if mail_meta.get("error") and not mail_meta.get("sent") and not mail_meta.get("dev_otp_logged"):
+        raise ValueError(mail_meta.get("error") or "Failed to send verification email")
     return OTP_TTL_MINUTES * 60, mail_meta

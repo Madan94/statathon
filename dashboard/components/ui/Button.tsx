@@ -14,7 +14,7 @@ const variants: Record<Variant, string> = {
   primary:
     'bg-primary text-white hover:bg-primary-hover focus-visible:ring-accent/40',
   secondary:
-    'bg-accent text-white hover:opacity-90 focus-visible:ring-accent/40',
+    'bg-accent text-[#0a0a0a] hover:brightness-105 focus-visible:ring-accent/40',
   outline:
     'border border-border bg-surface-card text-text hover:bg-accent-muted/50',
   destructive:
