@@ -24,7 +24,10 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def create_token(data):
+    import os
+
+    minutes = int(os.getenv("JWT_ACCESS_MINUTES", "30"))
     payload = data.copy()
-    payload["exp"] = datetime.utcnow() + timedelta(hours=12)
+    payload["exp"] = datetime.utcnow() + timedelta(minutes=minutes)
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     return token

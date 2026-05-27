@@ -5,8 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
+from auth.permissions import require_analysis_owner
 from database.database import SessionLocal
 from database.models import Analysis, Report
+from deps import get_current_user_id
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -20,10 +22,12 @@ def get_db():
 
 
 @router.get("/{analysis_id}/download")
-def download_report(analysis_id: int, db: Session = Depends(get_db)):
-    an = db.query(Analysis).filter(Analysis.id == analysis_id).first()
-    if not an:
-        raise HTTPException(status_code=404, detail="Analysis not found")
+def download_report(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    an = require_analysis_owner(db, analysis_id, user_id)
     if an.status != "complete":
         raise HTTPException(status_code=409, detail="Analysis not complete")
 

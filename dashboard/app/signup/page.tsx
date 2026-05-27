@@ -11,9 +11,11 @@ import ResendOtpButton from '@/components/auth/ResendOtpButton';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
+  const [fullName, setFullName] = useState('');
+  const [officerRole, setOfficerRole] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [challengeId, setChallengeId] = useState('');
@@ -26,7 +28,12 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await authApi.loginStart(email, password);
+      const res = await authApi.signupStart({
+        full_name: fullName,
+        officer_role: officerRole,
+        email,
+        password,
+      });
       setChallengeId(res.challenge_id);
       setStep(2);
       if (res.dev_otp_logged) {
@@ -37,8 +44,19 @@ export default function LoginPage() {
         toast.success('Verification code sent to your email');
       }
     } catch (err: unknown) {
-      const ax = err as { response?: { data?: { detail?: string } } };
-      setError(ax.response?.data?.detail || 'Invalid email or password');
+      const ax = err as {
+        response?: { data?: { detail?: string } };
+        message?: string;
+        code?: string;
+      };
+      const detail = ax.response?.data?.detail;
+      if (detail) {
+        setError(typeof detail === 'string' ? detail : JSON.stringify(detail));
+      } else if (ax.code === 'ERR_NETWORK' || ax.message?.includes('Network')) {
+        setError('Cannot reach the API. Start the server on http://127.0.0.1:8000 and check NEXT_PUBLIC_API_URL.');
+      } else {
+        setError(ax.message || 'Signup failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -53,8 +71,8 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      await authApi.loginVerifyOtp(challengeId, otp);
-      toast.success('Signed in');
+      await authApi.signupVerifyOtp(challengeId, otp);
+      toast.success('Account verified');
       router.push('/upload');
     } catch (err: unknown) {
       const ax = err as { response?: { data?: { detail?: string } } };
@@ -67,11 +85,36 @@ export default function LoginPage() {
   if (step === 1) {
     return (
       <AuthWizardLayout
-        title="Sign in"
-        subtitle="Enter your email and password to continue."
+        title="Create your officer account"
+        subtitle="Enter your details to register with BharatStat."
         step={1}
       >
         <form onSubmit={handleContinue} className="space-y-4">
+          <div>
+            <label htmlFor="fullName" className="block text-sm font-medium text-text mb-1">
+              Name
+            </label>
+            <input
+              id="fullName"
+              required
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full px-3 py-2 border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/40"
+            />
+          </div>
+          <div>
+            <label htmlFor="officerRole" className="block text-sm font-medium text-text mb-1">
+              Role of the Officer
+            </label>
+            <input
+              id="officerRole"
+              required
+              value={officerRole}
+              onChange={(e) => setOfficerRole(e.target.value)}
+              placeholder="e.g. Statistical Officer, Director"
+              className="w-full px-3 py-2 border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/40"
+            />
+          </div>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-text mb-1">
               Email
@@ -94,11 +137,13 @@ export default function LoginPage() {
               id="password"
               type="password"
               required
-              autoComplete="current-password"
+              minLength={12}
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/40"
             />
+            <p className="text-xs text-text-muted mt-1">At least 12 characters with letters and numbers</p>
           </div>
           {error && <Alert variant="error">{error}</Alert>}
           <Button type="submit" disabled={loading} className="w-full">
@@ -106,9 +151,9 @@ export default function LoginPage() {
           </Button>
         </form>
         <p className="mt-6 text-center text-sm text-text-muted">
-          New officer?{' '}
-          <Link href="/signup" className="text-primary hover:underline">
-            Create an account
+          Already have an account?{' '}
+          <Link href="/login" className="text-primary hover:underline">
+            Sign in
           </Link>
         </p>
       </AuthWizardLayout>
@@ -117,19 +162,19 @@ export default function LoginPage() {
 
   return (
     <AuthWizardLayout
-      title="Verify sign-in"
-      subtitle={`Enter the code sent to ${email}`}
+      title="Verify your email"
+      subtitle={`We sent a 6-digit code to ${email}`}
       step={2}
     >
       <form onSubmit={handleVerify} className="space-y-6">
         <OtpInput value={otp} onChange={setOtp} disabled={loading} />
         {error && <Alert variant="error">{error}</Alert>}
         <Button type="submit" disabled={loading} className="w-full">
-          {loading ? 'Verifying…' : 'Continue to platform'}
+          {loading ? 'Verifying…' : 'Continue'}
         </Button>
         <ResendOtpButton
           onResend={async () => {
-            const res = await authApi.loginResendOtp(challengeId);
+            const res = await authApi.signupResendOtp(challengeId);
             if (res.dev_otp_logged) {
               toast.info('Check API logs for OTP (dev mode)');
             } else {
@@ -142,7 +187,7 @@ export default function LoginPage() {
           className="w-full text-sm text-text-muted hover:text-text"
           onClick={() => setStep(1)}
         >
-          ← Back
+          ← Back to details
         </button>
       </form>
     </AuthWizardLayout>

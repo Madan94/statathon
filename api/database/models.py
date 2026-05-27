@@ -1,5 +1,6 @@
 from datetime import datetime
 from sqlalchemy import (
+    Boolean,
     Column,
     Integer,
     String,
@@ -19,8 +20,41 @@ class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
-    password = Column(String)
+    password = Column(String, nullable=False)
+    full_name = Column(String(256), nullable=True)
+    officer_role = Column(String(256), nullable=True)
+    email_verified_at = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=False, server_default="0")
+    failed_login_count = Column(Integer, default=0, server_default="0")
+    locked_until = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
     datasets = relationship("Dataset", back_populates="owner")
+    refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
+
+
+class OtpChallenge(Base):
+    __tablename__ = "otp_challenges"
+    id = Column(String(36), primary_key=True)
+    purpose = Column(String(32), nullable=False, index=True)
+    email = Column(String(320), nullable=False, index=True)
+    code_hash = Column(String(128), nullable=False)
+    payload_json = Column(JSON, nullable=True)
+    expires_at = Column(DateTime, nullable=False, index=True)
+    attempts = Column(Integer, default=0, server_default="0")
+    consumed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    token_hash = Column(String(128), nullable=False, unique=True, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    revoked_at = Column(DateTime, nullable=True)
+    user_agent = Column(String(512), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    user = relationship("User", back_populates="refresh_tokens")
 
 
 class Dataset(Base):

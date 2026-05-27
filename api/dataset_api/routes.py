@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from database.database import SessionLocal
 from database.models import Analysis, Dataset
+from auth.permissions import require_dataset_owner
 from deps import get_current_user_id, get_object_store
 from repositories.dataset_repository import DatasetRepository
 from services.analysis_runner import execute_registered_analysis_job
@@ -45,7 +46,9 @@ def upload(
 def create_presigned_upload_url(
     payload: UploadUrlRequest,
     store: ObjectStore = Depends(get_object_store),
+    user_id: int = Depends(get_current_user_id),
 ):
+    _ = user_id
     try:
         key = generate_object_key(payload.filename)
         expires = int(os.getenv("PRESIGNED_UPLOAD_EXPIRES_SECONDS", "3600"))
@@ -106,10 +109,12 @@ def register_dataset_after_presigned_upload(
 
 
 @router.get("/{dataset_id}")
-def get_dataset(dataset_id: int, db: Session = Depends(get_db)):
-    ds = db.query(Dataset).filter(Dataset.id == dataset_id).first()
-    if not ds:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+def get_dataset(
+    dataset_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    ds = require_dataset_owner(db, dataset_id, user_id)
     return {
         "id": ds.id,
         "filename": ds.filename,

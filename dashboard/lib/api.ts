@@ -1,45 +1,64 @@
-import axios from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { getCsrfToken } from './csrf';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const AUTH_TOKEN_KEY = 'bharatstat_token';
-const LEGACY_TOKEN_KEY = 'statathon_token';
-
-function persistToken(token: string) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(AUTH_TOKEN_KEY, token);
-  localStorage.removeItem(LEGACY_TOKEN_KEY);
-}
-
-function clearToken() {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem(AUTH_TOKEN_KEY);
-  localStorage.removeItem(LEGACY_TOKEN_KEY);
-}
-
-function readToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem(LEGACY_TOKEN_KEY);
-}
 
 const api = axios.create({
   baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
-export const setAuthToken = (token: string | null) => {
-  if (token) {
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  } else {
-    delete api.defaults.headers.common['Authorization'];
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const method = (config.method || 'get').toUpperCase();
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+    const csrf = getCsrfToken();
+    if (csrf) {
+      config.headers.set('X-CSRF-Token', csrf);
+    }
   }
-};
+  return config;
+});
 
-export const storeAuthToken = (token: string) => {
-  setAuthToken(token);
-  persistToken(token);
-};
+api.interceptors.response.use(
+  (res) => res,
+  async (error: AxiosError) => {
+    const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    if (
+      error.response?.status === 401 &&
+      original &&
+      !original._retry &&
+      !original.url?.includes('/auth/login') &&
+      !original.url?.includes('/auth/signup') &&
+      !original.url?.includes('/auth/refresh')
+    ) {
+      original._retry = true;
+      try {
+        await api.post('/auth/refresh');
+        return api(original);
+      } catch {
+        // refresh failed
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+export interface AuthUser {
+  id: number;
+  email: string;
+  full_name: string | null;
+  officer_role: string | null;
+  email_verified_at: string | null;
+}
+
+export interface ChallengeResponse {
+  challenge_id: string;
+  expires_in: number;
+  dev_otp_logged?: boolean;
+}
 
 // ─── Column / analysis-pipeline types ───────────────────────────────────────
 
@@ -303,35 +322,41 @@ export interface AnalysisResult {
 }
 
 export const authApi = {
-  register: async (email: string, password: string) => {
-    const { data } = await api.post('/auth/register', { email, password });
+  signupStart: async (payload: {
+    full_name: string;
+    officer_role: string;
+    email: string;
+    password: string;
+  }): Promise<ChallengeResponse> => {
+    const { data } = await api.post('/auth/signup/start', payload);
     return data;
   },
-  login: async (email: string, password: string) => {
-    const { data } = await api.post('/auth/login', { email, password });
-    if (data.access_token) {
-      setAuthToken(data.access_token);
-      persistToken(data.access_token);
-    }
+  signupVerifyOtp: async (challenge_id: string, otp: string) => {
+    const { data } = await api.post('/auth/signup/verify-otp', { challenge_id, otp });
     return data;
   },
-  googleAuthUrl: async (): Promise<{ url: string }> => {
-    const { data } = await api.get('/auth/oauth/google/url');
+  signupResendOtp: async (challenge_id: string): Promise<ChallengeResponse> => {
+    const { data } = await api.post('/auth/signup/resend-otp', { challenge_id });
     return data;
   },
-  logout: () => {
-    setAuthToken(null);
-    clearToken();
+  loginStart: async (email: string, password: string): Promise<ChallengeResponse> => {
+    const { data } = await api.post('/auth/login/start', { email, password });
+    return data;
   },
-  restoreToken: () => {
-    if (typeof window === 'undefined') return;
-    const token = readToken();
-    if (token) {
-      setAuthToken(token);
-      if (localStorage.getItem(LEGACY_TOKEN_KEY)) {
-        persistToken(token);
-      }
-    }
+  loginVerifyOtp: async (challenge_id: string, otp: string) => {
+    const { data } = await api.post('/auth/login/verify-otp', { challenge_id, otp });
+    return data;
+  },
+  loginResendOtp: async (challenge_id: string): Promise<ChallengeResponse> => {
+    const { data } = await api.post('/auth/login/resend-otp', { challenge_id });
+    return data;
+  },
+  me: async (): Promise<AuthUser> => {
+    const { data } = await api.get('/auth/me');
+    return data;
+  },
+  logout: async () => {
+    await api.post('/auth/logout');
   },
 };
 

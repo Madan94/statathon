@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { authApi } from '@/lib/api';
 
+/** Session is cookie-based; no localStorage token restore needed. */
 export default function AuthInit() {
   useEffect(() => {
-    authApi.restoreToken();
+    // Placeholder for future session refresh on app load if needed.
   }, []);
   return null;
 }

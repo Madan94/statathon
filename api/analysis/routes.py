@@ -14,6 +14,7 @@ from services.analysis_runner import (
 )
 from services.apply_service import apply_analysis_decisions
 from analysis.schemas import AnalysisDecisionsRequest
+from auth.permissions import require_analysis_owner, require_dataset_owner
 from deps import get_current_user_id
 from services.analysis_results_service import (
     enrich_payload_for_dashboard,
@@ -32,10 +33,13 @@ def get_db():
         db.close()
 
 
-def _analysis_meta_or_raise(analysis_id: int, db: Session) -> Analysis:
-    an = db.query(Analysis).filter(Analysis.id == analysis_id).first()
-    if not an:
-        raise HTTPException(status_code=404, detail="Analysis not found")
+def _analysis_meta_or_raise(analysis_id: int, db: Session, user_id: int | None = None) -> Analysis:
+    if user_id is not None:
+        an = require_analysis_owner(db, analysis_id, user_id)
+    else:
+        an = db.query(Analysis).filter(Analysis.id == analysis_id).first()
+        if not an:
+            raise HTTPException(status_code=404, detail="Analysis not found")
     if an.status == "failed":
         raise HTTPException(status_code=409, detail=an.error_message or "Analysis failed")
     if an.status != "complete":
@@ -70,8 +74,12 @@ def _normalize_priority_edges(payload: dict) -> list:
 
 
 @router.get("/{analysis_id}/results")
-def get_analysis_results(analysis_id: int, db: Session = Depends(get_db)):
-    _analysis_meta_or_raise(analysis_id, db)
+def get_analysis_results(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
     payload = resolve_semantic_analysis_payload(db, analysis_id)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
@@ -79,10 +87,12 @@ def get_analysis_results(analysis_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/{analysis_id}/status")
-def get_analysis_status(analysis_id: int, db: Session = Depends(get_db)):
-    an = db.query(Analysis).filter(Analysis.id == analysis_id).first()
-    if not an:
-        raise HTTPException(status_code=404, detail="Analysis not found")
+def get_analysis_status(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    an = require_analysis_owner(db, analysis_id, user_id)
     return {
         "analysis_id": an.id,
         "dataset_id": an.dataset_id,
@@ -93,7 +103,12 @@ def get_analysis_status(analysis_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{analysis_id}/apply")
-def apply_decisions(analysis_id: int, db: Session = Depends(get_db)):
+def apply_decisions(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
     try:
         return apply_analysis_decisions(db, analysis_id)
     except ValueError as e:
@@ -107,8 +122,7 @@ def submit_analysis_decisions(
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user_id),
 ):
-    _ = user_id
-    _analysis_meta_or_raise(analysis_id, db)
+    _analysis_meta_or_raise(analysis_id, db, user_id)
     try:
         result = DecisionService(db).save_column_decisions(analysis_id, body.decisions)
     except ValueError as e:
@@ -117,8 +131,12 @@ def submit_analysis_decisions(
 
 
 @router.get("/{analysis_id}/summary")
-def get_analysis_summary(analysis_id: int, db: Session = Depends(get_db)):
-    _analysis_meta_or_raise(analysis_id, db)
+def get_analysis_summary(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
     payload = resolve_semantic_analysis_payload(db, analysis_id)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
@@ -135,8 +153,12 @@ def get_analysis_summary(analysis_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/{analysis_id}/domains")
-def get_analysis_domains(analysis_id: int, db: Session = Depends(get_db)):
-    _analysis_meta_or_raise(analysis_id, db)
+def get_analysis_domains(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
     payload = resolve_semantic_analysis_payload(db, analysis_id)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
@@ -181,8 +203,12 @@ def get_analysis_domains(analysis_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/{analysis_id}/clusters")
-def get_analysis_clusters(analysis_id: int, db: Session = Depends(get_db)):
-    _analysis_meta_or_raise(analysis_id, db)
+def get_analysis_clusters(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
     payload = resolve_semantic_analysis_payload(db, analysis_id)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
@@ -190,8 +216,12 @@ def get_analysis_clusters(analysis_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/{analysis_id}/graph")
-def get_analysis_graph(analysis_id: int, db: Session = Depends(get_db)):
-    _analysis_meta_or_raise(analysis_id, db)
+def get_analysis_graph(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
     payload = resolve_semantic_analysis_payload(db, analysis_id)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
@@ -206,8 +236,12 @@ def get_analysis_graph(analysis_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/{analysis_id}/knowledge-graph")
-def get_analysis_knowledge_graph(analysis_id: int, db: Session = Depends(get_db)):
-    _analysis_meta_or_raise(analysis_id, db)
+def get_analysis_knowledge_graph(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
     payload = resolve_semantic_analysis_payload(db, analysis_id)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
@@ -218,8 +252,12 @@ def get_analysis_knowledge_graph(analysis_id: int, db: Session = Depends(get_db)
 
 
 @router.get("/{analysis_id}/blueprint")
-def get_analysis_blueprint(analysis_id: int, db: Session = Depends(get_db)):
-    _analysis_meta_or_raise(analysis_id, db)
+def get_analysis_blueprint(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
     payload = resolve_semantic_analysis_payload(db, analysis_id)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
@@ -243,10 +281,9 @@ def analyze_async(
     dataset_id: int,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
-    ds = db.query(Dataset).filter(Dataset.id == dataset_id).first()
-    if not ds:
-        raise HTTPException(404, "Dataset not found")
+    ds = require_dataset_owner(db, dataset_id, user_id)
     an = Analysis(dataset_id=dataset_id, status="pending")
     db.add(an)
     db.commit()
@@ -256,10 +293,12 @@ def analyze_async(
 
 
 @router.post("/{dataset_id}/analyze")
-def analyze(dataset_id: int, db: Session = Depends(get_db)):
-    ds = db.query(Dataset).filter(Dataset.id == dataset_id).first()
-    if not ds:
-        raise HTTPException(404, "Dataset not found")
+def analyze(
+    dataset_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    ds = require_dataset_owner(db, dataset_id, user_id)
     an = Analysis(dataset_id=dataset_id, status="running")
     db.add(an)
     db.commit()

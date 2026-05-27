@@ -9,7 +9,7 @@ import { cn } from '@/lib/cn';
 import Link from 'next/link';
 import { Home, Upload, X } from 'lucide-react';
 
-const PUBLIC_PATHS = ['/', '/login'];
+const PUBLIC_PATHS = ['/', '/login', '/signup'];
 
 interface AppShellProps {
   children: React.ReactNode;

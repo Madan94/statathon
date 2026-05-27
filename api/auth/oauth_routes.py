@@ -7,12 +7,19 @@ import secrets
 from urllib.parse import urlencode
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from auth.services import create_user
-from auth.utils import create_token
+from auth.cookies import set_session_cookies
+from auth.token_service import (
+    access_max_age_seconds,
+    create_access_token,
+    issue_refresh_token,
+    refresh_max_age_seconds,
+)
+import secrets as sec
 from database.database import SessionLocal
 from database.models import User
 
@@ -53,7 +60,7 @@ def google_auth_url():
 
 
 @router.get("/google/callback")
-def google_callback(code: str, state: str, db: Session = Depends(get_db)):
+def google_callback(code: str, state: str, request: Request, db: Session = Depends(get_db)):
     if not _google_configured():
         raise HTTPException(status_code=503, detail="Google OAuth not configured")
     if state not in _pending_states:
@@ -88,10 +95,33 @@ def google_callback(code: str, state: str, db: Session = Depends(get_db)):
         if not email:
             raise HTTPException(status_code=400, detail="Google account has no email")
 
+    profile = prof.json()
+    name = profile.get("name") or email.split("@")[0]
     user = db.query(User).filter(User.email == email).first()
     if not user:
-        user = create_user(db, email, secrets.token_urlsafe(32))
+        user = create_user(
+            db,
+            email,
+            secrets.token_urlsafe(32),
+            full_name=name,
+            officer_role="OAuth sign-in",
+            is_active=True,
+        )
+    elif not user.is_active:
+        user.is_active = True
+        user.full_name = user.full_name or name
+        db.commit()
 
-    token = create_token({"user_id": user.id})
+    access = create_access_token(user.id)
+    refresh = issue_refresh_token(db, user.id, user_agent=request.headers.get("user-agent"))
     frontend = os.getenv("OAUTH_FRONTEND_REDIRECT", "http://localhost:3000/login")
-    return RedirectResponse(url=f"{frontend}?token={token}")
+    response = RedirectResponse(url=f"{frontend}?oauth=success")
+    set_session_cookies(
+        response,
+        access,
+        refresh,
+        access_max_age_seconds(),
+        refresh_max_age_seconds(),
+        csrf_token=sec.token_urlsafe(32),
+    )
+    return response

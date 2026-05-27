@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, LogOut, User } from 'lucide-react';
-import { authApi } from '@/lib/api';
+import { authApi, AuthUser } from '@/lib/api';
 import api from '@/lib/api';
 import Breadcrumbs, { Crumb } from './Breadcrumbs';
 import { Button } from '@/components/ui/Button';
@@ -48,17 +48,19 @@ export default function TopBar({ breadcrumbs, onMenuClick }: TopBarProps) {
   const crumbs = breadcrumbs?.length ? breadcrumbs : autoBreadcrumbs(pathname);
   const router = useRouter();
   const [apiOk, setApiOk] = useState<boolean | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
-    api
-      .get('/health')
-      .then(() => setApiOk(true))
-      .catch(() => setApiOk(false));
-  }, []);
+    api.get('/health').then(() => setApiOk(true)).catch(() => setApiOk(false));
+    authApi.me().then(setUser).catch(() => setUser(null));
+  }, [pathname]);
 
-  const handleLogout = () => {
-    authApi.logout();
-    router.push('/login');
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } finally {
+      router.push('/login');
+    }
   };
 
   return (
@@ -97,13 +99,12 @@ export default function TopBar({ breadcrumbs, onMenuClick }: TopBarProps) {
             />
             API
           </span>
-          <Link
-            href="/login"
-            className="hidden sm:inline-flex items-center gap-1 text-sm text-text-muted hover:text-text"
-          >
-            <User className="h-4 w-4" aria-hidden />
-            Account
-          </Link>
+          {user && (
+            <span className="hidden md:inline text-sm text-text-muted truncate max-w-[180px]" title={user.email}>
+              <User className="h-4 w-4 inline mr-1" aria-hidden />
+              {user.full_name || user.email}
+            </span>
+          )}
           <Button variant="ghost" size="sm" onClick={handleLogout} aria-label="Log out">
             <LogOut className="h-4 w-4" aria-hidden />
             <span className="hidden sm:inline">Logout</span>

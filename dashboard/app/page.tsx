@@ -43,8 +43,10 @@ export default function Home() {
             >
               Sign in
             </Link>
-            <Link href="/upload">
-              <Button size="sm">Upload dataset</Button>
+            <Link href="/signup">
+              <Button size="sm" variant="outline">
+                Sign up
+              </Button>
             </Link>
           </div>
         </div>
@@ -67,8 +69,13 @@ export default function Home() {
             <Link href="/upload">
               <Button size="lg">Upload dataset</Button>
             </Link>
-            <Link href="/login">
+            <Link href="/signup">
               <Button variant="outline" size="lg">
+                Sign up
+              </Button>
+            </Link>
+            <Link href="/login">
+              <Button variant="ghost" size="lg" className="border border-border">
                 Sign in
               </Button>
             </Link>

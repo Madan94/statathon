@@ -18,10 +18,15 @@ if str(_API_DIR) not in sys.path:
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(1, str(_REPO_ROOT))
 
+import logging
 import os
+import traceback
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from auth.csrf import verify_csrf
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from database.database import Base, engine, SessionLocal
@@ -38,7 +43,10 @@ from analysis.routes import router as analysis_router
 from reports.routes import router as reports_router
 from report_builder_api.routes import router as report_builder_router
 
-app = FastAPI(title="Statathon")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("bharatstat.api")
+
+app = FastAPI(title="BharatStat")
 
 _cors_origins = os.getenv(
     "CORS_ORIGINS",
@@ -50,9 +58,56 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def request_log_middleware(request: Request, call_next):
+    logger.info("%s %s", request.method, request.url.path)
+    response = await call_next(request)
+    if response.status_code >= 400:
+        logger.info("Response %s for %s %s", response.status_code, request.method, request.url.path)
+    return response
+
+
+@app.middleware("http")
+async def csrf_middleware(request: Request, call_next):
+    from fastapi import HTTPException
+
+    try:
+        verify_csrf(request)
+    except HTTPException as exc:
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+    return await call_next(request)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    from fastapi import HTTPException
+
+    if isinstance(exc, HTTPException):
+        raise exc
+    logger.error("Unhandled error on %s %s: %s", request.method, request.url.path, exc)
+    logger.error(traceback.format_exc())
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
 Base.metadata.create_all(bind=engine)
+
+from database.migrate_auth import migrate_auth_schema
+
+migrate_auth_schema()
+
+_secret = os.getenv("SECRET_KEY", "")
+if os.getenv("AUTH_REQUIRED", "true").lower() in ("1", "true", "yes"):
+    if not _secret or _secret in ("supersecret", "change-me-use-long-random-string") or len(_secret) < 32:
+        import warnings
+
+        warnings.warn(
+            "SECRET_KEY must be a long random string when AUTH_REQUIRED=true",
+            stacklevel=1,
+        )
+
 app.include_router(auth_router)
 app.include_router(oauth_router)
 app.include_router(datasets_router)
