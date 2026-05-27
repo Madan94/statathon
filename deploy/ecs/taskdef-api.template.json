@@ -1,0 +1,61 @@
+{
+  "family": "bharatstat-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "2048",
+  "memory": "4096",
+  "executionRoleArn": "__ECS_EXECUTION_ROLE_ARN__",
+  "taskRoleArn": "__API_TASK_ROLE_ARN__",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "__API_IMAGE_URI__",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "hostPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      },
+      "environment": [
+        { "name": "APP_ENV", "value": "production" },
+        { "name": "AUTH_REQUIRED", "value": "true" },
+        { "name": "COOKIE_SECURE", "value": "true" },
+        { "name": "DATABASE_URL", "value": "__DATABASE_URL__" },
+        { "name": "CORS_ORIGINS", "value": "__CORS_ORIGINS__" },
+        { "name": "NEXT_INTERNAL_URL", "value": "__NEXT_INTERNAL_URL__" },
+        { "name": "STORAGE_PROVIDER", "value": "s3" },
+        { "name": "S3_BUCKET", "value": "__S3_BUCKET__" },
+        { "name": "AWS_REGION", "value": "__AWS_REGION__" },
+        { "name": "S3_UPLOAD_PREFIX", "value": "datasets" },
+        { "name": "REDIS_URL", "value": "__REDIS_URL__" },
+        { "name": "INFERENCE_MODE", "value": "remote" },
+        { "name": "GPU_WORKER_ENDPOINT", "value": "__GPU_WORKER_ENDPOINT__" }
+      ],
+      "secrets": [
+        { "name": "SECRET_KEY", "valueFrom": "__SECRET_ARN__SECRET_KEY::" },
+        { "name": "MAIL_INTERNAL_SECRET", "valueFrom": "__SECRET_ARN__MAIL_INTERNAL_SECRET::" },
+        { "name": "SMTP_USER", "valueFrom": "__SECRET_ARN__SMTP_USER::" },
+        { "name": "SMTP_PASS", "valueFrom": "__SECRET_ARN__SMTP_PASS::" },
+        { "name": "AWS_ACCESS_KEY_ID", "valueFrom": "__SECRET_ARN__AWS_ACCESS_KEY_ID::" },
+        { "name": "AWS_SECRET_ACCESS_KEY", "valueFrom": "__SECRET_ARN__AWS_SECRET_ACCESS_KEY::" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/bharatstat-api",
+          "awslogs-region": "__AWS_REGION__",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

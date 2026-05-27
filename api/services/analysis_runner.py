@@ -11,8 +11,13 @@ from database.database import SessionLocal
 from database.models import Analysis, Dataset, Report
 from pipelines.orchestrator import run_pipeline
 from object_storage.object_store import try_build_default_store
+from services.gpu_worker_client import run_remote_analysis
 
 _logger = logging.getLogger(__name__)
+
+
+def _inference_mode() -> str:
+    return os.getenv("INFERENCE_MODE", "local").strip().lower()
 
 
 def mark_dataset_upload_status(dataset_id: int, status: str) -> None:
@@ -64,6 +69,20 @@ def run_semantic_analysis_pipeline(
         db=db,
         object_store=store,
     )
+
+
+def run_analysis_pipeline_with_mode(
+    *,
+    dataset_id: int,
+    analysis_id: int,
+    db: Session,
+    ds: Dataset,
+) -> dict:
+    mode = _inference_mode()
+    if mode == "remote":
+        _logger.info("Running analysis via remote GPU worker for dataset=%s analysis=%s", dataset_id, analysis_id)
+        return run_remote_analysis(dataset=ds, dataset_id=dataset_id, analysis_id=analysis_id)
+    return run_semantic_analysis_pipeline(dataset_id=dataset_id, analysis_id=analysis_id, db=db)
 
 
 def persist_analysis_failure(analysis_id: int, detail: str) -> None:
@@ -124,8 +143,8 @@ def execute_registered_analysis_job(dataset_id: int, analysis_id: int) -> None:
             mark_dataset_upload_status(dataset_id, "PROCESSING")
 
         try:
-            result = run_semantic_analysis_pipeline(
-                dataset_id=dataset_id, analysis_id=analysis_id, db=db
+            result = run_analysis_pipeline_with_mode(
+                dataset_id=dataset_id, analysis_id=analysis_id, db=db, ds=ds
             )
             finalize_successful_analysis(db, dataset_id, analysis_id, result)
         except Exception as exc:  # noqa: BLE001

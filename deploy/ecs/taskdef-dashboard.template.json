@@ -1,0 +1,44 @@
+{
+  "family": "bharatstat-dashboard",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "__ECS_EXECUTION_ROLE_ARN__",
+  "taskRoleArn": "__DASHBOARD_TASK_ROLE_ARN__",
+  "containerDefinitions": [
+    {
+      "name": "dashboard",
+      "image": "__DASHBOARD_IMAGE_URI__",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "wget -q -O- http://localhost:3000/ > /dev/null || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      },
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "API_INTERNAL_URL", "value": "__API_INTERNAL_URL__" },
+        { "name": "NEXT_PUBLIC_API_URL", "value": "__API_PUBLIC_URL__" },
+        { "name": "MAIL_INTERNAL_SECRET", "value": "__MAIL_INTERNAL_SECRET__" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/bharatstat-dashboard",
+          "awslogs-region": "__AWS_REGION__",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
