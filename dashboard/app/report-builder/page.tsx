@@ -127,42 +127,9 @@ function ReportBuilderContent() {
       <div className="space-y-6">
         {error && <Alert variant="error">{error}</Alert>}
 
-        {/* Architecture banner */}
-        <Card className="bg-gradient-to-r from-[#0B3B7A]/5 to-[#0B3B7A]/10 border-[#0B3B7A]/20">
-          <h2 className="text-sm font-semibold text-primary mb-2">
-            6-Phase Architecture
-          </h2>
-          <ol className="text-xs text-text-muted grid gap-1 md:grid-cols-2">
-            <li>
-              <span className="font-semibold text-text">Phase 0</span> · PDF →
-              AST template (pdfplumber + Gemini Vision)
-            </li>
-            <li>
-              <span className="font-semibold text-text">Phase 1</span> ·
-              Knowledge Graph + RDF/Turtle/OWL export
-            </li>
-            <li>
-              <span className="font-semibold text-text">Phase 2</span> · Dual
-              memory: Redis STM + Postgres Reflection Ledger
-            </li>
-            <li>
-              <span className="font-semibold text-text">Phase 3</span> · Stateful
-              Apache Arrow kernel + Semantic Router
-            </li>
-            <li>
-              <span className="font-semibold text-text">Phase 4</span> ·
-              Hallucination Firewall (Scribe + Verifier)
-            </li>
-            <li>
-              <span className="font-semibold text-text">Phase 5/6</span> ·
-              Block-based AGUI + tamper-proof PDF export
-            </li>
-          </ol>
-        </Card>
-
         <div className="grid gap-6 md:grid-cols-2">
           {/* Phase 0: upload template */}
-          <Card title="1. Upload MoSPI template (PDF)" description="Phase 0 reverse-engineers an old MoSPI bulletin PDF into a reusable AST. Datasets (CSV/XLSX) go through the Upload page — templates are PDF only.">
+          <Card title="1. Upload MoSPI template (PDF)">
             <form onSubmit={onUpload} className="space-y-3">
               <input
                 type="text"
@@ -212,15 +179,11 @@ function ReportBuilderContent() {
                   </>
                 )}
               </Button>
-              <p className="text-xs text-text-muted">
-                Skip this step to use the built-in MoSPI default template, or
-                upload from inside any open report via &ldquo;Change template&rdquo;.
-              </p>
             </form>
           </Card>
 
           {/* Generate */}
-          <Card title="2. Generate report" description="Run all 6 phases against a completed analysis.">
+          <Card title="2. Generate report">
             <form onSubmit={onGenerate} className="space-y-3">
               <div>
                 <label className="text-xs text-text-muted mb-1 block">

@@ -6,13 +6,19 @@ from pathlib import Path
 
 import pandas as pd
 from sqlalchemy import create_engine
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _ROOT_ENV = Path(__file__).resolve().parents[1] / ".env"
+if _ROOT_ENV.is_file():
+    load_dotenv(_ROOT_ENV)
+else:
+    load_dotenv()
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
+    # Keep ingestion resilient in local/dev if env loading fails in a subprocess.
+    DATABASE_URL: str = "sqlite:///./statathon.db"
     model_config = SettingsConfigDict(env_file=_ROOT_ENV, extra="ignore")
 
 
