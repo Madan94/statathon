@@ -44,14 +44,15 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_WEIGHTS: dict[str, dict[str, float]] = {
     "semantic_mapping": {
-        "cosine": 0.32,
-        "jaccard": 0.12,
+        "alias_exact": 0.30,        # strong: column name == domain name / alias
+        "cosine": 0.22,
         "keyword_overlap": 0.10,
-        "structural": 0.10,
-        "dtype_alignment": 0.10,
-        "distribution_fit": 0.10,
-        "cluster_support": 0.08,
-        "graph_consistency": 0.08,
+        "structural": 0.08,
+        "jaccard": 0.07,
+        "dtype_alignment": 0.08,
+        "distribution_fit": 0.08,
+        "cluster_support": 0.05,
+        "graph_consistency": 0.02,
     },
     "clustering": {
         "silhouette": 0.35,
@@ -167,40 +168,94 @@ class ConfidenceCalibrator:
             return {}
         return {k: float(v) / total for k, v in w.items() if v > 0}
 
-    def combine(self, subsystem: str, signals: dict[str, float],
-                notes: list[str] | None = None) -> CalibratedScore:
-        """Weighted average of provided signals; missing signals are skipped.
+    def combine(
+        self,
+        subsystem: str,
+        signals: dict[str, float],
+        notes: list[str] | None = None,
+        applicability: dict[str, bool] | None = None,
+        enable_consensus_bonus: bool = True,
+    ) -> CalibratedScore:
+        """Weighted aggregation with applicability filtering + consensus bonus.
 
-        Signals that don't appear in the weight map are stored but do not
-        affect the score (so subsystems can include arbitrary diagnostics).
+        Key differences from a plain weighted average:
+
+          * `applicability` lets the caller mark a signal as N/A (e.g. structural
+            similarity when no tokens overlap). N/A signals are *dropped*, not
+            zeroed — so a missing-but-N/A signal does not penalise the score.
+          * Consensus bonus: when 4 or more *applicable* signals exceed 0.7,
+            +0.05 is added (capped at 1.0). When 6 or more exceed 0.7, +0.10.
+            This rewards multi-signal agreement that a plain average would
+            wash out.
+          * Signals without a configured weight are still kept in the audit
+            payload but do not influence the score.
         """
         weights = self.get_weights(subsystem)
-        if not weights:
-            # Unknown subsystem — degrade to simple mean of all signals
-            usable = {k: float(v) for k, v in signals.items()
-                      if isinstance(v, (int, float))}
-            if not usable:
-                return CalibratedScore(value=0.0, band="low",
-                                       signals=signals, weights={},
-                                       subsystem=subsystem,
-                                       notes=["unknown subsystem"])
-            val = float(sum(usable.values()) / len(usable))
-            return CalibratedScore(value=val, band=_band(val),
-                                   signals=signals, weights={},
-                                   subsystem=subsystem,
-                                   notes=(notes or []) + ["fallback mean"])
+        applicability = applicability or {}
 
-        # Renormalise weights against the signals actually present
-        present = {k: weights[k] for k in weights if k in signals}
-        wsum = sum(present.values())
-        if wsum <= 0:
-            return CalibratedScore(value=0.0, band="low",
-                                   signals=signals, weights=weights,
-                                   subsystem=subsystem,
-                                   notes=(notes or []) + ["no overlapping signals"])
-        norm_weights = {k: v / wsum for k, v in present.items()}
+        # Build the set of signals that participate in the score:
+        # must have a weight AND must be applicable.
+        participating: dict[str, float] = {}
+        for k, w in weights.items():
+            if k not in signals:
+                continue
+            if applicability.get(k, True) is False:
+                continue
+            participating[k] = w
+
+        if not participating:
+            return CalibratedScore(
+                value=0.0, band="low",
+                signals={k: float(v) for k, v in signals.items() if isinstance(v, (int, float))},
+                weights=weights,
+                subsystem=subsystem,
+                notes=(notes or []) + ["no applicable signals"],
+            )
+
+        # Renormalise the surviving weights to sum to 1.0
+        wsum = sum(participating.values())
+        norm_weights = {k: v / wsum for k, v in participating.items()}
         raw = sum(_clip01(signals[k]) * norm_weights[k] for k in norm_weights)
-        calibrated = self._calibrate(subsystem, raw)
+
+        # Consensus bonus
+        bonus = 0.0
+        if enable_consensus_bonus:
+            strong_signals = sum(
+                1 for k in norm_weights if _clip01(signals.get(k, 0.0)) >= 0.70
+            )
+            if strong_signals >= 6:
+                bonus = 0.10
+            elif strong_signals >= 4:
+                bonus = 0.05
+            elif strong_signals >= 3:
+                bonus = 0.025
+
+        # Tie-breaker dominance bonus: if a single signal is >= 0.9 and weights >= 0.20,
+        # bias the score toward it (anchoring effect).
+        dominant_bonus = 0.0
+        for k, w in norm_weights.items():
+            if w >= 0.20 and _clip01(signals.get(k, 0.0)) >= 0.90:
+                dominant_bonus = max(dominant_bonus, 0.03)
+
+        # Authority floor: when a signal carries near-certain semantic evidence,
+        # ensure the final score reflects that even if other signals are weak.
+        # Applies to `alias_exact == 1.0` (verbatim alias match) only.
+        authority_floor = 0.0
+        if subsystem == "semantic_mapping" and _clip01(signals.get("alias_exact", 0.0)) >= 0.99:
+            authority_floor = 0.88
+
+        calibrated = self._calibrate(subsystem, raw + bonus + dominant_bonus)
+        if authority_floor > 0:
+            calibrated = max(calibrated, authority_floor)
+        active_notes = list(notes or [])
+        if bonus > 0:
+            active_notes.append(f"consensus_bonus={bonus:.3f}")
+        if dominant_bonus > 0:
+            active_notes.append(f"dominant_signal_bonus={dominant_bonus:.3f}")
+        if any(applicability.get(k) is False for k in signals.keys()):
+            dropped = [k for k in signals if applicability.get(k) is False]
+            active_notes.append(f"dropped_inapplicable={dropped}")
+
         return CalibratedScore(
             value=calibrated,
             band=_band(calibrated),
@@ -208,7 +263,7 @@ class ConfidenceCalibrator:
                      if isinstance(v, (int, float))},
             weights=norm_weights,
             subsystem=subsystem,
-            notes=(notes or []),
+            notes=active_notes,
         )
 
     def _calibrate(self, subsystem: str, raw: float) -> float:

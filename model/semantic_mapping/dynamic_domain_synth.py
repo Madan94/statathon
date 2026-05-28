@@ -87,7 +87,9 @@ def synthesise_dynamic_domains(
     if not weak_cols:
         return []
 
-    clusters = _greedy_token_clusters(weak_cols, similarity_matrix)
+    clusters = _greedy_token_clusters(
+        weak_cols, similarity_matrix, column_profiles=column_profiles,
+    )
     domains: list[DynamicDomain] = []
     for members in clusters:
         if not members:
@@ -146,10 +148,23 @@ def _weak_columns(columns: list[str],
 def _greedy_token_clusters(
     columns: list[str],
     similarity_matrix: dict[str, dict[str, float]] | None,
+    column_profiles: dict[str, Any] | None = None,
     min_cluster_size: int = 2,
     sim_threshold: float = 0.40,
+    dist_threshold: float = 0.75,
 ) -> list[list[str]]:
-    """Group columns by token overlap (+ embedding similarity if available)."""
+    """Group columns by token overlap, embedding similarity, or distribution fingerprint.
+
+    Score per (a, b) = max(jaccard(name_a, name_b),
+                           cosine(embedding_a, embedding_b),
+                           distribution_similarity(profile_a, profile_b))
+
+    Columns join a cluster when at least one similarity metric clears its
+    threshold. This catches groups like {employment_rate, literacy_rate,
+    enrollment_rate} that share "rate" tokens, AND groups like
+    {height_cm, weight_kg, bmi} that share distributional shape (numeric,
+    normal-ish, positive).
+    """
     if not columns:
         return []
     visited: set[str] = set()
@@ -164,19 +179,74 @@ def _greedy_token_clusters(
                 continue
             other_tok = set(_tokens(other))
             union = tok | other_tok
-            if not union:
-                continue
-            jacc = len(tok & other_tok) / len(union)
+            jacc = len(tok & other_tok) / len(union) if union else 0.0
             sim = 0.0
             if similarity_matrix:
                 sim = float(similarity_matrix.get(col, {}).get(other, 0.0))
+            dist = _distribution_similarity(
+                (column_profiles or {}).get(col),
+                (column_profiles or {}).get(other),
+            )
             score = max(jacc, sim)
-            if score >= sim_threshold:
+            joined = score >= sim_threshold or dist >= dist_threshold
+            if joined:
                 members.append(other)
         if len(members) >= min_cluster_size:
             visited.update(members)
             clusters.append(members)
     return clusters
+
+
+def _distribution_similarity(p_a: Any, p_b: Any) -> float:
+    """0..1 — how similar two columns' distribution fingerprints are."""
+    if p_a is None or p_b is None:
+        return 0.0
+    # Accept both dict and DistributionProfile
+    def _g(p, key):
+        if isinstance(p, dict):
+            return p.get(key)
+        return getattr(p, key, None)
+
+    a_mean, b_mean = _g(p_a, "mean"), _g(p_b, "mean")
+    if a_mean is None or b_mean is None:
+        # Categorical or non-numeric — fallback on dtype match
+        a_dtype = str(_g(p_a, "dtype") or "")
+        b_dtype = str(_g(p_b, "dtype") or "")
+        return 0.6 if a_dtype == b_dtype else 0.0
+
+    score = 0.0
+    components = 0
+    # Same dtype
+    score += 0.25; components += 1
+
+    # Range overlap
+    a_min, a_max = _g(p_a, "min"), _g(p_a, "max")
+    b_min, b_max = _g(p_b, "min"), _g(p_b, "max")
+    if all(v is not None for v in (a_min, a_max, b_min, b_max)):
+        lo, hi = max(a_min, b_min), min(a_max, b_max)
+        union_lo, union_hi = min(a_min, b_min), max(a_max, b_max)
+        overlap = max(0.0, hi - lo)
+        union_span = max(1e-9, union_hi - union_lo)
+        score += 0.30 * (overlap / union_span)
+        components += 1
+
+    # Skew similarity
+    a_sk, b_sk = _g(p_a, "robust_skew") or _g(p_a, "skew"), _g(p_b, "robust_skew") or _g(p_b, "skew")
+    if a_sk is not None and b_sk is not None:
+        diff = abs(float(a_sk) - float(b_sk))
+        score += 0.25 * max(0.0, 1.0 - diff / 2.0)
+        components += 1
+
+    # Normality alignment
+    a_norm = _g(p_a, "is_normal_5pct")
+    b_norm = _g(p_b, "is_normal_5pct")
+    if a_norm is not None and b_norm is not None:
+        score += 0.20 if a_norm == b_norm else 0.0
+        components += 1
+
+    if components == 0:
+        return 0.0
+    return min(1.0, score)
 
 
 def _canonical_name_from_members(members: list[str]) -> str:

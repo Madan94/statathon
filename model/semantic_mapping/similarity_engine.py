@@ -217,6 +217,27 @@ class SimilarityEngine:
     # ---------------- aggregator ----------------
 
     @staticmethod
+    def alias_exact_match(column_name: str,
+                          domain_name: str,
+                          domain_aliases: list[str] | None) -> float:
+        """1.0 if the column name (normalised) IS the domain or an alias verbatim."""
+        col_norm = "_".join(_tokens(column_name))
+        if not col_norm:
+            return 0.0
+        candidates = {"_".join(_tokens(domain_name))}
+        for a in domain_aliases or []:
+            candidates.add("_".join(_tokens(a)))
+        if col_norm in candidates:
+            return 1.0
+        # Strong containment (e.g. "employment_rate_male" contains alias "employment_rate")
+        for c in candidates:
+            if c and (c in col_norm or col_norm in c):
+                short, long = sorted([c, col_norm], key=len)
+                if len(short) >= 4 and short in long:
+                    return 0.85
+        return 0.0
+
+    @staticmethod
     def compose_signals(
         *,
         cosine: float,
@@ -229,13 +250,21 @@ class SimilarityEngine:
         column_profile: DistributionProfile | None = None,
         cluster_support: float = 0.0,
         graph_consistency: float = 0.0,
+        cluster_support_applicable: bool | None = None,
+        graph_consistency_applicable: bool | None = None,
     ) -> dict[str, Any]:
-        """Return a `CalibratedScore.to_dict()` blending the 5 similarity signals.
+        """Return a `CalibratedScore.to_dict()` blending the multi-signal similarity.
 
-        Useful when a caller wants the same multi-signal score for an
-        already-computed cosine similarity (avoids re-running embeddings).
+        Each signal carries an `applicable` flag — if a signal cannot be
+        meaningfully computed for this (column, domain) pair (e.g. structural
+        similarity when the tokens share nothing) it is dropped from the score
+        rather than contributing a misleading zero.
         """
         col_tokens = _tokens(column_name)
+        dom_tokens = _tokens(domain_name)
+
+        # ---------------- compute signals + applicability ----------------
+        alias_hit = SimilarityEngine.alias_exact_match(column_name, domain_name, domain_aliases)
         jaccard = SimilarityEngine.jaccard_token_similarity(
             column_name, domain_name, domain_aliases
         )
@@ -246,17 +275,55 @@ class SimilarityEngine:
             column_profile, domain_metadata
         )
 
+        # Applicability rules
+        applicability = {
+            "cosine": True,                                          # always applicable
+            "alias_exact": alias_hit > 0.0,                          # only when there's a hit
+            "jaccard": bool(set(col_tokens) & (set(dom_tokens) | _alias_token_set(domain_aliases))),
+            "keyword_overlap": bool(domain_keywords),
+            "structural": (len(col_tokens) > 0 and len(dom_tokens) > 0
+                           and (col_tokens[0] == dom_tokens[0]
+                                or col_tokens[-1] == dom_tokens[-1]
+                                or _joined(col_tokens) in _joined(dom_tokens)
+                                or _joined(dom_tokens) in _joined(col_tokens))),
+            "dtype_alignment": column_dtype is not None or bool(domain_metadata),
+            "distribution_fit": column_profile is not None and column_profile.is_numeric,
+            "cluster_support": (cluster_support_applicable
+                                if cluster_support_applicable is not None
+                                else cluster_support > 0.0),
+            "graph_consistency": (graph_consistency_applicable
+                                  if graph_consistency_applicable is not None
+                                  else graph_consistency > 0.0),
+        }
+
+        signals = {
+            "cosine": float(cosine),
+            "alias_exact": float(alias_hit),
+            "jaccard": float(jaccard),
+            "keyword_overlap": float(keyword),
+            "structural": float(structural),
+            "dtype_alignment": float(dtype),
+            "distribution_fit": float(distribution),
+            "cluster_support": float(cluster_support),
+            "graph_consistency": float(graph_consistency),
+        }
+
         score = default_calibrator.combine(
-            "semantic_mapping",
-            {
-                "cosine": float(cosine),
-                "jaccard": jaccard,
-                "keyword_overlap": keyword,
-                "structural": structural,
-                "dtype_alignment": dtype,
-                "distribution_fit": distribution,
-                "cluster_support": float(cluster_support),
-                "graph_consistency": float(graph_consistency),
-            },
+            "semantic_mapping", signals, applicability=applicability,
         )
-        return score.to_dict()
+        out = score.to_dict()
+        out["applicability"] = applicability
+        return out
+
+
+def _alias_token_set(aliases: list[str] | None) -> set[str]:
+    if not aliases:
+        return set()
+    out: set[str] = set()
+    for a in aliases:
+        out.update(_tokens(a))
+    return out
+
+
+def _joined(toks: list[str]) -> str:
+    return "_".join(toks)
