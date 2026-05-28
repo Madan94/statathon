@@ -114,6 +114,20 @@ from database.migrate_auth import migrate_auth_schema
 
 migrate_auth_schema()
 
+# One-time Neo4j schema bootstrap (constraints + indexes); no-op when NEO4J_ENABLED=false
+try:
+    from graph.schema_bootstrap import ensure_schema as _kg_ensure_schema
+
+    _kg_bootstrap_result = _kg_ensure_schema()
+    if _kg_bootstrap_result.get("ok"):
+        logger.info("Neo4j schema bootstrap: %s statements OK",
+                    _kg_bootstrap_result.get("statements_run", 0))
+    elif _kg_bootstrap_result.get("enabled"):
+        logger.warning("Neo4j schema bootstrap: %s",
+                       _kg_bootstrap_result.get("error") or _kg_bootstrap_result.get("errors"))
+except Exception as _exc:
+    logger.info("Neo4j schema bootstrap skipped: %s", _exc)
+
 _secret = os.getenv("SECRET_KEY", "")
 if os.getenv("AUTH_REQUIRED", "true").lower() in ("1", "true", "yes"):
     if not _secret or _secret in ("supersecret", "change-me-use-long-random-string") or len(_secret) < 32:
