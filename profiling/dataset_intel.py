@@ -103,7 +103,10 @@ def _safe_skew(arr: np.ndarray) -> float | None:
     try:
         from scipy.stats import skew
 
-        return float(skew(arr, bias=False))
+        sk = float(skew(arr, bias=False))
+        if math.isnan(sk) or math.isinf(sk):
+            return None
+        return sk
     except Exception:
         return None
 
@@ -208,6 +211,36 @@ def profile_column(
             final_dtype = "string_like"
 
     profile["datatype"] = final_dtype
+    # #region agent log
+    if column_name == "year" or (
+        isinstance(profile.get("skewness"), float) and math.isnan(profile["skewness"])
+    ):
+        import json as _json
+        import time as _time
+
+        _log_path = "/media/akassh/New Volume/MOSPI/statathon/.cursor/debug-e80a72.log"
+        try:
+            with open(_log_path, "a", encoding="utf-8") as _f:
+                _f.write(
+                    _json.dumps(
+                        {
+                            "sessionId": "e80a72",
+                            "hypothesisId": "A",
+                            "location": "dataset_intel.py:profile_column",
+                            "message": "column profile skewness",
+                            "data": {
+                                "column": column_name,
+                                "skewness": profile.get("skewness"),
+                                "datatype": final_dtype,
+                            },
+                            "timestamp": int(_time.time() * 1000),
+                        }
+                    )
+                    + "\n"
+                )
+        except OSError:
+            pass
+    # #endregion
     return profile
 
 
