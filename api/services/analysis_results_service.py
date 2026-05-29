@@ -217,6 +217,10 @@ def enrich_payload_for_dashboard(db: Session, analysis_id: int, payload: dict) -
         enriched["domain_registry"] = payload["domain_registry"]
     if payload.get("column_normalization"):
         enriched["column_normalization"] = payload["column_normalization"]
+    if payload.get("effective_schema"):
+        enriched["effective_schema"] = payload["effective_schema"]
+    if payload.get("normalization_version") is not None:
+        enriched["normalization_version"] = payload["normalization_version"]
 
     mapping = payload.get("semantic_mapping") or []
     semantic: dict[str, str] = {}

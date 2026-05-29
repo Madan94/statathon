@@ -85,14 +85,40 @@ class Dataset(Base):
 
 class DatasetColumn(Base):
     __tablename__ = "dataset_columns"
+    __table_args__ = (
+        UniqueConstraint("analysis_id", "name", name="uq_dataset_columns_analysis_name"),
+    )
     id = Column(Integer, primary_key=True, index=True)
-    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
+    normalized_name = Column(String(512), nullable=True)
     inferred_type = Column(String(64), nullable=True)
     semantic_label = Column(String(256), nullable=True)
     priority = Column(Float, default=0.0)
     domain_tags = Column(JSON, nullable=True)
+    is_deleted = Column(Boolean, nullable=False, default=False, server_default="false")
+    is_excluded = Column(Boolean, nullable=False, default=False, server_default="false")
+    is_active = Column(Boolean, nullable=False, default=True, server_default="true")
+    last_modified = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     dataset = relationship("Dataset", back_populates="columns")
+
+
+class ColumnNormalizationAudit(Base):
+    """Audit trail for user normalization actions."""
+
+    __tablename__ = "column_normalization_audit"
+
+    id = Column(Integer, primary_key=True, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    column_id = Column(Integer, ForeignKey("dataset_columns.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    old_name = Column(String(512), nullable=True)
+    new_name = Column(String(512), nullable=True)
+    action = Column(String(64), nullable=False)
+    payload = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class Analysis(Base):

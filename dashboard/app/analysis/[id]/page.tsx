@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { analysisApi, AnalysisResult } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import WorkflowStepper from '@/components/layout/WorkflowStepper';
 import AnalysisStepper from '@/components/analysis/AnalysisStepper';
 import PageHeader from '@/components/layout/PageHeader';
@@ -42,6 +43,29 @@ const STEP_HEADERS: Record<number, { title: string; description: string }> = {
   },
 };
 
+function decisionsFromSaved(
+  columns: Array<{
+    original_name: string;
+    normalized_name: string;
+    is_deleted: boolean;
+    is_excluded: boolean;
+    is_active?: boolean;
+  }>
+): Record<string, ColumnDecision> {
+  const out: Record<string, ColumnDecision> = {};
+  for (const c of columns) {
+    out[c.original_name] = {
+      originalName: c.original_name,
+      displayName: c.normalized_name,
+      suggestedName: c.normalized_name,
+      normalizedName: c.normalized_name,
+      included: Boolean(c.is_active ?? (!c.is_deleted && !c.is_excluded)),
+      isDeleted: c.is_deleted,
+    };
+  }
+  return out;
+}
+
 export default function AnalysisPage() {
   const params = useParams();
   const analysisId = Number(params.id);
@@ -50,18 +74,47 @@ export default function AnalysisPage() {
   const [results, setResults] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [savingNormalization, setSavingNormalization] = useState(false);
 
-  // User state carried between steps
   const [columnDecisions, setColumnDecisions] = useState<Record<string, ColumnDecision>>({});
   const [semanticOverrides, setSemanticOverrides] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    analysisApi
-      .getResults(analysisId)
-      .then(setResults)
-      .catch(() => setLoadError('Failed to load analysis results. Check that the analysis has completed.'))
+    Promise.all([analysisApi.getResults(analysisId), analysisApi.getNormalization(analysisId)])
+      .then(([res, norm]) => {
+        setResults(res);
+        if (norm.normalization_version && norm.columns.length > 0) {
+          setColumnDecisions(decisionsFromSaved(norm.columns));
+        }
+      })
+      .catch(() =>
+        setLoadError('Failed to load analysis results. Check that the analysis has completed.')
+      )
       .finally(() => setLoading(false));
   }, [analysisId]);
+
+  const handleSaveNormalization = async (decisions: Record<string, ColumnDecision>) => {
+    setSavingNormalization(true);
+    try {
+      const columns = Object.values(decisions).map((c) => ({
+        original_name: c.originalName,
+        normalized_name: c.displayName.trim() || c.originalName,
+        is_deleted: c.isDeleted,
+        is_excluded: !c.included && !c.isDeleted,
+      }));
+      await analysisApi.saveNormalization(analysisId, columns);
+      const refreshed = await analysisApi.getResults(analysisId);
+      setResults(refreshed);
+      setColumnDecisions(decisions);
+      toast.success('Normalisation saved — semantic mapping uses approved schema');
+      setStep(3);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to save normalisation';
+      toast.error(msg);
+    } finally {
+      setSavingNormalization(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -80,7 +133,6 @@ export default function AnalysisPage() {
     );
   }
 
-  // Column analysis is a full-screen mode (step 6)
   if (step === 6) {
     return <ColumnAnalysisLayout results={results} analysisId={analysisId} onBack={() => setStep(5)} />;
   }
@@ -92,24 +144,17 @@ export default function AnalysisPage() {
       <WorkflowStepper currentStep={3} className="mb-5" />
       <AnalysisStepper currentStep={step} className="mb-8" />
 
-      <PageHeader
-        title={header.title}
-        description={header.description}
-      />
+      <PageHeader title={header.title} description={header.description} />
 
-      {step === 1 && (
-        <Step1Summary results={results} onProceed={() => setStep(2)} />
-      )}
+      {step === 1 && <Step1Summary results={results} onProceed={() => setStep(2)} />}
 
       {step === 2 && (
         <Step2Normalize
           results={results}
           decisions={columnDecisions}
-          onProceed={(d) => {
-            setColumnDecisions(d);
-            setStep(3);
-          }}
+          onProceed={handleSaveNormalization}
           onBack={() => setStep(1)}
+          saving={savingNormalization}
         />
       )}
 
@@ -118,6 +163,8 @@ export default function AnalysisPage() {
           results={results}
           analysisId={analysisId}
           overrides={semanticOverrides}
+          effectiveSchema={results.effective_schema}
+          normalizationVersion={results.normalization_version}
           onProceed={(o) => {
             setSemanticOverrides(o);
             setStep(4);

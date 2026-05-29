@@ -394,6 +394,33 @@ export interface AnalysisResult {
   derived_dataset?: Record<string, unknown>;
   outliers?: Record<string, OutlierResult>;
   content_hash?: string;
+  effective_schema?: string[];
+  normalization_version?: number | null;
+}
+
+export interface NormalizationColumnRecord {
+  column_id?: number;
+  original_name: string;
+  normalized_name: string;
+  is_deleted: boolean;
+  is_excluded: boolean;
+  is_active?: boolean;
+}
+
+export interface NormalizationSaveResponse {
+  analysis_id: number;
+  dataset_id: number;
+  normalization_version: number;
+  effective_schema: string[];
+  column_count: number;
+}
+
+export interface EffectiveSchemaResponse {
+  dataset_id: number;
+  analysis_id: number;
+  normalization_version: number | null;
+  columns: string[];
+  column_map: NormalizationColumnRecord[];
 }
 
 export interface DashboardSummary {
@@ -550,6 +577,28 @@ export const analysisApi = {
   },
   getResults: async (id: number): Promise<AnalysisResult> => {
     const { data } = await api.get(`/analysis/${id}/results`);
+    return data;
+  },
+  getNormalization: async (id: number): Promise<{ normalization_version: number | null; columns: NormalizationColumnRecord[] }> => {
+    const { data } = await api.get(`/analysis/${id}/normalization`);
+    return data;
+  },
+  saveNormalization: async (
+    id: number,
+    columns: Array<{
+      original_name: string;
+      normalized_name: string;
+      is_deleted: boolean;
+      is_excluded: boolean;
+    }>
+  ): Promise<NormalizationSaveResponse> => {
+    const { data } = await api.post(`/analysis/${id}/normalization`, { columns });
+    return data;
+  },
+  getEffectiveSchema: async (datasetId: number, analysisId: number): Promise<EffectiveSchemaResponse> => {
+    const { data } = await api.get(`/datasets/${datasetId}/effective-schema`, {
+      params: { analysis_id: analysisId },
+    });
     return data;
   },
   submitDecisions: async (id: number, decisions: Record<string, 'keep' | 'delete' | 'normalize'>) => {

@@ -111,8 +111,10 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 Base.metadata.create_all(bind=engine)
 
 from database.migrate_auth import migrate_auth_schema
+from database.migrate_dataset_columns import migrate_dataset_columns_schema
 
 migrate_auth_schema()
+migrate_dataset_columns_schema()
 
 # One-time Neo4j schema bootstrap (constraints + indexes); no-op when NEO4J_ENABLED=false
 try:

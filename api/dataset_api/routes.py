@@ -1,7 +1,7 @@
 import os
 
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -17,6 +17,7 @@ from .response_builder import dataset_metadata_response, dataset_upload_response
 from .schemas import RegisterDatasetRequest, UploadUrlRequest
 from .services import profile_registered_dataset, save_upload
 from .storage_keys import generate_object_key
+from services.normalization_service import NormalizationService
 
 router = APIRouter(prefix="/datasets", tags=["datasets"])
 
@@ -122,6 +123,23 @@ def register_dataset_after_presigned_upload(
     payload = dataset_upload_response(ds)
     payload["analysis_id"] = an.id
     return payload
+
+
+@router.get("/{dataset_id}/effective-schema")
+def get_dataset_effective_schema(
+    dataset_id: int,
+    analysis_id: int = Query(..., alias="analysis_id"),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    require_dataset_owner(db, dataset_id, user_id)
+    an = db.query(Analysis).filter(Analysis.id == analysis_id, Analysis.dataset_id == dataset_id).first()
+    if not an:
+        raise HTTPException(status_code=404, detail="Analysis not found for dataset")
+    try:
+        return NormalizationService(db).get_effective_schema_response(analysis_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.get("/{dataset_id}")
