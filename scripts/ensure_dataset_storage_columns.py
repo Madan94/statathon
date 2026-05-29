@@ -46,6 +46,9 @@ def main() -> int:
                 "ALTER TABLE datasets ADD COLUMN IF NOT EXISTS storage_provider VARCHAR(32) "
                 "NOT NULL DEFAULT 'local'",
             ),
+            ("row_count", "ALTER TABLE datasets ADD COLUMN IF NOT EXISTS row_count INTEGER DEFAULT 0"),
+            ("column_count", "ALTER TABLE datasets ADD COLUMN IF NOT EXISTS column_count INTEGER DEFAULT 0"),
+            ("health_summary", "ALTER TABLE datasets ADD COLUMN IF NOT EXISTS health_summary JSONB"),
         ]
         for name, stmt in stmts_by_col:
             if name not in cols:
@@ -71,6 +74,9 @@ def main() -> int:
             ("checksum", "ALTER TABLE datasets ADD COLUMN checksum VARCHAR(128)"),
             ("upload_status", "ALTER TABLE datasets ADD COLUMN upload_status VARCHAR(32)"),
             ("storage_provider", "ALTER TABLE datasets ADD COLUMN storage_provider VARCHAR(32) DEFAULT 'local'"),
+            ("row_count", "ALTER TABLE datasets ADD COLUMN row_count INTEGER DEFAULT 0"),
+            ("column_count", "ALTER TABLE datasets ADD COLUMN column_count INTEGER DEFAULT 0"),
+            ("health_summary", "ALTER TABLE datasets ADD COLUMN health_summary JSON"),
         ]
         for name, stmt in sqlite_ops:
             if name not in cols:

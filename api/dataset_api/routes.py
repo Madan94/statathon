@@ -6,15 +6,16 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from database.database import SessionLocal
-from database.models import Analysis, Dataset
+from database.models import Analysis
 from auth.permissions import require_dataset_owner
 from deps import get_current_user_id, get_object_store
 from repositories.dataset_repository import DatasetRepository
 from services.analysis_runner import execute_registered_analysis_job
 from object_storage.object_store import ObjectStore, StorageConfigError
 
+from .response_builder import dataset_metadata_response, dataset_upload_response
 from .schemas import RegisterDatasetRequest, UploadUrlRequest
-from .services import save_upload
+from .services import profile_registered_dataset, save_upload
 from .storage_keys import generate_object_key
 
 router = APIRouter(prefix="/datasets", tags=["datasets"])
@@ -39,7 +40,7 @@ def upload(
 ):
     upload_dir = os.getenv("UPLOAD_STORAGE_PATH", "./storage/uploads")
     ds = save_upload(file, upload_dir, user_id=user_id, db=db)
-    return {"dataset_id": ds.id, "id": ds.id, "filename": ds.filename}
+    return dataset_upload_response(ds)
 
 
 @router.post("/upload-url")
@@ -98,6 +99,19 @@ def register_dataset_after_presigned_upload(
         db.rollback()
         raise HTTPException(status_code=409, detail="object_key already registered") from e
 
+    try:
+        raw = store.download_object_body(body.object_key)
+    except ClientError as e:
+        raise HTTPException(status_code=502, detail=f"object storage download error: {e}") from e
+
+    ds = profile_registered_dataset(
+        db,
+        ds.id,
+        filename=body.filename,
+        file_bytes=raw,
+        file_size=body.file_size,
+    )
+
     an = Analysis(dataset_id=ds.id, status="pending")
     db.add(an)
     db.commit()
@@ -105,7 +119,9 @@ def register_dataset_after_presigned_upload(
 
     background_tasks.add_task(execute_registered_analysis_job, ds.id, an.id)
 
-    return {"dataset_id": ds.id, "analysis_id": an.id}
+    payload = dataset_upload_response(ds)
+    payload["analysis_id"] = an.id
+    return payload
 
 
 @router.get("/{dataset_id}")
@@ -115,21 +131,4 @@ def get_dataset(
     user_id: int = Depends(get_current_user_id),
 ):
     ds = require_dataset_owner(db, dataset_id, user_id)
-    return {
-        "id": ds.id,
-        "filename": ds.filename,
-        "user_id": ds.user_id,
-        "storage_path": ds.storage_path,
-        "object_key": ds.object_key,
-        "storage_provider": ds.storage_provider,
-        "storage_url": ds.storage_url,
-        "upload_status": ds.upload_status,
-        "file_size": ds.file_size,
-        "checksum": ds.checksum,
-        "row_count": ds.row_count,
-        "column_count": ds.column_count,
-        "status": ds.status,
-        "health_summary": ds.health_summary,
-        "created_at": ds.created_at.isoformat() if ds.created_at else None,
-        "updated_at": ds.updated_at.isoformat() if ds.updated_at else None,
-    }
+    return dataset_metadata_response(ds)

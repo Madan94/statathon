@@ -191,10 +191,46 @@ export interface AnomalyCandidate {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+export interface DatasetHealthSummary {
+  rows?: number;
+  columns?: number;
+  missing_cells?: number;
+  duplicate_rows?: number;
+  numeric_columns?: number;
+  categorical_columns?: number;
+  column_list?: string[];
+  dtypes?: Record<string, string>;
+  missing_per_column?: Record<string, number>;
+  memory_usage_mb?: number;
+  completeness_pct?: number;
+  consistency_pct?: number;
+  preview_rows?: Record<string, unknown>[];
+}
+
 export interface UploadResponse {
   dataset_id: number;
   id: number;
   filename: string;
+  name?: string;
+  row_count: number;
+  column_count: number;
+  file_size?: number;
+  file_size_bytes?: number;
+  file_size_mb?: number;
+  uploaded_at?: string;
+  status: string;
+  upload_status?: string;
+  health_summary?: DatasetHealthSummary;
+  missing_cells?: number;
+  duplicate_rows?: number;
+  numeric_columns?: number;
+  categorical_columns?: number;
+  column_list?: string[];
+  memory_usage_mb?: number;
+  completeness_pct?: number;
+  consistency_pct?: number;
+  preview_rows?: Record<string, unknown>[];
+  analysis_id?: number;
 }
 
 export interface PresignedUploadResponse {
@@ -206,10 +242,29 @@ export interface PresignedUploadResponse {
 export interface Dataset {
   id: number;
   filename: string;
+  name?: string;
   row_count: number;
   column_count: number;
   status: string;
   created_at: string;
+  uploaded_at?: string;
+  file_size?: number;
+  file_size_bytes?: number;
+  file_size_mb?: number;
+  upload_status?: string;
+  storage_provider?: string;
+  object_key?: string;
+  checksum?: string;
+  health_summary?: DatasetHealthSummary | null;
+  missing_cells?: number;
+  duplicate_rows?: number;
+  numeric_columns?: number;
+  categorical_columns?: number;
+  column_list?: string[];
+  memory_usage_mb?: number;
+  completeness_pct?: number;
+  consistency_pct?: number;
+  preview_rows?: Record<string, unknown>[];
 }
 
 export interface Analysis {
@@ -451,12 +506,12 @@ export const datasetsApi = {
           'Check bucket policy and that Content-Type matches the presigned signature.'
       );
     }
-    const { data: reg } = await api.post('/datasets/register', {
+    const { data: reg } = await api.post<UploadResponse>('/datasets/register', {
       object_key: urlData.object_key,
       filename: file.name,
       file_size: file.size,
     });
-    return { dataset_id: reg.dataset_id, id: reg.dataset_id, filename: file.name };
+    return { ...reg, dataset_id: reg.dataset_id, id: reg.dataset_id ?? reg.id, filename: file.name };
   },
   get: async (id: number): Promise<Dataset> => {
     const { data } = await api.get(`/datasets/${id}`);

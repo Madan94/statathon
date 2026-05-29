@@ -9,30 +9,47 @@ import WorkflowStepper from '@/components/layout/WorkflowStepper';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import Card from '@/components/ui/Card';
+import StatCard from '@/components/ui/StatCard';
 import { Alert } from '@/components/ui/Alert';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { cn } from '@/lib/cn';
 import {
   Rows3,
   Columns3,
-  Activity,
   Calendar,
   HardDrive,
   Fingerprint,
   Play,
   Loader2,
+  Hash,
+  Tags,
+  AlertTriangle,
+  Copy,
+  Database,
+  CheckCircle2,
+  ShieldCheck,
 } from 'lucide-react';
 
 function fmt(n: number | null | undefined, suffix = '') {
-  if (n == null) return '—';
+  if (n == null || Number.isNaN(n)) return '—';
   return `${n.toLocaleString()}${suffix}`;
 }
 
 function fmtBytes(b: number | null | undefined) {
-  if (!b) return '—';
+  if (b == null || b <= 0) return '—';
   if (b < 1024) return `${b} B`;
   if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
   return `${(b / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function fmtFileSize(dataset: Dataset) {
+  if (dataset.file_size_mb != null) return `${dataset.file_size_mb} MB`;
+  return fmtBytes(dataset.file_size ?? dataset.file_size_bytes);
+}
+
+function cellValue(value: unknown): string {
+  if (value == null) return '—';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
 }
 
 export default function DatasetPage() {
@@ -40,14 +57,7 @@ export default function DatasetPage() {
   const router = useRouter();
   const id = Number(params.id);
 
-  const [dataset, setDataset] = useState<Dataset & {
-    health_summary?: Record<string, unknown> | null;
-    file_size?: number;
-    checksum?: string;
-    storage_provider?: string;
-    upload_status?: string;
-    object_key?: string;
-  } | null>(null);
+  const [dataset, setDataset] = useState<Dataset | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
@@ -56,7 +66,7 @@ export default function DatasetPage() {
   useEffect(() => {
     datasetsApi
       .get(id)
-      .then((d) => setDataset(d as typeof dataset))
+      .then((d) => setDataset(d))
       .catch(() => setError('Dataset not found'))
       .finally(() => setLoading(false));
   }, [id]);
@@ -112,6 +122,28 @@ export default function DatasetPage() {
     );
   }
 
+  const health = dataset.health_summary ?? {};
+  const previewRows =
+    dataset.preview_rows ??
+    (Array.isArray(health.preview_rows) ? health.preview_rows : []);
+  const columnList =
+    dataset.column_list ??
+    (Array.isArray(health.column_list) ? health.column_list : []);
+  const previewColumns =
+    columnList.length > 0
+      ? columnList
+      : previewRows.length > 0
+      ? Object.keys(previewRows[0])
+      : [];
+
+  const missingCells = dataset.missing_cells ?? health.missing_cells;
+  const duplicateRows = dataset.duplicate_rows ?? health.duplicate_rows;
+  const numericColumns = dataset.numeric_columns ?? health.numeric_columns;
+  const categoricalColumns = dataset.categorical_columns ?? health.categorical_columns;
+  const memoryUsageMb = dataset.memory_usage_mb ?? health.memory_usage_mb;
+  const completenessPct = dataset.completeness_pct ?? health.completeness_pct;
+  const consistencyPct = dataset.consistency_pct ?? health.consistency_pct;
+
   const statusVariant =
     dataset.status === 'ingested'
       ? 'success'
@@ -124,7 +156,7 @@ export default function DatasetPage() {
   const metaItems = [
     { icon: Rows3, label: 'Rows', value: fmt(dataset.row_count) },
     { icon: Columns3, label: 'Columns', value: fmt(dataset.column_count) },
-    { icon: HardDrive, label: 'File size', value: fmtBytes(dataset.file_size) },
+    { icon: HardDrive, label: 'File size', value: fmtFileSize(dataset) },
     {
       icon: Calendar,
       label: 'Uploaded',
@@ -159,6 +191,86 @@ export default function DatasetPage() {
         ))}
       </div>
 
+      {/* Dataset summary */}
+      <Card title="Dataset summary" className="mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatCard label="Rows" value={fmt(dataset.row_count)} icon={Rows3} />
+          <StatCard label="Columns" value={fmt(dataset.column_count)} icon={Columns3} />
+          <StatCard label="File size" value={fmtFileSize(dataset)} icon={HardDrive} />
+          <StatCard
+            label="Memory usage"
+            value={memoryUsageMb != null ? `${memoryUsageMb} MB` : '—'}
+            icon={Database}
+          />
+        </div>
+
+        <dl className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 text-sm border-t border-border pt-4">
+          {[
+            { label: 'Numeric columns', value: fmt(numericColumns), icon: Hash },
+            { label: 'Categorical columns', value: fmt(categoricalColumns), icon: Tags },
+            { label: 'Missing cells', value: fmt(missingCells), icon: AlertTriangle },
+            { label: 'Duplicate rows', value: fmt(duplicateRows), icon: Copy },
+          ].map(({ label, value, icon: Icon }) => (
+            <div key={label} className="flex items-start gap-2">
+              <Icon className="h-4 w-4 text-text-muted mt-0.5 shrink-0" />
+              <div>
+                <dt className="text-xs text-text-muted uppercase tracking-wide">{label}</dt>
+                <dd className="mt-0.5 font-semibold text-text">{value}</dd>
+              </div>
+            </div>
+          ))}
+        </dl>
+      </Card>
+
+      {/* Dataset health summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          label="Completeness"
+          value={completenessPct != null ? `${completenessPct}%` : '—'}
+          icon={CheckCircle2}
+        />
+        <StatCard
+          label="Consistency"
+          value={consistencyPct != null ? `${consistencyPct}%` : '—'}
+          icon={ShieldCheck}
+        />
+        <StatCard label="Duplicates" value={fmt(duplicateRows)} icon={Copy} />
+        <StatCard label="Missing values" value={fmt(missingCells)} icon={AlertTriangle} />
+      </div>
+
+      {/* Column preview */}
+      {previewColumns.length > 0 && previewRows.length > 0 && (
+        <Card title="Column preview (first 10 rows)" className="mb-6">
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <table className="min-w-full text-sm">
+              <thead className="bg-surface border-b border-border">
+                <tr>
+                  {previewColumns.map((col) => (
+                    <th
+                      key={col}
+                      className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-text-muted whitespace-nowrap"
+                    >
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {previewRows.map((row, rowIdx) => (
+                  <tr key={rowIdx} className="border-b border-border last:border-0">
+                    {previewColumns.map((col) => (
+                      <td key={col} className="px-3 py-2 text-text whitespace-nowrap">
+                        {cellValue(row[col])}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
       {/* File details */}
       <Card title="File details" className="mb-6">
         <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
@@ -185,15 +297,6 @@ export default function DatasetPage() {
           )}
         </dl>
       </Card>
-
-      {/* Health summary (if available from prior analysis) */}
-      {dataset.health_summary && typeof dataset.health_summary === 'object' && (
-        <Card title="Quick health snapshot" className="mb-6">
-          <pre className="max-h-40 overflow-auto rounded-lg bg-surface border border-border p-3 text-xs font-mono text-text-muted">
-            {JSON.stringify(dataset.health_summary, null, 2)}
-          </pre>
-        </Card>
-      )}
 
       {/* Analysis launcher */}
       <Card>
@@ -247,11 +350,6 @@ export default function DatasetPage() {
                 </>
               )}
             </Button>
-            {dataset.row_count === 0 && !analyzing && (
-              <p className="text-xs text-warning">
-                Row and column counts are 0 — the file may need re-uploading.
-              </p>
-            )}
           </div>
         </div>
 

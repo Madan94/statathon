@@ -1,0 +1,3 @@
+{"sessionId": "e80a72", "hypothesisId": "A", "location": "dataset_profiler.py:_build_profile", "message": "preview_rows before json_safe wrap", "data": {"row_count": 5508, "preview_len": 10, "nan_in_preview": 0}, "timestamp": 1780056119381}
+{"sessionId": "e80a72", "hypothesisId": "A", "location": "dataset_profiler.py:_build_profile", "message": "health_summary after json_safe", "data": {"preview_sample_quarter": null, "health_summary_json_valid": true}, "timestamp": 1780056119385}
+{"sessionId": "e80a72", "hypothesisId": "E", "location": "services.py:save_upload", "message": "pre-commit dataset metadata", "data": {"row_count": 5508, "column_count": 16, "file_size": 825375, "health_summary_serializable": true}, "timestamp": 1780056119386}
