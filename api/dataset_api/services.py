@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from database.models import Dataset
 from repositories.dataset_repository import DatasetRepository
+from services.dataset_profile_service import DatasetProfileService
 from services.dataset_profiler import profile_dataset
 
 
@@ -22,6 +23,7 @@ def save_upload(file, upload_dir: str, user_id: int, db: Session) -> Dataset:
         shutil.copyfileobj(file.file, f)
 
     file_size_bytes = os.path.getsize(path)
+    file_bytes = open(path, "rb").read()
     try:
         profile = profile_dataset(path, filename=file.filename)
     except Exception as e:
@@ -42,37 +44,12 @@ def save_upload(file, upload_dir: str, user_id: int, db: Session) -> Dataset:
         status="ingested",
     )
     db.add(ds)
-    # #region agent log
-    import json as _json
-    import time as _time
+    db.commit()
+    db.refresh(ds)
 
-    _log_path = "/media/akassh/New Volume/MOSPI/statathon/.cursor/debug-e80a72.log"
-    try:
-        with open(_log_path, "a", encoding="utf-8") as _f:
-            _f.write(
-                _json.dumps(
-                    {
-                        "sessionId": "e80a72",
-                        "hypothesisId": "E",
-                        "location": "services.py:save_upload",
-                        "message": "pre-commit dataset metadata",
-                        "data": {
-                            "row_count": profile["row_count"],
-                            "column_count": profile["column_count"],
-                            "file_size": file_size_bytes,
-                            "health_summary_serializable": _json.dumps(
-                                profile["health_summary"], allow_nan=False
-                            )
-                            is not None,
-                        },
-                        "timestamp": int(_time.time() * 1000),
-                    }
-                )
-                + "\n"
-            )
-    except OSError:
-        pass
-    # #endregion
+    DatasetProfileService(db).persist_from_profiler(
+        ds.id, profile, source_bytes=file_bytes
+    )
     db.commit()
     db.refresh(ds)
     return ds
@@ -86,7 +63,6 @@ def profile_registered_dataset(
     file_bytes: bytes,
     file_size: int | None = None,
 ) -> Dataset:
-    """Download/register path: parse object bytes and persist metadata."""
     from services.dataset_profiler import profile_dataset_bytes
 
     try:
@@ -104,4 +80,10 @@ def profile_registered_dataset(
     )
     if not ds:
         raise HTTPException(status_code=404, detail="dataset not found after registration")
+
+    DatasetProfileService(db).persist_from_profiler(
+        dataset_id, profile, source_bytes=file_bytes
+    )
+    db.commit()
+    db.refresh(ds)
     return ds

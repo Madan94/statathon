@@ -239,6 +239,28 @@ export interface PresignedUploadResponse {
   expires_in: number;
 }
 
+export interface DatasetProfile {
+  dataset_id: number;
+  row_count: number;
+  column_count: number;
+  file_size_mb?: number | null;
+  memory_usage_mb?: number | null;
+  numeric_columns: number;
+  categorical_columns: number;
+  missing_cells: number;
+  duplicate_rows: number;
+  completeness_score?: number | null;
+  consistency_score?: number | null;
+  health_score?: number | null;
+  profile_version?: number;
+  column_list?: string[];
+  preview_rows?: Record<string, unknown>[];
+  dtypes?: Record<string, string>;
+  missing_per_column?: Record<string, number>;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface Dataset {
   id: number;
   filename: string;
@@ -542,6 +564,10 @@ export const datasetsApi = {
   },
   get: async (id: number): Promise<Dataset> => {
     const { data } = await api.get(`/datasets/${id}`);
+    return data;
+  },
+  getProfile: async (id: number): Promise<DatasetProfile> => {
+    const { data } = await api.get(`/datasets/${id}/profile`);
     return data;
   },
 };

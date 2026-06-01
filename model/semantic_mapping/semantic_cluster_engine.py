@@ -138,6 +138,11 @@ class SemanticClusterEngine:
             # Final support = weighted combination of purity, concentration, coherence
             support_score = round(0.40 * purity + 0.35 * concentration + 0.25 * coherence, 4)
 
+            total_votes = sum(votes.values()) or 1
+            domain_distribution = {
+                d: round(c / total_votes, 4) for d, c in votes.items()
+            }
+
             info[cluster_id] = {
                 "domain": best_domain,
                 "support": purity,
@@ -146,6 +151,6 @@ class SemanticClusterEngine:
                 "domain_purity": round(purity, 4),
                 "avg_domain_confidence": round(concentration, 4),
                 "members": members,
-                "domain_distribution": votes,
+                "domain_distribution": domain_distribution,
             }
         return info

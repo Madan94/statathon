@@ -17,6 +17,7 @@ from .response_builder import dataset_metadata_response, dataset_upload_response
 from .schemas import RegisterDatasetRequest, UploadUrlRequest
 from .services import profile_registered_dataset, save_upload
 from .storage_keys import generate_object_key
+from services.dataset_profile_service import DatasetProfileService
 from services.normalization_service import NormalizationService
 
 router = APIRouter(prefix="/datasets", tags=["datasets"])
@@ -123,6 +124,19 @@ def register_dataset_after_presigned_upload(
     payload = dataset_upload_response(ds)
     payload["analysis_id"] = an.id
     return payload
+
+
+@router.get("/{dataset_id}/profile")
+def get_dataset_profile(
+    dataset_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    ds = require_dataset_owner(db, dataset_id, user_id)
+    profile = DatasetProfileService(db).get_profile(dataset_id, ds=ds)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Dataset profile not found")
+    return profile
 
 
 @router.get("/{dataset_id}/effective-schema")

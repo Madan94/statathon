@@ -20,6 +20,7 @@ from services.analysis_results_service import (
     enrich_payload_for_dashboard,
     resolve_semantic_analysis_payload,
 )
+from analysis_state.cluster_utils import normalize_clusters_payload
 from services.decision_service import DecisionService
 from services.normalization_service import NormalizationService
 
@@ -263,7 +264,7 @@ def get_analysis_clusters(
     payload = _payload_for_analysis(db, analysis_id)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
-    return {"meta": {"analysis_id": analysis_id}, "clusters": payload.get("clusters") or []}
+    return {"meta": {"analysis_id": analysis_id}, "clusters": normalize_clusters_payload(payload.get("clusters") or [])}
 
 
 @router.get("/{analysis_id}/graph")

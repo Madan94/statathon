@@ -40,6 +40,7 @@ def dataset_metadata_response(ds: Dataset) -> dict:
         "memory_usage_mb": health.get("memory_usage_mb"),
         "completeness_pct": health.get("completeness_pct"),
         "consistency_pct": health.get("consistency_pct"),
+        "health_score": health.get("health_score"),
         "preview_rows": health.get("preview_rows"),
         "uploaded_at": ds.created_at.isoformat() if ds.created_at else None,
         "created_at": ds.created_at.isoformat() if ds.created_at else None,
