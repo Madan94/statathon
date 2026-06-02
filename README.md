@@ -11,24 +11,13 @@
 
 <br />
 
-<img src="docs/images/platform-hero.svg" alt="BharatStat platform overview" width="100%" />
+<img src="docs/images/header-image1.png" alt="BharatStat platform overview" width="100%" />
+
+<img src="docs/images/header-image2.png" alt="BharatStat platform overview" width="100%" />
 
 </div>
 
-<br />
 
-| Dashboard | Analysis pipeline | Report Builder |
-| :--: | :--: | :--: |
-| <img src="docs/images/platform-dashboard.svg" alt="Officer dashboard with datasets, analyses, and activity" width="100%" /> | <img src="docs/images/platform-analysis.svg" alt="Semantic mapping workspace with domain taxonomy and confidence scores" width="100%" /> | <img src="docs/images/platform-report-builder.svg" alt="Report Builder template extraction and PDF generation" width="100%" /> |
-| Officer home & KPIs | 5-step wizard · semantic routing | Template AST · MoSPI-style PDF |
-
-<br />
-
-BharatStat is an end-to-end data intelligence platform built for national statistics workflows (MoSPI-inspired). Officers upload survey or administrative spreadsheets, run a multi-stage analysis pipeline (profiling → semantic mapping → validation → anomalies → imputation candidates), explore results in an institutional dashboard, and generate template-driven PDF reports with optional knowledge-graph export.
-
-> **Screenshots:** Replace the SVG previews in [`docs/images/`](docs/images/) with PNG captures from your running app — see [`docs/images/README.md`](docs/images/README.md).
-
----
 
 ## Table of contents
 
@@ -52,15 +41,6 @@ BharatStat is an end-to-end data intelligence platform built for national statis
 - [Documentation index](#documentation-index)
 - [Contributing](#contributing)
 - [License](#license)
-
----
-
-## Platform preview
-
-| Asset | Path |
-|-------|------|
-| Hero banner | [`docs/images/header-image1.png`](docs/images/header-image1.png) |
-| Dashboard | [`docs/images/header-image2.png`](docs/images/header-image2.png) |
 
 ---
 
