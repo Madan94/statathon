@@ -18,6 +18,7 @@ export interface ColumnDecision {
   matchMethod?: string;
   matchConfidence?: number;
   included: boolean;
+  isDeleted: boolean;
   typeOverride?: string;
 }
 
@@ -26,6 +27,7 @@ interface Props {
   decisions: Record<string, ColumnDecision>;
   onProceed: (decisions: Record<string, ColumnDecision>) => void;
   onBack: () => void;
+  saving?: boolean;
 }
 
 function methodVariant(method: string): 'success' | 'warning' | 'default' | 'muted' {
@@ -37,7 +39,7 @@ function methodVariant(method: string): 'success' | 'warning' | 'default' | 'mut
   return 'muted';
 }
 
-export default function Step2Normalize({ results, decisions, onProceed, onBack }: Props) {
+export default function Step2Normalize({ results, decisions, onProceed, onBack, saving }: Props) {
   const plan = useMemo(() => buildNormalizationPlan(results), [results]);
 
   const health = results.health as {
@@ -61,6 +63,7 @@ export default function Step2Normalize({ results, decisions, onProceed, onBack }
         matchMethod: p.matchMethod,
         matchConfidence: p.matchConfidence,
         included: true,
+        isDeleted: false,
       };
     });
     return init;
@@ -86,7 +89,19 @@ export default function Step2Normalize({ results, decisions, onProceed, onBack }
   const toggleInclude = (key: string) => {
     setCols((prev) => ({
       ...prev,
-      [key]: { ...prev[key], included: !prev[key].included },
+      [key]: { ...prev[key], included: !prev[key].included, isDeleted: false },
+    }));
+  };
+  const markDeleted = (key: string) => {
+    setCols((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], isDeleted: true, included: false },
+    }));
+  };
+  const restoreColumn = (key: string) => {
+    setCols((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], isDeleted: false, included: true },
     }));
   };
   const resetAll = () => {
@@ -102,17 +117,19 @@ export default function Step2Normalize({ results, decisions, onProceed, onBack }
           matchMethod: p.matchMethod,
           matchConfidence: p.matchConfidence,
           included: true,
+          isDeleted: false,
         };
       });
       return next;
     });
   };
 
-  const includedCount = Object.values(cols).filter((c) => c.included).length;
+  const includedCount = Object.values(cols).filter((c) => c.included && !c.isDeleted).length;
+  const excludedCount = Object.values(cols).filter((c) => !c.included && !c.isDeleted).length;
+  const deletedCount = Object.values(cols).filter((c) => c.isDeleted).length;
   const renamedCount = Object.values(cols).filter(
     (c) => c.displayName !== c.suggestedName
   ).length;
-  const excludedCount = plan.length - includedCount;
 
   return (
     <div className="space-y-6">
@@ -135,8 +152,9 @@ export default function Step2Normalize({ results, decisions, onProceed, onBack }
 
       <div className="flex flex-wrap gap-3">
         <Badge variant="success">{includedCount} included</Badge>
-        {excludedCount > 0 && <Badge variant="danger">{excludedCount} excluded</Badge>}
-        {renamedCount > 0 && <Badge variant="warning">{renamedCount} manually edited</Badge>}
+        {excludedCount > 0 && <Badge variant="warning">{excludedCount} excluded</Badge>}
+        {deletedCount > 0 && <Badge variant="danger">{deletedCount} deleted</Badge>}
+        {renamedCount > 0 && <Badge variant="default">{renamedCount} renamed</Badge>}
       </div>
 
       <Card
@@ -185,14 +203,19 @@ export default function Step2Normalize({ results, decisions, onProceed, onBack }
                     key={p.originalName}
                     className={cn(
                       'border-b border-border/30 transition-colors',
-                      col.included ? 'hover:bg-surface/60' : 'opacity-40 bg-border/10'
+                      col.isDeleted
+                        ? 'opacity-30 line-through bg-danger/5'
+                        : col.included
+                        ? 'hover:bg-surface/60'
+                        : 'opacity-50 bg-border/10'
                     )}
                   >
                     <td className="px-4 py-3">
                       <input
                         type="checkbox"
-                        checked={col.included}
+                        checked={col.included && !col.isDeleted}
                         onChange={() => toggleInclude(p.originalName)}
+                        disabled={col.isDeleted}
                         className="h-4 w-4 rounded border-border text-accent focus:ring-accent/40 cursor-pointer"
                         aria-label={`Include ${p.originalName}`}
                       />
@@ -283,14 +306,18 @@ export default function Step2Normalize({ results, decisions, onProceed, onBack }
                         </button>
                         <button
                           type="button"
-                          onClick={() => toggleInclude(p.originalName)}
+                          onClick={() =>
+                            col.isDeleted
+                              ? restoreColumn(p.originalName)
+                              : markDeleted(p.originalName)
+                          }
                           className={cn(
                             'p-1 rounded transition-colors',
-                            col.included
-                              ? 'hover:bg-danger/10 text-text-muted hover:text-danger'
-                              : 'hover:bg-success/10 text-text-muted hover:text-success'
+                            col.isDeleted
+                              ? 'hover:bg-success/10 text-success'
+                              : 'hover:bg-danger/10 text-text-muted hover:text-danger'
                           )}
-                          title={col.included ? 'Exclude column' : 'Re-include column'}
+                          title={col.isDeleted ? 'Restore column' : 'Delete column'}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -322,8 +349,8 @@ export default function Step2Normalize({ results, decisions, onProceed, onBack }
           <span className="text-sm text-text-muted">
             {includedCount} of {plan.length} columns confirmed for semantic mapping
           </span>
-          <Button onClick={() => onProceed(cols)} size="lg">
-            Confirm normalisation & Proceed →
+          <Button onClick={() => onProceed(cols)} size="lg" disabled={saving}>
+            {saving ? 'Saving…' : 'Confirm normalisation & Proceed →'}
           </Button>
         </div>
       </div>

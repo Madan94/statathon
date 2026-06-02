@@ -191,10 +191,46 @@ export interface AnomalyCandidate {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+export interface DatasetHealthSummary {
+  rows?: number;
+  columns?: number;
+  missing_cells?: number;
+  duplicate_rows?: number;
+  numeric_columns?: number;
+  categorical_columns?: number;
+  column_list?: string[];
+  dtypes?: Record<string, string>;
+  missing_per_column?: Record<string, number>;
+  memory_usage_mb?: number;
+  completeness_pct?: number;
+  consistency_pct?: number;
+  preview_rows?: Record<string, unknown>[];
+}
+
 export interface UploadResponse {
   dataset_id: number;
   id: number;
   filename: string;
+  name?: string;
+  row_count: number;
+  column_count: number;
+  file_size?: number;
+  file_size_bytes?: number;
+  file_size_mb?: number;
+  uploaded_at?: string;
+  status: string;
+  upload_status?: string;
+  health_summary?: DatasetHealthSummary;
+  missing_cells?: number;
+  duplicate_rows?: number;
+  numeric_columns?: number;
+  categorical_columns?: number;
+  column_list?: string[];
+  memory_usage_mb?: number;
+  completeness_pct?: number;
+  consistency_pct?: number;
+  preview_rows?: Record<string, unknown>[];
+  analysis_id?: number;
 }
 
 export interface PresignedUploadResponse {
@@ -203,20 +239,55 @@ export interface PresignedUploadResponse {
   expires_in: number;
 }
 
+export interface DatasetProfile {
+  dataset_id: number;
+  row_count: number;
+  column_count: number;
+  file_size_mb?: number | null;
+  memory_usage_mb?: number | null;
+  numeric_columns: number;
+  categorical_columns: number;
+  missing_cells: number;
+  duplicate_rows: number;
+  completeness_score?: number | null;
+  consistency_score?: number | null;
+  health_score?: number | null;
+  profile_version?: number;
+  column_list?: string[];
+  preview_rows?: Record<string, unknown>[];
+  dtypes?: Record<string, string>;
+  missing_per_column?: Record<string, number>;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface Dataset {
   id: number;
   filename: string;
+  name?: string;
   row_count: number;
   column_count: number;
   status: string;
   created_at: string;
+  uploaded_at?: string;
   file_size?: number | null;
+  file_size_bytes?: number;
+  file_size_mb?: number;
   storage_path?: string | null;
   object_key?: string | null;
   storage_provider?: string | null;
   upload_status?: string | null;
   checksum?: string | null;
-  health_summary?: Record<string, unknown> | null;
+  health_summary?: DatasetHealthSummary | Record<string, unknown> | null;
+  missing_cells?: number;
+  duplicate_rows?: number;
+  numeric_columns?: number;
+  categorical_columns?: number;
+  column_list?: string[];
+  memory_usage_mb?: number;
+  completeness_pct?: number;
+  consistency_pct?: number;
+  preview_rows?: Record<string, unknown>[];
 }
 
 export interface Analysis {
@@ -346,6 +417,33 @@ export interface AnalysisResult {
   derived_dataset?: Record<string, unknown>;
   outliers?: Record<string, OutlierResult>;
   content_hash?: string;
+  effective_schema?: string[];
+  normalization_version?: number | null;
+}
+
+export interface NormalizationColumnRecord {
+  column_id?: number;
+  original_name: string;
+  normalized_name: string;
+  is_deleted: boolean;
+  is_excluded: boolean;
+  is_active?: boolean;
+}
+
+export interface NormalizationSaveResponse {
+  analysis_id: number;
+  dataset_id: number;
+  normalization_version: number;
+  effective_schema: string[];
+  column_count: number;
+}
+
+export interface EffectiveSchemaResponse {
+  dataset_id: number;
+  analysis_id: number;
+  normalization_version: number | null;
+  columns: string[];
+  column_map: NormalizationColumnRecord[];
 }
 
 export interface DashboardSummary {
@@ -470,15 +568,19 @@ export const datasetsApi = {
           'Check bucket policy and that Content-Type matches the presigned signature.'
       );
     }
-    const { data: reg } = await api.post('/datasets/register', {
+    const { data: reg } = await api.post<UploadResponse>('/datasets/register', {
       object_key: urlData.object_key,
       filename: file.name,
       file_size: file.size,
     });
-    return { dataset_id: reg.dataset_id, id: reg.dataset_id, filename: file.name };
+    return { ...reg, dataset_id: reg.dataset_id, id: reg.dataset_id ?? reg.id, filename: file.name };
   },
   get: async (id: number): Promise<Dataset> => {
     const { data } = await api.get(`/datasets/${id}`);
+    return data;
+  },
+  getProfile: async (id: number): Promise<DatasetProfile> => {
+    const { data } = await api.get(`/datasets/${id}/profile`);
     return data;
   },
 };
@@ -514,6 +616,28 @@ export const analysisApi = {
   },
   getResults: async (id: number): Promise<AnalysisResult> => {
     const { data } = await api.get(`/analysis/${id}/results`);
+    return data;
+  },
+  getNormalization: async (id: number): Promise<{ normalization_version: number | null; columns: NormalizationColumnRecord[] }> => {
+    const { data } = await api.get(`/analysis/${id}/normalization`);
+    return data;
+  },
+  saveNormalization: async (
+    id: number,
+    columns: Array<{
+      original_name: string;
+      normalized_name: string;
+      is_deleted: boolean;
+      is_excluded: boolean;
+    }>
+  ): Promise<NormalizationSaveResponse> => {
+    const { data } = await api.post(`/analysis/${id}/normalization`, { columns });
+    return data;
+  },
+  getEffectiveSchema: async (datasetId: number, analysisId: number): Promise<EffectiveSchemaResponse> => {
+    const { data } = await api.get(`/datasets/${datasetId}/effective-schema`, {
+      params: { analysis_id: analysisId },
+    });
     return data;
   },
   submitDecisions: async (id: number, decisions: Record<string, 'keep' | 'delete' | 'normalize'>) => {

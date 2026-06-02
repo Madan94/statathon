@@ -8,6 +8,7 @@ import Card from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/cn';
+import { formatDistributionPct, normalizeDomainDistribution } from '@/lib/clusterUtils';
 import { ChevronLeft, Layers, CheckCircle2, Info } from 'lucide-react';
 
 interface ExtendedCluster extends ClusterGroup {
@@ -99,6 +100,15 @@ export default function Step4Cluster({ results, analysisId, onProceed, onBack }:
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {rawClusters.map((cluster, idx) => {
               const colorCls = CLUSTER_COLORS[idx % CLUSTER_COLORS.length];
+              const domainDistribution = normalizeDomainDistribution(
+                cluster.domain_distribution,
+                cluster.domain,
+                cluster.columns?.length
+              );
+              const distributionEntries = Object.entries(domainDistribution).sort(
+                (a, b) => b[1] - a[1]
+              );
+
               return (
                 <div
                   key={cluster.cluster_id}
@@ -139,25 +149,22 @@ export default function Step4Cluster({ results, analysisId, onProceed, onBack }:
                     </div>
                   </div>
 
-                  {/* Domain distribution */}
-                  {cluster.domain_distribution &&
-                    Object.keys(cluster.domain_distribution).length > 1 && (
-                      <details className="text-xs opacity-80">
-                        <summary className="cursor-pointer hover:opacity-100">
-                          Domain distribution
-                        </summary>
-                        <ul className="mt-1.5 space-y-1 pl-2">
-                          {Object.entries(cluster.domain_distribution).map(([d, v]) => (
-                            <li key={d} className="flex justify-between gap-2">
-                              <span className="truncate">{d}</span>
-                              <span className="font-mono shrink-0">
-                                {(Number(v) * 100).toFixed(0)}%
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </details>
-                    )}
+                  {/* Domain distribution — always shown; normalized to sum 100% */}
+                  {distributionEntries.length > 0 && (
+                    <details className="text-xs opacity-80" open>
+                      <summary className="cursor-pointer hover:opacity-100">
+                        Domain distribution
+                      </summary>
+                      <ul className="mt-1.5 space-y-1 pl-2">
+                        {distributionEntries.map(([d, pct]) => (
+                          <li key={d} className="flex justify-between gap-2">
+                            <span className="truncate">{d}</span>
+                            <span className="font-mono shrink-0">{formatDistributionPct(pct)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
                 </div>
               );
             })}

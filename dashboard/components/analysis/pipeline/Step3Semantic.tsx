@@ -14,6 +14,8 @@ interface Props {
   results: AnalysisResult;
   analysisId: number;
   overrides: Record<string, string>;
+  effectiveSchema?: string[];
+  normalizationVersion?: number | null;
   onProceed: (overrides: Record<string, string>) => void;
   onBack: () => void;
 }
@@ -205,7 +207,15 @@ function DomainRegistryPanel({ registry, mappingRows, localOverrides }: {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function Step3Semantic({ results, analysisId, overrides, onProceed, onBack }: Props) {
+export default function Step3Semantic({
+  results,
+  analysisId,
+  overrides,
+  effectiveSchema,
+  normalizationVersion,
+  onProceed,
+  onBack,
+}: Props) {
   const [domainsPayload, setDomainsPayload] = useState<DomainsPayload | null>(null);
   const [domainsLoading, setDomainsLoading] = useState(true);
   const [localOverrides, setLocalOverrides] = useState<Record<string, string>>(overrides);
@@ -261,6 +271,23 @@ export default function Step3Semantic({ results, analysisId, overrides, onProcee
 
   return (
     <div className="space-y-6">
+      {effectiveSchema && effectiveSchema.length > 0 && (
+        <Card className="border-success/30 bg-success/5">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+            <span className="text-text">
+              Using approved normalisation
+              {normalizationVersion != null ? ` (v${normalizationVersion})` : ''} —{' '}
+              <strong>{effectiveSchema.length}</strong> active columns:
+            </span>
+            {effectiveSchema.map((col) => (
+              <Badge key={col} variant="success" className="font-mono text-[10px]">
+                {col}
+              </Badge>
+            ))}
+          </div>
+        </Card>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Domain registry */}
         <Card title="Domain taxonomy" description="All available statistical domains — static ontology + dynamic clusters generated this run." className="lg:col-span-1 h-fit">

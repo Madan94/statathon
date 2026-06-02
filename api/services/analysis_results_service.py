@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from analysis_state.cluster_utils import normalize_domain_distribution
+
 from sqlalchemy.orm import Session
 
 from database.models import (
@@ -53,7 +55,11 @@ def build_semantic_results_from_db(db: Session, analysis_id: int) -> dict | None
                 "support_score": c.support_score,
                 "support": (meta or {}).get("support"),
                 "columns": (meta or {}).get("columns"),
-                "domain_distribution": (meta or {}).get("domain_distribution"),
+                "domain_distribution": normalize_domain_distribution(
+                    (meta or {}).get("domain_distribution"),
+                    fallback_domain=c.semantic_domain,
+                    column_count=len((meta or {}).get("columns") or []),
+                ),
             }
         )
 
@@ -217,6 +223,10 @@ def enrich_payload_for_dashboard(db: Session, analysis_id: int, payload: dict) -
         enriched["domain_registry"] = payload["domain_registry"]
     if payload.get("column_normalization"):
         enriched["column_normalization"] = payload["column_normalization"]
+    if payload.get("effective_schema"):
+        enriched["effective_schema"] = payload["effective_schema"]
+    if payload.get("normalization_version") is not None:
+        enriched["normalization_version"] = payload["normalization_version"]
 
     mapping = payload.get("semantic_mapping") or []
     semantic: dict[str, str] = {}

@@ -1,24 +1,25 @@
 import os
 
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from database.database import SessionLocal
-from database.models import Analysis, Dataset
+from database.models import Analysis
 from auth.permissions import require_dataset_owner
 from deps import get_current_user_id, get_object_store
 from repositories.dataset_repository import DatasetRepository
 from services.analysis_runner import execute_registered_analysis_job
 from object_storage.object_store import ObjectStore, StorageConfigError, try_build_default_store
 
-from utils.datetime_json import isoformat_utc
-
 from .metadata import probe_and_persist_dataset_metadata
+from .response_builder import dataset_metadata_response, dataset_upload_response
 from .schemas import RegisterDatasetRequest, UploadUrlRequest
-from .services import save_upload
+from .services import profile_registered_dataset, save_upload
 from .storage_keys import generate_object_key
+from services.dataset_profile_service import DatasetProfileService
+from services.normalization_service import NormalizationService
 
 router = APIRouter(prefix="/datasets", tags=["datasets"])
 
@@ -42,7 +43,7 @@ def upload(
 ):
     upload_dir = os.getenv("UPLOAD_STORAGE_PATH", "./storage/uploads")
     ds = save_upload(file, upload_dir, user_id=user_id, db=db)
-    return {"dataset_id": ds.id, "id": ds.id, "filename": ds.filename}
+    return dataset_upload_response(ds)
 
 
 @router.post("/upload-url")
@@ -101,7 +102,18 @@ def register_dataset_after_presigned_upload(
         db.rollback()
         raise HTTPException(status_code=409, detail="object_key already registered") from e
 
-    probe_and_persist_dataset_metadata(db, ds, object_store=store)
+    try:
+        raw = store.download_object_body(body.object_key)
+    except ClientError as e:
+        raise HTTPException(status_code=502, detail=f"object storage download error: {e}") from e
+
+    ds = profile_registered_dataset(
+        db,
+        ds.id,
+        filename=body.filename,
+        file_bytes=raw,
+        file_size=body.file_size,
+    )
 
     an = Analysis(dataset_id=ds.id, status="pending")
     db.add(an)
@@ -110,7 +122,39 @@ def register_dataset_after_presigned_upload(
 
     background_tasks.add_task(execute_registered_analysis_job, ds.id, an.id)
 
-    return {"dataset_id": ds.id, "analysis_id": an.id}
+    payload = dataset_upload_response(ds)
+    payload["analysis_id"] = an.id
+    return payload
+
+
+@router.get("/{dataset_id}/profile")
+def get_dataset_profile(
+    dataset_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    ds = require_dataset_owner(db, dataset_id, user_id)
+    profile = DatasetProfileService(db).get_profile(dataset_id, ds=ds)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Dataset profile not found")
+    return profile
+
+
+@router.get("/{dataset_id}/effective-schema")
+def get_dataset_effective_schema(
+    dataset_id: int,
+    analysis_id: int = Query(..., alias="analysis_id"),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    require_dataset_owner(db, dataset_id, user_id)
+    an = db.query(Analysis).filter(Analysis.id == analysis_id, Analysis.dataset_id == dataset_id).first()
+    if not an:
+        raise HTTPException(status_code=404, detail="Analysis not found for dataset")
+    try:
+        return NormalizationService(db).get_effective_schema_response(analysis_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.get("/{dataset_id}")
@@ -124,21 +168,4 @@ def get_dataset(
         store = try_build_default_store() if ds.object_key else None
         probe_and_persist_dataset_metadata(db, ds, object_store=store)
         db.refresh(ds)
-    return {
-        "id": ds.id,
-        "filename": ds.filename,
-        "user_id": ds.user_id,
-        "storage_path": ds.storage_path,
-        "object_key": ds.object_key,
-        "storage_provider": ds.storage_provider,
-        "storage_url": ds.storage_url,
-        "upload_status": ds.upload_status,
-        "file_size": ds.file_size,
-        "checksum": ds.checksum,
-        "row_count": ds.row_count,
-        "column_count": ds.column_count,
-        "status": ds.status,
-        "health_summary": ds.health_summary,
-        "created_at": isoformat_utc(ds.created_at),
-        "updated_at": isoformat_utc(ds.updated_at),
-    }
+    return dataset_metadata_response(ds)

@@ -34,6 +34,14 @@ def evaluate_rule_positions(series: pd.Series, rule: CompiledRule) -> tuple[list
         s = pd.to_numeric(series, errors="coerce")
         lo = float(params["min"])
         mask = (~s.isna()) & (s < lo)
+    elif rule_type == "numeric_max":
+        s = pd.to_numeric(series, errors="coerce")
+        hi = float(params["max"])
+        mask = (~s.isna()) & (s > hi)
+    elif rule_type == "is_integer_like":
+        s = pd.to_numeric(series, errors="coerce")
+        # True (violation) if numeric but not (approximately) integer
+        mask = (~s.isna()) & ((s - s.round()).abs() > 1e-9)
     elif rule_type == "regex_or_null":
         import re
 

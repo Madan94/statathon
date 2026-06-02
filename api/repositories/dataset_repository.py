@@ -21,6 +21,30 @@ class DatasetRepository:
             ds.health_summary = health_summary
         self.db.flush()
 
+    def apply_upload_profile(
+        self,
+        dataset_id: int,
+        *,
+        row_count: int,
+        column_count: int,
+        file_size: int | None,
+        health_summary: dict,
+        upload_status: str = "UPLOADED",
+    ) -> Dataset | None:
+        ds = self.get_by_id(dataset_id)
+        if not ds:
+            return None
+        ds.row_count = row_count
+        ds.column_count = column_count
+        if file_size is not None:
+            ds.file_size = file_size
+        ds.health_summary = health_summary
+        ds.upload_status = upload_status
+        ds.status = "ingested"
+        self.db.commit()
+        self.db.refresh(ds)
+        return ds
+
     def get_by_id(self, dataset_id: int) -> Dataset | None:
         return self.db.query(Dataset).filter(Dataset.id == dataset_id).first()
 

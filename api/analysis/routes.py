@@ -13,14 +13,16 @@ from services.analysis_runner import (
     run_semantic_analysis_pipeline,
 )
 from services.apply_service import apply_analysis_decisions
-from analysis.schemas import AnalysisDecisionsRequest
+from analysis.schemas import AnalysisDecisionsRequest, NormalizationSaveRequest
 from auth.permissions import require_analysis_owner, require_dataset_owner
 from deps import get_current_user_id
 from services.analysis_results_service import (
     enrich_payload_for_dashboard,
     resolve_semantic_analysis_payload,
 )
+from analysis_state.cluster_utils import normalize_clusters_payload
 from services.decision_service import DecisionService
+from services.normalization_service import NormalizationService
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
@@ -73,6 +75,13 @@ def _normalize_priority_edges(payload: dict) -> list:
     return flat
 
 
+def _payload_for_analysis(db: Session, analysis_id: int) -> dict | None:
+    payload = resolve_semantic_analysis_payload(db, analysis_id)
+    if not payload:
+        return None
+    return NormalizationService(db).apply_to_payload(analysis_id, payload)
+
+
 @router.get("/{analysis_id}/results")
 def get_analysis_results(
     analysis_id: int,
@@ -80,7 +89,7 @@ def get_analysis_results(
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
-    payload = resolve_semantic_analysis_payload(db, analysis_id)
+    payload = _payload_for_analysis(db, analysis_id)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
     return enrich_payload_for_dashboard(db, analysis_id, payload)
@@ -130,6 +139,48 @@ def submit_analysis_decisions(
     return result
 
 
+@router.get("/{analysis_id}/normalization")
+def get_analysis_normalization(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    saved = NormalizationService(db).get_saved_decisions(analysis_id)
+    if saved:
+        return saved
+    records = NormalizationService(db)._ensure_columns_seeded(analysis_id)
+    return {
+        "normalization_version": None,
+        "columns": [
+            {
+                "column_id": c.id,
+                "original_name": c.name,
+                "normalized_name": c.normalized_name or c.name,
+                "is_deleted": c.is_deleted,
+                "is_excluded": c.is_excluded,
+                "is_active": c.is_active,
+            }
+            for c in records
+        ],
+    }
+
+
+@router.post("/{analysis_id}/normalization")
+def save_analysis_normalization(
+    analysis_id: int,
+    body: NormalizationSaveRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        updates = [c.model_dump() for c in body.columns]
+        return NormalizationService(db).save_normalization(analysis_id, user_id, updates)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
 @router.get("/{analysis_id}/summary")
 def get_analysis_summary(
     analysis_id: int,
@@ -159,7 +210,7 @@ def get_analysis_domains(
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
-    payload = resolve_semantic_analysis_payload(db, analysis_id)
+    payload = _payload_for_analysis(db, analysis_id)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
 
@@ -199,6 +250,7 @@ def get_analysis_domains(
         "domain_registry": domain_registry,
         "static_domains_taxonomy": static_taxonomy,
         "ontology_macro_type_best_hint": ontology_macro or archetype,
+        "effective_schema": payload.get("effective_schema"),
     }
 
 
@@ -209,10 +261,10 @@ def get_analysis_clusters(
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
-    payload = resolve_semantic_analysis_payload(db, analysis_id)
+    payload = _payload_for_analysis(db, analysis_id)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
-    return {"meta": {"analysis_id": analysis_id}, "clusters": payload.get("clusters") or []}
+    return {"meta": {"analysis_id": analysis_id}, "clusters": normalize_clusters_payload(payload.get("clusters") or [])}
 
 
 @router.get("/{analysis_id}/graph")
@@ -222,7 +274,7 @@ def get_analysis_graph(
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
-    payload = resolve_semantic_analysis_payload(db, analysis_id)
+    payload = _payload_for_analysis(db, analysis_id)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
     graph = payload.get("schema_graph") or {}

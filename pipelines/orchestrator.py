@@ -99,7 +99,18 @@ def run_pipeline(
 
     analysis_row = db.query(Analysis).filter(Analysis.id == analysis_id).first()
     if analysis_row:
-        analysis_row.checkpoint = make_json_safe(state.to_api_payload())
+        cp = make_json_safe(state.to_api_payload())
+        cp["raw_schema"] = [str(c) for c in df.columns]
+        analysis_row.checkpoint = cp
+
+    from services.normalization_service import NormalizationService
+
+    NormalizationService(db).seed_from_analysis_payload(
+        dataset_id=dataset_id,
+        analysis_id=analysis_id,
+        raw_columns=[str(c) for c in df.columns],
+        payload=analysis_row.checkpoint if analysis_row and isinstance(analysis_row.checkpoint, dict) else state.to_api_payload(),
+    )
 
     db.flush()
 

@@ -1,5 +1,4 @@
-"""Assemble anomaly intelligence + row-level candidates (no mutation)."""
-
+"""Assemble anomaly intelligence + row-level candidates with explainable confidence."""
 from __future__ import annotations
 
 from typing import Any
@@ -28,11 +27,24 @@ def build_anomaly_intelligence(
         z_rows = zscore_records(series, str(col))
         i_rows = iqr_records(series, str(col))
         iso_rows = isolation_records(series, str(col))
+
         preferred = pick.get("recommended") or "Z_SCORE"
-        primary = z_rows if preferred == "Z_SCORE" else i_rows
-        mc = float(pick.get("z_score_confidence") or 0) if preferred == "Z_SCORE" else float(
-            pick.get("iqr_confidence") or 0
-        )
+
+        # For the new ROBUST_ENSEMBLE pick combine z + iqr + iso.
+        if preferred == "ROBUST_ENSEMBLE":
+            primary_rows = z_rows + i_rows
+            primary_conf = max(
+                float(pick.get("z_score_confidence") or 0),
+                float(pick.get("iqr_confidence") or 0),
+                0.6,
+            )
+        elif preferred == "Z_SCORE":
+            primary_rows = z_rows
+            primary_conf = float(pick.get("z_score_confidence") or 0)
+        else:
+            primary_rows = i_rows
+            primary_conf = float(pick.get("iqr_confidence") or 0)
+
         per_column.append(
             {
                 "column": str(col),
@@ -40,22 +52,46 @@ def build_anomaly_intelligence(
                 "z_score_confidence": pick.get("z_score_confidence"),
                 "iqr_confidence": pick.get("iqr_confidence"),
                 "distribution_hint": pick.get("distribution_hint"),
+                "rationale": pick.get("rationale"),
+                "score_breakdown": pick.get("score_breakdown"),
                 "z_score_hits": z_rows,
                 "iqr_hits": i_rows,
                 "isolation_hits": iso_rows,
             }
         )
+
         seen: set[tuple[int, str]] = set()
-        for hit in primary + iso_rows:
+        for hit in primary_rows + iso_rows:
             key = (int(hit["row"]), str(hit.get("method") or ""))
             if key in seen:
                 continue
             seen.add(key)
             method = str(hit.get("method") or preferred)
-            base_mc = mc if method != "ISOLATION_FOREST" else float(
-                max(mc, pick.get("iqr_confidence") or 0, 0.45)
+            base_mc = primary_conf if method != "ISOLATION_FOREST" else max(
+                primary_conf,
+                float(pick.get("iqr_confidence") or 0),
+                0.45,
             )
             conf = anomaly_row_confidence(base_mc, hit.get("severity"))
+
+            explain = {
+                "primary_method": preferred,
+                "method_used": method,
+                "rationale": pick.get("rationale"),
+                "method_confidence": primary_conf,
+                "severity_band": hit.get("severity"),
+                "distribution_hint": pick.get("distribution_hint"),
+            }
+            if method == "Z_SCORE":
+                explain["z_abs"] = hit.get("z_abs")
+                explain["thresholds"] = hit.get("thresholds")
+            elif method == "IQR":
+                explain["iqr_excess"] = hit.get("iqr_excess")
+                explain["fence_multiplier"] = hit.get("fence_multiplier")
+                explain["fence_bounds"] = [hit.get("q1"), hit.get("q3"), hit.get("iqr")]
+            elif method == "ISOLATION_FOREST":
+                explain["isolation_score"] = hit.get("score")
+
             flat_candidates.append(
                 {
                     "row": int(hit["row"]),
@@ -66,11 +102,7 @@ def build_anomaly_intelligence(
                     "severity": hit.get("severity"),
                     "candidate_action": "REMOVE_VALUE",
                     "alternate_actions": ["KEEP", "REMOVE_ROW", "MARK_VALID"],
-                    "explain": {
-                        "primary_method": preferred,
-                        "metric": hit.get("z_abs") or hit.get("iqr_excess"),
-                        "isolation_forest": method == "ISOLATION_FOREST",
-                    },
+                    "explain": explain,
                 }
             )
 
@@ -80,5 +112,14 @@ def build_anomaly_intelligence(
         "summary": {
             "numeric_columns_scanned": len(per_column),
             "candidate_flags": len(flat_candidates),
+            "method_breakdown": _count_methods(flat_candidates),
         },
     }
+
+
+def _count_methods(flat_candidates: list[dict[str, Any]]) -> dict[str, int]:
+    out: dict[str, int] = {}
+    for c in flat_candidates:
+        m = str(c.get("method") or "UNKNOWN")
+        out[m] = out.get(m, 0) + 1
+    return out

@@ -81,18 +81,89 @@ class Dataset(Base):
     owner = relationship("User", back_populates="datasets")
     columns = relationship("DatasetColumn", back_populates="dataset", cascade="all, delete-orphan")
     analyses = relationship("Analysis", back_populates="dataset", cascade="all, delete-orphan")
+    profile = relationship(
+        "DatasetProfile",
+        back_populates="dataset",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+
+class DatasetProfile(Base):
+    """Immutable-at-read dataset summary generated once at upload time."""
+
+    __tablename__ = "dataset_profiles"
+    __table_args__ = (UniqueConstraint("dataset_id", name="uq_dataset_profiles_dataset_id"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    row_count = Column(Integer, nullable=False, default=0)
+    column_count = Column(Integer, nullable=False, default=0)
+    file_size_mb = Column(Float, nullable=True)
+    memory_usage_mb = Column(Float, nullable=True)
+    numeric_columns = Column(Integer, nullable=False, default=0)
+    categorical_columns = Column(Integer, nullable=False, default=0)
+    missing_cells = Column(Integer, nullable=False, default=0)
+    duplicate_rows = Column(Integer, nullable=False, default=0)
+    completeness_score = Column(Float, nullable=True)
+    consistency_score = Column(Float, nullable=True)
+    health_score = Column(Float, nullable=True)
+    profile_json = Column(JSON, nullable=True)
+    profile_version = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    dataset = relationship("Dataset", back_populates="profile")
+
+
+class ProfileGenerationLog(Base):
+    """Audit trail for dataset profile generation."""
+
+    __tablename__ = "profile_generation_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    profile_version = Column(Integer, nullable=False, default=1)
+    generation_time_ms = Column(Integer, nullable=True)
+    source_file_hash = Column(String(128), nullable=True)
+    generated_at = Column(DateTime, default=datetime.utcnow)
 
 
 class DatasetColumn(Base):
     __tablename__ = "dataset_columns"
+    __table_args__ = (
+        UniqueConstraint("analysis_id", "name", name="uq_dataset_columns_analysis_name"),
+    )
     id = Column(Integer, primary_key=True, index=True)
-    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
+    normalized_name = Column(String(512), nullable=True)
     inferred_type = Column(String(64), nullable=True)
     semantic_label = Column(String(256), nullable=True)
     priority = Column(Float, default=0.0)
     domain_tags = Column(JSON, nullable=True)
+    is_deleted = Column(Boolean, nullable=False, default=False, server_default="false")
+    is_excluded = Column(Boolean, nullable=False, default=False, server_default="false")
+    is_active = Column(Boolean, nullable=False, default=True, server_default="true")
+    last_modified = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     dataset = relationship("Dataset", back_populates="columns")
+
+
+class ColumnNormalizationAudit(Base):
+    """Audit trail for user normalization actions."""
+
+    __tablename__ = "column_normalization_audit"
+
+    id = Column(Integer, primary_key=True, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    column_id = Column(Integer, ForeignKey("dataset_columns.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    old_name = Column(String(512), nullable=True)
+    new_name = Column(String(512), nullable=True)
+    action = Column(String(64), nullable=False)
+    payload = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class Analysis(Base):
