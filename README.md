@@ -227,7 +227,6 @@ From the `api/` directory (required for correct import paths):
 
 ```bash
 cd api
-# Windows: ..\.venv\Scripts\python.exe -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
 $env:PYTHONPATH = (Resolve-Path "..").Path   
 python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
