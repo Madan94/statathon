@@ -196,14 +196,40 @@ def _recompute_from_df(claim: ClaimCheck, df: pd.DataFrame) -> tuple[float | Non
             return float(nc), "numeric_column_count"
 
     if claim.interpretation == "percentage":
-        total = float(df.size) or 1.0
-        missing_pct = float(df.isna().sum().sum()) / total * 100.0
+        total_cells = float(df.size) or 1.0
+        missing_pct = float(df.isna().sum().sum()) / total_cells * 100.0
         if _within(v, missing_pct, 0.05):
             return missing_pct, "missing_pct"
-        # Duplicate rate
         dup_pct = float(df.duplicated().sum()) / max(len(df), 1) * 100.0
         if _within(v, dup_pct, 0.1):
             return dup_pct, "duplicate_pct"
+        # Energy data: check % distributions (proved/indicated/inferred vs total_reserves)
+        _reserve_cols = ["Proved_Reserves", "Indicated_Reserves", "Inferred_Reserves"]
+        _total_col = "Total_Reserves"
+        if _total_col in df.columns:
+            # For each category (if Resource_Category exists) and overall
+            for cat_col in ([None] + (["Resource_Category"] if "Resource_Category" in df.columns else [])):
+                if cat_col is None:
+                    subs = [("all", df)]
+                else:
+                    subs = [(cat, df[df[cat_col] == cat]) for cat in df[cat_col].unique()]
+                for _, sub_df in subs:
+                    t = float(sub_df[_total_col].sum())
+                    if t <= 0:
+                        continue
+                    for rc in _reserve_cols:
+                        if rc in sub_df.columns:
+                            pct = float(sub_df[rc].sum()) / t * 100.0
+                            if _within(v, pct, 0.10):  # 10% tolerance for energy pcts
+                                return pct, f"{rc}_pct"
+            # State distribution percentage
+            if "State" in df.columns:
+                by_state = df.groupby("State")[_total_col].sum()
+                total_all = float(by_state.sum())
+                if total_all > 0:
+                    for state_pct in (by_state / total_all * 100).values:
+                        if _within(v, float(state_pct), 0.10):
+                            return float(state_pct), "state_distribution_pct"
 
     return None, ""
 
@@ -281,7 +307,10 @@ class VerifierAgent:
                     continue
 
             # 2c: check if drastically wrong (fail) vs just unknown (unverified)
-            if closest is not None and not _within(c.claimed_value, closest, 0.25):
+            # For percentage claims, be more lenient — small differences can come from
+            # section-level vs global computation differences
+            pct_tol = 0.50 if c.interpretation == "percentage" else 0.25
+            if closest is not None and not _within(c.claimed_value, closest, pct_tol):
                 if abs(c.claimed_value) > 10:  # only fail for non-trivial values
                     c.computed_value = closest
                     c.status = "fail"

@@ -91,6 +91,20 @@ class ConsensusEngine:
         max_words = int(hints.get("max_words", 250))
         attempts = 0
 
+        # Merge section-specific facts (e.g. energy section computed facts) into
+        # the verify_facts dict so the Verifier can match section-level numbers.
+        verify_facts = dict(facts)
+        sec_facts = hints.get("_energy_section_facts")
+        if isinstance(sec_facts, dict):
+            # Flatten nested structures (top3_detail etc.) into scalar values
+            for k, v in sec_facts.items():
+                if isinstance(v, (int, float)):
+                    verify_facts[f"_sec_{k}"] = v
+                elif isinstance(v, dict):
+                    for sk, sv in v.items():
+                        if isinstance(sv, (int, float)):
+                            verify_facts[f"_sec_{k}_{sk}"] = sv
+
         while attempts < MAX_RETRIES:
             attempts += 1
 
@@ -107,7 +121,7 @@ class ConsensusEngine:
             verdict = self._verifier.verify(
                 block_id=block_id,
                 narrative=narrative,
-                facts=facts,
+                facts=verify_facts,
                 df=df,
             )
 
@@ -152,11 +166,12 @@ class ConsensusEngine:
             facts=facts,
             max_words=max_words,
             dataset_type=dataset_type,
+            hints=hints,
         )
         fallback_verdict = self._verifier.verify(
             block_id=block_id,
             narrative=fallback,
-            facts=facts,
+            facts=verify_facts,
             df=df,
         )
         return ConsensuResult(

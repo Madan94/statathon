@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
 
 INTENT_KEYWORDS: dict[str, list[str]] = {
     "aggregation":    ["count", "total", "sum", "average", "mean", "median", "max", "min",
-                       "how many", "how much", "overall", "aggregate"],
+                       "how many", "how much", "overall", "aggregate",
+                       "highest", "lowest", "most", "least", "top", "bottom",
+                       "which", "rank", "per", "rate", "ratio", "index"],
     "trend":          ["trend", "over time", "year", "month", "quarter", "change", "growth",
                        "increase", "decrease", "trajectory", "progress"],
     "correlation":    ["correlat", "relation", "associat", "link", "influence", "impact",
@@ -36,7 +38,8 @@ INTENT_KEYWORDS: dict[str, list[str]] = {
     "comparative":    ["compare", "vs", "versus", "differ", "between", "contrast",
                        "higher", "lower", "best", "worst", "rank"],
     "cross_section":  ["group", "segment", "category", "class", "type", "gender",
-                       "region", "district", "state", "rural", "urban", "caste", "religion"],
+                       "region", "district", "state", "rural", "urban", "caste", "religion",
+                       "sector", "by", "per", "breakdown"],
     "anomaly":        ["anomal", "outlier", "unusual", "suspect", "flag", "abnormal",
                        "error", "invalid", "extreme"],
     "imputation":     ["missing", "null", "blank", "fill", "impute", "incomplete"],
@@ -73,26 +76,66 @@ DOMAIN_HINTS: dict[str, list[str]] = {
                       "location", "area"],
 }
 
-# Known filter values for energy/resource datasets
-_STATE_NAMES = {
-    "jharkhand", "odisha", "chhattisgarh", "west bengal", "madhya pradesh",
-    "telangana", "andhra pradesh", "rajasthan", "gujarat", "maharashtra",
-    "tamil nadu", "karnataka", "assam", "uttar pradesh", "bihar",
-}
-_RESOURCE_CATEGORIES = {
-    "coal", "lignite", "crude oil", "natural gas", "renewable energy",
-    "solar", "wind", "hydro", "biomass",
-}
+def _detect_filter_conditions(
+    query: str,
+    available_values: dict[str, list[str]] | None = None,
+) -> dict[str, str | None]:
+    """Detect filter conditions purely from the query + actual dataset values.
 
+    Scans every categorical column's unique values against the query text.
+    Returns {column_name: matched_value} for each column that has a match.
+    Zero hardcoding — all matching is driven by the live dataset.
+    """
+    if not available_values:
+        return {}
 
-def _detect_filter_conditions(query: str) -> dict[str, str | None]:
-    """Detect explicit state/resource filter conditions from query text."""
     q = query.lower()
-    state_filter = next((s.title() for s in _STATE_NAMES if s in q), None)
-    resource_filter = next(
-        (r.title() for r in _RESOURCE_CATEGORIES if r in q), None
-    )
-    return {"state": state_filter, "resource_category": resource_filter}
+    filters: dict[str, str | None] = {}
+
+    for col, vals in available_values.items():
+        for val in (vals or []):
+            if val and str(val).lower() in q:
+                filters[col] = val
+                break  # first match per column
+
+    return filters
+
+
+def _build_available_values(
+    df: "pd.DataFrame | None" = None,
+    analysis_payload: "dict | None" = None,
+    max_unique: int = 200,
+) -> dict[str, list[str]]:
+    """Build a {column → [unique_values]} map from df or analysis payload.
+
+    Used for dynamic filter detection without any hardcoded column/value lists.
+    """
+    import pandas as pd
+    result: dict[str, list[str]] = {}
+
+    if df is not None and not df.empty:
+        for col in df.select_dtypes(include=["object", "string", "category"]).columns:
+            unique_vals = df[col].dropna().unique()
+            if len(unique_vals) <= max_unique:
+                result[col] = [str(v) for v in unique_vals]
+
+    # Also pull from analysis payload column_profiles if provided
+    if analysis_payload:
+        col_profiles = analysis_payload.get("column_profiles") or {}
+        for col, profile in col_profiles.items():
+            if col in result:
+                continue
+            top_vals = (
+                profile.get("top_values")
+                or profile.get("value_counts")
+                or {}
+            )
+            if top_vals:
+                result[col] = [str(v) for v in (
+                    list(top_vals.keys()) if isinstance(top_vals, dict) else top_vals
+                )]
+
+    return result
 
 
 @dataclass
@@ -388,48 +431,91 @@ class PlannerAgent:
         *,
         analysis_payload: dict[str, Any] | None = None,
         available_columns: list[str] | None = None,
+        df: "Any | None" = None,   # pd.DataFrame — used for dynamic column/value detection
     ) -> ExecutionPlan:
+        import pandas as pd
+
         intent, sub_intents = _classify_intents(query)
         target_domains = _detect_domains(query)
 
-        # Detect explicit filter conditions (state / resource_category) from query
-        filter_conditions = _detect_filter_conditions(query)
+        # Derive available_columns from df if not explicitly given
+        if df is not None and not getattr(df, "empty", True):
+            if available_columns is None:
+                available_columns = list(df.columns)
 
-        # Try to match user vocabulary to real column names via payload
+        # Build available_values map fully from df (preferred) + payload
+        available_values = _build_available_values(df, analysis_payload)
+
+        # Detect filter conditions from actual dataset values — no hardcoding
+        filter_conditions = _detect_filter_conditions(query, available_values)
+
+        # Resolve target columns from query keywords matched against column names/values
         target_columns: list[str] = []
         if available_columns:
             q_lower = query.lower()
-            # Exact substring match
+            stop_words = {"by", "in", "of", "the", "a", "and", "for", "is", "are",
+                          "what", "show", "give", "list", "which", "how", "does",
+                          "vs", "versus", "compare", "total", "all", "with", "its",
+                          "that", "this", "from", "has", "have", "had", "been"}
+
+            def _col_words(col: str) -> set[str]:
+                """Split CamelCase + underscore/dash → lowercase word set."""
+                # CamelCase split: XYZAbc → XYZ Abc
+                camel_split = re.sub(r"([a-z])([A-Z])", r"\1 \2",
+                                     re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", col))
+                words = set(re.split(r"[\s_\-]+", camel_split.lower())) - stop_words
+                return words
+
+            # 1. Exact column-name substring match
             target_columns = [c for c in available_columns if c.lower() in q_lower]
-            # Word-level fuzzy match (each word of query vs each word of column)
-            if not target_columns:
-                q_words = set(re.split(r"[\s_]+", q_lower))
-                for c in available_columns:
-                    c_words = set(re.split(r"[\s_]+", c.lower()))
-                    if c_words & q_words - {"by", "in", "of", "the", "a", "and", "for"}:
-                        target_columns.append(c)
-            # Domain-based fallback
+
+            # 2. Word-level fuzzy: CamelCase-aware column word matching
+            q_words = set(re.split(r"[\s_\-]+", q_lower)) - stop_words
+            for c in available_columns:
+                if c in target_columns:
+                    continue
+                c_words = _col_words(c)
+                if c_words & q_words:
+                    target_columns.append(c)
+
+            # 3. Ensure filter-matched columns are always included
+            for col, val in filter_conditions.items():
+                if val and col in available_columns and col not in target_columns:
+                    target_columns.append(col)
+
+            # 4. Domain-based fallback: include semantically mapped columns
             if not target_columns and target_domains and analysis_payload:
                 for row in analysis_payload.get("semantic_mapping") or []:
                     if (isinstance(row, dict)
                             and row.get("domain") in target_domains
                             and row.get("column")):
                         target_columns.append(str(row["column"]))
-            # Always include columns that are likely filters/groupby targets
-            filter_col_hints = []
-            if filter_conditions.get("state") and "State" in available_columns:
-                filter_col_hints.append("State")
-            if filter_conditions.get("resource_category") and "Resource_Category" in available_columns:
-                filter_col_hints.append("Resource_Category")
-            # Ensure reserve numeric columns are included when energy domain
-            if "energy" in target_domains:
-                for c in available_columns:
-                    if any(kw in c.lower() for kw in ("reserve", "capacity", "potential")):
-                        filter_col_hints.append(c)
-            for c in filter_col_hints:
-                if c not in target_columns:
-                    target_columns.append(c)
+
+            # 5. If still empty, include all columns for general queries
+            if not target_columns and available_columns:
+                target_columns = list(available_columns)
+
             target_columns = list(dict.fromkeys(target_columns))[:20]
+
+            # 6. Ensure at least one numeric column is included for aggregation queries
+            #    (so analytics can actually compute something)
+            if df is not None and not getattr(df, "empty", True):
+                import pandas as _pd
+                has_num = any(
+                    _pd.api.types.is_numeric_dtype(df[c].dtype)
+                    for c in target_columns if c in df.columns
+                )
+                if not has_num and intent in (
+                    "aggregation", "cross_section", "comparative", "distribution", "narrative"
+                ):
+                    # Add top numeric columns by absolute sum
+                    num_candidates = sorted(
+                        [c for c in df.select_dtypes(include="number").columns
+                         if c not in target_columns],
+                        key=lambda c: -float(df[c].abs().sum()),
+                    )
+                    target_columns += num_candidates[:3]
+                    target_columns = list(dict.fromkeys(target_columns))[:20]
 
         needs_kg_ = _needs_kg(intent, query)
         needs_history_ = intent in ("narrative", "comparative", "trend")

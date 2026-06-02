@@ -254,11 +254,24 @@ class AnalyticsAgent:
                 "trend_column": target_col,
                 "time_column": time_col,
             }
+            # Group by time column for a cleaner chart (mean per period)
+            try:
+                grouped = (
+                    df.groupby(time_col)[target_col]
+                    .mean()
+                    .reset_index()
+                    .sort_values(time_col)
+                )
+                chart_labels = grouped[time_col].astype(str).tolist()
+                chart_values = [_safe_float(v) for v in grouped[target_col].tolist()]
+            except Exception:
+                chart_labels = sub[time_col].astype(str).tolist()[-50:]
+                chart_values = [_safe_float(v) for v in y[-50:]]
             chart = {
                 "chart_type": "line",
                 "title": f"{target_col} trend over {time_col}",
-                "labels": sub[time_col].astype(str).tolist()[-50:],
-                "values": [_safe_float(v) for v in y[-50:]],
+                "labels": chart_labels,
+                "values": chart_values,
             }
             direction = facts["trend_direction"]
             sig = "statistically significant" if p_value < 0.05 else "not statistically significant"
@@ -622,42 +635,95 @@ class AnalyticsAgent:
         df: pd.DataFrame,
         filter_conditions: dict,
     ) -> pd.DataFrame:
-        """Apply state/resource_category filters from planner."""
+        """Apply filter conditions from the planner.
+
+        filter_conditions is now {actual_column_name: value}, so we can
+        apply directly without any hardcoded column-name mapping.
+        """
         if df.empty or not filter_conditions:
             return df
         fdf = df.copy()
-        state = filter_conditions.get("state")
-        if state and "State" in fdf.columns:
-            matches = fdf["State"].str.lower() == state.lower()
-            if matches.any():
-                fdf = fdf[matches]
-        resource = filter_conditions.get("resource_category")
-        if resource and "Resource_Category" in fdf.columns:
-            matches = fdf["Resource_Category"].str.lower() == resource.lower()
-            if matches.any():
-                fdf = fdf[matches]
+
+        for col, val in filter_conditions.items():
+            if not val:
+                continue
+            # Direct column match (new style: col is the actual column name)
+            if col in fdf.columns:
+                try:
+                    mask = fdf[col].astype(str).str.lower() == str(val).lower()
+                    if mask.any():
+                        fdf = fdf[mask]
+                        continue
+                except Exception:
+                    pass
+            # Legacy fallback: col is a semantic key like "state" or "resource_category"
+            # Try to find a matching column heuristically
+            cat_cols = _cat_cols(fdf)
+            best = next(
+                (c for c in cat_cols
+                 if col.replace("_", "").lower() in c.lower().replace("_", "")),
+                None,
+            )
+            if best:
+                try:
+                    mask = fdf[best].astype(str).str.lower() == str(val).lower()
+                    if mask.any():
+                        fdf = fdf[mask]
+                except Exception:
+                    pass
+
         return fdf if not fdf.empty else df
 
     def _pick_groupby(self, df: pd.DataFrame, resolved_columns: list[str], query: str) -> str | None:
-        """Choose the best groupby column for energy/resource aggregation queries."""
+        """Choose the best groupby column dynamically from query and available columns."""
         q = query.lower()
         cat_cols = _cat_cols(df, resolved_columns)
-        # Prefer State or Resource_Category based on query
-        if "state" in q and "State" in df.columns:
-            return "State"
-        if any(kw in q for kw in ("resource", "category", "type", "coal", "lignite", "renewable")) \
-                and "Resource_Category" in df.columns:
-            return "Resource_Category"
-        # Column mentioned literally in query
+
+        # Prefer column whose name or values match query keywords
         for c in cat_cols:
             if c.lower() in q:
                 return c
-        # Prefer State > Resource_Category > first categorical
-        if "State" in df.columns:
-            return "State"
-        if "Resource_Category" in df.columns:
-            return "Resource_Category"
-        return cat_cols[0] if cat_cols else None
+
+        # Check if unique values of categorical columns appear in query
+        for c in cat_cols:
+            try:
+                unique_vals = df[c].dropna().unique()
+                for v in unique_vals:
+                    if str(v).lower() in q:
+                        return c
+            except Exception:
+                pass
+
+        # For comparison queries, prefer lower-cardinality categoricals (more meaningful segments)
+        if any(kw in q for kw in ("compare", "versus", "vs", "contrast", "differ")):
+            # Pick the categorical column with fewest unique values (best for comparison)
+            if cat_cols:
+                sorted_by_card = sorted(
+                    cat_cols,
+                    key=lambda c: df[c].nunique() if c in df.columns else 999,
+                )
+                return sorted_by_card[0]
+
+        # Prefer columns whose names overlap with query words (most explicit signal)
+        # CamelCase-aware matching
+        def _col_words_a(col: str) -> set:
+            camel = re.sub(r"([a-z])([A-Z])", r"\1 \2",
+                           re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", col))
+            return set(re.split(r"[\s_\-]+", camel.lower()))
+
+        q_words = set(re.split(r"[\s_\-]+", q))
+        for c in cat_cols:
+            if _col_words_a(c) & q_words:
+                return c
+
+        # Prefer lower-cardinality columns (better groupby candidates)
+        if cat_cols:
+            return min(
+                cat_cols,
+                key=lambda c: (df[c].nunique() if c in df.columns else 999),
+            )
+
+        return None
 
     def run(
         self,
@@ -678,6 +744,11 @@ class AnalyticsAgent:
         if mode in ("trend", "temporal"):
             return self.trend(df, cols, query)
         if mode == "distribution":
+            # For distribution, use aggregation_smart if it's a categorical query
+            # (e.g. "distribution by state" is really an aggregation)
+            grp = self._pick_groupby(df, cols, query)
+            if grp:
+                return self._aggregation_smart(df, cols, query)
             return self.distribution(df, cols, query)
         if mode == "forecast":
             return self.forecast(df, cols, query)
@@ -685,8 +756,18 @@ class AnalyticsAgent:
             return self.statistical_test(df, cols, query)
         if mode == "anomaly":
             return self.anomaly(df, cols, anomalies, query)
-        if mode in ("aggregation", "cross_section", "comparative"):
+        if mode in ("aggregation", "cross_section"):
             return self._aggregation_smart(df, cols, query)
+        if mode == "comparative":
+            # For comparative queries, use unfiltered df so all groups are visible.
+            return self._aggregation_smart(bundle.df, cols, query)
+        if mode == "narrative":
+            # If df has numeric + categorical columns, produce a cross-section instead of
+            # falling back to general stats — narrative queries like "Show X by Y" deserve real data
+            num = _numeric_cols(df, cols)
+            cat = _cat_cols(df)
+            if num and cat:
+                return self._aggregation_smart(df, cols, query)
         return self.general(df, cols)
 
     def _aggregation_smart(
@@ -700,10 +781,32 @@ class AnalyticsAgent:
             return AnalyticsResult("aggregation", error="No data")
 
         num_cols = _numeric_cols(df, resolved_columns)
+        if num_cols:
+            # Prioritize columns that:
+            # 1. Have non-zero sum (actually contain data)
+            # 2. Are mentioned in the query (by column name words)
+            q_lower = query.lower()
+            q_words = set(re.split(r"[\s_\-]+", q_lower))
+
+            # Temporal/ID columns shouldn't be primary value columns for aggregation
+            _temporal_kws = {"year", "month", "date", "quarter", "time",
+                              "id", "site", "code", "no", "number", "index"}
+
+            def _col_priority(c: str) -> tuple:
+                c_words = set(re.split(r"[\s_\-]+", c.lower()))
+                query_match = bool(c_words & q_words)
+                is_temporal = bool(c_words & _temporal_kws)
+                col_sum = float(df[c].abs().sum()) if c in df.columns else 0.0
+                # Temporal/ID cols sorted last; within same tier, sort by data richness
+                return (2 if is_temporal else (0 if query_match else 1), -col_sum)
+
+            num_cols = sorted(num_cols, key=_col_priority)
         group_col = self._pick_groupby(df, resolved_columns, query)
 
         if group_col and group_col in df.columns and num_cols:
             try:
+                # Pick the primary value column: highest sum (handles renewable MW vs reserves=0)
+                top_col = num_cols[0]
                 # For energy data: sum is more meaningful than mean
                 agg_df = (
                     df.groupby(group_col)[num_cols[:5]]
@@ -712,12 +815,15 @@ class AnalyticsAgent:
                 )
                 agg_df.columns = ["_".join(c) for c in agg_df.columns]
                 agg_df = agg_df.reset_index().sort_values(
-                    f"{num_cols[0]}_sum", ascending=False
+                    f"{top_col}_sum", ascending=False
                 )
                 table = _df_to_table(agg_df, 60)
 
-                top_col = num_cols[0]
                 sorted_series = df.groupby(group_col)[top_col].sum().sort_values(ascending=False)
+                sorted_series = sorted_series[sorted_series > 0]  # filter zero groups
+                if sorted_series.empty:
+                    # All zero — something wrong with filter; fall back to all data
+                    sorted_series = df.groupby(group_col)[top_col].sum().sort_values(ascending=False)
                 chart = {
                     "chart_type": "bar",
                     "title": f"Total {top_col} by {group_col}",

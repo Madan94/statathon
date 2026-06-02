@@ -164,7 +164,44 @@ def _deterministic_narrative(
             )
 
     elif block_section == "findings":
-        if "row_count" in facts:
+        _hints_f = hints or {}
+        # Use grand_total_reserves (generic key from _compute_energy_section_facts)
+        total_all = (
+            facts.get("grand_total_reserves")
+            or facts.get("total_value")
+            or next((v2 for k, v2 in facts.items()
+                     if k.startswith("total_") and isinstance(v2, (int, float)) and v2 > 0), None)
+        )
+        group_count = facts.get("group_count") or facts.get("state_count") or ""
+        top_group = facts.get("top_group") or facts.get("top_state") or ""
+        group_col = facts.get("top_group_col") or "group"
+
+        if total_all:
+            parts.append(
+                f"Analysis of the {v['dataset']} covering {group_count} {group_col}s "
+                "reveals the following key observations."
+            )
+            # Per-category breakdown using any *_categories fact
+            for col_key, cats in facts.items():
+                if col_key.endswith("_categories") and isinstance(cats, list):
+                    col_name = col_key.replace("_categories", "")
+                    parts.append(
+                        f"The dataset covers {len(cats)} {col_name} categories: "
+                        f"{', '.join(str(c) for c in cats[:8])}."
+                    )
+                    for cat in cats:
+                        safe = str(cat).lower().replace(" ", "_").replace("-", "_")
+                        val = facts.get(f"reserves_{safe}")
+                        unit_key = f"unit_{safe}"
+                        unit_label = facts.get(unit_key, "")
+                        unit_str = f" {unit_label}" if unit_label else ""
+                        if val:
+                            share = round(float(val) / float(total_all) * 100, 1) if total_all else ""
+                            pct_str = f" ({share}% of total)" if share else ""
+                            parts.append(f"{cat}: {val:,.2f}{unit_str}{pct_str}.")
+            if top_group:
+                parts.append(f"{top_group} leads with the highest aggregate value.")
+        elif "row_count" in facts:
             parts.append(
                 f"Analysis of the {int(facts['row_count']):,}-record {v['dataset']} reveals "
                 "the following key observations."
@@ -172,8 +209,14 @@ def _deterministic_narrative(
         if "key_patterns" in facts:
             patterns = facts["key_patterns"]
             if isinstance(patterns, list):
+                # Skip patterns that describe generic semantic mapping artefacts
+                skip_terms = {"census", "enumeration", "semantic map", "domain map"}
                 for p in patterns[:3]:
-                    parts.append(str(p) + ".")
+                    p_str = str(p)
+                    if not any(t in p_str.lower() for t in skip_terms):
+                        parts.append(p_str + ".")
+        if facts.get("correlation_note"):
+            parts.append(f"Key correlation: {facts['correlation_note']}.")
         if "health_score" in facts:
             parts.append(f"Overall data quality score: {facts['health_score']}.")
 
@@ -201,38 +244,99 @@ def _deterministic_narrative(
         )
 
     else:
-        # General body / analysis section — emit as much analytics context as possible
-        # Check hints first (enriched by pipeline), then facts
+        # General body / analysis section — fully generic prose from sec_facts
         _hints = hints or {}
-        _analytics_ctx = _hints.get("analytics_context") or facts.get("analytics_context") or ""
-        if _analytics_ctx:
-            parts.append(str(_analytics_ctx) + ".")
+        sec_facts = _hints.get("_energy_section_facts") or {}
+        resource_cat = sec_facts.get("resource_category") or _hints.get("resource_category", "")
+        filter_label = resource_cat or _hints.get("filter_value", "")
+
+        if sec_facts:
+            if sec_facts.get("resource_not_in_dataset"):
+                rc_name = sec_facts.get("resource_category") or filter_label or "this category"
+                parts.append(
+                    f"Data for '{rc_name}' is not currently available in this dataset. "
+                    "This section will be updated when the relevant data is incorporated."
+                )
+            else:
+                total = sec_facts.get("grand_total_reserves")
+                unit = sec_facts.get("value_unit") or ""
+                val_col = sec_facts.get("value_column") or ""
+                unit_str = f" {unit}" if unit else ""
+                val_col_label = val_col.replace("_", " ").title() if val_col else "Total"
+                group_count = sec_facts.get("group_count") or sec_facts.get("state_count") or ""
+                group_col = sec_facts.get("group_col") or "region"
+
+                # Opening sentence — dynamic, no hardcoded domain words
+                if filter_label and total:
+                    parts.append(
+                        f"The total {val_col_label} for {filter_label} stands at "
+                        f"{total:,.2f}{unit_str}."
+                    )
+                elif total:
+                    parts.append(
+                        f"The total {val_col_label} across all categories stands at "
+                        f"{total:,.2f}{unit_str}, covering {group_count} {group_col}s."
+                    )
+
+                # % breakdown for sibling numeric columns
+                pct_items = [
+                    (k.replace("_pct", "").replace("_", " ").title(), v)
+                    for k, v in sec_facts.items()
+                    if k.endswith("_pct") and v is not None
+                ]
+                if len(pct_items) >= 2:
+                    pct_str = ", ".join(
+                        f"{label} {pct}%" for label, pct in pct_items
+                    )
+                    parts.append(
+                        f"The composition by sub-category is: {pct_str} of total."
+                    )
+                elif len(pct_items) == 1:
+                    label, pct = pct_items[0]
+                    parts.append(f"{label} constitutes {pct}% of total {val_col_label}.")
+
+                if sec_facts.get("top3_states") and sec_facts.get("top3_pct"):
+                    top3 = sec_facts["top3_states"]
+                    top3_pct = sec_facts["top3_pct"]
+                    tail = (
+                        f" and {top3[2]}" if len(top3) > 2 else ""
+                    )
+                    parts.append(
+                        f"Geographic concentration is notable: {top3[0]}, {top3[1]}{tail} "
+                        f"together account for {top3_pct}% of the total."
+                    )
+
+                top_group = sec_facts.get("top_state") or sec_facts.get("top_group")
+                top_pct = sec_facts.get("top_state_pct") or sec_facts.get("top_group_pct")
+                if top_group and top_pct:
+                    parts.append(
+                        f"The highest value is observed in {top_group} "
+                        f"({top_pct}% of total {val_col_label})."
+                    )
+
+        elif _hints.get("analytics_context"):
+            ctx = str(_hints["analytics_context"])
+            parts.append(ctx if ctx.endswith(".") else ctx + ".")
+
         elif facts.get("narrative_hints"):
             parts.append(str(facts["narrative_hints"]))
-        if parts:
-            # Add key numeric facts
-            for key in ("total_Total_Reserves", "total_Proved_Reserves", "groups_count",
-                        "top_group", "top_Total_Reserves"):
-                if key in facts and facts[key] is not None:
-                    label = key.replace("_", " ").replace("total ", "total ").replace("top group", "leading group")
-                    parts.append(f"{label}: {facts[key]}.")
-        else:
+
+        # Ultimate fallback
+        if not parts:
             parts.append(f"{block_title}.")
             if "row_count" in facts:
                 parts.append(
                     f"This {v['dataset']} comprises {int(facts['row_count']):,} {v['rows']} "
                     f"across {int(facts.get('column_count', 0))} {v['columns']}."
                 )
-            if "total_Total_Reserves" in facts:
-                parts.append(
-                    f"Total reserves recorded: {facts['total_Total_Reserves']:.1f} units."
-                )
-            if "groups_count" in facts:
-                parts.append(
-                    f"Data spans {int(facts['groups_count'])} groups."
-                )
-        if facts.get("analytics_mode") and "retrieval_context" in facts:
-            parts.append(f"Analysis mode: {facts['analytics_mode']}.")
+            # Use any grand_total or first total_ fact as summary
+            total_val = facts.get("grand_total_reserves") or next(
+                (val for key, val in facts.items()
+                 if key.startswith("total_") and isinstance(val, (int, float)) and val > 0),
+                None,
+            )
+            if total_val:
+                parts.append(f"Total value recorded: {total_val:,.2f} units.")
 
     text = " ".join(parts)
     words = text.split()
