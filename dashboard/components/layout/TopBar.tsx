@@ -24,6 +24,12 @@ function autoBreadcrumbs(pathname: string): Crumb[] {
       { label: 'Report Builder', href: '/report-builder' },
     ];
   }
+  if (pathname === '/profile') {
+    return [
+      { label: 'Home', href: '/dashboard' },
+      { label: 'Profile', href: '/profile' },
+    ];
+  }
   const ds = pathname.match(/^\/datasets\/(\d+)/);
   if (ds) {
     return [
