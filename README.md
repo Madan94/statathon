@@ -1,13 +1,38 @@
+<div align="center">
+
 # BharatStat
 
 **Turn raw statistical datasets into audit-ready intelligence and publication-grade reports.**
 
+[![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?style=flat-square)](https://fastapi.tiangolo.com/)
+[![Next.js](https://img.shields.io/badge/Dashboard-Next.js_16-000000?style=flat-square)](https://nextjs.org/)
+[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=flat-square)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-Statathon_Hackathon-f5c518?style=flat-square)](#license)
+
+<br />
+
+<img src="docs/images/platform-hero.svg" alt="BharatStat platform overview" width="100%" />
+
+</div>
+
+<br />
+
+| Dashboard | Analysis pipeline | Report Builder |
+| :--: | :--: | :--: |
+| <img src="docs/images/platform-dashboard.svg" alt="Officer dashboard with datasets, analyses, and activity" width="100%" /> | <img src="docs/images/platform-analysis.svg" alt="Semantic mapping workspace with domain taxonomy and confidence scores" width="100%" /> | <img src="docs/images/platform-report-builder.svg" alt="Report Builder template extraction and PDF generation" width="100%" /> |
+| Officer home & KPIs | 5-step wizard · semantic routing | Template AST · MoSPI-style PDF |
+
+<br />
+
 BharatStat is an end-to-end data intelligence platform built for national statistics workflows (MoSPI-inspired). Officers upload survey or administrative spreadsheets, run a multi-stage analysis pipeline (profiling → semantic mapping → validation → anomalies → imputation candidates), explore results in an institutional dashboard, and generate template-driven PDF reports with optional knowledge-graph export.
+
+> **Screenshots:** Replace the SVG previews in [`docs/images/`](docs/images/) with PNG captures from your running app — see [`docs/images/README.md`](docs/images/README.md).
 
 ---
 
 ## Table of contents
 
+- [Platform preview](#platform-preview)
 - [Overview](#overview)
 - [Key capabilities](#key-capabilities)
 - [Architecture](#architecture)
@@ -27,6 +52,15 @@ BharatStat is an end-to-end data intelligence platform built for national statis
 - [Documentation index](#documentation-index)
 - [Contributing](#contributing)
 - [License](#license)
+
+---
+
+## Platform preview
+
+| Asset | Path |
+|-------|------|
+| Hero banner | [`docs/images/header-image1.png`](docs/images/header-image1.png) |
+| Dashboard | [`docs/images/header-image2.png`](docs/images/header-image2.png) |
 
 ---
 
@@ -209,22 +243,7 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Edit `.env` at the **repository root** (see [Configuration](#configuration)). Minimum for local dev:
-
-```env
-SECRET_KEY=<generate-a-48-char-random-string>
-DATABASE_URL=sqlite:///./statathon.db
-AUTH_REQUIRED=true
-DEV_AUTH_ENABLED=true
-DEV_TEST_EMAIL=officer@example.com
-DEV_TEST_PASSWORD=TestOfficer123!
-DEV_TEST_OTP=123456
-NEO4J_ENABLED=false
-OBJECT_STORAGE_DISABLED=true
-CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-```
-
-Generate `SECRET_KEY`:
+Edit `.env` at the **repository root** (see [Configuration](#configuration)).
 
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(48))"
@@ -420,18 +439,6 @@ Semantic accuracy benchmarks and relaxed matching rules: [docs/TESTING_FULL_GUID
 | **AWS (Fargate, GPU worker, cutover)** | [docs/deploy/aws/README.md](docs/deploy/aws/README.md) |
 | **Object storage (R2)** | [docs/R2_STEP_BY_STEP.md](docs/R2_STEP_BY_STEP.md), [docs/OBJECT_STORAGE.md](docs/OBJECT_STORAGE.md) |
 
-Production checklist:
-
-- [ ] Strong `SECRET_KEY`, `COOKIE_SECURE=true`, `APP_ENV=production`  
-- [ ] Managed PostgreSQL (`DATABASE_URL` with SSL)  
-- [ ] S3/R2 for uploads and report artifacts  
-- [ ] SMTP or transactional email for OTP  
-- [ ] CORS restricted to your dashboard domain  
-- [ ] Neo4j Aura or self-hosted only if KG features are required  
-- [ ] Run migrations on deploy (`api/database/migrate_*.py` run at startup)  
-
----
-
 ## Operations
 
 | Concern | Action |
@@ -458,22 +465,6 @@ Local artifact paths (gitignored): `storage/uploads/`, `storage/reports/`, `api/
 | [docs/OBJECT_STORAGE.md](docs/OBJECT_STORAGE.md) | S3-compatible storage |
 | [docs/deploy/aws/README.md](docs/deploy/aws/README.md) | AWS deployment runbooks |
 | [dashboard/README.md](dashboard/README.md) | Frontend-specific setup |
-
----
-
-## Contributing
-
-1. Fork the repository and create a feature branch from `main`.
-2. Keep changes focused; match existing naming and module boundaries.
-3. Run `pytest` and `npm run lint` before opening a PR.
-4. Do not commit secrets, `.venv`, `node_modules`, model caches, or generated `storage/` artifacts.
-5. Update relevant `docs/` pages when changing env vars, API contracts, or pipeline behavior.
-
----
-
-## License
-
-This project was developed for the **Statathon** hackathon. License terms should be defined by the repository owner before public or commercial distribution.
 
 ---
 
