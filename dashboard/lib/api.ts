@@ -210,6 +210,13 @@ export interface Dataset {
   column_count: number;
   status: string;
   created_at: string;
+  file_size?: number | null;
+  storage_path?: string | null;
+  object_key?: string | null;
+  storage_provider?: string | null;
+  upload_status?: string | null;
+  checksum?: string | null;
+  health_summary?: Record<string, unknown> | null;
 }
 
 export interface Analysis {

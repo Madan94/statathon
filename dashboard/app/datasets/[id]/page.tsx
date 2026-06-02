@@ -12,6 +12,7 @@ import Card from '@/components/ui/Card';
 import { Alert } from '@/components/ui/Alert';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/cn';
+import { formatIndiaTime } from '@/lib/datetime';
 import {
   Rows3,
   Columns3,
@@ -29,7 +30,7 @@ function fmt(n: number | null | undefined, suffix = '') {
 }
 
 function fmtBytes(b: number | null | undefined) {
-  if (!b) return '—';
+  if (b == null || Number.isNaN(b)) return '—';
   if (b < 1024) return `${b} B`;
   if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
   return `${(b / (1024 * 1024)).toFixed(2)} MB`;
@@ -40,14 +41,7 @@ export default function DatasetPage() {
   const router = useRouter();
   const id = Number(params.id);
 
-  const [dataset, setDataset] = useState<Dataset & {
-    health_summary?: Record<string, unknown> | null;
-    file_size?: number;
-    checksum?: string;
-    storage_provider?: string;
-    upload_status?: string;
-    object_key?: string;
-  } | null>(null);
+  const [dataset, setDataset] = useState<Dataset | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
@@ -56,7 +50,7 @@ export default function DatasetPage() {
   useEffect(() => {
     datasetsApi
       .get(id)
-      .then((d) => setDataset(d as typeof dataset))
+      .then(setDataset)
       .catch(() => setError('Dataset not found'))
       .finally(() => setLoading(false));
   }, [id]);
@@ -127,12 +121,14 @@ export default function DatasetPage() {
     { icon: HardDrive, label: 'File size', value: fmtBytes(dataset.file_size) },
     {
       icon: Calendar,
-      label: 'Uploaded',
-      value: dataset.created_at
-        ? new Date(dataset.created_at).toLocaleString()
-        : '—',
+      label: 'Uploaded (IST)',
+      value: formatIndiaTime(dataset.created_at),
     },
   ];
+
+  const objectKeyDisplay =
+    dataset.object_key ??
+    (dataset.storage_path ? `local:${dataset.storage_path.split(/[/\\]/).pop()}` : '—');
 
   return (
     <div>
@@ -165,12 +161,22 @@ export default function DatasetPage() {
           {[
             { label: 'Status', value: dataset.status },
             { label: 'Storage provider', value: dataset.storage_provider ?? 'local' },
-            { label: 'Upload status', value: dataset.upload_status ?? '—' },
-            { label: 'Object key', value: dataset.object_key ?? '—' },
-          ].map(({ label, value }) => (
-            <div key={label}>
+            { label: 'Upload status', value: dataset.upload_status ?? 'UPLOADED' },
+            { label: 'Object key', value: objectKeyDisplay, mono: true },
+            ...(dataset.storage_path && !dataset.object_key
+              ? [{ label: 'Storage path', value: dataset.storage_path, mono: true }]
+              : []),
+          ].map(({ label, value, mono }) => (
+            <div key={label} className={label === 'Storage path' ? 'sm:col-span-2' : undefined}>
               <dt className="text-xs text-text-muted uppercase tracking-wide">{label}</dt>
-              <dd className="mt-1 font-medium text-text truncate">{value}</dd>
+              <dd
+                className={cn(
+                  'mt-1 font-medium text-text',
+                  mono ? 'font-mono text-xs break-all' : 'truncate'
+                )}
+              >
+                {value}
+              </dd>
             </div>
           ))}
           {dataset.checksum && (
@@ -247,9 +253,10 @@ export default function DatasetPage() {
                 </>
               )}
             </Button>
-            {dataset.row_count === 0 && !analyzing && (
+            {(dataset.row_count === 0 || dataset.column_count === 0) && !analyzing && (
               <p className="text-xs text-warning">
-                Row and column counts are 0 — the file may need re-uploading.
+                Row/column counts are missing — re-upload the file or check that .xls has xlrd
+                installed on the API server.
               </p>
             )}
           </div>

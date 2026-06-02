@@ -15,6 +15,7 @@ import { authApi, dashboardApi, type DashboardSummary } from '@/lib/api';
 import Card from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
+import { formatIndiaTime } from '@/lib/datetime';
 
 function StatCard({
   label,
@@ -41,18 +42,6 @@ function StatCard({
       </div>
     </Card>
   );
-}
-
-function formatDate(iso: string | null) {
-  if (!iso) return '—';
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
-  } catch {
-    return iso;
-  }
 }
 
 export default function DashboardPage() {
@@ -176,7 +165,7 @@ export default function DashboardPage() {
                         <td className="px-5 py-3 text-[#64748b]">{ds.row_count}</td>
                         <td className="px-5 py-3 text-[#64748b]">{ds.column_count}</td>
                         <td className="px-5 py-3 text-[#64748b] whitespace-nowrap">
-                          {formatDate(ds.created_at)}
+                          {formatIndiaTime(ds.created_at)}
                         </td>
                         <td className="px-5 py-3 text-right">
                           <Link

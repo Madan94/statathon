@@ -8,6 +8,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from database.database import SessionLocal
+from utils.datetime_json import isoformat_utc
 from database.models import Analysis, Dataset, Report, ReportJob
 from deps import get_current_user_id
 
@@ -99,7 +100,7 @@ def dashboard_summary(
             status=ds.status or "pending",
             row_count=ds.row_count or 0,
             column_count=ds.column_count or 0,
-            created_at=ds.created_at.isoformat() if ds.created_at else None,
+            created_at=isoformat_utc(ds.created_at),
         )
         for ds in latest
     ]

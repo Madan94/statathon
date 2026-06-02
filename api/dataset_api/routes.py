@@ -11,8 +11,11 @@ from auth.permissions import require_dataset_owner
 from deps import get_current_user_id, get_object_store
 from repositories.dataset_repository import DatasetRepository
 from services.analysis_runner import execute_registered_analysis_job
-from object_storage.object_store import ObjectStore, StorageConfigError
+from object_storage.object_store import ObjectStore, StorageConfigError, try_build_default_store
 
+from utils.datetime_json import isoformat_utc
+
+from .metadata import probe_and_persist_dataset_metadata
 from .schemas import RegisterDatasetRequest, UploadUrlRequest
 from .services import save_upload
 from .storage_keys import generate_object_key
@@ -98,6 +101,8 @@ def register_dataset_after_presigned_upload(
         db.rollback()
         raise HTTPException(status_code=409, detail="object_key already registered") from e
 
+    probe_and_persist_dataset_metadata(db, ds, object_store=store)
+
     an = Analysis(dataset_id=ds.id, status="pending")
     db.add(an)
     db.commit()
@@ -115,6 +120,10 @@ def get_dataset(
     user_id: int = Depends(get_current_user_id),
 ):
     ds = require_dataset_owner(db, dataset_id, user_id)
+    if (ds.row_count or 0) == 0 and (ds.column_count or 0) == 0 and (ds.storage_path or ds.object_key):
+        store = try_build_default_store() if ds.object_key else None
+        probe_and_persist_dataset_metadata(db, ds, object_store=store)
+        db.refresh(ds)
     return {
         "id": ds.id,
         "filename": ds.filename,
@@ -130,6 +139,6 @@ def get_dataset(
         "column_count": ds.column_count,
         "status": ds.status,
         "health_summary": ds.health_summary,
-        "created_at": ds.created_at.isoformat() if ds.created_at else None,
-        "updated_at": ds.updated_at.isoformat() if ds.updated_at else None,
+        "created_at": isoformat_utc(ds.created_at),
+        "updated_at": isoformat_utc(ds.updated_at),
     }
