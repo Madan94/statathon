@@ -280,8 +280,8 @@ export default function Step3Semantic({
               {normalizationVersion != null ? ` (v${normalizationVersion})` : ''} —{' '}
               <strong>{effectiveSchema.length}</strong> active columns:
             </span>
-            {effectiveSchema.map((col) => (
-              <Badge key={col} variant="success" className="font-mono text-[10px]">
+            {effectiveSchema.map((col, idx) => (
+              <Badge key={`schema-col-${idx}-${col}`} variant="success" className="font-mono text-[10px]">
                 {col}
               </Badge>
             ))}
@@ -338,7 +338,7 @@ export default function Step3Semantic({
                 </tr>
               </thead>
               <tbody>
-                {mappingRows.map((row) => {
+                {mappingRows.map((row, rowIdx) => {
                   const effective = localOverrides[row.column] ?? row.domain ?? '—';
                   const isOverridden = !!localOverrides[row.column];
                   const info = routingInfo(row.routing_path ?? (row.explainability as { match_method?: string } | undefined)?.match_method);
@@ -346,7 +346,7 @@ export default function Step3Semantic({
                   const clusterSupport = row.cluster_support ?? 0;
                   const graphConsistency = row.graph_consistency ?? 0;
                   return (
-                    <tr key={row.column} className={cn('border-b border-border/30 hover:bg-surface/60 transition-colors align-top', isOverridden && 'bg-warning/5')}>
+                    <tr key={`mapping-${rowIdx}-${row.column}`} className={cn('border-b border-border/30 hover:bg-surface/60 transition-colors align-top', isOverridden && 'bg-warning/5')}>
                       <td className="px-4 py-3">
                         <div className="font-mono text-xs font-medium text-text">{row.column}</div>
                         {row.matched_keyword && (

@@ -141,11 +141,6 @@ function ReportBuilderContent() {
       <PageHeader
         title="Report Builder"
         description="Reverse-engineered AST · Knowledge graph · Hallucination firewall · Block-based AGUI"
-        actions={
-          <Link href="/report-builder/new">
-            <Button size="sm">New report wizard</Button>
-          </Link>
-        }
       />
 
       <div className="space-y-6">
