@@ -212,7 +212,6 @@ python -m venv .venv
 ```powershell
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements-windows.txt
-copy .env.example .env
 ```
 
 **Linux / macOS:**
@@ -220,13 +219,6 @@ copy .env.example .env
 ```bash
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
-```
-
-Edit `.env` at the **repository root** (see [Configuration](#configuration)).
-
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
 ### 2. Start the API
