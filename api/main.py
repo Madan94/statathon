@@ -111,8 +111,10 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 Base.metadata.create_all(bind=engine)
 
 from database.migrate_auth import migrate_auth_schema
+from database.migrate_report_builder import migrate_report_builder_schema
 
 migrate_auth_schema()
+migrate_report_builder_schema()
 
 _secret = os.getenv("SECRET_KEY", "")
 if os.getenv("AUTH_REQUIRED", "true").lower() in ("1", "true", "yes"):

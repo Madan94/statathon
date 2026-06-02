@@ -31,6 +31,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Alert } from '@/components/ui/Alert';
+import DeliveryPanel from '@/components/report-builder/DeliveryPanel';
 import {
   reportBuilderApi,
   ChatTurn,
@@ -40,6 +41,33 @@ import {
 } from '@/lib/api';
 
 const DRAG_MIME = 'application/x-statathon-block';
+
+function isBlockDrag(dt: DataTransfer): boolean {
+  return Array.from(dt.types).some(
+    (t) => t === DRAG_MIME || t === 'text/plain'
+  );
+}
+
+function parseDragPayload(dt: DataTransfer): {
+  block: RenderedBlock;
+  fromCanvas: boolean;
+} | null {
+  const raw = dt.getData(DRAG_MIME) || dt.getData('text/plain');
+  if (!raw) return null;
+  try {
+    const payload = JSON.parse(raw) as { block: RenderedBlock; fromCanvas: boolean };
+    if (!payload?.block) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function writeDragPayload(dt: DataTransfer, block: RenderedBlock, fromCanvas: boolean) {
+  const raw = JSON.stringify({ block, fromCanvas });
+  dt.setData(DRAG_MIME, raw);
+  dt.setData('text/plain', raw);
+}
 
 export default function JobCanvasPage() {
   const { jobId } = useParams<{ jobId: string }>();
@@ -232,6 +260,14 @@ export default function JobCanvasPage() {
         </Alert>
       )}
 
+      {data?.status === 'exported' && (
+        <DeliveryPanel
+          jobId={jobIdNum}
+          deliveryLog={data.delivery_log}
+          onDelivered={refresh}
+        />
+      )}
+
       <div className={chatOpen ? 'lg:pr-[420px] transition-[padding] duration-200' : ''}>
         {/* ----- Canvas column (full width) ----- */}
         <div className="space-y-6">
@@ -306,7 +342,13 @@ export default function JobCanvasPage() {
       </div>
 
       {/* ----- BI Chat drawer (fixed, won't squeeze canvas) ----- */}
-      {chatOpen && <ChatPanel jobId={jobIdNum} onClose={() => setChatOpen(false)} />}
+      {chatOpen && (
+        <ChatPanel
+          jobId={jobIdNum}
+          onClose={() => setChatOpen(false)}
+          onInsertBlock={(block) => handleDrop('bi_findings', block, false)}
+        />
+      )}
 
       {templateModalOpen && (
         <TemplateUploaderModal
@@ -349,25 +391,25 @@ function SectionDropZone({
   const [over, setOver] = useState(false);
 
   const onDragOver = (e: React.DragEvent) => {
-    if (e.dataTransfer.types.includes(DRAG_MIME)) {
-      e.preventDefault();
-      setOver(true);
-    }
+    if (!isBlockDrag(e.dataTransfer)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setOver(true);
   };
 
-  const onDragLeave = () => setOver(false);
+  const onDragLeave = (e: React.DragEvent) => {
+    const related = e.relatedTarget as Node | null;
+    if (related && e.currentTarget.contains(related)) return;
+    setOver(false);
+  };
 
   const onDropEvt = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setOver(false);
-    const raw = e.dataTransfer.getData(DRAG_MIME);
-    if (!raw) return;
-    try {
-      const payload = JSON.parse(raw) as { block: RenderedBlock; fromCanvas: boolean };
-      onDrop(section, payload.block, payload.fromCanvas);
-    } catch (err) {
-      console.error(err);
-    }
+    const payload = parseDragPayload(e.dataTransfer);
+    if (!payload) return;
+    void onDrop(section, payload.block, payload.fromCanvas);
   };
 
   return (
@@ -378,15 +420,18 @@ function SectionDropZone({
       </h2>
       <div
         onDragOver={onDragOver}
+        onDragOverCapture={onDragOver}
         onDragLeave={onDragLeave}
-        onDrop={onDropEvt}
+        onDropCapture={onDropEvt}
         className={
-          'space-y-3 rounded-xl border-2 border-dashed p-2 transition-colors ' +
-          (over ? 'border-accent bg-accent/5' : 'border-transparent')
+          'space-y-3 rounded-xl border-2 border-dashed p-2 min-h-[5rem] transition-colors ' +
+          (over ? 'border-accent bg-accent/5' : 'border-border/40')
         }
       >
         {blocks.length === 0 && emptyHint && (
-          <p className="text-xs text-text-muted italic px-2 py-4">{emptyHint}</p>
+          <p className="text-xs text-text-muted italic px-2 py-4 pointer-events-none select-none">
+            {emptyHint}
+          </p>
         )}
         {blocks.map((b) => (
           <BlockCard
@@ -475,10 +520,7 @@ function BlockCard({
   };
 
   const onDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData(
-      DRAG_MIME,
-      JSON.stringify({ block, fromCanvas: true })
-    );
+    writeDragPayload(e.dataTransfer, block, true);
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -726,7 +768,15 @@ function formatCell(v: unknown): string {
 
 // ---------------- Chat side panel ----------------
 
-function ChatPanel({ jobId, onClose }: { jobId: number; onClose: () => void }) {
+function ChatPanel({
+  jobId,
+  onClose,
+  onInsertBlock,
+}: {
+  jobId: number;
+  onClose: () => void;
+  onInsertBlock?: (block: RenderedBlock) => void | Promise<void>;
+}) {
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState(false);
@@ -812,7 +862,7 @@ function ChatPanel({ jobId, onClose }: { jobId: number; onClose: () => void }) {
             </div>
           )}
           {turns.map((t, i) => (
-            <ChatBubble key={i} turn={t} />
+            <ChatBubble key={i} turn={t} onInsertBlock={onInsertBlock} />
           ))}
           {busy && (
             <div className="text-xs text-text-muted flex items-center gap-2">
@@ -844,7 +894,13 @@ function ChatPanel({ jobId, onClose }: { jobId: number; onClose: () => void }) {
   );
 }
 
-function ChatBubble({ turn }: { turn: ChatTurn }) {
+function ChatBubble({
+  turn,
+  onInsertBlock,
+}: {
+  turn: ChatTurn;
+  onInsertBlock?: (block: RenderedBlock) => void | Promise<void>;
+}) {
   if (turn.role === 'user') {
     return (
       <div className="flex justify-end">
@@ -867,7 +923,12 @@ function ChatBubble({ turn }: { turn: ChatTurn }) {
         <p className="whitespace-pre-wrap text-text">{turn.text}</p>
         {turn.block && (
           <div className="mt-2">
-            <DraggableProposal block={turn.block} />
+            <DraggableProposal
+              block={turn.block}
+              onInsert={
+                onInsertBlock ? () => onInsertBlock(turn.block!) : undefined
+              }
+            />
           </div>
         )}
       </div>
@@ -1136,13 +1197,28 @@ function TemplateUploaderModal({
 
 // ---------------- Draggable proposal card ----------------
 
-function DraggableProposal({ block }: { block: RenderedBlock }) {
+function DraggableProposal({
+  block,
+  onInsert,
+}: {
+  block: RenderedBlock;
+  onInsert?: () => void | Promise<void>;
+}) {
+  const [inserting, setInserting] = useState(false);
+
   const onDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData(
-      DRAG_MIME,
-      JSON.stringify({ block, fromCanvas: false })
-    );
+    writeDragPayload(e.dataTransfer, block, false);
     e.dataTransfer.effectAllowed = 'copy';
+  };
+
+  const insert = async () => {
+    if (!onInsert || inserting) return;
+    setInserting(true);
+    try {
+      await onInsert();
+    } finally {
+      setInserting(false);
+    }
   };
 
   return (
@@ -1150,7 +1226,7 @@ function DraggableProposal({ block }: { block: RenderedBlock }) {
       draggable
       onDragStart={onDragStart}
       className="rounded-lg border border-dashed border-accent/40 bg-accent/5 p-2 cursor-grab active:cursor-grabbing"
-      title="Drag into any section of the report"
+      title="Drag into BI Findings or any section drop zone"
     >
       <div className="flex items-center gap-2 mb-1">
         <GripVertical className="h-3 w-3 text-text-muted" />
@@ -1160,9 +1236,24 @@ function DraggableProposal({ block }: { block: RenderedBlock }) {
         <Badge variant="muted">{block.kind}</Badge>
         <span className="text-[10px] text-text-muted truncate">{block.title}</span>
       </div>
-      <div className="text-xs">
+      <div className="text-xs pointer-events-none">
         <BlockBody block={block} editing={false} draft="" setDraft={() => {}} />
       </div>
+      {onInsert && (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="mt-2 w-full pointer-events-auto"
+          disabled={inserting}
+          onClick={insert}
+        >
+          {inserting ? (
+            <Loader2 className="h-3 w-3 animate-spin mr-1" />
+          ) : null}
+          Insert into BI Findings
+        </Button>
+      )}
     </div>
   );
 }

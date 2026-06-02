@@ -4,6 +4,20 @@ from typing import Any, Optional
 from pydantic import BaseModel
 
 
+class DataFilterSpecIn(BaseModel):
+    include_columns: Optional[list[str]] = None
+    exclude_columns: Optional[list[str]] = None
+    max_rows: Optional[int] = None
+    min_complete_row_pct: Optional[float] = None
+
+
+class TemplateUpdateIn(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    ast: Optional[dict[str, Any]] = None
+    filter_config: Optional[DataFilterSpecIn | dict[str, Any]] = None
+
+
 class TemplateOut(BaseModel):
     id: int
     name: str
@@ -12,6 +26,7 @@ class TemplateOut(BaseModel):
     extraction_method: Optional[str] = None
     block_count: int
     source_hash: Optional[str] = None
+    filter_config: Optional[dict[str, Any]] = None
     created_at: Optional[str] = None
 
 
@@ -19,9 +34,38 @@ class TemplateCreateOut(TemplateOut):
     ast: dict[str, Any]
 
 
+class TemplateExtractionJobOut(BaseModel):
+    id: int
+    status: str
+    stage: Optional[str] = None
+    progress_pct: int = 0
+    template_name: str
+    source_filename: Optional[str] = None
+    source_hash: Optional[str] = None
+    vault_object_key: Optional[str] = None
+    extraction_method: Optional[str] = None
+    stage_diagnostics: Optional[dict[str, Any]] = None
+    error_message: Optional[str] = None
+    created_template_id: Optional[int] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class ReadyAnalysisOut(BaseModel):
+    analysis_id: int
+    dataset_id: int
+    filename: str
+    row_count: int
+    column_count: int
+    status: str
+    upload_status: Optional[str] = None
+    created_at: Optional[str] = None
+
+
 class GenerateRequest(BaseModel):
     analysis_id: int
     template_id: Optional[int] = None  # None => use builtin MoSPI default
+    filter_config: Optional[DataFilterSpecIn | dict[str, Any]] = None
 
 
 class JobOut(BaseModel):
@@ -34,8 +78,16 @@ class JobOut(BaseModel):
     final_pdf_path: Optional[str] = None
     kg_export_path: Optional[str] = None
     error_message: Optional[str] = None
+    filter_config: Optional[dict[str, Any]] = None
+    delivery_log: Optional[list[dict[str, Any]]] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+
+
+class DeliverRequest(BaseModel):
+    channel: str  # email | webhook
+    to: Optional[str] = None  # email address
+    url: Optional[str] = None  # webhook URL
 
 
 class CorrectionIn(BaseModel):

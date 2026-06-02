@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { datasetsApi } from '@/lib/api';
+import { datasetsApi, reportBuilderApi, ReadyAnalysis } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import PageHeader from '@/components/layout/PageHeader';
 import WorkflowStepper from '@/components/layout/WorkflowStepper';
@@ -39,9 +40,37 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false);
   const [importingFromUrl, setImportingFromUrl] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [useCloud, setUseCloud] = useState(false);
   const [presignedUrl, setPresignedUrl] = useState('');
   const [remoteFilename, setRemoteFilename] = useState('');
+  const [analyses, setAnalyses] = useState<ReadyAnalysis[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadHistory = async () => {
+      setLoadingHistory(true);
+      setHistoryError(null);
+      try {
+        const rows = await reportBuilderApi.listReadyAnalyses();
+        if (!mounted) return;
+        setAnalyses(rows);
+      } catch (err: unknown) {
+        if (!mounted) return;
+        const ax = err as { response?: { data?: { detail?: string } }; message?: string };
+        setHistoryError(
+          ax.response?.data?.detail || ax.message || 'Failed to load analysis history'
+        );
+      } finally {
+        if (mounted) setLoadingHistory(false);
+      }
+    };
+    void loadHistory();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -182,6 +211,55 @@ export default function UploadPage() {
         </Card>
       </div>
       {error && <Alert variant="error" className="mt-4">{error}</Alert>}
+      <Card
+        className="mt-6 border border-border bg-surface-card"
+        title="History of analyzed reports"
+        description="Recently completed analyses available for report generation."
+      >
+        {loadingHistory ? (
+          <p className="text-sm text-text-muted">Loading history…</p>
+        ) : historyError ? (
+          <Alert variant="error">{historyError}</Alert>
+        ) : analyses.length === 0 ? (
+          <p className="text-sm text-text-muted">No completed analyses found yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b border-border">
+                  <th className="py-2 pr-4 font-medium text-text-muted">Analysis ID</th>
+                  <th className="py-2 pr-4 font-medium text-text-muted">Dataset ID</th>
+                  <th className="py-2 pr-4 font-medium text-text-muted">File</th>
+                  <th className="py-2 pr-4 font-medium text-text-muted">Status</th>
+                  <th className="py-2 pr-4 font-medium text-text-muted">Created</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {analyses.map((row) => (
+                  <tr key={row.analysis_id} className="border-b border-border/40">
+                    <td className="py-2 pr-4 font-mono">#{row.analysis_id}</td>
+                    <td className="py-2 pr-4">{row.dataset_id}</td>
+                    <td className="py-2 pr-4">{row.filename}</td>
+                    <td className="py-2 pr-4 capitalize">{row.status || '—'}</td>
+                    <td className="py-2 pr-4 text-text-muted">
+                      {row.created_at ? new Date(row.created_at).toLocaleString() : '—'}
+                    </td>
+                    <td className="py-2 pr-4">
+                      <Link
+                        href={`/analysis/${row.analysis_id}`}
+                        className="text-primary hover:underline text-xs"
+                      >
+                        Open →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

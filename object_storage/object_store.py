@@ -32,6 +32,11 @@ class ObjectStore(ABC):
         """Return full object body (MVP — stream large files to disk in a future iteration)."""
         ...
 
+    @abstractmethod
+    def upload_object_body(self, object_key: str, body: bytes, content_type: str) -> None:
+        """Upload full object body for server-side ingestion pipelines."""
+        ...
+
 
 def _truthy_raw(val: str | None) -> bool:
     return (val or "").strip().lower() in ("1", "true", "yes", "on")
@@ -110,6 +115,14 @@ class S3CompatibleStore(ObjectStore):
     def download_object_body(self, object_key: str) -> bytes:
         resp = self._client.get_object(Bucket=self._bucket, Key=object_key)
         return resp["Body"].read()
+
+    def upload_object_body(self, object_key: str, body: bytes, content_type: str) -> None:
+        self._client.put_object(
+            Bucket=self._bucket,
+            Key=object_key,
+            Body=body,
+            ContentType=content_type,
+        )
 
 
 def build_default_store() -> ObjectStore:

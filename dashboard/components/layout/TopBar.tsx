@@ -30,6 +30,12 @@ function autoBreadcrumbs(pathname: string): Crumb[] {
       { label: 'Profile', href: '/profile' },
     ];
   }
+  if (pathname.startsWith('/activity')) {
+    return [
+      { label: 'Home', href: '/dashboard' },
+      { label: 'All Activity', href: '/activity' },
+    ];
+  }
   const ds = pathname.match(/^\/datasets\/(\d+)/);
   if (ds) {
     return [

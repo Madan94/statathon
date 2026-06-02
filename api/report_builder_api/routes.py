@@ -19,9 +19,11 @@ from __future__ import annotations
 
 import logging
 import os
+import hashlib
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from uuid import uuid4
 
 from fastapi import (
     APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile,
@@ -32,9 +34,13 @@ from sqlalchemy.orm import Session
 
 from database.database import SessionLocal
 from database.models import Analysis, Dataset, ReportCorrection, ReportJob, ReportTemplate
+from database.models import ReportTemplateExtractionJob
+from deps import get_current_user_id
+from auth.permissions import require_analysis_owner
 from services.analysis_results_service import resolve_semantic_analysis_payload, enrich_payload_for_dashboard
 from core.ingestion import dataframe_for_uploaded_dataset
 from object_storage.object_store import try_build_default_store
+from utils.datetime_json import isoformat_utc
 
 from report_builder import bi_chat
 from report_builder import blueprint as bp
@@ -42,10 +48,13 @@ from report_builder import firewall as fw
 from report_builder.memory import ReflectionLedger, STM
 from report_builder.pipeline import generate_report
 
+from .access import filter_config_dict, require_job_access, require_template_access
+from .template_validation import validate_ast_payload
 from .schemas import (
-    ChatIn, CorrectionIn, GenerateRequest, InsertBlockIn, JobOut, MoveBlockIn,
-    TemplateCreateOut, TemplateOut,
+    ChatIn, CorrectionIn, DeliverRequest, GenerateRequest, InsertBlockIn, JobOut,
+    MoveBlockIn, ReadyAnalysisOut, TemplateCreateOut, TemplateExtractionJobOut, TemplateOut, TemplateUpdateIn,
 )
+from . import delivery as delivery_mod
 
 logger = logging.getLogger(__name__)
 
@@ -70,11 +79,13 @@ def _template_to_out(row: ReportTemplate) -> TemplateOut:
         extraction_method=row.extraction_method,
         block_count=len((ast.get("blocks") or []) if isinstance(ast, dict) else []),
         source_hash=row.source_hash,
-        created_at=row.created_at.isoformat() if row.created_at else None,
+        filter_config=row.filter_config if isinstance(row.filter_config, dict) else None,
+        created_at=isoformat_utc(row.created_at),
     )
 
 
 def _job_to_out(row: ReportJob) -> JobOut:
+    delivery_log = row.delivery_log if isinstance(row.delivery_log, list) else None
     return JobOut(
         id=row.id,
         analysis_id=row.analysis_id,
@@ -85,12 +96,250 @@ def _job_to_out(row: ReportJob) -> JobOut:
         final_pdf_path=row.final_pdf_path,
         kg_export_path=row.kg_export_path,
         error_message=row.error_message,
-        created_at=row.created_at.isoformat() if row.created_at else None,
-        updated_at=row.updated_at.isoformat() if row.updated_at else None,
+        filter_config=row.filter_config if isinstance(row.filter_config, dict) else None,
+        delivery_log=delivery_log,
+        created_at=isoformat_utc(row.created_at),
+        updated_at=isoformat_utc(row.updated_at),
     )
 
 
+def _extract_job_to_out(row: ReportTemplateExtractionJob) -> TemplateExtractionJobOut:
+    return TemplateExtractionJobOut(
+        id=row.id,
+        status=row.status,
+        stage=row.stage,
+        progress_pct=row.progress_pct or 0,
+        template_name=row.template_name,
+        source_filename=row.source_filename,
+        source_hash=row.source_hash,
+        vault_object_key=row.vault_object_key,
+        extraction_method=row.extraction_method,
+        stage_diagnostics=row.stage_diagnostics if isinstance(row.stage_diagnostics, dict) else None,
+        error_message=row.error_message,
+        created_template_id=row.created_template_id,
+        created_at=isoformat_utc(row.created_at),
+        updated_at=isoformat_utc(row.updated_at),
+    )
+
+
+def _update_extract_job(
+    db: Session,
+    row: ReportTemplateExtractionJob,
+    *,
+    status: str | None = None,
+    stage: str | None = None,
+    progress_pct: int | None = None,
+    diagnostics: dict | None = None,
+    error_message: str | None = None,
+) -> None:
+    if status is not None:
+        row.status = status
+    if stage is not None:
+        row.stage = stage
+    if progress_pct is not None:
+        row.progress_pct = max(0, min(100, int(progress_pct)))
+    if diagnostics is not None:
+        merged = dict(row.stage_diagnostics or {}) if isinstance(row.stage_diagnostics, dict) else {}
+        merged[str(stage or row.stage or "unknown")] = diagnostics
+        row.stage_diagnostics = merged
+    if error_message is not None:
+        row.error_message = error_message
+    db.commit()
+
+
+# ---------------- Ready analyses (wizard data source) ----------------
+
+
+@router.get("/ready-analyses", response_model=list[ReadyAnalysisOut])
+def list_ready_analyses(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    rows = (
+        db.query(Analysis, Dataset)
+        .join(Dataset, Analysis.dataset_id == Dataset.id)
+        .filter(Dataset.user_id == user_id, Analysis.status == "complete")
+        .order_by(Analysis.id.desc())
+        .limit(100)
+        .all()
+    )
+    return [
+        ReadyAnalysisOut(
+            analysis_id=an.id,
+            dataset_id=ds.id,
+            filename=ds.filename,
+            row_count=ds.row_count or 0,
+            column_count=ds.column_count or 0,
+            status=an.status,
+            upload_status=ds.upload_status,
+            created_at=isoformat_utc(an.created_at),
+        )
+        for an, ds in rows
+    ]
+
+
 # ---------------- Templates ----------------
+
+
+def _run_template_extraction_job(extract_job_id: int) -> None:
+    db = SessionLocal()
+    try:
+        row = db.query(ReportTemplateExtractionJob).filter(
+            ReportTemplateExtractionJob.id == extract_job_id
+        ).first()
+        if not row:
+            return
+        _update_extract_job(
+            db,
+            row,
+            status="running",
+            stage="stage1_immutable_ingestion_vaulting",
+            progress_pct=5,
+            diagnostics={"status": "started"},
+        )
+
+        src_path = Path(row.source_storage_path or "")
+        raw = src_path.read_bytes() if src_path.is_file() else b""
+        source_hash = hashlib.sha256(raw).hexdigest() if raw else ""
+        row.source_hash = source_hash
+        vault_object_key = ""
+        store = try_build_default_store()
+        if store and raw:
+            vault_object_key = (
+                f"report_templates/immutable/{source_hash[:2]}/{source_hash}/"
+                f"{Path(row.source_filename or 'template.pdf').name}"
+            )
+            try:
+                store.upload_object_body(vault_object_key, raw, "application/pdf")
+            except Exception as exc:
+                logger.warning("Immutable vault upload failed: %s", exc)
+                vault_object_key = ""
+        row.vault_object_key = vault_object_key or None
+        _update_extract_job(
+            db,
+            row,
+            stage="stage1_immutable_ingestion_vaulting",
+            progress_pct=20,
+            diagnostics={
+                "status": "completed",
+                "sha256": source_hash,
+                "vault_object_key": vault_object_key,
+            },
+        )
+
+        def _progress(stage: str, pct: int, payload: dict[str, object]):
+            _update_extract_job(db, row, stage=stage, progress_pct=pct, diagnostics=dict(payload))
+
+        ast, diagnostics = bp.compile_template_production(src_path, row.template_name, progress=_progress)
+        ast_payload = diagnostics.get("blueprint_payload") if isinstance(diagnostics, dict) else None
+        if not isinstance(ast_payload, dict):
+            ast_payload = ast.to_dict()
+            ast_payload["doc_id"] = diagnostics.get("doc_id") if isinstance(diagnostics, dict) else "MOSPI_TPL_01"
+        ast_payload["production_stages"] = diagnostics.get("stages") if isinstance(diagnostics, dict) else {}
+
+        template = ReportTemplate(
+            user_id=row.user_id,
+            name=row.template_name,
+            description="Production extracted template",
+            source_filename=row.source_filename,
+            source_storage_path=row.source_storage_path,
+            source_hash=ast.source_hash,
+            ast_json=ast_payload,
+            extraction_method=ast.extraction_method,
+            page_count=ast.page_count,
+        )
+        db.add(template)
+        db.commit()
+        db.refresh(template)
+
+        row.created_template_id = template.id
+        row.extraction_method = ast.extraction_method
+        _update_extract_job(
+            db,
+            row,
+            status="completed",
+            stage="stage6_final_ast_json_layout",
+            progress_pct=100,
+            diagnostics={"status": "completed", "created_template_id": template.id},
+        )
+    except Exception as exc:
+        logger.exception("Template extraction job %s failed", extract_job_id)
+        row = db.query(ReportTemplateExtractionJob).filter(
+            ReportTemplateExtractionJob.id == extract_job_id
+        ).first()
+        if row:
+            _update_extract_job(
+                db,
+                row,
+                status="failed",
+                error_message=str(exc)[:8000],
+            )
+    finally:
+        db.close()
+
+
+@router.post("/templates/extract-async", response_model=TemplateExtractionJobOut)
+async def extract_template_async(
+    background: BackgroundTasks,
+    name: str = Form(...),
+    description: Optional[str] = Form(None),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    upload_dir = Path(os.getenv("REPORT_TEMPLATE_DIR", "./storage/templates"))
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    safe_name = f"{int(datetime.utcnow().timestamp())}_{uuid4().hex}_{Path(file.filename or 'template.pdf').name}"
+    dest = upload_dir / safe_name
+    raw = await file.read()
+    dest.write_bytes(raw)
+
+    row = ReportTemplateExtractionJob(
+        user_id=user_id,
+        status="pending",
+        stage="queued",
+        progress_pct=0,
+        template_name=name.strip(),
+        source_filename=file.filename,
+        source_storage_path=str(dest),
+        stage_diagnostics={"queued": {"description": description or ""}},
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    background.add_task(_run_template_extraction_job, row.id)
+    return _extract_job_to_out(row)
+
+
+@router.get("/templates/extract-jobs", response_model=list[TemplateExtractionJobOut])
+def list_template_extract_jobs(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    rows = (
+        db.query(ReportTemplateExtractionJob)
+        .filter(ReportTemplateExtractionJob.user_id == user_id)
+        .order_by(ReportTemplateExtractionJob.id.desc())
+        .limit(50)
+        .all()
+    )
+    return [_extract_job_to_out(r) for r in rows]
+
+
+@router.get("/templates/extract-jobs/{job_id}", response_model=TemplateExtractionJobOut)
+def get_template_extract_job(
+    job_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    row = db.query(ReportTemplateExtractionJob).filter(
+        ReportTemplateExtractionJob.id == job_id,
+        ReportTemplateExtractionJob.user_id == user_id,
+    ).first()
+    if not row:
+        raise HTTPException(404, "Extraction job not found")
+    return _extract_job_to_out(row)
+
 
 @router.post("/templates/upload", response_model=TemplateCreateOut)
 async def upload_template(
@@ -98,6 +347,7 @@ async def upload_template(
     description: Optional[str] = Form(None),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
     """Phase 0 entry point — upload a historical/government PDF, compile to AST."""
     upload_dir = Path(os.getenv("REPORT_TEMPLATE_DIR", "./storage/templates"))
@@ -112,6 +362,7 @@ async def upload_template(
     ast_payload = ast.to_dict()
 
     row = ReportTemplate(
+        user_id=user_id,
         name=name,
         description=description,
         source_filename=file.filename,
@@ -130,36 +381,103 @@ async def upload_template(
 
 
 @router.get("/templates", response_model=list[TemplateOut])
-def list_templates(db: Session = Depends(get_db)):
-    rows = db.query(ReportTemplate).order_by(ReportTemplate.id.desc()).all()
+def list_templates(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    rows = (
+        db.query(ReportTemplate)
+        .filter(
+            (ReportTemplate.user_id == user_id) | (ReportTemplate.user_id.is_(None))
+        )
+        .order_by(ReportTemplate.id.desc())
+        .all()
+    )
     return [_template_to_out(r) for r in rows]
 
 
-@router.get("/templates/{template_id}")
-def get_template(template_id: int, db: Session = Depends(get_db)):
-    row = db.query(ReportTemplate).filter(ReportTemplate.id == template_id).first()
-    if not row:
-        raise HTTPException(404, "Template not found")
-    return {
-        **_template_to_out(row).model_dump(),
-        "ast": row.ast_json,
-    }
-
-
-@router.delete("/templates/{template_id}")
-def delete_template(template_id: int, db: Session = Depends(get_db)):
-    row = db.query(ReportTemplate).filter(ReportTemplate.id == template_id).first()
-    if not row:
-        raise HTTPException(404, "Template not found")
-    db.delete(row)
+@router.post("/templates/clone-default", response_model=TemplateCreateOut)
+def clone_default_template(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    ast_payload = bp.DEFAULT_MOSPI_TEMPLATE.to_dict()
+    row = ReportTemplate(
+        user_id=user_id,
+        name=ast_payload.get("name") or "MoSPI Standard Report",
+        description="Cloned from built-in default template",
+        ast_json=ast_payload,
+        extraction_method=ast_payload.get("extraction_method"),
+        page_count=ast_payload.get("page_count"),
+    )
+    db.add(row)
     db.commit()
-    return {"deleted": template_id}
+    db.refresh(row)
+    out = _template_to_out(row).model_dump()
+    out["ast"] = ast_payload
+    return TemplateCreateOut(**out)
 
 
 @router.get("/templates/default/preview")
 def default_template_preview():
     """Returns the builtin MoSPI default AST (no DB row)."""
     return bp.DEFAULT_MOSPI_TEMPLATE.to_dict()
+
+
+@router.get("/templates/{template_id}")
+def get_template(
+    template_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    row = require_template_access(db, template_id, user_id)
+    return {
+        **_template_to_out(row).model_dump(),
+        "ast": row.ast_json,
+        "filter_config": row.filter_config,
+    }
+
+
+@router.put("/templates/{template_id}", response_model=TemplateOut)
+def update_template(
+    template_id: int,
+    body: TemplateUpdateIn,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    row = require_template_access(db, template_id, user_id, allow_shared=True)
+    if row.user_id is not None and row.user_id != user_id:
+        raise HTTPException(403, "Not allowed to edit this template")
+    if row.user_id is None:
+        row.user_id = user_id
+    if body.name is not None:
+        row.name = body.name.strip()
+    if body.description is not None:
+        row.description = body.description
+    if body.ast is not None:
+        validated = validate_ast_payload(body.ast)
+        row.ast_json = validated
+        row.page_count = validated.get("page_count") or row.page_count
+    fc = filter_config_dict(body.filter_config)
+    if fc is not None:
+        row.filter_config = fc
+    db.commit()
+    db.refresh(row)
+    return _template_to_out(row)
+
+
+@router.delete("/templates/{template_id}")
+def delete_template(
+    template_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    row = require_template_access(db, template_id, user_id, allow_shared=False)
+    if row.user_id is None:
+        raise HTTPException(403, "Cannot delete shared legacy templates")
+    db.delete(row)
+    db.commit()
+    return {"deleted": template_id}
 
 
 # ---------------- Jobs ----------------
@@ -211,6 +529,12 @@ def _run_job(job_id: int):
             if tpl:
                 template_ast = tpl.ast_json
 
+        fc = job.filter_config
+        if not fc and job.template_id:
+            tpl = db.query(ReportTemplate).filter(ReportTemplate.id == job.template_id).first()
+            if tpl and isinstance(tpl.filter_config, dict):
+                fc = tpl.filter_config
+
         generate_report(
             db=db,
             job_id=job.id,
@@ -220,6 +544,7 @@ def _run_job(job_id: int):
             df_loader=_load_df,
             template_ast=template_ast,
             dataset_filename=dataset.filename,
+            filter_config=fc,
         )
     except Exception as exc:
         logger.exception("Report builder job %s failed", job_id)
@@ -236,22 +561,24 @@ def _run_job(job_id: int):
 
 
 @router.post("/generate", response_model=JobOut)
-def generate(req: GenerateRequest, background: BackgroundTasks, db: Session = Depends(get_db)):
-    analysis = db.query(Analysis).filter(Analysis.id == req.analysis_id).first()
-    if not analysis:
-        raise HTTPException(404, "Analysis not found")
+def generate(
+    req: GenerateRequest,
+    background: BackgroundTasks,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    analysis = require_analysis_owner(db, req.analysis_id, user_id)
     if analysis.status != "complete":
         raise HTTPException(409, f"Analysis status is '{analysis.status}', must be 'complete'")
     if req.template_id is not None:
-        tpl = db.query(ReportTemplate).filter(ReportTemplate.id == req.template_id).first()
-        if not tpl:
-            raise HTTPException(404, "Template not found")
+        require_template_access(db, req.template_id, user_id)
 
     job = ReportJob(
         analysis_id=req.analysis_id,
         template_id=req.template_id,
         status="pending",
         stage="queued",
+        filter_config=filter_config_dict(req.filter_config),
     )
     db.add(job)
     db.commit()
@@ -262,26 +589,40 @@ def generate(req: GenerateRequest, background: BackgroundTasks, db: Session = De
 
 
 @router.get("/jobs", response_model=list[JobOut])
-def list_jobs(analysis_id: Optional[int] = None, db: Session = Depends(get_db)):
-    q = db.query(ReportJob).order_by(ReportJob.id.desc())
+def list_jobs(
+    analysis_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    q = (
+        db.query(ReportJob)
+        .join(Analysis, ReportJob.analysis_id == Analysis.id)
+        .join(Dataset, Analysis.dataset_id == Dataset.id)
+        .filter(Dataset.user_id == user_id)
+        .order_by(ReportJob.id.desc())
+    )
     if analysis_id is not None:
+        require_analysis_owner(db, analysis_id, user_id)
         q = q.filter(ReportJob.analysis_id == analysis_id)
     return [_job_to_out(r) for r in q.limit(100).all()]
 
 
 @router.get("/jobs/{job_id}", response_model=JobOut)
-def get_job(job_id: int, db: Session = Depends(get_db)):
-    row = db.query(ReportJob).filter(ReportJob.id == job_id).first()
-    if not row:
-        raise HTTPException(404, "Job not found")
-    return _job_to_out(row)
+def get_job(
+    job_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    return _job_to_out(require_job_access(db, job_id, user_id))
 
 
 @router.get("/jobs/{job_id}/canvas")
-def get_canvas(job_id: int, db: Session = Depends(get_db)):
-    row = db.query(ReportJob).filter(ReportJob.id == job_id).first()
-    if not row:
-        raise HTTPException(404, "Job not found")
+def get_canvas(
+    job_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    row = require_job_access(db, job_id, user_id)
     return {
         **_job_to_out(row).model_dump(),
         "canvas": row.blocks_json or None,
@@ -289,11 +630,29 @@ def get_canvas(job_id: int, db: Session = Depends(get_db)):
     }
 
 
+@router.post("/jobs/{job_id}/deliver")
+def deliver_job(
+    job_id: int,
+    body: DeliverRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    row = require_job_access(db, job_id, user_id)
+    result = delivery_mod.deliver_report(job=row, request=body)
+    log = list(row.delivery_log) if isinstance(row.delivery_log, list) else []
+    log.append(result)
+    row.delivery_log = log
+    db.commit()
+    return {"ok": True, "entry": result}
+
+
 @router.get("/jobs/{job_id}/download")
-def download_job_pdf(job_id: int, db: Session = Depends(get_db)):
-    row = db.query(ReportJob).filter(ReportJob.id == job_id).first()
-    if not row:
-        raise HTTPException(404, "Job not found")
+def download_job_pdf(
+    job_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    row = require_job_access(db, job_id, user_id)
     if not row.final_pdf_path:
         raise HTTPException(409, "PDF not yet generated")
     path = Path(row.final_pdf_path)
@@ -311,9 +670,14 @@ def download_job_pdf(job_id: int, db: Session = Depends(get_db)):
 # ---------------- Block-level ops ----------------
 
 @router.post("/jobs/{job_id}/blocks/{block_id}/regenerate")
-def regenerate_block(job_id: int, block_id: str, db: Session = Depends(get_db)):
-    job = db.query(ReportJob).filter(ReportJob.id == job_id).first()
-    if not job or not job.blocks_json:
+def regenerate_block(
+    job_id: int,
+    block_id: str,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    job = require_job_access(db, job_id, user_id)
+    if not job.blocks_json:
         raise HTTPException(404, "Job or canvas not found")
     canvas = dict(job.blocks_json)
     sections = canvas.get("sections") or []
@@ -372,11 +736,13 @@ def regenerate_block(job_id: int, block_id: str, db: Session = Depends(get_db)):
 
 @router.post("/jobs/{job_id}/blocks/{block_id}/correction")
 def record_correction(
-    job_id: int, block_id: str, body: CorrectionIn, db: Session = Depends(get_db)
+    job_id: int,
+    block_id: str,
+    body: CorrectionIn,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
-    job = db.query(ReportJob).filter(ReportJob.id == job_id).first()
-    if not job:
-        raise HTTPException(404, "Job not found")
+    job = require_job_access(db, job_id, user_id)
     ledger = ReflectionLedger(db)
     new_id = ledger.record_correction(
         job_id=job_id, block_id=block_id, kind=body.kind,
@@ -399,11 +765,8 @@ def record_correction(
 # ---------------- Canvas mutation (insert / move / delete) ----------------
 
 
-def _load_job_or_404(db: Session, job_id: int) -> ReportJob:
-    job = db.query(ReportJob).filter(ReportJob.id == job_id).first()
-    if not job:
-        raise HTTPException(404, "Job not found")
-    return job
+def _load_job_or_404(db: Session, job_id: int, user_id: int) -> ReportJob:
+    return require_job_access(db, job_id, user_id)
 
 
 def _ensure_section(canvas: dict, section: str) -> dict:
@@ -424,9 +787,14 @@ def _find_block(canvas: dict, block_id: str) -> tuple[dict, dict, int] | None:
 
 
 @router.post("/jobs/{job_id}/blocks/insert")
-def insert_block(job_id: int, body: InsertBlockIn, db: Session = Depends(get_db)):
+def insert_block(
+    job_id: int,
+    body: InsertBlockIn,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
     """Insert a chat-proposed (or freshly drafted) block into the canvas."""
-    job = _load_job_or_404(db, job_id)
+    job = _load_job_or_404(db, job_id, user_id)
     canvas = dict(job.blocks_json or {"job_id": job.id, "analysis_id": job.analysis_id,
                                        "template_name": "", "summary": {}, "sections": []})
     sect = _ensure_section(canvas, body.section)
@@ -446,8 +814,13 @@ def insert_block(job_id: int, body: InsertBlockIn, db: Session = Depends(get_db)
 
 
 @router.post("/jobs/{job_id}/blocks/move")
-def move_block(job_id: int, body: MoveBlockIn, db: Session = Depends(get_db)):
-    job = _load_job_or_404(db, job_id)
+def move_block(
+    job_id: int,
+    body: MoveBlockIn,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    job = _load_job_or_404(db, job_id, user_id)
     canvas = dict(job.blocks_json or {})
     found = _find_block(canvas, body.block_id)
     if not found:
@@ -468,8 +841,13 @@ def move_block(job_id: int, body: MoveBlockIn, db: Session = Depends(get_db)):
 
 
 @router.delete("/jobs/{job_id}/blocks/{block_id}")
-def delete_block(job_id: int, block_id: str, db: Session = Depends(get_db)):
-    job = _load_job_or_404(db, job_id)
+def delete_block(
+    job_id: int,
+    block_id: str,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    job = _load_job_or_404(db, job_id, user_id)
     canvas = dict(job.blocks_json or {})
     found = _find_block(canvas, block_id)
     if not found:
@@ -482,11 +860,15 @@ def delete_block(job_id: int, block_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/jobs/{job_id}/re-export")
-def re_export(job_id: int, db: Session = Depends(get_db)):
+def re_export(
+    job_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
     """Re-render the PDF from the current canvas after edits / inserts."""
     from report_builder.exporter import export_pdf
 
-    job = _load_job_or_404(db, job_id)
+    job = _load_job_or_404(db, job_id, user_id)
     if not job.blocks_json:
         raise HTTPException(409, "No canvas to export")
     out_dir = Path(os.getenv("REPORT_STORAGE_PATH", "./storage/reports"))
@@ -512,15 +894,24 @@ def re_export(job_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/jobs/{job_id}/chat/history")
-def chat_history(job_id: int, db: Session = Depends(get_db)):
-    _load_job_or_404(db, job_id)
+def chat_history(
+    job_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _load_job_or_404(db, job_id, user_id)
     return {"turns": bi_chat.get_history(job_id)}
 
 
 @router.post("/jobs/{job_id}/chat")
-def chat(job_id: int, body: ChatIn, db: Session = Depends(get_db)):
+def chat(
+    job_id: int,
+    body: ChatIn,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
     """One BI chat turn — runs through Phases 1-5 and returns a draggable block."""
-    job = _load_job_or_404(db, job_id)
+    job = _load_job_or_404(db, job_id, user_id)
     if not body.query or not body.query.strip():
         raise HTTPException(400, "Empty query")
 

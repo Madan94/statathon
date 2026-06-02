@@ -346,6 +346,7 @@ class ReportTemplate(Base):
     ast_json = Column(JSON, nullable=False)
     extraction_method = Column(String(64), nullable=True)  # "pdfplumber+gemini_vision" / "manual"
     page_count = Column(Integer, nullable=True)
+    filter_config = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -366,6 +367,8 @@ class ReportJob(Base):
     kg_export_path = Column(String(1024), nullable=True)  # Phase 1 RDF/Turtle artifact
     final_pdf_path = Column(String(1024), nullable=True)  # Phase 6 PDF output
     content_hash = Column(String(128), nullable=True)
+    filter_config = Column(JSON, nullable=True)
+    delivery_log = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -386,3 +389,26 @@ class ReportCorrection(Base):
     after_text = Column(Text, nullable=True)
     diagnostics = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ReportTemplateExtractionJob(Base):
+    """Async extraction lifecycle for production-grade template compilation."""
+
+    __tablename__ = "report_template_extraction_jobs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    status = Column(String(32), nullable=False, default="pending", index=True)
+    stage = Column(String(64), nullable=True, index=True)
+    progress_pct = Column(Integer, nullable=False, default=0)
+    template_name = Column(String(256), nullable=False)
+    source_filename = Column(String(512), nullable=True)
+    source_storage_path = Column(String(1024), nullable=True)
+    vault_object_key = Column(String(1024), nullable=True)
+    source_hash = Column(String(128), nullable=True, index=True)
+    extraction_method = Column(String(64), nullable=True)
+    stage_diagnostics = Column(JSON, nullable=True)
+    error_message = Column(Text, nullable=True)
+    created_template_id = Column(Integer, ForeignKey("report_templates.id"), nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

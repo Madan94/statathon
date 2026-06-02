@@ -365,9 +365,21 @@ export interface DashboardSummary {
   }>;
 }
 
+export interface ActivityItem {
+  event_type: string;
+  title: string;
+  actor_id: number;
+  created_at: string | null;
+  metadata: Record<string, unknown>;
+}
+
 export const dashboardApi = {
   getSummary: async (): Promise<DashboardSummary> => {
     const { data } = await api.get('/dashboard/summary');
+    return data;
+  },
+  getActivity: async (limit = 150): Promise<ActivityItem[]> => {
+    const { data } = await api.get('/dashboard/activity', { params: { limit } });
     return data;
   },
 };
@@ -560,6 +572,41 @@ export interface ReportTemplateWithAst extends ReportTemplate {
   ast: Record<string, unknown>;
 }
 
+export interface TemplateExtractionJob {
+  id: number;
+  status: string;
+  stage?: string | null;
+  progress_pct: number;
+  template_name: string;
+  source_filename?: string | null;
+  source_hash?: string | null;
+  vault_object_key?: string | null;
+  extraction_method?: string | null;
+  stage_diagnostics?: Record<string, unknown> | null;
+  error_message?: string | null;
+  created_template_id?: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface DataFilterSpec {
+  include_columns?: string[] | null;
+  exclude_columns?: string[] | null;
+  max_rows?: number | null;
+  min_complete_row_pct?: number | null;
+}
+
+export interface ReadyAnalysis {
+  analysis_id: number;
+  dataset_id: number;
+  filename: string;
+  row_count: number;
+  column_count: number;
+  status: string;
+  upload_status?: string | null;
+  created_at?: string | null;
+}
+
 export interface ReportJob {
   id: number;
   analysis_id: number;
@@ -570,6 +617,8 @@ export interface ReportJob {
   final_pdf_path?: string | null;
   kg_export_path?: string | null;
   error_message?: string | null;
+  filter_config?: DataFilterSpec | null;
+  delivery_log?: Array<Record<string, unknown>> | null;
   created_at?: string | null;
   updated_at?: string | null;
 }
@@ -624,6 +673,26 @@ export interface ChatTurn {
 }
 
 export const reportBuilderApi = {
+  listReadyAnalyses: async (): Promise<ReadyAnalysis[]> => {
+    const { data } = await api.get('/report-builder/ready-analyses');
+    return data;
+  },
+  cloneDefaultTemplate: async (): Promise<ReportTemplateWithAst> => {
+    const { data } = await api.post('/report-builder/templates/clone-default');
+    return data;
+  },
+  updateTemplate: async (
+    id: number,
+    payload: {
+      name?: string;
+      description?: string;
+      ast?: Record<string, unknown>;
+      filter_config?: DataFilterSpec;
+    }
+  ): Promise<ReportTemplate> => {
+    const { data } = await api.put(`/report-builder/templates/${id}`, payload);
+    return data;
+  },
   listTemplates: async (): Promise<ReportTemplate[]> => {
     const { data } = await api.get('/report-builder/templates');
     return data;
@@ -642,6 +711,40 @@ export const reportBuilderApi = {
     });
     return data;
   },
+  extractTemplateAsync: async (
+    name: string,
+    file: File,
+    description?: string
+  ): Promise<TemplateExtractionJob> => {
+    const form = new FormData();
+    form.append('name', name);
+    if (description) form.append('description', description);
+    form.append('file', file);
+    const { data } = await api.post('/report-builder/templates/extract-async', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  },
+  getTemplateExtractJob: async (jobId: number): Promise<TemplateExtractionJob> => {
+    const { data } = await api.get(`/report-builder/templates/extract-jobs/${jobId}`);
+    return data;
+  },
+  pollTemplateExtractJob: async (
+    jobId: number,
+    onTick?: (job: TemplateExtractionJob) => void,
+    intervalMs = 1500,
+    maxAttempts = 240
+  ): Promise<TemplateExtractionJob> => {
+    for (let i = 0; i < maxAttempts; i++) {
+      const job = await reportBuilderApi.getTemplateExtractJob(jobId);
+      onTick?.(job);
+      if (job.status === 'completed' || job.status === 'failed') {
+        return job;
+      }
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+    throw new Error('Template extraction timed out');
+  },
   getTemplate: async (id: number) => {
     const { data } = await api.get(`/report-builder/templates/${id}`);
     return data;
@@ -653,11 +756,23 @@ export const reportBuilderApi = {
     const { data } = await api.get('/report-builder/templates/default/preview');
     return data;
   },
-  generate: async (analysisId: number, templateId?: number | null): Promise<ReportJob> => {
+  generate: async (
+    analysisId: number,
+    templateId?: number | null,
+    filterConfig?: DataFilterSpec | null
+  ): Promise<ReportJob> => {
     const { data } = await api.post('/report-builder/generate', {
       analysis_id: analysisId,
       template_id: templateId ?? null,
+      filter_config: filterConfig ?? null,
     });
+    return data;
+  },
+  deliver: async (
+    jobId: number,
+    payload: { channel: 'email' | 'webhook'; to?: string; url?: string }
+  ) => {
+    const { data } = await api.post(`/report-builder/jobs/${jobId}/deliver`, payload);
     return data;
   },
   listJobs: async (analysisId?: number): Promise<ReportJob[]> => {

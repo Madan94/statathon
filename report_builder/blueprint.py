@@ -18,7 +18,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +64,16 @@ class TemplateAST:
             "extraction_method": self.extraction_method,
             "blocks": [b.to_dict() for b in self.blocks],
         }
+
+
+PRODUCTION_STAGE_ORDER = (
+    "stage1_immutable_ingestion_vaulting",
+    "stage2_vision_spatial_layout_parsing",
+    "stage3_semantic_blueprint_extraction",
+    "stage4_required_answer_structure_modeling",
+    "stage5_detailed_ast_hierarchy_assembly",
+    "stage6_final_ast_json_layout",
+)
 
 
 # ---------------- Built-in default (MoSPI-style) ----------------
@@ -132,6 +142,31 @@ def _pdfplumber_layout(pdf_path: str | Path) -> list[dict[str, Any]]:
         for i, page in enumerate(pdf.pages):
             words = page.extract_words(use_text_flow=True) or []
             tables = page.extract_tables() or []
+            images = page.images or []
+            table_previews: list[dict[str, Any]] = []
+            for tbl in tables[:5]:
+                if not tbl:
+                    continue
+                str_rows = [[str(c or "") for c in row] for row in tbl]
+                table_previews.append(
+                    {
+                        "row_count": len(str_rows),
+                        "col_count": max((len(r) for r in str_rows), default=0),
+                        "preview_rows": str_rows[:4],
+                    }
+                )
+            image_previews = [
+                {
+                    "x0": img.get("x0"),
+                    "x1": img.get("x1"),
+                    "y0": img.get("y0"),
+                    "y1": img.get("y1"),
+                    "width": img.get("width"),
+                    "height": img.get("height"),
+                    "name": img.get("name"),
+                }
+                for img in images[:20]
+            ]
             pages.append({
                 "page_index": i,
                 "width": page.width,
@@ -139,7 +174,11 @@ def _pdfplumber_layout(pdf_path: str | Path) -> list[dict[str, Any]]:
                 "word_count": len(words),
                 "has_tables": bool(tables),
                 "table_count": len(tables),
+                "table_previews": table_previews,
+                "image_count": len(images),
+                "image_previews": image_previews,
                 "headings": _heuristic_headings(words),
+                "raw_text": (page.extract_text() or ""),
                 "raw_text_sample": (page.extract_text() or "")[:600],
             })
     return pages
@@ -337,40 +376,240 @@ def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]
 
 # ---------------- Public API ----------------
 
+
+def compile_template_production(
+    pdf_path: str | Path,
+    template_name: str,
+    *,
+    progress: Callable[[str, int, dict[str, Any]], None] | None = None,
+) -> tuple[TemplateAST, dict[str, Any]]:
+    """Run full 6-stage extraction with strict architecture payload."""
+    path = Path(pdf_path)
+    diagnostics: dict[str, Any] = {"stages": {}, "doc_id": "MOSPI_TPL_01"}
+
+    def _tick(stage: str, pct: int, payload: dict[str, Any] | None = None) -> None:
+        diagnostics["stages"][stage] = payload or {}
+        if progress:
+            progress(stage, pct, payload or {})
+
+    _tick(PRODUCTION_STAGE_ORDER[0], 10, {"status": "started"})
+    file_hash = sha256_of_file(path) if path.exists() else None
+    diagnostics["source_hash"] = file_hash
+    _tick(PRODUCTION_STAGE_ORDER[0], 20, {"sha256": file_hash, "status": "completed"})
+
+    _tick(PRODUCTION_STAGE_ORDER[1], 35, {"status": "started"})
+    pages: list[dict[str, Any]] = []
+    extraction_method = "unknown"
+    if path.exists():
+        try:
+            from template_engine.ingestion.pdf_loader import load_pdf  # type: ignore
+
+            loaded_pages, extraction_method = load_pdf(path)
+            pages = []
+            for p in loaded_pages:
+                tbl_previews = []
+                for t in (p.tables or [])[:6]:
+                    tbl_rows = [[str(c or "") for c in row] for row in (t.rows or [])]
+                    tbl_previews.append(
+                        {
+                            "row_count": int(t.row_count or len(tbl_rows)),
+                            "col_count": int(t.col_count or max((len(r) for r in tbl_rows), default=0)),
+                            "preview_rows": tbl_rows[:5],
+                        }
+                    )
+                pages.append(
+                    {
+                        "page_index": p.page_index,
+                        "width": p.width,
+                        "height": p.height,
+                        "word_count": p.word_count,
+                        "has_tables": bool(p.tables),
+                        "table_count": len(p.tables or []),
+                        "table_previews": tbl_previews,
+                        "image_count": 0,
+                        "image_previews": [],
+                        "headings": p.headings[:30],
+                        "raw_text": p.raw_text or "",
+                        "raw_text_sample": (p.raw_text or "")[:800],
+                    }
+                )
+        except Exception as exc:
+            logger.warning("template_engine load_pdf failed: %s; using legacy loader", exc)
+            pages = _colpali_extract(path) if path.exists() else None
+            extraction_method = "colpali+sglang"
+            if pages is None and path.exists():
+                pages = _pdfplumber_layout(path)
+                extraction_method = "pdfplumber+sglang"
+            pages = pages or []
+
+    if extraction_method == "stub":
+        raise RuntimeError(
+            "Real PDF extraction unavailable (stub loader used). Install/enable pdfplumber or PyMuPDF."
+        )
+    if not pages:
+        raise RuntimeError("No PDF pages extracted. Cannot build production blueprint from empty content.")
+    section_hierarchy = [
+        {
+            "page_index": p.get("page_index"),
+            "titles": p.get("headings") or [],
+            "paragraph_count": p.get("word_count") or 0,
+            "table_count": p.get("table_count") or 0,
+            "image_count": p.get("image_count") or 0,
+        }
+        for p in pages
+    ]
+    page_layout_preview = [
+        {
+            "page_index": p.get("page_index"),
+            "headings": p.get("headings") or [],
+            "has_tables": bool(p.get("has_tables")),
+            "table_count": p.get("table_count") or 0,
+            "table_previews": p.get("table_previews") or [],
+            "image_count": p.get("image_count") or 0,
+            "image_previews": p.get("image_previews") or [],
+            "paragraph_excerpt": (p.get("raw_text_sample") or "")[:400],
+        }
+        for p in pages[:20]
+    ]
+    extracted_text_pages = [
+        {
+            "page_index": p.get("page_index"),
+            "text": (p.get("raw_text") or "")[:5000],
+        }
+        for p in pages[:20]
+    ]
+    extracted_tables = [
+        {
+            "page_index": p.get("page_index"),
+            "tables": p.get("table_previews") or [],
+        }
+        for p in pages[:20]
+        if (p.get("table_previews") or [])
+    ]
+    extracted_images = [
+        {
+            "page_index": p.get("page_index"),
+            "images": p.get("image_previews") or [],
+        }
+        for p in pages[:20]
+        if (p.get("image_previews") or [])
+    ]
+    diagnostics["stages"][PRODUCTION_STAGE_ORDER[1]] = {
+        "page_count": len(pages),
+        "section_hierarchy": section_hierarchy[:25],
+        "page_layout_preview": page_layout_preview,
+        "layout_extractors": {"paragraphs": True, "tables": True},
+        "status": "completed",
+    }
+    _tick(PRODUCTION_STAGE_ORDER[1], 45, diagnostics["stages"][PRODUCTION_STAGE_ORDER[1]])
+
+    _tick(PRODUCTION_STAGE_ORDER[2], 55, {"status": "started"})
+    inferred_blocks = _sglang_compile_ast(pages)
+    if not inferred_blocks:
+        # fallback still uses real headings from extracted pages
+        inferred_blocks = _heuristic_classify_sections(pages)
+    generalized_questions: list[dict[str, Any]] = []
+    for idx, blk in enumerate(inferred_blocks[:40]):
+        generalized_questions.append(
+            {
+                "id": f"q_{idx+1}",
+                "question": f"What does the report section '{blk.title}' reveal and how does it compare over categories/time?",
+                "section": blk.section,
+            }
+        )
+    _tick(
+        PRODUCTION_STAGE_ORDER[2],
+        65,
+        {"questions_count": len(generalized_questions), "status": "completed"},
+    )
+
+    _tick(PRODUCTION_STAGE_ORDER[3], 75, {"status": "started"})
+    answer_schema = {
+        "datagrid_schema_generator": {
+            "required_columns": ["dimension", "metric", "period", "value", "variance_yoy"],
+        },
+        "narrative_schema_generator": {"tone": "official", "min_words": 80, "max_words": 220},
+        "chart_schema_generator": {
+            "allowed": ["grouped_bar", "line_trend", "pie"],
+        },
+    }
+    _tick(PRODUCTION_STAGE_ORDER[3], 82, {"answer_schema": answer_schema, "status": "completed"})
+
+    _tick(PRODUCTION_STAGE_ORDER[4], 90, {"status": "started"})
+    heading_pool: list[str] = []
+    for p in pages:
+        for h in (p.get("headings") or []):
+            hs = str(h).strip()
+            if hs and hs.lower() not in {x.lower() for x in heading_pool}:
+                heading_pool.append(hs)
+    topics = [
+        {"id": f"t_{i+1}", "name": h}
+        for i, h in enumerate(heading_pool[:8])
+    ]
+    subtopics = [
+        {"topic_id": (topics[i % len(topics)]["id"] if topics else "t_1"), "name": h}
+        for i, h in enumerate(heading_pool[8:20])
+    ]
+    _tick(
+        PRODUCTION_STAGE_ORDER[4],
+        94,
+        {
+            "topics": topics,
+            "subtopics": subtopics,
+            "block_count": len(inferred_blocks),
+            "status": "completed",
+        },
+    )
+
+    _tick(PRODUCTION_STAGE_ORDER[5], 98, {"status": "started"})
+    ast = TemplateAST(
+        name=template_name or "MoSPI Standard Report",
+        source_hash=file_hash,
+        page_count=len(pages),
+        blocks=inferred_blocks,
+        extraction_method=extraction_method,
+    )
+    payload = ast.to_dict()
+    payload["doc_id"] = diagnostics["doc_id"]
+    payload["main_topics"] = topics
+    payload["sub_topics"] = subtopics
+    payload["questions"] = generalized_questions
+    payload["expected_answer_structure"] = answer_schema
+    payload["extracted_layout"] = {
+        "page_layout_preview": page_layout_preview,
+        "section_hierarchy": section_hierarchy[:25],
+    }
+    payload["extracted_assets"] = {
+        "text_pages": extracted_text_pages,
+        "tables": extracted_tables,
+        "images": extracted_images,
+    }
+    payload["context_fill_options"] = {
+        "kg_hooks": {
+            "Sector": {"enum": "Target DB Entities"},
+        }
+    }
+    diagnostics["blueprint_payload"] = payload
+    diagnostics["final_payload_preview"] = {
+        "doc_id": payload.get("doc_id"),
+        "main_topics_count": len(payload.get("main_topics") or []),
+        "questions_count": len(payload.get("questions") or []),
+    }
+    _tick(PRODUCTION_STAGE_ORDER[5], 100, {"status": "completed"})
+    return ast, diagnostics
+
 def compile_template(pdf_path: str | Path, template_name: str) -> TemplateAST:
     """Phase 0 entry point: PDF -> TemplateAST."""
-    path = Path(pdf_path)
-    file_hash = sha256_of_file(path) if path.exists() else None
-
-    # 1. Primary: ColPali vision-spatial extraction.
-    pages = _colpali_extract(path) if path.exists() else None
-    extraction_method = "colpali+sglang"
-
-    # 2. Secondary: pdfplumber layout if ColPali unavailable on this host.
-    if pages is None and path.exists():
-        pages = _pdfplumber_layout(path)
-        extraction_method = "pdfplumber+sglang"
-
-    # 3. AST compilation via SGLang.
-    blocks = _sglang_compile_ast(pages or []) if pages else []
-
-    if not blocks:
-        # 4. Last-resort: canonical MoSPI skeleton with preserved audit hash.
+    ast, _ = compile_template_production(pdf_path, template_name)
+    if not ast.blocks:
         return TemplateAST(
             name=template_name or "MoSPI Standard Report",
-            source_hash=file_hash,
-            page_count=len(pages or []),
+            source_hash=ast.source_hash,
+            page_count=ast.page_count,
             blocks=list(DEFAULT_MOSPI_TEMPLATE.blocks),
             extraction_method="builtin_fallback",
         )
-
-    return TemplateAST(
-        name=template_name,
-        source_hash=file_hash,
-        page_count=len(pages or []),
-        blocks=blocks,
-        extraction_method=extraction_method,
-    )
+    return ast
 
 
 def template_from_ast_json(payload: dict[str, Any]) -> TemplateAST:

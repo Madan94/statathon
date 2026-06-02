@@ -75,6 +75,24 @@ def _vocab(dataset_type: str) -> dict[str, str]:
     return {"rows": "records", "columns": "variables", "dataset": "dataset"}
 
 
+def _to_float(value: Any, default: float = 0.0) -> float:
+    """Safely coerce numbers, including percent strings like '11.35%'."""
+    if value is None:
+        return default
+    if isinstance(value, (int, float)):
+        return float(value)
+    text = str(value).strip()
+    if not text:
+        return default
+    if text.endswith("%"):
+        text = text[:-1].strip()
+    text = text.replace(",", "")
+    try:
+        return float(text)
+    except ValueError:
+        return default
+
+
 # ---------------------------------------------------------------------------
 # Deterministic fallback
 # ---------------------------------------------------------------------------
@@ -96,7 +114,7 @@ def _deterministic_narrative(
                 f"and {int(facts['column_count'])} {v['columns']}."
             )
         if "missing_pct" in facts:
-            mp = float(facts["missing_pct"])
+            mp = _to_float(facts["missing_pct"])
             level = "negligible" if mp < 1 else "moderate" if mp < 10 else "elevated" if mp < 25 else "high"
             parts.append(f"The overall rate of missing values stands at {mp:.1f}%, which is {level}.")
         if "health_score" in facts:
@@ -126,7 +144,7 @@ def _deterministic_narrative(
 
     elif block_section == "data_quality":
         if "missing_pct" in facts:
-            parts.append(f"The overall missing value rate is {float(facts['missing_pct']):.1f}%.")
+            parts.append(f"The overall missing value rate is {_to_float(facts['missing_pct']):.1f}%.")
         if "duplicate_rows" in facts and int(facts["duplicate_rows"]) > 0:
             parts.append(f"{int(facts['duplicate_rows'])} duplicate rows were detected.")
         if "anomaly_count" in facts:
@@ -154,7 +172,7 @@ def _deterministic_narrative(
             parts.append(f"Overall data quality score: {facts['health_score']}.")
 
     elif block_section == "recommendations":
-        mp = float(facts.get("missing_pct", 0))
+        mp = _to_float(facts.get("missing_pct", 0))
         if mp > 5:
             parts.append(
                 f"It is recommended to address the {mp:.1f}% missing value rate "

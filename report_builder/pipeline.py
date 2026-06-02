@@ -30,6 +30,9 @@ from report_builder import kernel as kx
 from report_builder import firewall as fw
 from report_builder.agui import BlockCanvas, RenderedBlock
 from report_builder.exporter import export_pdf
+from analytics_engine.snapshot import write_parquet_snapshot
+from analytics_engine.router import resolve_block_analytics
+from report_builder.filter_engine import DataFilterSpec, apply_filters
 from report_builder.memory import STM, ReflectionLedger
 
 logger = logging.getLogger(__name__)
@@ -143,6 +146,20 @@ def _render_block_payload(
             dataset_type=dataset_type,
         )
         return {"text": text}
+
+    analytics_payload = resolve_block_analytics(
+        engine=hints.get("engine"),
+        hints=hints,
+        df=df,
+        facts=facts,
+    )
+    if analytics_payload and kind in ("table", "chart", "metric"):
+        if kind == "table" and analytics_payload.get("rows") is not None:
+            return analytics_payload
+        if kind == "chart" and analytics_payload.get("labels"):
+            return analytics_payload
+        if kind == "metric" and analytics_payload.get("metrics"):
+            return analytics_payload
 
     if kind == "metric":
         metrics_keys = hints.get("metrics") or []
@@ -328,6 +345,7 @@ def generate_report(
     template_ast: dict[str, Any] | None,
     dataset_filename: str | None,
     out_root: str | Path | None = None,
+    filter_config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run all phases. Returns status dict; full canvas persisted on the job."""
     out_root = Path(out_root or os.getenv("REPORT_STORAGE_PATH", "./storage/reports"))
@@ -370,6 +388,15 @@ def generate_report(
     except Exception as exc:
         logger.warning("[job %s] Arrow kernel load failed: %s", job_id, exc)
         df = pd.DataFrame()
+
+    filter_spec = DataFilterSpec.from_dict(filter_config)
+    if filter_spec and not df.empty:
+        df = apply_filters(df, filter_spec)
+        logger.info("[job %s] Phase 3: filters applied, rows=%s", job_id, len(df))
+
+    snap_path = write_parquet_snapshot(df, analysis_id, out_root / "analytics")
+    if snap_path:
+        logger.info("[job %s] analytics snapshot: %s", job_id, snap_path)
 
     facts = _collect_facts(analysis_payload, df)
     logger.info("[job %s] Phase 3: %s facts keys", job_id, len(facts))
