@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class SignupStartRequest(BaseModel):
@@ -9,8 +9,19 @@ class SignupStartRequest(BaseModel):
 
 
 class LoginStartRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(..., min_length=3, max_length=320)
     password: str
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        email = v.strip().lower()
+        # Allow dev test addresses (.local etc.) — do not use EmailStr here.
+        if email.endswith("@test.local") or email.endswith("@example.com"):
+            return email
+        if "@" not in email or len(email.split("@", 1)[0]) < 1:
+            raise ValueError("Invalid email address")
+        return email
 
 
 class OtpVerifyRequest(BaseModel):
@@ -26,6 +37,13 @@ class ChallengeResponse(BaseModel):
     challenge_id: str
     expires_in: int
     dev_otp_logged: bool | None = None
+    dev_otp: str | None = None  # only for dev test user
+
+
+class DevQuickLoginResponse(BaseModel):
+    message: str
+    user_id: int
+    email: str
 
 
 class UserMeResponse(BaseModel):

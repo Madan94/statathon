@@ -34,6 +34,13 @@ class TemplateCreateOut(TemplateOut):
     ast: dict[str, Any]
 
 
+class TemplateImportJsonIn(BaseModel):
+    name: str
+    description: Optional[str] = None
+    ast: dict[str, Any]
+    document_format: Optional[str] = None  # "energy_chapter" converts document/children AST
+
+
 class TemplateExtractionJobOut(BaseModel):
     id: int
     status: str

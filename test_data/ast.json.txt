@@ -1,0 +1,344 @@
+{
+  "document": {
+    "id": "energy_reserves_2025",
+    "type": "chapter",
+    "chapterNumber": 1,
+    "title": "Energy Reserves and Potential",
+    "source": "Stat Reports",
+    "pages": [1,2,3,4,5,6,7,8,9,10],
+
+    "children": [
+
+      {
+        "type": "section",
+        "id": "introduction",
+        "title": "Introduction",
+
+        "paragraphs": [
+          {
+            "type": "definition",
+            "content": "Energy reserves are part of energy resources that can be recovered based on technical, economic and environmental considerations."
+          }
+        ]
+      },
+
+      {
+        "type": "section",
+        "id": "global_classification",
+        "title": "Global Classification of Energy Reserves",
+
+        "frameworks": [
+          {
+            "name": "UNFC 2009",
+
+            "dimensions": [
+              "Economic and Social Viability",
+              "Field Project Status and Feasibility",
+              "Geological Knowledge"
+            ]
+          },
+
+          {
+            "name": "SEEA Energy",
+
+            "classes": [
+              {
+                "code": "A",
+                "description": "Commercially recoverable resources"
+              },
+
+              {
+                "code": "B",
+                "description": "Potentially commercially recoverable resources"
+              },
+
+              {
+                "code": "C",
+                "description": "Non-commercial and other known deposits"
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "type": "section",
+        "id": "energy_reserves_india",
+        "title": "Energy Reserves in India",
+
+        "summary": [
+          "Coal",
+          "Lignite",
+          "Crude Oil",
+          "Natural Gas",
+          "Renewable Energy"
+        ]
+      },
+
+      {
+        "type": "section",
+        "id": "coal_reserves",
+
+        "title": "1.1 Coal Reserves",
+
+        "resource": {
+          "name": "Coal",
+
+          "unit": "Billion Tonnes",
+
+          "totalReserve": 400.715,
+
+          "growthPercent": 2.90,
+
+          "reserveClassification": {
+            "proved": 55,
+            "indicated": 37,
+            "inferred": 8
+          },
+
+          "topStates": [
+            "Odisha",
+            "Jharkhand",
+            "Chhattisgarh"
+          ],
+
+          "combinedSharePercent": 70
+        },
+
+        "figure": {
+          "id": "fig_1_1",
+          "type": "pie_chart",
+
+          "dataset": {
+            "proved": 55,
+            "indicated": 37,
+            "inferred": 8
+          }
+        }
+      },
+
+      {
+        "type": "section",
+
+        "id": "lignite_reserves",
+
+        "title": "1.2 Lignite Reserves",
+
+        "resource": {
+          "name": "Lignite",
+
+          "unit": "Billion Tonnes",
+
+          "totalReserve": 47.371,
+
+          "growthPercent": 0.15,
+
+          "reserveClassification": {
+            "proved": 17,
+            "indicated": 53,
+            "inferred": 30
+          },
+
+          "dominantState": {
+            "name": "Tamil Nadu",
+            "sharePercent": 79
+          }
+        },
+
+        "figure": {
+          "id": "fig_1_2",
+
+          "dataset": {
+            "proved": 17,
+            "indicated": 53,
+            "inferred": 30
+          }
+        }
+      },
+
+      {
+        "type": "section",
+
+        "id": "crude_oil",
+
+        "title": "1.3 Crude Oil Reserves",
+
+        "resource": {
+          "name": "Crude Oil",
+
+          "unit": "Million Tonnes",
+
+          "totalReserve": 672.07,
+
+          "growthPercent": 0.10,
+
+          "distribution": {
+            "Western Offshore": 31,
+            "Assam": 22,
+            "Rajasthan": 20,
+            "Gujarat": 18,
+            "Eastern Offshore": 6,
+            "Andhra Pradesh": 1,
+            "Tamil Nadu": 1,
+            "Others": 1
+          }
+        }
+      },
+
+      {
+        "type": "section",
+
+        "id": "natural_gas",
+
+        "title": "1.4 Natural Gas Reserves",
+
+        "resource": {
+          "name": "Natural Gas",
+
+          "unit": "BCM",
+
+          "totalReserve": 1073.01,
+
+          "changePercent": -1.94,
+
+          "distribution": {
+            "Western Offshore": 32,
+            "Eastern Offshore": 25,
+            "Assam": 15,
+            "Andhra Pradesh": 6,
+            "Gujarat": 5,
+            "West Bengal CBM": 4,
+            "Tamil Nadu": 4,
+            "Tripura": 3,
+            "Rajasthan": 3,
+            "Madhya Pradesh CBM": 2,
+            "Others": 1
+          }
+        }
+      },
+
+      {
+        "type": "section",
+
+        "id": "renewable_energy",
+
+        "title": "1.5 Renewable Energy Potential in India",
+
+        "totalPotentialMW": 4704043,
+
+        "sources": [
+          {
+            "name": "Solar",
+            "potentialMW": 3343378,
+            "sharePercent": 71.1
+          },
+
+          {
+            "name": "Wind",
+            "potentialMW": 1163856,
+            "sharePercent": 24.7
+          },
+
+          {
+            "name": "Large Hydro",
+            "potentialMW": 133410,
+            "sharePercent": 2.84
+          },
+
+          {
+            "name": "Small Hydro",
+            "potentialMW": 21134,
+            "sharePercent": 0.45
+          },
+
+          {
+            "name": "Biomass",
+            "potentialMW": 28447,
+            "sharePercent": 0.60
+          },
+
+          {
+            "name": "Cogeneration Bagasse",
+            "potentialMW": 13818,
+            "sharePercent": 0.29
+          }
+        ]
+      },
+
+      {
+        "type": "section",
+
+        "id": "statewise_renewable_distribution",
+
+        "title": "Geographical Distribution of Renewable Energy Potential",
+
+        "topStates": [
+          {
+            "state": "Rajasthan",
+            "sharePercent": 24,
+            "potentialMW": 1114794
+          },
+
+          {
+            "state": "Maharashtra",
+            "sharePercent": 14,
+            "potentialMW": 671024
+          },
+
+          {
+            "state": "Gujarat",
+            "sharePercent": 9,
+            "potentialMW": 427954
+          },
+
+          {
+            "state": "Andhra Pradesh",
+            "sharePercent": 9,
+            "potentialMW": 427933
+          },
+
+          {
+            "state": "Karnataka",
+            "sharePercent": 8.6,
+            "potentialMW": 404227
+          }
+        ]
+      },
+
+      {
+        "type": "table",
+        "id": "table_1_1",
+        "title": "Statewise Coal Reserves",
+
+        "schema": {
+          "columns": [
+            "State",
+            "Proved_2025",
+            "Indicated_2025",
+            "Inferred_2025",
+            "Total_2025",
+            "DistributionPercent"
+          ]
+        }
+      },
+
+      {
+        "type": "table",
+        "id": "table_1_2",
+        "title": "Statewise Lignite Reserves"
+      },
+
+      {
+        "type": "table",
+        "id": "table_1_3",
+        "title": "Statewise Crude Oil and Natural Gas Reserves"
+      },
+
+      {
+        "type": "table",
+        "id": "table_1_4",
+        "title": "Statewise Renewable Energy Potential"
+      }
+    ]
+  }
+}

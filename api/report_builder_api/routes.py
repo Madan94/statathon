@@ -52,7 +52,8 @@ from .access import filter_config_dict, require_job_access, require_template_acc
 from .template_validation import validate_ast_payload
 from .schemas import (
     ChatIn, CorrectionIn, DeliverRequest, GenerateRequest, InsertBlockIn, JobOut,
-    MoveBlockIn, ReadyAnalysisOut, TemplateCreateOut, TemplateExtractionJobOut, TemplateOut, TemplateUpdateIn,
+    MoveBlockIn, ReadyAnalysisOut, TemplateCreateOut, TemplateExtractionJobOut,
+    TemplateImportJsonIn, TemplateOut, TemplateUpdateIn,
 )
 from . import delivery as delivery_mod
 
@@ -415,6 +416,38 @@ def clone_default_template(
     db.refresh(row)
     out = _template_to_out(row).model_dump()
     out["ast"] = ast_payload
+    return TemplateCreateOut(**out)
+
+
+@router.post("/templates/import-json", response_model=TemplateCreateOut)
+def import_template_json(
+    body: TemplateImportJsonIn,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Import AST from JSON — supports report-builder blocks or energy chapter document AST."""
+    from report_builder.energy_ast_converter import document_ast_to_report_blocks
+
+    raw = body.ast
+    if body.document_format == "energy_chapter" or (
+        isinstance(raw, dict) and "document" in raw and "blocks" not in raw
+    ):
+        raw = document_ast_to_report_blocks(raw)
+
+    validated = validate_ast_payload(raw)
+    row = ReportTemplate(
+        user_id=user_id,
+        name=body.name.strip(),
+        description=(body.description or "Imported from JSON AST").strip(),
+        ast_json=validated,
+        extraction_method=validated.get("extraction_method") or "json_import",
+        page_count=validated.get("page_count"),
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    out = _template_to_out(row).model_dump()
+    out["ast"] = validated
     return TemplateCreateOut(**out)
 
 
@@ -890,7 +923,98 @@ def re_export(
     return {"content_hash": digest, "final_pdf_path": storage_path}
 
 
-# ---------------- BI Chat ----------------
+# ---------------- DeepAgent BI Chat ----------------
+
+
+@router.get("/jobs/{job_id}/context")
+def deep_context(
+    job_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Return the DeepAgent context panel status — which data sources are loaded."""
+    job = _load_job_or_404(db, job_id, user_id)
+    analysis = db.query(Analysis).filter(Analysis.id == job.analysis_id).first()
+    if not analysis:
+        raise HTTPException(404, "Analysis not found")
+    dataset = db.query(Dataset).filter(Dataset.id == analysis.dataset_id).first()
+    if not dataset:
+        raise HTTPException(404, "Dataset not found")
+
+    payload = resolve_semantic_analysis_payload(db, analysis.id) or {}
+    payload = enrich_payload_for_dashboard(db, analysis.id, payload)
+
+    def _load_df():
+        store = try_build_default_store() if dataset.object_key else None
+        return dataframe_for_uploaded_dataset(
+            dataset_storage_path=dataset.storage_path,
+            dataset_object_key=dataset.object_key,
+            filename=dataset.filename,
+            object_store=store,
+        )
+
+    from report_builder.deep_bi import get_context_status
+    return get_context_status(
+        analysis_id=analysis.id,
+        analysis_payload=payload,
+        df_loader=_load_df,
+        db=db,
+    )
+
+
+@router.post("/jobs/{job_id}/deep-chat")
+def deep_chat(
+    job_id: int,
+    body: ChatIn,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """DeepAgent BI chat — full PlannerAgent → RetrievalAgent → AnalyticsAgent → Scribe → Verifier pipeline.
+
+    Returns multiple RenderedBlocks (narrative + table + chart + metrics)
+    that can be dragged into any section of the report canvas.
+    """
+    job = _load_job_or_404(db, job_id, user_id)
+    if not body.query or not body.query.strip():
+        raise HTTPException(400, "Empty query")
+
+    analysis = db.query(Analysis).filter(Analysis.id == job.analysis_id).first()
+    if not analysis:
+        raise HTTPException(404, "Underlying analysis not found")
+    dataset = db.query(Dataset).filter(Dataset.id == analysis.dataset_id).first()
+    if not dataset:
+        raise HTTPException(404, "Underlying dataset not found")
+
+    payload = resolve_semantic_analysis_payload(db, analysis.id) or {}
+    payload = enrich_payload_for_dashboard(db, analysis.id, payload)
+
+    def _load_df():
+        store = try_build_default_store() if dataset.object_key else None
+        return dataframe_for_uploaded_dataset(
+            dataset_storage_path=dataset.storage_path,
+            dataset_object_key=dataset.object_key,
+            filename=dataset.filename,
+            object_store=store,
+        )
+
+    ledger = ReflectionLedger(db)
+    stm = STM()
+
+    from report_builder.deep_bi import deep_chat as _deep_chat
+    result = _deep_chat(
+        job_id=job.id,
+        analysis_id=analysis.id,
+        query=body.query.strip(),
+        analysis_payload=payload,
+        df_loader=_load_df,
+        db=db,
+        stm=stm,
+        ledger=ledger,
+    )
+    return result
+
+
+# ---------------- Classic BI Chat (kept for backward compat) ----------------
 
 
 @router.get("/jobs/{job_id}/chat/history")

@@ -7,6 +7,8 @@ import os
 
 import httpx
 
+from dev_console import log_dev_otp
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,6 +21,7 @@ def send_otp_email(to_email: str, otp: str, purpose: str) -> dict:
     if not secret:
         if app_env == "development":
             logger.warning("MAIL_INTERNAL_SECRET unset — OTP for %s: %s", to_email, otp)
+            log_dev_otp(email=to_email, otp=otp, purpose=purpose, via="no_secret")
             return {"sent": False, "dev_otp_logged": True}
         return {"sent": False, "error": "MAIL_INTERNAL_SECRET not configured"}
 
@@ -32,20 +35,24 @@ def send_otp_email(to_email: str, otp: str, purpose: str) -> dict:
             )
             data = resp.json() if resp.content else {}
         if resp.status_code == 200 and data.get("sent"):
+            log_dev_otp(email=to_email, otp=otp, purpose=purpose, via="email_sent")
             return {"sent": True}
         if resp.status_code == 200 and data.get("dev"):
             logger.warning("SMTP dev log mode — OTP for %s: %s", to_email, otp)
+            log_dev_otp(email=to_email, otp=otp, purpose=purpose, via="smtp_dev")
             return {"sent": False, "dev_otp_logged": True}
         detail = data.get("detail") or data.get("error") or resp.text[:200]
         logger.error("Nodemailer send-otp failed: %s %s", resp.status_code, detail)
         if app_env == "development":
             logger.warning("Dev fallback OTP for %s: %s", to_email, otp)
+            log_dev_otp(email=to_email, otp=otp, purpose=purpose, via="fallback")
             return {"sent": False, "dev_otp_logged": True, "error": str(detail)}
         return {"sent": False, "error": str(detail)}
     except Exception as e:
         logger.error("Nodemailer request failed: %s", e)
         if app_env == "development":
             logger.warning("Dev fallback OTP for %s: %s", to_email, otp)
+            log_dev_otp(email=to_email, otp=otp, purpose=purpose, via="exception")
             return {"sent": False, "dev_otp_logged": True}
         return {"sent": False, "error": str(e)}
 

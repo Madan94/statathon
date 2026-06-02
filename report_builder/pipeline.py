@@ -74,10 +74,46 @@ def _collect_facts(
         summary = compute_dataset_summary(analysis_payload, df if not df.empty else None)
         facts = detect_key_metrics(summary, analysis_payload, df if not df.empty else None)
         facts["_summary"] = summary.to_dict()
-        return facts
     except Exception as exc:
         logger.warning("report_semantics facts failed: %s; using legacy", exc)
-        return _collect_facts_legacy(analysis_payload, df)
+        facts = _collect_facts_legacy(analysis_payload, df)
+
+    # Post-process: inject energy-specific facts from the actual DataFrame
+    _RESERVE_COLS = ["Proved_Reserves", "Indicated_Reserves", "Inferred_Reserves",
+                     "Total_Reserves", "Potential_Capacity_MW"]
+    if df is not None and not df.empty and any(c in df.columns for c in _RESERVE_COLS):
+        facts["dataset_type"] = "energy"
+        for col in _RESERVE_COLS:
+            if col in df.columns:
+                try:
+                    facts[f"total_{col}"] = round(float(df[col].sum()), 2)
+                    facts[f"mean_{col}"] = round(float(df[col].mean()), 2)
+                    facts[f"max_{col}"] = round(float(df[col].max()), 2)
+                except Exception:
+                    pass
+        if "State" in df.columns:
+            facts["state_count"] = int(df["State"].nunique())
+            try:
+                if "Total_Reserves" in df.columns:
+                    top_state = df.groupby("State")["Total_Reserves"].sum().idxmax()
+                    facts["top_state_by_reserves"] = str(top_state)
+                    facts["top_state_total_reserves"] = round(
+                        float(df[df["State"] == top_state]["Total_Reserves"].sum()), 2
+                    )
+            except Exception:
+                pass
+        if "Resource_Category" in df.columns:
+            facts["resource_categories"] = df["Resource_Category"].unique().tolist()
+            try:
+                if "Total_Reserves" in df.columns:
+                    by_resource = df.groupby("Resource_Category")["Total_Reserves"].sum().round(2).to_dict()
+                    for k, v in by_resource.items():
+                        safe_key = k.lower().replace(" ", "_").replace("-", "_")
+                        facts[f"reserves_{safe_key}"] = v
+            except Exception:
+                pass
+
+    return facts
 
 
 def _collect_facts_legacy(
@@ -114,12 +150,129 @@ def _collect_facts_legacy(
         facts["mapped_column_count"] = sum(
             1 for r in mapping if isinstance(r, dict) and r.get("domain")
         )
+    # Auto-detect energy dataset and override wrong semantic classification
+    if df is not None and not df.empty:
+        _energy_indicator_cols = {"Total_Reserves", "Proved_Reserves", "Inferred_Reserves",
+                                  "Resource_Category", "Potential_Capacity_MW"}
+        if _energy_indicator_cols & set(df.columns):
+            facts["dataset_type"] = "energy"
+    # Energy-specific aggregate facts
+    if df is not None and not df.empty:
+        _RESERVE_COLS = ["Proved_Reserves", "Indicated_Reserves", "Inferred_Reserves",
+                         "Total_Reserves", "Potential_Capacity_MW"]
+        for col in _RESERVE_COLS:
+            if col in df.columns:
+                try:
+                    facts[f"total_{col}"] = round(float(df[col].sum()), 2)
+                    facts[f"mean_{col}"] = round(float(df[col].mean()), 2)
+                    facts[f"max_{col}"] = round(float(df[col].max()), 2)
+                except Exception:
+                    pass
+        if "State" in df.columns:
+            facts["state_count"] = int(df["State"].nunique())
+            try:
+                top_state = df.groupby("State")["Total_Reserves"].sum().idxmax() \
+                    if "Total_Reserves" in df.columns else None
+                if top_state:
+                    facts["top_state_by_reserves"] = str(top_state)
+                    facts["top_state_total_reserves"] = round(
+                        float(df[df["State"] == top_state]["Total_Reserves"].sum()), 2
+                    )
+            except Exception:
+                pass
+        if "Resource_Category" in df.columns:
+            facts["resource_categories"] = df["Resource_Category"].unique().tolist()
+            try:
+                if "Total_Reserves" in df.columns:
+                    by_resource = df.groupby("Resource_Category")["Total_Reserves"].sum().round(2).to_dict()
+                    for k, v in by_resource.items():
+                        safe_key = k.lower().replace(" ", "_").replace("-", "_")
+                        facts[f"reserves_{safe_key}"] = v
+            except Exception:
+                pass
     return facts
 
 
 # ---------------------------------------------------------------------------
 # Block payload renderers (table / chart / metric)
 # ---------------------------------------------------------------------------
+
+_RESERVE_NUM_COLS = ["Proved_Reserves", "Indicated_Reserves", "Inferred_Reserves",
+                     "Total_Reserves", "Potential_Capacity_MW"]
+
+
+def _has_reserve_columns(df: pd.DataFrame) -> bool:
+    return any(c in df.columns for c in _RESERVE_NUM_COLS)
+
+
+def _render_energy_table(df: pd.DataFrame, hints: dict, title: str) -> dict | None:
+    """Generate a meaningful reserves table grouped by State or Resource_Category."""
+    import pandas as _pd
+    try:
+        # Detect best groupby from hints
+        top_states = hints.get("topStates")
+        sources = hints.get("sources")
+        table_schema = hints.get("table_schema") or {}
+        resource_filter = None
+
+        # Determine groupby
+        group_col = "State" if "State" in df.columns else None
+        if "Resource_Category" in df.columns and (
+            sources or (table_schema and "resource" in str(table_schema).lower())
+        ):
+            group_col = "Resource_Category"
+
+        num_cols = [c for c in _RESERVE_NUM_COLS if c in df.columns]
+        if not group_col or not num_cols:
+            return None
+
+        agg = df.groupby(group_col)[num_cols].sum().round(2).reset_index()
+        agg = agg.sort_values(num_cols[0], ascending=False)
+
+        # Filter to top states if requested
+        if top_states and isinstance(top_states, list) and group_col == "State":
+            filtered = agg[agg["State"].isin(top_states)]
+            if not filtered.empty:
+                agg = filtered
+
+        rows = agg.where(_pd.notnull(agg), None).to_dict(orient="records")
+        return {"columns": [group_col] + num_cols, "rows": rows}
+    except Exception:
+        return None
+
+
+def _render_energy_chart(df: pd.DataFrame, hints: dict, title: str) -> dict | None:
+    """Generate a reserves chart (pie/bar) from the energy dataset."""
+    try:
+        template_figure = hints.get("template_figure") or {}
+        chart_type = hints.get("chart_type") or str(template_figure.get("type") or "bar")
+        chart_type = chart_type.replace("_chart", "")
+
+        # Determine groupby and value column
+        group_col = "Resource_Category" if (
+            chart_type == "pie" or "resource" in title.lower() or "category" in title.lower()
+        ) else "State"
+        if group_col not in df.columns:
+            group_col = "State" if "State" in df.columns else "Resource_Category"
+
+        val_col = "Total_Reserves" if "Total_Reserves" in df.columns else None
+        if not val_col:
+            val_col = next((c for c in _RESERVE_NUM_COLS if c in df.columns), None)
+        if not val_col:
+            return None
+
+        series = df.groupby(group_col)[val_col].sum().sort_values(ascending=False)
+        return {
+            "chart_type": chart_type if chart_type in ("bar", "line", "pie") else "bar",
+            "title": title,
+            "labels": series.index.tolist()[:20],
+            "values": [round(float(v), 2) for v in series.values[:20]],
+            "x_label": group_col,
+            "y_label": val_col,
+        }
+    except Exception:
+        return None
+
 
 def _render_block_payload(
     block,
@@ -136,11 +289,59 @@ def _render_block_payload(
 
     if kind == "narrative":
         reflections = ledger.retrieve_similar(block.block_id, title)
+        # Augment hints with pre-computed energy analytics for better narratives
+        enriched_hints = dict(hints)
+        if not df.empty and _has_reserve_columns(df):
+            enriched_hints.setdefault("source", "energy_reserves")
+            # Build a concise analytics context string for the scribe
+            parts: list[str] = []
+            if "total_Total_Reserves" in facts:
+                parts.append(f"Total reserves: {facts['total_Total_Reserves']:.1f} units")
+            if "top_state_by_reserves" in facts:
+                parts.append(
+                    f"Leading state: {facts['top_state_by_reserves']} "
+                    f"({facts.get('top_state_total_reserves', '')})"
+                )
+            if "state_count" in facts:
+                parts.append(f"Covers {facts['state_count']} states")
+            if "resource_categories" in facts:
+                parts.append(f"Resource categories: {', '.join(facts['resource_categories'])}")
+            # Add per-resource totals
+            for cat in (facts.get("resource_categories") or []):
+                safe = cat.lower().replace(" ", "_").replace("-", "_")
+                val = facts.get(f"reserves_{safe}")
+                if val is not None:
+                    parts.append(f"{cat} total reserves: {val}")
+            if parts:
+                enriched_hints["analytics_context"] = "; ".join(parts)
+            # Section-specific hints from AST
+            section_id = hints.get("template_section", "")
+            if "coal" in section_id.lower() or "coal" in title.lower():
+                coal_val = facts.get("reserves_coal")
+                if coal_val:
+                    enriched_hints["analytics_context"] = (
+                        f"Coal total reserves: {coal_val}; "
+                        + enriched_hints.get("analytics_context", "")
+                    )
+            if "lignite" in title.lower():
+                lig_val = facts.get("reserves_lignite")
+                if lig_val:
+                    enriched_hints["analytics_context"] = (
+                        f"Lignite total reserves: {lig_val}; "
+                        + enriched_hints.get("analytics_context", "")
+                    )
+            if "renewable" in title.lower():
+                ren_val = facts.get("reserves_renewable_energy")
+                if ren_val:
+                    enriched_hints["analytics_context"] = (
+                        f"Renewable energy capacity: {ren_val} MW; "
+                        + enriched_hints.get("analytics_context", "")
+                    )
         text = fw.scribe_narrative(
             block_id=block.block_id,
             block_title=title,
             block_section=block.section,
-            hints=hints,
+            hints=enriched_hints,
             facts=facts,
             reflections=reflections,
             dataset_type=dataset_type,
@@ -174,7 +375,12 @@ def _render_block_payload(
 
     if kind == "table":
         src = hints.get("source")
-        if src == "semantic_mapping":
+        # Energy AST table: build actual reserve data from CSV
+        if src == "semantic_mapping" and not df.empty and _has_reserve_columns(df):
+            energy_table = _render_energy_table(df, hints, title)
+            if energy_table:
+                return energy_table
+        if src == "semantic_mapping" and not _has_reserve_columns(df):
             rows = analysis_payload.get("semantic_mapping") or []
             if isinstance(rows, list):
                 pruned = [
@@ -243,6 +449,12 @@ def _render_block_payload(
         return {"columns": [], "rows": []}
 
     if kind == "chart":
+        # Energy AST chart: build from actual CSV data
+        if not df.empty and _has_reserve_columns(df) and hints.get("source") == "semantic_mapping":
+            energy_chart = _render_energy_chart(df, hints, title)
+            if energy_chart:
+                return energy_chart
+
         if hints.get("source") == "missing_per_column" and not df.empty:
             counts = kx.column_missing_counts(df)
             top = sorted(counts.items(), key=lambda kv: kv[1], reverse=True)[:20]

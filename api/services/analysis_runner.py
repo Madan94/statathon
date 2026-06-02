@@ -85,6 +85,36 @@ def run_analysis_pipeline_with_mode(
     return run_semantic_analysis_pipeline(dataset_id=dataset_id, analysis_id=analysis_id, db=db)
 
 
+def reset_orphaned_analyses() -> int:
+    """Mark pending/running analyses failed after API restart (background jobs are lost)."""
+    db = SessionLocal()
+    try:
+        rows = db.query(Analysis).filter(Analysis.status.in_(["pending", "running"])).all()
+        for an in rows:
+            an.status = "failed"
+            an.error_message = "Analysis interrupted (server restarted). Run analysis again."
+        if rows:
+            db.commit()
+        return len(rows)
+    finally:
+        db.close()
+
+
+def supersede_inflight_analyses(db: Session, dataset_id: int) -> None:
+    """Fail stale pending/running rows before starting a fresh analysis."""
+    rows = (
+        db.query(Analysis)
+        .filter(
+            Analysis.dataset_id == dataset_id,
+            Analysis.status.in_(["pending", "running"]),
+        )
+        .all()
+    )
+    for an in rows:
+        an.status = "failed"
+        an.error_message = "Superseded by a new analysis run."
+
+
 def persist_analysis_failure(analysis_id: int, detail: str) -> None:
     db = SessionLocal()
     try:

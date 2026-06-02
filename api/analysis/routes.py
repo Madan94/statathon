@@ -2,6 +2,7 @@ import os
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from database.database import SessionLocal
 from database.models import Analysis, Dataset
@@ -11,6 +12,7 @@ from services.analysis_runner import (
     mark_dataset_upload_status,
     persist_analysis_failure,
     run_semantic_analysis_pipeline,
+    supersede_inflight_analyses,
 )
 from services.apply_service import apply_analysis_decisions
 from analysis.schemas import AnalysisDecisionsRequest, NormalizationSaveRequest
@@ -329,18 +331,24 @@ def get_analysis_blueprint(
 
 
 @router.post("/{dataset_id}/analyze-async")
-def analyze_async(
+async def analyze_async(
     dataset_id: int,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user_id),
 ):
     ds = require_dataset_owner(db, dataset_id, user_id)
+    supersede_inflight_analyses(db, dataset_id)
+
     an = Analysis(dataset_id=dataset_id, status="pending")
     db.add(an)
     db.commit()
     db.refresh(an)
-    background_tasks.add_task(execute_dataset_analysis_job, dataset_id, an.id)
+
+    async def _run_job() -> None:
+        await run_in_threadpool(execute_dataset_analysis_job, dataset_id, an.id)
+
+    background_tasks.add_task(_run_job)
     return {"analysis_id": an.id, "id": an.id, "dataset_id": dataset_id, "status": "pending"}
 
 

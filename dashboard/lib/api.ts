@@ -78,6 +78,22 @@ export interface ChallengeResponse {
   challenge_id: string;
   expires_in: number;
   dev_otp_logged?: boolean;
+  dev_otp?: string | null;
+}
+
+/** Extract a readable message from axios / fetch errors. */
+export function formatApiError(err: unknown, fallback = 'Request failed'): string {
+  if (axios.isAxiosError(err)) {
+    const detail = err.response?.data?.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) {
+      return detail.map((d) => (typeof d === 'object' && d && 'msg' in d ? String(d.msg) : String(d))).join('; ');
+    }
+    if (detail && typeof detail === 'object') return JSON.stringify(detail);
+    return err.message || fallback;
+  }
+  if (err instanceof Error) return err.message || fallback;
+  return fallback;
 }
 
 // ─── Column / analysis-pipeline types ───────────────────────────────────────
@@ -512,6 +528,11 @@ export const authApi = {
     const { data } = await api.post('/auth/login/resend-otp', { challenge_id });
     return data;
   },
+  /** Development only — sign in as test officer without OTP. */
+  devQuickLogin: async (email: string, password: string) => {
+    const { data } = await api.post('/auth/dev/quick-login', { email, password });
+    return data;
+  },
   me: async (): Promise<AuthUser> => {
     const { data } = await api.get('/auth/me');
     return data;
@@ -601,8 +622,8 @@ export const analysisApi = {
   pollUntilComplete: async (
     analysisId: number,
     onTick?: (status: AnalysisStatus) => void,
-    intervalMs = 2000,
-    maxAttempts = 120
+    intervalMs = 3000,
+    maxAttempts = 400
   ): Promise<AnalysisStatus> => {
     for (let i = 0; i < maxAttempts; i++) {
       const st = await analysisApi.getStatus(analysisId);
@@ -796,6 +817,42 @@ export interface ChatTurn {
   created_at: string;
 }
 
+export interface DeepAgentContext {
+  dataset?: { loaded: boolean; rows: number; columns: number; col_sample: string[] };
+  knowledge_graph?: { backend: string; available: boolean; note?: string };
+  stm?: { backend: string; available: boolean };
+  ltm?: { backend: string; available: boolean };
+  rulebooks?: { available: boolean };
+  analysis?: {
+    semantic_mapped_columns: number;
+    clusters: number;
+    anomaly_candidates: number;
+    imputation_candidates: number;
+    has_schema_graph: boolean;
+  };
+  domains?: Record<string, number>;
+}
+
+export interface DeepAgentTurn {
+  turn_id: string;
+  query: string;
+  role: 'user' | 'assistant';
+  text: string;
+  blocks: RenderedBlock[];
+  plan?: { intent: string; target_domains: string[]; sub_intents: string[] };
+  analytics?: { mode: string; error?: string; facts?: Record<string, unknown> };
+  context_used?: {
+    resolved_columns: string[];
+    kg_neighbors_count: number;
+    anomalies: number;
+    imputations: number;
+    intent: string;
+  };
+  verifier?: VerifierVerdict | null;
+  error?: string | null;
+  created_at: string;
+}
+
 export const reportBuilderApi = {
   listReadyAnalyses: async (): Promise<ReadyAnalysis[]> => {
     const { data } = await api.get('/report-builder/ready-analyses');
@@ -803,6 +860,20 @@ export const reportBuilderApi = {
   },
   cloneDefaultTemplate: async (): Promise<ReportTemplateWithAst> => {
     const { data } = await api.post('/report-builder/templates/clone-default');
+    return data;
+  },
+  importJsonTemplate: async (
+    name: string,
+    ast: Record<string, unknown>,
+    description?: string,
+    documentFormat?: 'energy_chapter'
+  ): Promise<ReportTemplateWithAst> => {
+    const { data } = await api.post('/report-builder/templates/import-json', {
+      name,
+      description,
+      ast,
+      document_format: documentFormat,
+    });
     return data;
   },
   updateTemplate: async (
@@ -941,6 +1012,14 @@ export const reportBuilderApi = {
   },
   chatHistory: async (jobId: number): Promise<{ turns: ChatTurn[] }> => {
     const { data } = await api.get(`/report-builder/jobs/${jobId}/chat/history`);
+    return data;
+  },
+  deepChat: async (jobId: number, query: string): Promise<DeepAgentTurn> => {
+    const { data } = await api.post(`/report-builder/jobs/${jobId}/deep-chat`, { query });
+    return data;
+  },
+  getJobContext: async (jobId: number): Promise<DeepAgentContext> => {
+    const { data } = await api.get(`/report-builder/jobs/${jobId}/context`);
     return data;
   },
   insertBlock: async (

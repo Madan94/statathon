@@ -12,8 +12,10 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 
 from auth.email_client import send_otp_email
+from auth.dev_user import get_dev_fixed_otp, is_dev_test_email, log_test_user_otp, resolve_dev_user
 from auth.utils import hash_password
 from database.models import OtpChallenge, User
+from dev_console import log_dev_otp
 
 OTP_LENGTH = int(os.getenv("OTP_LENGTH", "6"))
 OTP_TTL_MINUTES = int(os.getenv("OTP_TTL_MINUTES", "10"))
@@ -158,6 +160,8 @@ def start_login(db: Session, email: str, password: str) -> tuple[str | None, int
 
     email = normalize_email(email)
     user = authenticate_user(db, email, password)
+    if not user and is_dev_test_email(email):
+        user = resolve_dev_user(db, email, password)
     if not user:
         return None, None, None
     if not user.is_active:
@@ -166,7 +170,7 @@ def start_login(db: Session, email: str, password: str) -> tuple[str | None, int
     if user.locked_until and user.locked_until > datetime.utcnow():
         return None, None, None
 
-    otp = _generate_otp()
+    otp = get_dev_fixed_otp() if is_dev_test_email(email) else _generate_otp()
     challenge_id = str(uuid.uuid4())
     expires_at = datetime.utcnow() + timedelta(minutes=OTP_TTL_MINUTES)
 
@@ -189,6 +193,9 @@ def start_login(db: Session, email: str, password: str) -> tuple[str | None, int
     db.commit()
 
     mail_meta = send_otp_email(email, otp, "login_verify")
+    log_dev_otp(email=email, otp=otp, purpose="login_verify", via="otp_service")
+    if is_dev_test_email(email):
+        log_test_user_otp(purpose="login_verify")
     if mail_meta.get("error") and not mail_meta.get("sent") and not mail_meta.get("dev_otp_logged"):
         raise ValueError(mail_meta.get("error") or "Failed to send verification email")
     return challenge_id, OTP_TTL_MINUTES * 60, mail_meta
@@ -226,13 +233,16 @@ def resend_otp(db: Session, challenge_id: str) -> tuple[int, dict]:
     if ch.consumed_at:
         raise ValueError("This code was already used. Sign in again to get a new code.")
 
-    otp = _generate_otp()
+    otp = get_dev_fixed_otp() if is_dev_test_email(ch.email) else _generate_otp()
     ch.code_hash = _hash_otp(otp)
     ch.attempts = 0
     ch.expires_at = datetime.utcnow() + timedelta(minutes=OTP_TTL_MINUTES)
     db.commit()
 
     mail_meta = send_otp_email(ch.email, otp, ch.purpose)
+    log_dev_otp(email=ch.email, otp=otp, purpose=ch.purpose, via="resend")
+    if is_dev_test_email(ch.email):
+        log_test_user_otp(purpose=ch.purpose)
     if mail_meta.get("error") and not mail_meta.get("sent") and not mail_meta.get("dev_otp_logged"):
         raise ValueError(mail_meta.get("error") or "Failed to send verification email")
     return OTP_TTL_MINUTES * 60, mail_meta

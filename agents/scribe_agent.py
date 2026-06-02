@@ -60,6 +60,11 @@ _MOSPI_VOCAB: dict[str, dict[str, str]] = {
         "columns": "economic variables",
         "dataset": "economic survey data",
     },
+    "energy": {
+        "rows": "site/resource observations",
+        "columns": "energy reserve attributes",
+        "dataset": "energy reserves dataset",
+    },
     "survey": {
         "rows": "survey respondents",
         "columns": "questionnaire fields",
@@ -103,6 +108,7 @@ def _deterministic_narrative(
     facts: dict[str, Any],
     max_words: int,
     dataset_type: str = "unknown",
+    hints: dict[str, Any] | None = None,
 ) -> str:
     v = _vocab(dataset_type)
     parts: list[str] = []
@@ -195,12 +201,38 @@ def _deterministic_narrative(
         )
 
     else:
-        parts.append(f"{block_title}.")
-        if "row_count" in facts:
-            parts.append(
-                f"This dataset contains {int(facts['row_count']):,} {v['rows']} "
-                f"and {int(facts.get('column_count', 0))} {v['columns']}."
-            )
+        # General body / analysis section — emit as much analytics context as possible
+        # Check hints first (enriched by pipeline), then facts
+        _hints = hints or {}
+        _analytics_ctx = _hints.get("analytics_context") or facts.get("analytics_context") or ""
+        if _analytics_ctx:
+            parts.append(str(_analytics_ctx) + ".")
+        elif facts.get("narrative_hints"):
+            parts.append(str(facts["narrative_hints"]))
+        if parts:
+            # Add key numeric facts
+            for key in ("total_Total_Reserves", "total_Proved_Reserves", "groups_count",
+                        "top_group", "top_Total_Reserves"):
+                if key in facts and facts[key] is not None:
+                    label = key.replace("_", " ").replace("total ", "total ").replace("top group", "leading group")
+                    parts.append(f"{label}: {facts[key]}.")
+        else:
+            parts.append(f"{block_title}.")
+            if "row_count" in facts:
+                parts.append(
+                    f"This {v['dataset']} comprises {int(facts['row_count']):,} {v['rows']} "
+                    f"across {int(facts.get('column_count', 0))} {v['columns']}."
+                )
+            if "total_Total_Reserves" in facts:
+                parts.append(
+                    f"Total reserves recorded: {facts['total_Total_Reserves']:.1f} units."
+                )
+            if "groups_count" in facts:
+                parts.append(
+                    f"Data spans {int(facts['groups_count'])} groups."
+                )
+        if facts.get("analytics_mode") and "retrieval_context" in facts:
+            parts.append(f"Analysis mode: {facts['analytics_mode']}.")
 
     text = " ".join(parts)
     words = text.split()
@@ -336,4 +368,5 @@ class ScribeAgent:
             facts=facts,
             max_words=max_words,
             dataset_type=dataset_type,
+            hints=hints,
         )

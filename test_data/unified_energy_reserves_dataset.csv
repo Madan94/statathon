@@ -1,0 +1,1091 @@
+Site_ID,State,Resource_Category,Unit_of_Measure,Proved_Reserves,Indicated_Reserves,Inferred_Reserves,Total_Reserves,Potential_Capacity_MW
+SITE_0001,Jharkhand,Coal,Billion Tonnes,671,329,98,1098,0
+SITE_0002,Jharkhand,Coal,Billion Tonnes,20,487,87,594,0
+SITE_0003,Jharkhand,Coal,Billion Tonnes,2142,789,14,2945,0
+SITE_0004,Jharkhand,Coal,Billion Tonnes,854,287,157,1298,0
+SITE_0005,Jharkhand,Coal,Billion Tonnes,124,57,69,250,0
+SITE_0006,Jharkhand,Coal,Billion Tonnes,2175,45,111,2331,0
+SITE_0007,Jharkhand,Coal,Billion Tonnes,1504,885,3,2392,0
+SITE_0008,Jharkhand,Coal,Billion Tonnes,471,660,3,1134,0
+SITE_0009,Jharkhand,Coal,Billion Tonnes,108,198,5,311,0
+SITE_0010,Jharkhand,Coal,Billion Tonnes,472,1973,192,2637,0
+SITE_0011,Jharkhand,Coal,Billion Tonnes,415,859,62,1336,0
+SITE_0012,Jharkhand,Coal,Billion Tonnes,167,12,50,229,0
+SITE_0013,Jharkhand,Coal,Billion Tonnes,1586,488,102,2176,0
+SITE_0014,Jharkhand,Coal,Billion Tonnes,6,62,274,342,0
+SITE_0015,Jharkhand,Coal,Billion Tonnes,526,287,162,975,0
+SITE_0016,Jharkhand,Coal,Billion Tonnes,695,715,393,1803,0
+SITE_0017,Jharkhand,Coal,Billion Tonnes,797,250,621,1668,0
+SITE_0018,Jharkhand,Coal,Billion Tonnes,1130,225,96,1451,0
+SITE_0019,Jharkhand,Coal,Billion Tonnes,527,344,76,947,0
+SITE_0020,Jharkhand,Coal,Billion Tonnes,266,1660,16,1942,0
+SITE_0021,Jharkhand,Coal,Billion Tonnes,1088,1690,64,2842,0
+SITE_0022,Jharkhand,Coal,Billion Tonnes,151,167,97,415,0
+SITE_0023,Jharkhand,Coal,Billion Tonnes,1087,86,127,1300,0
+SITE_0024,Jharkhand,Coal,Billion Tonnes,1307,216,155,1678,0
+SITE_0025,Jharkhand,Coal,Billion Tonnes,2113,1365,39,3517,0
+SITE_0026,Jharkhand,Coal,Billion Tonnes,645,1373,264,2282,0
+SITE_0027,Jharkhand,Coal,Billion Tonnes,3249,2743,70,6062,0
+SITE_0028,Jharkhand,Coal,Billion Tonnes,977,133,22,1132,0
+SITE_0029,Jharkhand,Coal,Billion Tonnes,2080,479,402,2961,0
+SITE_0030,Jharkhand,Coal,Billion Tonnes,236,2062,353,2651,0
+SITE_0031,Jharkhand,Coal,Billion Tonnes,1231,123,234,1588,0
+SITE_0032,Jharkhand,Coal,Billion Tonnes,3129,252,173,3554,0
+SITE_0033,Jharkhand,Coal,Billion Tonnes,639,1935,34,2608,0
+SITE_0034,Jharkhand,Coal,Billion Tonnes,790,585,53,1428,0
+SITE_0035,Jharkhand,Coal,Billion Tonnes,2289,88,74,2451,0
+SITE_0036,Jharkhand,Coal,Billion Tonnes,586,578,107,1271,0
+SITE_0037,Jharkhand,Coal,Billion Tonnes,213,1,239,453,0
+SITE_0038,Jharkhand,Coal,Billion Tonnes,1967,927,55,2949,0
+SITE_0039,Jharkhand,Coal,Billion Tonnes,1330,353,237,1920,0
+SITE_0040,Jharkhand,Coal,Billion Tonnes,134,219,202,555,0
+SITE_0041,Jharkhand,Coal,Billion Tonnes,821,661,59,1541,0
+SITE_0042,Jharkhand,Coal,Billion Tonnes,19,953,115,1087,0
+SITE_0043,Jharkhand,Coal,Billion Tonnes,1953,864,60,2877,0
+SITE_0044,Jharkhand,Coal,Billion Tonnes,283,374,263,920,0
+SITE_0045,Jharkhand,Coal,Billion Tonnes,1115,541,7,1663,0
+SITE_0046,Jharkhand,Coal,Billion Tonnes,228,222,101,551,0
+SITE_0047,Jharkhand,Coal,Billion Tonnes,328,108,127,563,0
+SITE_0048,Jharkhand,Coal,Billion Tonnes,70,612,43,725,0
+SITE_0049,Jharkhand,Coal,Billion Tonnes,583,774,138,1495,0
+SITE_0050,Jharkhand,Coal,Billion Tonnes,266,343,54,663,0
+SITE_0051,Odisha,Coal,Billion Tonnes,499,1955,177,2631,0
+SITE_0052,Odisha,Coal,Billion Tonnes,773,1021,89,1883,0
+SITE_0053,Odisha,Coal,Billion Tonnes,1173,188,44,1405,0
+SITE_0054,Odisha,Coal,Billion Tonnes,1049,319,245,1613,0
+SITE_0055,Odisha,Coal,Billion Tonnes,938,240,200,1378,0
+SITE_0056,Odisha,Coal,Billion Tonnes,409,297,284,990,0
+SITE_0057,Odisha,Coal,Billion Tonnes,962,197,79,1238,0
+SITE_0058,Odisha,Coal,Billion Tonnes,183,136,130,449,0
+SITE_0059,Odisha,Coal,Billion Tonnes,1830,1740,183,3753,0
+SITE_0060,Odisha,Coal,Billion Tonnes,377,430,14,821,0
+SITE_0061,Odisha,Coal,Billion Tonnes,342,811,188,1341,0
+SITE_0062,Odisha,Coal,Billion Tonnes,724,604,104,1432,0
+SITE_0063,Odisha,Coal,Billion Tonnes,2221,333,136,2690,0
+SITE_0064,Odisha,Coal,Billion Tonnes,692,638,59,1389,0
+SITE_0065,Odisha,Coal,Billion Tonnes,426,684,124,1234,0
+SITE_0066,Odisha,Coal,Billion Tonnes,248,819,97,1164,0
+SITE_0067,Odisha,Coal,Billion Tonnes,1265,616,48,1929,0
+SITE_0068,Odisha,Coal,Billion Tonnes,128,1159,683,1970,0
+SITE_0069,Odisha,Coal,Billion Tonnes,223,318,243,784,0
+SITE_0070,Odisha,Coal,Billion Tonnes,317,624,252,1193,0
+SITE_0071,Odisha,Coal,Billion Tonnes,47,170,287,504,0
+SITE_0072,Odisha,Coal,Billion Tonnes,446,261,517,1224,0
+SITE_0073,Odisha,Coal,Billion Tonnes,1275,1713,161,3149,0
+SITE_0074,Odisha,Coal,Billion Tonnes,696,67,261,1024,0
+SITE_0075,Odisha,Coal,Billion Tonnes,160,783,209,1152,0
+SITE_0076,Odisha,Coal,Billion Tonnes,749,629,15,1393,0
+SITE_0077,Odisha,Coal,Billion Tonnes,496,486,338,1320,0
+SITE_0078,Odisha,Coal,Billion Tonnes,833,614,41,1488,0
+SITE_0079,Odisha,Coal,Billion Tonnes,3768,883,129,4780,0
+SITE_0080,Odisha,Coal,Billion Tonnes,367,696,543,1606,0
+SITE_0081,Odisha,Coal,Billion Tonnes,1691,651,185,2527,0
+SITE_0082,Odisha,Coal,Billion Tonnes,243,2655,238,3136,0
+SITE_0083,Odisha,Coal,Billion Tonnes,176,978,355,1509,0
+SITE_0084,Odisha,Coal,Billion Tonnes,902,16,420,1338,0
+SITE_0085,Odisha,Coal,Billion Tonnes,587,1156,129,1872,0
+SITE_0086,Odisha,Coal,Billion Tonnes,254,95,307,656,0
+SITE_0087,Odisha,Coal,Billion Tonnes,757,1633,462,2852,0
+SITE_0088,Odisha,Coal,Billion Tonnes,791,111,134,1036,0
+SITE_0089,Odisha,Coal,Billion Tonnes,173,777,140,1090,0
+SITE_0090,Odisha,Coal,Billion Tonnes,575,1551,135,2261,0
+SITE_0091,Odisha,Coal,Billion Tonnes,299,144,46,489,0
+SITE_0092,Odisha,Coal,Billion Tonnes,622,1384,94,2100,0
+SITE_0093,Odisha,Coal,Billion Tonnes,269,110,42,421,0
+SITE_0094,Odisha,Coal,Billion Tonnes,1202,34,279,1515,0
+SITE_0095,Odisha,Coal,Billion Tonnes,70,155,60,285,0
+SITE_0096,Odisha,Coal,Billion Tonnes,2221,216,78,2515,0
+SITE_0097,Odisha,Coal,Billion Tonnes,1937,860,136,2933,0
+SITE_0098,Odisha,Coal,Billion Tonnes,420,656,157,1233,0
+SITE_0099,Odisha,Coal,Billion Tonnes,535,995,24,1554,0
+SITE_0100,Odisha,Coal,Billion Tonnes,51,557,109,717,0
+SITE_0101,Chhattisgarh,Coal,Billion Tonnes,441,1093,13,1547,0
+SITE_0102,Chhattisgarh,Coal,Billion Tonnes,804,255,20,1079,0
+SITE_0103,Chhattisgarh,Coal,Billion Tonnes,17,539,72,628,0
+SITE_0104,Chhattisgarh,Coal,Billion Tonnes,65,2872,9,2946,0
+SITE_0105,Chhattisgarh,Coal,Billion Tonnes,434,516,47,997,0
+SITE_0106,Chhattisgarh,Coal,Billion Tonnes,382,31,30,443,0
+SITE_0107,Chhattisgarh,Coal,Billion Tonnes,802,66,14,882,0
+SITE_0108,Chhattisgarh,Coal,Billion Tonnes,3,43,15,61,0
+SITE_0109,Chhattisgarh,Coal,Billion Tonnes,1051,4,6,1061,0
+SITE_0110,Chhattisgarh,Coal,Billion Tonnes,633,606,9,1248,0
+SITE_0111,Chhattisgarh,Coal,Billion Tonnes,302,740,101,1143,0
+SITE_0112,Chhattisgarh,Coal,Billion Tonnes,310,224,18,552,0
+SITE_0113,Chhattisgarh,Coal,Billion Tonnes,424,114,83,621,0
+SITE_0114,Chhattisgarh,Coal,Billion Tonnes,620,92,4,716,0
+SITE_0115,Chhattisgarh,Coal,Billion Tonnes,859,2164,4,3027,0
+SITE_0116,Chhattisgarh,Coal,Billion Tonnes,23,412,8,443,0
+SITE_0117,Chhattisgarh,Coal,Billion Tonnes,198,545,17,760,0
+SITE_0118,Chhattisgarh,Coal,Billion Tonnes,296,555,33,884,0
+SITE_0119,Chhattisgarh,Coal,Billion Tonnes,204,7,70,281,0
+SITE_0120,Chhattisgarh,Coal,Billion Tonnes,336,911,25,1272,0
+SITE_0121,Chhattisgarh,Coal,Billion Tonnes,1162,530,0,1692,0
+SITE_0122,Chhattisgarh,Coal,Billion Tonnes,338,1278,230,1846,0
+SITE_0123,Chhattisgarh,Coal,Billion Tonnes,386,466,34,886,0
+SITE_0124,Chhattisgarh,Coal,Billion Tonnes,417,583,30,1030,0
+SITE_0125,Chhattisgarh,Coal,Billion Tonnes,754,1811,111,2676,0
+SITE_0126,Chhattisgarh,Coal,Billion Tonnes,196,1577,20,1793,0
+SITE_0127,Chhattisgarh,Coal,Billion Tonnes,74,812,59,945,0
+SITE_0128,Chhattisgarh,Coal,Billion Tonnes,652,528,20,1200,0
+SITE_0129,Chhattisgarh,Coal,Billion Tonnes,69,424,64,557,0
+SITE_0130,Chhattisgarh,Coal,Billion Tonnes,981,1463,72,2516,0
+SITE_0131,Chhattisgarh,Coal,Billion Tonnes,388,59,17,464,0
+SITE_0132,Chhattisgarh,Coal,Billion Tonnes,180,1182,129,1491,0
+SITE_0133,Chhattisgarh,Coal,Billion Tonnes,76,344,4,424,0
+SITE_0134,Chhattisgarh,Coal,Billion Tonnes,35,2451,44,2530,0
+SITE_0135,Chhattisgarh,Coal,Billion Tonnes,243,917,25,1185,0
+SITE_0136,Chhattisgarh,Coal,Billion Tonnes,978,366,84,1428,0
+SITE_0137,Chhattisgarh,Coal,Billion Tonnes,393,745,23,1161,0
+SITE_0138,Chhattisgarh,Coal,Billion Tonnes,537,3016,51,3604,0
+SITE_0139,Chhattisgarh,Coal,Billion Tonnes,77,112,3,192,0
+SITE_0140,Chhattisgarh,Coal,Billion Tonnes,2,577,96,675,0
+SITE_0141,Chhattisgarh,Coal,Billion Tonnes,759,836,32,1627,0
+SITE_0142,Chhattisgarh,Coal,Billion Tonnes,64,235,202,501,0
+SITE_0143,Chhattisgarh,Coal,Billion Tonnes,30,583,6,619,0
+SITE_0144,Chhattisgarh,Coal,Billion Tonnes,796,6,147,949,0
+SITE_0145,Chhattisgarh,Coal,Billion Tonnes,874,273,14,1161,0
+SITE_0146,Chhattisgarh,Coal,Billion Tonnes,193,553,1,747,0
+SITE_0147,Chhattisgarh,Coal,Billion Tonnes,311,361,28,700,0
+SITE_0148,Chhattisgarh,Coal,Billion Tonnes,716,92,9,817,0
+SITE_0149,Chhattisgarh,Coal,Billion Tonnes,332,71,34,437,0
+SITE_0150,Chhattisgarh,Coal,Billion Tonnes,243,393,41,677,0
+SITE_0151,West Bengal,Coal,Billion Tonnes,160,374,97,631,0
+SITE_0152,West Bengal,Coal,Billion Tonnes,53,445,168,666,0
+SITE_0153,West Bengal,Coal,Billion Tonnes,60,106,68,234,0
+SITE_0154,West Bengal,Coal,Billion Tonnes,387,921,84,1392,0
+SITE_0155,West Bengal,Coal,Billion Tonnes,1097,56,34,1187,0
+SITE_0156,West Bengal,Coal,Billion Tonnes,249,590,17,856,0
+SITE_0157,West Bengal,Coal,Billion Tonnes,16,315,26,357,0
+SITE_0158,West Bengal,Coal,Billion Tonnes,421,22,131,574,0
+SITE_0159,West Bengal,Coal,Billion Tonnes,396,107,1,504,0
+SITE_0160,West Bengal,Coal,Billion Tonnes,18,187,75,280,0
+SITE_0161,West Bengal,Coal,Billion Tonnes,42,52,25,119,0
+SITE_0162,West Bengal,Coal,Billion Tonnes,352,160,116,628,0
+SITE_0163,West Bengal,Coal,Billion Tonnes,216,304,163,683,0
+SITE_0164,West Bengal,Coal,Billion Tonnes,100,215,9,324,0
+SITE_0165,West Bengal,Coal,Billion Tonnes,266,22,107,395,0
+SITE_0166,West Bengal,Coal,Billion Tonnes,406,288,217,911,0
+SITE_0167,West Bengal,Coal,Billion Tonnes,202,334,46,582,0
+SITE_0168,West Bengal,Coal,Billion Tonnes,19,336,4,359,0
+SITE_0169,West Bengal,Coal,Billion Tonnes,84,746,70,900,0
+SITE_0170,West Bengal,Coal,Billion Tonnes,676,20,85,781,0
+SITE_0171,West Bengal,Coal,Billion Tonnes,261,118,235,614,0
+SITE_0172,West Bengal,Coal,Billion Tonnes,25,10,130,165,0
+SITE_0173,West Bengal,Coal,Billion Tonnes,198,179,34,411,0
+SITE_0174,West Bengal,Coal,Billion Tonnes,79,12,49,140,0
+SITE_0175,West Bengal,Coal,Billion Tonnes,51,156,114,321,0
+SITE_0176,West Bengal,Coal,Billion Tonnes,11,88,223,322,0
+SITE_0177,West Bengal,Coal,Billion Tonnes,683,324,32,1039,0
+SITE_0178,West Bengal,Coal,Billion Tonnes,127,61,79,267,0
+SITE_0179,West Bengal,Coal,Billion Tonnes,170,160,104,434,0
+SITE_0180,West Bengal,Coal,Billion Tonnes,117,56,125,298,0
+SITE_0181,West Bengal,Coal,Billion Tonnes,246,380,299,925,0
+SITE_0182,West Bengal,Coal,Billion Tonnes,335,780,42,1157,0
+SITE_0183,West Bengal,Coal,Billion Tonnes,645,161,212,1018,0
+SITE_0184,West Bengal,Coal,Billion Tonnes,630,155,266,1051,0
+SITE_0185,West Bengal,Coal,Billion Tonnes,48,382,144,574,0
+SITE_0186,West Bengal,Coal,Billion Tonnes,133,332,5,470,0
+SITE_0187,West Bengal,Coal,Billion Tonnes,486,60,52,598,0
+SITE_0188,West Bengal,Coal,Billion Tonnes,307,6,28,341,0
+SITE_0189,West Bengal,Coal,Billion Tonnes,126,41,77,244,0
+SITE_0190,West Bengal,Coal,Billion Tonnes,303,641,63,1007,0
+SITE_0191,West Bengal,Coal,Billion Tonnes,470,498,27,995,0
+SITE_0192,West Bengal,Coal,Billion Tonnes,343,441,145,929,0
+SITE_0193,West Bengal,Coal,Billion Tonnes,572,165,135,872,0
+SITE_0194,West Bengal,Coal,Billion Tonnes,1288,88,318,1694,0
+SITE_0195,West Bengal,Coal,Billion Tonnes,146,67,8,221,0
+SITE_0196,West Bengal,Coal,Billion Tonnes,15,924,86,1025,0
+SITE_0197,West Bengal,Coal,Billion Tonnes,99,27,31,157,0
+SITE_0198,West Bengal,Coal,Billion Tonnes,220,329,47,596,0
+SITE_0199,West Bengal,Coal,Billion Tonnes,0,609,4,613,0
+SITE_0200,West Bengal,Coal,Billion Tonnes,49,172,223,444,0
+SITE_0201,Madhya Pradesh,Coal,Billion Tonnes,84,145,38,267,0
+SITE_0202,Madhya Pradesh,Coal,Billion Tonnes,10,288,29,327,0
+SITE_0203,Madhya Pradesh,Coal,Billion Tonnes,216,77,6,299,0
+SITE_0204,Madhya Pradesh,Coal,Billion Tonnes,158,139,132,429,0
+SITE_0205,Madhya Pradesh,Coal,Billion Tonnes,48,50,57,155,0
+SITE_0206,Madhya Pradesh,Coal,Billion Tonnes,165,9,20,194,0
+SITE_0207,Madhya Pradesh,Coal,Billion Tonnes,193,273,33,499,0
+SITE_0208,Madhya Pradesh,Coal,Billion Tonnes,274,10,16,300,0
+SITE_0209,Madhya Pradesh,Coal,Billion Tonnes,166,199,59,424,0
+SITE_0210,Madhya Pradesh,Coal,Billion Tonnes,326,136,171,633,0
+SITE_0211,Madhya Pradesh,Coal,Billion Tonnes,218,235,20,473,0
+SITE_0212,Madhya Pradesh,Coal,Billion Tonnes,68,22,16,106,0
+SITE_0213,Madhya Pradesh,Coal,Billion Tonnes,188,1550,38,1776,0
+SITE_0214,Madhya Pradesh,Coal,Billion Tonnes,85,192,28,305,0
+SITE_0215,Madhya Pradesh,Coal,Billion Tonnes,252,128,0,380,0
+SITE_0216,Madhya Pradesh,Coal,Billion Tonnes,80,46,50,176,0
+SITE_0217,Madhya Pradesh,Coal,Billion Tonnes,6,115,44,165,0
+SITE_0218,Madhya Pradesh,Coal,Billion Tonnes,351,188,19,558,0
+SITE_0219,Madhya Pradesh,Coal,Billion Tonnes,1106,320,13,1439,0
+SITE_0220,Madhya Pradesh,Coal,Billion Tonnes,917,339,41,1297,0
+SITE_0221,Madhya Pradesh,Coal,Billion Tonnes,338,176,118,632,0
+SITE_0222,Madhya Pradesh,Coal,Billion Tonnes,316,914,170,1400,0
+SITE_0223,Madhya Pradesh,Coal,Billion Tonnes,212,49,3,264,0
+SITE_0224,Madhya Pradesh,Coal,Billion Tonnes,96,115,373,584,0
+SITE_0225,Madhya Pradesh,Coal,Billion Tonnes,73,169,29,271,0
+SITE_0226,Madhya Pradesh,Coal,Billion Tonnes,136,180,275,591,0
+SITE_0227,Madhya Pradesh,Coal,Billion Tonnes,259,30,59,348,0
+SITE_0228,Madhya Pradesh,Coal,Billion Tonnes,267,36,23,326,0
+SITE_0229,Madhya Pradesh,Coal,Billion Tonnes,85,473,163,721,0
+SITE_0230,Madhya Pradesh,Coal,Billion Tonnes,343,118,106,567,0
+SITE_0231,Madhya Pradesh,Coal,Billion Tonnes,118,249,3,370,0
+SITE_0232,Madhya Pradesh,Coal,Billion Tonnes,76,146,6,228,0
+SITE_0233,Madhya Pradesh,Coal,Billion Tonnes,539,110,38,687,0
+SITE_0234,Madhya Pradesh,Coal,Billion Tonnes,301,625,149,1075,0
+SITE_0235,Madhya Pradesh,Coal,Billion Tonnes,66,184,79,329,0
+SITE_0236,Madhya Pradesh,Coal,Billion Tonnes,397,444,57,898,0
+SITE_0237,Madhya Pradesh,Coal,Billion Tonnes,312,90,71,473,0
+SITE_0238,Madhya Pradesh,Coal,Billion Tonnes,47,129,152,328,0
+SITE_0239,Madhya Pradesh,Coal,Billion Tonnes,335,259,10,604,0
+SITE_0240,Madhya Pradesh,Coal,Billion Tonnes,118,77,34,229,0
+SITE_0241,Madhya Pradesh,Coal,Billion Tonnes,203,176,162,541,0
+SITE_0242,Madhya Pradesh,Coal,Billion Tonnes,65,508,94,667,0
+SITE_0243,Madhya Pradesh,Coal,Billion Tonnes,573,83,191,847,0
+SITE_0244,Madhya Pradesh,Coal,Billion Tonnes,137,122,96,355,0
+SITE_0245,Madhya Pradesh,Coal,Billion Tonnes,213,138,5,356,0
+SITE_0246,Madhya Pradesh,Coal,Billion Tonnes,568,343,34,945,0
+SITE_0247,Madhya Pradesh,Coal,Billion Tonnes,296,327,29,652,0
+SITE_0248,Madhya Pradesh,Coal,Billion Tonnes,427,463,284,1174,0
+SITE_0249,Madhya Pradesh,Coal,Billion Tonnes,8,666,124,798,0
+SITE_0250,Madhya Pradesh,Coal,Billion Tonnes,123,316,81,520,0
+SITE_0251,Telangana,Coal,Billion Tonnes,66,155,6,227,0
+SITE_0252,Telangana,Coal,Billion Tonnes,52,175,19,246,0
+SITE_0253,Telangana,Coal,Billion Tonnes,30,88,50,168,0
+SITE_0254,Telangana,Coal,Billion Tonnes,461,126,192,779,0
+SITE_0255,Telangana,Coal,Billion Tonnes,246,169,282,697,0
+SITE_0256,Telangana,Coal,Billion Tonnes,115,40,12,167,0
+SITE_0257,Telangana,Coal,Billion Tonnes,270,48,7,325,0
+SITE_0258,Telangana,Coal,Billion Tonnes,122,250,10,382,0
+SITE_0259,Telangana,Coal,Billion Tonnes,39,209,248,496,0
+SITE_0260,Telangana,Coal,Billion Tonnes,316,250,31,597,0
+SITE_0261,Telangana,Coal,Billion Tonnes,153,165,26,344,0
+SITE_0262,Telangana,Coal,Billion Tonnes,43,1,27,71,0
+SITE_0263,Telangana,Coal,Billion Tonnes,271,60,23,354,0
+SITE_0264,Telangana,Coal,Billion Tonnes,2,83,66,151,0
+SITE_0265,Telangana,Coal,Billion Tonnes,1,9,18,28,0
+SITE_0266,Telangana,Coal,Billion Tonnes,34,723,35,792,0
+SITE_0267,Telangana,Coal,Billion Tonnes,149,205,5,359,0
+SITE_0268,Telangana,Coal,Billion Tonnes,9,41,94,144,0
+SITE_0269,Telangana,Coal,Billion Tonnes,268,372,3,643,0
+SITE_0270,Telangana,Coal,Billion Tonnes,35,216,172,423,0
+SITE_0271,Telangana,Coal,Billion Tonnes,299,304,0,603,0
+SITE_0272,Telangana,Coal,Billion Tonnes,6,79,22,107,0
+SITE_0273,Telangana,Coal,Billion Tonnes,453,753,40,1246,0
+SITE_0274,Telangana,Coal,Billion Tonnes,163,89,22,274,0
+SITE_0275,Telangana,Coal,Billion Tonnes,361,107,162,630,0
+SITE_0276,Telangana,Coal,Billion Tonnes,597,142,41,780,0
+SITE_0277,Telangana,Coal,Billion Tonnes,38,111,21,170,0
+SITE_0278,Telangana,Coal,Billion Tonnes,62,45,52,159,0
+SITE_0279,Telangana,Coal,Billion Tonnes,349,48,129,526,0
+SITE_0280,Telangana,Coal,Billion Tonnes,404,32,22,458,0
+SITE_0281,Telangana,Coal,Billion Tonnes,1499,263,15,1777,0
+SITE_0282,Telangana,Coal,Billion Tonnes,173,21,11,205,0
+SITE_0283,Telangana,Coal,Billion Tonnes,63,106,13,182,0
+SITE_0284,Telangana,Coal,Billion Tonnes,583,70,36,689,0
+SITE_0285,Telangana,Coal,Billion Tonnes,112,41,5,158,0
+SITE_0286,Telangana,Coal,Billion Tonnes,297,25,4,326,0
+SITE_0287,Telangana,Coal,Billion Tonnes,257,83,38,378,0
+SITE_0288,Telangana,Coal,Billion Tonnes,229,418,19,666,0
+SITE_0289,Telangana,Coal,Billion Tonnes,4,235,40,279,0
+SITE_0290,Telangana,Coal,Billion Tonnes,1,115,85,201,0
+SITE_0291,Telangana,Coal,Billion Tonnes,14,136,21,171,0
+SITE_0292,Telangana,Coal,Billion Tonnes,264,9,234,507,0
+SITE_0293,Telangana,Coal,Billion Tonnes,112,664,88,864,0
+SITE_0294,Telangana,Coal,Billion Tonnes,92,429,61,582,0
+SITE_0295,Telangana,Coal,Billion Tonnes,87,25,14,126,0
+SITE_0296,Telangana,Coal,Billion Tonnes,89,21,23,133,0
+SITE_0297,Telangana,Coal,Billion Tonnes,26,67,9,102,0
+SITE_0298,Telangana,Coal,Billion Tonnes,358,277,29,664,0
+SITE_0299,Telangana,Coal,Billion Tonnes,595,293,40,928,0
+SITE_0300,Telangana,Coal,Billion Tonnes,217,118,61,396,0
+SITE_0301,Maharashtra,Coal,Billion Tonnes,49,29,59,137,0
+SITE_0302,Maharashtra,Coal,Billion Tonnes,92,135,14,241,0
+SITE_0303,Maharashtra,Coal,Billion Tonnes,52,93,44,189,0
+SITE_0304,Maharashtra,Coal,Billion Tonnes,275,71,35,381,0
+SITE_0305,Maharashtra,Coal,Billion Tonnes,59,40,46,145,0
+SITE_0306,Maharashtra,Coal,Billion Tonnes,270,50,11,331,0
+SITE_0307,Maharashtra,Coal,Billion Tonnes,199,13,10,222,0
+SITE_0308,Maharashtra,Coal,Billion Tonnes,81,7,20,108,0
+SITE_0309,Maharashtra,Coal,Billion Tonnes,371,29,17,417,0
+SITE_0310,Maharashtra,Coal,Billion Tonnes,57,33,54,144,0
+SITE_0311,Maharashtra,Coal,Billion Tonnes,121,40,115,276,0
+SITE_0312,Maharashtra,Coal,Billion Tonnes,560,122,38,720,0
+SITE_0313,Maharashtra,Coal,Billion Tonnes,93,2,10,105,0
+SITE_0314,Maharashtra,Coal,Billion Tonnes,55,34,22,111,0
+SITE_0315,Maharashtra,Coal,Billion Tonnes,184,16,75,275,0
+SITE_0316,Maharashtra,Coal,Billion Tonnes,64,17,52,133,0
+SITE_0317,Maharashtra,Coal,Billion Tonnes,3,9,40,52,0
+SITE_0318,Maharashtra,Coal,Billion Tonnes,376,35,16,427,0
+SITE_0319,Maharashtra,Coal,Billion Tonnes,22,3,2,27,0
+SITE_0320,Maharashtra,Coal,Billion Tonnes,959,154,5,1118,0
+SITE_0321,Maharashtra,Coal,Billion Tonnes,183,167,34,384,0
+SITE_0322,Maharashtra,Coal,Billion Tonnes,97,135,35,267,0
+SITE_0323,Maharashtra,Coal,Billion Tonnes,146,5,57,208,0
+SITE_0324,Maharashtra,Coal,Billion Tonnes,210,121,9,340,0
+SITE_0325,Maharashtra,Coal,Billion Tonnes,62,16,14,92,0
+SITE_0326,Maharashtra,Coal,Billion Tonnes,108,20,115,243,0
+SITE_0327,Maharashtra,Coal,Billion Tonnes,64,45,29,138,0
+SITE_0328,Maharashtra,Coal,Billion Tonnes,69,101,59,229,0
+SITE_0329,Maharashtra,Coal,Billion Tonnes,86,96,51,233,0
+SITE_0330,Maharashtra,Coal,Billion Tonnes,166,1,25,192,0
+SITE_0331,Maharashtra,Coal,Billion Tonnes,4,23,34,61,0
+SITE_0332,Maharashtra,Coal,Billion Tonnes,105,84,59,248,0
+SITE_0333,Maharashtra,Coal,Billion Tonnes,207,76,124,407,0
+SITE_0334,Maharashtra,Coal,Billion Tonnes,278,292,36,606,0
+SITE_0335,Maharashtra,Coal,Billion Tonnes,172,55,27,254,0
+SITE_0336,Maharashtra,Coal,Billion Tonnes,210,98,64,372,0
+SITE_0337,Maharashtra,Coal,Billion Tonnes,106,2,2,110,0
+SITE_0338,Maharashtra,Coal,Billion Tonnes,78,40,46,164,0
+SITE_0339,Maharashtra,Coal,Billion Tonnes,223,61,7,291,0
+SITE_0340,Maharashtra,Coal,Billion Tonnes,83,57,77,217,0
+SITE_0341,Maharashtra,Coal,Billion Tonnes,48,17,57,122,0
+SITE_0342,Maharashtra,Coal,Billion Tonnes,137,100,39,276,0
+SITE_0343,Maharashtra,Coal,Billion Tonnes,85,10,5,100,0
+SITE_0344,Maharashtra,Coal,Billion Tonnes,236,222,52,510,0
+SITE_0345,Maharashtra,Coal,Billion Tonnes,24,44,99,167,0
+SITE_0346,Maharashtra,Coal,Billion Tonnes,34,9,20,63,0
+SITE_0347,Maharashtra,Coal,Billion Tonnes,3,85,4,92,0
+SITE_0348,Maharashtra,Coal,Billion Tonnes,52,23,79,154,0
+SITE_0349,Maharashtra,Coal,Billion Tonnes,5,26,12,43,0
+SITE_0350,Maharashtra,Coal,Billion Tonnes,63,97,0,160,0
+SITE_0351,Tamil Nadu,Lignite,Billion Tonnes,57,442,126,625,0
+SITE_0352,Tamil Nadu,Lignite,Billion Tonnes,43,293,32,368,0
+SITE_0353,Tamil Nadu,Lignite,Billion Tonnes,588,558,75,1221,0
+SITE_0354,Tamil Nadu,Lignite,Billion Tonnes,47,480,409,936,0
+SITE_0355,Tamil Nadu,Lignite,Billion Tonnes,20,532,44,596,0
+SITE_0356,Tamil Nadu,Lignite,Billion Tonnes,1,475,57,533,0
+SITE_0357,Tamil Nadu,Lignite,Billion Tonnes,173,1030,15,1218,0
+SITE_0358,Tamil Nadu,Lignite,Billion Tonnes,341,722,71,1134,0
+SITE_0359,Tamil Nadu,Lignite,Billion Tonnes,51,126,467,644,0
+SITE_0360,Tamil Nadu,Lignite,Billion Tonnes,53,371,37,461,0
+SITE_0361,Tamil Nadu,Lignite,Billion Tonnes,8,3,216,227,0
+SITE_0362,Tamil Nadu,Lignite,Billion Tonnes,9,1275,89,1373,0
+SITE_0363,Tamil Nadu,Lignite,Billion Tonnes,105,95,142,342,0
+SITE_0364,Tamil Nadu,Lignite,Billion Tonnes,28,1113,139,1280,0
+SITE_0365,Tamil Nadu,Lignite,Billion Tonnes,10,91,246,347,0
+SITE_0366,Tamil Nadu,Lignite,Billion Tonnes,24,44,121,189,0
+SITE_0367,Tamil Nadu,Lignite,Billion Tonnes,125,25,113,263,0
+SITE_0368,Tamil Nadu,Lignite,Billion Tonnes,44,220,161,425,0
+SITE_0369,Tamil Nadu,Lignite,Billion Tonnes,21,107,78,206,0
+SITE_0370,Tamil Nadu,Lignite,Billion Tonnes,108,254,1060,1422,0
+SITE_0371,Tamil Nadu,Lignite,Billion Tonnes,53,492,27,572,0
+SITE_0372,Tamil Nadu,Lignite,Billion Tonnes,124,1,3,128,0
+SITE_0373,Tamil Nadu,Lignite,Billion Tonnes,21,516,32,569,0
+SITE_0374,Tamil Nadu,Lignite,Billion Tonnes,162,1305,177,1644,0
+SITE_0375,Tamil Nadu,Lignite,Billion Tonnes,72,1675,58,1805,0
+SITE_0376,Tamil Nadu,Lignite,Billion Tonnes,40,397,763,1200,0
+SITE_0377,Tamil Nadu,Lignite,Billion Tonnes,36,91,54,181,0
+SITE_0378,Tamil Nadu,Lignite,Billion Tonnes,83,509,191,783,0
+SITE_0379,Tamil Nadu,Lignite,Billion Tonnes,70,621,12,703,0
+SITE_0380,Tamil Nadu,Lignite,Billion Tonnes,333,1268,220,1821,0
+SITE_0381,Tamil Nadu,Lignite,Billion Tonnes,141,168,32,341,0
+SITE_0382,Tamil Nadu,Lignite,Billion Tonnes,55,648,100,803,0
+SITE_0383,Tamil Nadu,Lignite,Billion Tonnes,32,25,44,101,0
+SITE_0384,Tamil Nadu,Lignite,Billion Tonnes,16,652,116,784,0
+SITE_0385,Tamil Nadu,Lignite,Billion Tonnes,50,591,57,698,0
+SITE_0386,Tamil Nadu,Lignite,Billion Tonnes,9,283,308,600,0
+SITE_0387,Tamil Nadu,Lignite,Billion Tonnes,1,418,21,440,0
+SITE_0388,Tamil Nadu,Lignite,Billion Tonnes,196,32,228,456,0
+SITE_0389,Tamil Nadu,Lignite,Billion Tonnes,72,79,143,294,0
+SITE_0390,Tamil Nadu,Lignite,Billion Tonnes,6,672,242,920,0
+SITE_0391,Tamil Nadu,Lignite,Billion Tonnes,45,103,104,252,0
+SITE_0392,Tamil Nadu,Lignite,Billion Tonnes,120,422,6,548,0
+SITE_0393,Tamil Nadu,Lignite,Billion Tonnes,1,100,542,643,0
+SITE_0394,Tamil Nadu,Lignite,Billion Tonnes,384,919,176,1479,0
+SITE_0395,Tamil Nadu,Lignite,Billion Tonnes,7,1254,10,1271,0
+SITE_0396,Tamil Nadu,Lignite,Billion Tonnes,130,109,729,968,0
+SITE_0397,Tamil Nadu,Lignite,Billion Tonnes,51,41,7,99,0
+SITE_0398,Tamil Nadu,Lignite,Billion Tonnes,35,869,92,996,0
+SITE_0399,Tamil Nadu,Lignite,Billion Tonnes,4,1516,108,1628,0
+SITE_0400,Tamil Nadu,Lignite,Billion Tonnes,57,651,76,784,0
+SITE_0401,Rajasthan,Lignite,Billion Tonnes,69,173,89,331,0
+SITE_0402,Rajasthan,Lignite,Billion Tonnes,7,30,78,115,0
+SITE_0403,Rajasthan,Lignite,Billion Tonnes,10,90,91,191,0
+SITE_0404,Rajasthan,Lignite,Billion Tonnes,5,19,17,41,0
+SITE_0405,Rajasthan,Lignite,Billion Tonnes,21,223,9,253,0
+SITE_0406,Rajasthan,Lignite,Billion Tonnes,65,64,6,135,0
+SITE_0407,Rajasthan,Lignite,Billion Tonnes,18,10,19,47,0
+SITE_0408,Rajasthan,Lignite,Billion Tonnes,6,18,5,29,0
+SITE_0409,Rajasthan,Lignite,Billion Tonnes,34,78,12,124,0
+SITE_0410,Rajasthan,Lignite,Billion Tonnes,48,113,14,175,0
+SITE_0411,Rajasthan,Lignite,Billion Tonnes,11,55,0,66,0
+SITE_0412,Rajasthan,Lignite,Billion Tonnes,4,108,0,112,0
+SITE_0413,Rajasthan,Lignite,Billion Tonnes,50,93,11,154,0
+SITE_0414,Rajasthan,Lignite,Billion Tonnes,25,3,51,79,0
+SITE_0415,Rajasthan,Lignite,Billion Tonnes,16,28,62,106,0
+SITE_0416,Rajasthan,Lignite,Billion Tonnes,63,16,5,84,0
+SITE_0417,Rajasthan,Lignite,Billion Tonnes,10,10,13,33,0
+SITE_0418,Rajasthan,Lignite,Billion Tonnes,11,69,124,204,0
+SITE_0419,Rajasthan,Lignite,Billion Tonnes,19,66,52,137,0
+SITE_0420,Rajasthan,Lignite,Billion Tonnes,107,17,6,130,0
+SITE_0421,Rajasthan,Lignite,Billion Tonnes,1,91,172,264,0
+SITE_0422,Rajasthan,Lignite,Billion Tonnes,17,84,39,140,0
+SITE_0423,Rajasthan,Lignite,Billion Tonnes,11,50,2,63,0
+SITE_0424,Rajasthan,Lignite,Billion Tonnes,5,6,25,36,0
+SITE_0425,Rajasthan,Lignite,Billion Tonnes,7,99,0,106,0
+SITE_0426,Rajasthan,Lignite,Billion Tonnes,23,30,76,129,0
+SITE_0427,Rajasthan,Lignite,Billion Tonnes,8,13,40,61,0
+SITE_0428,Rajasthan,Lignite,Billion Tonnes,21,62,116,199,0
+SITE_0429,Rajasthan,Lignite,Billion Tonnes,84,57,64,205,0
+SITE_0430,Rajasthan,Lignite,Billion Tonnes,9,90,13,112,0
+SITE_0431,Rajasthan,Lignite,Billion Tonnes,34,148,2,184,0
+SITE_0432,Rajasthan,Lignite,Billion Tonnes,4,110,14,128,0
+SITE_0433,Rajasthan,Lignite,Billion Tonnes,46,44,54,144,0
+SITE_0434,Rajasthan,Lignite,Billion Tonnes,35,84,68,187,0
+SITE_0435,Rajasthan,Lignite,Billion Tonnes,39,39,0,78,0
+SITE_0436,Rajasthan,Lignite,Billion Tonnes,22,90,61,173,0
+SITE_0437,Rajasthan,Lignite,Billion Tonnes,31,21,40,92,0
+SITE_0438,Rajasthan,Lignite,Billion Tonnes,15,20,34,69,0
+SITE_0439,Rajasthan,Lignite,Billion Tonnes,10,48,43,101,0
+SITE_0440,Rajasthan,Lignite,Billion Tonnes,32,21,64,117,0
+SITE_0441,Rajasthan,Lignite,Billion Tonnes,17,182,33,232,0
+SITE_0442,Rajasthan,Lignite,Billion Tonnes,16,16,35,67,0
+SITE_0443,Rajasthan,Lignite,Billion Tonnes,2,47,149,198,0
+SITE_0444,Rajasthan,Lignite,Billion Tonnes,31,100,5,136,0
+SITE_0445,Rajasthan,Lignite,Billion Tonnes,11,18,47,76,0
+SITE_0446,Rajasthan,Lignite,Billion Tonnes,1,2,37,40,0
+SITE_0447,Rajasthan,Lignite,Billion Tonnes,0,73,8,81,0
+SITE_0448,Rajasthan,Lignite,Billion Tonnes,14,3,45,62,0
+SITE_0449,Rajasthan,Lignite,Billion Tonnes,20,23,21,64,0
+SITE_0450,Rajasthan,Lignite,Billion Tonnes,3,75,167,245,0
+SITE_0451,Gujarat,Lignite,Billion Tonnes,8,1,17,26,0
+SITE_0452,Gujarat,Lignite,Billion Tonnes,16,11,5,32,0
+SITE_0453,Gujarat,Lignite,Billion Tonnes,57,6,43,106,0
+SITE_0454,Gujarat,Lignite,Billion Tonnes,8,0,5,13,0
+SITE_0455,Gujarat,Lignite,Billion Tonnes,1,19,28,48,0
+SITE_0456,Gujarat,Lignite,Billion Tonnes,13,1,1,15,0
+SITE_0457,Gujarat,Lignite,Billion Tonnes,20,8,6,34,0
+SITE_0458,Gujarat,Lignite,Billion Tonnes,0,4,2,6,0
+SITE_0459,Gujarat,Lignite,Billion Tonnes,32,5,1,38,0
+SITE_0460,Gujarat,Lignite,Billion Tonnes,4,2,52,58,0
+SITE_0461,Gujarat,Lignite,Billion Tonnes,4,0,0,4,0
+SITE_0462,Gujarat,Lignite,Billion Tonnes,15,4,4,23,0
+SITE_0463,Gujarat,Lignite,Billion Tonnes,61,7,0,68,0
+SITE_0464,Gujarat,Lignite,Billion Tonnes,5,3,102,110,0
+SITE_0465,Gujarat,Lignite,Billion Tonnes,2,10,6,18,0
+SITE_0466,Gujarat,Lignite,Billion Tonnes,35,9,28,72,0
+SITE_0467,Gujarat,Lignite,Billion Tonnes,40,1,47,88,0
+SITE_0468,Gujarat,Lignite,Billion Tonnes,32,3,9,44,0
+SITE_0469,Gujarat,Lignite,Billion Tonnes,21,1,19,41,0
+SITE_0470,Gujarat,Lignite,Billion Tonnes,23,3,16,42,0
+SITE_0471,Gujarat,Lignite,Billion Tonnes,61,18,31,110,0
+SITE_0472,Gujarat,Lignite,Billion Tonnes,3,1,9,13,0
+SITE_0473,Gujarat,Lignite,Billion Tonnes,5,4,49,58,0
+SITE_0474,Gujarat,Lignite,Billion Tonnes,19,7,64,90,0
+SITE_0475,Gujarat,Lignite,Billion Tonnes,7,2,110,119,0
+SITE_0476,Gujarat,Lignite,Billion Tonnes,71,3,0,74,0
+SITE_0477,Gujarat,Lignite,Billion Tonnes,10,3,25,38,0
+SITE_0478,Gujarat,Lignite,Billion Tonnes,11,6,71,88,0
+SITE_0479,Gujarat,Lignite,Billion Tonnes,23,1,15,39,0
+SITE_0480,Gujarat,Lignite,Billion Tonnes,30,6,5,41,0
+SITE_0481,Gujarat,Lignite,Billion Tonnes,49,8,96,153,0
+SITE_0482,Gujarat,Lignite,Billion Tonnes,17,12,3,32,0
+SITE_0483,Gujarat,Lignite,Billion Tonnes,28,7,3,38,0
+SITE_0484,Gujarat,Lignite,Billion Tonnes,14,20,30,64,0
+SITE_0485,Gujarat,Lignite,Billion Tonnes,58,9,0,67,0
+SITE_0486,Gujarat,Lignite,Billion Tonnes,5,4,4,13,0
+SITE_0487,Gujarat,Lignite,Billion Tonnes,2,3,3,8,0
+SITE_0488,Gujarat,Lignite,Billion Tonnes,1,4,2,7,0
+SITE_0489,Gujarat,Lignite,Billion Tonnes,58,3,78,139,0
+SITE_0490,Gujarat,Lignite,Billion Tonnes,14,6,17,37,0
+SITE_0491,Gujarat,Lignite,Billion Tonnes,45,5,14,64,0
+SITE_0492,Gujarat,Lignite,Billion Tonnes,153,6,10,169,0
+SITE_0493,Gujarat,Lignite,Billion Tonnes,7,1,11,19,0
+SITE_0494,Gujarat,Lignite,Billion Tonnes,68,1,21,90,0
+SITE_0495,Gujarat,Lignite,Billion Tonnes,30,9,32,71,0
+SITE_0496,Gujarat,Lignite,Billion Tonnes,63,1,6,70,0
+SITE_0497,Gujarat,Lignite,Billion Tonnes,4,24,7,35,0
+SITE_0498,Gujarat,Lignite,Billion Tonnes,13,1,12,26,0
+SITE_0499,Gujarat,Lignite,Billion Tonnes,9,5,24,38,0
+SITE_0500,Gujarat,Lignite,Billion Tonnes,3,5,18,26,0
+SITE_0501,Puducherry,Lignite,Billion Tonnes,0,4,0,4,0
+SITE_0502,Puducherry,Lignite,Billion Tonnes,0,5,0,5,0
+SITE_0503,Puducherry,Lignite,Billion Tonnes,0,9,0,9,0
+SITE_0504,Puducherry,Lignite,Billion Tonnes,0,2,0,2,0
+SITE_0505,Puducherry,Lignite,Billion Tonnes,0,17,0,17,0
+SITE_0506,Puducherry,Lignite,Billion Tonnes,0,7,7,14,0
+SITE_0507,Puducherry,Lignite,Billion Tonnes,0,6,0,6,0
+SITE_0508,Puducherry,Lignite,Billion Tonnes,0,3,0,3,0
+SITE_0509,Puducherry,Lignite,Billion Tonnes,0,19,0,19,0
+SITE_0510,Puducherry,Lignite,Billion Tonnes,0,14,0,14,0
+SITE_0511,Puducherry,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0512,Puducherry,Lignite,Billion Tonnes,0,7,1,8,0
+SITE_0513,Puducherry,Lignite,Billion Tonnes,0,14,0,14,0
+SITE_0514,Puducherry,Lignite,Billion Tonnes,0,3,0,3,0
+SITE_0515,Puducherry,Lignite,Billion Tonnes,0,17,0,17,0
+SITE_0516,Puducherry,Lignite,Billion Tonnes,0,11,0,11,0
+SITE_0517,Puducherry,Lignite,Billion Tonnes,0,26,1,27,0
+SITE_0518,Puducherry,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0519,Puducherry,Lignite,Billion Tonnes,0,12,1,13,0
+SITE_0520,Puducherry,Lignite,Billion Tonnes,0,18,0,18,0
+SITE_0521,Puducherry,Lignite,Billion Tonnes,0,9,0,9,0
+SITE_0522,Puducherry,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0523,Puducherry,Lignite,Billion Tonnes,0,6,0,6,0
+SITE_0524,Puducherry,Lignite,Billion Tonnes,0,6,0,6,0
+SITE_0525,Puducherry,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0526,Puducherry,Lignite,Billion Tonnes,0,6,0,6,0
+SITE_0527,Puducherry,Lignite,Billion Tonnes,0,5,0,5,0
+SITE_0528,Puducherry,Lignite,Billion Tonnes,0,3,0,3,0
+SITE_0529,Puducherry,Lignite,Billion Tonnes,0,7,0,7,0
+SITE_0530,Puducherry,Lignite,Billion Tonnes,0,22,0,22,0
+SITE_0531,Puducherry,Lignite,Billion Tonnes,0,6,0,6,0
+SITE_0532,Puducherry,Lignite,Billion Tonnes,0,12,0,12,0
+SITE_0533,Puducherry,Lignite,Billion Tonnes,0,15,1,16,0
+SITE_0534,Puducherry,Lignite,Billion Tonnes,0,8,0,8,0
+SITE_0535,Puducherry,Lignite,Billion Tonnes,0,3,0,3,0
+SITE_0536,Puducherry,Lignite,Billion Tonnes,0,2,0,2,0
+SITE_0537,Puducherry,Lignite,Billion Tonnes,0,4,0,4,0
+SITE_0538,Puducherry,Lignite,Billion Tonnes,0,12,0,12,0
+SITE_0539,Puducherry,Lignite,Billion Tonnes,0,5,0,5,0
+SITE_0540,Puducherry,Lignite,Billion Tonnes,0,12,0,12,0
+SITE_0541,Puducherry,Lignite,Billion Tonnes,0,4,0,4,0
+SITE_0542,Puducherry,Lignite,Billion Tonnes,0,8,0,8,0
+SITE_0543,Puducherry,Lignite,Billion Tonnes,0,25,0,25,0
+SITE_0544,Puducherry,Lignite,Billion Tonnes,0,3,0,3,0
+SITE_0545,Puducherry,Lignite,Billion Tonnes,0,6,0,6,0
+SITE_0546,Puducherry,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0547,Puducherry,Lignite,Billion Tonnes,0,4,0,4,0
+SITE_0548,Puducherry,Lignite,Billion Tonnes,0,1,1,2,0
+SITE_0549,Puducherry,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0550,Puducherry,Lignite,Billion Tonnes,0,13,0,13,0
+SITE_0551,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,7,8,0
+SITE_0552,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0553,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0554,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0555,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0556,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0557,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0558,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0559,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0560,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0561,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0562,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0563,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0564,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0565,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0566,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0567,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0568,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0569,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0570,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0571,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0572,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0573,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0574,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0575,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0576,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0577,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0578,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0579,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0580,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0581,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0582,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0583,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0584,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0585,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0586,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0587,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0588,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0589,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0590,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0591,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0592,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0593,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0594,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0595,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0596,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0597,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0598,Jammu & Kashmir,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0599,Jammu & Kashmir,Lignite,Billion Tonnes,0,1,0,1,0
+SITE_0600,Jammu & Kashmir,Lignite,Billion Tonnes,0,4,0,4,0
+SITE_0601,Kerala,Lignite,Billion Tonnes,0,0,6,6,0
+SITE_0602,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0603,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0604,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0605,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0606,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0607,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0608,Kerala,Lignite,Billion Tonnes,0,0,1,1,0
+SITE_0609,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0610,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0611,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0612,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0613,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0614,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0615,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0616,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0617,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0618,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0619,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0620,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0621,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0622,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0623,Kerala,Lignite,Billion Tonnes,0,0,1,1,0
+SITE_0624,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0625,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0626,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0627,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0628,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0629,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0630,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0631,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0632,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0633,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0634,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0635,Kerala,Lignite,Billion Tonnes,0,0,1,1,0
+SITE_0636,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0637,Kerala,Lignite,Billion Tonnes,0,0,1,1,0
+SITE_0638,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0639,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0640,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0641,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0642,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0643,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0644,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0645,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0646,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0647,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0648,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0649,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0650,Kerala,Lignite,Billion Tonnes,0,0,0,0,0
+SITE_0651,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,9825
+SITE_0652,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,111163
+SITE_0653,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,10456
+SITE_0654,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,77582
+SITE_0655,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,43300
+SITE_0656,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,262
+SITE_0657,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,5843
+SITE_0658,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,19983
+SITE_0659,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,80884
+SITE_0660,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,35657
+SITE_0661,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,12212
+SITE_0662,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,10741
+SITE_0663,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,4449
+SITE_0664,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,4189
+SITE_0665,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,45553
+SITE_0666,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,1276
+SITE_0667,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,13402
+SITE_0668,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,60193
+SITE_0669,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,11715
+SITE_0670,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,22482
+SITE_0671,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,41804
+SITE_0672,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,5404
+SITE_0673,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,98187
+SITE_0674,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,76547
+SITE_0675,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,129
+SITE_0676,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,32008
+SITE_0677,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,26219
+SITE_0678,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,1541
+SITE_0679,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,40609
+SITE_0680,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,17297
+SITE_0681,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,31268
+SITE_0682,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,8000
+SITE_0683,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,3544
+SITE_0684,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,8925
+SITE_0685,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,27299
+SITE_0686,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,1790
+SITE_0687,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,12818
+SITE_0688,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,66305
+SITE_0689,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,18676
+SITE_0690,Rajasthan,Renewable Energy,Megawatts (MW),0,0,0,0,15257
+SITE_0691,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,24522
+SITE_0692,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,5861
+SITE_0693,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,4069
+SITE_0694,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,13634
+SITE_0695,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,3490
+SITE_0696,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,47600
+SITE_0697,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,4664
+SITE_0698,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,25385
+SITE_0699,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,8457
+SITE_0700,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,8591
+SITE_0701,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,14320
+SITE_0702,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,27161
+SITE_0703,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,4904
+SITE_0704,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,3075
+SITE_0705,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,12856
+SITE_0706,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,23247
+SITE_0707,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,13260
+SITE_0708,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,16531
+SITE_0709,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,47522
+SITE_0710,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,3791
+SITE_0711,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,1584
+SITE_0712,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,454
+SITE_0713,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,21003
+SITE_0714,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,14801
+SITE_0715,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,630
+SITE_0716,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,17141
+SITE_0717,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,7613
+SITE_0718,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,39461
+SITE_0719,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,2745
+SITE_0720,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,18426
+SITE_0721,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,22729
+SITE_0722,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,6216
+SITE_0723,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,16262
+SITE_0724,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,317
+SITE_0725,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,67948
+SITE_0726,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,10526
+SITE_0727,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,2730
+SITE_0728,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,76859
+SITE_0729,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,13197
+SITE_0730,Maharashtra,Renewable Energy,Megawatts (MW),0,0,0,0,17442
+SITE_0731,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,8337
+SITE_0732,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,466
+SITE_0733,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,7737
+SITE_0734,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,569
+SITE_0735,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,2136
+SITE_0736,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,9650
+SITE_0737,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,35792
+SITE_0738,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,14440
+SITE_0739,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,476
+SITE_0740,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,17979
+SITE_0741,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,126
+SITE_0742,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,6781
+SITE_0743,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,20045
+SITE_0744,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,3526
+SITE_0745,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,7499
+SITE_0746,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,15785
+SITE_0747,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,7777
+SITE_0748,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,4801
+SITE_0749,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,7766
+SITE_0750,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,40220
+SITE_0751,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,9788
+SITE_0752,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,18628
+SITE_0753,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,6212
+SITE_0754,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,149
+SITE_0755,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,2091
+SITE_0756,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,5331
+SITE_0757,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,13449
+SITE_0758,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,37772
+SITE_0759,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,3294
+SITE_0760,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,8913
+SITE_0761,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,5644
+SITE_0762,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,29545
+SITE_0763,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,10375
+SITE_0764,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,32829
+SITE_0765,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,4463
+SITE_0766,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,1314
+SITE_0767,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,7647
+SITE_0768,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,11789
+SITE_0769,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,528
+SITE_0770,Gujarat,Renewable Energy,Megawatts (MW),0,0,0,0,6285
+SITE_0771,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,10642
+SITE_0772,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,4576
+SITE_0773,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,16620
+SITE_0774,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,13773
+SITE_0775,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,6586
+SITE_0776,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,19099
+SITE_0777,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,28224
+SITE_0778,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,6996
+SITE_0779,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,33372
+SITE_0780,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,17485
+SITE_0781,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,8351
+SITE_0782,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,232
+SITE_0783,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,3368
+SITE_0784,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,26769
+SITE_0785,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,19631
+SITE_0786,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,835
+SITE_0787,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,5272
+SITE_0788,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,3691
+SITE_0789,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,7178
+SITE_0790,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,322
+SITE_0791,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,11518
+SITE_0792,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,6446
+SITE_0793,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,583
+SITE_0794,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,26508
+SITE_0795,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,1429
+SITE_0796,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,7835
+SITE_0797,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,21192
+SITE_0798,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,13943
+SITE_0799,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,86
+SITE_0800,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,7389
+SITE_0801,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,4823
+SITE_0802,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,24260
+SITE_0803,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,1270
+SITE_0804,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,13563
+SITE_0805,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,6304
+SITE_0806,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,6417
+SITE_0807,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,484
+SITE_0808,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,27654
+SITE_0809,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,1511
+SITE_0810,Andhra Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,11696
+SITE_0811,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,9383
+SITE_0812,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,48
+SITE_0813,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,8144
+SITE_0814,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,1867
+SITE_0815,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,5309
+SITE_0816,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,1428
+SITE_0817,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,12619
+SITE_0818,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,14407
+SITE_0819,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,9777
+SITE_0820,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,14171
+SITE_0821,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,40558
+SITE_0822,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,2788
+SITE_0823,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,5643
+SITE_0824,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,10906
+SITE_0825,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,18875
+SITE_0826,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,24336
+SITE_0827,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,6483
+SITE_0828,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,4759
+SITE_0829,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,2951
+SITE_0830,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,17162
+SITE_0831,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,2156
+SITE_0832,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,10948
+SITE_0833,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,1266
+SITE_0834,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,17529
+SITE_0835,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,380
+SITE_0836,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,3920
+SITE_0837,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,12269
+SITE_0838,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,29724
+SITE_0839,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,7619
+SITE_0840,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,2797
+SITE_0841,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,2047
+SITE_0842,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,16146
+SITE_0843,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,10258
+SITE_0844,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,12336
+SITE_0845,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,25315
+SITE_0846,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,18899
+SITE_0847,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,2827
+SITE_0848,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,8587
+SITE_0849,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,4242
+SITE_0850,Karnataka,Renewable Energy,Megawatts (MW),0,0,0,0,3348
+SITE_0851,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,3046
+SITE_0852,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,5916
+SITE_0853,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,8697
+SITE_0854,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,124
+SITE_0855,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,6146
+SITE_0856,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,4540
+SITE_0857,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,16520
+SITE_0858,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,7680
+SITE_0859,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,18581
+SITE_0860,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,14588
+SITE_0861,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,1672
+SITE_0862,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,1544
+SITE_0863,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,1704
+SITE_0864,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,130
+SITE_0865,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,9363
+SITE_0866,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,12277
+SITE_0867,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,8502
+SITE_0868,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,7739
+SITE_0869,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,2884
+SITE_0870,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,7629
+SITE_0871,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,850
+SITE_0872,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,4736
+SITE_0873,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,4977
+SITE_0874,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,14120
+SITE_0875,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,1001
+SITE_0876,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,519
+SITE_0877,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,4676
+SITE_0878,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,15490
+SITE_0879,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,4178
+SITE_0880,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,43444
+SITE_0881,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,5623
+SITE_0882,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,872
+SITE_0883,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,2815
+SITE_0884,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,5161
+SITE_0885,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,13081
+SITE_0886,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,11738
+SITE_0887,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,5876
+SITE_0888,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,9311
+SITE_0889,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,14370
+SITE_0890,Tamil Nadu,Renewable Energy,Megawatts (MW),0,0,0,0,2341
+SITE_0891,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,630
+SITE_0892,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,8563
+SITE_0893,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,1172
+SITE_0894,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,522
+SITE_0895,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,7647
+SITE_0896,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,573
+SITE_0897,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,11861
+SITE_0898,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,172
+SITE_0899,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,6205
+SITE_0900,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,817
+SITE_0901,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,9842
+SITE_0902,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,3638
+SITE_0903,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,10280
+SITE_0904,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,4454
+SITE_0905,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,10483
+SITE_0906,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,6482
+SITE_0907,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,2565
+SITE_0908,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,5516
+SITE_0909,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,822
+SITE_0910,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,5287
+SITE_0911,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,4984
+SITE_0912,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,8802
+SITE_0913,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,5200
+SITE_0914,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,7920
+SITE_0915,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,8339
+SITE_0916,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,6371
+SITE_0917,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,2948
+SITE_0918,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,3904
+SITE_0919,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,6838
+SITE_0920,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,776
+SITE_0921,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,137
+SITE_0922,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,10507
+SITE_0923,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,927
+SITE_0924,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,5065
+SITE_0925,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,16567
+SITE_0926,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,1307
+SITE_0927,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,1482
+SITE_0928,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,3761
+SITE_0929,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,2851
+SITE_0930,Telangana,Renewable Energy,Megawatts (MW),0,0,0,0,2151
+SITE_0931,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,1520
+SITE_0932,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,7699
+SITE_0933,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,2171
+SITE_0934,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,8670
+SITE_0935,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,73
+SITE_0936,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,2696
+SITE_0937,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,1574
+SITE_0938,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,54
+SITE_0939,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,48
+SITE_0940,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,6360
+SITE_0941,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,1653
+SITE_0942,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,3966
+SITE_0943,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,231
+SITE_0944,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,1054
+SITE_0945,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,1843
+SITE_0946,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,438
+SITE_0947,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,964
+SITE_0948,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,582
+SITE_0949,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,5666
+SITE_0950,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,3120
+SITE_0951,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,3392
+SITE_0952,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,2525
+SITE_0953,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,164
+SITE_0954,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,3755
+SITE_0955,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,436
+SITE_0956,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,743
+SITE_0957,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,7399
+SITE_0958,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,3904
+SITE_0959,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,163
+SITE_0960,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,7822
+SITE_0961,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,278
+SITE_0962,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,4032
+SITE_0963,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,33
+SITE_0964,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,1966
+SITE_0965,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,4807
+SITE_0966,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,2701
+SITE_0967,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,2465
+SITE_0968,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,345
+SITE_0969,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,2186
+SITE_0970,Uttar Pradesh,Renewable Energy,Megawatts (MW),0,0,0,0,7543
+SITE_0971,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,750
+SITE_0972,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,386
+SITE_0973,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,695
+SITE_0974,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,1351
+SITE_0975,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,1042
+SITE_0976,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,411
+SITE_0977,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,190
+SITE_0978,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,214
+SITE_0979,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,125
+SITE_0980,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,344
+SITE_0981,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,89
+SITE_0982,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,19
+SITE_0983,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,171
+SITE_0984,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,989
+SITE_0985,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,63
+SITE_0986,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,693
+SITE_0987,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,735
+SITE_0988,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,6
+SITE_0989,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,1182
+SITE_0990,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,74
+SITE_0991,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,1080
+SITE_0992,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,124
+SITE_0993,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,891
+SITE_0994,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,75
+SITE_0995,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,13
+SITE_0996,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,405
+SITE_0997,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,30
+SITE_0998,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,269
+SITE_0999,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,40
+SITE_1000,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,49
+SITE_1001,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,386
+SITE_1002,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,109
+SITE_1003,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,421
+SITE_1004,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,50
+SITE_1005,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,277
+SITE_1006,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,232
+SITE_1007,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,247
+SITE_1008,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,252
+SITE_1009,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,321
+SITE_1010,Punjab,Renewable Energy,Megawatts (MW),0,0,0,0,154
+SITE_1011,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,210
+SITE_1012,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,162
+SITE_1013,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,208
+SITE_1014,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,425
+SITE_1015,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,632
+SITE_1016,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,1077
+SITE_1017,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,30
+SITE_1018,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,100
+SITE_1019,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,136
+SITE_1020,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,85
+SITE_1021,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,461
+SITE_1022,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,99
+SITE_1023,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,32
+SITE_1024,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,59
+SITE_1025,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,79
+SITE_1026,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,253
+SITE_1027,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,98
+SITE_1028,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,227
+SITE_1029,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,40
+SITE_1030,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,360
+SITE_1031,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,166
+SITE_1032,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,252
+SITE_1033,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,38
+SITE_1034,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,766
+SITE_1035,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,82
+SITE_1036,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,408
+SITE_1037,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,172
+SITE_1038,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,444
+SITE_1039,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,553
+SITE_1040,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,96
+SITE_1041,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,517
+SITE_1042,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,163
+SITE_1043,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,102
+SITE_1044,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,37
+SITE_1045,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,44
+SITE_1046,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,142
+SITE_1047,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,276
+SITE_1048,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,27
+SITE_1049,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,116
+SITE_1050,Tripura,Renewable Energy,Megawatts (MW),0,0,0,0,13
+SITE_1051,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,826
+SITE_1052,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,53
+SITE_1053,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,370
+SITE_1054,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,62
+SITE_1055,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,671
+SITE_1056,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,6
+SITE_1057,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,435
+SITE_1058,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,235
+SITE_1059,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,69
+SITE_1060,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,67
+SITE_1061,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,406
+SITE_1062,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,32
+SITE_1063,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,93
+SITE_1064,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,158
+SITE_1065,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,195
+SITE_1066,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,301
+SITE_1067,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,23
+SITE_1068,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,210
+SITE_1069,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,141
+SITE_1070,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,170
+SITE_1071,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,254
+SITE_1072,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,74
+SITE_1073,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,199
+SITE_1074,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,123
+SITE_1075,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,254
+SITE_1076,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,200
+SITE_1077,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,25
+SITE_1078,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,230
+SITE_1079,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,19
+SITE_1080,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,32
+SITE_1081,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,123
+SITE_1082,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,2
+SITE_1083,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,38
+SITE_1084,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,43
+SITE_1085,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,17
+SITE_1086,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,33
+SITE_1087,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,92
+SITE_1088,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,282
+SITE_1089,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,7
+SITE_1090,Sikkim,Renewable Energy,Megawatts (MW),0,0,0,0,7

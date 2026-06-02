@@ -5,13 +5,15 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-# Repo root = parent of `api/` (works when cwd is `api/` during uvicorn)
-_root_env = Path(__file__).resolve().parents[2] / ".env"
+# `database.py` lives in api/database/ — repo API root is one level up
+_api_root = Path(__file__).resolve().parents[1]
+_root_env = _api_root.parent / ".env"
 if _root_env.is_file():
     load_dotenv(_root_env)
 else:
     load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./statathon.db")
+_default_sqlite = (_api_root / "statathon.db").resolve().as_posix()
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{_default_sqlite}")
 _is_sqlite = DATABASE_URL.startswith("sqlite")
 engine = create_engine(
     DATABASE_URL,

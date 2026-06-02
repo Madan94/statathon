@@ -52,6 +52,7 @@ export default function ReportBuilderWizardPage() {
   const [filterConfig, setFilterConfig] = useState<DataFilterSpec>({});
   const [uploadName, setUploadName] = useState('');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [jsonFile, setJsonFile] = useState<File | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -110,6 +111,29 @@ export default function ReportBuilderWizardPage() {
       await reportBuilderApi.listTemplates().then(setTemplates);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onImportJsonTemplate = async () => {
+    if (!jsonFile || !uploadName.trim()) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const text = await jsonFile.text();
+      const ast = JSON.parse(text) as Record<string, unknown>;
+      const t = await reportBuilderApi.importJsonTemplate(
+        uploadName.trim(),
+        ast,
+        'Imported from JSON AST',
+        ast.document ? 'energy_chapter' : undefined
+      );
+      setTemplateId(t.id);
+      setBlocks(blocksFromAst(t.ast));
+      await reportBuilderApi.listTemplates().then(setTemplates);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'JSON import failed');
     } finally {
       setLoading(false);
     }
@@ -246,6 +270,26 @@ export default function ReportBuilderWizardPage() {
             <Button type="button" size="sm" onClick={onUploadTemplate} disabled={loading || !uploadFile}>
               Upload PDF
             </Button>
+          </div>
+          <div className="flex flex-wrap gap-2 items-end border-t border-border pt-4">
+            <input
+              type="file"
+              accept="application/json,.json,.txt"
+              className="text-sm flex-1 min-w-[200px]"
+              onChange={(e) => setJsonFile(e.target.files?.[0] || null)}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={onImportJsonTemplate}
+              disabled={loading || !jsonFile || !uploadName.trim()}
+            >
+              Import JSON AST
+            </Button>
+            <span className="text-xs text-text-muted w-full">
+              Use your <code className="text-text">ast.json.txt</code> (Energy Reserves chapter) here.
+            </span>
           </div>
           <div>
             <label className="text-xs text-text-muted block mb-1">Or select existing</label>

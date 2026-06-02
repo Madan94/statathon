@@ -32,6 +32,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Alert } from '@/components/ui/Alert';
 import DeliveryPanel from '@/components/report-builder/DeliveryPanel';
+import DeepAgentPanel from '@/components/report-builder/DeepAgentPanel';
 import {
   reportBuilderApi,
   ChatTurn,
@@ -78,6 +79,7 @@ export default function JobCanvasPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<'classic' | 'deep'>('deep');
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const pollingRef = useRef<boolean>(false);
 
@@ -235,7 +237,7 @@ export default function JobCanvasPage() {
               onClick={() => setChatOpen((v) => !v)}
             >
               <MessageSquare className="h-4 w-4 mr-1" />
-              {chatOpen ? 'Hide chat' : 'BI Chat'}
+              {chatOpen ? 'Hide BI' : 'Open BI'}
             </Button>
             <Button size="sm" variant="secondary" onClick={refresh}>
               <RefreshCw className="h-4 w-4 mr-1" /> Refresh
@@ -341,13 +343,58 @@ export default function JobCanvasPage() {
 
       </div>
 
-      {/* ----- BI Chat drawer (fixed, won't squeeze canvas) ----- */}
+      {/* ----- DeepAgent BI Drawer (fixed right panel) ----- */}
       {chatOpen && (
-        <ChatPanel
-          jobId={jobIdNum}
-          onClose={() => setChatOpen(false)}
-          onInsertBlock={(block) => handleDrop('bi_findings', block, false)}
-        />
+        <div className="fixed top-0 right-0 h-screen w-[420px] z-50 flex flex-col border-l border-border bg-surface-card shadow-2xl">
+          {/* Tab header */}
+          <div className="flex items-center border-b border-border shrink-0">
+            <button
+              className={`flex-1 py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                activeTab === 'deep'
+                  ? 'text-primary border-b-2 border-primary bg-primary/5'
+                  : 'text-text-muted hover:text-text'
+              }`}
+              onClick={() => setActiveTab('deep')}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              DeepAgent BI
+            </button>
+            <button
+              className={`flex-1 py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+                activeTab === 'classic'
+                  ? 'text-primary border-b-2 border-primary bg-primary/5'
+                  : 'text-text-muted hover:text-text'
+              }`}
+              onClick={() => setActiveTab('classic')}
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              Classic Chat
+            </button>
+            <button
+              className="px-3 py-2.5 text-text-muted hover:text-text"
+              onClick={() => setChatOpen(false)}
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Panel content */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            {activeTab === 'deep' ? (
+              <DeepAgentPanel
+                jobId={jobIdNum}
+                onDragBlock={(block) => handleDrop('bi_findings', block, false)}
+              />
+            ) : (
+              <ChatPanel
+                jobId={jobIdNum}
+                onClose={() => setChatOpen(false)}
+                onInsertBlock={(block) => handleDrop('bi_findings', block, false)}
+              />
+            )}
+          </div>
+        </div>
       )}
 
       {templateModalOpen && (

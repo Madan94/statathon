@@ -112,9 +112,33 @@ Base.metadata.create_all(bind=engine)
 
 from database.migrate_auth import migrate_auth_schema
 from database.migrate_report_builder import migrate_report_builder_schema
+from database.migrate_dataset_columns import migrate_dataset_columns_schema
 
 migrate_auth_schema()
 migrate_report_builder_schema()
+migrate_dataset_columns_schema()
+
+try:
+    from services.analysis_runner import reset_orphaned_analyses
+
+    _orphaned = reset_orphaned_analyses()
+    if _orphaned:
+        logger.info("Reset %s orphaned analysis job(s) after startup", _orphaned)
+except Exception as _orphan_exc:
+    logger.warning("Orphaned analysis reset skipped: %s", _orphan_exc)
+
+# Seed dev test officer (development only)
+if os.getenv("APP_ENV", "development").lower() in ("development", "dev", "local"):
+    try:
+        from auth.dev_user import ensure_dev_test_user
+
+        _seed_db = SessionLocal()
+        try:
+            ensure_dev_test_user(_seed_db)
+        finally:
+            _seed_db.close()
+    except Exception as _seed_exc:
+        logger.warning("Dev test user seed skipped: %s", _seed_exc)
 
 # One-time Neo4j schema bootstrap (constraints + indexes); no-op when NEO4J_ENABLED=false
 try:

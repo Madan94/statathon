@@ -52,9 +52,7 @@ export default function Sidebar() {
           </div>
         )}
       </nav>
-      <p className="p-4 text-[12px] text-white leading-relaxed border-t border-white/10">
-        Made with ❤️ by Team Dynamite
-      </p>
+      
     </aside>
   );
 }

@@ -15,6 +15,7 @@ from auth.otp_service import (
 )
 from auth.schemas import (
     ChallengeResponse,
+    DevQuickLoginResponse,
     LoginStartRequest,
     OtpVerifyRequest,
     ResendOtpRequest,
@@ -138,10 +139,20 @@ def login_start(body: LoginStartRequest, request: Request, db: Session = Depends
     if not challenge_id:
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
+    dev_otp = None
+    try:
+        from auth.dev_user import dev_auth_enabled, get_dev_fixed_otp, is_dev_test_email
+
+        if dev_auth_enabled() and is_dev_test_email(email):
+            dev_otp = get_dev_fixed_otp()
+    except Exception:
+        pass
+
     return ChallengeResponse(
         challenge_id=challenge_id,
         expires_in=expires_in or 600,
         dev_otp_logged=mail_meta.get("dev_otp_logged") if mail_meta else None,
+        dev_otp=dev_otp,
     )
 
 
@@ -218,6 +229,46 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
         revoke_refresh_token(db, raw)
     clear_session_cookies(response)
     return {"message": "logged out"}
+
+
+@router.post("/dev/quick-login", response_model=DevQuickLoginResponse)
+def dev_quick_login(
+    body: LoginStartRequest,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    """Development only — sign in as the test officer without OTP."""
+    from auth.dev_user import (
+        DEV_TEST_EMAIL,
+        dev_auth_enabled,
+        is_dev_test_email,
+        log_test_user_otp,
+        resolve_dev_user,
+    )
+    from auth.services import authenticate_user
+
+    if not dev_auth_enabled():
+        raise HTTPException(status_code=404, detail="Not available")
+
+    email = body.email.lower().strip()
+    if not is_dev_test_email(email):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Dev quick-login only for {DEV_TEST_EMAIL}",
+        )
+
+    user = resolve_dev_user(db, email, body.password)
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    log_test_user_otp(purpose="quick_login_skipped")
+    _issue_session(response, db, user, request)
+    return DevQuickLoginResponse(
+        message="Dev session issued (OTP skipped)",
+        user_id=user.id,
+        email=user.email,
+    )
 
 
 # Legacy endpoints — redirect clients to OTP flows

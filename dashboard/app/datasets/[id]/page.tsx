@@ -77,13 +77,22 @@ export default function DatasetPage() {
     setAnalyzing(true);
     setError(null);
     setProgress('Starting analysis…');
+    let analysisId: number | undefined;
+    const startedAt = Date.now();
     try {
       const started = await analysisApi.runAsync(id);
-      const analysisId = started.id ?? started.analysis_id;
+      analysisId = started.id ?? started.analysis_id;
       if (!analysisId) throw new Error('No analysis ID returned');
 
       const final = await analysisApi.pollUntilComplete(analysisId, (st) => {
-        setProgress(`Status: ${st.status}${st.error_message ? ` — ${st.error_message}` : ''}`);
+        const elapsedMin = Math.floor((Date.now() - startedAt) / 60000);
+        const suffix =
+          st.status === 'running' || st.status === 'pending'
+            ? ' — first run can take 10–20 min while models load'
+            : '';
+        setProgress(
+          `Status: ${st.status}${st.error_message ? ` — ${st.error_message}` : ''} (${elapsedMin}m)${suffix}`
+        );
       });
 
       if (final.status === 'failed') {
@@ -94,6 +103,21 @@ export default function DatasetPage() {
       router.push(`/analysis/${analysisId}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Analysis failed';
+      if (analysisId && msg.includes('timed out')) {
+        try {
+          const st = await analysisApi.getStatus(analysisId);
+          if (st.status === 'running' || st.status === 'pending') {
+            toast.info(
+              `Analysis #${analysisId} is still running on the server. Check back in a few minutes or open the analysis page.`
+            );
+            setProgress(`Analysis #${analysisId} still running on server…`);
+            setError(null);
+            return;
+          }
+        } catch {
+          /* fall through to generic error */
+        }
+      }
       setError(msg);
       toast.error(msg);
       setProgress(null);
@@ -315,7 +339,8 @@ export default function DatasetPage() {
             </h2>
             <p className="text-sm text-text-muted">
               Runs semantic mapping, column clustering, schema graph construction, validation,
-              outlier detection, imputation scoring and PDF report generation.
+              outlier detection, imputation scoring and PDF report generation. The first run may
+              take 10–20 minutes while ML models download.
             </p>
           </div>
 
