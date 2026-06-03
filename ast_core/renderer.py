@@ -278,7 +278,8 @@ def _draw_table(c: _canvas.Canvas, *, table: Table, bbox: BBox,
     header_pdf_y = page_height - header_top_ast - header_h
     c.setFillColor(HexColor("#003366"))
     c.rect(x, header_pdf_y, bbox.width, header_h, fill=1, stroke=0)
-    c.setFillColor(HexColor(header_color))
+    # Always white text on navy header band (body style is often black)
+    c.setFillColor(HexColor("#FFFFFF"))
     c.setFont(header_font, header_size)
     for i, lines in enumerate(wrapped_headers):
         cw = col_widths[i]
@@ -441,10 +442,13 @@ def _draw_figure_placeholder(c: _canvas.Canvas, *, caption: str, bbox: BBox,
         the figure bbox.
       * Otherwise draw a soft placeholder so the layout shape is preserved.
     """
-    cap_h = 16.0
-    image_bbox = BBox(x=bbox.x, y=bbox.y,
-                       width=bbox.width,
-                       height=max(0.0, bbox.height - cap_h))
+    # Caption band at bottom of figure block; image uses the rest
+    cap_h = min(36.0, max(26.0, bbox.height * 0.14))
+    image_bbox = BBox(
+        x=bbox.x, y=bbox.y,
+        width=bbox.width,
+        height=max(0.0, bbox.height - cap_h),
+    )
     if image_bbox.height <= 0:
         warnings.append(f"figure bbox too small {element_id}")
         return
@@ -453,15 +457,19 @@ def _draw_figure_placeholder(c: _canvas.Canvas, *, caption: str, bbox: BBox,
     drew_chart = False
     if computed_chart and computed_chart.get("data"):
         try:
-            png = _render_chart_png(computed_chart,
-                                      width_pt=image_bbox.width,
-                                      height_pt=image_bbox.height)
+            png = _render_chart_png(
+                computed_chart,
+                width_pt=image_bbox.width,
+                height_pt=image_bbox.height,
+                draw_title=False,
+            )
             if png is not None:
                 from reportlab.lib.utils import ImageReader
+                # Fill the figure slot exactly — avoid letterboxing white gaps
                 c.drawImage(ImageReader(io.BytesIO(png)),
                              x, y_pdf,
                              width=image_bbox.width, height=image_bbox.height,
-                             preserveAspectRatio=True, mask='auto')
+                             preserveAspectRatio=False, anchor="sw", mask="auto")
                 drew_chart = True
         except Exception as exc:
             warnings.append(f"chart render failed for {element_id}: {exc}")
@@ -476,43 +484,115 @@ def _draw_figure_placeholder(c: _canvas.Canvas, *, caption: str, bbox: BBox,
         msg = "(no data for this figure)" if computed_chart is None else "(empty chart)"
         c.drawString(x + 6, y_pdf + image_bbox.height - 14, msg)
 
-    # Caption beneath the chart
-    cap_bbox = BBox(x=bbox.x, y=bbox.y + image_bbox.height + 2,
-                     width=bbox.width, height=cap_h - 2)
+    # Caption at bottom of figure bbox (top-left coordinates)
+    cap_bbox = BBox(
+        x=bbox.x, y=bbox.y + bbox.height - cap_h,
+        width=bbox.width, height=cap_h,
+    )
     _draw_paragraph(c, text=caption, bbox=cap_bbox, page_height=page_height,
                      style=style_ast.by_id("s_caption"),
                      allow_overflow=True, warnings=warnings,
                      element_id=f"caption:{element_id}")
 
 
-def _render_chart_png(chart: dict[str, Any], *, width_pt: float,
-                       height_pt: float) -> bytes | None:
-    """Render a chart spec to PNG bytes using matplotlib."""
+def _short_chart_label(label: str, *, max_len: int = 14) -> str:
+    s = str(label or "").strip()
+    if len(s) <= max_len:
+        return s
+    return s[: max_len - 1] + "…"
+
+
+_PIE_SLICE_COLORS: dict[str, str] = {
+    "proved": "#1f4e79",
+    "indicated": "#5b9bd5",
+    "inferred": "#bdd7ee",
+    "solar": "#1f4e79",
+    "wind": "#5b9bd5",
+    "large hydro": "#ed7d31",
+    "hydro": "#ed7d31",
+}
+
+
+def _color_for_pie_label(label: str, fallback: str) -> str:
+    low = str(label).lower()
+    for key, color in _PIE_SLICE_COLORS.items():
+        if key in low:
+            return color
+    return fallback
+
+
+def _format_axis_value(v: float) -> str:
+    av = abs(v)
+    if av >= 1_000_000:
+        return f"{v / 1_000_000:.1f}M"
+    if av >= 1_000:
+        return f"{v / 1_000:.1f}K"
+    if float(int(v)) == v:
+        return str(int(v))
+    return f"{v:.1f}"
+
+
+def _render_chart_png(
+    chart: dict[str, Any],
+    *,
+    width_pt: float,
+    height_pt: float,
+    draw_title: bool = False,
+) -> bytes | None:
+    """Render a chart spec to PNG bytes using matplotlib (MoSPI-quality)."""
     try:
         import matplotlib
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
+        import matplotlib.ticker as mticker
     except Exception:
         return None
 
     ctype = (chart.get("type") or "bar").lower()
     title = chart.get("title") or ""
     data = chart.get("data") or []
-    labels = [str(d.get("label", "")) for d in data if isinstance(d, dict)]
-    values: list[float] = []
+    pairs: list[tuple[str, float]] = []
     for d in data:
         if not isinstance(d, dict):
             continue
         try:
-            values.append(float(d.get("value", 0)))
-        except Exception:
-            values.append(0.0)
-    if not values or sum(abs(v) for v in values) == 0:
+            pairs.append((str(d.get("label", "")), float(d.get("value", 0))))
+        except (TypeError, ValueError):
+            continue
+    if not pairs or sum(abs(v) for _, v in pairs) == 0:
         return None
 
-    fig_w = max(1.5, width_pt / 72.0)
-    fig_h = max(1.5, height_pt / 72.0)
-    fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=140)
+    if ctype == "pie":
+        order = (
+            ("proved", 0), ("indicated", 1), ("inferred", 2),
+            ("solar", 0), ("wind", 1), ("large hydro", 2), ("hydro", 2),
+        )
+
+        def _pie_rank(item: tuple[str, float]) -> int:
+            lab = item[0].lower()
+            for key, r in order:
+                if key in lab:
+                    return r
+            return 50
+
+        pairs = sorted(pairs, key=_pie_rank)
+    else:
+        pairs.sort(key=lambda x: x[1], reverse=True)
+    narrow = width_pt < 280
+    max_bars = 5 if narrow else 8
+    if ctype == "bar":
+        pairs = pairs[:max_bars]
+    else:
+        pairs = pairs[:12]
+    labels = [_short_chart_label(l, max_len=14 if width_pt > 300 else 10)
+              for l, _ in pairs]
+    values = [v for _, v in pairs]
+    n = len(labels)
+
+    fig_w = max(2.0, width_pt / 72.0)
+    fig_h = max(1.8, height_pt / 72.0)
+    dpi = 150
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=dpi)
     try:
         palette = [
             "#1f4e79", "#2e75b6", "#5b9bd5", "#9dc3e6", "#bdd7ee",
@@ -520,25 +600,86 @@ def _render_chart_png(chart: dict[str, Any], *, width_pt: float,
             "#264478", "#9e480e",
         ]
         if ctype == "pie":
-            ax.pie(values, labels=labels,
-                    autopct=lambda p: f"{p:.1f}%" if p >= 1.5 else "",
-                    startangle=90, colors=palette[:len(values)],
-                    textprops={"fontsize": 8},
-                    pctdistance=0.7)
+            pie_colors = [
+                _color_for_pie_label(lab, palette[i % len(palette)])
+                for i, lab in enumerate(labels)
+            ]
+            tall_slot = height_pt > width_pt * 1.05
+            if tall_slot:
+                ax.set_position([0.08, 0.30, 0.84, 0.58])
+            wedges, _, autotexts = ax.pie(
+                values,
+                labels=None,
+                autopct=lambda p: f"{p:.1f}%" if p >= 2.5 else "",
+                startangle=90,
+                colors=pie_colors,
+                pctdistance=0.65,
+            )
+            for t in autotexts:
+                t.set_fontsize(7 if not narrow else 6)
+                t.set_color("#ffffff")
+                t.set_fontweight("bold")
+            leg_fs = 7 if not narrow else 6
+            ncol = min(n, 3)
+            leg_y = 0.06 if tall_slot else -0.02
+            ax.legend(
+                labels,
+                loc="lower center",
+                bbox_to_anchor=(0.5, leg_y),
+                ncol=ncol,
+                fontsize=leg_fs,
+                frameon=False,
+            )
             ax.axis("equal")
+            if tall_slot:
+                plt.subplots_adjust(left=0.04, right=0.96, top=0.98, bottom=0.12)
+            else:
+                plt.subplots_adjust(left=0.04, right=0.96, top=0.96, bottom=0.20)
         elif ctype == "line":
-            ax.plot(labels, values, marker="o", color=palette[0], linewidth=2)
-            ax.tick_params(axis="x", labelrotation=30, labelsize=7)
-            ax.grid(True, alpha=0.3)
+            ax.plot(range(n), values, marker="o", color=palette[0], linewidth=2)
+            ax.set_xticks(range(n))
+            ax.set_xticklabels(labels, rotation=35, ha="right", fontsize=6)
+            ax.yaxis.set_major_formatter(
+                mticker.FuncFormatter(lambda x, _: _format_axis_value(x)))
+            ax.grid(True, alpha=0.3, axis="y")
+            plt.subplots_adjust(left=0.14, right=0.98, top=0.92,
+                                bottom=0.28 if n <= 5 else 0.38)
         else:
-            ax.bar(labels, values, color=palette[:len(values)])
-            ax.tick_params(axis="x", labelrotation=30, labelsize=7)
-            ax.grid(True, axis="y", alpha=0.3)
-        if title:
-            ax.set_title(title, fontsize=9)
-        fig.tight_layout()
+            # Horizontal bars when labels would overlap on vertical axis
+            use_horizontal = narrow or n > 5
+            ax.grid(True, alpha=0.25, axis="y" if use_horizontal else "x",
+                    linestyle="--")
+            ax.set_axisbelow(True)
+            if use_horizontal:
+                ypos = list(range(n))
+                ax.barh(ypos, values, color=palette[:n], height=0.7,
+                        edgecolor="white", linewidth=0.4)
+                ax.set_yticks(ypos)
+                ax.set_yticklabels(labels, fontsize=6)
+                ax.invert_yaxis()
+                ax.xaxis.set_major_formatter(
+                    mticker.FuncFormatter(lambda x, _: _format_axis_value(x)))
+                xmax = max(values) * 1.08 if values else 1.0
+                ax.set_xlim(0, xmax)
+                left = 0.32 if max(len(l) for l in labels) > 10 else 0.24
+                plt.subplots_adjust(left=left, right=0.98, top=0.94, bottom=0.16)
+            else:
+                xpos = range(n)
+                ax.bar(xpos, values, color=palette[:n], width=0.72,
+                       edgecolor="white", linewidth=0.4)
+                ax.set_xticks(list(xpos))
+                ax.set_xticklabels(labels, rotation=25, ha="right", fontsize=7)
+                ax.yaxis.set_major_formatter(
+                    mticker.FuncFormatter(lambda x, _: _format_axis_value(x)))
+                plt.subplots_adjust(left=0.14, right=0.98, top=0.94, bottom=0.32)
+
+        if draw_title and title:
+            short_title = _short_chart_label(title, max_len=48)
+            ax.set_title(short_title, fontsize=7, color="#1f4e79", pad=4)
+
         buf = io.BytesIO()
-        fig.savefig(buf, format="png", dpi=140, bbox_inches="tight")
+        fig.savefig(buf, format="png", dpi=dpi, facecolor="white",
+                    edgecolor="none", pad_inches=0.05)
         return buf.getvalue()
     except Exception as exc:
         logger.info("chart render error: %s", exc)
@@ -638,19 +779,35 @@ def _draw_block(c: _canvas.Canvas, *, block_type: str, element_id: str,
                 allow_overflow: bool, warnings: list[str]) -> None:
     sty = ast.styleAST
 
-    if block_type in ("title", "subtitle", "heading", "chapter_heading",
-                       "text", "header", "footer", "caption"):
+    # Paragraph-like block types — covers classic names AND coord-AST names
+    # (heading_1, heading_2, paragraph, chapter_header, meta, body, etc.)
+    _PARAGRAPH_TYPES = frozenset({
+        "title", "subtitle", "heading", "chapter_heading", "chapter_header",
+        "text", "header", "footer", "caption", "meta", "body",
+        # coord-AST specific
+        "heading_1", "heading_2", "paragraph",
+    })
+    if block_type in _PARAGRAPH_TYPES:
         para = ast.contentAST.paragraph_by_id(element_id)
         if not para:
             warnings.append(f"missing paragraph {element_id}")
             return
         style = sty.by_id(para.styleId) if para.styleId else None
         if style is None:
-            style = (sty.by_id("s_h1") if para.type == "title" else
-                      sty.by_id("s_h1") if para.type == "chapter_heading" else
-                      sty.by_id("s_h2") if para.type in ("subtitle", "heading") else
-                      sty.by_id("s_caption") if para.type == "caption" else
-                      sty.by_id("s_body"))
+            # Map paragraph type → style
+            ptype = para.type.lower() if para.type else ""
+            if ptype in ("title",):
+                style = sty.by_id("s_h1")
+            elif ptype in ("chapter_heading", "chapter_header"):
+                style = sty.by_id("s_h1")
+            elif ptype in ("subtitle", "heading", "heading_1"):
+                style = sty.by_id("s_h1")
+            elif ptype in ("heading_2",):
+                style = sty.by_id("s_h2")
+            elif ptype in ("caption",):
+                style = sty.by_id("s_caption")
+            else:
+                style = sty.by_id("s_body")
         _draw_paragraph(c, text=para.content, bbox=bbox,
                          page_height=page_height, style=style,
                          allow_overflow=allow_overflow, warnings=warnings,
@@ -813,7 +970,7 @@ def _draw_page_header_band(c: _canvas.Canvas, page, ast: MultiAST) -> None:
     for p in ast.contentAST.paragraphs:
         if p.type == "subtitle" and p.content.strip() and subtitle is None:
             subtitle = p.content.strip()
-        if (p.type == "chapter_heading" and p.content.strip()
+        if (p.type in ("chapter_heading", "chapter_header") and p.content.strip()
               and chapter_head is None):
             chapter_head = p.content.strip()
     title = chapter_head or subtitle or title
@@ -835,12 +992,31 @@ def _draw_page_header_band(c: _canvas.Canvas, page, ast: MultiAST) -> None:
                        "Ministry of Statistics & PI")
 
 
-def _draw_table_of_contents(c: _canvas.Canvas, page, ast: MultiAST) -> None:
-    """Auto-generate a Table of Contents from the SemanticAST / page headings.
+def _element_page_map(ast: MultiAST) -> dict[str, int]:
+    """Map content element id → 1-based page number."""
+    ref_page: dict[str, int] = {}
+    for page_idx, pg in enumerate(ast.layoutAST.pages):
+        for block in pg.blocks:
+            for ref in block.elementRefs:
+                if ref:
+                    ref_page[ref] = page_idx + 1
+    return ref_page
 
-    Generic across any AST. Walks every page, collects the first heading
-    paragraph on each page, and prints `<heading>  ...  <page no>`.
-    """
+
+_TOC_BLOCK_TYPES = frozenset({
+    "heading", "chapter_heading", "chapter_header", "subtitle",
+    "heading_1", "heading_2",
+})
+
+
+_TOC_PARA_TYPES = frozenset({
+    "title", "subtitle", "chapter_heading", "chapter_header",
+    "heading", "heading_1", "heading_2",
+})
+
+
+def _draw_table_of_contents(c: _canvas.Canvas, page, ast: MultiAST) -> None:
+    """Auto-generate a Table of Contents from layout headings and tables."""
     margin_x = 60
     cursor_y = page.height - 90
 
@@ -854,25 +1030,59 @@ def _draw_table_of_contents(c: _canvas.Canvas, page, ast: MultiAST) -> None:
     c.line(margin_x, cursor_y, margin_x + 160, cursor_y)
     cursor_y -= 28
 
-    # Collect (label, page_number) from headings
+    ref_page = _element_page_map(ast)
     entries: list[tuple[str, int]] = []
-    for page_idx, p in enumerate(ast.layoutAST.pages):
-        for block in p.blocks:
-            if block.type not in ("heading", "chapter_heading", "subtitle"):
-                continue
+    seen: set[str] = set()
+
+    # Headings in document order (by page, then top-to-bottom on page)
+    for page_idx, pg in enumerate(ast.layoutAST.pages):
+        blocks = sorted(
+            [b for b in pg.blocks if b.elementRefs and b.type in _TOC_BLOCK_TYPES],
+            key=lambda b: (b.inline_bbox.y if b.inline_bbox else 0),
+        )
+        for block in blocks:
             for ref in block.elementRefs:
                 para = ast.contentAST.paragraph_by_id(ref)
-                if para and para.content.strip():
-                    entries.append((para.content.strip(), page_idx + 1))
-                    break
-            else:
+                if not para or not para.content.strip():
+                    continue
+                label = para.content.strip()
+                if label.lower() in ("go",) or len(label) <= 2:
+                    continue
+                key = label.lower()
+                if key in seen:
+                    continue
+                seen.add(key)
+                entries.append((label, ref_page.get(ref, page_idx + 1)))
+                break
+
+    # Section headings from contentAST not always on layout blocks
+    if len(entries) < 4:
+        for para in ast.contentAST.paragraphs:
+            if para.type not in _TOC_PARA_TYPES:
                 continue
-            break   # one entry per page
-    # If no headings, fall back to listing every table title
-    if not entries:
-        for t_idx, t in enumerate(ast.tableAST.tables):
-            if t.title:
-                entries.append((t.title, 0))
+            label = (para.content or "").strip()
+            if not label or len(label) <= 2 or label.lower() in seen:
+                continue
+            if para.type == "title" and "chapter one" in label.lower():
+                continue
+            pg_no = ref_page.get(para.id, 0)
+            if pg_no <= 1:
+                continue
+            seen.add(label.lower())
+            entries.append((label, pg_no))
+
+    # Tables (appendix pages)
+    for t in ast.tableAST.tables:
+        if not t.title:
+            continue
+        pg_no = ref_page.get(t.tableId, 0)
+        key = t.title.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        entries.append((t.title, pg_no))
+
+    entries.sort(key=lambda e: (e[1] if e[1] else 999, e[0].lower()))
 
     c.setFont("Helvetica", 11)
     c.setFillColor(HexColor("#222222"))
@@ -973,17 +1183,31 @@ def render_ast_to_pdf(
             c.showPage()
             continue
 
-        for block in page.blocks:
+        # Draw top-to-bottom (ascending y in top-left coordinates)
+        sorted_blocks = sorted(
+            page.blocks,
+            key=lambda b: b.inline_bbox.y if b.inline_bbox else 0,
+        )
+        for block in sorted_blocks:
             for element_id in (block.elementRefs or [None]):
                 if element_id is None:
                     continue
-                node = ast.geometryAST.by_element_ref(element_id) \
-                       or ast.geometryAST.by_id(f"node_{element_id}")
-                if node is None:
+                # Geometry lookup: prefer inline bbox (coord-AST) then
+                # GeometryAST node, then synthesised auto_ node.
+                resolved_bbox: BBox | None = None
+                if block.inline_bbox:
+                    resolved_bbox = block.inline_bbox
+                else:
+                    node = (ast.geometryAST.by_element_ref(element_id)
+                            or ast.geometryAST.by_id(f"node_{element_id}")
+                            or ast.geometryAST.by_id(f"auto_{block.blockId}_{element_id}"))
+                    if node:
+                        resolved_bbox = node.bbox
+                if resolved_bbox is None:
                     warnings.append(f"no geometry for {element_id}")
                     continue
                 _draw_block(c, block_type=block.type, element_id=element_id,
-                             ast=ast, bbox=node.bbox, page_height=page.height,
+                             ast=ast, bbox=resolved_bbox, page_height=page.height,
                              allow_overflow=allow_overflow, warnings=warnings)
 
         # Footer on every page (page number + generated-on stamp)

@@ -81,16 +81,31 @@ class LayoutBlock:
     blockId: str
     type: str
     elementRefs: list[str] = field(default_factory=list)
+    # Inline bbox — present in coordinate-based ASTs (fina-ast style).
+    # The coord_loader promotes these into GeometryAST nodes so the renderer
+    # still uses the single geometry lookup path.
+    inline_bbox: "BBox | None" = field(default=None, repr=False)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"blockId": self.blockId, "type": self.type,
-                "elementRefs": list(self.elementRefs)}
+        out: dict[str, Any] = {"blockId": self.blockId, "type": self.type,
+                                "elementRefs": list(self.elementRefs)}
+        if self.inline_bbox is not None:
+            out["bbox"] = self.inline_bbox.to_dict()
+        return out
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> LayoutBlock:
+    def from_dict(cls, d: dict[str, Any]) -> "LayoutBlock":
+        # Accept both elementRef (singular, new coord-AST) and elementRefs (array)
+        refs: list[str] = list(d.get("elementRefs") or [])
+        singular = d.get("elementRef")
+        if singular and singular not in refs:
+            refs = [singular]
+        bbox_raw = d.get("bbox")
+        inline = BBox.from_dict(bbox_raw) if bbox_raw else None
         return cls(blockId=str(d.get("blockId") or ""),
                    type=str(d.get("type") or "text"),
-                   elementRefs=list(d.get("elementRefs") or []))
+                   elementRefs=refs,
+                   inline_bbox=inline)
 
 
 @dataclass
@@ -193,21 +208,26 @@ class GeometryNode:
     styleId: str | None = None
     pageId: str | None = None
     elementRef: str | None = None
+    # Optional chart components (e.g. pre-computed pie slices from a coord-AST).
+    # Shape: [{"type": "pie_slice", "label": str, "percentage": float, "color": str}, ...]
+    components: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {"nodeId": self.nodeId, "bbox": self.bbox.to_dict()}
-        if self.styleId: out["styleId"] = self.styleId
-        if self.pageId:  out["pageId"]  = self.pageId
+        if self.styleId:    out["styleId"] = self.styleId
+        if self.pageId:     out["pageId"]  = self.pageId
         if self.elementRef: out["elementRef"] = self.elementRef
+        if self.components: out["components"] = self.components
         return out
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> GeometryNode:
-        return cls(nodeId=str(d.get("nodeId") or ""),
+    def from_dict(cls, d: dict[str, Any]) -> "GeometryNode":
+        return cls(nodeId=str(d.get("nodeId") or d.get("id") or ""),
                    bbox=BBox.from_dict(d.get("bbox") or {}),
-                   styleId=d.get("styleId"),
+                   styleId=d.get("styleId") or d.get("style"),
                    pageId=d.get("pageId"),
-                   elementRef=d.get("elementRef"))
+                   elementRef=d.get("elementRef"),
+                   components=list(d.get("components") or []))
 
 
 @dataclass

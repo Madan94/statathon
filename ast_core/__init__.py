@@ -45,6 +45,7 @@ from .schema import (
     AgentAST, AgentScope,
 )
 from .loader import load_multi_ast, save_multi_ast
+from .coord_loader import load_coord_ast
 from .builder import MultiASTBuilder
 
 __all__ = [
@@ -65,6 +66,6 @@ __all__ = [
     "RetrievalAST", "RetrievalChunk",
     "EvidenceAST", "EvidenceEntry",
     "AgentAST", "AgentScope",
-    "load_multi_ast", "save_multi_ast",
+    "load_multi_ast", "save_multi_ast", "load_coord_ast",
     "MultiASTBuilder",
 ]

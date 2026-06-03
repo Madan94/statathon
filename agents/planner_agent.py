@@ -378,15 +378,21 @@ def _build_steps(
 
 # ─── LLM-enhanced plan (Gemini) ───────────────────────────────────────────────
 
-def _gemini_plan(query: str, context_summary: str) -> dict[str, Any] | None:
+def _gemini_plan(query: str, context_summary: str,
+                  extra_system_prompt: str | None = None) -> dict[str, Any] | None:
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         return None
     try:
         import google.generativeai as genai  # type: ignore
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        prompt = f"""You are the Planner Agent for a Government Statistical DeepAgent.
+        model_name = os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash")
+        model = genai.GenerativeModel(model_name)
+        extra_section = (
+            f"\n\nAdditional instructions:\n{extra_system_prompt}\n"
+            if extra_system_prompt else ""
+        )
+        prompt = f"""You are the Planner Agent for a Government Statistical DeepAgent.{extra_section}
 
 Dataset context:
 {context_summary}
@@ -432,6 +438,7 @@ class PlannerAgent:
         analysis_payload: dict[str, Any] | None = None,
         available_columns: list[str] | None = None,
         df: "Any | None" = None,   # pd.DataFrame — used for dynamic column/value detection
+        extra_system_prompt: str | None = None,  # optional injected prompt (e.g. for chart planning)
     ) -> ExecutionPlan:
         import pandas as pd
 
@@ -533,8 +540,8 @@ class PlannerAgent:
             f"Intent: {intent}."
         )
 
-        # Attempt LLM-enhanced plan
-        llm_raw = _gemini_plan(query, context_summary)
+        # Attempt LLM-enhanced plan (inject extra_system_prompt for specialised callers)
+        llm_raw = _gemini_plan(query, context_summary, extra_system_prompt)
 
         # Merge LLM output where safe, keep rule-based structure
         if llm_raw:

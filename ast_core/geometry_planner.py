@@ -93,7 +93,12 @@ _STYLE_FOR_TYPE: dict[str, str] = {
     "title": "s_h1",
     "subtitle": "s_h2",
     "chapter_heading": "s_h1",
+    "chapter_header": "s_h1",
     "heading": "s_h2",
+    "heading_1": "s_h1",
+    "heading_2": "s_h2",
+    "paragraph": "s_body",
+    "body": "s_body",
     "text": "s_body",
     "list": "s_body",
     "caption": "s_caption",
@@ -219,7 +224,9 @@ def _height_for_element(ast: MultiAST, element_id: str, block_type: str,
 def _spacing_for_type(block_type: str) -> float:
     return {
         "title": 14, "subtitle": 10, "chapter_heading": 18,
-        "heading": 12, "text": 10, "list": 10,
+        "chapter_header": 18, "heading": 12, "heading_1": 12,
+        "heading_2": 10, "paragraph": 10, "body": 10,
+        "text": 10, "list": 10,
         "table": 18, "figure": 16, "chart": 16,
         "header": 6, "footer": 6, "empty_canvas": 0,
     }.get(block_type, 10)
