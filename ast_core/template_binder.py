@@ -293,6 +293,18 @@ class TemplateBinder:
             )
             return
 
+        # Refuse to bind when fewer than half of the non-key headers resolved
+        # to a dataset column. Filling 1-of-8 columns and leaving the rest
+        # as None creates a misleading "almost-empty" table; the template's
+        # original example rows are a more honest fallback.
+        non_key_count = max(1, len(headers) - 1)
+        if len(col_to_metric) < max(2, non_key_count // 2):
+            report.warnings.append(
+                f"table {t.tableId}: only {len(col_to_metric)}/{non_key_count} "
+                f"non-key headers resolved; keeping template rows"
+            )
+            return
+
         # Aggregate by key_col
         grouped = scope.groupby(key_col)
         rows: list[list[Any]] = []
@@ -357,50 +369,164 @@ class TemplateBinder:
 
     def _bind_figure_caption(self, f: Figure, df: pd.DataFrame,
                               kg: ColumnSynonymKG, report: BindReport) -> None:
-        # Use the existing caption as a query; if it mentions a resource we
-        # aggregate the relevant column and append the live number.
-        caption_low = (f.caption or "").lower()
-        if not caption_low:
+        """Bind a figure to a real chart spec derived from the dataset.
+
+        Strategy:
+          1. Resolve the *resource scope* from the caption / description.
+          2. Resolve the *breakdown axis* (composition / by_state /
+             by_source / by_region).
+          3. Compute the pie data from the dataset rows in scope.
+          4. Populate ``figure.computed_chart`` so the renderer draws a
+             real pie chart. If the dataset doesn't have the needed
+             columns, leave it None (renderer shows a placeholder — never
+             invents a chart).
+        """
+        caption = (f.caption or "")
+        description = (f.description or "")
+        text = (caption + " " + description).lower()
+        if not text.strip():
             return
+
         resource_col = next(
             (c for c in df.columns if "resource" in c.lower()
               or "category" in c.lower()),
             None,
         )
-        metric_col = next(
-            (c for c in df.columns
-              if pd.api.types.is_numeric_dtype(df[c])
-              and ("total" in c.lower() or "reserves" in c.lower()
-                    or "capacity" in c.lower())),
-            None,
-        )
-        if not metric_col:
-            return
-
-        # Detect resource in caption
         scope = df
+        resource_label: str | None = None
         if resource_col is not None:
             for cand in df[resource_col].astype(str).dropna().unique():
-                if str(cand).lower() in caption_low:
+                cand_low = str(cand).lower()
+                cand_tokens = re.findall(r"[a-z]+", cand_low)
+                if any(re.search(rf"(?<![a-z]){t}(?![a-z])", text)
+                        for t in cand_tokens if len(t) >= 4):
                     scope = df[df[resource_col].astype(str) == cand]
+                    resource_label = str(cand)
                     break
-        try:
-            total = float(pd.to_numeric(scope[metric_col], errors="coerce").sum())
-        except Exception:
+
+        # Detect any resource the caption clearly references (whether or not
+        # the dataset has rows for it).
+        text_resource_hint: str | None = None
+        for kw in ("crude oil", "natural gas", "petroleum", "lignite",
+                     "coal", "renewable", "solar", "wind", "biomass"):
+            if kw in text:
+                text_resource_hint = kw
+                break
+
+        # If the caption explicitly mentions a resource that the dataset does
+        # NOT contain (no matching Resource_Category), refuse to fall back to
+        # the full DataFrame — that would render a chart of the wrong
+        # commodity. Leave computed_chart=None so the renderer shows an
+        # empty placeholder.
+        if (text_resource_hint is not None
+              and resource_col is not None
+              and resource_label is None):
             return
-        if total > 0:
-            tag = f" (total {metric_col} = {int(total) if total == int(total) else round(total, 2)})"
-            if tag not in f.caption:
-                f.caption = f.caption.rstrip(".") + tag
-                report.figures_captioned += 1
-                report.evidence.append(EvidenceEntry(
-                    evidenceId=f"E_{f.figureId}_total",
-                    claim=f"figure caption total of {metric_col}",
-                    value=total, source="aggregate",
-                    row_ids=[],
-                    computation={"agg": "sum", "metric": metric_col},
-                    confidence=0.90, verified=True,
-                ))
+
+        # ---- Breakdown axis ----
+        breakdown = "composition"
+        if "statewise" in text or "state wise" in text or "by state" in text:
+            breakdown = "by_state"
+        elif "sourcewise" in text or "source wise" in text:
+            breakdown = "by_source"
+        elif "regional" in text:
+            breakdown = "by_region"
+        elif ("proved" in text or "indicated" in text or "inferred" in text
+                or "composition" in text or "reserves of" in text):
+            breakdown = "composition"
+
+        chart_spec: dict[str, Any] | None = None
+        evidence_value: Any = None
+        evidence_comp: dict[str, Any] = {
+            "breakdown": breakdown,
+            "resource_filter": resource_label or text_resource_hint,
+        }
+
+        if breakdown == "composition" and not scope.empty:
+            comp_cols: list[tuple[str, str]] = []
+            for kind, search in (("Proved", "proved"), ("Indicated", "indicated"),
+                                  ("Inferred", "inferred")):
+                col = next((c for c in df.columns
+                              if search in c.lower()
+                              and pd.api.types.is_numeric_dtype(df[c])), None)
+                if col is not None:
+                    comp_cols.append((kind, col))
+            data: list[dict[str, Any]] = []
+            for kind, col in comp_cols:
+                try:
+                    v = float(pd.to_numeric(scope[col], errors="coerce").sum())
+                except Exception:
+                    v = 0.0
+                if v > 0:
+                    data.append({"label": kind, "value": v})
+            if data:
+                # Use the figure caption directly so the chart title matches
+                # what the AST declares; strip any "Fig 1.x:" prefix.
+                clean_caption = re.sub(r"^Fig\s+\d+(?:\.\d+)?[:\s.]+", "",
+                                          caption, flags=re.IGNORECASE).strip()
+                chart_spec = {
+                    "type": "pie",
+                    "title": clean_caption or f"{(resource_label or text_resource_hint or '').title()} Composition",
+                    "data": data,
+                }
+                evidence_value = data
+
+        elif breakdown in ("by_state", "by_source", "by_region") and not scope.empty:
+            state_col = next((c for c in df.columns if c.lower() == "state"),
+                              None) or next(
+                (c for c in df.columns if "state" in c.lower()
+                  and not pd.api.types.is_numeric_dtype(df[c])), None,
+            )
+            # Pick the metric most relevant to the resource
+            metric_col = None
+            preferred = (("capacity" if "renewable" in text or "potential" in text
+                           else "total"),
+                          "proved", "reserves", "capacity")
+            for pref in preferred:
+                metric_col = next(
+                    (c for c in df.columns
+                      if pd.api.types.is_numeric_dtype(df[c])
+                      and pref in c.lower()), None,
+                )
+                if metric_col:
+                    break
+            if state_col and metric_col:
+                grouped = (scope.assign(_m=pd.to_numeric(scope[metric_col],
+                                                              errors="coerce"))
+                              .groupby(state_col)["_m"]
+                              .sum()
+                              .sort_values(ascending=False))
+                top = grouped.head(8)
+                others = float(grouped.iloc[8:].sum()) if grouped.size > 8 else 0.0
+                data = [{"label": str(k), "value": float(v)}
+                        for k, v in top.items() if v > 0]
+                if others > 0:
+                    data.append({"label": "Others", "value": others})
+                if data:
+                    clean_caption = re.sub(r"^Fig\s+\d+(?:\.\d+)?[:\s.]+", "",
+                                              caption, flags=re.IGNORECASE).strip()
+                    chart_spec = {
+                        "type": "pie",
+                        "title": clean_caption or
+                                  f"{(resource_label or text_resource_hint or '').title()} by State",
+                        "data": data,
+                    }
+                    evidence_value = data
+                    evidence_comp["metric_column"] = metric_col
+                    evidence_comp["state_column"] = state_col
+
+        if chart_spec:
+            f.computed_chart = chart_spec
+            ev_id = f"E_{f.figureId}_chart"
+            f.evidenceRefs.append(ev_id)
+            report.figures_captioned += 1
+            report.evidence.append(EvidenceEntry(
+                evidenceId=ev_id, claim=f.caption,
+                value=evidence_value, source="aggregate",
+                row_ids=list(scope.index[:200]),
+                computation=evidence_comp,
+                confidence=0.95, verified=True,
+            ))
 
     # ---------------- Charts ----------------
 

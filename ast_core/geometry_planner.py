@@ -22,8 +22,12 @@ from .schema import (
 
 @dataclass
 class PageFrame:
-    """Where content can live on a page (everything else is margin)."""
-    margin_top: float = 50.0
+    """Where content can live on a page (everything else is margin).
+
+    Top margin reserves space for the Ministry header band; bottom margin
+    reserves space for the page-number footer.
+    """
+    margin_top: float = 60.0
     margin_bottom: float = 50.0
     margin_left: float = 50.0
     margin_right: float = 50.0
@@ -42,19 +46,22 @@ class GeometryPlan:
 
 
 def _estimate_text_height(text: str, font_size: float, frame_width: float,
-                          leading_factor: float = 1.30) -> float:
+                          leading_factor: float = 1.45) -> float:
     """Best-effort wrapping height estimate.
 
-    Assumes monospaced-equivalent width of 0.55 * font_size per glyph. This
-    overshoots slightly for proportional fonts which leaves headroom rather
-    than overflow.
+    Uses ~0.48 * font_size per glyph (Helvetica average) plus a 1.45 leading
+    factor so descenders + paragraph spacing never clip. Adds an 8pt floor
+    so blocks don't visually kiss each other.
     """
     if not text:
-        return font_size * leading_factor
-    char_w = max(0.50 * font_size, 4.0)
+        return font_size * leading_factor + 4
+    char_w = max(0.48 * font_size, 4.0)
     chars_per_line = max(1, int(frame_width / char_w))
-    n_lines = max(1, (len(text) + chars_per_line - 1) // chars_per_line)
-    return n_lines * font_size * leading_factor
+    paragraphs = str(text).split("\n")
+    n_lines = 0
+    for para in paragraphs:
+        n_lines += max(1, (len(para) + chars_per_line - 1) // chars_per_line)
+    return n_lines * font_size * leading_factor + 8
 
 
 def _estimate_table_height(rows_count: int, has_title: bool = True,
@@ -211,11 +218,11 @@ def _height_for_element(ast: MultiAST, element_id: str, block_type: str,
 
 def _spacing_for_type(block_type: str) -> float:
     return {
-        "title": 8, "subtitle": 6, "chapter_heading": 12,
-        "heading": 8, "text": 6, "list": 6,
-        "table": 12, "figure": 12, "chart": 12,
-        "header": 4, "footer": 4, "empty_canvas": 0,
-    }.get(block_type, 6)
+        "title": 14, "subtitle": 10, "chapter_heading": 18,
+        "heading": 12, "text": 10, "list": 10,
+        "table": 18, "figure": 16, "chart": 16,
+        "header": 6, "footer": 6, "empty_canvas": 0,
+    }.get(block_type, 10)
 
 
 def write_geometry_to_ast(ast: MultiAST, plan: GeometryPlan) -> None:

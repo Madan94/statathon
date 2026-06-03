@@ -191,7 +191,25 @@ def _draw_table(c: _canvas.Canvas, *, table: Table, bbox: BBox,
     header_font, header_size, header_color = _resolve_font(header_style)
 
     n_cols = len(table.columns)
-    col_w = bbox.width / max(n_cols, 1)
+    # Adaptive font sizing so 8+ column tables don't end with "Distri…" headers
+    if n_cols >= 9:
+        header_size = 7.0
+        body_size = 7.5
+    elif n_cols >= 7:
+        header_size = 8.0
+        body_size = 8.0
+
+    # Adaptive column widths: first column ~1.8x (for labels), others share.
+    if n_cols >= 4:
+        first_w = bbox.width * 0.20
+        rest_w = (bbox.width - first_w) / (n_cols - 1)
+        col_widths = [first_w] + [rest_w] * (n_cols - 1)
+    else:
+        col_widths = [bbox.width / n_cols] * n_cols
+    col_lefts = [bbox.x]
+    for w in col_widths[:-1]:
+        col_lefts.append(col_lefts[-1] + w)
+    col_w = bbox.width / max(n_cols, 1)   # legacy fallback for callers using single width
     x, y_pdf = _to_pdf_xy(page_height, bbox)
 
     # Title (if any) eats the first ~16pt
@@ -220,7 +238,10 @@ def _draw_table(c: _canvas.Canvas, *, table: Table, bbox: BBox,
             raise LayoutOverflowError(msg)
         rows_to_draw = rows_to_draw[:max_rows]
 
-    # Header row
+    # Header row — recompute height tightly to whichever font_size we landed on
+    header_h = header_size * 1.9 + 4
+    row_h = body_size * 1.9 + 2
+
     header_top_ast = cursor_y_top
     header_pdf_y = page_height - header_top_ast - header_h
     c.setFillColor(HexColor("#003366"))
@@ -228,21 +249,35 @@ def _draw_table(c: _canvas.Canvas, *, table: Table, bbox: BBox,
     c.setFillColor(HexColor(header_color))
     c.setFont(header_font, header_size)
     for i, col in enumerate(table.columns):
-        cx = x + i * col_w + 4
+        cx = col_lefts[i] + 4
+        cw = col_widths[i]
         cy = header_pdf_y + header_h / 2 - header_size / 2 + 1
-        # Truncate header text to col_w
-        col_text = _truncate_to_width(c, str(col), header_font, header_size, col_w - 8)
+        col_text = _truncate_to_width(c, str(col), header_font, header_size, cw - 8)
         c.drawString(cx, cy, col_text)
     cursor_y_top += header_h
 
+    # Vertical separators inside the header band
+    c.setStrokeColor(HexColor("#1f4e79"))
+    c.setLineWidth(0.4)
+    for left in col_lefts[1:]:
+        c.line(left, header_pdf_y, left, header_pdf_y + header_h)
+
     # Rows
     c.setFillColor(HexColor(body_color))
+    last_row_pdf_y = None
     for r_idx, row in enumerate(rows_to_draw):
         row_top_ast = cursor_y_top
         row_pdf_y = page_height - row_top_ast - row_h
+        last_row_pdf_y = row_pdf_y
         if r_idx % 2 == 1:
             c.setFillColor(HexColor("#F5F6FA"))
             c.rect(x, row_pdf_y, bbox.width, row_h, fill=1, stroke=0)
+        # Highlight the Total row if present (last row whose first cell is "Total")
+        if (r_idx == len(rows_to_draw) - 1
+              and len(row) > 0 and str(row[0]).strip().lower() == "total"):
+            c.setFillColor(HexColor("#E3F0FF"))
+            c.rect(x, row_pdf_y, bbox.width, row_h, fill=1, stroke=0)
+
         c.setStrokeColor(HexColor("#CCCCCC"))
         c.setLineWidth(0.25)
         c.line(x, row_pdf_y, x + bbox.width, row_pdf_y)
@@ -250,12 +285,67 @@ def _draw_table(c: _canvas.Canvas, *, table: Table, bbox: BBox,
         c.setFillColor(HexColor(body_color))
         c.setFont(body_font, body_size)
         for col_i, cell in enumerate(row):
-            cx = x + col_i * col_w + 4
+            if col_i >= len(col_lefts):
+                break
+            cx = col_lefts[col_i] + 4
+            cw = col_widths[col_i]
             cy = row_pdf_y + row_h / 2 - body_size / 2 + 1
-            cell_text = _truncate_to_width(c, str(cell), body_font, body_size,
-                                             col_w - 8)
-            c.drawString(cx, cy, cell_text)
+            display = _format_cell(cell)
+            cell_text = _truncate_to_width(c, display, body_font, body_size,
+                                             cw - 8)
+            # Right-align numeric cells; left-align everything else
+            if _looks_numeric(display) and col_i > 0:
+                tw = c.stringWidth(cell_text, body_font, body_size)
+                c.drawString(col_lefts[col_i] + cw - tw - 4, cy, cell_text)
+            else:
+                c.drawString(cx, cy, cell_text)
         cursor_y_top += row_h
+
+    # Bottom border + column dividers down the body
+    if last_row_pdf_y is not None:
+        bottom_y = last_row_pdf_y
+        c.setStrokeColor(HexColor("#CCCCCC"))
+        c.setLineWidth(0.25)
+        c.line(x, bottom_y, x + bbox.width, bottom_y)
+        for left in col_lefts[1:]:
+            c.line(left, bottom_y, left, header_pdf_y)
+        # Outer rectangle
+        c.setLineWidth(0.5)
+        c.rect(x, bottom_y, bbox.width, (header_pdf_y + header_h) - bottom_y,
+                fill=0, stroke=1)
+
+
+def _looks_numeric(text: str) -> bool:
+    """True if `text` reads as a number (possibly with commas / decimals / unit)."""
+    s = str(text or "").strip()
+    if s in ("", "—"):
+        return False
+    cleaned = s.replace(",", "").replace("%", "").replace("$", "")
+    try:
+        float(cleaned)
+        return True
+    except ValueError:
+        return False
+
+
+def _format_cell(value: Any) -> str:
+    """Render a table cell value: empty/None -> em-dash, numbers formatted."""
+    if value is None:
+        return "—"
+    if isinstance(value, str):
+        s = value.strip()
+        if not s or s.lower() == "none":
+            return "—"
+        return s
+    if isinstance(value, float):
+        if value != value:    # NaN
+            return "—"
+        if value.is_integer():
+            return f"{int(value):,}"
+        return f"{value:,.2f}"
+    if isinstance(value, int):
+        return f"{value:,}"
+    return str(value)
 
 
 def _truncate_to_width(c: _canvas.Canvas, text: str, font_name: str,
@@ -306,30 +396,123 @@ def _draw_list(c: _canvas.Canvas, *, items: list[str], ordered: bool,
 
 def _draw_figure_placeholder(c: _canvas.Canvas, *, caption: str, bbox: BBox,
                               page_height: float, style_ast: StyleAST,
-                              warnings: list[str], element_id: str) -> None:
-    """Outlines a rectangle for the figure with a caption beneath.
+                              warnings: list[str], element_id: str,
+                              computed_chart: dict[str, Any] | None = None) -> None:
+    """Draw a figure at its declared bbox.
 
-    Asset embedding can be wired later via assetAST.storageRef.
+    Strategy:
+      * If `computed_chart` is populated (the binder produced a chart spec
+        from the dataset), render a real matplotlib pie/bar/line chart at
+        the figure bbox.
+      * Otherwise draw a soft placeholder so the layout shape is preserved.
     """
-    x, y_pdf = _to_pdf_xy(page_height, bbox)
-    # Frame
-    c.setStrokeColor(HexColor("#999999"))
-    c.setLineWidth(0.5)
-    image_h = bbox.height - 18
-    if image_h <= 0:
+    cap_h = 16.0
+    image_bbox = BBox(x=bbox.x, y=bbox.y,
+                       width=bbox.width,
+                       height=max(0.0, bbox.height - cap_h))
+    if image_bbox.height <= 0:
         warnings.append(f"figure bbox too small {element_id}")
         return
-    c.rect(x, y_pdf + 18, bbox.width, image_h, stroke=1, fill=0)
-    c.setFont("Helvetica-Oblique", 8)
-    c.setFillColor(HexColor("#555555"))
-    c.drawString(x + 4, y_pdf + image_h + 22, "[figure placeholder]")
 
-    # Caption beneath
-    cap_bbox = BBox(x=bbox.x, y=bbox.y + bbox.height - 14, width=bbox.width, height=14)
+    x, y_pdf = _to_pdf_xy(page_height, image_bbox)
+    drew_chart = False
+    if computed_chart and computed_chart.get("data"):
+        try:
+            png = _render_chart_png(computed_chart,
+                                      width_pt=image_bbox.width,
+                                      height_pt=image_bbox.height)
+            if png is not None:
+                from reportlab.lib.utils import ImageReader
+                c.drawImage(ImageReader(io.BytesIO(png)),
+                             x, y_pdf,
+                             width=image_bbox.width, height=image_bbox.height,
+                             preserveAspectRatio=True, mask='auto')
+                drew_chart = True
+        except Exception as exc:
+            warnings.append(f"chart render failed for {element_id}: {exc}")
+
+    if not drew_chart:
+        c.setStrokeColor(HexColor("#bbbbbb"))
+        c.setLineWidth(0.5)
+        c.setFillColor(HexColor("#fafafa"))
+        c.rect(x, y_pdf, image_bbox.width, image_bbox.height, stroke=1, fill=1)
+        c.setFont("Helvetica-Oblique", 8)
+        c.setFillColor(HexColor("#888888"))
+        msg = "(no data for this figure)" if computed_chart is None else "(empty chart)"
+        c.drawString(x + 6, y_pdf + image_bbox.height - 14, msg)
+
+    # Caption beneath the chart
+    cap_bbox = BBox(x=bbox.x, y=bbox.y + image_bbox.height + 2,
+                     width=bbox.width, height=cap_h - 2)
     _draw_paragraph(c, text=caption, bbox=cap_bbox, page_height=page_height,
                      style=style_ast.by_id("s_caption"),
                      allow_overflow=True, warnings=warnings,
                      element_id=f"caption:{element_id}")
+
+
+def _render_chart_png(chart: dict[str, Any], *, width_pt: float,
+                       height_pt: float) -> bytes | None:
+    """Render a chart spec to PNG bytes using matplotlib."""
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except Exception:
+        return None
+
+    ctype = (chart.get("type") or "bar").lower()
+    title = chart.get("title") or ""
+    data = chart.get("data") or []
+    labels = [str(d.get("label", "")) for d in data if isinstance(d, dict)]
+    values: list[float] = []
+    for d in data:
+        if not isinstance(d, dict):
+            continue
+        try:
+            values.append(float(d.get("value", 0)))
+        except Exception:
+            values.append(0.0)
+    if not values or sum(abs(v) for v in values) == 0:
+        return None
+
+    fig_w = max(1.5, width_pt / 72.0)
+    fig_h = max(1.5, height_pt / 72.0)
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=140)
+    try:
+        palette = [
+            "#1f4e79", "#2e75b6", "#5b9bd5", "#9dc3e6", "#bdd7ee",
+            "#e7a300", "#ed7d31", "#c00000", "#7f6000", "#385723",
+            "#264478", "#9e480e",
+        ]
+        if ctype == "pie":
+            ax.pie(values, labels=labels,
+                    autopct=lambda p: f"{p:.1f}%" if p >= 1.5 else "",
+                    startangle=90, colors=palette[:len(values)],
+                    textprops={"fontsize": 8},
+                    pctdistance=0.7)
+            ax.axis("equal")
+        elif ctype == "line":
+            ax.plot(labels, values, marker="o", color=palette[0], linewidth=2)
+            ax.tick_params(axis="x", labelrotation=30, labelsize=7)
+            ax.grid(True, alpha=0.3)
+        else:
+            ax.bar(labels, values, color=palette[:len(values)])
+            ax.tick_params(axis="x", labelrotation=30, labelsize=7)
+            ax.grid(True, axis="y", alpha=0.3)
+        if title:
+            ax.set_title(title, fontsize=9)
+        fig.tight_layout()
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=140, bbox_inches="tight")
+        return buf.getvalue()
+    except Exception as exc:
+        logger.info("chart render error: %s", exc)
+        return None
+    finally:
+        try:
+            plt.close(fig)
+        except Exception:
+            pass
 
 
 def _draw_chart_placeholder(c: _canvas.Canvas, *, chart, bbox: BBox,
@@ -469,7 +652,8 @@ def _draw_block(c: _canvas.Canvas, *, block_type: str, element_id: str,
         _draw_figure_placeholder(c, caption=f.caption, bbox=bbox,
                                    page_height=page_height,
                                    style_ast=sty, warnings=warnings,
-                                   element_id=element_id)
+                                   element_id=element_id,
+                                   computed_chart=f.computed_chart)
         return
 
     if block_type == "chart":
@@ -485,6 +669,75 @@ def _draw_block(c: _canvas.Canvas, *, block_type: str, element_id: str,
         return
 
     warnings.append(f"unhandled block type '{block_type}' for {element_id}")
+
+
+# ---------------------------------------------------------------------------
+# Cover / header / footer chrome
+# ---------------------------------------------------------------------------
+
+
+def _draw_cover_chrome(c: _canvas.Canvas, page, ast: MultiAST) -> None:
+    """Paint a Ministry-style header strip + emblem zone above the cover content."""
+    # Top accent strip
+    c.setFillColor(HexColor("#0B3B7A"))
+    c.rect(0, page.height - 30, page.width, 30, stroke=0, fill=1)
+    # Ministry tagline (centre)
+    c.setFillColor(HexColor("#ffffff"))
+    c.setFont("Helvetica-Bold", 10)
+    text = "Ministry of Statistics and Programme Implementation"
+    tw = c.stringWidth(text, "Helvetica-Bold", 10)
+    c.drawString((page.width - tw) / 2, page.height - 20, text)
+
+    # Bottom decorative band
+    c.setFillColor(HexColor("#0B3B7A"))
+    c.rect(0, 0, page.width, 24, stroke=0, fill=1)
+    c.setFillColor(HexColor("#ffffff"))
+    c.setFont("Helvetica", 8)
+    foot = "Government of India  |  Energy Statistics Division"
+    fw = c.stringWidth(foot, "Helvetica", 8)
+    c.drawString((page.width - fw) / 2, 9, foot)
+
+
+def _draw_page_header_band(c: _canvas.Canvas, page, ast: MultiAST) -> None:
+    # Prefer the document subtitle / chapter heading (skip generic "Chapter One"
+    # which is usually just a numeral on the cover).
+    title = "Energy Reserves and Potential"
+    subtitle = None
+    chapter_head = None
+    for p in ast.contentAST.paragraphs:
+        if p.type == "subtitle" and p.content.strip() and subtitle is None:
+            subtitle = p.content.strip()
+        if (p.type == "chapter_heading" and p.content.strip()
+              and chapter_head is None):
+            chapter_head = p.content.strip()
+    title = chapter_head or subtitle or title
+    # Strip a leading "CHAPTER N:" prefix so the band reads cleanly
+    import re as _re
+    title = _re.sub(r"^chapter\s+\d+\s*[:\-]\s*", "", title, flags=_re.IGNORECASE)
+
+    c.setStrokeColor(HexColor("#cccccc"))
+    c.setLineWidth(0.4)
+    c.line(36, page.height - 28, page.width - 36, page.height - 28)
+    c.setFont("Helvetica", 8)
+    c.setFillColor(HexColor("#666666"))
+    c.drawString(36, page.height - 20, "Chapter 1: " + title)
+    doc_id = ast.metadata.documentId or ""
+    if doc_id:
+        c.drawRightString(page.width - 36, page.height - 20, doc_id)
+
+
+def _draw_page_footer(c: _canvas.Canvas, page, page_no: int,
+                      total_pages: int, ast: MultiAST) -> None:
+    c.setStrokeColor(HexColor("#cccccc"))
+    c.setLineWidth(0.4)
+    c.line(36, 30, page.width - 36, 30)
+    c.setFont("Helvetica", 8)
+    c.setFillColor(HexColor("#666666"))
+    from datetime import datetime as _dt
+    stamp = (ast.metadata.updatedAt or ast.metadata.createdAt
+              or _dt.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"))
+    c.drawString(36, 18, f"STATATHON Report Engine  |  Generated {stamp}")
+    c.drawRightString(page.width - 36, 18, f"Page {page_no} of {total_pages}")
 
 
 # ---------------------------------------------------------------------------
@@ -523,10 +776,17 @@ def render_ast_to_pdf(
     c = _canvas.Canvas(str(out_path))
 
     pages = ast.layoutAST.pages
-    for page in pages:
+    total_pages = len(pages)
+    for page_idx, page in enumerate(pages):
         c.setPageSize((page.width, page.height))
+        # Ministry header band on every page after the cover
+        if page_idx > 0:
+            _draw_page_header_band(c, page, ast)
+        # Cover treatment for page 1
+        if page_idx == 0:
+            _draw_cover_chrome(c, page, ast)
+
         for block in page.blocks:
-            # tables / figures / charts use the element id as bbox key
             for element_id in (block.elementRefs or [None]):
                 if element_id is None:
                     continue
@@ -538,6 +798,10 @@ def render_ast_to_pdf(
                 _draw_block(c, block_type=block.type, element_id=element_id,
                              ast=ast, bbox=node.bbox, page_height=page.height,
                              allow_overflow=allow_overflow, warnings=warnings)
+
+        # Footer on every page (page number + generated-on stamp)
+        if page_idx > 0:
+            _draw_page_footer(c, page, page_idx + 1, total_pages, ast)
         c.showPage()
 
     c.save()

@@ -20,8 +20,10 @@ from ast_core.renderer import render_ast_to_pdf
 repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ast_path = os.path.join(repo, "Enterprise_Document_AST.json")
 data_path = os.path.join(repo, "test_data", "unified_energy_reserves_dataset.csv")
-pdf_out = os.path.join(repo, "outputs", "energy_report_from_ast.pdf")
-ast_out = os.path.join(repo, "outputs", "energy_report_ast_filled.json")
+from datetime import datetime as _dt
+_stamp = _dt.utcnow().strftime("%H%M%S")
+pdf_out = os.path.join(repo, "outputs", f"energy_report_{_stamp}.pdf")
+ast_out = os.path.join(repo, "outputs", f"energy_report_ast_filled_{_stamp}.json")
 
 print("=" * 78)
 print("Step 1: Load template AST")

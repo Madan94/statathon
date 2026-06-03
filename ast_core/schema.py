@@ -451,17 +451,33 @@ class Figure:
     caption: str = ""
     assetRef: str = ""
     description: str = ""
+    # When the figure is data-driven, the binder populates `computed_chart`
+    # with a shape:
+    #   {"type": "pie"|"bar"|"line",
+    #    "title": str,
+    #    "data": [{"label": str, "value": float}, ...]}
+    # The renderer reads this and draws a real chart at the figure's bbox.
+    computed_chart: dict[str, Any] | None = None
+    evidenceRefs: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"figureId": self.figureId, "caption": self.caption,
-                "assetRef": self.assetRef, "description": self.description}
+        out: dict[str, Any] = {"figureId": self.figureId, "caption": self.caption,
+                                "assetRef": self.assetRef,
+                                "description": self.description}
+        if self.computed_chart is not None:
+            out["computed_chart"] = self.computed_chart
+        if self.evidenceRefs:
+            out["evidenceRefs"] = self.evidenceRefs
+        return out
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> Figure:
         return cls(figureId=str(d.get("figureId") or ""),
                    caption=str(d.get("caption") or ""),
                    assetRef=str(d.get("assetRef") or ""),
-                   description=str(d.get("description") or ""))
+                   description=str(d.get("description") or ""),
+                   computed_chart=d.get("computed_chart"),
+                   evidenceRefs=list(d.get("evidenceRefs") or []))
 
 
 @dataclass
