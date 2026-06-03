@@ -424,16 +424,27 @@ class TemplateBinder:
             return
 
         # ---- Breakdown axis ----
+        # Derive the breakdown axis ENTIRELY from the caption text — no
+        # hardcoded energy vocabulary. The pattern "<word>wise" or "by <word>"
+        # tells us which axis the chart is asking for; we then look for a
+        # column carrying that axis in the dataset.
         breakdown = "composition"
-        if "statewise" in text or "state wise" in text or "by state" in text:
-            breakdown = "by_state"
-        elif "sourcewise" in text or "source wise" in text:
-            breakdown = "by_source"
-        elif "regional" in text:
-            breakdown = "by_region"
-        elif ("proved" in text or "indicated" in text or "inferred" in text
-                or "composition" in text or "reserves of" in text):
-            breakdown = "composition"
+        breakdown_axis_token: str | None = None
+
+        wise_match = re.search(r"\b([a-z]{3,15})\s*wise\b", text)
+        if not wise_match:
+            wise_match = re.search(r"\bby\s+([a-z]{3,15})\b", text)
+        if wise_match:
+            axis_word = wise_match.group(1).rstrip("s")  # statewise/states -> state
+            breakdown = f"by_{axis_word}"
+            breakdown_axis_token = axis_word
+
+        # Composition is the fallback (Proved/Indicated/Inferred-style breakdowns)
+        if (breakdown == "composition"
+              and not ("composition" in text or "proved" in text
+                        or "indicated" in text or "inferred" in text
+                        or "reserves of" in text)):
+            breakdown_axis_token = None    # nothing recognisable in caption
 
         chart_spec: dict[str, Any] | None = None
         evidence_value: Any = None
@@ -471,35 +482,81 @@ class TemplateBinder:
                 }
                 evidence_value = data
 
-        elif breakdown in ("by_state", "by_source", "by_region") and not scope.empty:
-            state_col = next((c for c in df.columns if c.lower() == "state"),
-                              None) or next(
-                (c for c in df.columns if "state" in c.lower()
-                  and not pd.api.types.is_numeric_dtype(df[c])), None,
+        elif breakdown_axis_token and not scope.empty:
+            # Generic axis resolver: look for a NON-numeric column whose name
+            # contains the breakdown token as a *word* (not a substring —
+            # otherwise "source" would falsely match "Resource_Category").
+            tok = breakdown_axis_token.lower()
+            tok_pat = re.compile(rf"(?:^|[^a-z]){re.escape(tok)}(?:$|[^a-z])")
+            axis_col = next(
+                (c for c in df.columns
+                  if tok_pat.search(c.lower())
+                  and not pd.api.types.is_numeric_dtype(df[c])),
+                None,
             )
-            # Pick the metric most relevant to the resource
-            metric_col = None
-            preferred = (("capacity" if "renewable" in text or "potential" in text
-                           else "total"),
-                          "proved", "reserves", "capacity")
-            for pref in preferred:
-                metric_col = next(
-                    (c for c in df.columns
-                      if pd.api.types.is_numeric_dtype(df[c])
-                      and pref in c.lower()), None,
+            if axis_col is None:
+                # Try KG synonyms — but still require word-boundary match
+                # against the resolved column tokens.
+                matches = kg.resolve(breakdown_axis_token, top_k=5, min_score=0.30)
+                axis_col = next(
+                    (m.column for m in matches
+                      if m.column in df.columns
+                      and not pd.api.types.is_numeric_dtype(df[m.column])
+                      and tok in set(re.findall(r"[a-z]+", m.column.lower()))),
+                    None,
                 )
-                if metric_col:
+            if axis_col is None:
+                return  # dataset can't support this breakdown
+
+            # Choose the most relevant numeric metric for the resource scope.
+            # Generic rule: only consider metrics that have NON-ZERO totals in
+            # the current scope (so we don't pick "Total_Reserves" for
+            # renewable rows where every reserves value is 0 — the right
+            # column there is "Potential_Capacity_MW").
+            numeric_cols = [c for c in df.columns
+                              if pd.api.types.is_numeric_dtype(df[c])]
+            # Score each numeric column by total magnitude in scope
+            scored: list[tuple[str, float]] = []
+            for c in numeric_cols:
+                try:
+                    total = float(pd.to_numeric(scope[c], errors="coerce").abs().sum())
+                except Exception:
+                    total = 0.0
+                if total > 0:
+                    scored.append((c, total))
+            scored.sort(key=lambda kv: kv[1], reverse=True)
+
+            # Preference ordering: among columns that have data, prefer the
+            # one whose name token appears in the caption (e.g. "potential"
+            # in the caption favours "Potential_Capacity_MW").
+            caption_tokens = set(re.findall(r"[a-z]+", text))
+            metric_col = None
+            for cand, _total in scored:
+                cand_tokens = set(re.findall(r"[a-z]+", cand.lower()))
+                if cand_tokens & caption_tokens:
+                    metric_col = cand
                     break
-            if state_col and metric_col:
+            if metric_col is None and scored:
+                metric_col = scored[0][0]   # largest-magnitude column in scope
+            if axis_col and metric_col:
                 grouped = (scope.assign(_m=pd.to_numeric(scope[metric_col],
                                                               errors="coerce"))
-                              .groupby(state_col)["_m"]
-                              .sum()
+                              .groupby(axis_col)["_m"].sum()
                               .sort_values(ascending=False))
-                top = grouped.head(8)
-                others = float(grouped.iloc[8:].sum()) if grouped.size > 8 else 0.0
-                data = [{"label": str(k), "value": float(v)}
-                        for k, v in top.items() if v > 0]
+                # Generic small-slice collapsing: items below 3% of total
+                # collapse into "Others" so labels don't collide.
+                grand_total = float(grouped.sum()) or 1.0
+                top: list[tuple[Any, float]] = []
+                others = 0.0
+                for k, v in grouped.items():
+                    if v <= 0:
+                        continue
+                    share = float(v) / grand_total
+                    if share >= 0.03 and len(top) < 8:
+                        top.append((k, float(v)))
+                    else:
+                        others += float(v)
+                data = [{"label": str(k), "value": v} for k, v in top]
                 if others > 0:
                     data.append({"label": "Others", "value": others})
                 if data:
@@ -508,12 +565,12 @@ class TemplateBinder:
                     chart_spec = {
                         "type": "pie",
                         "title": clean_caption or
-                                  f"{(resource_label or text_resource_hint or '').title()} by State",
+                                  f"{(resource_label or text_resource_hint or '').title()} by {axis_col}",
                         "data": data,
                     }
                     evidence_value = data
                     evidence_comp["metric_column"] = metric_col
-                    evidence_comp["state_column"] = state_col
+                    evidence_comp["axis_column"] = axis_col
 
         if chart_spec:
             f.computed_chart = chart_spec

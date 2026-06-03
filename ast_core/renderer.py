@@ -238,8 +238,40 @@ def _draw_table(c: _canvas.Canvas, *, table: Table, bbox: BBox,
             raise LayoutOverflowError(msg)
         rows_to_draw = rows_to_draw[:max_rows]
 
-    # Header row — recompute height tightly to whichever font_size we landed on
-    header_h = header_size * 1.9 + 4
+    # Header row — wrap each header onto up to 2 lines if it doesn't fit.
+    # This is the generic fix for "Distribution (%) 2025" being truncated
+    # to "Distrib…" in narrow tables.
+    wrapped_headers: list[list[str]] = []
+    max_header_lines = 1
+    for i, col in enumerate(table.columns):
+        col_str = str(col)
+        cw = col_widths[i] - 8
+        if c.stringWidth(col_str, header_font, header_size) <= cw:
+            wrapped_headers.append([col_str])
+            continue
+        words = col_str.split()
+        lines: list[str] = []
+        current = ""
+        for w in words:
+            cand = (current + " " + w).strip()
+            if c.stringWidth(cand, header_font, header_size) <= cw:
+                current = cand
+            else:
+                if current:
+                    lines.append(current)
+                current = w
+        if current:
+            lines.append(current)
+        if not lines:
+            lines = [col_str]
+        if len(lines) > 2:
+            lines = [lines[0],
+                      _truncate_to_width(c, " ".join(lines[1:]),
+                                           header_font, header_size, cw)]
+        wrapped_headers.append(lines)
+        max_header_lines = max(max_header_lines, len(lines))
+
+    header_h = max_header_lines * (header_size * 1.4) + 6
     row_h = body_size * 1.9 + 2
 
     header_top_ast = cursor_y_top
@@ -248,12 +280,15 @@ def _draw_table(c: _canvas.Canvas, *, table: Table, bbox: BBox,
     c.rect(x, header_pdf_y, bbox.width, header_h, fill=1, stroke=0)
     c.setFillColor(HexColor(header_color))
     c.setFont(header_font, header_size)
-    for i, col in enumerate(table.columns):
-        cx = col_lefts[i] + 4
+    for i, lines in enumerate(wrapped_headers):
         cw = col_widths[i]
-        cy = header_pdf_y + header_h / 2 - header_size / 2 + 1
-        col_text = _truncate_to_width(c, str(col), header_font, header_size, cw - 8)
-        c.drawString(cx, cy, col_text)
+        cx_left = col_lefts[i] + 4
+        # Centre the wrapped header vertically inside the header band
+        total_text_h = len(lines) * header_size * 1.4
+        first_baseline = header_pdf_y + (header_h + total_text_h) / 2 - header_size
+        for li, line in enumerate(lines):
+            cy = first_baseline - li * header_size * 1.4
+            c.drawString(cx_left, cy, line)
     cursor_y_top += header_h
 
     # Vertical separators inside the header band
@@ -677,31 +712,102 @@ def _draw_block(c: _canvas.Canvas, *, block_type: str, element_id: str,
 
 
 def _draw_cover_chrome(c: _canvas.Canvas, page, ast: MultiAST) -> None:
-    """Paint a Ministry-style header strip + emblem zone above the cover content."""
-    # Top accent strip
+    """Paint Ministry banner + centred title block + footer for the cover page.
+
+    The block paragraphs declared in the AST (b1_1, b1_2 …) still draw on top
+    via the normal _draw_paragraph path; this function paints the surrounding
+    chrome. To avoid duplicating the title, _draw_block special-cases the
+    cover page when this chrome is active.
+    """
+    # Top accent band with Ministry name (centred, white on navy)
     c.setFillColor(HexColor("#0B3B7A"))
-    c.rect(0, page.height - 30, page.width, 30, stroke=0, fill=1)
-    # Ministry tagline (centre)
+    c.rect(0, page.height - 40, page.width, 40, stroke=0, fill=1)
     c.setFillColor(HexColor("#ffffff"))
-    c.setFont("Helvetica-Bold", 10)
-    text = "Ministry of Statistics and Programme Implementation"
-    tw = c.stringWidth(text, "Helvetica-Bold", 10)
-    c.drawString((page.width - tw) / 2, page.height - 20, text)
+    c.setFont("Helvetica-Bold", 12)
+    ministry = "MINISTRY OF STATISTICS AND PROGRAMME IMPLEMENTATION"
+    tw = c.stringWidth(ministry, "Helvetica-Bold", 12)
+    c.drawString((page.width - tw) / 2, page.height - 26, ministry)
+
+    # Thin gold accent line
+    c.setStrokeColor(HexColor("#c8a23a"))
+    c.setLineWidth(1.2)
+    c.line(0, page.height - 42, page.width, page.height - 42)
+
+    # ------- Centred title block (replaces the cover paragraph rendering) -------
+    # Collect cover paragraphs (title / subtitle / text on page 1)
+    cover_paras: list[tuple[str, str]] = []   # (type, content)
+    cover_page = ast.layoutAST.pages[0]
+    refs: list[str] = []
+    for blk in cover_page.blocks:
+        refs.extend(blk.elementRefs)
+    for pid in refs:
+        p = ast.contentAST.paragraph_by_id(pid)
+        if p and p.content.strip():
+            cover_paras.append((p.type, p.content.strip()))
+
+    # Find the title + subtitle; skip 2-letter all-caps placeholders ("GO")
+    title = next((c for t, c in cover_paras if t == "title"), "")
+    subtitle = next((c for t, c in cover_paras if t == "subtitle"), "")
+    extras = [c for t, c in cover_paras
+              if t not in ("title", "subtitle") and len(c) > 4]
+
+    # Centre block roughly 1/3 down the page
+    centre_y = page.height * 0.62
+    if title:
+        c.setFont("Helvetica-Bold", 26)
+        c.setFillColor(HexColor("#0B3B7A"))
+        tw = c.stringWidth(title, "Helvetica-Bold", 26)
+        c.drawString((page.width - tw) / 2, centre_y, title)
+        centre_y -= 18
+    if subtitle:
+        c.setFont("Helvetica", 16)
+        c.setFillColor(HexColor("#1f4e79"))
+        tw = c.stringWidth(subtitle, "Helvetica", 16)
+        c.drawString((page.width - tw) / 2, centre_y, subtitle)
+        centre_y -= 30
+
+    # Decorative divider
+    c.setStrokeColor(HexColor("#c8a23a"))
+    c.setLineWidth(0.8)
+    div_w = 200
+    c.line((page.width - div_w) / 2, centre_y, (page.width + div_w) / 2, centre_y)
+    centre_y -= 24
+
+    # Publication metadata
+    from datetime import datetime as _dt
+    pub_date = (ast.metadata.updatedAt or ast.metadata.createdAt
+                  or _dt.utcnow().strftime("%Y-%m-%d"))
+    c.setFillColor(HexColor("#444444"))
+    c.setFont("Helvetica", 11)
+    pub = f"As on {pub_date[:10]}"
+    pw = c.stringWidth(pub, "Helvetica", 11)
+    c.drawString((page.width - pw) / 2, centre_y, pub)
+    centre_y -= 16
+
+    for line in extras:
+        c.setFont("Helvetica-Oblique", 10)
+        c.setFillColor(HexColor("#666666"))
+        lw = c.stringWidth(line, "Helvetica-Oblique", 10)
+        c.drawString((page.width - lw) / 2, centre_y, line)
+        centre_y -= 14
 
     # Bottom decorative band
+    c.setStrokeColor(HexColor("#c8a23a"))
+    c.setLineWidth(1.2)
+    c.line(0, 26, page.width, 26)
     c.setFillColor(HexColor("#0B3B7A"))
     c.rect(0, 0, page.width, 24, stroke=0, fill=1)
     c.setFillColor(HexColor("#ffffff"))
-    c.setFont("Helvetica", 8)
-    foot = "Government of India  |  Energy Statistics Division"
-    fw = c.stringWidth(foot, "Helvetica", 8)
+    c.setFont("Helvetica-Bold", 9)
+    foot = "GOVERNMENT OF INDIA"
+    fw = c.stringWidth(foot, "Helvetica-Bold", 9)
     c.drawString((page.width - fw) / 2, 9, foot)
 
 
 def _draw_page_header_band(c: _canvas.Canvas, page, ast: MultiAST) -> None:
     # Prefer the document subtitle / chapter heading (skip generic "Chapter One"
     # which is usually just a numeral on the cover).
-    title = "Energy Reserves and Potential"
+    title = ""
     subtitle = None
     chapter_head = None
     for p in ast.contentAST.paragraphs:
@@ -711,19 +817,85 @@ def _draw_page_header_band(c: _canvas.Canvas, page, ast: MultiAST) -> None:
               and chapter_head is None):
             chapter_head = p.content.strip()
     title = chapter_head or subtitle or title
-    # Strip a leading "CHAPTER N:" prefix so the band reads cleanly
     import re as _re
-    title = _re.sub(r"^chapter\s+\d+\s*[:\-]\s*", "", title, flags=_re.IGNORECASE)
+    # Strip leading "CHAPTER N:" / "CHAPTER N -" prefixes so we don't print
+    # "Chapter 1: Chapter 1: ..." after we add the prefix below.
+    cleaned = _re.sub(r"^chapter\s+\d+\s*[:\-]\s*", "", title, flags=_re.IGNORECASE)
+    chapter_label = "Chapter 1: " + cleaned if cleaned else "Energy Reserves and Potential"
 
-    c.setStrokeColor(HexColor("#cccccc"))
-    c.setLineWidth(0.4)
-    c.line(36, page.height - 28, page.width - 36, page.height - 28)
-    c.setFont("Helvetica", 8)
-    c.setFillColor(HexColor("#666666"))
-    c.drawString(36, page.height - 20, "Chapter 1: " + title)
-    doc_id = ast.metadata.documentId or ""
-    if doc_id:
-        c.drawRightString(page.width - 36, page.height - 20, doc_id)
+    # Soft gray header line — no doc_id (debug noise)
+    c.setStrokeColor(HexColor("#dddddd"))
+    c.setLineWidth(0.3)
+    c.line(36, page.height - 26, page.width - 36, page.height - 26)
+    c.setFont("Helvetica-Oblique", 8)
+    c.setFillColor(HexColor("#888888"))
+    c.drawString(36, page.height - 18, chapter_label)
+    # Right side: ministry tag instead of doc_id
+    c.drawRightString(page.width - 36, page.height - 18,
+                       "Ministry of Statistics & PI")
+
+
+def _draw_table_of_contents(c: _canvas.Canvas, page, ast: MultiAST) -> None:
+    """Auto-generate a Table of Contents from the SemanticAST / page headings.
+
+    Generic across any AST. Walks every page, collects the first heading
+    paragraph on each page, and prints `<heading>  ...  <page no>`.
+    """
+    margin_x = 60
+    cursor_y = page.height - 90
+
+    # Title of the TOC page
+    c.setFillColor(HexColor("#0B3B7A"))
+    c.setFont("Helvetica-Bold", 22)
+    c.drawString(margin_x, cursor_y, "Table of Contents")
+    cursor_y -= 12
+    c.setStrokeColor(HexColor("#c8a23a"))
+    c.setLineWidth(0.8)
+    c.line(margin_x, cursor_y, margin_x + 160, cursor_y)
+    cursor_y -= 28
+
+    # Collect (label, page_number) from headings
+    entries: list[tuple[str, int]] = []
+    for page_idx, p in enumerate(ast.layoutAST.pages):
+        for block in p.blocks:
+            if block.type not in ("heading", "chapter_heading", "subtitle"):
+                continue
+            for ref in block.elementRefs:
+                para = ast.contentAST.paragraph_by_id(ref)
+                if para and para.content.strip():
+                    entries.append((para.content.strip(), page_idx + 1))
+                    break
+            else:
+                continue
+            break   # one entry per page
+    # If no headings, fall back to listing every table title
+    if not entries:
+        for t_idx, t in enumerate(ast.tableAST.tables):
+            if t.title:
+                entries.append((t.title, 0))
+
+    c.setFont("Helvetica", 11)
+    c.setFillColor(HexColor("#222222"))
+    line_h = 18
+    for label, page_no in entries:
+        if cursor_y < 50:
+            break
+        # Truncate long labels
+        max_chars = 70
+        display = label if len(label) <= max_chars else label[: max_chars - 1] + "…"
+        c.drawString(margin_x, cursor_y, display)
+        # Dotted leader
+        leader_left = margin_x + c.stringWidth(display, "Helvetica", 11) + 6
+        leader_right = page.width - margin_x - 30
+        if leader_right > leader_left:
+            c.setStrokeColor(HexColor("#bbbbbb"))
+            c.setLineWidth(0.4)
+            c.setDash(1, 2)
+            c.line(leader_left, cursor_y + 2, leader_right, cursor_y + 2)
+            c.setDash()
+        if page_no:
+            c.drawRightString(page.width - margin_x, cursor_y, str(page_no))
+        cursor_y -= line_h
 
 
 def _draw_page_footer(c: _canvas.Canvas, page, page_no: int,
@@ -782,9 +954,24 @@ def render_ast_to_pdf(
         # Ministry header band on every page after the cover
         if page_idx > 0:
             _draw_page_header_band(c, page, ast)
-        # Cover treatment for page 1
+        # Cover page: paint chrome ONLY. We render the title block ourselves
+        # in _draw_cover_chrome so the per-block path is skipped here to
+        # avoid drawing the same paragraphs twice.
         if page_idx == 0:
             _draw_cover_chrome(c, page, ast)
+            # Footer still drawn at the bottom
+            c.showPage()
+            continue
+
+        # Page 2 special case: if it's an empty_canvas block, paint a Table
+        # of Contents derived from the AST instead of leaving the page blank.
+        only_block = page.blocks[0] if len(page.blocks) == 1 else None
+        if (page_idx == 1 and only_block is not None
+              and only_block.type == "empty_canvas"):
+            _draw_table_of_contents(c, page, ast)
+            _draw_page_footer(c, page, page_idx + 1, total_pages, ast)
+            c.showPage()
+            continue
 
         for block in page.blocks:
             for element_id in (block.elementRefs or [None]):
