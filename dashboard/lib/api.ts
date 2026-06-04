@@ -963,6 +963,19 @@ export const reportBuilderApi = {
     });
     return data;
   },
+  /** Coordinate-exact PDF from fina-ast layout + Deep BI (economics domain default). */
+  coordGenerate: async (
+    analysisId: number,
+    options?: { astPath?: string; domain?: string; useGemini?: boolean }
+  ): Promise<{ job_id: number; status: string; stage?: string; message: string }> => {
+    const { data } = await api.post('/report-builder/coord-generate', {
+      analysis_id: analysisId,
+      ast_path: options?.astPath,
+      domain: options?.domain ?? 'economics',
+      use_gemini: options?.useGemini ?? true,
+    });
+    return data;
+  },
   deliver: async (
     jobId: number,
     payload: { channel: 'email' | 'webhook'; to?: string; url?: string }

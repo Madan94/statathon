@@ -634,9 +634,16 @@ class DeepBIFigureBinder:
         Maximum number of bars / slices in chart output.
     """
 
-    def __init__(self, *, use_gemini: bool = True, top_n: int = 10):
+    def __init__(
+        self,
+        *,
+        use_gemini: bool = True,
+        top_n: int = 10,
+        strict_deep_bi: bool = False,
+    ):
         self._use_gemini = use_gemini
         self._top_n = top_n
+        self._strict = strict_deep_bi
         self._ast_ref: MultiAST | None = None  # set during bind for table-fallback
 
     # ------------------------------------------------------------------ public
@@ -670,7 +677,7 @@ class DeepBIFigureBinder:
 
         for fig in ast.figureAST.figures:
             report.figures_attempted += 1
-            if fig.computed_chart and fig.computed_chart.get("data"):
+            if not self._strict and fig.computed_chart and fig.computed_chart.get("data"):
                 report.figures_from_components += 1
                 report.figures_bound += 1
                 continue  # already populated (e.g. from geometry components)
@@ -688,62 +695,75 @@ class DeepBIFigureBinder:
 
             chart_data = None
 
-            cap_l = caption.lower()
-            if "source wise" in cap_l or "sourcewise" in cap_l:
-                sw = _chart_renewable_sourcewise(fig, ast)
-                if sw and len(sw.get("data") or []) >= 2:
-                    chart_data = sw
-                    report.figures_from_fallback += 1
-
-            # ----- AST table charts (oil / gas / renewable statewise) — authoritative -----
-            if _caption_needs_ast_table(caption):
-                tbl_chart = _chart_from_ast_tables(
-                    fig, ast, chart_type, top_n=self._top_n)
-                if tbl_chart and len(tbl_chart.get("data") or []) >= 2:
-                    chart_data = tbl_chart
-                    report.figures_from_fallback += 1
-
-            # ----- Reserve composition (coal/lignite pies): dataset aggregation first -----
-            if chart_type == "pie" and not chart_data:
-                pie_rows = _direct_aggregate(
-                    df, caption, "pie", filter_value, top_n=min(6, self._top_n),
-                )
-                if len(pie_rows) >= 2:
-                    chart_data = {"type": "pie", "title": caption, "data": pie_rows}
-                    report.figures_from_fallback += 1
-
-            # ----- Attempt 1: Deep BI pipeline (bar / regional charts) -----
-            if not chart_data and self._use_gemini:
-                try:
-                    chart_data = self._bind_via_deep_bi(fig, df, chart_type, filter_value)
+            if self._strict:
+                # Deep BI agents only
+                if self._use_gemini:
+                    try:
+                        chart_data = self._bind_via_deep_bi(
+                            fig, df, chart_type, filter_value,
+                        )
+                        if chart_data:
+                            report.figures_from_deep_bi += 1
+                    except Exception as exc:
+                        report.warnings.append(
+                            f"Deep BI failed for {fig.figureId}: {exc}"
+                        )
+                if not chart_data:
+                    chart_data = self._bind_via_response_builder(fig, df, chart_type)
                     if chart_data:
                         report.figures_from_deep_bi += 1
-                except Exception as exc:
-                    msg = f"Deep BI failed for {fig.figureId}: {exc}"
-                    logger.warning(msg)
-                    report.warnings.append(msg)
+            else:
+                cap_l = caption.lower()
+                if "source wise" in cap_l or "sourcewise" in cap_l:
+                    sw = _chart_renewable_sourcewise(fig, ast)
+                    if sw and len(sw.get("data") or []) >= 2:
+                        chart_data = sw
+                        report.figures_from_fallback += 1
 
-            # ----- Attempt 2: direct aggregation from dataset -----
-            if not chart_data and not df.empty:
-                rows = _direct_aggregate(df, caption, chart_type, filter_value,
-                                          top_n=self._top_n)
-                # Only accept if meaningful (≥3 data points); otherwise try table-fallback
-                if rows and len(rows) >= 3:
-                    chart_data = {"type": chart_type, "title": caption, "data": rows}
-                    report.figures_from_fallback += 1
+                if _caption_needs_ast_table(caption):
+                    tbl_chart = _chart_from_ast_tables(
+                        fig, ast, chart_type, top_n=self._top_n,
+                    )
+                    if tbl_chart and len(tbl_chart.get("data") or []) >= 2:
+                        chart_data = tbl_chart
+                        report.figures_from_fallback += 1
 
-            # ----- Attempt 3: extract from AST table data for this figure -----
-            # Used when dataset lacks coverage for the figure's topic (e.g. Crude Oil,
-            # Natural Gas, Renewable Energy potential tables that exist in the AST).
-            if (not chart_data or len((chart_data or {}).get("data") or []) < 3) \
-                    and self._ast_ref is not None:
-                tbl_chart = _chart_from_ast_tables(
-                    fig, self._ast_ref, chart_type, self._top_n)
-                if tbl_chart and len(tbl_chart.get("data") or []) > len(
-                        (chart_data or {}).get("data") or []):
-                    chart_data = tbl_chart
-                    if not report.figures_from_fallback or len(
-                            (chart_data or {}).get("data") or []) < 3:
+                if chart_type == "pie" and not chart_data:
+                    pie_rows = _direct_aggregate(
+                        df, caption, "pie", filter_value, top_n=min(6, self._top_n),
+                    )
+                    if len(pie_rows) >= 2:
+                        chart_data = {"type": "pie", "title": caption, "data": pie_rows}
+                        report.figures_from_fallback += 1
+
+                if not chart_data and self._use_gemini:
+                    try:
+                        chart_data = self._bind_via_deep_bi(
+                            fig, df, chart_type, filter_value,
+                        )
+                        if chart_data:
+                            report.figures_from_deep_bi += 1
+                    except Exception as exc:
+                        msg = f"Deep BI failed for {fig.figureId}: {exc}"
+                        logger.warning(msg)
+                        report.warnings.append(msg)
+
+                if not chart_data and not df.empty:
+                    rows = _direct_aggregate(
+                        df, caption, chart_type, filter_value, top_n=self._top_n,
+                    )
+                    if rows and len(rows) >= 3:
+                        chart_data = {"type": chart_type, "title": caption, "data": rows}
+                        report.figures_from_fallback += 1
+
+                if (not chart_data or len((chart_data or {}).get("data") or []) < 3) \
+                        and self._ast_ref is not None:
+                    tbl_chart = _chart_from_ast_tables(
+                        fig, self._ast_ref, chart_type, self._top_n,
+                    )
+                    if tbl_chart and len(tbl_chart.get("data") or []) > len(
+                            (chart_data or {}).get("data") or []):
+                        chart_data = tbl_chart
                         report.figures_from_fallback += 1
 
             if chart_data:
@@ -849,3 +869,28 @@ class DeepBIFigureBinder:
         # Fall back to generic table extraction
         chart = _exec_to_chart(result_dict, chart_type, title, top_n=self._top_n)
         return chart
+
+    def _bind_via_response_builder(
+        self,
+        fig: Figure,
+        df: pd.DataFrame,
+        chart_type: str,
+    ) -> dict | None:
+        """Deep BI execute path (intent → plan → execute → chart)."""
+        from .deep_bi_execute import chart_from_execution, execute_bi_query
+
+        q = fig.description or _caption_to_query(fig.caption or "", df)
+        try:
+            ex = execute_bi_query(
+                f"{q} Rank top states. Chart type: {chart_type}.",
+                df,
+                archetype="economic",
+            )
+            spec = chart_from_execution(
+                ex, chart_type=chart_type, top_n=self._top_n, query=q,
+            )
+            if spec:
+                return {"type": spec["type"], "title": fig.caption, "data": spec["data"]}
+        except Exception as exc:
+            logger.warning("Deep BI execute chart failed %s: %s", fig.figureId, exc)
+        return None

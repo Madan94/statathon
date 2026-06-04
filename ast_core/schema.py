@@ -311,20 +311,33 @@ class Paragraph:
     content: str = ""
     styleId: str | None = None
     evidenceRefs: list[str] = field(default_factory=list)
+    # Coordinate-template BI: legacy template text + query for Deep BI on new dataset
+    biQuery: str = ""
+    templateQuestion: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         out = {"id": self.id, "type": self.type, "content": self.content}
-        if self.styleId: out["styleId"] = self.styleId
-        if self.evidenceRefs: out["evidenceRefs"] = self.evidenceRefs
+        if self.styleId:
+            out["styleId"] = self.styleId
+        if self.evidenceRefs:
+            out["evidenceRefs"] = self.evidenceRefs
+        if self.biQuery:
+            out["biQuery"] = self.biQuery
+        if self.templateQuestion:
+            out["templateQuestion"] = self.templateQuestion
         return out
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> Paragraph:
-        return cls(id=str(d.get("id") or ""),
-                   type=str(d.get("type") or "text"),
-                   content=str(d.get("content") or ""),
-                   styleId=d.get("styleId"),
-                   evidenceRefs=list(d.get("evidenceRefs") or []))
+        return cls(
+            id=str(d.get("id") or ""),
+            type=str(d.get("type") or "text"),
+            content=str(d.get("content") or ""),
+            styleId=d.get("styleId"),
+            evidenceRefs=list(d.get("evidenceRefs") or []),
+            biQuery=str(d.get("biQuery") or ""),
+            templateQuestion=str(d.get("templateQuestion") or ""),
+        )
 
 
 @dataclass
@@ -425,13 +438,19 @@ class Table:
     styleId: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        meta = dict(self.metadata or {})
+        bi_q = meta.get("biQuery")
         out = {
             "tableId": self.tableId, "title": self.title,
             "columns": self.columns, "rows": self.rows,
-            "footnotes": self.footnotes, "metadata": self.metadata,
+            "footnotes": self.footnotes, "metadata": meta,
         }
-        if self.evidenceRefs: out["evidenceRefs"] = self.evidenceRefs
-        if self.styleId: out["styleId"] = self.styleId
+        if bi_q:
+            out["biQuery"] = bi_q
+        if self.evidenceRefs:
+            out["evidenceRefs"] = self.evidenceRefs
+        if self.styleId:
+            out["styleId"] = self.styleId
         return out
 
     @classmethod
@@ -442,7 +461,10 @@ class Table:
                    rows=[list(r) if isinstance(r, list) else [r]
                          for r in (d.get("rows") or [])],
                    footnotes=list(d.get("footnotes") or []),
-                   metadata=dict(d.get("metadata") or {}),
+                   metadata={
+                       **dict(d.get("metadata") or {}),
+                       **({"biQuery": d["biQuery"]} if d.get("biQuery") else {}),
+                   },
                    evidenceRefs=list(d.get("evidenceRefs") or []),
                    styleId=d.get("styleId"))
 
