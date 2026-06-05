@@ -22,7 +22,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 from ast_core.schema import TemplateBlueprintAST, TemplateEntity, TopicNode
+from template_engine.config import PipelineConfig, get_config
 from template_engine.ingestion.pdf_hasher import sha256_file
+from template_engine.storage.checkpoint import CheckpointBackend, get_checkpoint_backend
 from template_engine.vlm.client import VLMClient, VLMClientFactory, VLMExtractionError
 from template_engine.vlm.schemas import VLMPageResult
 from template_engine.extraction.entity_extractor import extract_entities
@@ -90,6 +92,7 @@ class ExtractionResult:
     partial: bool = False  # True if some pages failed
     failed_pages: list[int] = field(default_factory=list)
     review: ReviewResult | None = None  # Automated review result
+    warnings: list[str] = field(default_factory=list)  # Non-fatal issues
 
 
 # Type for progress callbacks
@@ -105,6 +108,7 @@ def run_extraction_pipeline(
     progress_callback: ProgressCallback | None = None,
     resume_from: TemplateBlueprintAST | None = None,
     skip_pages: list[int] | None = None,
+    config: PipelineConfig | None = None,
 ) -> ExtractionResult:
     """Run the full Phase 0 extraction pipeline.
 
@@ -116,13 +120,27 @@ def run_extraction_pipeline(
         progress_callback: Optional callback invoked at each stage transition.
         resume_from: Existing partial AST to merge with (for resume flows).
         skip_pages: Pages to skip (already extracted in previous run).
+        config: Override pipeline config (uses global if None).
 
     Returns:
         ExtractionResult with the assembled TemplateBlueprintAST.
     """
+    cfg = config or get_config()
     path = Path(pdf_path)
     progress = ExtractionProgress()
     result = ExtractionResult(success=False, progress=progress)
+
+    # Initialize checkpoint backend
+    checkpoint: CheckpointBackend | None = None
+    if cfg.checkpoint.enabled:
+        try:
+            checkpoint = get_checkpoint_backend(
+                backend=cfg.checkpoint.backend,
+                file_dir=cfg.checkpoint.file_dir,
+            )
+        except Exception as exc:
+            logger.warning("Checkpoint init failed (non-fatal): %s", exc)
+            result.warnings.append(f"Checkpoint unavailable: {exc}")
 
     def _update(stage: str, pct: int) -> None:
         progress.stage = stage
@@ -130,6 +148,13 @@ def run_extraction_pipeline(
         progress.progress_pct = pct
         if progress_callback:
             progress_callback(progress)
+
+    def _save_checkpoint(stage: str, data: dict[str, Any]) -> None:
+        if checkpoint and result.source_hash:
+            try:
+                checkpoint.save(result.source_hash, stage, data)
+            except Exception as exc:
+                logger.warning("Checkpoint save failed (non-fatal): %s", exc)
 
     # ─── Stage 1: Hashing ───────────────────────────────────────────────
     _update("hashing", 5)
@@ -144,6 +169,34 @@ def run_extraction_pipeline(
             "message": f"PDF file not found: {path}",
             "severity": "warning",
         })
+
+    result.source_hash = source_hash
+    progress.timings["hashing"] = time.time() - t0
+
+    # Check for completed checkpoint (cache hit)
+    try:
+        has_cache = (
+            checkpoint and source_hash
+            and checkpoint.exists(source_hash, "complete")
+        )
+    except Exception as exc:
+        logger.warning("Checkpoint lookup failed (non-fatal): %s", exc)
+        has_cache = False
+        checkpoint = None  # Disable broken checkpoint for rest of pipeline
+
+    if has_cache:
+        cached = checkpoint.load(source_hash, "complete")
+        if cached and "ast" in cached:
+            try:
+                ast = TemplateBlueprintAST.from_dict(cached["ast"])
+                _update("complete", 100)
+                result.success = True
+                result.ast = ast
+                result.warnings.append("Loaded from checkpoint cache")
+                logger.info("Cache hit for %s — returning stored AST", source_hash[:8])
+                return result
+            except Exception:
+                pass  # Stale cache — continue extraction
 
     result.source_hash = source_hash
     progress.timings["hashing"] = time.time() - t0
@@ -203,47 +256,117 @@ def run_extraction_pipeline(
         _update("complete", 100)
         return result
 
+    # Checkpoint VLM results
+    _save_checkpoint("vlm_parsing", {
+        "pages_count": len(pages),
+        "failed_pages": failed_pages,
+    })
+
     # ─── Stage 3: Entity Extraction ────────────────────────────────────
     _update("entity_extraction", 40)
     t0 = time.time()
 
-    raw_entities = extract_entities(pages)
+    try:
+        raw_entities = extract_entities(pages)
+    except Exception as exc:
+        logger.warning("Entity extraction failed (non-fatal): %s", exc)
+        raw_entities = []
+        result.warnings.append(f"Entity extraction failed: {exc}")
+        progress.errors.append({
+            "stage": "entity_extraction",
+            "message": str(exc),
+            "severity": "warning",
+        })
+
     progress.timings["entity_extraction"] = time.time() - t0
 
     # ─── Stage 4: Entity Deduplication ─────────────────────────────────
     _update("entity_deduplication", 50)
     t0 = time.time()
 
-    entities = deduplicate_entities(raw_entities)
+    try:
+        entities = deduplicate_entities(raw_entities)
+    except Exception as exc:
+        logger.warning("Entity dedup failed (non-fatal): %s", exc)
+        entities = raw_entities  # Use raw entities as fallback
+        result.warnings.append(f"Entity dedup failed: {exc}")
+
     progress.entities_found = len(entities)
     progress.timings["entity_deduplication"] = time.time() - t0
+
+    _save_checkpoint("entity_deduplication", {
+        "entity_count": len(entities),
+    })
 
     # ─── Stage 5: Question Inference ───────────────────────────────────
     _update("question_inference", 65)
     t0 = time.time()
 
-    topics = infer_questions(pages, entities)
+    try:
+        topics = infer_questions(pages, entities)
+    except Exception as exc:
+        logger.warning("Question inference failed (non-fatal): %s", exc)
+        topics = []
+        result.warnings.append(f"Question inference failed: {exc}")
+        progress.errors.append({
+            "stage": "question_inference",
+            "message": str(exc),
+            "severity": "warning",
+        })
+
     progress.questions_inferred = sum(len(t.questions) for t in topics)
     progress.timings["question_inference"] = time.time() - t0
+
+    _save_checkpoint("question_inference", {
+        "topic_count": len(topics),
+        "question_count": progress.questions_inferred,
+    })
 
     # ─── Stage 6: AST Assembly ─────────────────────────────────────────
     _update("ast_assembly", 80)
     t0 = time.time()
 
-    sglang_client = SGLangClientFactory.create(sglang_backend)
+    sglang_client = SGLangClientFactory.create(sglang_backend or cfg.sglang.backend or None)
     # Always use the client's actual backend_name (not the user-supplied alias).
-    # e.g. vlm_backend="fallback" → vlm_client.backend_name == "pdfplumber_fallback"
     resolved_vlm_backend = vlm_client.backend_name
 
-    ast = assemble_template_ast(
-        pages=pages,
-        entities=entities,
-        topics=topics,
-        template_name=template_name,
-        source_hash=source_hash,
-        sglang_client=sglang_client,
-        vlm_backend=resolved_vlm_backend,
-    )
+    try:
+        ast = assemble_template_ast(
+            pages=pages,
+            entities=entities,
+            topics=topics,
+            template_name=template_name,
+            source_hash=source_hash,
+            sglang_client=sglang_client,
+            vlm_backend=resolved_vlm_backend,
+        )
+    except Exception as exc:
+        logger.warning("AST assembly failed (non-fatal): %s", exc)
+        result.warnings.append(f"AST assembly failed: {exc}")
+        progress.errors.append({
+            "stage": "ast_assembly",
+            "message": str(exc),
+            "severity": "error",
+        })
+        # Build minimal AST so pipeline can still return partial results
+        ast = TemplateBlueprintAST(
+            templateId=f"tmpl_{source_hash[:12]}",
+            name=template_name,
+            sourceHash=source_hash,
+            pageCount=len(pages),
+            extractionMethod=f"{resolved_vlm_backend}+{sglang_client.backend_name if sglang_client else 'none'}",
+            topics=topics,
+            entities=entities,
+            extractionMeta={
+                "total_pages": len(pages),
+                "total_entities": len(entities),
+                "total_topics": len(topics),
+                "total_questions": progress.questions_inferred,
+                "assembly_failed": True,
+            },
+        )
+        result.partial = True
+
     progress.timings["ast_assembly"] = time.time() - t0
 
     # ─── Stage 7: Merge with resume (if applicable) ───────────────────
@@ -255,7 +378,12 @@ def run_extraction_pipeline(
     _update("validation", 95)
     t0 = time.time()
     try:
-        reviewer = TemplateReviewer()
+        reviewer = TemplateReviewer(
+            min_topics=cfg.review.min_topics,
+            min_questions=cfg.review.min_questions,
+            min_entities=cfg.review.min_entities,
+            min_confidence=cfg.review.min_confidence,
+        )
         review = reviewer.review(ast)
         result.review = review
         if review.has_errors:
@@ -279,6 +407,12 @@ def run_extraction_pipeline(
     result.success = True
     result.ast = ast
     result.failed_pages = failed_pages
+
+    # Save completed AST to checkpoint
+    _save_checkpoint("complete", {
+        "ast": ast.to_dict() if hasattr(ast, "to_dict") else {},
+        "template_name": template_name,
+    })
 
     logger.info(
         "Pipeline complete for '%s': %d pages → %d entities → %d questions in %d topics (%.1fs)",

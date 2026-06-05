@@ -207,6 +207,136 @@ class RealSGLangClient(SGLangClient):
             f"SGLang generation failed after {self._max_retries} attempts: {last_exc}"
         )
 
+    # ------------------------------------------------------------------
+    # Decomposed 3-call pipeline (Step 7)
+    # Splits monolithic AST generation into 3 smaller calls:
+    #   1. generate_topics() — extract topic list
+    #   2. generate_questions(topics) — infer questions per topic
+    #   3. generate_answer_structure(questions) — layout components
+    # Each uses a focused sub-schema that fits within 4096 tokens.
+    # ------------------------------------------------------------------
+
+    _TOPIC_SCHEMA: dict[str, Any] = {
+        "type": "object",
+        "properties": {
+            "topics": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "topicId": {"type": "string"},
+                        "title": {"type": "string"},
+                        "pageRange": {"type": "array", "items": {"type": "integer"}},
+                    },
+                    "required": ["topicId", "title"],
+                },
+            },
+        },
+        "required": ["topics"],
+    }
+
+    _QUESTION_SCHEMA: dict[str, Any] = {
+        "type": "object",
+        "properties": {
+            "questions": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "questionId": {"type": "string"},
+                        "topicId": {"type": "string"},
+                        "text": {"type": "string"},
+                        "questionType": {"type": "string"},
+                    },
+                    "required": ["questionId", "topicId", "text"],
+                },
+            },
+        },
+        "required": ["questions"],
+    }
+
+    _ANSWER_SCHEMA: dict[str, Any] = {
+        "type": "object",
+        "properties": {
+            "answers": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "questionId": {"type": "string"},
+                        "layoutType": {"type": "string"},
+                        "components": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "componentId": {"type": "string"},
+                                    "type": {"type": "string"},
+                                    "renderOrder": {"type": "integer"},
+                                    "suggestedConstraints": {"type": "object"},
+                                },
+                                "required": ["componentId", "type"],
+                            },
+                        },
+                    },
+                    "required": ["questionId", "components"],
+                },
+            },
+        },
+        "required": ["answers"],
+    }
+
+    def generate_topics(self, document_context: str) -> dict[str, Any]:
+        """Call 1/3: Extract topics from document context."""
+        prompt = (
+            "Given the following document structure, identify the main statistical topics.\n"
+            "Return ONLY topics with their IDs and page ranges.\n\n"
+            f"{document_context}"
+        )
+        return self.generate(prompt, self._TOPIC_SCHEMA)
+
+    def generate_questions(self, topics_context: str) -> dict[str, Any]:
+        """Call 2/3: Infer analytical questions per topic."""
+        prompt = (
+            "Given these topics extracted from a statistical document, "
+            "generate analytical questions for each topic.\n"
+            "Each question should have a questionType (descriptive/comparative/trend/composition).\n\n"
+            f"{topics_context}"
+        )
+        return self.generate(prompt, self._QUESTION_SCHEMA)
+
+    def generate_answer_structure(self, questions_context: str) -> dict[str, Any]:
+        """Call 3/3: Design answer layout components per question."""
+        prompt = (
+            "Given these analytical questions, design the answer structure for each.\n"
+            "Each answer needs components (narrative_paragraph, data_table, chart, kpi_card) "
+            "with render order and suggested constraints (max_words, precision, etc).\n\n"
+            f"{questions_context}"
+        )
+        return self.generate(prompt, self._ANSWER_SCHEMA)
+
+    def generate_decomposed(self, document_context: str) -> dict[str, Any]:
+        """Run the full 3-call decomposed pipeline, merging results into one AST fragment."""
+        # Call 1
+        topics_result = self.generate_topics(document_context)
+        topics = topics_result.get("topics", [])
+
+        # Call 2
+        topics_ctx = json.dumps({"topics": topics, "document_context": document_context[:2000]})
+        questions_result = self.generate_questions(topics_ctx)
+        questions = questions_result.get("questions", [])
+
+        # Call 3
+        questions_ctx = json.dumps({"questions": questions})
+        answers_result = self.generate_answer_structure(questions_ctx)
+
+        # Merge into unified fragment
+        return {
+            "topics": topics,
+            "questions": questions,
+            "answers": answers_result.get("answers", []),
+        }
+
 
 class SGLangClientFactory:
     """Factory for SGLang clients based on environment."""

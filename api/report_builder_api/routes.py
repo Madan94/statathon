@@ -518,8 +518,16 @@ def delete_template(
 
 def _run_job(job_id: int):
     """Background runner — opens its own DB session."""
+    from api.report_builder_api.progress_sse import get_progress_bus, ProgressEvent
+
+    bus = get_progress_bus()
+
+    def _emit(stage: str, pct: int, message: str):
+        bus.publish(job_id, ProgressEvent(stage=stage, pct=pct, message=message))
+
     db = SessionLocal()
     try:
+        _emit("init", 5, "Loading job context...")
         job = db.query(ReportJob).filter(ReportJob.id == job_id).first()
         if not job:
             return
@@ -569,6 +577,8 @@ def _run_job(job_id: int):
             if tpl and isinstance(tpl.filter_config, dict):
                 fc = tpl.filter_config
 
+        _emit("binding", 20, "Resolving entity bindings...")
+
         generate_report(
             db=db,
             job_id=job.id,
@@ -580,9 +590,15 @@ def _run_job(job_id: int):
             dataset_filename=dataset.filename,
             filter_config=fc,
         )
+
+        _emit("complete", 100, "Report generation complete")
+        bus.publish(job_id, ProgressEvent(event_type="complete", stage="done", pct=100, message="Done"))
     except Exception as exc:
         logger.exception("Report builder job %s failed", job_id)
         try:
+            bus.publish(job_id, ProgressEvent(
+                event_type="error", stage="error", pct=-1, message=str(exc)[:500],
+            ))
             job = db.query(ReportJob).filter(ReportJob.id == job_id).first()
             if job:
                 job.status = "failed"
@@ -824,6 +840,88 @@ def download_job_pdf(
         media_type="application/pdf",
         filename=f"statathon-report-{job_id}.pdf",
     )
+
+
+@router.get("/jobs/{job_id}/preview")
+def preview_job_html(
+    job_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Return HTML preview of the generated report (rendered from canvas blocks)."""
+    from fastapi.responses import HTMLResponse
+
+    row = require_job_access(db, job_id, user_id)
+    if not row.blocks_json:
+        raise HTTPException(409, "Report not yet generated")
+
+    blocks = row.blocks_json if isinstance(row.blocks_json, list) else []
+
+    # Build simple HTML from canvas blocks
+    parts = [
+        "<!DOCTYPE html><html><head><meta charset='utf-8'>",
+        "<style>body{font-family:system-ui;max-width:800px;margin:40px auto;padding:0 20px;line-height:1.6}",
+        "table{border-collapse:collapse;width:100%;margin:16px 0}",
+        "th,td{border:1px solid #ddd;padding:8px;text-align:left}",
+        "th{background:#f4f4f4}.kpi{text-align:center;font-size:2em;font-weight:bold;padding:20px}",
+        ".section{margin-top:32px}.citation{color:#666;font-size:0.85em}</style>",
+        f"<title>Report #{job_id} Preview</title></head><body>",
+    ]
+
+    for block in blocks:
+        btype = block.get("type", "narrative")
+        section = block.get("section", "")
+        title = block.get("title", "")
+        content = block.get("content", "")
+
+        if title:
+            parts.append(f"<div class='section'><h2>{_escape_html(title)}</h2>")
+        if btype == "narrative":
+            parts.append(f"<p>{_escape_html(content)}</p>")
+        elif btype == "data_table":
+            parts.append(_render_html_table(block.get("table_data", {})))
+        elif btype == "kpi_card":
+            val = block.get("value", content)
+            parts.append(f"<div class='kpi'>{_escape_html(str(val))}</div>")
+        elif btype == "chart":
+            parts.append(f"<p><em>[Chart: {_escape_html(title or 'Visualization')}]</em></p>")
+        else:
+            parts.append(f"<p>{_escape_html(content)}</p>")
+        if title:
+            parts.append("</div>")
+
+    parts.append("</body></html>")
+    return HTMLResponse(content="".join(parts))
+
+
+def _escape_html(text: str) -> str:
+    """Basic HTML escaping."""
+    return (
+        text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
+
+
+def _render_html_table(table_data: dict) -> str:
+    """Render a simple HTML table from table_data dict."""
+    headers = table_data.get("headers", [])
+    rows = table_data.get("rows", [])
+    if not headers and not rows:
+        return "<p><em>[Empty table]</em></p>"
+    parts = ["<table><thead><tr>"]
+    for h in headers:
+        parts.append(f"<th>{_escape_html(str(h))}</th>")
+    parts.append("</tr></thead><tbody>")
+    for row in rows[:50]:  # Limit to 50 rows in preview
+        parts.append("<tr>")
+        cells = row if isinstance(row, list) else [row]
+        for cell in cells:
+            parts.append(f"<td>{_escape_html(str(cell))}</td>")
+        parts.append("</tr>")
+    parts.append("</tbody></table>")
+    return "".join(parts)
 
 
 # ---------------- Block-level ops ----------------

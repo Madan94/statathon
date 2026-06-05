@@ -120,3 +120,80 @@ def _merge_group(group: list[TemplateEntity]) -> TemplateEntity:
 def _name_similarity(a: str, b: str) -> float:
     """Compute string similarity ratio (0.0-1.0)."""
     return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+
+
+# ---------------------------------------------------------------------------
+# Scoped dedup (Step 5: topic-scoped with cross-refs for GEO/TIME)
+# ---------------------------------------------------------------------------
+
+_GLOBAL_ENTITY_TYPES = frozenset({"geo", "time", "temporal", "geographic", "location"})
+
+
+def deduplicate_entities_scoped(
+    entities: list[TemplateEntity],
+    topic_map: dict[str, list[str]] | None = None,
+    similarity_threshold: float | None = None,
+) -> list[TemplateEntity]:
+    """Scope-aware dedup: dedup within each topic, cross-ref GEO/TIME globally.
+
+    Args:
+        entities: Raw extracted entities (may have .scope set or not)
+        topic_map: mapping of topic_id -> list of page indices.
+                   If provided, entities are assigned to topics by pageIndex.
+        similarity_threshold: override the default fuzzy match threshold
+
+    Returns:
+        Deduplicated, scoped entities with crossRefs populated for global types.
+    """
+    threshold = similarity_threshold or _SIMILARITY_THRESHOLD
+
+    if not entities:
+        return []
+
+    # Assign scopes based on topic_map if entities don't have scope set
+    if topic_map:
+        page_to_topic: dict[int, str] = {}
+        for tid, pages in topic_map.items():
+            for p in pages:
+                page_to_topic[int(p)] = tid
+        for ent in entities:
+            if not ent.scope and ent.pageIndex >= 0:
+                ent.scope = page_to_topic.get(ent.pageIndex, "global")
+            elif not ent.scope:
+                ent.scope = "global"
+
+    # Group by scope
+    scope_groups: dict[str, list[TemplateEntity]] = {}
+    for ent in entities:
+        scope_groups.setdefault(ent.scope or "global", []).append(ent)
+
+    # Dedup within each scope independently
+    all_deduped: list[TemplateEntity] = []
+    for scope, group in scope_groups.items():
+        deduped = deduplicate_entities(group)
+        for ent in deduped:
+            ent.scope = scope
+        all_deduped.extend(deduped)
+
+    # Assign temporary unique IDs before cross-ref pass
+    for idx, ent in enumerate(all_deduped):
+        ent.entityId = f"ent_{idx + 1:04d}"
+
+    # Cross-ref pass: link GEO/TIME entities across scopes
+    global_types = [e for e in all_deduped if e.entityType.lower() in _GLOBAL_ENTITY_TYPES]
+    for ent in global_types:
+        for other in global_types:
+            if other.entityId == ent.entityId:
+                continue
+            if other.scope == ent.scope:
+                continue
+            sim = _name_similarity(ent.name, other.name)
+            if sim >= threshold and other.entityId not in ent.crossRefs:
+                ent.crossRefs.append(other.entityId)
+
+    logger.info(
+        "Scoped dedup: %d → %d entities across %d scopes, %d cross-refs",
+        len(entities), len(all_deduped), len(scope_groups),
+        sum(len(e.crossRefs) for e in all_deduped),
+    )
+    return all_deduped

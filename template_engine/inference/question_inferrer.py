@@ -55,6 +55,63 @@ class QuestionInferrer(ABC):
         ...
 
 
+class PLFSDirectInferrer(QuestionInferrer):
+    """Tier 0: PLFS Statement-aware inferrer — highest confidence, zero LLM cost.
+
+    Detects PLFS "Statement X.Y" patterns and maps directly to questions
+    using the PLFS glossary. This is the fastest and most reliable inferrer
+    for PLFS documents.
+    """
+
+    @property
+    def method_name(self) -> str:
+        return "plfs_direct"
+
+    def infer(self, page: VLMPageResult, region: VLMRegion,
+              entities: list[TemplateEntity]) -> tuple[str, float] | None:
+        # Only fire for heading/title regions
+        if region.role not in ("heading_h1", "heading_h2", "title", "paragraph"):
+            return None
+
+        # Check for Statement pattern
+        statement_re = re.compile(
+            r"Statement\s+(\d+)\.(\d+)(?:\s*\(([^)]+)\))?\s*[:.]?\s*(.*)",
+            re.IGNORECASE,
+        )
+        match = statement_re.search(region.text)
+        if not match:
+            return None
+
+        title = match.group(4).strip()
+        if not title:
+            return None
+
+        # Import and use PLFS parser for classification
+        try:
+            from template_engine.extraction.plfs_parser import (
+                classify_statement,
+                _load_glossary,
+            )
+            glossary = _load_glossary()
+            archetype = classify_statement(title, glossary)
+
+            # Generate question based on archetype
+            title_clean = title.rstrip(".")
+            question_map = {
+                "distribution": f"What is the {title_clean.lower()}?",
+                "rate": f"How does {title_clean.lower()} vary across categories?",
+                "trend": f"What is the {title_clean.lower()}?",
+                "cross_tabulation": f"How is {title_clean.lower()} distributed?",
+                "state_level": f"How does {title_clean.lower()} compare across states/UTs?",
+            }
+            question = question_map.get(archetype, f"What does {title_clean.lower()} show?")
+            return question, 0.92  # High confidence — pattern match
+
+        except Exception:
+            # Fallback: simple question from title
+            return f"Analyze: {title}", 0.85
+
+
 class PatternInferrer(QuestionInferrer):
     """Infers questions using predefined MoSPI question pattern templates."""
 
@@ -354,11 +411,12 @@ def infer_questions(pages: list[VLMPageResult],
     Returns:
         List of TopicNode containing nested QuestionNodes.
     """
-    # Build inferrer cascade
+    # Build inferrer cascade (ordered by priority: cheapest+best first)
     inferrers: list[QuestionInferrer] = [
-        HybridInferrer(),
-        PatternInferrer(),
-        StubInferrer(),
+        PLFSDirectInferrer(),   # Tier 0: PLFS Statement pattern (free, 0.92 conf)
+        HybridInferrer(),       # Tier 1: VLM + LLM reasoning (API cost)
+        PatternInferrer(),      # Tier 2: MoSPI pattern templates (free, 0.65-0.72 conf)
+        StubInferrer(),         # Tier 3: Generic from heading (free, 0.40 conf)
     ]
 
     # Group pages into topics by heading hierarchy
@@ -424,6 +482,9 @@ def infer_questions(pages: list[VLMPageResult],
             answer_structure = _build_answer_structure(page, region, question_type)
             entity_bindings = _bind_entities_to_question(page, region, entities)
 
+            # Assign priority based on confidence + method
+            priority = _assign_priority(confidence, method, question_type)
+
             question = QuestionNode(
                 questionId=f"Q_{question_counter:04d}",
                 intent=intent,
@@ -434,6 +495,7 @@ def infer_questions(pages: list[VLMPageResult],
                 answerStructure=answer_structure,
                 pageIndex=page.pageIndex,
                 sourceHeading=region.text.strip(),
+                priority=priority,
             )
             current_topic.questions.append(question)
 
@@ -442,6 +504,36 @@ def infer_questions(pages: list[VLMPageResult],
         question_counter, len(topics), len(pages),
     )
     return topics
+
+
+# ---------------------------------------------------------------------------
+# Priority Assignment
+# ---------------------------------------------------------------------------
+
+# High-priority question types (core PLFS indicators)
+_HIGH_PRIORITY_TYPES = {"trend", "comparison", "composition"}
+
+# Methods that indicate high-quality extraction
+_HIGH_PRIORITY_METHODS = {"plfs_direct", "hybrid"}
+
+
+def _assign_priority(confidence: float, method: str, question_type: str) -> str:
+    """Assign priority to a question based on extraction quality.
+
+    Rules:
+      - high: confidence >= 0.85 OR plfs_direct/hybrid method OR core question type
+      - medium: confidence >= 0.60
+      - low: everything else (user approval recommended)
+    """
+    if confidence >= 0.85:
+        return "high"
+    if method in _HIGH_PRIORITY_METHODS:
+        return "high"
+    if question_type in _HIGH_PRIORITY_TYPES and confidence >= 0.70:
+        return "high"
+    if confidence >= 0.60:
+        return "medium"
+    return "low"
 
 
 # ---------------------------------------------------------------------------

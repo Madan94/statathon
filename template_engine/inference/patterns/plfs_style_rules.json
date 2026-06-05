@@ -1,0 +1,112 @@
+{
+  "meta": {
+    "version": "1.0",
+    "domain": "plfs",
+    "description": "PLFS-specific style rules for narrative generation"
+  },
+  "precision_rules": {
+    "percentage": {
+      "decimal_places": 1,
+      "format": "{value:.1f}%",
+      "example": "The LFPR stood at 57.3%."
+    },
+    "count": {
+      "decimal_places": 0,
+      "format": "{value:,.0f}",
+      "example": "The sample comprised 1,01,579 households."
+    },
+    "ratio": {
+      "decimal_places": 2,
+      "format": "{value:.2f}",
+      "example": "The worker-population ratio was 0.47."
+    },
+    "index": {
+      "decimal_places": 1,
+      "format": "{value:.1f}",
+      "example": "The CPI-IW index was 132.5."
+    }
+  },
+  "sentence_patterns": {
+    "trend_increase": [
+      "The {indicator} increased from {prev_value} in {prev_period} to {curr_value} in {curr_period}.",
+      "{indicator} registered an increase of {change} percentage points, rising from {prev_value} to {curr_value}.",
+      "An upward movement of {change} percentage points was observed in {indicator} during {curr_period}."
+    ],
+    "trend_decrease": [
+      "The {indicator} declined from {prev_value} in {prev_period} to {curr_value} in {curr_period}.",
+      "{indicator} recorded a decrease of {change} percentage points over the reference period.",
+      "A decline of {change} percentage points was noted in {indicator} during {curr_period}."
+    ],
+    "trend_stable": [
+      "The {indicator} remained broadly stable at {curr_value} during {curr_period}.",
+      "No significant change was observed in {indicator}, which stood at {curr_value}."
+    ],
+    "comparison_higher": [
+      "The {indicator} for {group_a} ({value_a}) was higher than that for {group_b} ({value_b}).",
+      "{group_a} recorded a higher {indicator} ({value_a}) compared to {group_b} ({value_b})."
+    ],
+    "comparison_lower": [
+      "The {indicator} for {group_a} ({value_a}) was lower than that for {group_b} ({value_b}).",
+      "{group_a} registered a lower {indicator} ({value_a}) relative to {group_b} ({value_b})."
+    ],
+    "composition": [
+      "Of the total {total_label}, {component} accounted for {share}%.",
+      "{component} constituted {share}% of the total {total_label} during {period}.",
+      "The share of {component} in total {total_label} was {share}%."
+    ],
+    "level_statement": [
+      "The {indicator} was estimated at {value} during {period} ({frequency}).",
+      "As per the PLFS {period} estimates, the {indicator} stood at {value}."
+    ]
+  },
+  "comparison_templates": {
+    "rural_urban": {
+      "dimensions": ["Rural", "Urban"],
+      "template": "The {indicator} was {rural_value} in rural areas and {urban_value} in urban areas.",
+      "gap_template": "The rural-urban gap in {indicator} was {gap} percentage points."
+    },
+    "male_female": {
+      "dimensions": ["Male", "Female"],
+      "template": "For males, the {indicator} was {male_value}, while for females it was {female_value}.",
+      "gap_template": "The gender gap in {indicator} was {gap} percentage points."
+    },
+    "quarterly": {
+      "dimensions": ["Q1", "Q2", "Q3", "Q4"],
+      "template": "The {indicator} moved from {q1_value} in Q1 to {q4_value} in Q4 of {year}."
+    },
+    "annual": {
+      "dimensions": ["Previous Year", "Current Year"],
+      "template": "On an annual basis, the {indicator} changed from {prev_value} ({prev_year}) to {curr_value} ({curr_year})."
+    }
+  },
+  "terminology": {
+    "LFPR": "Labour Force Participation Rate",
+    "WPR": "Worker Population Ratio",
+    "UR": "Unemployment Rate",
+    "CWS": "Current Weekly Status",
+    "UPSS": "Usual Principal and Subsidiary Status",
+    "UPS": "Usual Principal Status",
+    "ps+ss": "principal and subsidiary status",
+    "hh": "household",
+    "persons": "persons aged 15 years and above"
+  },
+  "hedging_rules": {
+    "significant_change_threshold": 1.0,
+    "hedge_phrases": [
+      "broadly stable",
+      "marginal change",
+      "modest variation"
+    ],
+    "confidence_qualifiers": {
+      "high": "",
+      "medium": "approximately",
+      "low": "estimated at around"
+    }
+  },
+  "formatting_rules": {
+    "indian_numbering": true,
+    "lakh_crore_threshold": 100000,
+    "period_format": "{quarter} ({month_start}-{month_end}), {year}",
+    "source_citation": "Source: Periodic Labour Force Survey (PLFS), MoSPI, GoI"
+  }
+}

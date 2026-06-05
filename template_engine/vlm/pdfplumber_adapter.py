@@ -177,3 +177,123 @@ class PdfPlumberVLMAdapter(VLMClient):
             ))
 
         return regions
+
+    def _extract_tables_camelot(
+        self, pdf_path: Path, page_num: int, page_idx: int,
+    ) -> list[VLMTableData]:
+        """Enhanced table extraction using camelot-py (lattice mode).
+
+        camelot handles merged cells and multi-level headers better than
+        pdfplumber for PLFS-style tables with ruled lines.
+
+        Falls back silently if camelot is not installed.
+        """
+        try:
+            import camelot  # type: ignore
+        except ImportError:
+            return []
+
+        try:
+            # camelot uses 1-indexed page numbers
+            tables = camelot.read_pdf(
+                str(pdf_path),
+                pages=str(page_num + 1),
+                flavor="lattice",
+                suppress_stdout=True,
+            )
+        except Exception as exc:
+            logger.debug("camelot extraction failed for page %d: %s", page_num, exc)
+            return []
+
+        results: list[VLMTableData] = []
+        for t_idx, table in enumerate(tables):
+            if table.df.empty:
+                continue
+
+            df = table.df
+            region_id = f"r_{page_idx}_camelot_{t_idx}"
+
+            # Detect multi-level headers: rows where most cells are non-empty
+            # and look like header text (short, no decimal numbers)
+            header_levels: list[list[str]] = []
+            data_start = 0
+
+            for row_idx in range(min(3, len(df))):  # Check up to 3 rows for headers
+                row = [str(c).strip() for c in df.iloc[row_idx]]
+                non_empty = [c for c in row if c]
+                if len(non_empty) >= len(row) * 0.5:
+                    # Likely a header row if cells are short
+                    if all(len(c) < 50 for c in non_empty):
+                        header_levels.append(row)
+                        data_start = row_idx + 1
+                    else:
+                        break
+                else:
+                    break
+
+            if not header_levels:
+                header_levels = [[str(c).strip() for c in df.iloc[0]]]
+                data_start = 1
+
+            headers = header_levels[-1] if header_levels else []
+            rows = [
+                [str(c).strip() for c in df.iloc[r]]
+                for r in range(data_start, len(df))
+            ]
+
+            # Detect header spans from merged cells
+            header_spans: list[list[tuple[int, int]]] = []
+            for lvl_row in header_levels:
+                spans: list[tuple[int, int]] = []
+                col = 0
+                while col < len(lvl_row):
+                    if lvl_row[col]:
+                        span_width = 1
+                        while (col + span_width < len(lvl_row)
+                               and lvl_row[col + span_width] == ""):
+                            span_width += 1
+                        if span_width > 1:
+                            spans.append((col, span_width))
+                    col += 1
+                header_spans.append(spans)
+
+            # Detect row headers (first non-numeric columns)
+            row_headers = 0
+            if rows:
+                for col_idx in range(min(3, len(rows[0]))):
+                    numeric_count = sum(
+                        1 for r in rows[:5]
+                        if col_idx < len(r) and _is_numeric(r[col_idx])
+                    )
+                    if numeric_count < len(rows[:5]) * 0.5:
+                        row_headers = col_idx + 1
+                    else:
+                        break
+
+            results.append(VLMTableData(
+                headers=headers,
+                rows=rows,
+                regionId=region_id,
+                headerLevels=header_levels,
+                headerSpans=header_spans,
+                rowHeaders=row_headers,
+            ))
+
+        if results:
+            logger.debug(
+                "camelot extracted %d tables from page %d",
+                len(results), page_num,
+            )
+        return results
+
+
+def _is_numeric(s: str) -> bool:
+    """Check if a string looks like a number."""
+    s = s.strip().replace(",", "").replace("%", "").replace("-", "")
+    if not s:
+        return False
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False

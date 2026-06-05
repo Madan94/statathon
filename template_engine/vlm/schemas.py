@@ -120,21 +120,89 @@ class VLMEntity:
 
 @dataclass
 class VLMTableData:
-    """Structured table data extracted by VLM."""
+    """Structured table data extracted by VLM.
+
+    Supports hierarchical headers (multi-level column headers) and
+    merged cells common in MoSPI/PLFS tables.
+
+    headerLevels: list of header rows (multi-level headers)
+      e.g. [["", "Rural", "Rural", "Urban", "Urban"],
+            ["", "Male", "Female", "Male", "Female"]]
+    headerSpans: column spans for merged header cells
+      e.g. [[(0,1), (1,2), (3,2)]]  → (start_col, span_width)
+    rowHeaders: first N columns that serve as row identifiers
+    mergedCells: list of (row, col, rowspan, colspan) for merged data cells
+    """
     headers: list[str] = field(default_factory=list)
     rows: list[list[str]] = field(default_factory=list)
     regionId: str = ""
+    headerLevels: list[list[str]] = field(default_factory=list)
+    headerSpans: list[list[tuple[int, int]]] = field(default_factory=list)
+    rowHeaders: int = 0  # number of left columns that are row headers
+    mergedCells: list[tuple[int, int, int, int]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"headers": self.headers, "rows": self.rows, "regionId": self.regionId}
+        out: dict[str, Any] = {
+            "headers": self.headers,
+            "rows": self.rows,
+            "regionId": self.regionId,
+        }
+        if self.headerLevels:
+            out["headerLevels"] = self.headerLevels
+        if self.headerSpans:
+            out["headerSpans"] = [[(s, w) for s, w in level] for level in self.headerSpans]
+        if self.rowHeaders:
+            out["rowHeaders"] = self.rowHeaders
+        if self.mergedCells:
+            out["mergedCells"] = [list(mc) for mc in self.mergedCells]
+        return out
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> VLMTableData:
+        header_spans_raw = d.get("headerSpans") or []
+        header_spans = [
+            [(int(s[0]), int(s[1])) for s in level]
+            for level in header_spans_raw
+        ]
+        merged_raw = d.get("mergedCells") or []
+        merged_cells = [
+            (int(mc[0]), int(mc[1]), int(mc[2]), int(mc[3]))
+            for mc in merged_raw if len(mc) >= 4
+        ]
         return cls(
             headers=list(d.get("headers") or []),
             rows=[list(r) for r in (d.get("rows") or [])],
             regionId=str(d.get("regionId") or ""),
+            headerLevels=[list(lvl) for lvl in (d.get("headerLevels") or [])],
+            headerSpans=header_spans,
+            rowHeaders=int(d.get("rowHeaders") or 0),
+            mergedCells=merged_cells,
         )
+
+    @property
+    def is_hierarchical(self) -> bool:
+        """True if table has multi-level headers."""
+        return len(self.headerLevels) > 1
+
+    @property
+    def flat_headers(self) -> list[str]:
+        """Flatten multi-level headers into single-row names (e.g. 'Rural / Male')."""
+        if not self.headerLevels:
+            return self.headers
+        if len(self.headerLevels) == 1:
+            return self.headerLevels[0]
+
+        # Build composite header from all levels
+        ncols = max(len(lvl) for lvl in self.headerLevels)
+        result: list[str] = []
+        for col in range(ncols):
+            parts: list[str] = []
+            for lvl in self.headerLevels:
+                val = lvl[col] if col < len(lvl) else ""
+                if val and val not in parts:
+                    parts.append(val)
+            result.append(" / ".join(parts) if parts else f"col_{col}")
+        return result
 
 
 @dataclass

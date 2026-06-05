@@ -12,3 +12,8 @@ from template_engine.observability.tracing import (
     init_tracing,
     TracingConfig,
 )
+from template_engine.observability.llm_tracing import (
+    llm_span,
+    trace_llm_call,
+    LLMSpanResult,
+)

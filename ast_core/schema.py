@@ -377,13 +377,27 @@ class AnswerComponent:
     Each component defines WHAT to render (type + constraints) and WHERE
     it connects to in the MultiAST (refs). At runtime, Deep BI fills the
     content; the structure is fixed from the template.
+
+    Constraints model:
+      - suggestedConstraints: populated during extraction (soft defaults)
+      - userConstraints: user overrides from dashboard (takes priority)
+      - constraints: legacy field (backward-compatible alias for suggested)
+      - effective_constraints: merged view (user > suggested)
     """
     componentId: str
     renderOrder: int = 0
     type: str = "narrative_paragraph"  # one of COMPONENT_TYPES
     constraints: dict[str, Any] = field(default_factory=dict)
+    suggestedConstraints: dict[str, Any] = field(default_factory=dict)
+    userConstraints: dict[str, Any] = field(default_factory=dict)
     refs: AnswerComponentRef = field(default_factory=AnswerComponentRef)
     bbox: BBox | None = None  # inline geometry if extracted from PDF
+
+    @property
+    def effective_constraints(self) -> dict[str, Any]:
+        """Merged constraints: user overrides > suggested > legacy."""
+        merged = {**self.constraints, **self.suggestedConstraints, **self.userConstraints}
+        return merged
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -393,6 +407,10 @@ class AnswerComponent:
             "constraints": self.constraints,
             "refs": self.refs.to_dict(),
         }
+        if self.suggestedConstraints:
+            out["suggestedConstraints"] = self.suggestedConstraints
+        if self.userConstraints:
+            out["userConstraints"] = self.userConstraints
         if self.bbox:
             out["bbox"] = self.bbox.to_dict()
         return out
@@ -405,6 +423,8 @@ class AnswerComponent:
             renderOrder=int(d.get("renderOrder") or d.get("render_order") or 0),
             type=str(d.get("type") or "narrative_paragraph"),
             constraints=dict(d.get("constraints") or {}),
+            suggestedConstraints=dict(d.get("suggestedConstraints") or {}),
+            userConstraints=dict(d.get("userConstraints") or {}),
             refs=AnswerComponentRef.from_dict(d.get("refs") or {}),
             bbox=BBox.from_dict(bbox_raw) if bbox_raw else None,
         )
@@ -437,6 +457,10 @@ class TemplateEntity:
 
     Entities are classified into dimension/measure/filter/metadata and ranked
     by confidence based on where in the PDF they were found.
+
+    Scoping:
+      - scope: "topic_001" (local to a topic) or "global" (cross-topic)
+      - crossRefs: entity IDs that this entity cross-references across topics
     """
     entityId: str
     name: str = ""
@@ -446,6 +470,8 @@ class TemplateEntity:
     aliases: list[str] = field(default_factory=list)
     pageIndex: int = -1  # which PDF page this was found on
     sourceContext: str = ""  # surrounding text for disambiguation
+    scope: str = ""  # topic_xxx or "global" — empty means unscoped (legacy)
+    crossRefs: list[str] = field(default_factory=list)  # entity IDs this links to
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -458,6 +484,8 @@ class TemplateEntity:
         if self.aliases:        out["aliases"] = self.aliases
         if self.pageIndex >= 0: out["pageIndex"] = self.pageIndex
         if self.sourceContext:   out["sourceContext"] = self.sourceContext
+        if self.scope:          out["scope"] = self.scope
+        if self.crossRefs:      out["crossRefs"] = self.crossRefs
         return out
 
     @classmethod
@@ -471,6 +499,8 @@ class TemplateEntity:
             aliases=list(d.get("aliases") or []),
             pageIndex=int(d.get("pageIndex") if d.get("pageIndex") is not None else -1),
             sourceContext=str(d.get("sourceContext") or ""),
+            scope=str(d.get("scope") or ""),
+            crossRefs=list(d.get("crossRefs") or []),
         )
 
 
@@ -516,6 +546,7 @@ class QuestionNode:
     answerStructure: AnswerStructure = field(default_factory=AnswerStructure)
     pageIndex: int = -1  # source page in legacy PDF
     sourceHeading: str = ""  # heading from which this was inferred
+    priority: str = "medium"  # high | medium | low — controls retry budget + user approval
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -526,6 +557,7 @@ class QuestionNode:
             "inferenceConfidence": self.inferenceConfidence,
             "requiredEntities": [e.to_dict() for e in self.requiredEntities],
             "answerStructure": self.answerStructure.to_dict(),
+            "priority": self.priority,
         }
         if self.pageIndex >= 0:  out["pageIndex"] = self.pageIndex
         if self.sourceHeading:   out["sourceHeading"] = self.sourceHeading
@@ -544,6 +576,7 @@ class QuestionNode:
             answerStructure=AnswerStructure.from_dict(d.get("answerStructure") or {}),
             pageIndex=int(d.get("pageIndex") if d.get("pageIndex") is not None else -1),
             sourceHeading=str(d.get("sourceHeading") or ""),
+            priority=str(d.get("priority") or "medium"),
         )
 
 

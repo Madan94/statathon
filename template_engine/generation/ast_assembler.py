@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from typing import Any
 
 from ast_core.schema import (
@@ -78,7 +79,7 @@ def assemble_template_ast(
 
     # 2. SGLang enrichment (optional — adds semantic hints, refines questions)
     if sglang_client and sglang_client.backend_name != "mock_sglang":
-        ast = _sglang_enrich(ast, pages, sglang_client)
+        ast = _sglang_enrich(ast, pages, sglang_client, entities)
 
     # 3. Validate
     _validate_ast(ast)
@@ -121,8 +122,19 @@ def _determine_extraction_method(pages: list[VLMPageResult],
 
 
 def _sglang_enrich(ast: TemplateBlueprintAST, pages: list[VLMPageResult],
-                   client: SGLangClient) -> TemplateBlueprintAST:
-    """Use SGLang to enrich the AST with better question intents and constraints."""
+                   client: SGLangClient,
+                   entities: list[TemplateEntity] | None = None) -> TemplateBlueprintAST:
+    """Use SGLang to enrich the AST with better question intents and constraints.
+
+    If decomposed mode is enabled (SGLANG_DECOMPOSED=true) and client is
+    RealSGLangClient, uses the 3-call pipeline for smaller context windows.
+    """
+    # Check if decomposed mode is requested
+    use_decomposed = os.getenv("SGLANG_DECOMPOSED", "").lower() in ("1", "true", "yes")
+
+    if use_decomposed and hasattr(client, "generate_decomposed"):
+        return _sglang_enrich_decomposed(ast, pages, client, entities or [])
+
     try:
         schema = export_json_schema()
 
@@ -188,3 +200,70 @@ def _populate_cross_links(ast: TemplateBlueprintAST,
             for component in question.answerStructure.components:
                 if not component.refs.entityRefs:
                     component.refs.entityRefs = bound_entity_ids[:5]
+
+
+# ---------------------------------------------------------------------------
+# Decomposed SGLang enrichment (Step 7)
+# ---------------------------------------------------------------------------
+
+def _sglang_enrich_decomposed(
+    ast: TemplateBlueprintAST,
+    pages: list[VLMPageResult],
+    client: SGLangClient,
+    entities: list[TemplateEntity],
+) -> TemplateBlueprintAST:
+    """3-call decomposed SGLang pipeline for small-VRAM models.
+
+    Splits the monolithic AST generation into:
+      1. Topics extraction (small schema, fast)
+      2. Questions per topic (medium schema)
+      3. Answer structure per question (medium schema)
+
+    Results are merged back into the AST.
+    """
+    try:
+        # Build compact document context
+        doc_ctx_parts = []
+        for p in pages[:15]:
+            doc_ctx_parts.append(
+                f"Page {p.pageIndex}: headings={p.headings[:3]}, "
+                f"tables={p.has_tables}, charts={p.has_charts}"
+            )
+        doc_context = "\n".join(doc_ctx_parts)
+
+        # Call 1-2-3
+        merged = client.generate_decomposed(doc_context)
+
+        # Merge topics from decomposed into AST
+        new_topics = merged.get("topics", [])
+        answers_map: dict[str, dict] = {
+            a["questionId"]: a for a in merged.get("answers", [])
+        }
+
+        for topic_data in new_topics:
+            tid = topic_data.get("topicId", "")
+            # Find matching existing topic or skip
+            existing = next((t for t in ast.topics if t.topicId == tid), None)
+            if not existing:
+                continue
+
+            # Enrich questions with answer structures from call 3
+            for q in existing.questions:
+                answer_data = answers_map.get(q.questionId)
+                if answer_data and answer_data.get("components"):
+                    # Update answer structure with suggested constraints
+                    for comp_data in answer_data["components"]:
+                        comp_id = comp_data.get("componentId", "")
+                        existing_comp = next(
+                            (c for c in q.answerStructure.components if c.componentId == comp_id),
+                            None,
+                        )
+                        if existing_comp and comp_data.get("suggestedConstraints"):
+                            existing_comp.suggestedConstraints = comp_data["suggestedConstraints"]
+
+        logger.info("Decomposed SGLang enrichment complete: %d topics processed", len(new_topics))
+        return ast
+
+    except Exception as exc:
+        logger.warning("Decomposed SGLang enrichment failed, using base AST: %s", exc)
+        return ast

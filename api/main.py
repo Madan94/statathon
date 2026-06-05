@@ -42,6 +42,8 @@ from dataset_api.routes import router as datasets_router
 from analysis.routes import router as analysis_router
 from reports.routes import router as reports_router
 from report_builder_api.routes import router as report_builder_router
+from report_builder_api.progress_sse import router as progress_sse_router
+from report_builder_api.entity_binding_api import router as entity_binding_router
 from dashboard.routes import router as dashboard_router
 
 logging.basicConfig(level=logging.INFO)
@@ -170,6 +172,8 @@ app.include_router(datasets_router)
 app.include_router(analysis_router)
 app.include_router(reports_router)
 app.include_router(report_builder_router)
+app.include_router(progress_sse_router)
+app.include_router(entity_binding_router)
 app.include_router(dashboard_router)
 
 
