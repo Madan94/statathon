@@ -1,4 +1,6 @@
-FROM python:3.11-slim
+# pytorch/pytorch base ships with PyTorch + CUDA 12.1 + cuDNN 8 pre-installed.
+# This completely eliminates the large torch download that caused IncompleteRead.
+FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -6,28 +8,40 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     MODEL_ID=vidore/colpali-v1.2 \
     DEVICE=auto \
     COLPALI_DPI=120 \
-    COLPALI_PAGE_BATCH_SIZE=1
+    COLPALI_PAGE_BATCH_SIZE=1 \
+    COLPALI_PORT=8001 \
+    # pip reliability: 10 retries, 5-min timeout per chunk
+    PIP_RETRIES=10 \
+    PIP_DEFAULT_TIMEOUT=300 \
+    PIP_PROGRESS_BAR=off
 
 WORKDIR /app
 
+# System deps — poppler for pdf2image
 RUN apt-get update \
     && apt-get install -y --no-install-recommends poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir \
-        torch --index-url https://download.pytorch.org/whl/cu121 \
-    && pip install --no-cache-dir \
+# Step 1: upgrade pip in isolation (cached layer, never changes)
+RUN pip install --no-cache-dir --upgrade pip
+
+# Step 2: torch is ALREADY in the base image — skip entirely.
+# Only install ML + service packages. Each is small (<50MB), unlikely to drop.
+RUN pip install --no-cache-dir --retries 10 --timeout 300 \
         transformers \
-        colpali-engine \
+        colpali-engine
+
+RUN pip install --no-cache-dir --retries 10 --timeout 120 \
         pdf2image \
         pdfplumber \
         fastapi \
-        uvicorn \
+        "uvicorn[standard]" \
         python-multipart
 
 COPY services/colpali/main.py /app/main.py
 
-EXPOSE 8100
+# Port matches docker-compose.gpu.yml ports mapping AND COLPALI_ENDPOINT
+EXPOSE 8001
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8100"]
+# COLPALI_PORT env var lets compose override without rebuilding
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${COLPALI_PORT:-8001}"]

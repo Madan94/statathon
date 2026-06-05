@@ -6,20 +6,39 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     HF_HOME=/cache \
     SGLANG_MODEL=Qwen/Qwen2.5-3B-Instruct \
-    SGLANG_PORT=30000 \
-    SGLANG_MEM_FRACTION_STATIC=0.42
+    SGLANG_PORT=8002 \
+    SGLANG_MEM_FRACTION_STATIC=0.42 \
+    # pip reliability settings — sglang[all] is ~2GB, needs long timeout + retries
+    PIP_RETRIES=10 \
+    PIP_DEFAULT_TIMEOUT=600 \
+    PIP_PROGRESS_BAR=off
 
 WORKDIR /app
 
+# Install python3 + pip; git needed by some sglang sub-deps
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends python3 python3-pip python3-venv git \
+    && apt-get install -y --no-install-recommends \
+        python3 python3-pip python3-venv git curl \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/python3 /usr/bin/python
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir "sglang[all]>=0.3" huggingface_hub
+# Layer 1: pip upgrade only — tiny, always cached after first success
+RUN pip install --no-cache-dir --upgrade pip
 
-EXPOSE 30000
+# Layer 2: torch first (pre-req for sglang, ~2GB) — isolated so it caches on success
+# If this layer drops mid-download, layers before it are still cached.
+RUN pip install --no-cache-dir --retries 10 --timeout 600 \
+        torch --index-url https://download.pytorch.org/whl/cu121
+
+# Layer 3: sglang[all] — isolated layer, retried independently from torch
+RUN pip install --no-cache-dir --retries 10 --timeout 600 \
+        "sglang[all]>=0.3"
+
+# Layer 4: utilities — small packages, fast
+RUN pip install --no-cache-dir --retries 5 --timeout 120 \
+        huggingface_hub
+
+EXPOSE 8002
 
 CMD python -m sglang.launch_server \
     --model-path ${SGLANG_MODEL} \
