@@ -1,0 +1,29 @@
+# SGLang grammar-constrained LLM server (Qwen2.5-3B default).
+# Requires NVIDIA Container Toolkit on host (--gpus all).
+FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    HF_HOME=/cache \
+    SGLANG_MODEL=Qwen/Qwen2.5-3B-Instruct \
+    SGLANG_PORT=30000 \
+    SGLANG_MEM_FRACTION_STATIC=0.42
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 python3-pip python3-venv git \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3 /usr/bin/python
+
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir "sglang[all]>=0.3" huggingface_hub
+
+EXPOSE 30000
+
+CMD python -m sglang.launch_server \
+    --model-path ${SGLANG_MODEL} \
+    --host 0.0.0.0 \
+    --port ${SGLANG_PORT} \
+    --mem-fraction-static ${SGLANG_MEM_FRACTION_STATIC} \
+    --tp 1

@@ -1,13 +1,11 @@
-# Docker Compose: 6GB VRAM GPU Sequential Sharing
-# ColPali extraction → stop → SGLang generation → stop
+# Docker Compose: GPU — ColPali + SGLang on shared GPU (g5.xlarge ~24GB VRAM)
 #
-# Usage:
-#   docker compose -f docker-compose.gpu.yml up colpali  # Run extraction
-#   docker compose -f docker-compose.gpu.yml stop colpali
-#   docker compose -f docker-compose.gpu.yml up sglang   # Run generation
+# Local / EC2 usage:
+#   docker compose -f docker-compose.gpu.yml --profile gpu build colpali sglang
+#   docker compose -f docker-compose.gpu.yml --profile gpu up -d colpali sglang
 #
-# For full pipeline (automated):
-#   docker compose -f docker-compose.gpu.yml run --rm pipeline
+# Sequential pipeline (README):
+#   docker compose -f docker-compose.gpu.yml --profile gpu run --rm pipeline
 
 services:
   colpali:
@@ -23,18 +21,19 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - COLPALI_MODEL=${COLPALI_MODEL:-vidore/colpali-v1.2}
-      - COLPALI_BATCH_SIZE=${COLPALI_BATCH_SIZE:-4}
-      - CHECKPOINT_ENABLED=true
-      - CHECKPOINT_DIR=/app/checkpoints
+      - HF_HOME=/cache
+      - MODEL_ID=${COLPALI_MODEL:-vidore/colpali-v1.2}
+      - DEVICE=auto
+      - COLPALI_DPI=${COLPALI_DPI:-96}
+      - COLPALI_PAGE_BATCH_SIZE=${COLPALI_PAGE_BATCH_SIZE:-1}
     volumes:
-      - ./model/cache:/root/.cache/huggingface
-      - ./checkpoints:/app/checkpoints
+      - ${GPU_MODEL_CACHE:-./model/cache}:/cache
       - ./data:/app/data
     ports:
-      - "8001:8001"
+      - "8100:8100"
     profiles:
       - gpu
+    restart: unless-stopped
 
   sglang:
     build:
@@ -49,16 +48,17 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
+      - HF_HOME=/cache
       - SGLANG_MODEL=${SGLANG_MODEL:-Qwen/Qwen2.5-3B-Instruct}
-      - SGLANG_MAX_TOKENS=${SGLANG_MAX_TOKENS:-4096}
-      - SGLANG_PORT=8002
+      - SGLANG_PORT=30000
+      - SGLANG_MEM_FRACTION_STATIC=${SGLANG_MEM_FRACTION_STATIC:-0.42}
     volumes:
-      - ./model/cache:/root/.cache/huggingface
-      - ./checkpoints:/app/checkpoints
+      - ${GPU_MODEL_CACHE:-./model/cache}:/cache
     ports:
-      - "8002:8002"
+      - "30000:30000"
     profiles:
       - gpu
+    restart: unless-stopped
 
   pipeline:
     build:
@@ -66,8 +66,9 @@ services:
       dockerfile: docker/Dockerfile.api
     depends_on: []
     environment:
-      - COLPALI_ENDPOINT=http://colpali:8001
-      - SGLANG_ENDPOINT=http://sglang:8002
+      - COLPALI_ENDPOINT=http://colpali:8100/extract
+      - SGLANG_ENDPOINT=http://sglang:30000
+      - SGLANG_BACKEND=sglang
       - CHECKPOINT_ENABLED=true
       - CHECKPOINT_DIR=/app/checkpoints
       - DATABASE_URL=${DATABASE_URL:-}

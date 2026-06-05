@@ -19,6 +19,9 @@ This folder contains the production deployment assets for the console-first AWS 
 - [05-cutover-checklist.md](./05-cutover-checklist.md)  
   Smoke tests, cutover execution, and rollback flow.
 
+- [06-colpali-sglang-remote.md](./06-colpali-sglang-remote.md)  
+  ColPali + SGLang on EC2 GPU; local Windows API via HTTP endpoints.
+
 ## Templates
 
 - `deploy/ecs/taskdef-api.template.json`
