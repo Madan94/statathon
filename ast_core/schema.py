@@ -286,17 +286,374 @@ class SemanticNode:
                    contentRefs=list(d.get("contentRefs") or []))
 
 
+# ---------------------------------------------------------------------------
+# Deep Template Schema — Topics / Questions / Answer Structures / Entities
+# ---------------------------------------------------------------------------
+
+# Component types supported in answer structures
+COMPONENT_TYPES = (
+    "narrative_paragraph",
+    "grouped_bar_chart",
+    "line_chart",
+    "pie_chart",
+    "data_table",
+    "metric_card",
+    "list_bullets",
+    "heading",
+    "cross_tabulation_matrix",
+    "formula_block",
+    "geographic_map",
+)
+
+# Entity classification types
+ENTITY_TYPES = ("dimension", "measure", "filter", "metadata")
+
+# Confidence source ranking (higher index = lower confidence)
+ENTITY_SOURCE_TYPES = (
+    "table_header",
+    "chart_axis",
+    "chart_legend",
+    "section_heading",
+    "narrative_term",
+    "footnote",
+    "formula_variable",
+)
+
+
+@dataclass
+class AnswerComponentRef:
+    """Cross-links an answer component to all relevant sub-AST nodes."""
+    layoutRef: str = ""          # → layoutAST block
+    geometryRef: str = ""        # → geometryAST node (bbox)
+    figureRef: str = ""          # → figureAST figure
+    chartRef: str = ""           # → chartAST chart
+    tableRef: str = ""           # → tableAST table
+    styleRef: str = ""           # → styleAST style
+    contentRef: str = ""         # → contentAST paragraph
+    entityRefs: list[str] = field(default_factory=list)      # → entityGraph
+    factRefs: list[str] = field(default_factory=list)        # → factAST
+    evidenceRef: str = ""        # → evidenceAST
+    citationRef: str = ""        # → citationAST
+    analyticsRef: str = ""       # → analyticsAST metric/aggregation
+
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {}
+        if self.layoutRef:      out["layoutRef"] = self.layoutRef
+        if self.geometryRef:    out["geometryRef"] = self.geometryRef
+        if self.figureRef:      out["figureRef"] = self.figureRef
+        if self.chartRef:       out["chartRef"] = self.chartRef
+        if self.tableRef:       out["tableRef"] = self.tableRef
+        if self.styleRef:       out["styleRef"] = self.styleRef
+        if self.contentRef:     out["contentRef"] = self.contentRef
+        if self.entityRefs:     out["entityRefs"] = self.entityRefs
+        if self.factRefs:       out["factRefs"] = self.factRefs
+        if self.evidenceRef:    out["evidenceRef"] = self.evidenceRef
+        if self.citationRef:    out["citationRef"] = self.citationRef
+        if self.analyticsRef:   out["analyticsRef"] = self.analyticsRef
+        return out
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "AnswerComponentRef":
+        return cls(
+            layoutRef=str(d.get("layoutRef") or ""),
+            geometryRef=str(d.get("geometryRef") or ""),
+            figureRef=str(d.get("figureRef") or ""),
+            chartRef=str(d.get("chartRef") or ""),
+            tableRef=str(d.get("tableRef") or ""),
+            styleRef=str(d.get("styleRef") or ""),
+            contentRef=str(d.get("contentRef") or ""),
+            entityRefs=list(d.get("entityRefs") or []),
+            factRefs=list(d.get("factRefs") or []),
+            evidenceRef=str(d.get("evidenceRef") or ""),
+            citationRef=str(d.get("citationRef") or ""),
+            analyticsRef=str(d.get("analyticsRef") or ""),
+        )
+
+
+@dataclass
+class AnswerComponent:
+    """A single renderable component within an answer structure.
+
+    Each component defines WHAT to render (type + constraints) and WHERE
+    it connects to in the MultiAST (refs). At runtime, Deep BI fills the
+    content; the structure is fixed from the template.
+    """
+    componentId: str
+    renderOrder: int = 0
+    type: str = "narrative_paragraph"  # one of COMPONENT_TYPES
+    constraints: dict[str, Any] = field(default_factory=dict)
+    refs: AnswerComponentRef = field(default_factory=AnswerComponentRef)
+    bbox: BBox | None = None  # inline geometry if extracted from PDF
+
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "componentId": self.componentId,
+            "renderOrder": self.renderOrder,
+            "type": self.type,
+            "constraints": self.constraints,
+            "refs": self.refs.to_dict(),
+        }
+        if self.bbox:
+            out["bbox"] = self.bbox.to_dict()
+        return out
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "AnswerComponent":
+        bbox_raw = d.get("bbox")
+        return cls(
+            componentId=str(d.get("componentId") or ""),
+            renderOrder=int(d.get("renderOrder") or d.get("render_order") or 0),
+            type=str(d.get("type") or "narrative_paragraph"),
+            constraints=dict(d.get("constraints") or {}),
+            refs=AnswerComponentRef.from_dict(d.get("refs") or {}),
+            bbox=BBox.from_dict(bbox_raw) if bbox_raw else None,
+        )
+
+
+@dataclass
+class AnswerStructure:
+    """Defines HOW an answer must be rendered — layout type + ordered components."""
+    layoutType: str = "single"  # single | split | multi-panel | full-page
+    components: list[AnswerComponent] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "layoutType": self.layoutType,
+            "components": [c.to_dict() for c in self.components],
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "AnswerStructure":
+        return cls(
+            layoutType=str(d.get("layoutType") or d.get("layout_type") or "single"),
+            components=[AnswerComponent.from_dict(c)
+                        for c in (d.get("components") or [])],
+        )
+
+
+@dataclass
+class TemplateEntity:
+    """An entity extracted from the legacy PDF — represents a data concept.
+
+    Entities are classified into dimension/measure/filter/metadata and ranked
+    by confidence based on where in the PDF they were found.
+    """
+    entityId: str
+    name: str = ""
+    entityType: str = "dimension"  # one of ENTITY_TYPES
+    sourceType: str = "table_header"  # one of ENTITY_SOURCE_TYPES
+    confidence: float = 1.0
+    aliases: list[str] = field(default_factory=list)
+    pageIndex: int = -1  # which PDF page this was found on
+    sourceContext: str = ""  # surrounding text for disambiguation
+
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "entityId": self.entityId,
+            "name": self.name,
+            "entityType": self.entityType,
+            "sourceType": self.sourceType,
+            "confidence": self.confidence,
+        }
+        if self.aliases:        out["aliases"] = self.aliases
+        if self.pageIndex >= 0: out["pageIndex"] = self.pageIndex
+        if self.sourceContext:   out["sourceContext"] = self.sourceContext
+        return out
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "TemplateEntity":
+        return cls(
+            entityId=str(d.get("entityId") or ""),
+            name=str(d.get("name") or ""),
+            entityType=str(d.get("entityType") or "dimension"),
+            sourceType=str(d.get("sourceType") or "table_header"),
+            confidence=float(d.get("confidence") or 1.0),
+            aliases=list(d.get("aliases") or []),
+            pageIndex=int(d.get("pageIndex") if d.get("pageIndex") is not None else -1),
+            sourceContext=str(d.get("sourceContext") or ""),
+        )
+
+
+@dataclass
+class QuestionEntityBinding:
+    """Links a question to its required entities with confidence."""
+    entityId: str
+    role: str = "required"  # required | optional | filter | grouping
+    confidence: float = 1.0
+    bindingMethod: str = "auto"  # auto | vlm | pattern | human
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "entityId": self.entityId,
+            "role": self.role,
+            "confidence": self.confidence,
+            "bindingMethod": self.bindingMethod,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "QuestionEntityBinding":
+        return cls(
+            entityId=str(d.get("entityId") or ""),
+            role=str(d.get("role") or "required"),
+            confidence=float(d.get("confidence") or 1.0),
+            bindingMethod=str(d.get("bindingMethod") or "auto"),
+        )
+
+
+@dataclass
+class QuestionNode:
+    """A single analytical question inferred from the legacy PDF.
+
+    The question is the LINCHPIN — it bridges legacy structure (answer_structure)
+    with new data (entity bindings → KG resolution → Deep BI execution).
+    """
+    questionId: str
+    intent: str = ""  # natural language question/intent
+    questionType: str = "comparison"  # comparison | distribution | trend | composition | correlation | ranking | describe
+    inferenceMethod: str = "vlm"  # vlm | hybrid | pattern | stub
+    inferenceConfidence: float = 0.0
+    requiredEntities: list[QuestionEntityBinding] = field(default_factory=list)
+    answerStructure: AnswerStructure = field(default_factory=AnswerStructure)
+    pageIndex: int = -1  # source page in legacy PDF
+    sourceHeading: str = ""  # heading from which this was inferred
+
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "questionId": self.questionId,
+            "intent": self.intent,
+            "questionType": self.questionType,
+            "inferenceMethod": self.inferenceMethod,
+            "inferenceConfidence": self.inferenceConfidence,
+            "requiredEntities": [e.to_dict() for e in self.requiredEntities],
+            "answerStructure": self.answerStructure.to_dict(),
+        }
+        if self.pageIndex >= 0:  out["pageIndex"] = self.pageIndex
+        if self.sourceHeading:   out["sourceHeading"] = self.sourceHeading
+        return out
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "QuestionNode":
+        return cls(
+            questionId=str(d.get("questionId") or ""),
+            intent=str(d.get("intent") or ""),
+            questionType=str(d.get("questionType") or "comparison"),
+            inferenceMethod=str(d.get("inferenceMethod") or "vlm"),
+            inferenceConfidence=float(d.get("inferenceConfidence") or 0),
+            requiredEntities=[QuestionEntityBinding.from_dict(e)
+                              for e in (d.get("requiredEntities") or [])],
+            answerStructure=AnswerStructure.from_dict(d.get("answerStructure") or {}),
+            pageIndex=int(d.get("pageIndex") if d.get("pageIndex") is not None else -1),
+            sourceHeading=str(d.get("sourceHeading") or ""),
+        )
+
+
+@dataclass
+class TopicNode:
+    """A topic groups related questions under a thematic heading.
+
+    Hierarchy: Section → Topic → Question → AnswerStructure → Components
+    """
+    topicId: str
+    title: str = ""
+    description: str = ""
+    questions: list[QuestionNode] = field(default_factory=list)
+    pageRange: list[int] = field(default_factory=list)  # [start_page, end_page]
+
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "topicId": self.topicId,
+            "title": self.title,
+            "questions": [q.to_dict() for q in self.questions],
+        }
+        if self.description:  out["description"] = self.description
+        if self.pageRange:    out["pageRange"] = self.pageRange
+        return out
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "TopicNode":
+        return cls(
+            topicId=str(d.get("topicId") or ""),
+            title=str(d.get("title") or ""),
+            description=str(d.get("description") or ""),
+            questions=[QuestionNode.from_dict(q)
+                       for q in (d.get("questions") or [])],
+            pageRange=list(d.get("pageRange") or []),
+        )
+
+
+@dataclass
+class TemplateBlueprintAST:
+    """The deep template blueprint — the full reverse-engineered structure.
+
+    This is the master schema produced by Phase 0 (template_engine). It contains
+    the complete topic/question/answer hierarchy plus all extracted entities,
+    enabling cross-dataset report generation via entity remapping.
+    """
+    templateId: str = ""
+    name: str = ""
+    sourceHash: str = ""
+    pageCount: int = 0
+    extractionMethod: str = "colpali+sglang"
+    topics: list[TopicNode] = field(default_factory=list)
+    entities: list[TemplateEntity] = field(default_factory=list)
+    extractionMeta: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "templateId": self.templateId,
+            "name": self.name,
+            "sourceHash": self.sourceHash,
+            "pageCount": self.pageCount,
+            "extractionMethod": self.extractionMethod,
+            "topics": [t.to_dict() for t in self.topics],
+            "entities": [e.to_dict() for e in self.entities],
+            "extractionMeta": self.extractionMeta,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "TemplateBlueprintAST":
+        return cls(
+            templateId=str(d.get("templateId") or ""),
+            name=str(d.get("name") or ""),
+            sourceHash=str(d.get("sourceHash") or d.get("source_hash") or ""),
+            pageCount=int(d.get("pageCount") or d.get("page_count") or 0),
+            extractionMethod=str(d.get("extractionMethod") or ""),
+            topics=[TopicNode.from_dict(t) for t in (d.get("topics") or [])],
+            entities=[TemplateEntity.from_dict(e) for e in (d.get("entities") or [])],
+            extractionMeta=dict(d.get("extractionMeta") or {}),
+        )
+
+    def all_questions(self) -> list[QuestionNode]:
+        """Flatten all questions across all topics."""
+        return [q for t in self.topics for q in t.questions]
+
+    def entity_by_id(self, eid: str) -> TemplateEntity | None:
+        for e in self.entities:
+            if e.entityId == eid:
+                return e
+        return None
+
+
 @dataclass
 class SemanticAST:
     nodes: list[SemanticNode] = field(default_factory=list)
+    # Deep template blueprint (Phase 0 output) — nested topics/questions/answers
+    blueprint: TemplateBlueprintAST | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {"nodes": [n.to_dict() for n in self.nodes]}
+        out: dict[str, Any] = {"nodes": [n.to_dict() for n in self.nodes]}
+        if self.blueprint:
+            out["blueprint"] = self.blueprint.to_dict()
+        return out
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> SemanticAST:
-        return cls(nodes=[SemanticNode.from_dict(n)
-                          for n in (d.get("nodes") or [])])
+        bp_raw = d.get("blueprint")
+        return cls(
+            nodes=[SemanticNode.from_dict(n)
+                   for n in (d.get("nodes") or [])],
+            blueprint=TemplateBlueprintAST.from_dict(bp_raw) if bp_raw else None,
+        )
 
 
 # ---------------------------------------------------------------------------

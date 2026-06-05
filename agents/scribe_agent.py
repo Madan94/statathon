@@ -350,14 +350,26 @@ def _deterministic_narrative(
 # ---------------------------------------------------------------------------
 
 def _gemini_model():
-    try:
-        import google.generativeai as g  # type: ignore
-    except Exception:
-        return None
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         return None
+    # Prefer current google-genai SDK; fall back to legacy google-generativeai
     try:
+        import google.genai as _g  # type: ignore
+        client = _g.Client(api_key=api_key)
+        model_name = os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash")
+        # Return a thin wrapper that exposes .generate_content(prompt)
+        class _NewSDKModel:
+            def generate_content(self, prompt: str):
+                resp = client.models.generate_content(model=model_name, contents=prompt)
+                class _R:
+                    text = resp.text
+                return _R()
+        return _NewSDKModel()
+    except ImportError:
+        pass
+    try:
+        import google.generativeai as g  # type: ignore  # noqa: F401
         g.configure(api_key=api_key)
         return g.GenerativeModel(os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash"))
     except Exception as exc:

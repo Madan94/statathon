@@ -630,3 +630,114 @@ def template_from_ast_json(payload: dict[str, Any]) -> TemplateAST:
             for i, b in enumerate(payload.get("blocks") or [])
         ],
     )
+
+
+# ---------------------------------------------------------------------------
+# Bridge: new deep TemplateBlueprintAST → legacy TemplateAST
+# ---------------------------------------------------------------------------
+
+def template_from_deep_blueprint(blueprint) -> TemplateAST:
+    """Convert a TemplateBlueprintAST (new pipeline) to the legacy TemplateAST.
+
+    This shim allows the report_builder pipeline to consume output from the
+    enhanced template_engine.pipeline without modification to downstream phases.
+
+    Maps: topic → section, question → block (kind inferred from answer components).
+    """
+    blocks: list[BlockSpec] = []
+    counter = 0
+
+    for topic in (blueprint.topics or []):
+        # Emit heading block for topic
+        section_slug = re.sub(r"[^a-z0-9]+", "_", topic.title.lower()).strip("_") or f"section_{counter}"
+        blocks.append(BlockSpec(
+            block_id=f"blk_{counter}",
+            kind="heading",
+            title=topic.title,
+            section=section_slug,
+            hints={"page_range": topic.pageRange},
+        ))
+        counter += 1
+
+        for question in (topic.questions or []):
+            kind = _infer_block_kind(question)
+            blocks.append(BlockSpec(
+                block_id=f"blk_{counter}",
+                kind=kind,
+                title=question.intent[:80] if question.intent else "Section",
+                section=section_slug,
+                hints={
+                    "question_id": question.questionId,
+                    "question_type": question.questionType,
+                    "confidence": question.inferenceConfidence,
+                    "component_count": len(question.answerStructure.components),
+                },
+            ))
+            counter += 1
+
+    return TemplateAST(
+        name=blueprint.name,
+        source_hash=blueprint.sourceHash,
+        page_count=blueprint.pageCount,
+        blocks=blocks or list(DEFAULT_MOSPI_TEMPLATE.blocks),
+        extraction_method=blueprint.extractionMethod or "deep_pipeline",
+    )
+
+
+def _infer_block_kind(question) -> str:
+    """Infer legacy block kind from a QuestionNode's answer components."""
+    if not question.answerStructure or not question.answerStructure.components:
+        return "narrative"
+
+    type_counts: dict[str, int] = {}
+    for comp in question.answerStructure.components:
+        type_counts[comp.type] = type_counts.get(comp.type, 0) + 1
+
+    # Priority: table > chart > metric > narrative
+    if "data_table" in type_counts or "cross_tabulation_matrix" in type_counts:
+        return "table"
+    if any(k in type_counts for k in ("grouped_bar_chart", "line_chart", "pie_chart", "geographic_map")):
+        return "chart"
+    if "metric_card" in type_counts:
+        return "metric"
+    return "narrative"
+
+
+def compile_template_from_deep_pipeline(
+    pdf_path: str | Path,
+    template_name: str,
+    *,
+    progress: Callable[[str, int, dict[str, Any]], None] | None = None,
+) -> tuple[TemplateAST, dict[str, Any]]:
+    """Bridge: run the new deep pipeline and return legacy-format TemplateAST.
+
+    Falls back to compile_template_production if the deep pipeline fails.
+    """
+    try:
+        from template_engine.pipeline import run_extraction_pipeline
+
+        result = run_extraction_pipeline(
+            pdf_path=pdf_path,
+            template_name=template_name,
+            progress_callback=(lambda p: progress(p.stage, p.progress_pct, p.to_dict()))
+            if progress else None,
+        )
+
+        if result.success and result.ast:
+            legacy_ast = template_from_deep_blueprint(result.ast)
+            diagnostics = {
+                "source_hash": result.source_hash,
+                "stages": result.progress.timings,
+                "deep_pipeline": True,
+                "topics": len(result.ast.topics),
+                "questions": sum(len(t.questions) for t in result.ast.topics),
+                "entities": len(result.ast.entities),
+                "blueprint_payload": result.ast.to_dict(),
+            }
+            return legacy_ast, diagnostics
+
+    except Exception as exc:
+        logger.warning("Deep pipeline failed, falling back: %s", exc)
+
+    # Fallback to original production pipeline
+    return compile_template_production(pdf_path, template_name, progress=progress)

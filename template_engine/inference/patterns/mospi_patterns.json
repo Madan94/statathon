@@ -1,0 +1,77 @@
+[
+  {
+    "triggers": ["consumption expenditure", "mpce", "household expenditure", "consumer expenditure"],
+    "template": "Compare {measure} across {dimension} categories",
+    "confidence": 0.70
+  },
+  {
+    "triggers": ["distribution", "spread", "breakdown", "composition"],
+    "template": "What is the distribution of {heading}?",
+    "confidence": 0.65
+  },
+  {
+    "triggers": ["rural vs urban", "rural and urban", "sector-wise", "rural-urban"],
+    "template": "Compare {measure} between rural and urban sectors",
+    "confidence": 0.72
+  },
+  {
+    "triggers": ["state-wise", "by state", "across states", "inter-state"],
+    "template": "Analyze {measure} variation across states",
+    "confidence": 0.70
+  },
+  {
+    "triggers": ["trend", "growth", "over the years", "time series", "temporal"],
+    "template": "What is the trend in {heading} over time?",
+    "confidence": 0.68
+  },
+  {
+    "triggers": ["employment", "unemployment", "workforce", "labour force"],
+    "template": "Analyze employment patterns by {dimension}",
+    "confidence": 0.67
+  },
+  {
+    "triggers": ["literacy", "education", "enrollment", "educational attainment"],
+    "template": "Compare education metrics across {dimension} groups",
+    "confidence": 0.66
+  },
+  {
+    "triggers": ["health", "mortality", "morbidity", "nutrition", "immunization"],
+    "template": "Analyze health indicators by {dimension}",
+    "confidence": 0.66
+  },
+  {
+    "triggers": ["poverty", "inequality", "gini", "poverty ratio", "bpl"],
+    "template": "Measure poverty and inequality across {dimension}",
+    "confidence": 0.68
+  },
+  {
+    "triggers": ["population", "demographic", "census", "fertility"],
+    "template": "Describe population distribution by {dimension}",
+    "confidence": 0.65
+  },
+  {
+    "triggers": ["gender", "male female", "sex ratio", "women"],
+    "template": "Compare {measure} across gender categories",
+    "confidence": 0.67
+  },
+  {
+    "triggers": ["age group", "age-wise", "age distribution"],
+    "template": "Analyze {measure} distribution across age groups",
+    "confidence": 0.66
+  },
+  {
+    "triggers": ["industry", "sector", "industrial", "manufacturing"],
+    "template": "Compare industrial output across {dimension}",
+    "confidence": 0.65
+  },
+  {
+    "triggers": ["price", "inflation", "cpi", "wpi", "cost of living"],
+    "template": "Analyze price trends for {heading}",
+    "confidence": 0.68
+  },
+  {
+    "triggers": ["housing", "dwelling", "construction", "shelter"],
+    "template": "Describe housing conditions by {dimension}",
+    "confidence": 0.64
+  }
+]
