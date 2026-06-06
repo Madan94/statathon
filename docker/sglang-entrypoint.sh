@@ -75,8 +75,8 @@ echo ""
 #   --gpu-memory-utilization 0.90  → use 90% of 6GB = 5.4GB (AWQ model only ~1.8GB)
 #   --max-model-len 4096           → limits KV cache size (big context = more VRAM)
 #   --enforce-eager                → disables CUDA graphs (saves ~500MB VRAM)
-#   --quantization awq             → 4-bit quantized weights (~1.8GB vs 5.8GB FP16)
 #   --max-num-seqs 4               → concurrent requests (plenty of KV cache room)
+#   NOTE: No --quantization flag needed — vLLM auto-detects from model config
 exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
@@ -84,7 +84,6 @@ exec python3 -m vllm.entrypoints.openai.api_server \
     --gpu-memory-utilization 0.90 \
     --max-model-len 4096 \
     --enforce-eager \
-    --quantization awq \
     --max-num-seqs 4 \
     --trust-remote-code \
     --download-dir "${HF_HOME}"
