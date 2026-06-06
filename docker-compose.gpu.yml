@@ -68,23 +68,20 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - SGLANG_MODEL=${SGLANG_MODEL:-Qwen/Qwen2.5-3B-Instruct}
-      - SGLANG_MAX_TOKENS=${SGLANG_MAX_TOKENS:-4096}
-      # SGLANG_PORT default is already 8002 in Dockerfile — keep explicit here for clarity
-      - SGLANG_PORT=8002
-      - SGLANG_MEM_FRACTION_STATIC=${SGLANG_MEM_FRACTION:-0.42}
+      # vLLM env vars (replaced sglang — same OpenAI API on same port)
+      - VLLM_MODEL=${SGLANG_MODEL:-Qwen/Qwen2.5-3B-Instruct}
+      - VLLM_PORT=8002
     volumes:
       # HF_HOME in Dockerfile is /cache — must match
       - ./model/cache:/cache
-      - ./checkpoints:/app/checkpoints
     ports:
       - "8002:8002"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       interval: 15s
       timeout: 10s
-      retries: 8
-      start_period: 90s
+      retries: 12
+      start_period: 120s
     profiles:
       - gpu
 

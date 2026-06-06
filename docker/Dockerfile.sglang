@@ -1,38 +1,33 @@
 # syntax=docker/dockerfile:1
 # ─────────────────────────────────────────────────────────────────────────────
-# SGLang LLM server for RTX 4050 Laptop (SM89, 6GB VRAM, 24GB RAM)
+# vLLM OpenAI-compatible LLM server (Qwen2.5-3B default).
+# Replaces SGLang — sglang's sgl_kernel only ships SM100 (Blackwell) builds,
+# which don't work on RTX 4050 (SM89 Ada Lovelace).
 #
-# ═══════════════════════════════════════════════════════════════════════════════
-# STRATEGY: Use lmsysorg/sglang official image as base.
-# This is the ONLY reliable way to get correctly compiled sgl_kernel for your
-# GPU. Building from pip always has CUDA version / arch mismatches.
-#
-# The official image ships with:
-#   - Correct sgl_kernel for your GPU arch
-#   - PyTorch matched to container CUDA version
-#   - All quantization kernels pre-compiled
-#   - Tested server startup
-#
-# If the official image approach fails for any reason, there's a fallback
-# strategy documented at the bottom (vLLM-based alternative).
-# ═══════════════════════════════════════════════════════════════════════════════
+# vLLM advantages over sglang for our use case:
+#   ✓ Proper SM89 support (RTX 40-series)
+#   ✓ Same OpenAI API: /v1/chat/completions (drop-in replacement)
+#   ✓ Smaller VRAM footprint for 3B models
+#   ✓ Official Docker image tested on Ada Lovelace GPUs
+#   ✓ No sgl_kernel dependency issues
 #
 # Build:  docker compose -f docker-compose.gpu.yml --profile gpu build sglang
 # Run:    docker compose -f docker-compose.gpu.yml --profile gpu up sglang
+#
+# The service is still called "sglang" in compose to avoid changing all
+# references in orchestrator/blueprint code. The API is identical.
 # ─────────────────────────────────────────────────────────────────────────────
-FROM lmsysorg/sglang:latest
+FROM vllm/vllm-openai:latest
 
-# Override defaults for your 6GB VRAM laptop
 ENV HF_HOME=/cache \
-    SGLANG_MODEL=Qwen/Qwen2.5-3B-Instruct \
-    SGLANG_PORT=8002 \
-    SGLANG_MEM_FRACTION_STATIC=0.40
+    VLLM_MODEL=Qwen/Qwen2.5-3B-Instruct \
+    VLLM_PORT=8002
 
-# Install curl for healthcheck (not in sglang image by default)
+# Install curl for healthcheck
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Entrypoint with diagnostics
+# Entrypoint with diagnostics + VRAM-optimized flags
 COPY docker/sglang-entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 

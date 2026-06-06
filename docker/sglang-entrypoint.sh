@@ -1,12 +1,18 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────────────────
-# SGLang entrypoint — runtime diagnostics + graceful startup
+# vLLM entrypoint — runtime diagnostics + VRAM-optimized launch
 # RTX 4050 Laptop: SM89, 6GB VRAM, 24GB RAM
+#
+# Serves OpenAI-compatible API at /v1/chat/completions
+# Drop-in replacement for SGLang — same API contract
 # ─────────────────────────────────────────────────────────────────────────────
 set -e
 
+MODEL="${VLLM_MODEL:-Qwen/Qwen2.5-3B-Instruct}"
+PORT="${VLLM_PORT:-8002}"
+
 echo "═══════════════════════════════════════════════════════════════"
-echo "  SGLang Server — Startup Diagnostics"
+echo "  vLLM Server — Startup Diagnostics"
 echo "  $(date '+%Y-%m-%d %H:%M:%S')"
 echo "═══════════════════════════════════════════════════════════════"
 echo ""
@@ -17,70 +23,67 @@ if command -v nvidia-smi &>/dev/null; then
     GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)
     GPU_MEM=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader 2>/dev/null | head -1)
     GPU_FREE=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader 2>/dev/null | head -1)
-    CUDA_DRIVER=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1)
+    DRIVER_VER=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1)
     echo "  ✓ GPU: ${GPU_NAME:-unknown}"
     echo "  ✓ VRAM: ${GPU_MEM:-unknown} (free: ${GPU_FREE:-unknown})"
-    echo "  ✓ Driver: ${CUDA_DRIVER:-unknown}"
-    
-    # Check if another process is using GPU (ColPali still running?)
+    echo "  ✓ Driver: ${DRIVER_VER:-unknown}"
+
+    # Warn if GPU already in use (ColPali not stopped?)
     GPU_USED=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null | head -1)
     if [ "${GPU_USED:-0}" -gt 500 ]; then
         echo "  ⚠ WARNING: ${GPU_USED}MB VRAM already in use!"
-        echo "    → Is ColPali still running? Stop it first."
-        echo "    → Continuing anyway (may OOM)..."
+        echo "    → Is ColPali still running? Stop it first for sequential mode."
     fi
 else
-    echo "  ✗ nvidia-smi not found — GPU not available"
+    echo "  ✗ nvidia-smi not found"
     echo "  → Ensure: docker run --gpus all ..."
-    echo "  → WSL2: run 'wsl --shutdown' then restart Docker if GPU adapter lost"
+    echo "  → WSL2 fix: wsl --shutdown → restart Docker Desktop"
     exit 1
 fi
 echo ""
 
 # ── Model Cache Check ────────────────────────────────────────────────────────
 echo "▶ Model Cache:"
-MODEL_DIR="${HF_HOME}/hub/models--$(echo $SGLANG_MODEL | tr '/' '--')"
+MODEL_DIR="${HF_HOME}/hub/models--$(echo $MODEL | tr '/' '--')"
 if [ -d "$MODEL_DIR" ]; then
     MODEL_SIZE=$(du -sh "$MODEL_DIR" 2>/dev/null | cut -f1)
-    echo "  ✓ Cached: ${SGLANG_MODEL} (${MODEL_SIZE})"
+    echo "  ✓ Cached: ${MODEL} (${MODEL_SIZE})"
     echo "  → Fast start (no download)"
 else
-    echo "  ⚠ Not cached: ${SGLANG_MODEL}"
-    echo "  → First boot downloads ~3-5GB. Subsequent boots instant."
-    echo "  → Ensure volume mount: -v ./model/cache:/cache"
+    echo "  ⚠ Not cached: ${MODEL}"
+    echo "  → First boot downloads ~3GB. Subsequent boots instant."
+    echo "  → Ensure volume: -v ./model/cache:/cache"
 fi
 echo ""
 
 # ── Configuration ────────────────────────────────────────────────────────────
 echo "▶ Configuration:"
-echo "  Model:        ${SGLANG_MODEL}"
-echo "  Port:         ${SGLANG_PORT}"
-echo "  Mem fraction: ${SGLANG_MEM_FRACTION_STATIC}"
-echo "  VRAM budget:  ~$((6 * ${SGLANG_MEM_FRACTION_STATIC%.*}))GB of 6GB"
-echo ""
-
-# ── Determine launch flags ───────────────────────────────────────────────────
-EXTRA_ARGS=""
-
-# For 6GB VRAM: disable features that consume extra memory
-EXTRA_ARGS="${EXTRA_ARGS} --disable-cuda-graph"
-# Chunked prefill reduces peak VRAM during long prompts
-EXTRA_ARGS="${EXTRA_ARGS} --chunked-prefill-size 2048"
-# Limit concurrent requests to avoid OOM on 6GB
-EXTRA_ARGS="${EXTRA_ARGS} --max-running-requests 2"
-
-echo "▶ Extra flags: ${EXTRA_ARGS}"
+echo "  Model:          ${MODEL}"
+echo "  Port:           ${PORT}"
+echo "  Max model len:  4096 (fits in 6GB VRAM)"
+echo "  GPU mem util:   0.85 (leaves 900MB for system)"
+echo "  Enforce eager:  yes (saves VRAM vs CUDA graphs)"
 echo ""
 echo "═══════════════════════════════════════════════════════════════"
-echo "  Launching SGLang server..."
+echo "  Launching vLLM server..."
 echo "═══════════════════════════════════════════════════════════════"
 echo ""
 
-# ── Launch ───────────────────────────────────────────────────────────────────
-exec python -m sglang.launch_server \
-    --model-path "${SGLANG_MODEL}" \
+# ── Launch vLLM ──────────────────────────────────────────────────────────────
+# Key flags for 6GB VRAM:
+#   --gpu-memory-utilization 0.85  → use 85% of 6GB = 5.2GB (leaves headroom)
+#   --max-model-len 4096           → limits KV cache size (big context = more VRAM)
+#   --enforce-eager                → disables CUDA graphs (saves ~500MB VRAM)
+#   --dtype half                   → FP16 (3B model = ~6GB in FP32, ~3GB in FP16)
+#   --max-num-seqs 2               → max 2 concurrent requests (prevents OOM)
+exec python -m vllm.entrypoints.openai.api_server \
+    --model "${MODEL}" \
     --host 0.0.0.0 \
-    --port "${SGLANG_PORT}" \
-    --mem-fraction-static "${SGLANG_MEM_FRACTION_STATIC}" \
-    --tp 1 \
-    ${EXTRA_ARGS}
+    --port "${PORT}" \
+    --gpu-memory-utilization 0.85 \
+    --max-model-len 4096 \
+    --enforce-eager \
+    --dtype half \
+    --max-num-seqs 2 \
+    --trust-remote-code \
+    --download-dir "${HF_HOME}"
