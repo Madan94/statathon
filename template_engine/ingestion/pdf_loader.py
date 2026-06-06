@@ -219,8 +219,11 @@ def _load_colpali(pdf_path: Path) -> list[PageData] | None:
     try:
         import requests  # type: ignore
 
+        # Always POST to base_url/extract — never the root endpoint.
+        # COLPALI_ENDPOINT must be the base URL only (no /extract suffix).
+        colpali_url = endpoint.rstrip("/") + "/extract"
         with open(pdf_path, "rb") as f:
-            r = requests.post(endpoint, files={"file": f}, timeout=120)
+            r = requests.post(colpali_url, files={"file": f}, timeout=120)
         r.raise_for_status()
         raw_pages = r.json().get("pages") or []
         pages: list[PageData] = []
