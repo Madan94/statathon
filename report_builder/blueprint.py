@@ -521,7 +521,24 @@ def compile_template_production(
     _tick(PRODUCTION_STAGE_ORDER[1], 35, {"status": "started"})
     pages: list[dict[str, Any]] = []
     extraction_method = "unknown"
-    if path.exists():
+
+    # ── Sequential GPU mode: use orchestrator (ColPali Docker → stop → SGLang Docker → stop)
+    from report_builder.gpu_orchestrator import get_pipeline_mode, extract_with_colpali
+
+    gpu_mode = get_pipeline_mode()
+    _sequential = gpu_mode == "sequential"
+
+    if _sequential and path.exists():
+        logger.info("[blueprint] ▶ PIPELINE_GPU_MODE=sequential   orchestrating Docker containers")
+        raw_pages = extract_with_colpali(path)
+        if raw_pages:
+            pages = raw_pages
+            extraction_method = "colpali+sequential"
+        else:
+            logger.warning("[blueprint] ⚠ sequential ColPali failed — falling back to local extractors")
+            _sequential = False  # fall through to local path below
+
+    if not _sequential and path.exists():
         try:
             from template_engine.ingestion.pdf_loader import load_pdf  # type: ignore
 
@@ -626,7 +643,35 @@ def compile_template_production(
     _tick(PRODUCTION_STAGE_ORDER[1], 45, diagnostics["stages"][PRODUCTION_STAGE_ORDER[1]])
 
     _tick(PRODUCTION_STAGE_ORDER[2], 55, {"status": "started"})
-    inferred_blocks = _sglang_compile_ast(pages)
+
+    # ── Sequential GPU mode: use orchestrator for SGLang too
+    inferred_blocks: list[BlockSpec] = []
+    if _sequential:
+        from report_builder.gpu_orchestrator import compile_with_sglang
+        raw_blocks = compile_with_sglang(pages)
+        if raw_blocks:
+            for i, entry in enumerate(raw_blocks):
+                try:
+                    inferred_blocks.append(BlockSpec(
+                        block_id=str(entry.get("block_id") or f"blk_{i}"),
+                        kind=str(entry.get("kind") or "narrative"),
+                        title=str(entry.get("title") or "Section"),
+                        section=str(entry.get("section") or "body"),
+                        required=bool(entry.get("required", True)),
+                        hints=entry.get("hints") or {},
+                    ))
+                except Exception:
+                    continue
+            if inferred_blocks:
+                logger.info(
+                    "[blueprint] ✓ sequential SGLang   blocks=%d", len(inferred_blocks)
+                )
+        if not inferred_blocks:
+            logger.info("[blueprint] ⚠ sequential SGLang returned 0 blocks — trying Gemini fallback")
+            inferred_blocks = _sglang_compile_ast(pages)
+    else:
+        inferred_blocks = _sglang_compile_ast(pages)
+
     if not inferred_blocks:
         # fallback still uses real headings from extracted pages
         inferred_blocks = _heuristic_classify_sections(pages)
