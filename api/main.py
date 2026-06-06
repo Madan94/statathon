@@ -20,7 +20,9 @@ if str(_REPO_ROOT) not in sys.path:
 
 import logging
 import os
+import time
 import traceback
+import uuid
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,8 +30,9 @@ from fastapi.responses import JSONResponse
 
 from auth.csrf import verify_csrf
 from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError, OperationalError
 from sqlalchemy.orm import Session
-from database.database import Base, engine, SessionLocal
+from database.database import Base, engine, SessionLocal, is_transient_db_error, pool_stats
 import database.models  # noqa: F401 — register metadata for semantic tables
 
 from pipelines.model_path import ensure_huggingface_hub_cache
@@ -67,10 +70,27 @@ app.add_middleware(
 
 @app.middleware("http")
 async def request_log_middleware(request: Request, call_next):
-    logger.info("%s %s", request.method, request.url.path)
-    response = await call_next(request)
-    if response.status_code >= 400:
-        logger.info("Response %s for %s %s", response.status_code, request.method, request.url.path)
+    """Per-request log line with unique req-id and end-to-end latency.
+
+    Format:
+      [req_abc123] start GET /path
+      [req_abc123] done  GET /path → 200  142.3ms
+    """
+    req_id = uuid.uuid4().hex[:8]
+    t0 = time.monotonic()
+    logger.info("[req_%s] start %s %s", req_id, request.method, request.url.path)
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        elapsed_ms = (time.monotonic() - t0) * 1000
+        logger.error("[req_%s] CRASH %s %s → %s  %.1fms",
+                     req_id, request.method, request.url.path, type(exc).__name__, elapsed_ms)
+        raise
+    elapsed_ms = (time.monotonic() - t0) * 1000
+    level = logger.warning if response.status_code >= 500 else logger.info
+    level("[req_%s] done  %s %s → %d  %.1fms",
+          req_id, request.method, request.url.path, response.status_code, elapsed_ms)
+    response.headers["X-Request-ID"] = req_id
     return response
 
 
@@ -106,6 +126,25 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
     if isinstance(exc, HTTPException):
         raise exc
+
+    # Classify DB connectivity errors → 503 (Service Unavailable, retriable)
+    # rather than 500 (true server bug). Frontend can show "reconnecting…"
+    # instead of a stack-trace error.
+    if isinstance(exc, (OperationalError, DBAPIError)) and is_transient_db_error(exc):
+        logger.warning(
+            "[db] transient DB error on %s %s: %s",
+            request.method, request.url.path, str(exc).split(chr(10))[0][:300],
+        )
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": "database temporarily unreachable (DNS/network) — retry shortly",
+                "error_class": type(exc).__name__,
+                "retry_after_seconds": 5,
+            },
+            headers={"Retry-After": "5"},
+        )
+
     logger.error("Unhandled error on %s %s: %s", request.method, request.url.path, exc)
     logger.error(traceback.format_exc())
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
@@ -197,12 +236,32 @@ def health():
 
 @app.get("/health/db")
 def health_db():
-    """Verify SQLAlchemy can reach the database (use after pointing DATABASE_URL at Neon, etc.)."""
+    """Verify SQLAlchemy can reach the database + return pool stats.
+
+    Returns 200 when reachable, 503 when DNS/network is down.
+    """
+    stats = pool_stats()
     db: Session = SessionLocal()
     try:
+        t0 = time.monotonic()
         db.execute(text("SELECT 1"))
-        return {"status": "ok", "database": "reachable"}
+        elapsed_ms = (time.monotonic() - t0) * 1000
+        return {
+            "status": "ok",
+            "database": "reachable",
+            "ping_ms": round(elapsed_ms, 1),
+            "pool": stats,
+        }
     except Exception as e:
-        return {"status": "error", "detail": str(e)}
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "error",
+                "detail": str(e).split(chr(10))[0][:300],
+                "error_class": type(e).__name__,
+                "transient": is_transient_db_error(e),
+                "pool": stats,
+            },
+        )
     finally:
         db.close()

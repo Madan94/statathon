@@ -1,9 +1,13 @@
+import logging
 import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
+from sqlalchemy.exc import DBAPIError, OperationalError
 from sqlalchemy.orm import sessionmaker
+
+logger = logging.getLogger("bharatstat.database")
 
 # `database.py` lives in api/database/ — repo API root is one level up
 _api_root = Path(__file__).resolve().parents[1]
@@ -15,12 +19,80 @@ else:
 _default_sqlite = (_api_root / "statathon.db").resolve().as_posix()
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{_default_sqlite}")
 _is_sqlite = DATABASE_URL.startswith("sqlite")
+
+# For Postgres (Supabase, Neon, RDS):
+#  - pool_pre_ping → SELECT 1 before handing out a connection
+#  - pool_recycle  → drop connections older than 280s (Supabase pooler kills idle conns ~300s)
+#  - pool_size/max_overflow → keep small for hobby tier, allow burst
+#  - pool_timeout → wait at most 30s to get a connection from the pool
+#  - connect_args.connect_timeout → fail-fast on DNS/network hangs (default psycopg2 blocks ~75s)
+_pg_connect_args = {"connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", "10"))}
+
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False} if _is_sqlite else {},
+    connect_args={"check_same_thread": False} if _is_sqlite else _pg_connect_args,
     pool_pre_ping=not _is_sqlite,
-    pool_recycle=280 if not _is_sqlite else -1,
+    pool_recycle=int(os.getenv("DB_POOL_RECYCLE", "280")) if not _is_sqlite else -1,
+    pool_size=int(os.getenv("DB_POOL_SIZE", "5")) if not _is_sqlite else 5,
+    max_overflow=int(os.getenv("DB_POOL_MAX_OVERFLOW", "10")) if not _is_sqlite else 10,
+    pool_timeout=int(os.getenv("DB_POOL_TIMEOUT", "30")),
+    echo_pool=os.getenv("DB_ECHO_POOL", "false").lower() in ("1", "true", "yes"),
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base  # noqa: E402
 Base = declarative_base()
+
+
+def _is_transient_db_error(exc: BaseException) -> bool:
+    """Classify DB exceptions: True if DNS/network/connection issue (retriable)."""
+    msg = str(exc).lower()
+    indicators = (
+        "could not translate host name",
+        "name or service not known",
+        "connection refused",
+        "connection reset",
+        "connection timed out",
+        "server closed the connection",
+        "no route to host",
+        "temporary failure in name resolution",
+        "ssl syscall error",
+        "eof detected",
+    )
+    return any(ind in msg for ind in indicators)
+
+
+@event.listens_for(engine, "handle_error")
+def _on_db_error(ctx) -> None:
+    """Auto-recover the pool when DNS/network failures invalidate connections.
+
+    Without this, once DNS hiccups, the pool caches dead psycopg2 connections
+    and every subsequent request returns 500 even after the network recovers.
+    """
+    exc = ctx.original_exception
+    if isinstance(exc, (OperationalError, DBAPIError)) and _is_transient_db_error(exc):
+        logger.warning("[db] transient error detected (%s) — disposing pool for fresh DNS lookup",
+                       type(exc).__name__)
+        try:
+            engine.dispose()
+        except Exception as dispose_exc:
+            logger.error("[db] pool dispose failed: %s", dispose_exc)
+
+
+def pool_stats() -> dict:
+    """Pool diagnostics for /health/db."""
+    if _is_sqlite:
+        return {"backend": "sqlite", "url": DATABASE_URL}
+    p = engine.pool
+    return {
+        "backend": "postgresql",
+        "host_redacted": DATABASE_URL.split("@")[-1].split("/")[0] if "@" in DATABASE_URL else "",
+        "size": p.size(),
+        "checked_in": p.checkedin(),
+        "checked_out": p.checkedout(),
+        "overflow": p.overflow(),
+    }
+
+
+def is_transient_db_error(exc: BaseException) -> bool:
+    """Public helper: True if exception is a retriable DNS/network issue."""
+    return _is_transient_db_error(exc)
