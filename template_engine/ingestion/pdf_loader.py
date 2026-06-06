@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -215,17 +216,31 @@ def _load_pymupdf(pdf_path: Path) -> list[PageData] | None:
 def _load_colpali(pdf_path: Path) -> list[PageData] | None:
     endpoint = os.getenv("COLPALI_ENDPOINT")
     if not endpoint:
+        logger.info("[pdf_loader] COLPALI_ENDPOINT not set — skipping ColPali extractor")
         return None
+
+    # COLPALI_ENDPOINT must be the base URL only (no /extract suffix).
+    colpali_url = endpoint.rstrip("/") + "/extract"
+    # COLPALI_TIMEOUT: increase for large PDFs (default 300s; override in .env).
+    timeout = int(os.getenv("COLPALI_TIMEOUT", "300"))
+    file_size_kb = pdf_path.stat().st_size / 1024 if pdf_path.exists() else 0
+    logger.info(
+        "[pdf_loader] ColPali → %s  file=%.1f KB  timeout=%ds",
+        colpali_url, file_size_kb, timeout,
+    )
+    t0 = time.monotonic()
     try:
         import requests  # type: ignore
 
-        # Always POST to base_url/extract — never the root endpoint.
-        # COLPALI_ENDPOINT must be the base URL only (no /extract suffix).
-        colpali_url = endpoint.rstrip("/") + "/extract"
         with open(pdf_path, "rb") as f:
-            r = requests.post(colpali_url, files={"file": f}, timeout=120)
+            r = requests.post(colpali_url, files={"file": f}, timeout=timeout)
+        elapsed = time.monotonic() - t0
         r.raise_for_status()
         raw_pages = r.json().get("pages") or []
+        logger.info(
+            "[pdf_loader] ColPali OK  pages=%d  elapsed=%.1fs",
+            len(raw_pages), elapsed,
+        )
         pages: list[PageData] = []
         for i, p in enumerate(raw_pages):
             text_blocks = [
@@ -252,7 +267,18 @@ def _load_colpali(pdf_path: Path) -> list[PageData] | None:
             ))
         return pages or None
     except Exception as exc:
-        logger.info("ColPali sidecar unavailable: %s", exc)
+        elapsed = time.monotonic() - t0
+        err_str = str(exc).lower()
+        if "timed out" in err_str or "timeout" in err_str:
+            kind = "TIMEOUT"
+        elif "refused" in err_str or "failed to establish" in err_str:
+            kind = "REFUSED (ColPali not running?)"
+        else:
+            kind = "ERROR"
+        logger.info(
+            "[pdf_loader] ColPali %s after %.1fs: %s",
+            kind, elapsed, exc,
+        )
         return None
 
 
@@ -283,23 +309,38 @@ def load_pdf(pdf_path: str | Path) -> tuple[list[PageData], str]:
 
     Returns:
       (pages, extraction_method)
+
+    Extraction cascade (logged for full observability):
+      1. ColPali  — GPU vision model (best spatial accuracy; requires Docker sidecar)
+      2. pdfplumber — text + table layout (pure Python; always available)
+      3. PyMuPDF (fitz) — fast fallback
+      4. stub — produces filename-derived heading only; never fails
     """
     path = Path(pdf_path)
     if not path.exists():
-        logger.warning("PDF not found: %s; using stub", path)
+        logger.warning("[pdf_loader] PDF not found: %s; using stub", path)
         return _stub_pages(path), "stub"
 
-    # Order: ColPali (best) → pdfplumber → PyMuPDF → stub
+    file_size_kb = path.stat().st_size / 1024
+    logger.info("[pdf_loader] load_pdf start: %s  (%.1f KB)", path.name, file_size_kb)
+
+    logger.info("[pdf_loader] cascade 1/4: ColPali")
     pages = _load_colpali(path)
     if pages:
+        logger.info("[pdf_loader] ✓ extractor=colpali  pages=%d", len(pages))
         return pages, "colpali"
 
+    logger.info("[pdf_loader] cascade 2/4: pdfplumber")
     pages = _load_pdfplumber(path)
     if pages:
+        logger.info("[pdf_loader] ✓ extractor=pdfplumber  pages=%d", len(pages))
         return pages, "pdfplumber"
 
+    logger.info("[pdf_loader] cascade 3/4: PyMuPDF")
     pages = _load_pymupdf(path)
     if pages:
+        logger.info("[pdf_loader] ✓ extractor=pymupdf  pages=%d", len(pages))
         return pages, "pymupdf"
 
+    logger.warning("[pdf_loader] cascade 4/4: all extractors failed — using stub (filename only)")
     return _stub_pages(path), "stub"

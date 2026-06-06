@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import re
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -212,32 +213,47 @@ def _gemini_classify_sections(page_summaries: list[dict[str, Any]]) -> list[Bloc
     """Ask Gemini to map detected headings/layout into our block kinds.
 
     Returns block specs ordered per page; falls back gracefully if Gemini fails.
+    Uses google.genai >= 1.0 SDK with automatic fallback to legacy google.generativeai.
     """
     if not page_summaries:
         return []
-    try:
-        import google.generativeai as g  # type: ignore
-    except Exception:
-        logger.info("google-generativeai not available; using heuristic classification")
-        return _heuristic_classify_sections(page_summaries)
 
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
+        logger.info("[blueprint] GEMINI_API_KEY not set — using heuristic classification")
         return _heuristic_classify_sections(page_summaries)
+
+    model_name = os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash")
+    prompt = (
+        "You are a report-template compiler. Given a list of pages with detected "
+        "headings and layout signals, output a JSON list of block specs. Each item "
+        "must have: block_id (slug), kind (one of narrative/table/chart/metric/heading), "
+        "title (short), section (slug), required (bool), hints (object with page_index, "
+        "and optional chart_type/source).\n"
+        "Only return valid JSON. No prose.\n\n"
+        f"PAGES:\n{json.dumps(page_summaries, indent=2)[:8000]}"
+    )
+    logger.info(
+        "[blueprint] Gemini classify: model=%s  pages=%d  prompt_chars=%d",
+        model_name, len(page_summaries), len(prompt),
+    )
+    t0 = time.monotonic()
     try:
-        g.configure(api_key=api_key)
-        model = g.GenerativeModel(os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash"))
-        prompt = (
-            "You are a report-template compiler. Given a list of pages with detected "
-            "headings and layout signals, output a JSON list of block specs. Each item "
-            "must have: block_id (slug), kind (one of narrative/table/chart/metric/heading), "
-            "title (short), section (slug), required (bool), hints (object with page_index, "
-            "and optional chart_type/source).\n"
-            "Only return valid JSON. No prose.\n\n"
-            f"PAGES:\n{json.dumps(page_summaries, indent=2)[:8000]}"
-        )
-        resp = model.generate_content(prompt)
-        text = (resp.text or "").strip()
+        text: str = ""
+        try:
+            # Prefer new google-genai SDK (pip install google-genai)
+            import google.genai as _genai  # type: ignore
+            client = _genai.Client(api_key=api_key)
+            resp = client.models.generate_content(model=model_name, contents=prompt)
+            text = (resp.text or "").strip()
+        except ImportError:
+            # Fall back to legacy google-generativeai SDK
+            import google.generativeai as g  # type: ignore
+            g.configure(api_key=api_key)
+            resp = g.GenerativeModel(model_name).generate_content(prompt)
+            text = (resp.text or "").strip()
+
+        elapsed = time.monotonic() - t0
         # Strip markdown fences if present
         text = re.sub(r"^```(?:json)?|```$", "", text, flags=re.MULTILINE).strip()
         data = json.loads(text)
@@ -254,9 +270,17 @@ def _gemini_classify_sections(page_summaries: list[dict[str, Any]]) -> list[Bloc
                 ))
             except Exception:
                 continue
+        logger.info(
+            "[blueprint] Gemini classify done: blocks=%d  elapsed=%.1fs",
+            len(blocks), elapsed,
+        )
         return blocks or _heuristic_classify_sections(page_summaries)
     except Exception as exc:
-        logger.warning("Gemini classification failed: %s; using heuristic", exc)
+        elapsed = time.monotonic() - t0
+        logger.warning(
+            "[blueprint] Gemini classify failed after %.1fs: %s — using heuristic",
+            elapsed, exc,
+        )
         return _heuristic_classify_sections(page_summaries)
 
 
@@ -330,12 +354,24 @@ def _colpali_extract(pdf_path: str | Path) -> list[dict[str, Any]] | None:
             # Always use base URL + /extract so this is consistent with ColPaliClient
             # which also appends /extract. COLPALI_ENDPOINT must NOT include /extract.
             colpali_url = endpoint.rstrip("/") + "/extract"
+            timeout = int(os.getenv("COLPALI_TIMEOUT", "300"))
+            logger.info(
+                "[blueprint._colpali_extract] → %s  timeout=%ds",
+                colpali_url, timeout,
+            )
+            t0 = time.monotonic()
             with open(pdf_path, "rb") as f:
-                r = requests.post(colpali_url, files={"file": f}, timeout=120)
+                r = requests.post(colpali_url, files={"file": f}, timeout=timeout)
             r.raise_for_status()
-            return r.json().get("pages") or None
+            pages = r.json().get("pages") or None
+            logger.info(
+                "[blueprint._colpali_extract] OK  pages=%d  elapsed=%.1fs",
+                len(pages) if pages else 0,
+                time.monotonic() - t0,
+            )
+            return pages
         except Exception as exc:
-            logger.info("ColPali endpoint unreachable: %s", exc)
+            logger.info("[blueprint._colpali_extract] endpoint unreachable: %s", exc)
     return None
 
 
@@ -405,6 +441,11 @@ def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]
                 "max_tokens": 4096,
             }
             timeout = int(os.getenv("SGLANG_TIMEOUT", "120"))
+            logger.info(
+                "[blueprint._sglang_compile_ast] SGLang → %s  model=%s  timeout=%ds",
+                endpoint, model, timeout,
+            )
+            t0 = time.monotonic()
             r = requests.post(
                 f"{endpoint.rstrip('/')}/v1/chat/completions",
                 json=payload,
@@ -417,9 +458,13 @@ def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]
             data = _json.loads(content)
             blocks = _parse_blocks(data, f"http:{endpoint}")
             if blocks:
+                logger.info(
+                    "[blueprint._sglang_compile_ast] SGLang OK  blocks=%d  elapsed=%.1fs",
+                    len(blocks), time.monotonic() - t0,
+                )
                 return blocks
         except Exception as exc:
-            logger.info("SGLang HTTP endpoint unavailable: %s — trying in-process or Gemini", exc)
+            logger.info("[blueprint._sglang_compile_ast] SGLang HTTP endpoint unavailable: %s — trying in-process or Gemini", exc)
 
     # ── Attempt 2: sglang Python in-process SDK (only if locally installed) ──
     try:
@@ -446,6 +491,7 @@ def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]
         pass
 
     # ── Attempt 3: Gemini fallback ──
+    logger.info("[blueprint._sglang_compile_ast] falling back to Gemini")
     return _gemini_classify_sections(page_summaries)
 
 
@@ -571,6 +617,7 @@ def compile_template_production(
     ]
     diagnostics["stages"][PRODUCTION_STAGE_ORDER[1]] = {
         "page_count": len(pages),
+        "extraction_method": extraction_method,
         "section_hierarchy": section_hierarchy[:25],
         "page_layout_preview": page_layout_preview,
         "layout_extractors": {"paragraphs": True, "tables": True},

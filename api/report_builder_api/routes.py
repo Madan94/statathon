@@ -20,6 +20,7 @@ from __future__ import annotations
 import logging
 import os
 import hashlib
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -184,6 +185,7 @@ def list_ready_analyses(
 
 
 def _run_template_extraction_job(extract_job_id: int) -> None:
+    t_job_start = time.monotonic()
     db = SessionLocal()
     try:
         row = db.query(ReportTemplateExtractionJob).filter(
@@ -191,13 +193,21 @@ def _run_template_extraction_job(extract_job_id: int) -> None:
         ).first()
         if not row:
             return
+
+        src_path = Path(row.source_storage_path or "")
+        file_size_kb = src_path.stat().st_size / 1024 if src_path.is_file() else 0
+        logger.info(
+            "[job %d] extraction started: template=%r  file=%s  size=%.1f KB",
+            extract_job_id, row.template_name, row.source_filename, file_size_kb,
+        )
+
         _update_extract_job(
             db,
             row,
             status="running",
             stage="stage1_immutable_ingestion_vaulting",
             progress_pct=5,
-            diagnostics={"status": "started"},
+            diagnostics={"status": "started", "file_size_kb": round(file_size_kb, 1)},
         )
 
         src_path = Path(row.source_storage_path or "")
@@ -230,6 +240,12 @@ def _run_template_extraction_job(extract_job_id: int) -> None:
         )
 
         def _progress(stage: str, pct: int, payload: dict[str, object]):
+            elapsed = round(time.monotonic() - t_job_start, 1)
+            logger.info(
+                "[job %d] stage=%s  pct=%d  elapsed=%.1fs  method=%s",
+                extract_job_id, stage, pct, elapsed,
+                payload.get("extraction_method", ""),
+            )
             _update_extract_job(db, row, stage=stage, progress_pct=pct, diagnostics=dict(payload))
 
         ast, diagnostics = bp.compile_template_production(src_path, row.template_name, progress=_progress)
@@ -256,16 +272,27 @@ def _run_template_extraction_job(extract_job_id: int) -> None:
 
         row.created_template_id = template.id
         row.extraction_method = ast.extraction_method
+        elapsed_total = time.monotonic() - t_job_start
+        logger.info(
+            "[job %d] extraction COMPLETED: template_id=%d  method=%s  pages=%d  blocks=%d  elapsed=%.1fs",
+            extract_job_id, template.id, ast.extraction_method,
+            ast.page_count, len(ast.blocks), elapsed_total,
+        )
         _update_extract_job(
             db,
             row,
             status="completed",
             stage="stage6_final_ast_json_layout",
             progress_pct=100,
-            diagnostics={"status": "completed", "created_template_id": template.id},
+            diagnostics={"status": "completed", "created_template_id": template.id,
+                         "elapsed_s": round(elapsed_total, 1)},
         )
     except Exception as exc:
-        logger.exception("Template extraction job %s failed", extract_job_id)
+        elapsed_total = time.monotonic() - t_job_start
+        logger.exception(
+            "[job %d] extraction FAILED after %.1fs",
+            extract_job_id, elapsed_total,
+        )
         row = db.query(ReportTemplateExtractionJob).filter(
             ReportTemplateExtractionJob.id == extract_job_id
         ).first()

@@ -116,6 +116,9 @@ vine==5.1.0
 # Gemini / Google Generative AI — used by agents, template_engine, report_builder
 # (import google.generativeai appears in 11 source files)
 google-generativeai>=0.8.0
+# New google-genai SDK (>= 1.0) — blueprint.py and scribe_agent.py prefer this;
+# avoids the FutureWarning from the deprecated google-generativeai package.
+google-genai>=1.0.0
 watchfiles==1.1.1
 wcwidth==0.7.0
 websockets==16.0
