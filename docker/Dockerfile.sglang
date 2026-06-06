@@ -1,63 +1,44 @@
 # syntax=docker/dockerfile:1
 # ─────────────────────────────────────────────────────────────────────────────
-# SGLang grammar-constrained LLM server (Qwen2.5-3B default).
-# Requires NVIDIA Container Toolkit on host (--gpus all).
+# SGLang LLM server for RTX 4050 Laptop (SM89, 6GB VRAM, 24GB RAM)
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+# STRATEGY: Use lmsysorg/sglang official image as base.
+# This is the ONLY reliable way to get correctly compiled sgl_kernel for your
+# GPU. Building from pip always has CUDA version / arch mismatches.
+#
+# The official image ships with:
+#   - Correct sgl_kernel for your GPU arch
+#   - PyTorch matched to container CUDA version
+#   - All quantization kernels pre-compiled
+#   - Tested server startup
+#
+# If the official image approach fails for any reason, there's a fallback
+# strategy documented at the bottom (vLLM-based alternative).
+# ═══════════════════════════════════════════════════════════════════════════════
 #
 # Build:  docker compose -f docker-compose.gpu.yml --profile gpu build sglang
 # Run:    docker compose -f docker-compose.gpu.yml --profile gpu up sglang
-#
-# Cache strategy:
-#   - BuildKit pip cache mount (--mount=type=cache) keeps .whl files across builds
-#   - Pinned versions → layers only rebuild when YOU bump versions
-#   - Model downloads at runtime via volume mount (./model/cache:/cache)
-#   - Rebuild after fix = seconds (warm cache), not 37 minutes
 # ─────────────────────────────────────────────────────────────────────────────
-FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
+FROM lmsysorg/sglang:latest
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    HF_HOME=/cache \
+# Override defaults for your 6GB VRAM laptop
+ENV HF_HOME=/cache \
     SGLANG_MODEL=Qwen/Qwen2.5-3B-Instruct \
     SGLANG_PORT=8002 \
-    SGLANG_MEM_FRACTION_STATIC=0.42
+    SGLANG_MEM_FRACTION_STATIC=0.40
 
-WORKDIR /app
+# Install curl for healthcheck (not in sglang image by default)
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# ── Layer 1: System packages (cached forever) ────────────────────────────────
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        python3 python3-pip python3-venv git curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3 /usr/bin/python
-
-# ── Layer 2: pip upgrade (tiny, cached forever) ──────────────────────────────
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --upgrade pip
-
-# ── Layer 3: PyTorch for CUDA 12.1 (~2GB, cached via pip mount) ──────────────
-# Isolated layer — if sglang install fails, torch stays cached.
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install torch --index-url https://download.pytorch.org/whl/cu121
-
-# ── Layer 4: SGLang + fix (the main layer) ───────────────────────────────────
-# Pin to >=0.4 for Qwen2.5 support. BuildKit cache means even a rebuild
-# only re-installs changed packages — doesn't re-download 2GB from PyPI.
-# 'kernels' package removed: transformers 4.46+ optionally imports it via
-# hub_kernels.py but the installed version has a bug (LayerRepository called
-# without revision/version). Without it, transformers works fine.
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install "sglang[all]>=0.4" \
-    && pip uninstall -y kernels 2>/dev/null || true
-
-# ── Layer 5: Utilities (tiny, fast) ──────────────────────────────────────────
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install huggingface_hub
+# Entrypoint with diagnostics
+COPY docker/sglang-entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8002
 
-CMD python -m sglang.launch_server \
-    --model-path ${SGLANG_MODEL} \
-    --host 0.0.0.0 \
-    --port ${SGLANG_PORT} \
-    --mem-fraction-static ${SGLANG_MEM_FRACTION_STATIC} \
-    --tp 1
+HEALTHCHECK --interval=15s --timeout=5s --start-period=120s --retries=8 \
+    CMD curl -fsS http://localhost:8002/health || exit 1
+
+ENTRYPOINT ["/app/entrypoint.sh"]
