@@ -1,184 +1,235 @@
 """
-Semantic Mapping Pipeline V2 — Qdrant + BGE-M3 + Gemini domain titles.
+Semantic Mapping & Domain Clustering V2 — Production Pipeline.
 
-Parallel to model/semantic_mapping/; does not import that package.
+Orchestrates the full 11-step flow with Qdrant as the vector backbone:
+
+  STEP 1  Usecase detection                  (usecase_detector)
+  STEP 2  Static domain loading              (domain_loader)
+  STEP 3  Dynamic domain generation (LLM)    (dynamic_domains)
+  STEP 4  Domain synthesis -> Qdrant         (domain_synthesis)
+  STEP 5  Column feature generation          (feature_extraction)
+  STEP 6  Domain matching engine             (matching_engine)
+  STEP 7  LLM fallback (< 0.80)              (matching_engine)
+  STEP 8  Domain confidence + source         (matching_engine)
+  STEP 9  HDBSCAN domain clustering          (clustering)
+  STEP 10 Cluster labeling (majority vote)   (clustering)
+  STEP 11 Cluster validation (purity)        (clustering)
+  +       Schema graph + Knowledge graph     (kg_builder)
+
+FINAL OUTPUT:
+    {
+      "semantic_mapping":   {column: {domain, confidence, source, ...}},
+      "domains":            {domain_name: {...}},        # unified registry
+      "dynamic_domains":    {domain_name: {...}},        # LLM-proposed subset
+      "clusters":           {cluster_id: {...}},
+      "cluster_confidence": {cluster_id: float},
+      "usecase": {...}, "schema_graph": {...},
+      "knowledge_graph": {...}, "meta": {...}
+    }
 """
 from __future__ import annotations
 
-import hashlib
 import logging
+import time
 from typing import Any
 
-from semantic_mapping_v2.config import (
-    STATIC_DOMAINS_COLLECTION,
-    STRICT_THRESHOLD,
-    columns_collection,
-    dynamic_domains_collection,
-)
-from semantic_mapping_v2.embedder import BgeM3Embedder
-from semantic_mapping_v2.normalization import ColumnPreprocessorV2
-from semantic_mapping_v2.registry_manager import RegistryManager, get_qdrant_client
+import numpy as np
+import pandas as pd
+
+from semantic_mapping_v2.clustering import DomainClusteringEngine
+from semantic_mapping_v2.config import validate_weights
+from semantic_mapping_v2.domain_loader import DomainRegistryLoader
+from semantic_mapping_v2.domain_synthesis import UnifiedDomainRegistry
+from semantic_mapping_v2.dynamic_domains import DynamicDomainGenerator
+from semantic_mapping_v2.embedder import SemanticEmbedder
+from semantic_mapping_v2.feature_extraction import FeatureExtractor
+from semantic_mapping_v2.kg_builder import KnowledgeGraphBuilder, SchemaGraphV2
+from semantic_mapping_v2.matching_engine import MatchingEngine
+from semantic_mapping_v2.usecase_detector import UsecaseDetector
 
 logger = logging.getLogger(__name__)
 
 
-def _point_id(namespace: str, text: str) -> str:
-    digest = hashlib.sha256(f"{namespace}:{text}".encode("utf-8")).hexdigest()
-    return digest[:32]
-
-
 class SemanticPipelineV2:
-    """
-    V2 entry point: normalize → ingest metadata → LLM domains → Qdrant search → gatekeeper.
-    """
+    """Production semantic mapping + domain clustering pipeline (Qdrant-backed)."""
 
-    def __init__(self):
-        self.preprocessor = ColumnPreprocessorV2()
-        self.embedder = BgeM3Embedder()
-        self.registry = RegistryManager(embedder=self.embedder)
+    def __init__(self, embedder: SemanticEmbedder | None = None, *, use_llm: bool = True):
+        self.embedder = embedder or SemanticEmbedder()
+        self.use_llm = use_llm
+        self.loader = DomainRegistryLoader()
+        self.generator = DynamicDomainGenerator()
+        self.detector = UsecaseDetector(self.embedder, self.loader)
+        self.features = FeatureExtractor()
+        self.registry = UnifiedDomainRegistry(self.embedder, self.loader, self.generator)
+        self.matcher = MatchingEngine(self.registry, self.embedder)
+        self.clusterer = DomainClusteringEngine()
+        self.kg = KnowledgeGraphBuilder()
 
-    def run(
+        issues = validate_weights()
+        if issues:
+            logger.warning("Score weights do not sum to 1.0: %s", issues)
+
+    # -----------------------------------------------------------------------
+    def analyze(
         self,
-        dataset_id: str,
-        columns: list[str],
-        dataset_metadata: dict[str, Any] | None = None,
+        df: pd.DataFrame | None = None,
         *,
-        dynamic_titles: list[dict[str, str]] | None = None,
+        dataset_id: str,
+        dataset_name: str | None = None,
+        columns: list[str] | None = None,
+        datatypes: dict[str, str] | None = None,
+        samples: dict[str, list[Any]] | None = None,
+        file_name: str = "",
+        sheet_names: list[str] | None = None,
+        user_usecase: str | None = None,
     ) -> dict[str, Any]:
-        """
-        Args:
-            dataset_id: Unique dataset identifier (scopes Qdrant collections).
-            columns: Raw column names.
-            dataset_metadata: JSON metadata with keys such as dataset_archetype,
-                datatypes, column_metadata, and optional extra ingestion fields.
-        """
-        meta = dataset_metadata or {}
-        archetype = str(meta.get("dataset_archetype") or meta.get("dataset_type") or "unknown")
-        datatypes = meta.get("datatypes") or {}
-        column_metadata = meta.get("column_metadata") or {}
+        t0 = time.time()
+        dataset_name = dataset_name or dataset_id
 
-        normalized = self.preprocessor.normalize_columns(columns)
+        # STEP 5 (features first; they feed every later step) ----------------
+        if df is not None:
+            features = self.features.from_dataframe(df)
+        elif columns:
+            features = self.features.from_metadata(columns, datatypes, samples)
+        else:
+            raise ValueError("analyze() needs either a DataFrame or a columns list.")
+        if not features:
+            raise ValueError("No columns to analyze.")
 
-        static_ready = self.registry.ensure_static_domains()
+        column_names = list(features.keys())
+        sample_values = {c: list(f.samples) for c, f in features.items()}
 
-        llm_used = False
-        if dynamic_titles is None:
-            try:
-                from services.gemini_domain_generator_v2 import generate_domain_titles
+        # One query vector per column, reused by matching/clustering/schema.
+        reps = [features[c].representation for c in column_names]
+        rep_vecs = self.embedder.embed_queries_batch(reps)
+        column_vectors = {c: rep_vecs[i] for i, c in enumerate(column_names)}
 
-                dynamic_titles = generate_domain_titles(
-                    dataset_archetype=archetype,
-                    column_names=columns,
-                    datatypes=datatypes if isinstance(datatypes, dict) else {},
-                    column_metadata=column_metadata if isinstance(column_metadata, dict) else {},
-                )
-            except Exception as exc:
-                logger.warning("LLM domain generation error: %s", exc)
-                dynamic_titles = None
+        # STEP 1 — usecase detection ----------------------------------------
+        uc = self.detector.detect(
+            column_names=column_names,
+            dataset_name=dataset_name,
+            file_name=file_name,
+            sheet_names=sheet_names or [],
+            sample_values=sample_values,
+            user_usecase=user_usecase,
+        )
 
-        if dynamic_titles:
-            self.registry.upsert_dynamic_domains(dataset_id, dynamic_titles)
-            print(
-                f"✨ LLM Generated Domains: "
-                f"{[d.get('domain_name') if isinstance(d, dict) else d for d in dynamic_titles]}"
-            )
-            llm_used = True
-        elif dynamic_titles is None:
-            logger.info("LLM domain generation failed; using static_domains only.")
+        # STEP 2-4 — static + dynamic -> unified registry seeded into Qdrant -
+        synth = self.registry.build(
+            usecase=uc.usecase,
+            dataset_id=dataset_id,
+            dataset_name=dataset_name,
+            column_names=column_names,
+            sample_values=sample_values,
+            use_llm=self.use_llm,
+        )
+        # Refresh matcher's domain index against the freshly built registry.
+        self.matcher = MatchingEngine(self.registry, self.embedder)
 
-        self._upsert_column_vectors(dataset_id, normalized)
+        # STEP 6-8 — column -> domain mapping with LLM fallback -------------
+        mappings = self.matcher.map_columns(
+            usecase=uc.usecase,
+            dataset_id=dataset_id,
+            dataset_name=dataset_name,
+            features=features,
+            column_query_vectors=column_vectors,
+            use_llm=self.use_llm,
+        )
+        # Carry dtype onto each mapping for downstream KG/use.
+        for col, m in mappings.items():
+            m.signals.setdefault("_dtype", 0.0)
+        column_domains = {c: m.domain for c, m in mappings.items()}
 
-        semantic_mapping: dict[str, dict[str, Any]] = {}
-        for col in columns:
-            norm_text = normalized[col]
-            query_vec = self.embedder.embed_query(norm_text).tolist()
-            hits = self.registry.search_domains(
-                query_vec,
-                dataset_id,
-                include_dynamic=llm_used,
-                limit=5,
-            )
-            print(f"\nDEBUG: Analyzing column '{col}' (Normalized: '{norm_text}')")
-            if hits:
-                for i, hit in enumerate(hits):
-                    print(f"  Hit {i+1}: {hit['payload'].get('title', hit['payload'].get('subdomain'))} | Score: {hit['score']:.4f}")
-            else:
-                print("  No hits returned from Qdrant.")
-            best_score = float(hits[0]["score"]) if hits else 0.0
-            best_payload = hits[0]["payload"] if hits else {}
+        # STEP 9-11 — clustering, labeling, validation ----------------------
+        clusters, column_clusters = self.clusterer.cluster(
+            features=features, mappings=mappings, column_vectors=column_vectors
+        )
 
-            if best_score >= STRICT_THRESHOLD and hits:
-                if best_payload.get("source") == "dynamic":
-                    domain = str(best_payload.get("title") or "unknown")
-                else:
-                    domain = str(best_payload.get("subdomain") or best_payload.get("keyword") or "unknown")
-                routing_path = "qdrant_semantic_match"
-            else:
-                domain = "uncorrelated"
-                routing_path = "uncorrelated_sink"
+        # Schema graph + Knowledge graph ------------------------------------
+        schema = SchemaGraphV2().build(column_vectors, column_domains, column_clusters)
+        domains_map = self._unified_domains_map(synth)
+        knowledge_graph = self.kg.build(
+            dataset_id=dataset_id,
+            dataset_name=dataset_name,
+            usecase=uc.usecase,
+            usecase_confidence=uc.confidence,
+            domains=domains_map,
+            mappings=mappings,
+            clusters=clusters,
+            column_clusters=column_clusters,
+            schema_graph=schema,
+        )
 
-            semantic_mapping[col] = {
-                "normalized_name": norm_text,
-                "domain": domain,
-                "confidence": round(best_score, 4),
-                "routing_path": routing_path,
-                "top_match": hits[0] if hits else None,
-                "explainability": {
-                    "dataset_archetype": archetype,
-                    "engine": "semantic_mapping_v2",
-                    "strict_threshold": STRICT_THRESHOLD,
-                    "llm_domains_used": llm_used,
-                    "static_registry_ready": static_ready,
-                },
-            }
+        return self._assemble_output(
+            uc=uc,
+            synth=synth,
+            domains_map=domains_map,
+            mappings=mappings,
+            features=features,
+            clusters=clusters,
+            schema=schema,
+            knowledge_graph=knowledge_graph,
+            elapsed=time.time() - t0,
+        )
 
-        return {
-            "engine_version": "v2",
-            "dataset_id": dataset_id,
-            "dataset_context": {
-                "dataset_type": archetype,
-                "metadata": meta,
-            },
-            "semantic_mapping": semantic_mapping,
-            "domain_registry": {
-                "static_collection": STATIC_DOMAINS_COLLECTION if static_ready else None,
-                "dynamic_collection": dynamic_domains_collection(dataset_id),
-                "dynamic_titles": dynamic_titles or [],
-                "llm_used": llm_used,
-            },
-            "column_normalization": [
-                {"column": c, "normalized": normalized[c]} for c in columns
-            ],
+    # -- output assembly -----------------------------------------------------
+    @staticmethod
+    def _unified_domains_map(synth: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        out: dict[str, dict[str, Any]] = {}
+        for d in synth.get("domains", []):
+            out[d["domain_name"]] = d
+        return out
+
+    def _assemble_output(
+        self,
+        *,
+        uc,
+        synth: dict[str, Any],
+        domains_map: dict[str, dict[str, Any]],
+        mappings: dict[str, Any],
+        features: dict[str, Any],
+        clusters: list[Any],
+        schema: SchemaGraphV2,
+        knowledge_graph: dict[str, Any],
+        elapsed: float,
+    ) -> dict[str, Any]:
+        semantic_mapping: dict[str, Any] = {}
+        for col, m in mappings.items():
+            d = m.to_dict()
+            d["dtype"] = features[col].dtype
+            semantic_mapping[col] = d
+
+        dynamic_domains = {
+            name: meta for name, meta in domains_map.items()
+            if meta.get("domain_type") == "dynamic"
         }
 
-    def _upsert_column_vectors(self, dataset_id: str, normalized: dict[str, str]) -> None:
-        """Store normalized column query vectors in Qdrant for traceability."""
-        client = get_qdrant_client()
-        if not client:
-            return
+        clusters_out: dict[str, Any] = {}
+        cluster_confidence: dict[str, float] = {}
+        for cl in clusters:
+            cd = cl.to_dict()
+            clusters_out[cd["cluster_id"]] = cd
+            cluster_confidence[cd["cluster_id"]] = cd["cluster_confidence"]
 
-        collection = columns_collection(dataset_id)
-        if not self.registry._ensure_collection(collection):
-            return
-
-        try:
-            from qdrant_client.http.models import PointStruct
-
-            points = []
-            for col, text in normalized.items():
-                vec = self.embedder.embed_query(text)
-                points.append(
-                    PointStruct(
-                        id=_point_id(collection, col),
-                        vector=vec.tolist(),
-                        payload={
-                            "column_name": col,
-                            "normalized_text": text,
-                            "dataset_id": str(dataset_id),
-                        },
-                    )
-                )
-            if points:
-                client.upsert(collection_name=collection, points=points)
-        except Exception as exc:
-            logger.debug("Column vector upsert skipped: %s", exc)
+        return {
+            "semantic_mapping": semantic_mapping,
+            "domains": domains_map,
+            "dynamic_domains": dynamic_domains,
+            "clusters": clusters_out,
+            "cluster_confidence": cluster_confidence,
+            "usecase": uc.to_dict(),
+            "schema_graph": schema.to_dict(),
+            "knowledge_graph": knowledge_graph,
+            "meta": {
+                "embedding_provider": self.embedder.provider,
+                "embedding_model": self.embedder.model_name,
+                "embedding_dim": self.embedder.dim,
+                "static_domains": synth.get("static_count", 0),
+                "dynamic_domains": synth.get("dynamic_count", 0),
+                "unified_domains": synth.get("unified_count", 0),
+                "llm_used": synth.get("llm_used", False),
+                "qdrant_static_ready": synth.get("static_ready", False),
+                "qdrant_dynamic_ready": synth.get("dynamic_ready", False),
+                "elapsed_sec": round(elapsed, 3),
+            },
+        }

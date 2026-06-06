@@ -1,0 +1,24 @@
+{
+  "usecase": "demography",
+  "version": "2026.1",
+  "description": "Demographic and census statistics: population, households, vital events and migration.",
+  "keywords": ["population", "census", "demographic", "household", "migration", "fertility", "mortality", "sex ratio", "age", "literacy", "vital"],
+  "domains": [
+    {"domain": "population", "description": "Population counts, density and headcount.", "synonyms": ["population", "headcount", "density", "total population", "persons"], "examples": ["population", "pop_density", "headcount"]},
+    {"domain": "age_structure", "description": "Age, age group and age distribution.", "synonyms": ["age", "age group", "agegroup", "age band", "age distribution"], "examples": ["age", "age_group", "age_band"]},
+    {"domain": "sex", "description": "Sex, gender and sex ratio.", "synonyms": ["sex", "gender", "sex ratio", "male", "female"], "examples": ["sex", "gender", "sex_ratio"]},
+    {"domain": "household", "description": "Household identity, size and composition.", "synonyms": ["household", "hh", "household size", "head", "family", "dwelling"], "examples": ["household_size", "household_id", "head_of_household"]},
+    {"domain": "marital_status", "description": "Marital status and marriage information.", "synonyms": ["marital status", "married", "single", "widowed", "divorced", "age at marriage"], "examples": ["marital_status", "age_at_marriage"]},
+    {"domain": "religion", "description": "Religion and community identity.", "synonyms": ["religion", "faith", "community", "religious group"], "examples": ["religion", "religious_group"]},
+    {"domain": "social_group", "description": "Social group, caste and ethnicity.", "synonyms": ["social group", "caste", "ethnicity", "category", "sc", "st", "obc"], "examples": ["social_group", "caste", "ethnicity"]},
+    {"domain": "literacy", "description": "Literacy and educational attainment.", "synonyms": ["literacy", "literate", "education level", "schooling", "literacy rate"], "examples": ["literacy_rate", "is_literate", "education_level"]},
+    {"domain": "fertility", "description": "Fertility, births and birth rate.", "synonyms": ["fertility", "births", "birth rate", "tfr", "children born", "natality"], "examples": ["birth_rate", "total_fertility_rate", "children_born"]},
+    {"domain": "mortality", "description": "Mortality, deaths and death rate.", "synonyms": ["mortality", "death", "death rate", "infant mortality", "life expectancy"], "examples": ["death_rate", "infant_mortality_rate", "deaths"]},
+    {"domain": "migration", "description": "Migration status, origin and reason.", "synonyms": ["migration", "migrant", "place of birth", "previous residence", "reason for migration"], "examples": ["migration_status", "place_of_birth", "migration_reason"]},
+    {"domain": "occupation", "description": "Main activity / occupation of persons.", "synonyms": ["occupation", "main activity", "work", "economic activity", "worker category"], "examples": ["occupation", "main_activity", "worker_category"]},
+    {"domain": "housing", "description": "Housing condition, tenure and amenities.", "synonyms": ["housing", "tenure", "dwelling", "amenity", "structure type", "pucca", "kutcha"], "examples": ["house_type", "tenure", "amenities"]},
+    {"domain": "geography", "description": "Geographic location: state, district, town, village, ward.", "synonyms": ["state", "district", "town", "village", "ward", "region", "rural", "urban"], "examples": ["state", "district", "village", "ward"]},
+    {"domain": "survey_metadata", "description": "Census year, round, enumeration period.", "synonyms": ["census year", "year", "round", "enumeration", "period"], "examples": ["census_year", "year", "enumeration_block"]},
+    {"domain": "identifier", "description": "Unique person / household / record identifiers.", "synonyms": ["id", "key", "serial", "uid", "person id", "household id", "enumeration number"], "examples": ["person_id", "household_id", "serial_no"]}
+  ]
+}

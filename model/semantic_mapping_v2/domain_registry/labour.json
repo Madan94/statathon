@@ -1,0 +1,24 @@
+{
+  "usecase": "labour",
+  "version": "2026.1",
+  "description": "Labour force, employment, wages and work participation surveys (e.g. PLFS).",
+  "keywords": ["employment", "worker", "wage", "labour", "lfpr", "wpr", "unemployment", "occupation", "industry", "job", "workforce", "earnings", "self employed"],
+  "domains": [
+    {"domain": "demographic", "description": "Person demographics: age, sex, marital status, religion.", "synonyms": ["age", "sex", "gender", "marital status", "religion", "social group", "caste"], "examples": ["age", "gender", "marital_status", "religion", "social_group"]},
+    {"domain": "education", "description": "Educational attainment and literacy of individuals.", "synonyms": ["education level", "literacy", "qualification", "schooling", "general education"], "examples": ["general_education", "literacy", "highest_qualification", "education_level"]},
+    {"domain": "employment", "description": "Employment status, activity status and labour participation.", "synonyms": ["employment status", "activity status", "weekly status", "usual status", "employed", "unemployed", "labour force"], "examples": ["weekly_status", "usual_status", "activity_status", "employment_status"]},
+    {"domain": "occupation", "description": "Occupation, job role and national classification codes.", "synonyms": ["occupation", "job", "nco", "profession", "primary occupation", "work role"], "examples": ["occupation", "primary_occupation_code", "nco_code", "job_title"]},
+    {"domain": "industry", "description": "Industry / sector of economic activity and NIC codes.", "synonyms": ["industry", "nic", "sector of activity", "economic activity", "enterprise type"], "examples": ["industry", "nic_code", "industry_division", "economic_activity"]},
+    {"domain": "income", "description": "Income, salary and earnings of person or household.", "synonyms": ["income", "salary", "earnings", "wage", "remuneration", "pay"], "examples": ["salary", "monthly_income", "earnings", "wage_amount"]},
+    {"domain": "wages", "description": "Wage rates, daily/monthly wages and casual labour payments.", "synonyms": ["wage rate", "daily wage", "casual wage", "piece rate", "wage per day"], "examples": ["daily_wage", "wage_rate", "casual_wage", "wage_per_day"]},
+    {"domain": "work_status", "description": "Nature of work: regular, casual, self-employed, contract.", "synonyms": ["regular", "casual", "self employed", "contract", "salaried", "informal"], "examples": ["work_status", "employment_type", "contract_type", "job_nature"]},
+    {"domain": "labor_metrics", "description": "Aggregate labour indicators like LFPR, WPR, unemployment rate.", "synonyms": ["lfpr", "wpr", "unemployment rate", "labour force participation", "worker population ratio", "participation rate"], "examples": ["lfpr", "wpr", "unemployment_rate", "participation_rate"]},
+    {"domain": "training", "description": "Vocational training, skill development and apprenticeship.", "synonyms": ["vocational training", "skill", "apprenticeship", "training received", "skill development"], "examples": ["vocational_training", "skill_type", "training_status", "apprenticeship"]},
+    {"domain": "migration", "description": "Migration status, place of previous residence and reason.", "synonyms": ["migration", "migrant", "previous residence", "reason for migration", "out migrant"], "examples": ["migration_status", "previous_residence", "migration_reason"]},
+    {"domain": "social_group", "description": "Social group, caste category and community classification.", "synonyms": ["social group", "caste", "category", "community", "sc", "st", "obc"], "examples": ["social_group", "caste_category", "community"]},
+    {"domain": "household", "description": "Household identity, size and composition.", "synonyms": ["household", "hh", "household size", "head of household", "family size"], "examples": ["hh_size", "household_id", "household_head", "family_size"]},
+    {"domain": "geography", "description": "Geographic location: state, district, sector, region.", "synonyms": ["state", "district", "region", "sector", "rural", "urban", "village", "zone"], "examples": ["state", "district", "sector", "region", "rural_urban"]},
+    {"domain": "survey_metadata", "description": "Survey administration: round, schedule, weights, period.", "synonyms": ["survey round", "schedule", "weight", "multiplier", "quarter", "month", "year", "wave"], "examples": ["survey_round", "weight", "quarter", "year", "month"]},
+    {"domain": "identifier", "description": "Unique record and unit identifiers / keys.", "synonyms": ["id", "key", "serial", "psu", "fsu", "uid", "person id", "household id"], "examples": ["survey_id", "person_id", "psu_id", "serial_no"]}
+  ]
+}

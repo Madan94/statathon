@@ -1,0 +1,24 @@
+{
+  "usecase": "industry",
+  "version": "2026.1",
+  "description": "Industrial statistics and economic indicators (e.g. ASI, price indices, inflation).",
+  "keywords": ["industry", "factory", "enterprise", "production", "output", "asi", "index", "inflation", "price", "wages", "capital", "value added", "economic"],
+  "domains": [
+    {"domain": "enterprise", "description": "Establishment / factory identity and type.", "synonyms": ["enterprise", "factory", "establishment", "unit", "firm", "organisation type"], "examples": ["factory_id", "enterprise_type", "establishment", "unit_type"]},
+    {"domain": "production", "description": "Output, products manufactured and quantities.", "synonyms": ["production", "output", "products", "manufactured", "quantity produced", "production volume"], "examples": ["production_volume", "output_quantity", "products_made"]},
+    {"domain": "value_added", "description": "Gross/net value added and economic contribution.", "synonyms": ["value added", "gva", "net value added", "gross value added", "contribution"], "examples": ["gross_value_added", "net_value_added", "gva"]},
+    {"domain": "capital", "description": "Fixed capital, investment and assets.", "synonyms": ["capital", "fixed capital", "investment", "assets", "machinery", "plant"], "examples": ["fixed_capital", "invested_capital", "machinery_value"]},
+    {"domain": "labor_cost", "description": "Wages, salaries and labour cost of the enterprise.", "synonyms": ["wages", "salary", "labour cost", "emoluments", "compensation", "bonus"], "examples": ["total_wages", "salaries", "labour_cost", "emoluments"]},
+    {"domain": "raw_materials", "description": "Inputs, raw materials and intermediate consumption.", "synonyms": ["raw materials", "inputs", "intermediate consumption", "materials cost"], "examples": ["raw_material_cost", "input_value", "materials_consumed"]},
+    {"domain": "energy_input", "description": "Fuel and energy consumed by the enterprise.", "synonyms": ["fuel", "energy consumed", "electricity cost", "power input"], "examples": ["fuel_cost", "energy_consumed", "electricity_cost"]},
+    {"domain": "price_index", "description": "Price indices such as WPI, CPI and base year indices.", "synonyms": ["price index", "wpi", "cpi", "index", "base year index", "index al", "index rl"], "examples": ["index_al", "index_rl", "price_index", "wpi"]},
+    {"domain": "inflation", "description": "Inflation rates and price change measures.", "synonyms": ["inflation", "inflation rate", "price change", "rate of inflation"], "examples": ["inflation_al", "inflation_rl", "inflation_rate"]},
+    {"domain": "indicator", "description": "Named economic indicator or measured series.", "synonyms": ["indicator", "measure", "series", "metric name"], "examples": ["indicator", "series_name", "measure"]},
+    {"domain": "employment", "description": "Number of workers and persons engaged.", "synonyms": ["workers", "persons engaged", "employees", "workforce", "headcount"], "examples": ["num_workers", "persons_engaged", "employees"]},
+    {"domain": "industry_classification", "description": "Industry / sector classification (NIC).", "synonyms": ["nic", "industry code", "sector", "industry division", "classification"], "examples": ["nic_code", "industry_code", "sector"]},
+    {"domain": "geography", "description": "Geographic location: state, district, region.", "synonyms": ["state", "district", "region", "zone", "location"], "examples": ["state", "district", "region"]},
+    {"domain": "survey_metadata", "description": "Reference period, base year, year, month.", "synonyms": ["year", "base year", "month", "quarter", "reference period", "frequency"], "examples": ["year", "base_year", "month", "frequency"]},
+    {"domain": "identifier", "description": "Unique enterprise / record identifiers.", "synonyms": ["id", "key", "code", "serial", "unit id"], "examples": ["unit_id", "record_id", "serial_no"]},
+    {"domain": "uncorrelated", "description": "Free-text or values with no clear industrial domain.", "synonyms": ["remarks", "notes", "comment", "misc"], "examples": ["remarks", "notes", "comment"]}
+  ]
+}

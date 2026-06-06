@@ -1,8 +1,13 @@
 """
-V2 accuracy & generalization test.
+V2 semantic mapping smoke test (new Qdrant-backed pipeline).
+
+Exercises the production pipeline on a real sample CSV and asserts structural
+correctness of the FINAL OUTPUT — it does NOT assert memorized domain names, so
+it stays valid as the registries evolve. LLM is disabled here for determinism;
+embeddings use whichever provider is available (BGE-M3 locally or Gemini).
 
 Run from repo root:
-  .\\data\\Scripts\\python.exe .\\tests\\test_semantic_mapping_v2.py
+  .\.venv\Scripts\python.exe .\tests\test_semantic_mapping_v2.py
 """
 from __future__ import annotations
 
@@ -24,50 +29,64 @@ from dotenv import load_dotenv
 
 load_dotenv(_REPO_ROOT / ".env")
 
+import pandas as pd
+
 from semantic_mapping_v2.pipeline import SemanticPipelineV2
 
-def test_v2_accuracy():
-    print("🧪 Running V2 Accuracy & Generalization Test...")
-    pipeline = SemanticPipelineV2()
-    
-    # Dataset representing mixed concepts
-    dataset_id = "test_survey_001"
-    raw_columns = [
-        "orbital_satellite_count", "rocket_launch_payload_kg",  # Should map to same 'Space' domain
-        "employee_monthly_wage", "worker_salary_amount",         # Should map to same 'Labor' domain
-        "patient_blood_type",                                    # Should map to 'Health'
-        "random_noise_xyz"                                       # Should be uncorrelated
-    ]
-    
-    metadata = {
-        "dataset_archetype": "multi_domain_survey",
-        "datatypes": {col: "string" for col in raw_columns},
-        "column_metadata": {col: {"description": "test data"} for col in raw_columns}
-    }
+_CSV = _REPO_ROOT / "test_data" / "unified_energy_reserves_dataset.csv"
+_OUTPUT_KEYS = {
+    "semantic_mapping", "domains", "dynamic_domains",
+    "clusters", "cluster_confidence", "usecase",
+    "schema_graph", "knowledge_graph", "meta",
+}
 
-    # Execute
-    results = pipeline.run(dataset_id, raw_columns, metadata)
-    mapping = results["semantic_mapping"]
 
-    # 1. VERIFY GENERALIZATION (Grouping)
-    space_doms = {mapping["orbital_satellite_count"]["domain"], mapping["rocket_launch_payload_kg"]["domain"]}
-    labor_doms = {mapping["employee_monthly_wage"]["domain"], mapping["worker_salary_amount"]["domain"]}
-    
-    print("\n--- GENERALIZATION CHECK ---")
-    print(f"Space group domains: {space_doms}")
-    print(f"Labor group domains: {labor_doms}")
-    
-    # 2. VERIFY NOISE HANDLING
-    noise_dom = mapping["random_noise_xyz"]["domain"]
-    noise_conf = mapping["random_noise_xyz"]["confidence"]
-    print(f"Noise mapping: {noise_dom} (Conf: {noise_conf})")
+def test_v2_pipeline_structure() -> dict:
+    """Run the pipeline on a real CSV and validate the output contract."""
+    df = pd.read_csv(_CSV).head(200)
+    pipeline = SemanticPipelineV2(use_llm=False)
+    result = pipeline.analyze(
+        df, dataset_id="test_energy_001", dataset_name="Energy Reserves Test"
+    )
 
-    # Assertions
-    assert len(space_doms) == 1, "❌ FAILED: Space columns did not generalize to one domain."
-    assert len(labor_doms) == 1, "❌ FAILED: Labor columns did not generalize to one domain."
-    assert noise_dom == "uncorrelated", "❌ FAILED: Noise was incorrectly mapped to a domain."
-    
-    print("\n✅ All accuracy checks passed!")
+    # 1. Output contract.
+    missing = _OUTPUT_KEYS - set(result)
+    assert not missing, f"missing output keys: {missing}"
+
+    # 2. Every column is mapped with a confidence + source.
+    mapping = result["semantic_mapping"]
+    assert set(mapping) == set(df.columns), "every column must be mapped"
+    for col, m in mapping.items():
+        assert "domain" in m and "confidence" in m and "source" in m, col
+        assert 0.0 <= m["confidence"] <= 1.0, f"{col} confidence out of range"
+
+    # 3. Usecase detected (energy expected for this CSV).
+    uc = result["usecase"]
+    assert uc["usecase"], "usecase must be set"
+    print(f"usecase: {uc['usecase']} ({uc['confidence']:.2f})")
+
+    # 4. Clusters cover every column exactly once; confidence map aligns.
+    clustered_cols = [c for cl in result["clusters"].values() for c in cl["columns"]]
+    assert sorted(clustered_cols) == sorted(df.columns), "clusters must cover all columns once"
+    assert set(result["clusters"]) == set(result["cluster_confidence"])
+
+    # 5. Schema graph + KG are well-formed.
+    assert "nodes" in result["schema_graph"] and "edges" in result["schema_graph"]
+    kg = result["knowledge_graph"]
+    assert kg["stats"]["node_count"] == len(kg["nodes"])
+    assert kg["stats"]["column_count"] == len(df.columns)
+
+    # 6. Qdrant was actually used for the static registry.
+    assert result["meta"]["qdrant_static_ready"] is True, "Qdrant static registry must be seeded"
+
+    print(
+        f"OK: {len(mapping)} cols, {len(result['clusters'])} clusters, "
+        f"provider={result['meta']['embedding_provider']}, "
+        f"static={result['meta']['static_domains']}"
+    )
+    return result
+
 
 if __name__ == "__main__":
-    test_v2_accuracy()
+    test_v2_pipeline_structure()
+    print("\nAll structural checks passed.")

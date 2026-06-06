@@ -11,6 +11,9 @@ __pycache__/
 # --- Local data / caches (optional: keep large caches out of git) ---
 model/cache/
 model/storage/vector_cache/
+# Qdrant embedded-local vector store (regenerated at runtime)
+model/storage/qdrant_local/
+model/storage/qdrant_smoketest/
 model/weights/
 model/phase2_output.json
 .venv/
@@ -22,6 +25,7 @@ api/model/
 api/storage/
 
 # Report Builder runtime artifacts (generated PDFs, uploaded templates, KG exports)
+outputs/
 storage/reports/
 storage/templates/
 storage/derived/

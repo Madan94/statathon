@@ -1,0 +1,24 @@
+{
+  "usecase": "health",
+  "version": "2026.1",
+  "description": "Health statistics: patients, disease, treatment, nutrition and facilities.",
+  "keywords": ["health", "patient", "disease", "hospital", "treatment", "nutrition", "mortality", "vaccination", "insurance", "medical", "clinic", "morbidity"],
+  "domains": [
+    {"domain": "patient", "description": "Patient identity and demographics.", "synonyms": ["patient", "person", "case", "patient id", "individual"], "examples": ["patient_id", "case_id", "person_id"]},
+    {"domain": "demographic", "description": "Demographics: age, sex, social group.", "synonyms": ["age", "sex", "gender", "social group", "caste", "religion"], "examples": ["age", "gender", "social_group"]},
+    {"domain": "disease", "description": "Disease, diagnosis and morbidity condition.", "synonyms": ["disease", "diagnosis", "illness", "condition", "morbidity", "ailment"], "examples": ["disease", "diagnosis", "condition", "ailment"]},
+    {"domain": "treatment", "description": "Treatment, procedure and medication received.", "synonyms": ["treatment", "procedure", "medication", "therapy", "surgery", "drug"], "examples": ["treatment_type", "procedure", "medication"]},
+    {"domain": "hospital", "description": "Hospital / facility identity and type.", "synonyms": ["hospital", "clinic", "facility", "health centre", "phc", "institution type"], "examples": ["hospital_id", "facility_type", "health_centre"]},
+    {"domain": "nutrition", "description": "Nutrition, anthropometry and dietary intake.", "synonyms": ["nutrition", "weight", "height", "bmi", "malnutrition", "stunting", "wasting", "calorie"], "examples": ["weight_kg", "height_cm", "bmi", "nutrition_status"]},
+    {"domain": "mortality", "description": "Mortality, deaths and survival.", "synonyms": ["mortality", "death", "deceased", "death rate", "survival", "fatality"], "examples": ["death", "mortality_rate", "deceased"]},
+    {"domain": "vaccination", "description": "Immunisation and vaccination status.", "synonyms": ["vaccination", "immunisation", "vaccine", "dose", "immunised"], "examples": ["vaccination_status", "vaccine_dose", "immunised"]},
+    {"domain": "insurance", "description": "Health insurance and coverage.", "synonyms": ["insurance", "coverage", "health scheme", "insured", "ayushman"], "examples": ["insurance_status", "coverage_type", "is_insured"]},
+    {"domain": "medical_cost", "description": "Healthcare expenditure and out-of-pocket cost.", "synonyms": ["medical cost", "treatment cost", "expenditure", "out of pocket", "medical expense"], "examples": ["treatment_cost", "medical_expenditure", "oop_cost"]},
+    {"domain": "healthcare_access", "description": "Access to healthcare: distance, availability, utilisation.", "synonyms": ["access", "distance to facility", "availability", "utilisation", "reachability"], "examples": ["distance_to_phc", "facility_access", "utilisation"]},
+    {"domain": "maternal_child", "description": "Maternal and child health indicators.", "synonyms": ["maternal", "child health", "antenatal", "delivery", "infant", "anc"], "examples": ["antenatal_visits", "delivery_type", "infant_health"]},
+    {"domain": "geography", "description": "Geographic location: state, district, block, village.", "synonyms": ["state", "district", "block", "village", "region", "rural", "urban"], "examples": ["state", "district", "block", "village"]},
+    {"domain": "survey_metadata", "description": "Survey round, year, reporting period, weights.", "synonyms": ["year", "round", "period", "weight", "survey date"], "examples": ["year", "survey_round", "weight"]},
+    {"domain": "identifier", "description": "Unique patient / facility identifiers.", "synonyms": ["id", "key", "code", "patient id", "facility id"], "examples": ["patient_id", "facility_id", "record_id"]},
+    {"domain": "uncorrelated", "description": "Free-text or values with no clear health domain.", "synonyms": ["remarks", "notes", "comment", "misc"], "examples": ["remarks", "notes", "comment"]}
+  ]
+}

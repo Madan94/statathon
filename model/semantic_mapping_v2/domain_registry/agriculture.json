@@ -1,0 +1,24 @@
+{
+  "usecase": "agriculture",
+  "version": "2026.1",
+  "description": "Agricultural statistics: crops, land, yield, irrigation and inputs.",
+  "keywords": ["agriculture", "crop", "yield", "land", "irrigation", "fertilizer", "soil", "livestock", "harvest", "farm", "cultivation", "produce"],
+  "domains": [
+    {"domain": "crop", "description": "Crop type, variety and season.", "synonyms": ["crop", "crop type", "variety", "season", "kharif", "rabi", "commodity"], "examples": ["crop_name", "crop_type", "variety", "season"]},
+    {"domain": "yield", "description": "Crop yield and productivity per area.", "synonyms": ["yield", "productivity", "production per hectare", "output per acre", "yield rate"], "examples": ["yield_per_hectare", "productivity", "crop_yield"]},
+    {"domain": "land", "description": "Land area, holding size and land use.", "synonyms": ["land", "area", "holding", "acreage", "hectares", "land use", "plot size"], "examples": ["land_area", "holding_size", "area_hectares"]},
+    {"domain": "irrigation", "description": "Irrigation source, method and coverage.", "synonyms": ["irrigation", "irrigated area", "canal", "tubewell", "drip", "water source"], "examples": ["irrigated_area", "irrigation_source", "irrigation_type"]},
+    {"domain": "fertilizer", "description": "Fertilizer, pesticide and input usage.", "synonyms": ["fertilizer", "pesticide", "urea", "npk", "input", "manure", "agrochemical"], "examples": ["fertilizer_used", "pesticide_qty", "urea_kg"]},
+    {"domain": "soil", "description": "Soil type, quality and properties.", "synonyms": ["soil", "soil type", "soil quality", "ph", "fertility", "loam", "clay"], "examples": ["soil_type", "soil_ph", "soil_quality"]},
+    {"domain": "livestock", "description": "Livestock, poultry and animal husbandry.", "synonyms": ["livestock", "cattle", "poultry", "animal", "milk yield", "dairy"], "examples": ["livestock_count", "cattle_owned", "milk_yield"]},
+    {"domain": "production", "description": "Total agricultural production / output.", "synonyms": ["production", "output", "produce", "harvest", "total production"], "examples": ["total_production", "output_tonnes", "harvest_quantity"]},
+    {"domain": "agri_income", "description": "Income, revenue and cost from agriculture.", "synonyms": ["agricultural income", "revenue", "farm income", "cost of cultivation", "profit"], "examples": ["farm_income", "cultivation_cost", "crop_revenue"]},
+    {"domain": "climate", "description": "Weather and climate affecting agriculture.", "synonyms": ["rainfall", "temperature", "climate", "weather", "monsoon", "drought"], "examples": ["rainfall_mm", "temperature", "monsoon_status"]},
+    {"domain": "market", "description": "Market price, sale and procurement.", "synonyms": ["market price", "msp", "procurement", "mandi", "sale price", "wholesale"], "examples": ["market_price", "msp", "sale_price"]},
+    {"domain": "farmer", "description": "Farmer / cultivator identity and category.", "synonyms": ["farmer", "cultivator", "agricultural household", "marginal farmer", "land holder"], "examples": ["farmer_id", "cultivator_type", "farmer_category"]},
+    {"domain": "geography", "description": "Geographic location: state, district, block, village.", "synonyms": ["state", "district", "block", "village", "region", "agro climatic zone"], "examples": ["state", "district", "block", "village"]},
+    {"domain": "survey_metadata", "description": "Agricultural year, season, reporting period.", "synonyms": ["agricultural year", "season", "year", "period", "crop year"], "examples": ["agricultural_year", "season", "year"]},
+    {"domain": "identifier", "description": "Unique plot / farmer / record identifiers.", "synonyms": ["id", "key", "code", "plot id", "survey number"], "examples": ["plot_id", "farmer_id", "survey_number"]},
+    {"domain": "uncorrelated", "description": "Free-text or values with no clear agriculture domain.", "synonyms": ["remarks", "notes", "comment", "misc"], "examples": ["remarks", "notes", "comment"]}
+  ]
+}

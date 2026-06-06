@@ -1,0 +1,24 @@
+{
+  "usecase": "consumption",
+  "version": "2026.1",
+  "description": "Household consumption expenditure surveys (e.g. HCES): spending, items and welfare.",
+  "keywords": ["consumption", "expenditure", "spending", "household", "food", "non food", "mpce", "consumer", "purchase", "quantity", "value"],
+  "domains": [
+    {"domain": "household", "description": "Household identity, size and composition.", "synonyms": ["household", "hh", "household size", "head", "family size", "members"], "examples": ["hh_size", "household_id", "household_head", "family_size"]},
+    {"domain": "demographic", "description": "Demographics of household members.", "synonyms": ["age", "sex", "gender", "marital status", "religion", "social group"], "examples": ["age", "gender", "religion", "social_group"]},
+    {"domain": "food_expenditure", "description": "Spending on food items and groups.", "synonyms": ["food expenditure", "food spending", "cereals", "pulses", "milk", "vegetables", "food value"], "examples": ["food_expenditure", "cereal_value", "milk_expenditure", "food_total"]},
+    {"domain": "non_food_expenditure", "description": "Spending on non-food items: fuel, clothing, durables.", "synonyms": ["non food expenditure", "clothing", "fuel", "durables", "rent", "non food value"], "examples": ["non_food_expenditure", "clothing_expenditure", "fuel_value", "rent"]},
+    {"domain": "total_expenditure", "description": "Total and aggregate household expenditure.", "synonyms": ["total expenditure", "total spending", "aggregate expenditure", "consumption total"], "examples": ["exp_total", "total_expenditure", "total_consumption"]},
+    {"domain": "mpce", "description": "Monthly per-capita expenditure and welfare measures.", "synonyms": ["mpce", "per capita expenditure", "welfare", "consumption decile", "per capita"], "examples": ["mpce", "per_capita_expenditure", "expenditure_decile"]},
+    {"domain": "item_quantity", "description": "Quantities of items consumed or purchased.", "synonyms": ["quantity", "qty", "units consumed", "amount purchased", "kg", "litre"], "examples": ["quantity", "qty_consumed", "units_purchased"]},
+    {"domain": "item_value", "description": "Monetary value / price of consumed items.", "synonyms": ["value", "price", "amount", "cost", "item value", "monetary value"], "examples": ["value", "item_value", "price", "amount"]},
+    {"domain": "item_code", "description": "Item and commodity classification codes.", "synonyms": ["item code", "commodity code", "product code", "item id"], "examples": ["item_code", "commodity_code", "product_code"]},
+    {"domain": "income", "description": "Household income and earnings proxies.", "synonyms": ["income", "earnings", "household income", "salary"], "examples": ["household_income", "income", "earnings"]},
+    {"domain": "assets", "description": "Household assets, durable goods and ownership.", "synonyms": ["assets", "durable goods", "ownership", "vehicle", "appliance"], "examples": ["asset_ownership", "durable_goods", "owns_vehicle"]},
+    {"domain": "housing", "description": "Housing condition, tenure and amenities.", "synonyms": ["housing", "tenure", "dwelling", "rooms", "latrine", "amenity", "pucca", "kutcha"], "examples": ["house_type", "tenure", "rooms", "latrine_facility"]},
+    {"domain": "beneficiary", "description": "Welfare scheme participation and ration card status.", "synonyms": ["beneficiary", "ration card", "scheme", "subsidy", "pds", "welfare scheme"], "examples": ["is_beneficiary", "ration_card", "scheme_beneficiary"]},
+    {"domain": "geography", "description": "Geographic location: state, district, sector.", "synonyms": ["state", "district", "region", "sector", "rural", "urban", "village"], "examples": ["state_code", "district_code", "sector", "region"]},
+    {"domain": "survey_metadata", "description": "Survey administration: round, weights, period, schedule.", "synonyms": ["survey round", "weight", "multiplier", "quarter", "month", "year", "survey date"], "examples": ["survey_round", "weight", "survey_date", "year"]},
+    {"domain": "identifier", "description": "Unique record and unit identifiers / keys.", "synonyms": ["id", "key", "serial", "psu", "fsu", "uid", "household id"], "examples": ["survey_id", "household_id", "psu_id", "serial_no"]}
+  ]
+}
