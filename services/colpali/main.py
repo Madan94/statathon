@@ -22,6 +22,8 @@ MODEL_ID = os.getenv("MODEL_ID", "vidore/colpali-v1.2")
 DEVICE = os.getenv("DEVICE", "auto").strip().lower()
 COLPALI_DPI = int(os.getenv("COLPALI_DPI", "120"))
 COLPALI_PAGE_BATCH_SIZE = max(1, int(os.getenv("COLPALI_PAGE_BATCH_SIZE", "1")))
+# Windows: set POPPLER_PATH=C:\poppler\bin if poppler is not on PATH
+POPPLER_PATH: str | None = os.getenv("POPPLER_PATH") or None
 
 app = FastAPI(title="ColPali Service", version="1.0.0")
 
@@ -130,12 +132,24 @@ def _structural_pages(pdf_path: Path) -> list[dict[str, Any]]:
 
 
 def _extract_pdf(pdf_path: Path) -> dict[str, Any]:
-    import pdf2image
+    # Vision pass (ColPali model inference) is best-effort.
+    # Falls back gracefully if poppler is missing (Windows) or GPU OOM.
+    try:
+        import pdf2image
 
-    images = pdf2image.convert_from_path(str(pdf_path), dpi=COLPALI_DPI)
-    if not images:
-        raise RuntimeError("pdf2image produced no pages")
-    _vision_pass(images)
+        kwargs: dict[str, Any] = {"dpi": COLPALI_DPI}
+        if POPPLER_PATH:
+            kwargs["poppler_path"] = POPPLER_PATH
+        images = pdf2image.convert_from_path(str(pdf_path), **kwargs)
+        if images:
+            _vision_pass(images)
+        else:
+            logger.warning("pdf2image produced no pages — skipping vision pass")
+    except Exception as exc:
+        logger.warning(
+            "Vision pass skipped (poppler missing or model error): %s", exc
+        )
+
     pages = _structural_pages(pdf_path)
     return {"pages": pages, "model": MODEL_ID, "page_count": len(pages)}
 
