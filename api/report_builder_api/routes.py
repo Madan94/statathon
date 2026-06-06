@@ -197,7 +197,7 @@ def _run_template_extraction_job(extract_job_id: int) -> None:
         src_path = Path(row.source_storage_path or "")
         file_size_kb = src_path.stat().st_size / 1024 if src_path.is_file() else 0
         logger.info(
-            "[job %d] extraction started: template=%r  file=%s  size=%.1f KB",
+            "[job %d] 📥 START         template=%r   file=%s   size=%.1f KB",
             extract_job_id, row.template_name, row.source_filename, file_size_kb,
         )
 
@@ -241,10 +241,13 @@ def _run_template_extraction_job(extract_job_id: int) -> None:
 
         def _progress(stage: str, pct: int, payload: dict[str, object]):
             elapsed = round(time.monotonic() - t_job_start, 1)
+            method = payload.get("extraction_method", "")
+            method_tag = f"   method={method}" if method else ""
+            # Pad stage name so the bar/pct column lines up vertically
+            stage_label = stage.ljust(44)
             logger.info(
-                "[job %d] stage=%s  pct=%d  elapsed=%.1fs  method=%s",
-                extract_job_id, stage, pct, elapsed,
-                payload.get("extraction_method", ""),
+                "[job %d] · %s  %3d%%   t=%5.1fs%s",
+                extract_job_id, stage_label, pct, elapsed, method_tag,
             )
             _update_extract_job(db, row, stage=stage, progress_pct=pct, diagnostics=dict(payload))
 
@@ -274,7 +277,7 @@ def _run_template_extraction_job(extract_job_id: int) -> None:
         row.extraction_method = ast.extraction_method
         elapsed_total = time.monotonic() - t_job_start
         logger.info(
-            "[job %d] extraction COMPLETED: template_id=%d  method=%s  pages=%d  blocks=%d  elapsed=%.1fs",
+            "[job %d] ✓ COMPLETED     template_id=%d   method=%s   pages=%d   blocks=%d   elapsed=%.1fs",
             extract_job_id, template.id, ast.extraction_method,
             ast.page_count, len(ast.blocks), elapsed_total,
         )
@@ -290,7 +293,7 @@ def _run_template_extraction_job(extract_job_id: int) -> None:
     except Exception as exc:
         elapsed_total = time.monotonic() - t_job_start
         logger.exception(
-            "[job %d] extraction FAILED after %.1fs",
+            "[job %d] ✗ FAILED        elapsed=%.1fs",
             extract_job_id, elapsed_total,
         )
         row = db.query(ReportTemplateExtractionJob).filter(

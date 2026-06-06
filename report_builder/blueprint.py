@@ -220,7 +220,7 @@ def _gemini_classify_sections(page_summaries: list[dict[str, Any]]) -> list[Bloc
 
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        logger.info("[blueprint] GEMINI_API_KEY not set — using heuristic classification")
+        logger.info("[blueprint] ⚠ GEMINI_API_KEY not set — using heuristic classification")
         return _heuristic_classify_sections(page_summaries)
 
     model_name = os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash")
@@ -234,7 +234,7 @@ def _gemini_classify_sections(page_summaries: list[dict[str, Any]]) -> list[Bloc
         f"PAGES:\n{json.dumps(page_summaries, indent=2)[:8000]}"
     )
     logger.info(
-        "[blueprint] Gemini classify: model=%s  pages=%d  prompt_chars=%d",
+        "[blueprint] ▶ Gemini POST    model=%s   pages=%d   prompt=%d chars",
         model_name, len(page_summaries), len(prompt),
     )
     t0 = time.monotonic()
@@ -271,14 +271,14 @@ def _gemini_classify_sections(page_summaries: list[dict[str, Any]]) -> list[Bloc
             except Exception:
                 continue
         logger.info(
-            "[blueprint] Gemini classify done: blocks=%d  elapsed=%.1fs",
+            "[blueprint] ✓ Gemini OK      blocks=%d   elapsed=%.1fs",
             len(blocks), elapsed,
         )
         return blocks or _heuristic_classify_sections(page_summaries)
     except Exception as exc:
         elapsed = time.monotonic() - t0
         logger.warning(
-            "[blueprint] Gemini classify failed after %.1fs: %s — using heuristic",
+            "[blueprint] ✗ Gemini FAIL    elapsed=%.1fs   %s   → using heuristic",
             elapsed, exc,
         )
         return _heuristic_classify_sections(page_summaries)
@@ -442,7 +442,7 @@ def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]
             }
             timeout = int(os.getenv("SGLANG_TIMEOUT", "120"))
             logger.info(
-                "[blueprint._sglang_compile_ast] SGLang → %s  model=%s  timeout=%ds",
+                "[blueprint] ▶ SGLang POST    url=%s   model=%s   timeout=%ds",
                 endpoint, model, timeout,
             )
             t0 = time.monotonic()
@@ -459,12 +459,12 @@ def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]
             blocks = _parse_blocks(data, f"http:{endpoint}")
             if blocks:
                 logger.info(
-                    "[blueprint._sglang_compile_ast] SGLang OK  blocks=%d  elapsed=%.1fs",
+                    "[blueprint] ✓ SGLang OK      blocks=%d   elapsed=%.1fs",
                     len(blocks), time.monotonic() - t0,
                 )
                 return blocks
         except Exception as exc:
-            logger.info("[blueprint._sglang_compile_ast] SGLang HTTP endpoint unavailable: %s — trying in-process or Gemini", exc)
+            logger.info("[blueprint] ⚠ SGLang unavailable: %s   🔁 falling back", exc)
 
     # ── Attempt 2: sglang Python in-process SDK (only if locally installed) ──
     try:
@@ -491,7 +491,7 @@ def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]
         pass
 
     # ── Attempt 3: Gemini fallback ──
-    logger.info("[blueprint._sglang_compile_ast] falling back to Gemini")
+    logger.info("[blueprint] 🔁 fallback chain  SGLang ✗ → in-process ✗ → Gemini")
     return _gemini_classify_sections(page_summaries)
 
 

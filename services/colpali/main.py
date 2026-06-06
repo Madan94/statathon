@@ -133,8 +133,20 @@ def _structural_pages(pdf_path: Path) -> list[dict[str, Any]]:
 
 
 def _extract_pdf(pdf_path: Path) -> dict[str, Any]:
-    # Vision pass (ColPali model inference) is best-effort.
-    # Falls back gracefully if poppler is missing (Windows) or GPU OOM.
+    """Run vision + structural passes; return unified page payload.
+
+    Returns:
+      {
+        "pages":        [...page dicts...],
+        "model":        "<MODEL_ID>",
+        "page_count":   int,
+        "vision_pass":  True  | False | None,   # None = not attempted
+        "vision_error": "<msg>" | None,         # populated when vision_pass == False
+      }
+    """
+    vision_pass: bool | None = None
+    vision_error: str | None = None
+
     try:
         import pdf2image
 
@@ -143,16 +155,40 @@ def _extract_pdf(pdf_path: Path) -> dict[str, Any]:
             kwargs["poppler_path"] = POPPLER_PATH
         images = pdf2image.convert_from_path(str(pdf_path), **kwargs)
         if images:
-            _vision_pass(images)
+            try:
+                _vision_pass(images)
+                vision_pass = True
+                logger.info(
+                    "▶ vision pass OK   pages=%d   dpi=%d   model=%s",
+                    len(images), COLPALI_DPI, MODEL_ID,
+                )
+            except Exception as vexc:
+                vision_pass = False
+                vision_error = f"{type(vexc).__name__}: {vexc}"[:500]
+                # CUDA unknown error usually = stale context. Hint user to restart.
+                hint = ""
+                if "cuda" in str(vexc).lower():
+                    hint = "  HINT: restart the container (docker compose restart colpali) to reset the CUDA context"
+                logger.warning("✗ vision pass FAIL   %s%s", vision_error, hint)
         else:
-            logger.warning("pdf2image produced no pages — skipping vision pass")
+            vision_pass = False
+            vision_error = "pdf2image produced no pages"
+            logger.warning("⚠ %s — skipping vision pass", vision_error)
     except Exception as exc:
+        vision_pass = False
+        vision_error = f"{type(exc).__name__}: {exc}"[:500]
         logger.warning(
-            "Vision pass skipped (poppler missing or model error): %s", exc
+            "⚠ vision pass skipped (poppler missing or pdf2image error): %s", exc
         )
 
     pages = _structural_pages(pdf_path)
-    return {"pages": pages, "model": MODEL_ID, "page_count": len(pages)}
+    return {
+        "pages": pages,
+        "model": MODEL_ID,
+        "page_count": len(pages),
+        "vision_pass": vision_pass,
+        "vision_error": vision_error,
+    }
 
 
 @app.on_event("startup")

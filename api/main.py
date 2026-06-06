@@ -34,10 +34,15 @@ from sqlalchemy.exc import DBAPIError, OperationalError
 from sqlalchemy.orm import Session
 from database.database import Base, engine, SessionLocal, is_transient_db_error, pool_stats
 import database.models  # noqa: F401 — register metadata for semantic tables
-
 from pipelines.model_path import ensure_huggingface_hub_cache
 
 ensure_huggingface_hub_cache(_REPO_ROOT)
+
+# Configure rich logging BEFORE importing routers (so their module-level
+# loggers inherit the new handler instead of basicConfig defaults).
+from logging_setup import configure_rich_logging  # noqa: E402
+
+configure_rich_logging(level=os.getenv("LOG_LEVEL", "INFO"))
 
 from auth.routes import router as auth_router
 from auth.oauth_routes import router as oauth_router
@@ -49,7 +54,6 @@ from report_builder_api.progress_sse import router as progress_sse_router
 from report_builder_api.entity_binding_api import router as entity_binding_router
 from dashboard.routes import router as dashboard_router
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("bharatstat.api")
 
 app = FastAPI(title="BharatStat")
@@ -72,24 +76,29 @@ app.add_middleware(
 async def request_log_middleware(request: Request, call_next):
     """Per-request log line with unique req-id and end-to-end latency.
 
-    Format:
-      [req_abc123] start GET /path
-      [req_abc123] done  GET /path → 200  142.3ms
+    Format (color-coded by rich based on status):
+      ▶ [req_abc12345] GET  /path
+      ✓ [req_abc12345] GET  /path  →  200   142.3 ms
+      ✗ [req_abc12345] GET  /path  →  500   18.0 ms
     """
     req_id = uuid.uuid4().hex[:8]
     t0 = time.monotonic()
-    logger.info("[req_%s] start %s %s", req_id, request.method, request.url.path)
+    method = request.method.ljust(4)
+    path = request.url.path
+    logger.info("▶ [req_%s] %s %s", req_id, method, path)
     try:
         response = await call_next(request)
     except Exception as exc:
         elapsed_ms = (time.monotonic() - t0) * 1000
-        logger.error("[req_%s] CRASH %s %s → %s  %.1fms",
-                     req_id, request.method, request.url.path, type(exc).__name__, elapsed_ms)
+        logger.error("✗ [req_%s] %s %s  →  CRASH %s   %.1f ms",
+                     req_id, method, path, type(exc).__name__, elapsed_ms)
         raise
     elapsed_ms = (time.monotonic() - t0) * 1000
-    level = logger.warning if response.status_code >= 500 else logger.info
-    level("[req_%s] done  %s %s → %d  %.1fms",
-          req_id, request.method, request.url.path, response.status_code, elapsed_ms)
+    sc = response.status_code
+    icon = "✓" if sc < 400 else ("⚠" if sc < 500 else "✗")
+    level = logger.warning if sc >= 500 else (logger.info if sc < 400 else logger.warning)
+    level("%s [req_%s] %s %s  →  %d   %.1f ms",
+          icon, req_id, method, path, sc, elapsed_ms)
     response.headers["X-Request-ID"] = req_id
     return response
 
