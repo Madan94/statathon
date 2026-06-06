@@ -54,7 +54,8 @@ def _load_model():
 
     logger.info("Loading ColPali model %s on %s", MODEL_ID, _resolve_device())
     dtype = torch.float16 if _resolve_device().type != "cpu" else torch.float32
-    _MODEL = ColPali.from_pretrained(MODEL_ID, torch_dtype=dtype, low_cpu_mem_usage=True)
+    # `dtype` is the new kwarg name; `torch_dtype` deprecated in transformers >= 4.40
+    _MODEL = ColPali.from_pretrained(MODEL_ID, dtype=dtype, low_cpu_mem_usage=True)
     _MODEL.eval()
     _MODEL.to(_resolve_device())
     _PROCESSOR = ColPaliProcessor.from_pretrained(MODEL_ID)
