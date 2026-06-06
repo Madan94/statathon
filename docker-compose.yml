@@ -28,7 +28,30 @@ services:
     ports:
       - "7474:7474"
       - "7687:7687"
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_API_URL is baked into client bundles at build time.
+        # Browser uses /api/backend same-origin proxy (lib/api.ts) — localhost:8000
+        # is the fallback that works whether running Docker or not.
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    environment:
+      # API_INTERNAL_URL is read by SSR routes (app/api/backend/[...path]/route.ts)
+      # for server-side proxying. Must use Docker service name, not localhost.
+      - API_INTERNAL_URL=http://api:8000
+    depends_on:
+      - api
+
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
