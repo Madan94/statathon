@@ -3,6 +3,8 @@ FROM python:3.13-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+# Set WORKDIR to /app so all absolute imports work from the repo root
+# (template_engine, agents, report_builder, etc. are all under /app)
 WORKDIR /app
 
 RUN apt-get update \
@@ -19,8 +21,9 @@ COPY . /app
 
 RUN ln -sfn /app/scripts /app/api/scripts
 
-WORKDIR /app/api
-
+# Default CMD runs the API server.
+# The pipeline service overrides this with:
+#   command: ["python", "/app/scripts/run_pipeline.py"]
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -110,45 +110,10 @@ services:
       - ./checkpoints:/app/checkpoints
       - ./data:/app/data
       - ./outputs:/app/outputs
-    # run_extraction_pipeline is the actual function signature:
-    #   run_extraction_pipeline(pdf_path, template_name, ...) -> ExtractionResult
-    # It saves a full TemplateBlueprintAST with entities, questions, topics.
-    # Output JSON is written to OUTPUT_DIR/template_<sha256[:12]>.json
-    command: >
-      python -c "
-      import os, json, sys
-      from pathlib import Path
-      from template_engine.pipeline import run_extraction_pipeline
-
-      pdf   = os.getenv('PDF_INPUT_PATH', '/app/data/input.pdf')
-      name  = os.getenv('TEMPLATE_NAME', 'PLFS Template')
-      outdir = Path(os.getenv('OUTPUT_DIR', '/app/outputs'))
-      outdir.mkdir(parents=True, exist_ok=True)
-
-      print(f'[pipeline] Extracting template from: {pdf}')
-      print(f'[pipeline] Template name           : {name}')
-
-      result = run_extraction_pipeline(pdf, template_name=name)
-
-      if not result.success:
-          print('[pipeline] FAILED:', result.progress.errors, file=sys.stderr)
-          sys.exit(1)
-
-      ast_dict = result.ast.to_dict()
-      out_file = outdir / f'template_{result.source_hash[:12]}.json'
-      out_file.write_text(json.dumps(ast_dict, indent=2, ensure_ascii=False))
-
-      print(f'[pipeline] SUCCESS')
-      print(f'[pipeline] Pages     : {result.progress.pages_processed}')
-      print(f'[pipeline] Entities  : {result.progress.entities_found}')
-      print(f'[pipeline] Questions : {result.progress.questions_inferred}')
-      print(f'[pipeline] AST saved : {out_file}')
-      if result.review:
-          print(f'[pipeline] Review    : {result.review.decision.value} (confidence={result.review.confidence_score:.2f})')
-      if result.warnings:
-          print(f'[pipeline] Warnings  : {len(result.warnings)}')
-          for w in result.warnings: print(f'           - {w}')
-      "
+    # run_extraction_pipeline is the actual entry point in template_engine/pipeline.py
+    # Script is at /app/scripts/run_pipeline.py (copied by Dockerfile.api COPY . /app)
+    # All config via env vars: PDF_INPUT_PATH, TEMPLATE_NAME, OUTPUT_DIR
+    command: ["python", "/app/scripts/run_pipeline.py"]
     profiles:
       - gpu
 
