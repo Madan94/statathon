@@ -14,6 +14,8 @@ services:
       - VLM_BACKEND=fallback
       - SGLANG_BACKEND=
       - CHECKPOINT_ENABLED=true
+      # DATABASE_URL: let env_file provide it. Remove the host-interpolation ambiguity.
+      # env_file: .env will set DATABASE_URL to the Supabase URL.
     env_file: .env
     volumes:
       - ./storage:/app/storage

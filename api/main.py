@@ -110,51 +110,64 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.error(traceback.format_exc())
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
-Base.metadata.create_all(bind=engine)
+# ── Startup: DB schema + migrations ─────────────────────────────────────────
+# IMPORTANT: do NOT call create_all / migrations at module level.
+# If DATABASE_URL is temporarily unreachable (Supabase paused, DNS failure,
+# network not ready) the entire uvicorn process would crash before serving
+# a single request. Wrapping in a startup event lets the app start and
+# respond to /health even while the DB is recovering.
+@app.on_event("startup")
+async def _startup_db() -> None:
+    from database.migrate_auth import migrate_auth_schema
+    from database.migrate_report_builder import migrate_report_builder_schema
+    from database.migrate_dataset_columns import migrate_dataset_columns_schema
 
-from database.migrate_auth import migrate_auth_schema
-from database.migrate_report_builder import migrate_report_builder_schema
-from database.migrate_dataset_columns import migrate_dataset_columns_schema
-
-migrate_auth_schema()
-migrate_report_builder_schema()
-migrate_dataset_columns_schema()
-
-try:
-    from services.analysis_runner import reset_orphaned_analyses
-
-    _orphaned = reset_orphaned_analyses()
-    if _orphaned:
-        logger.info("Reset %s orphaned analysis job(s) after startup", _orphaned)
-except Exception as _orphan_exc:
-    logger.warning("Orphaned analysis reset skipped: %s", _orphan_exc)
-
-# Seed dev test officer (development only)
-if os.getenv("APP_ENV", "development").lower() in ("development", "dev", "local"):
     try:
-        from auth.dev_user import ensure_dev_test_user
+        Base.metadata.create_all(bind=engine)
+        migrate_auth_schema()
+        migrate_report_builder_schema()
+        migrate_dataset_columns_schema()
+        logger.info("DB schema initialised (create_all + migrations OK)")
+    except Exception as _db_exc:
+        # Log clearly but do NOT re-raise — app still starts, DB-dependent
+        # endpoints will fail with 500 until the DB becomes reachable.
+        logger.error(
+            "DB startup failed — app will start but DB endpoints will error: %s",
+            _db_exc,
+        )
 
-        _seed_db = SessionLocal()
+    try:
+        from services.analysis_runner import reset_orphaned_analyses
+        _orphaned = reset_orphaned_analyses()
+        if _orphaned:
+            logger.info("Reset %s orphaned analysis job(s) after startup", _orphaned)
+    except Exception as _orphan_exc:
+        logger.warning("Orphaned analysis reset skipped: %s", _orphan_exc)
+
+    # Seed dev test officer (development only)
+    if os.getenv("APP_ENV", "development").lower() in ("development", "dev", "local"):
         try:
-            ensure_dev_test_user(_seed_db)
-        finally:
-            _seed_db.close()
-    except Exception as _seed_exc:
-        logger.warning("Dev test user seed skipped: %s", _seed_exc)
+            from auth.dev_user import ensure_dev_test_user
+            _seed_db = SessionLocal()
+            try:
+                ensure_dev_test_user(_seed_db)
+            finally:
+                _seed_db.close()
+        except Exception as _seed_exc:
+            logger.warning("Dev test user seed skipped: %s", _seed_exc)
 
-# One-time Neo4j schema bootstrap (constraints + indexes); no-op when NEO4J_ENABLED=false
-try:
-    from graph.schema_bootstrap import ensure_schema as _kg_ensure_schema
-
-    _kg_bootstrap_result = _kg_ensure_schema()
-    if _kg_bootstrap_result.get("ok"):
-        logger.info("Neo4j schema bootstrap: %s statements OK",
-                    _kg_bootstrap_result.get("statements_run", 0))
-    elif _kg_bootstrap_result.get("enabled"):
-        logger.warning("Neo4j schema bootstrap: %s",
-                       _kg_bootstrap_result.get("error") or _kg_bootstrap_result.get("errors"))
-except Exception as _exc:
-    logger.info("Neo4j schema bootstrap skipped: %s", _exc)
+    # One-time Neo4j schema bootstrap
+    try:
+        from graph.schema_bootstrap import ensure_schema as _kg_ensure_schema
+        _kg_bootstrap_result = _kg_ensure_schema()
+        if _kg_bootstrap_result.get("ok"):
+            logger.info("Neo4j schema bootstrap: %s statements OK",
+                        _kg_bootstrap_result.get("statements_run", 0))
+        elif _kg_bootstrap_result.get("enabled"):
+            logger.warning("Neo4j schema bootstrap: %s",
+                           _kg_bootstrap_result.get("error") or _kg_bootstrap_result.get("errors"))
+    except Exception as _exc:
+        logger.info("Neo4j schema bootstrap skipped: %s", _exc)
 
 _secret = os.getenv("SECRET_KEY", "")
 if os.getenv("AUTH_REQUIRED", "true").lower() in ("1", "true", "yes"):

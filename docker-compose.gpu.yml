@@ -132,7 +132,13 @@ services:
       # Docker containers cannot resolve 'localhost' as another container — must use service names.
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_PASSWORD=${NEO4J_PASSWORD:-mospi_secure_password}
-      - DATABASE_URL=${DATABASE_URL:-sqlite:///./statathon.db}
+      # DATABASE_URL: do NOT use ${DATABASE_URL:-fallback} here.
+      # Host-shell interpolation is ambiguous — if the shell has DATABASE_URL
+      # exported (from 'source .env' or shell profile), that wins over the
+      # fallback, sending Supabase URL to a container that may lack DNS/internet.
+      # Let env_file: .env provide DATABASE_URL cleanly instead.
+      # Uncomment the line below ONLY if you want to force a local SQLite for this container:
+      # - DATABASE_URL=sqlite:////app/statathon.db
       - TRACING_ENABLED=${TRACING_ENABLED:-0}
       # .env sets REDIS_URL=redis://localhost:6379/0 — localhost inside container = itself, broken.
       - REDIS_URL=redis://redis:6379/0
