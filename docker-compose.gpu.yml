@@ -92,7 +92,11 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.api
-    depends_on: []
+    # Wait for ColPali to finish loading the model before sending the first PDF.
+    # Without this, pipeline starts immediately and gets "Connection refused" on page 1.
+    depends_on:
+      colpali:
+        condition: service_healthy
     environment:
       - COLPALI_ENDPOINT=http://colpali:8001
       - SGLANG_ENDPOINT=http://sglang:8002
@@ -138,7 +142,14 @@ services:
       # .env sets SGLANG_ENDPOINT=http://localhost:8002 (for local dev).
       # Inside Docker the sglang service is reachable at http://sglang:8002, not localhost.
       - SGLANG_ENDPOINT=http://sglang:8002
+      # Enable checkpointing for UI-triggered extractions so a crash resumes instead of restarting.
+      - CHECKPOINT_ENABLED=true
     env_file: .env
+    depends_on:
+      neo4j:
+        condition: service_started
+      redis:
+        condition: service_started
     volumes:
       - ./storage:/app/storage
       - ./model/cache:/app/model/cache
@@ -149,10 +160,16 @@ services:
     build:
       context: ./dashboard
       dockerfile: Dockerfile
+      args:
+        # Baked into client bundles at build time. Browser uses /api/backend same-origin
+        # proxy (lib/api.ts) — so http://localhost:8000 is only a browser fallback.
+        NEXT_PUBLIC_API_URL: http://localhost:8000
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://api:8000
+      # API_INTERNAL_URL is read first by app/api/backend/[...path]/route.ts for SSR
+      # proxying. Must use Docker service name — localhost inside the container = itself.
+      - API_INTERNAL_URL=http://api:8000
     depends_on:
       - api
 
