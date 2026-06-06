@@ -15,12 +15,36 @@ else:
 _default_sqlite = (_api_root / "statathon.db").resolve().as_posix()
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{_default_sqlite}")
 _is_sqlite = DATABASE_URL.startswith("sqlite")
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} if _is_sqlite else {},
-    pool_pre_ping=not _is_sqlite,
-    pool_recycle=280 if not _is_sqlite else -1,
-)
+def _make_engine(url: str):
+    return create_engine(
+        url,
+        connect_args={"check_same_thread": False} if url.startswith("sqlite") else {},
+        pool_pre_ping=not url.startswith("sqlite"),
+        pool_recycle=280 if not url.startswith("sqlite") else -1,
+    )
+
+
+engine = _make_engine(DATABASE_URL)
+
+# If the configured DATABASE_URL is a remote DB, verify connectivity and
+# fall back to a local sqlite database if the host is unreachable. This
+# avoids startup crashes when developers keep placeholder env values.
+if not _is_sqlite:
+    try:
+        # perform a light-weight check
+        with engine.connect() as conn:
+            pass
+    except Exception as exc:  # pragma: no cover - environment dependent
+        # On failure, fall back to a file-based sqlite DB in api/ directory
+        import logging
+        logging.getLogger("bharatstat.api").warning(
+            "Could not connect to DATABASE_URL '%s' — falling back to local sqlite. Error: %s",
+            DATABASE_URL,
+            exc,
+        )
+        DATABASE_URL = f"sqlite:///{_api_root / 'statathon.db'}"
+        engine = _make_engine(DATABASE_URL)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 from sqlalchemy.orm import declarative_base
 Base = declarative_base()

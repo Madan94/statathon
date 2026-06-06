@@ -1,7 +1,7 @@
 import json
 import numpy as np
 from numpy.linalg import norm
-from rapidfuzz import process, distance
+from rapidfuzz import fuzz, process
 
 class HierarchicalDomainRouter:
     def __init__(self, json_path: str, embedding_model):
@@ -34,13 +34,14 @@ class HierarchicalDomainRouter:
 
             self.sub_domain_vectors[tier_name] = {}
             for sub_name, keywords in tier_data.get("subdomains", {}).items():
-                target_text = f"{sub_name} {' '.join(keywords)}".strip()
-                vec = self._embed_text(target_text)
-                self.sub_domain_vectors[tier_name][sub_name] = vec
-                
+                vector_list = [self._embed_text(sub_name)]
+                for kw in keywords:
+                    vector_list.append(self._embed_text(kw))
+                self.sub_domain_vectors[tier_name][sub_name] = vector_list
+
                 # Safely cache universal vectors so we never hardcode a dependency on 'census'
                 if sub_name in self.universal_keys and sub_name not in self.universal_vectors:
-                    self.universal_vectors[sub_name] = vec
+                    self.universal_vectors[sub_name] = vector_list
 
     def _embed_text(self, text: str):
         if hasattr(self.embedding_model, "embed_text"):
@@ -48,6 +49,12 @@ class HierarchicalDomainRouter:
         if hasattr(self.embedding_model, "encode"):
             return self.embedding_model.encode(text)
         raise AttributeError("Embedding model must provide embed_text() or encode().")
+
+    def _append_master_fuzzy(self, keyword: str, sub_name: str) -> None:
+        key = keyword.lower()
+        bucket = self.master_fuzzy_vocab.setdefault(key, [])
+        if sub_name not in bucket:
+            bucket.append(sub_name)
 
     def _build_fuzzy_dictionary(self):
         """Builds a flat lookup dictionary for fast lexical routing."""
@@ -57,10 +64,10 @@ class HierarchicalDomainRouter:
             self.fuzzy_vocab[tier_name] = {}
             for sub_name, keywords in tier_data.get("subdomains", {}).items():
                 self.fuzzy_vocab[tier_name][sub_name.lower()] = sub_name
-                self.master_fuzzy_vocab[sub_name.lower()] = sub_name
+                self._append_master_fuzzy(sub_name, sub_name)
                 for kw in keywords:
                     self.fuzzy_vocab[tier_name][kw.lower()] = sub_name
-                    self.master_fuzzy_vocab[kw.lower()] = sub_name
+                    self._append_master_fuzzy(kw, sub_name)
 
     def cosine_similarity(self, vec_a, vec_b):
         return float(np.dot(vec_a, vec_b) / (norm(vec_a) * norm(vec_b)))
@@ -92,27 +99,31 @@ class HierarchicalDomainRouter:
             }
 
         # ==========================================
-        # 1B. RAPIDFUZZ LEXICAL FAST-TRACK
+        # 1B. RAPIDFUZZ LEXICAL FAST-TRACK (global master vocab)
         # ==========================================
-        tier_name = archetype or self._best_tier(column_vector)
-        
-        # Safely fetch archetype vocab, fallback to master. NO hardcoded "census" strings.
-        target_vocab = self.fuzzy_vocab.get(tier_name)
-        if not target_vocab:
-            target_vocab = self.master_fuzzy_vocab
-
-        if target_vocab:
-            keywords = list(target_vocab.keys())
+        if self.master_fuzzy_vocab:
+            keywords = list(self.master_fuzzy_vocab.keys())
             best_match = process.extractOne(
                 col_lower,
                 keywords,
-                scorer=distance.JaroWinkler.normalized_similarity
+                scorer=fuzz.token_set_ratio,
             )
 
-            if best_match and best_match[1] >= 0.85:
+            if best_match and best_match[1] >= 85:
                 matched_keyword = best_match[0]
-                winning_domain = target_vocab[matched_keyword]
-                macro_tier = tier_name or self._best_tier_for_domain(winning_domain) or "unknown"
+                tied_domains = self.master_fuzzy_vocab.get(matched_keyword) or []
+                winning_domain = tied_domains[0] if tied_domains else "unknown"
+                if archetype and archetype in self.sub_domain_vectors:
+                    archetype_domains = set(self.sub_domain_vectors[archetype].keys())
+                    for candidate in tied_domains:
+                        if candidate in archetype_domains:
+                            winning_domain = candidate
+                            break
+                macro_tier = (
+                    self._best_tier_for_domain(winning_domain)
+                    or archetype
+                    or "unknown"
+                )
                 return {
                     "predicted_domain": winning_domain,
                     "macro_tier": macro_tier,
@@ -142,57 +153,62 @@ class HierarchicalDomainRouter:
                 "display_label": self._humanize_label(column_name),
             }
 
-        if archetype and archetype in self.tier_vectors:
-            winning_tier = archetype
-        else:
-            winning_tier = max(tier_scores, key=tier_scores.get)
-
+        winning_tier = max(tier_scores, key=tier_scores.get)
         macro_confidence = tier_scores.get(winning_tier, 0.0)
 
         # ==========================================
-        # 3. MICRO ROUTING (The Contextual Sieve)
+        # 3. GLOBAL VECTOR SIEVE + SOFT ARCHETYPE WEIGHTING
         # ==========================================
-        active_tier = archetype if archetype and archetype in self.sub_domain_vectors else winning_tier
-        
-        # Build the Sieve: Specific Domains + Universal Domains
-        target_dataset = self.sub_domain_vectors.get(active_tier, {}).copy()
-        
-        for uk, uvec in self.universal_vectors.items():
-            if uk not in target_dataset:
-                target_dataset[uk] = uvec
+        global_vectors: dict[str, list] = {}
+        for _tier_name, subs in self.sub_domain_vectors.items():
+            for sub_name, vector_list in subs.items():
+                if sub_name not in global_vectors:
+                    global_vectors[sub_name] = vector_list
+        for uk, vector_list in self.universal_vectors.items():
+            if uk not in global_vectors:
+                global_vectors[uk] = vector_list
 
-        if not target_dataset:
+        if not global_vectors:
+            fallback_tier = archetype if archetype and archetype in self.tier_vectors else winning_tier
             return {
-                "predicted_domain": active_tier,
-                "macro_tier": active_tier,
+                "predicted_domain": fallback_tier,
+                "macro_tier": fallback_tier,
                 "confidence": float(macro_confidence),
                 "pass_1_score": float(macro_confidence),
                 "pass_2_score": float(macro_confidence),
                 "is_locked": False,
                 "match_method": "embedding_similarity",
-                "matched_keyword": active_tier,
-                "display_label": self._humanize_label(active_tier),
+                "matched_keyword": fallback_tier,
+                "display_label": self._humanize_label(fallback_tier),
             }
 
-        # Calculate scores ONLY against this pruned dictionary
-        sub_scores = {sub_name: self.cosine_similarity(column_vector, sub_vec) 
-                      for sub_name, sub_vec in target_dataset.items()}
-        
-        winning_domain = max(sub_scores, key=sub_scores.get)
-        micro_confidence = sub_scores[winning_domain]
-        
-        # If the archetype was forced, trust the micro_confidence completely.
-        if archetype:
-            confidence = micro_confidence 
-        else:
-            confidence = (macro_confidence * 0.3) + (micro_confidence * 0.7)
+        archetype_subs: set[str] = set()
+        if archetype and archetype in self.sub_domain_vectors:
+            archetype_subs = set(self.sub_domain_vectors[archetype].keys())
+
+        adjusted_scores: dict[str, float] = {}
+        for sub_name, vector_list in global_vectors.items():
+            max_sim = -1.0
+            for kw_vec in vector_list:
+                sim = self.cosine_similarity(column_vector, kw_vec)
+                if sim > max_sim:
+                    max_sim = sim
+            if sub_name in archetype_subs:
+                max_sim = min(1.0, max_sim * 1.05)
+            adjusted_scores[sub_name] = max_sim
+
+        winning_domain = max(adjusted_scores, key=adjusted_scores.get)
+        micro_confidence = adjusted_scores[winning_domain]
+        macro_tier = self._best_tier_for_domain(winning_domain) or winning_tier or archetype or "unknown"
+        macro_confidence = tier_scores.get(macro_tier, macro_confidence)
 
         return {
             "predicted_domain": winning_domain,
-            "macro_tier": active_tier,
-            "confidence": float(confidence),
+            "macro_tier": macro_tier,
+            "confidence": float(micro_confidence),
             "pass_1_score": float(macro_confidence),
             "pass_2_score": float(micro_confidence),
+            "sub_domain_scores": {k: float(v) for k, v in adjusted_scores.items()},
             "is_locked": False,
             "match_method": "embedding_similarity",
             "matched_keyword": winning_domain,

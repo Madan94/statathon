@@ -14,8 +14,7 @@ def run_semantic_pipeline(
 ) -> dict:
     from semantic_mapping.semantic_pipeline import SemanticPipeline
 
-    cache_dir = str(repo_root() / "model" / "storage" / "vector_cache")
-    pipeline = SemanticPipeline(vector_cache_dir=cache_dir)
+    pipeline = SemanticPipeline()
     return pipeline.run(
         columns,
         column_enrichment=column_enrichment,

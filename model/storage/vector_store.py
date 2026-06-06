@@ -5,8 +5,9 @@ import os
 
 class VectorStore:
 
-    def __init__(self, cache_dir="storage/vector_cache"):
+    def __init__(self, cache_dir="storage/vector_cache", expected_dim: int | None = None):
         self.cache_dir = cache_dir
+        self.expected_dim = expected_dim
         os.makedirs(self.cache_dir, exist_ok=True)
         self._mem_cache = {}
 
@@ -22,16 +23,25 @@ class VectorStore:
     # ---- single vector ops ----
 
     def has(self, key: str) -> bool:
-        if key in self._mem_cache:
+        return self.get(key) is not None
+
+    def _valid_dim(self, vec: np.ndarray) -> bool:
+        if self.expected_dim is None:
             return True
-        return os.path.exists(self._path(key))
+        return int(vec.shape[-1]) == self.expected_dim
 
     def get(self, key: str):
         if key in self._mem_cache:
-            return self._mem_cache[key]
+            vec = self._mem_cache[key]
+            if self._valid_dim(vec):
+                return vec
+            del self._mem_cache[key]
         path = self._path(key)
         if os.path.exists(path):
             vec = np.load(path)
+            if not self._valid_dim(vec):
+                os.remove(path)
+                return None
             self._mem_cache[key] = vec
             return vec
         return None

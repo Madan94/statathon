@@ -21,7 +21,7 @@ class SemanticClusterEngine:
     def __init__(
         self,
         base: ClusterEngine | None = None,
-        coherence_merge_threshold: float = 0.72,
+        coherence_merge_threshold: float = 0.45,
     ):
         self._base = base or ClusterEngine()
         self.coherence_merge_threshold = coherence_merge_threshold
@@ -85,7 +85,7 @@ class SemanticClusterEngine:
                     dom_j = {column_domains.get(x, "") for x in mj}
                     domain_overlap = len(dom_i & dom_j) > 0
                     if mean_cross >= self.coherence_merge_threshold or (
-                        mean_cross >= 0.55 and domain_overlap
+                        mean_cross >= 0.35 and domain_overlap
                     ):
                         members_by_cluster[ci] = mi | mj
                         members_by_cluster.pop(cj, None)
