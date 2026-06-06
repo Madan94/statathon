@@ -285,37 +285,42 @@ def _heuristic_classify_sections(page_summaries: list[dict[str, Any]]) -> list[B
 def _colpali_extract(pdf_path: str | Path) -> list[dict[str, Any]] | None:
     """Vision-spatial extraction via ColPali.
 
-    Tries the local sidecar in this order:
-      1. `colpali-engine` Python package (HuggingFace model loaded in-process).
-      2. HTTP endpoint at COLPALI_ENDPOINT (e.g. http://colpali:8001/extract).
+    Respects COLPALI_IN_PROCESS env var (default: false).
+    When false (Docker mode), skips in-process model load and goes directly
+    to the HTTP endpoint at COLPALI_ENDPOINT (e.g. http://colpali:8001/extract).
+    When true (local dev without Docker), loads colpali-engine in-process.
+
     Returns the same `page_summaries` shape as `_pdfplumber_layout` so the
     downstream SGLang AST compiler is agnostic to source.
     """
-    try:
-        from colpali_engine.models import ColPali  # type: ignore
-        from colpali_engine.utils.processing_utils import process_images  # type: ignore
-        import pdf2image  # type: ignore
+    in_process = os.getenv("COLPALI_IN_PROCESS", "false").strip().lower() in ("1", "true", "yes")
 
-        model = ColPali.from_pretrained(os.getenv("COLPALI_MODEL", "vidore/colpali-v1.2"))
-        images = pdf2image.convert_from_path(str(pdf_path))
-        spatial = process_images(model, images)
-        # Adapt ColPali output (per-page bbox + caption tokens) to our shape.
-        out = []
-        for i, page in enumerate(spatial):
-            out.append({
-                "page_index": i,
-                "width": page.get("width"),
-                "height": page.get("height"),
-                "word_count": len(page.get("tokens") or []),
-                "has_tables": any(b.get("kind") == "table" for b in page.get("blocks") or []),
-                "table_count": sum(1 for b in page.get("blocks") or [] if b.get("kind") == "table"),
-                "headings": [b.get("text") for b in page.get("blocks") or [] if b.get("kind") == "heading"],
-                "raw_text_sample": page.get("text", "")[:600],
-                "colpali_blocks": page.get("blocks") or [],
-            })
-        return out
-    except Exception:
-        pass
+    if in_process:
+        try:
+            from colpali_engine.models import ColPali  # type: ignore
+            from colpali_engine.utils.processing_utils import process_images  # type: ignore
+            import pdf2image  # type: ignore
+
+            model = ColPali.from_pretrained(os.getenv("COLPALI_MODEL", "vidore/colpali-v1.2"))
+            images = pdf2image.convert_from_path(str(pdf_path))
+            spatial = process_images(model, images)
+            # Adapt ColPali output (per-page bbox + caption tokens) to our shape.
+            out = []
+            for i, page in enumerate(spatial):
+                out.append({
+                    "page_index": i,
+                    "width": page.get("width"),
+                    "height": page.get("height"),
+                    "word_count": len(page.get("tokens") or []),
+                    "has_tables": any(b.get("kind") == "table" for b in page.get("blocks") or []),
+                    "table_count": sum(1 for b in page.get("blocks") or [] if b.get("kind") == "table"),
+                    "headings": [b.get("text") for b in page.get("blocks") or [] if b.get("kind") == "heading"],
+                    "raw_text_sample": page.get("text", "")[:600],
+                    "colpali_blocks": page.get("blocks") or [],
+                })
+            return out
+        except Exception:
+            pass
 
     endpoint = os.getenv("COLPALI_ENDPOINT")
     if endpoint:
@@ -337,11 +342,86 @@ def _colpali_extract(pdf_path: str | Path) -> list[dict[str, Any]] | None:
 def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]:
     """Compile page summaries to a SGLang-structured block list.
 
-    Uses the sglang Python frontend when available; otherwise drives a Gemini
-    call with the SGLang prompt convention (produces identical JSON shape).
+    Priority (first success wins):
+      1. SGLang HTTP endpoint at SGLANG_ENDPOINT (Docker container, port 8002).
+         This is the primary path when SGLang Docker is running.
+      2. sglang Python in-process SDK (only if `sglang` is installed locally).
+      3. Gemini gemini-2.5-flash HTTP fallback (always works, no local install).
+
+    Why HTTP-first:
+      The UI upload flow goes through blueprint.compile_template_production() which
+      calls this function. The Docker SGLang container is only reachable via HTTP —
+      trying `import sglang` first completely bypassed the container.
     """
     if not page_summaries:
         return []
+
+    import json as _json
+
+    def _parse_blocks(data: Any, source: str) -> list[BlockSpec]:
+        """Parse a raw JSON value into BlockSpec list."""
+        if isinstance(data, dict):
+            # SGLang may wrap in {"blocks": [...]} or {"items": [...]}
+            data = data.get("blocks") or data.get("items") or []
+        blocks: list[BlockSpec] = []
+        for i, entry in enumerate(data if isinstance(data, list) else []):
+            try:
+                blocks.append(BlockSpec(
+                    block_id=str(entry.get("block_id") or f"blk_{i}"),
+                    kind=str(entry.get("kind") or "narrative"),
+                    title=str(entry.get("title") or "Section"),
+                    section=str(entry.get("section") or "body"),
+                    required=bool(entry.get("required", True)),
+                    hints=entry.get("hints") or {},
+                ))
+            except Exception:
+                continue
+        if blocks:
+            logger.info("SGLang (%s) compiled %d blocks", source, len(blocks))
+        return blocks
+
+    # ── Attempt 1: HTTP endpoint (Docker SGLang container at SGLANG_ENDPOINT) ──
+    endpoint = os.getenv("SGLANG_ENDPOINT", "").strip()
+    if endpoint:
+        try:
+            import requests  # type: ignore
+
+            model = os.getenv("SGLANG_MODEL", "Qwen/Qwen2.5-3B-Instruct")
+            prompt = (
+                "You compile statistical-report PDFs into structured block ASTs.\n"
+                "Output ONLY a JSON array. Each item must have: "
+                "block_id (slug), kind (narrative|table|chart|metric|heading), "
+                "title (short string), section (slug), required (bool), "
+                "hints (object with at least page_index).\n\n"
+                f"PAGES:\n{_json.dumps(page_summaries)[:8000]}"
+            )
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": "You compile statistical-report PDFs into block ASTs."},
+                    {"role": "user", "content": prompt},
+                ],
+                "temperature": 0.1,
+                "max_tokens": 4096,
+            }
+            timeout = int(os.getenv("SGLANG_TIMEOUT", "120"))
+            r = requests.post(
+                f"{endpoint.rstrip('/')}/v1/chat/completions",
+                json=payload,
+                timeout=timeout,
+            )
+            r.raise_for_status()
+            content = r.json()["choices"][0]["message"]["content"]
+            # Strip markdown fences if present
+            content = re.sub(r"^```(?:json)?|```$", "", content.strip(), flags=re.MULTILINE).strip()
+            data = _json.loads(content)
+            blocks = _parse_blocks(data, f"http:{endpoint}")
+            if blocks:
+                return blocks
+        except Exception as exc:
+            logger.info("SGLang HTTP endpoint unavailable: %s — trying in-process or Gemini", exc)
+
+    # ── Attempt 2: sglang Python in-process SDK (only if locally installed) ──
     try:
         import sglang as sgl  # type: ignore
 
@@ -354,26 +434,18 @@ def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]
             )
             s += sgl.assistant(sgl.gen("ast", max_tokens=2048))
 
-        import json as _json
         state = _ast_program.run(pages_json=_json.dumps(page_summaries)[:8000])
         try:
             data = _json.loads(state["ast"])
         except Exception:
             data = []
-        blocks: list[BlockSpec] = []
-        for i, entry in enumerate(data if isinstance(data, list) else []):
-            blocks.append(BlockSpec(
-                block_id=str(entry.get("block_id") or f"blk_{i}"),
-                kind=str(entry.get("kind") or "narrative"),
-                title=str(entry.get("title") or "Section"),
-                section=str(entry.get("section") or "body"),
-                required=bool(entry.get("required", True)),
-                hints=entry.get("hints") or {},
-            ))
+        blocks = _parse_blocks(data, "in-process")
         if blocks:
             return blocks
     except Exception:
         pass
+
+    # ── Attempt 3: Gemini fallback ──
     return _gemini_classify_sections(page_summaries)
 
 

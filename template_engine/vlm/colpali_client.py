@@ -4,10 +4,10 @@ The microservice accepts PDF files and returns structured page results
 with semantic regions, entities, tables, and charts.
 
 Docker deployment:
-  docker run -p 8100:8100 --gpus all bharatstat/colpali-service:latest
+  docker run -p 8001:8001 --gpus all bharatstat/colpali-service:latest
 
 Env:
-  COLPALI_ENDPOINT=http://localhost:8100
+  COLPALI_ENDPOINT=http://localhost:8001
   COLPALI_TIMEOUT=120
   COLPALI_MAX_RETRIES=3   (default: 3, for transient 5xx/timeout errors)
 """
@@ -30,7 +30,7 @@ _RETRYABLE_STATUS = {429, 500, 502, 503, 504}
 class ColPaliClient(VLMClient):
     """Real HTTP client to the ColPali vision-spatial microservice."""
 
-    def __init__(self, endpoint: str = "http://localhost:8100",
+    def __init__(self, endpoint: str = "http://localhost:8001",
                  timeout: int | None = None,
                  max_retries: int | None = None):
         self._endpoint = endpoint.rstrip("/")
