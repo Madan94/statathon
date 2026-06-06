@@ -423,13 +423,15 @@ def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]
             import requests  # type: ignore
 
             model = os.getenv("SGLANG_MODEL", "Qwen/Qwen2.5-3B-Instruct-AWQ")
+            # Truncate page data to ~3000 chars so input fits in 4096 context
+            pages_text = _json.dumps(page_summaries)[:3000]
             prompt = (
                 "You compile statistical-report PDFs into structured block ASTs.\n"
                 "Output ONLY a JSON array. Each item must have: "
                 "block_id (slug), kind (narrative|table|chart|metric|heading), "
                 "title (short string), section (slug), required (bool), "
                 "hints (object with at least page_index).\n\n"
-                f"PAGES:\n{_json.dumps(page_summaries)[:8000]}"
+                f"PAGES:\n{pages_text}"
             )
             payload = {
                 "model": model,
@@ -438,7 +440,7 @@ def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]
                     {"role": "user", "content": prompt},
                 ],
                 "temperature": 0.1,
-                "max_tokens": 4096,
+                "max_tokens": 2048,
             }
             timeout = int(os.getenv("SGLANG_TIMEOUT", "120"))
             logger.info(
