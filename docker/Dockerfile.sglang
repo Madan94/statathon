@@ -20,7 +20,7 @@
 FROM vllm/vllm-openai:latest
 
 ENV HF_HOME=/cache \
-    VLLM_MODEL=Qwen/Qwen2.5-3B-Instruct \
+    VLLM_MODEL=Qwen/Qwen2.5-3B-Instruct-AWQ \
     VLLM_PORT=8002
 
 # Install curl for healthcheck + ensure python alias exists

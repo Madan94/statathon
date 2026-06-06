@@ -69,7 +69,7 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       # vLLM env vars (replaced sglang — same OpenAI API on same port)
-      - VLLM_MODEL=${SGLANG_MODEL:-Qwen/Qwen2.5-3B-Instruct}
+      - VLLM_MODEL=${SGLANG_MODEL:-Qwen/Qwen2.5-3B-Instruct-AWQ}
       - VLLM_PORT=8002
     volumes:
       # HF_HOME in Dockerfile is /cache — must match

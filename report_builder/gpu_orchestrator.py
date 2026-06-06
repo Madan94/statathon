@@ -252,7 +252,7 @@ def compile_with_sglang(page_summaries: list[dict[str, Any]]) -> list[dict[str, 
         return None
 
     endpoint = _SGLANG_ENDPOINT
-    model = os.getenv("SGLANG_MODEL", "Qwen/Qwen2.5-3B-Instruct")
+    model = os.getenv("SGLANG_MODEL", "Qwen/Qwen2.5-3B-Instruct-AWQ")
     prompt = (
         "You compile statistical-report PDFs into structured block ASTs.\n"
         "Output ONLY a JSON array. Each item must have: "

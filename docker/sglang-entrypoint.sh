@@ -8,7 +8,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 set -e
 
-MODEL="${VLLM_MODEL:-Qwen/Qwen2.5-3B-Instruct}"
+MODEL="${VLLM_MODEL:-Qwen/Qwen2.5-3B-Instruct-AWQ}"
 PORT="${VLLM_PORT:-8002}"
 
 echo "═══════════════════════════════════════════════════════════════"
@@ -61,7 +61,8 @@ echo "▶ Configuration:"
 echo "  Model:          ${MODEL}"
 echo "  Port:           ${PORT}"
 echo "  Max model len:  4096 (fits in 6GB VRAM)"
-echo "  GPU mem util:   0.75 (4.5GB — leaves room for display driver)"
+echo "  GPU mem util:   0.90 (AWQ model ~1.8GB, leaves plenty for KV cache)"
+  echo "  Quantization:   AWQ 4-bit (native vLLM support)"
 echo "  Enforce eager:  yes (saves VRAM vs CUDA graphs)"
 echo ""
 echo "═══════════════════════════════════════════════════════════════"
@@ -71,19 +72,19 @@ echo ""
 
 # ── Launch vLLM ──────────────────────────────────────────────────────────────
 # Key flags for 6GB VRAM (with ~1GB used by display driver):
-#   --gpu-memory-utilization 0.75  → use 75% of 6GB = 4.5GB (fits in 4.95GB free)
+#   --gpu-memory-utilization 0.90  → use 90% of 6GB = 5.4GB (AWQ model only ~1.8GB)
 #   --max-model-len 4096           → limits KV cache size (big context = more VRAM)
 #   --enforce-eager                → disables CUDA graphs (saves ~500MB VRAM)
-#   --dtype half                   → FP16 (3B model = ~6GB in FP32, ~3GB in FP16)
-#   --max-num-seqs 2               → max 2 concurrent requests (prevents OOM)
+#   --quantization awq             → 4-bit quantized weights (~1.8GB vs 5.8GB FP16)
+#   --max-num-seqs 4               → concurrent requests (plenty of KV cache room)
 exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
     --port "${PORT}" \
-    --gpu-memory-utilization 0.75 \
+    --gpu-memory-utilization 0.90 \
     --max-model-len 4096 \
     --enforce-eager \
-    --dtype half \
-    --max-num-seqs 2 \
+    --quantization awq \
+    --max-num-seqs 4 \
     --trust-remote-code \
     --download-dir "${HF_HOME}"
