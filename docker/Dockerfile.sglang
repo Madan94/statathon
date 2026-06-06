@@ -30,14 +30,18 @@ RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir --retries 10 --timeout 600 \
         torch --index-url https://download.pytorch.org/whl/cu121
 
-# Layer 3: sglang[all] — isolated layer, retried independently from torch
-# Pin transformers<4.46 to avoid hub_kernels.py breaking change
-# (transformers 4.46+ imports kernels.LayerRepository with missing args, crashes on import)
+# Layer 3: sglang[all] — let pip resolve freely (no extra constraints)
 RUN pip install --no-cache-dir --retries 10 --timeout 600 \
-        "sglang[all]>=0.3" \
-        "transformers>=4.40,<4.46"
+        "sglang[all]>=0.3"
 
-# Layer 4: utilities — small packages, fast
+# Layer 4: Force-downgrade transformers to <4.46 AFTER sglang installs.
+# transformers 4.46+ imports kernels.LayerRepository with a breaking API
+# (ValueError: Either a revision or a version must be specified) that crashes
+# sglang on startup. Installing separately avoids resolution-too-deep.
+RUN pip install --no-cache-dir --force-reinstall --no-deps \
+        "transformers>=4.44,<4.46"
+
+# Layer 5: utilities — small packages, fast
 RUN pip install --no-cache-dir --retries 5 --timeout 120 \
         huggingface_hub
 
