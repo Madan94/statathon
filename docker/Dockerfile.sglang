@@ -34,15 +34,12 @@ RUN pip install --no-cache-dir --retries 10 --timeout 600 \
 RUN pip install --no-cache-dir --retries 10 --timeout 600 \
         "sglang[all]>=0.3"
 
-# Layer 4: Force-downgrade transformers to <4.46 AFTER sglang installs.
-# transformers 4.46+ imports kernels.LayerRepository with a breaking API
-# (ValueError: Either a revision or a version must be specified) that crashes
-# sglang on startup. Installing separately avoids resolution-too-deep.
-# Must also pin tokenizers to match (transformers 4.45 needs tokenizers <0.21).
-RUN pip install --no-cache-dir --force-reinstall --no-deps \
-        "transformers>=4.44,<4.46" \
-    && pip install --no-cache-dir --force-reinstall \
-        "tokenizers>=0.20,<0.21"
+# Layer 4: Remove the 'kernels' package that transformers 4.46+ optionally
+# imports via hub_kernels.py. The installed version has a bug:
+#   LayerRepository() called without revision/version → ValueError
+# Without 'kernels', transformers skips hub_kernels entirely — no crash.
+# sglang doesn't need hub_kernels; it only needs transformers core.
+RUN pip uninstall -y kernels 2>/dev/null || true
 
 # Layer 5: utilities — small packages, fast
 RUN pip install --no-cache-dir --retries 5 --timeout 120 \
