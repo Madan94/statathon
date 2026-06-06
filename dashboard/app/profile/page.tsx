@@ -70,7 +70,7 @@ export default function ProfilePage() {
         description="Your officer account details for BharatStat."
       />
 
-      {error && <Alert variant="danger">{error}</Alert>}
+      {error && <Alert variant="error">{error}</Alert>}
 
       {loading ? (
         <div className="flex items-center justify-center py-16 text-[#64748b]" role="status">
