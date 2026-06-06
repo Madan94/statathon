@@ -1,6 +1,13 @@
-# pytorch/pytorch base ships with PyTorch + CUDA 12.1 + cuDNN 9 pre-installed.
-# 2.4.1 required: transformers >= 4.40 refuses to load with torch < 2.4,
-# causing colpali_engine to fail with "name 'nn' is not defined".
+# syntax=docker/dockerfile:1
+# ─────────────────────────────────────────────────────────────────────────────
+# ColPali vision-PDF extractor (vidore/colpali-v1.2 default).
+# Base image ships with PyTorch 2.4.1 + CUDA 12.1 + cuDNN 9 pre-installed.
+#
+# Build:  docker compose -f docker-compose.gpu.yml --profile gpu build colpali
+# Run:    docker compose -f docker-compose.gpu.yml --profile gpu up colpali
+#
+# Cache strategy: BuildKit pip cache mount keeps wheels across builds.
+# ─────────────────────────────────────────────────────────────────────────────
 FROM pytorch/pytorch:2.4.1-cuda12.1-cudnn9-devel
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -10,40 +17,37 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DEVICE=auto \
     COLPALI_DPI=120 \
     COLPALI_PAGE_BATCH_SIZE=1 \
-    COLPALI_PORT=8001 \
-    # pip reliability: 10 retries, 5-min timeout per chunk
-    PIP_RETRIES=10 \
-    PIP_DEFAULT_TIMEOUT=300 \
-    PIP_PROGRESS_BAR=off
+    COLPALI_PORT=8001
 
 WORKDIR /app
 
-# System deps — poppler for pdf2image
+# ── Layer 1: System deps (poppler for pdf2image) ─────────────────────────────
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends poppler-utils \
+    && apt-get install -y --no-install-recommends poppler-utils curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Step 1: upgrade pip in isolation (cached layer, never changes)
-RUN pip install --no-cache-dir --upgrade pip
+# ── Layer 2: pip upgrade ─────────────────────────────────────────────────────
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade pip
 
-# Step 2: torch is ALREADY in the base image — skip entirely.
-# Pin transformers >= 4.40 (requires torch >= 2.4, which we now have).
-# Pin colpali-engine to stable release.
-RUN pip install --no-cache-dir --retries 10 --timeout 300 \
+# ── Layer 3: ML libraries (torch already in base) ────────────────────────────
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install \
         "transformers>=4.40,<5" \
         "colpali-engine>=0.3,<1"
 
-RUN pip install --no-cache-dir --retries 10 --timeout 120 \
+# ── Layer 4: Web/PDF utilities ───────────────────────────────────────────────
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install \
         pdf2image \
         pdfplumber \
         fastapi \
         "uvicorn[standard]" \
         python-multipart
 
+# ── Layer 5: Application code (invalidates only on code changes) ─────────────
 COPY services/colpali/main.py /app/main.py
 
-# Port matches docker-compose.gpu.yml ports mapping AND COLPALI_ENDPOINT
 EXPOSE 8001
 
-# COLPALI_PORT env var lets compose override without rebuilding
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${COLPALI_PORT:-8001}"]

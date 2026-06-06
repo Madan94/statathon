@@ -81,10 +81,10 @@ services:
       - "8002:8002"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
-      interval: 30s
+      interval: 15s
       timeout: 10s
-      retries: 5
-      start_period: 120s
+      retries: 8
+      start_period: 90s
     profiles:
       - gpu
 
@@ -188,6 +188,7 @@ services:
       - "7687:7687"
     volumes:
       - neo4j_data:/data
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -195,6 +196,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    restart: unless-stopped
 
 volumes:
   neo4j_data:

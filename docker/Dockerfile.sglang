@@ -1,5 +1,17 @@
+# syntax=docker/dockerfile:1
+# ─────────────────────────────────────────────────────────────────────────────
 # SGLang grammar-constrained LLM server (Qwen2.5-3B default).
 # Requires NVIDIA Container Toolkit on host (--gpus all).
+#
+# Build:  docker compose -f docker-compose.gpu.yml --profile gpu build sglang
+# Run:    docker compose -f docker-compose.gpu.yml --profile gpu up sglang
+#
+# Cache strategy:
+#   - BuildKit pip cache mount (--mount=type=cache) keeps .whl files across builds
+#   - Pinned versions → layers only rebuild when YOU bump versions
+#   - Model downloads at runtime via volume mount (./model/cache:/cache)
+#   - Rebuild after fix = seconds (warm cache), not 37 minutes
+# ─────────────────────────────────────────────────────────────────────────────
 FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -7,43 +19,39 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HF_HOME=/cache \
     SGLANG_MODEL=Qwen/Qwen2.5-3B-Instruct \
     SGLANG_PORT=8002 \
-    SGLANG_MEM_FRACTION_STATIC=0.42 \
-    # pip reliability settings — sglang[all] is ~2GB, needs long timeout + retries
-    PIP_RETRIES=10 \
-    PIP_DEFAULT_TIMEOUT=600 \
-    PIP_PROGRESS_BAR=off
+    SGLANG_MEM_FRACTION_STATIC=0.42
 
 WORKDIR /app
 
-# Install python3 + pip; git needed by some sglang sub-deps
+# ── Layer 1: System packages (cached forever) ────────────────────────────────
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         python3 python3-pip python3-venv git curl \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/python3 /usr/bin/python
 
-# Layer 1: pip upgrade only — tiny, always cached after first success
-RUN pip install --no-cache-dir --upgrade pip
+# ── Layer 2: pip upgrade (tiny, cached forever) ──────────────────────────────
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade pip
 
-# Layer 2: torch first (pre-req for sglang, ~2GB) — isolated so it caches on success
-# If this layer drops mid-download, layers before it are still cached.
-RUN pip install --no-cache-dir --retries 10 --timeout 600 \
-        torch --index-url https://download.pytorch.org/whl/cu121
+# ── Layer 3: PyTorch for CUDA 12.1 (~2GB, cached via pip mount) ──────────────
+# Isolated layer — if sglang install fails, torch stays cached.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install torch --index-url https://download.pytorch.org/whl/cu121
 
-# Layer 3: sglang[all] — let pip resolve freely (no extra constraints)
-RUN pip install --no-cache-dir --retries 10 --timeout 600 \
-        "sglang[all]>=0.3"
+# ── Layer 4: SGLang + fix (the main layer) ───────────────────────────────────
+# Pin to >=0.4 for Qwen2.5 support. BuildKit cache means even a rebuild
+# only re-installs changed packages — doesn't re-download 2GB from PyPI.
+# 'kernels' package removed: transformers 4.46+ optionally imports it via
+# hub_kernels.py but the installed version has a bug (LayerRepository called
+# without revision/version). Without it, transformers works fine.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install "sglang[all]>=0.4" \
+    && pip uninstall -y kernels 2>/dev/null || true
 
-# Layer 4: Remove the 'kernels' package that transformers 4.46+ optionally
-# imports via hub_kernels.py. The installed version has a bug:
-#   LayerRepository() called without revision/version → ValueError
-# Without 'kernels', transformers skips hub_kernels entirely — no crash.
-# sglang doesn't need hub_kernels; it only needs transformers core.
-RUN pip uninstall -y kernels 2>/dev/null || true
-
-# Layer 5: utilities — small packages, fast
-RUN pip install --no-cache-dir --retries 5 --timeout 120 \
-        huggingface_hub
+# ── Layer 5: Utilities (tiny, fast) ──────────────────────────────────────────
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install huggingface_hub
 
 EXPOSE 8002
 
