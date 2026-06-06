@@ -369,7 +369,10 @@ def _colpali_extract(pdf_path: str | Path) -> list[dict[str, Any]] | None:
                 len(pages) if pages else 0,
                 time.monotonic() - t0,
             )
-            return pages
+            if pages:
+                from report_builder.gpu_orchestrator import _normalize_colpali_pages
+                return _normalize_colpali_pages(pages)
+            return None
         except Exception as exc:
             logger.info("[blueprint._colpali_extract] endpoint unreachable: %s", exc)
     return None
@@ -422,7 +425,7 @@ def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]
         try:
             import requests  # type: ignore
 
-            model = os.getenv("SGLANG_MODEL", "Qwen/Qwen2.5-3B-Instruct-AWQ")
+            model = os.getenv("SGLANG_MODEL", "Qwen/Qwen2.5-VL-7B-Instruct-AWQ")
             # Truncate page data to ~3000 chars so input fits in 4096 context
             pages_text = _json.dumps(page_summaries)[:3000]
             prompt = (
@@ -521,6 +524,59 @@ def compile_template_production(
     _tick(PRODUCTION_STAGE_ORDER[0], 20, {"sha256": file_hash, "status": "completed"})
 
     _tick(PRODUCTION_STAGE_ORDER[1], 35, {"status": "started"})
+
+    # ── V2 Multi-Pass Pipeline (LayoutLM + Qwen-VL) ──────────────────────────
+    # Activated by EXTRACTION_PIPELINE=v2 (default: v1 for backwards compat)
+    if os.getenv("EXTRACTION_PIPELINE", "v1") == "v2" and path.exists():
+        logger.info("[blueprint] ▶ EXTRACTION_PIPELINE=v2 — using multi-pass pipeline")
+        from report_builder.extraction_pipeline import run_extraction_pipeline
+
+        enterprise_ast = run_extraction_pipeline(
+            pdf_path=path,
+            doc_title=template_name or "Document",
+            source_hash=file_hash or "",
+            progress_callback=lambda stage, pct, data: _tick(stage, pct, {"v2": True}),
+        )
+        # Build TemplateAST from enterprise AST for backward compat
+        v2_blocks: list[BlockSpec] = []
+        for para in (enterprise_ast.get("contentAST", {}).get("paragraphs") or [])[:40]:
+            v2_blocks.append(BlockSpec(
+                block_id=para.get("id", f"blk_{len(v2_blocks)}"),
+                kind="narrative",
+                title=para.get("content", "")[:60],
+                section="body",
+                required=True,
+                hints={},
+            ))
+        for tbl in (enterprise_ast.get("tableAST", {}).get("tables") or [])[:20]:
+            v2_blocks.append(BlockSpec(
+                block_id=tbl.get("tableId", f"tbl_{len(v2_blocks)}"),
+                kind="table",
+                title=tbl.get("title", "Table"),
+                section="body",
+                required=True,
+                hints={"columns": tbl.get("columns", [])},
+            ))
+        if not v2_blocks:
+            v2_blocks = list(DEFAULT_MOSPI_TEMPLATE.blocks)
+
+        ast = TemplateAST(
+            name=template_name or "Enterprise Document",
+            source_hash=file_hash,
+            page_count=enterprise_ast.get("metadata", {}).get("pageCount", 0),
+            blocks=v2_blocks,
+            extraction_method="layoutlm+qwen-vl+sequential",
+        )
+        payload = ast.to_dict()
+        payload["enterprise_ast"] = enterprise_ast
+        payload["extracted_assets"] = enterprise_ast.get("extracted_assets", {})
+        payload["questions"] = enterprise_ast.get("questions", [])
+        payload["templateSlots"] = enterprise_ast.get("templateSlots", {})
+        diagnostics["stages"]["v2_pipeline"] = {"status": "completed"}
+        _tick(PRODUCTION_STAGE_ORDER[5], 100, {"status": "completed"})
+        return ast, diagnostics
+
+    # ── V1 Legacy Pipeline ────────────────────────────────────────────────────
     pages: list[dict[str, Any]] = []
     extraction_method = "unknown"
 

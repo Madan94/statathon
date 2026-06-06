@@ -1,8 +1,18 @@
+# syntax=docker/dockerfile:1
+# ─────────────────────────────────────────────────────────────────────────────
+# Fargate / ECS deployment image (no BuildKit cache mounts — immutable layers)
+#
+# DESIGN: Fail-fast + deterministic builds for production
+#   - No --mount=type=cache (not available on Fargate build agents)
+#   - PIP_NO_CACHE_DIR=1 for smaller image size
+#   - Import verification before app code layer
+# ─────────────────────────────────────────────────────────────────────────────
 FROM python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/app
 
 WORKDIR /app
 
@@ -12,7 +22,12 @@ RUN apt-get update \
 
 COPY requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir -r /app/requirements.txt
+    && pip install --prefer-binary --no-cache-dir -r /app/requirements.txt
+
+# ── Fail-fast: verify deps before adding app code ────────────────────────────
+RUN python -c "\
+import fastapi, uvicorn, pydantic; \
+print(f'✓ fastapi={fastapi.__version__} pydantic={pydantic.__version__}')"
 
 COPY . /app
 RUN ln -sfn /app/scripts /app/api/scripts
@@ -21,6 +36,7 @@ WORKDIR /app/api
 ENV PYTHONPATH=/app
 
 EXPOSE 8000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD curl -fsS http://127.0.0.1:8000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -fsS http://127.0.0.1:8000/health || exit 1
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

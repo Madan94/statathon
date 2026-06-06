@@ -1,16 +1,21 @@
 # syntax=docker/dockerfile:1
 # ─────────────────────────────────────────────────────────────────────────────
-# Next.js standalone Docker build (mirrors dashboard/Dockerfile)
+# Next.js standalone Docker build
 # Requires output: "standalone" in next.config.ts.
+#
+# DESIGN: Fail-fast + maximum cache
+#   - Stage 1: deps (cached until package-lock changes)
+#   - Stage 2: build (fail-fast — TypeScript/lint errors caught here)
+#   - Stage 3: minimal runtime (no devDeps, no source)
 # ─────────────────────────────────────────────────────────────────────────────
 
-# ── Stage 1: install deps ──────────────────────────────────────────────────
+# ── Stage 1: install deps (cached by package-lock.json) ──────────────────────
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY dashboard/package.json dashboard/package-lock.json ./
-RUN npm ci
+RUN npm ci --prefer-offline
 
-# ── Stage 2: build ────────────────────────────────────────────────────────
+# ── Stage 2: build (TypeScript errors = build fail = fail-fast) ──────────────
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -22,18 +27,22 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
 
-# ── Stage 3: minimal runtime image ────────────────────────────────────────
+# ── Stage 3: minimal runtime image (~50MB vs ~1GB dev) ───────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
 
+# Copy only production artifacts
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
 EXPOSE 3000
+
+HEALTHCHECK --interval=20s --timeout=5s --retries=3 --start-period=10s \
+    CMD wget -qO- http://localhost:3000/ || exit 1
 
 CMD ["node", "server.js"]

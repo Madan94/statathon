@@ -8,7 +8,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 set -e
 
-MODEL="${VLLM_MODEL:-Qwen/Qwen2.5-3B-Instruct-AWQ}"
+MODEL="${VLLM_MODEL:-Qwen/Qwen2.5-VL-7B-Instruct-AWQ}"
 PORT="${VLLM_PORT:-8002}"
 
 echo "═══════════════════════════════════════════════════════════════"
@@ -60,8 +60,8 @@ echo ""
 echo "▶ Configuration:"
 echo "  Model:          ${MODEL}"
 echo "  Port:           ${PORT}"
-echo "  Max model len:  4096 (fits in 6GB VRAM)"
-echo "  GPU mem util:   0.78 (reserves 4.68GB — under 4.95GB free after display driver)"
+echo "  Max model len:  2048 (vision model needs more VRAM for image tokens)"
+echo "  GPU mem util:   0.82 (reserves 4.92GB — tight fit for 7B-AWQ vision)"
 echo "  Enforce eager:  yes (saves VRAM vs CUDA graphs)"
 echo ""
 echo "═══════════════════════════════════════════════════════════════"
@@ -73,21 +73,23 @@ echo ""
 # VRAM Budget (RTX 4050/3050 Laptop, 6GB total):
 #   Display driver uses ~1.05GB → only 4.95GB free
 #   gpu_memory_utilization is % of TOTAL (6GB), not FREE (4.95GB)
-#   So: 0.78 × 6.0 = 4.68GB requested < 4.95GB free ✓
-#   AWQ model ~1.8GB + KV cache ~2.8GB = 4.6GB — fits perfectly
+#   So: 0.82 × 6.0 = 4.92GB requested ≈ 4.95GB free (tight but fits)
+#   Qwen2.5-VL-7B-AWQ ~4.0GB weights + KV cache ~0.5GB = 4.5GB
 #
-#   --gpu-memory-utilization 0.78  → reserve 4.68GB (safe under 4.95GB free)
-#   --max-model-len 4096           → limits KV cache size
+#   --gpu-memory-utilization 0.82  → reserve 4.92GB (tight fit, validated)
+#   --max-model-len 2048           → smaller KV cache for vision model
 #   --enforce-eager                → disables CUDA graphs (saves ~500MB VRAM)
-#   --max-num-seqs 4               → concurrent requests
+#   --max-num-seqs 1               → single request (saves KV cache memory)
+#   --limit-mm-per-prompt image=1  → one image per request (page-by-page)
 #   NOTE: No --quantization flag needed — vLLM auto-detects from model config
 exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
     --port "${PORT}" \
-    --gpu-memory-utilization 0.78 \
-    --max-model-len 4096 \
+    --gpu-memory-utilization 0.82 \
+    --max-model-len 2048 \
     --enforce-eager \
-    --max-num-seqs 4 \
+    --max-num-seqs 1 \
+    --limit-mm-per-prompt image=1 \
     --trust-remote-code \
     --download-dir "${HF_HOME}"

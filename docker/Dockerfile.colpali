@@ -3,10 +3,13 @@
 # ColPali vision-PDF extractor (vidore/colpali-v1.2 default).
 # Base image ships with PyTorch 2.4.1 + CUDA 12.1 + cuDNN 9 pre-installed.
 #
+# DESIGN: Fail-fast + maximum cache
+#   - System deps → pip → ML libs → web libs → verify → app code
+#   - Each layer builds only if the one above it changed
+#   - Verification layer catches missing symbols/ABI mismatches at build time
+#
 # Build:  docker compose -f docker-compose.gpu.yml --profile gpu build colpali
 # Run:    docker compose -f docker-compose.gpu.yml --profile gpu up colpali
-#
-# Cache strategy: BuildKit pip cache mount keeps wheels across builds.
 # ─────────────────────────────────────────────────────────────────────────────
 FROM pytorch/pytorch:2.4.1-cuda12.1-cudnn9-devel
 
@@ -21,16 +24,18 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# ── Layer 1: System deps (poppler for pdf2image) ─────────────────────────────
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends poppler-utils curl \
-    && rm -rf /var/lib/apt/lists/*
+# ── Layer 1: System deps ─────────────────────────────────────────────────────
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+        poppler-utils curl \
+    && rm -rf /tmp/*
 
-# ── Layer 2: pip upgrade ─────────────────────────────────────────────────────
+# ── Layer 2: pip baseline ────────────────────────────────────────────────────
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --upgrade pip
+    pip install --upgrade pip setuptools wheel
 
-# ── Layer 3: ML libraries (torch already in base) ────────────────────────────
+# ── Layer 3: ML libraries (torch already in base, pinned for ABI compat) ────
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install \
         "transformers>=4.40,<5" \
@@ -45,9 +50,21 @@ RUN --mount=type=cache,target=/root/.cache/pip \
         "uvicorn[standard]" \
         python-multipart
 
-# ── Layer 5: Application code (invalidates only on code changes) ─────────────
+# ── Layer 5: Fail-fast — verify all imports resolve at build time ────────────
+RUN python -c "\
+import torch; \
+from colpali_engine.models import ColPali, ColPaliProcessor; \
+from transformers import AutoTokenizer; \
+from fastapi import FastAPI; \
+import pdfplumber; \
+print(f'✓ torch={torch.__version__} cuda={torch.cuda.is_available()} colpali OK')"
+
+# ── Layer 6: Application code (invalidates only on code changes) ─────────────
 COPY services/colpali/main.py /app/main.py
 
 EXPOSE 8001
+
+HEALTHCHECK --interval=20s --timeout=5s --retries=4 --start-period=90s \
+    CMD curl -fsS http://localhost:8001/health || exit 1
 
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${COLPALI_PORT:-8001}"]

@@ -1,41 +1,55 @@
 # syntax=docker/dockerfile:1
 # ─────────────────────────────────────────────────────────────────────────────
-# vLLM OpenAI-compatible LLM server (Qwen2.5-3B default).
-# Replaces SGLang — sglang's sgl_kernel only ships SM100 (Blackwell) builds,
-# which don't work on RTX 4050 (SM89 Ada Lovelace).
+# vLLM OpenAI-compatible LLM server (Qwen2.5-VL-7B-AWQ vision model)
+# Replaces SGLang — sglang's sgl_kernel only ships SM100 (Blackwell) builds.
 #
-# vLLM advantages over sglang for our use case:
-#   ✓ Proper SM89 support (RTX 40-series)
+# DESIGN: Fail-fast + maximum cache + future-proof
+#   - Base image already has vLLM + CUDA + Python
+#   - Only add: curl (healthcheck), entrypoint script
+#   - Verify vLLM importable at build time (ABI/version mismatch = build fail)
+#   - CRLF fix baked in (Windows git compat)
+#   - Healthcheck start-period accounts for model download on first run
+#
+# vLLM advantages for our use case:
+#   ✓ Proper SM89 support (RTX 40-series) and SM86 (RTX 30-series)
 #   ✓ Same OpenAI API: /v1/chat/completions (drop-in replacement)
-#   ✓ Smaller VRAM footprint for 3B models
-#   ✓ Official Docker image tested on Ada Lovelace GPUs
-#   ✓ No sgl_kernel dependency issues
+#   ✓ Vision model support (Qwen2.5-VL with image inputs)
+#   ✓ Official Docker image tested on Ada Lovelace + Ampere GPUs
+#   ✓ AWQ auto-detection (no --quantization flag needed)
 #
 # Build:  docker compose -f docker-compose.gpu.yml --profile gpu build sglang
 # Run:    docker compose -f docker-compose.gpu.yml --profile gpu up sglang
-#
-# The service is still called "sglang" in compose to avoid changing all
-# references in orchestrator/blueprint code. The API is identical.
 # ─────────────────────────────────────────────────────────────────────────────
 FROM vllm/vllm-openai:latest
 
 ENV HF_HOME=/cache \
-    VLLM_MODEL=Qwen/Qwen2.5-3B-Instruct-AWQ \
-    VLLM_PORT=8002
+    VLLM_MODEL=Qwen/Qwen2.5-VL-7B-Instruct-AWQ \
+    VLLM_PORT=8002 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-# Install curl for healthcheck + ensure python alias exists
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/* \
+# ── Layer 1: System utils + python alias ─────────────────────────────────────
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /tmp/* \
     && (which python || ln -sf $(which python3) /usr/local/bin/python) 2>/dev/null; true
 
-# Entrypoint with diagnostics + VRAM-optimized flags
+# ── Layer 2: Fail-fast — verify vLLM is importable at build time ─────────────
+RUN python3 -c "\
+from vllm import LLM; \
+from vllm.entrypoints.openai.api_server import run_server; \
+print('✓ vLLM importable, api_server OK')" 2>/dev/null || \
+    python3 -c "import vllm; print(f'✓ vllm={vllm.__version__}')"
+
+# ── Layer 3: Entrypoint (changes rarely) ─────────────────────────────────────
 COPY docker/sglang-entrypoint.sh /app/entrypoint.sh
-# Fix Windows CRLF → Linux LF (git on Windows adds \r which breaks #!/bin/bash)
+# Fix Windows CRLF → Linux LF + make executable in one atomic operation
 RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 EXPOSE 8002
 
-HEALTHCHECK --interval=15s --timeout=5s --start-period=120s --retries=8 \
+HEALTHCHECK --interval=15s --timeout=5s --start-period=180s --retries=10 \
     CMD curl -fsS http://localhost:8002/health || exit 1
 
 ENTRYPOINT ["/app/entrypoint.sh"]

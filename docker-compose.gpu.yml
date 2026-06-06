@@ -1,60 +1,45 @@
-# Docker Compose: 6GB VRAM GPU Sequential Sharing
-# ColPali extraction → stop → SGLang generation → stop
+# Docker Compose: 6GB VRAM GPU Sequential Pipeline
+# LayoutLMv3 (CPU) + Qwen2.5-VL-7B-AWQ (GPU) — Enterprise Document AST
 #
-# ── Build images (one-time, cached after success):
-#   docker compose -f docker-compose.gpu.yml --profile gpu build colpali sglang
+# ── Build (one-time, cached after success):
+#   docker compose -f docker-compose.gpu.yml --profile gpu build
 #
-# ── Sequential pipeline (recommended):
-#   docker compose -f docker-compose.gpu.yml --profile gpu up colpali
-#   docker compose -f docker-compose.gpu.yml --profile gpu stop colpali
-#   docker compose -f docker-compose.gpu.yml --profile gpu up sglang
-#   docker compose -f docker-compose.gpu.yml --profile gpu stop sglang
-#
-# ── One-shot pipeline with custom PDF:
-#   PDF_INPUT_PATH=/app/data/myfile.pdf \
-#     docker compose -f docker-compose.gpu.yml --profile gpu run --rm pipeline
+# ── V2 Pipeline (LayoutLM + Qwen-VL multi-pass extraction):
+#   docker compose -f docker-compose.gpu.yml --profile gpu up layoutlm sglang
+#   docker compose -f docker-compose.gpu.yml --profile gpu run --rm pipeline
 #
 # ── API + Dashboard only (no GPU needed):
 #   docker compose -f docker-compose.gpu.yml up api dashboard neo4j redis
 
 services:
-  colpali:
+  # ── LayoutLMv3 — CPU document layout detection ─────────────────────────────
+  layoutlm:
     build:
       context: .
-      dockerfile: docker/Dockerfile.colpali
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+      dockerfile: docker/Dockerfile.layoutlm
     environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      # MODEL_ID is what services/colpali/main.py actually reads via os.getenv("MODEL_ID")
-      - MODEL_ID=${COLPALI_MODEL:-vidore/colpali-v1.2}
-      # COLPALI_PAGE_BATCH_SIZE is what main.py reads — not COLPALI_BATCH_SIZE
-      - COLPALI_PAGE_BATCH_SIZE=${COLPALI_BATCH_SIZE:-4}
-      - COLPALI_PORT=8001
-      - DEVICE=auto
-      - CHECKPOINT_ENABLED=true
-      - CHECKPOINT_DIR=/app/checkpoints
+      - MODEL_ID=${LAYOUTLM_MODEL:-microsoft/layoutlmv3-large}
+      - LAYOUTLM_PORT=8001
+      - MAX_PAGES=100
     volumes:
-      # HF_HOME in Dockerfile is /cache — mount must match exactly or models re-download every restart
       - ./model/cache:/cache
-      - ./checkpoints:/app/checkpoints
-      - ./data:/app/data
     ports:
       - "8001:8001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+      test: ["CMD", "curl", "-fsS", "http://localhost:8001/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 4
+      start_period: 45s
     profiles:
       - gpu
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    restart: unless-stopped
 
+  # ── vLLM (Qwen2.5-VL-7B-AWQ) — GPU vision + text model ───────────────────
   sglang:
     build:
       context: .
@@ -68,56 +53,54 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      # vLLM env vars (replaced sglang — same OpenAI API on same port)
-      - VLLM_MODEL=${SGLANG_MODEL:-Qwen/Qwen2.5-3B-Instruct-AWQ}
+      - VLLM_MODEL=${SGLANG_MODEL:-Qwen/Qwen2.5-VL-7B-Instruct-AWQ}
       - VLLM_PORT=8002
     volumes:
-      # HF_HOME in Dockerfile is /cache — must match
       - ./model/cache:/cache
     ports:
       - "8002:8002"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:8002/health"]
       interval: 15s
-      timeout: 10s
-      retries: 12
-      start_period: 120s
+      timeout: 5s
+      retries: 10
+      start_period: 180s
     profiles:
       - gpu
+    restart: unless-stopped
 
+  # ── Pipeline runner (uses LayoutLM + Qwen-VL for extraction) ───────────────
   pipeline:
     build:
       context: .
       dockerfile: docker/Dockerfile.api
-    # Wait for ColPali to finish loading the model before sending the first PDF.
-    # Without this, pipeline starts immediately and gets "Connection refused" on page 1.
     depends_on:
-      colpali:
+      layoutlm:
+        condition: service_healthy
+      sglang:
         condition: service_healthy
     environment:
-      - COLPALI_ENDPOINT=http://colpali:8001
+      - EXTRACTION_PIPELINE=v2
+      - LAYOUTLM_ENDPOINT=http://layoutlm:8001
       - SGLANG_ENDPOINT=http://sglang:8002
+      - PIPELINE_GPU_MODE=sequential
       - CHECKPOINT_ENABLED=true
       - CHECKPOINT_DIR=/app/checkpoints
       - DATABASE_URL=${DATABASE_URL:-}
-      # ── What PDF to extract from (copy it into ./data/ first)
       - PDF_INPUT_PATH=${PDF_INPUT_PATH:-/app/data/input.pdf}
-      # ── Human-readable name for the template (used in outputs + DB)
-      - TEMPLATE_NAME=${TEMPLATE_NAME:-PLFS Template}
-      # ── Where to write the output AST JSON (mounted as ./outputs)
+      - TEMPLATE_NAME=${TEMPLATE_NAME:-Enterprise Template}
       - OUTPUT_DIR=/app/outputs
     env_file: .env
     volumes:
       - ./checkpoints:/app/checkpoints
       - ./data:/app/data
       - ./outputs:/app/outputs
-    # run_extraction_pipeline is the actual entry point in template_engine/pipeline.py
-    # Script is at /app/scripts/run_pipeline.py (copied by Dockerfile.api COPY . /app)
-    # All config via env vars: PDF_INPUT_PATH, TEMPLATE_NAME, OUTPUT_DIR
+      - ./model/cache:/app/model/cache
     command: ["python", "/app/scripts/run_pipeline.py"]
     profiles:
       - gpu
 
+  # ── API Server ──────────────────────────────────────────────────────────────
   api:
     build:
       context: .
@@ -125,27 +108,13 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # These override values from env_file where the service names differ from localhost.
-      # Docker containers cannot resolve 'localhost' as another container — must use service names.
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_PASSWORD=${NEO4J_PASSWORD:-mospi_secure_password}
-      # DATABASE_URL: do NOT use ${DATABASE_URL:-fallback} here.
-      # Host-shell interpolation is ambiguous — if the shell has DATABASE_URL
-      # exported (from 'source .env' or shell profile), that wins over the
-      # fallback, sending Supabase URL to a container that may lack DNS/internet.
-      # Let env_file: .env provide DATABASE_URL cleanly instead.
-      # Uncomment the line below ONLY if you want to force a local SQLite for this container:
-      # - DATABASE_URL=sqlite:////app/statathon.db
       - TRACING_ENABLED=${TRACING_ENABLED:-0}
-      # .env sets REDIS_URL=redis://localhost:6379/0 — localhost inside container = itself, broken.
       - REDIS_URL=redis://redis:6379/0
-      # .env sets COLPALI_ENDPOINT=http://localhost:8001 (for local dev).
-      # Inside Docker the colpali service is reachable at http://colpali:8001, not localhost.
-      - COLPALI_ENDPOINT=http://colpali:8001
-      # .env sets SGLANG_ENDPOINT=http://localhost:8002 (for local dev).
-      # Inside Docker the sglang service is reachable at http://sglang:8002, not localhost.
+      - LAYOUTLM_ENDPOINT=http://layoutlm:8001
       - SGLANG_ENDPOINT=http://sglang:8002
-      # Enable checkpointing for UI-triggered extractions so a crash resumes instead of restarting.
+      - EXTRACTION_PIPELINE=${EXTRACTION_PIPELINE:-v2}
       - CHECKPOINT_ENABLED=true
     env_file: .env
     depends_on:
@@ -158,24 +127,24 @@ services:
       - ./model/cache:/app/model/cache
       - ./outputs:/app/outputs
       - ./checkpoints:/app/checkpoints
+    restart: unless-stopped
 
+  # ── Dashboard (Next.js) ─────────────────────────────────────────────────────
   dashboard:
     build:
-      context: ./dashboard
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: docker/Dockerfile.dashboard
       args:
-        # Baked into client bundles at build time. Browser uses /api/backend same-origin
-        # proxy (lib/api.ts) — so http://localhost:8000 is only a browser fallback.
         NEXT_PUBLIC_API_URL: http://localhost:8000
     ports:
       - "3000:3000"
     environment:
-      # API_INTERNAL_URL is read first by app/api/backend/[...path]/route.ts for SSR
-      # proxying. Must use Docker service name — localhost inside the container = itself.
       - API_INTERNAL_URL=http://api:8000
     depends_on:
       - api
+    restart: unless-stopped
 
+  # ── Neo4j ──────────────────────────────────────────────────────────────────
   neo4j:
     image: neo4j:5
     environment:
@@ -187,6 +156,7 @@ services:
       - neo4j_data:/data
     restart: unless-stopped
 
+  # ── Redis ──────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     ports:

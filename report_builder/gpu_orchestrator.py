@@ -173,6 +173,40 @@ def stop_sglang() -> None:
     _run_compose("stop", "sglang", check=False)
 
 
+def _normalize_colpali_pages(raw_pages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Map ColPali response shape to blueprint's expected page dict shape.
+
+    ColPali returns: {page_index, width, height, blocks: [{text, kind, ...}], text, has_charts}
+    Blueprint expects: {page_index, width, height, headings, raw_text, raw_text_sample,
+                        word_count, has_tables, table_count, table_previews, image_count, image_previews}
+    """
+    out: list[dict[str, Any]] = []
+    for p in raw_pages:
+        blocks = p.get("blocks") or []
+        text = p.get("text") or ""
+        headings = [b["text"] for b in blocks if b.get("kind") == "heading" and b.get("text")]
+        word_count = len(text.split()) if text else 0
+
+        # Extract tables if pdfplumber detected any (future: table blocks)
+        table_blocks = [b for b in blocks if b.get("kind") == "table"]
+
+        out.append({
+            "page_index": p.get("page_index"),
+            "width": p.get("width"),
+            "height": p.get("height"),
+            "word_count": word_count,
+            "has_tables": bool(table_blocks) or bool(p.get("has_tables")),
+            "table_count": len(table_blocks),
+            "table_previews": [],
+            "image_count": p.get("image_count", 0),
+            "image_previews": p.get("image_previews") or [],
+            "headings": headings,
+            "raw_text": text,
+            "raw_text_sample": text[:800],
+        })
+    return out
+
+
 def extract_with_colpali(pdf_path: str | Path) -> list[dict[str, Any]] | None:
     """Start ColPali → POST PDF → return pages → stop ColPali.
 
@@ -220,7 +254,7 @@ def extract_with_colpali(pdf_path: str | Path) -> list[dict[str, Any]] | None:
             "[gpu-orch] ✓ ColPali extracted   pages=%d   vision=%s   elapsed=%.1fs",
             len(pages), "✓" if vision_ok else "✗" if vision_ok is False else "?", elapsed,
         )
-        return pages if pages else None
+        return _normalize_colpali_pages(pages) if pages else None
     except Exception as exc:
         elapsed = time.monotonic() - t0
         logger.error("[gpu-orch] ✗ ColPali extraction failed: %s   elapsed=%.1fs", exc, elapsed)
@@ -252,7 +286,7 @@ def compile_with_sglang(page_summaries: list[dict[str, Any]]) -> list[dict[str, 
         return None
 
     endpoint = _SGLANG_ENDPOINT
-    model = os.getenv("SGLANG_MODEL", "Qwen/Qwen2.5-3B-Instruct-AWQ")
+    model = os.getenv("SGLANG_MODEL", "Qwen/Qwen2.5-VL-7B-Instruct-AWQ")
     # Truncate page data to ~3000 chars so input fits within 4096 context window
     # Budget: ~1500 tokens input + 2048 tokens output = 3548 < 4096 ✓
     pages_text = _json.dumps(page_summaries)[:3000]

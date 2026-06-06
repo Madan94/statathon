@@ -1,0 +1,55 @@
+# syntax=docker/dockerfile:1
+# ─────────────────────────────────────────────────────────────────────────────
+# LayoutLMv3 Document Layout Detection Service
+# CPU-only (~1.4GB RAM for large model)
+#
+# DESIGN: Fail-fast + maximum cache retention
+#   1. System deps layer (rarely changes)
+#   2. requirements.txt layer (only on deps change)
+#   3. Model pre-warm verification (fails build if deps broken)
+#   4. App code layer (changes frequently → last layer)
+# ─────────────────────────────────────────────────────────────────────────────
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    HF_HOME=/cache \
+    MODEL_ID=microsoft/layoutlmv3-large \
+    LAYOUTLM_PORT=8001
+
+WORKDIR /app
+
+# ── Layer 1: System deps (changes ~never) ────────────────────────────────────
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+        poppler-utils \
+        tesseract-ocr \
+        libgl1-mesa-glx \
+        libglib2.0-0 \
+        curl \
+    && rm -rf /tmp/*
+
+# ── Layer 2: Python deps (changes only when requirements.txt changes) ────────
+COPY services/layoutlm/requirements.txt /app/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade pip setuptools wheel \
+    && pip install --prefer-binary -r requirements.txt
+
+# ── Layer 3: Fail-fast verification — catch broken deps at BUILD time ────────
+RUN python -c "\
+import torch; \
+from transformers import AutoTokenizer, AutoConfig; \
+from PIL import Image; \
+import pdfplumber; \
+print(f'✓ torch={torch.__version__}, transformers OK, PIL OK, pdfplumber OK')"
+
+# ── Layer 4: App code (changes most frequently → last) ───────────────────────
+COPY services/layoutlm/ /app/
+
+EXPOSE 8001
+
+HEALTHCHECK --interval=20s --timeout=5s --retries=4 --start-period=45s \
+    CMD curl -fsS http://localhost:8001/health || exit 1
+
+CMD ["python", "main.py"]

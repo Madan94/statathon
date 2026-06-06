@@ -87,6 +87,7 @@ redis==7.4.0
 regex==2026.4.4
 reportlab==4.5.0
 pdfplumber>=0.11.4,<1
+pdf2image>=1.16.0
 PyMuPDF>=1.24.12,<2
 rich==15.0.0
 rsa==4.9.1
