@@ -124,14 +124,20 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # These override values from env_file where the service names differ from localhost
+      # These override values from env_file where the service names differ from localhost.
+      # Docker containers cannot resolve 'localhost' as another container — must use service names.
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_PASSWORD=${NEO4J_PASSWORD:-mospi_secure_password}
       - DATABASE_URL=${DATABASE_URL:-sqlite:///./statathon.db}
       - TRACING_ENABLED=${TRACING_ENABLED:-0}
-      # env_file sets REDIS_URL=redis://localhost:6379/0 (localhost = container itself, broken)
-      # This env: block overrides it with the correct docker service name
+      # .env sets REDIS_URL=redis://localhost:6379/0 — localhost inside container = itself, broken.
       - REDIS_URL=redis://redis:6379/0
+      # .env sets COLPALI_ENDPOINT=http://localhost:8001 (for local dev).
+      # Inside Docker the colpali service is reachable at http://colpali:8001, not localhost.
+      - COLPALI_ENDPOINT=http://colpali:8001
+      # .env sets SGLANG_ENDPOINT=http://localhost:8002 (for local dev).
+      # Inside Docker the sglang service is reachable at http://sglang:8002, not localhost.
+      - SGLANG_ENDPOINT=http://sglang:8002
     env_file: .env
     volumes:
       - ./storage:/app/storage

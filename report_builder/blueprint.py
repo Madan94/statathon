@@ -322,8 +322,11 @@ def _colpali_extract(pdf_path: str | Path) -> list[dict[str, Any]] | None:
         try:
             import requests  # type: ignore
 
+            # Always use base URL + /extract so this is consistent with ColPaliClient
+            # which also appends /extract. COLPALI_ENDPOINT must NOT include /extract.
+            colpali_url = endpoint.rstrip("/") + "/extract"
             with open(pdf_path, "rb") as f:
-                r = requests.post(endpoint, files={"file": f}, timeout=120)
+                r = requests.post(colpali_url, files={"file": f}, timeout=120)
             r.raise_for_status()
             return r.json().get("pages") or None
         except Exception as exc:
