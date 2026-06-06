@@ -61,7 +61,7 @@ echo "▶ Configuration:"
 echo "  Model:          ${MODEL}"
 echo "  Port:           ${PORT}"
 echo "  Max model len:  4096 (fits in 6GB VRAM)"
-echo "  GPU mem util:   0.85 (leaves 900MB for system)"
+echo "  GPU mem util:   0.75 (4.5GB — leaves room for display driver)"
 echo "  Enforce eager:  yes (saves VRAM vs CUDA graphs)"
 echo ""
 echo "═══════════════════════════════════════════════════════════════"
@@ -70,8 +70,8 @@ echo "════════════════════════�
 echo ""
 
 # ── Launch vLLM ──────────────────────────────────────────────────────────────
-# Key flags for 6GB VRAM:
-#   --gpu-memory-utilization 0.85  → use 85% of 6GB = 5.2GB (leaves headroom)
+# Key flags for 6GB VRAM (with ~1GB used by display driver):
+#   --gpu-memory-utilization 0.75  → use 75% of 6GB = 4.5GB (fits in 4.95GB free)
 #   --max-model-len 4096           → limits KV cache size (big context = more VRAM)
 #   --enforce-eager                → disables CUDA graphs (saves ~500MB VRAM)
 #   --dtype half                   → FP16 (3B model = ~6GB in FP32, ~3GB in FP16)
@@ -80,7 +80,7 @@ exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
     --port "${PORT}" \
-    --gpu-memory-utilization 0.85 \
+    --gpu-memory-utilization 0.75 \
     --max-model-len 4096 \
     --enforce-eager \
     --dtype half \
