@@ -58,7 +58,11 @@ def _run_compose(*args: str, check: bool = True) -> subprocess.CompletedProcess:
 
 
 def _wait_for_health(url: str, service_name: str, timeout_s: int) -> bool:
-    """Poll health endpoint until OK or timeout."""
+    """Poll health endpoint until OK or timeout.
+
+    Also checks if the Docker container has crashed (exited) — avoids waiting
+    the full timeout for a container that died on startup.
+    """
     health_url = url.rstrip("/") + "/health"
     deadline = time.monotonic() + timeout_s
     attempt = 0
@@ -79,9 +83,44 @@ def _wait_for_health(url: str, service_name: str, timeout_s: int) -> bool:
                 return True
         except Exception:
             pass
+
+        # Every 10 attempts, check if container actually crashed (exited)
+        if attempt % 10 == 0:
+            if _is_container_dead(service_name.lower()):
+                logger.error(
+                    "[gpu-orch] ✗ %s container exited/crashed — aborting wait (check: docker logs)",
+                    service_name,
+                )
+                return False
+
         time.sleep(3)
     logger.error("[gpu-orch] ✗ %s failed to become healthy within %ds", service_name, timeout_s)
     return False
+
+
+def _is_container_dead(service_name: str) -> bool:
+    """Check if the docker compose service has exited (crashed)."""
+    try:
+        result = subprocess.run(
+            _compose_cmd("ps", "--status=exited", "--format", "{{.Service}}"),
+            capture_output=True, text=True, timeout=10,
+        )
+        exited_services = result.stdout.strip().lower()
+        return service_name in exited_services
+    except Exception:
+        return False  # can't tell → keep waiting
+
+
+def _get_container_logs(service_name: str, tail: int = 30) -> str:
+    """Get last N lines of container logs for error diagnosis."""
+    try:
+        result = subprocess.run(
+            _compose_cmd("logs", "--tail", str(tail), service_name),
+            capture_output=True, text=True, timeout=15,
+        )
+        return result.stdout.strip() or result.stderr.strip()
+    except Exception:
+        return "(unable to fetch logs)"
 
 
 def _is_service_healthy(endpoint: str) -> bool:
@@ -100,7 +139,11 @@ def ensure_colpali_up() -> bool:
         return True
     _run_compose("up", "-d", "colpali", check=False)
     timeout = int(os.getenv("COLPALI_WARMUP_TIMEOUT", "180"))
-    return _wait_for_health(_COLPALI_ENDPOINT, "ColPali", timeout)
+    ok = _wait_for_health(_COLPALI_ENDPOINT, "ColPali", timeout)
+    if not ok:
+        logs = _get_container_logs("colpali")
+        logger.error("[gpu-orch] ColPali container logs (last 30 lines):\n%s", logs)
+    return ok
 
 
 def stop_colpali() -> None:
@@ -117,7 +160,11 @@ def ensure_sglang_up() -> bool:
         return True
     _run_compose("up", "-d", "sglang", check=False)
     timeout = int(os.getenv("SGLANG_WARMUP_TIMEOUT", "240"))
-    return _wait_for_health(_SGLANG_ENDPOINT, "SGLang", timeout)
+    ok = _wait_for_health(_SGLANG_ENDPOINT, "SGLang", timeout)
+    if not ok:
+        logs = _get_container_logs("sglang")
+        logger.error("[gpu-orch] SGLang container logs (last 30 lines):\n%s", logs)
+    return ok
 
 
 def stop_sglang() -> None:

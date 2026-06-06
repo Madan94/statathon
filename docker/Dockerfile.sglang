@@ -31,8 +31,11 @@ RUN pip install --no-cache-dir --retries 10 --timeout 600 \
         torch --index-url https://download.pytorch.org/whl/cu121
 
 # Layer 3: sglang[all] — isolated layer, retried independently from torch
+# Pin transformers<4.46 to avoid hub_kernels.py breaking change
+# (transformers 4.46+ imports kernels.LayerRepository with missing args, crashes on import)
 RUN pip install --no-cache-dir --retries 10 --timeout 600 \
-        "sglang[all]>=0.3"
+        "sglang[all]>=0.3" \
+        "transformers>=4.40,<4.46"
 
 # Layer 4: utilities — small packages, fast
 RUN pip install --no-cache-dir --retries 5 --timeout 120 \
