@@ -1,6 +1,7 @@
-# pytorch/pytorch base ships with PyTorch + CUDA 12.1 + cuDNN 8 pre-installed.
-# This completely eliminates the large torch download that caused IncompleteRead.
-FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+# pytorch/pytorch base ships with PyTorch + CUDA 12.1 + cuDNN 9 pre-installed.
+# 2.4.1 required: transformers >= 4.40 refuses to load with torch < 2.4,
+# causing colpali_engine to fail with "name 'nn' is not defined".
+FROM pytorch/pytorch:2.4.1-cuda12.1-cudnn9-devel
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -26,10 +27,11 @@ RUN apt-get update \
 RUN pip install --no-cache-dir --upgrade pip
 
 # Step 2: torch is ALREADY in the base image — skip entirely.
-# Only install ML + service packages. Each is small (<50MB), unlikely to drop.
+# Pin transformers >= 4.40 (requires torch >= 2.4, which we now have).
+# Pin colpali-engine to stable release.
 RUN pip install --no-cache-dir --retries 10 --timeout 300 \
-        transformers \
-        colpali-engine
+        "transformers>=4.40,<5" \
+        "colpali-engine>=0.3,<1"
 
 RUN pip install --no-cache-dir --retries 10 --timeout 120 \
         pdf2image \
