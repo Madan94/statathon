@@ -23,9 +23,10 @@ ENV HF_HOME=/cache \
     VLLM_MODEL=Qwen/Qwen2.5-3B-Instruct \
     VLLM_PORT=8002
 
-# Install curl for healthcheck
+# Install curl for healthcheck + ensure python alias exists
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && (which python || ln -sf $(which python3) /usr/local/bin/python) 2>/dev/null; true
 
 # Entrypoint with diagnostics + VRAM-optimized flags
 COPY docker/sglang-entrypoint.sh /app/entrypoint.sh

@@ -76,7 +76,7 @@ echo ""
 #   --enforce-eager                → disables CUDA graphs (saves ~500MB VRAM)
 #   --dtype half                   → FP16 (3B model = ~6GB in FP32, ~3GB in FP16)
 #   --max-num-seqs 2               → max 2 concurrent requests (prevents OOM)
-exec python -m vllm.entrypoints.openai.api_server \
+exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
     --port "${PORT}" \
