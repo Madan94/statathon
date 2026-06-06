@@ -61,8 +61,7 @@ echo "▶ Configuration:"
 echo "  Model:          ${MODEL}"
 echo "  Port:           ${PORT}"
 echo "  Max model len:  4096 (fits in 6GB VRAM)"
-echo "  GPU mem util:   0.90 (AWQ model ~1.8GB, leaves plenty for KV cache)"
-  echo "  Quantization:   AWQ 4-bit (native vLLM support)"
+echo "  GPU mem util:   0.78 (reserves 4.68GB — under 4.95GB free after display driver)"
 echo "  Enforce eager:  yes (saves VRAM vs CUDA graphs)"
 echo ""
 echo "═══════════════════════════════════════════════════════════════"
@@ -71,17 +70,22 @@ echo "════════════════════════�
 echo ""
 
 # ── Launch vLLM ──────────────────────────────────────────────────────────────
-# Key flags for 6GB VRAM (with ~1GB used by display driver):
-#   --gpu-memory-utilization 0.90  → use 90% of 6GB = 5.4GB (AWQ model only ~1.8GB)
-#   --max-model-len 4096           → limits KV cache size (big context = more VRAM)
+# VRAM Budget (RTX 4050/3050 Laptop, 6GB total):
+#   Display driver uses ~1.05GB → only 4.95GB free
+#   gpu_memory_utilization is % of TOTAL (6GB), not FREE (4.95GB)
+#   So: 0.78 × 6.0 = 4.68GB requested < 4.95GB free ✓
+#   AWQ model ~1.8GB + KV cache ~2.8GB = 4.6GB — fits perfectly
+#
+#   --gpu-memory-utilization 0.78  → reserve 4.68GB (safe under 4.95GB free)
+#   --max-model-len 4096           → limits KV cache size
 #   --enforce-eager                → disables CUDA graphs (saves ~500MB VRAM)
-#   --max-num-seqs 4               → concurrent requests (plenty of KV cache room)
+#   --max-num-seqs 4               → concurrent requests
 #   NOTE: No --quantization flag needed — vLLM auto-detects from model config
 exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
     --port "${PORT}" \
-    --gpu-memory-utilization 0.90 \
+    --gpu-memory-utilization 0.78 \
     --max-model-len 4096 \
     --enforce-eager \
     --max-num-seqs 4 \
