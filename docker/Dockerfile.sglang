@@ -38,8 +38,11 @@ RUN pip install --no-cache-dir --retries 10 --timeout 600 \
 # transformers 4.46+ imports kernels.LayerRepository with a breaking API
 # (ValueError: Either a revision or a version must be specified) that crashes
 # sglang on startup. Installing separately avoids resolution-too-deep.
+# Must also pin tokenizers to match (transformers 4.45 needs tokenizers <0.21).
 RUN pip install --no-cache-dir --force-reinstall --no-deps \
-        "transformers>=4.44,<4.46"
+        "transformers>=4.44,<4.46" \
+    && pip install --no-cache-dir --force-reinstall \
+        "tokenizers>=0.20,<0.21"
 
 # Layer 5: utilities — small packages, fast
 RUN pip install --no-cache-dir --retries 5 --timeout 120 \
