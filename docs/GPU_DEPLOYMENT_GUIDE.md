@@ -419,16 +419,20 @@ docker compose -f docker-compose.gpu.yml --profile gpu run --rm pipeline
 
 | Component | VRAM Usage |
 |-----------|-----------|
-| NVIDIA display driver | ~1.05 GB |
-| Qwen2.5-VL-7B-AWQ weights | ~4.0 GB |
-| KV cache (max_model_len=2048) | ~0.5 GB |
+| WSL2 display driver | ~0.5 GB |
+| Qwen2.5-VL vision encoder (fp16, NOT quantized) | ~1.2 GB |
+| Qwen2.5-VL language model (AWQ 4-bit Marlin) | ~3.5 GB |
+| KV cache (1024 tokens, 1 seq) | ~0.15 GB |
+| Activation memory | ~0.2 GB |
 | **Total required** | **~5.55 GB** |
 | RTX 4050 total | 6.0 GB |
-| RTX 3050 total | 6.0 GB |
-| **Headroom** | **~0.45 GB** |
+| `--gpu-memory-utilization 0.88` | 5.4 GB allocated |
+| `--swap-space 4` | 4 GB host RAM for KV overflow |
+| **Headroom** | **~0.35 GB** |
 
-> The `--enforce-eager` flag saves ~500MB by disabling CUDA graphs.  
-> Sequential mode means LayoutLM (CPU) finishes before vLLM (GPU) needs all VRAM.
+> The vision encoder is NOT quantized (stays fp16) — this is why the model needs more VRAM than typical 7B-AWQ.  
+> `--enforce-eager` saves ~500MB by disabling CUDA graphs.  
+> `--swap-space 4` uses host RAM for KV cache overflow (you have 24GB RAM).
 
 ---
 
