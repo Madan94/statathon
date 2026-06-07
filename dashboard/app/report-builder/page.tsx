@@ -520,7 +520,7 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
           {/* Extraction method badge */}
           <div className="flex items-center gap-2">
             <Badge variant="success">{String(ast.extraction_method || 'unknown')}</Badge>
-            {pipelineTrace.total_elapsed && (
+            {Boolean(pipelineTrace.total_elapsed) && (
               <Badge variant="muted">Total: {String(pipelineTrace.total_elapsed)}s</Badge>
             )}
           </div>
@@ -537,7 +537,7 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                       <span className="text-[10px] text-text-muted font-mono w-4">{level}</span>
                       <span className={`w-1.5 h-1.5 rounded-full ${level === 1 ? 'bg-primary' : level === 2 ? 'bg-blue-400' : 'bg-gray-300'}`} />
                       <span className="text-xs text-text">{String(node.title || node.name || '—')}</span>
-                      {node.pageSpan && (
+                      {Boolean(node.pageSpan) && (
                         <span className="text-[10px] text-text-muted">p.{JSON.stringify(node.pageSpan)}</span>
                       )}
                     </div>
@@ -556,7 +556,7 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                   <li key={`f-${f.factId || idx}`} className="text-xs text-text flex gap-2">
                     <span className="text-text-muted shrink-0">{idx + 1}.</span>
                     <span>{String(f.statement || f.text || '—')}</span>
-                    {f.confidence && <Badge variant="muted" className="text-[9px]">{Math.round(Number(f.confidence) * 100)}%</Badge>}
+                    {Boolean(f.confidence) && <Badge variant="muted" className="text-[9px]">{Math.round(Number(f.confidence) * 100)}%</Badge>}
                   </li>
                 ))}
               </ul>
@@ -718,7 +718,7 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                     <Badge variant="success">table</Badge>
                     <span className="text-sm font-medium text-text">{String(t.title || `Table ${idx + 1}`)}</span>
                     <span className="text-[10px] text-text-muted">{String(t.pageRef || '')}</span>
-                    {t.source && <Badge variant="muted">{String(t.source)}</Badge>}
+                    {Boolean(t.source) && <Badge variant="muted">{String(t.source)}</Badge>}
                   </div>
                   {Array.isArray(t.columns) && (t.columns as string[]).length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-2">
@@ -751,10 +751,10 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                   <span className="text-xs text-text-muted font-mono shrink-0 w-5">{idx + 1}</span>
                   <div className="flex-1">
                     <p className="text-xs text-text">{String(q.question || '—')}</p>
-                    {(q.section || q.answerType) && (
+                    {Boolean(q.section || q.answerType) && (
                       <div className="flex gap-1.5 mt-1">
-                        {q.section && <Badge variant="muted">{String(q.section)}</Badge>}
-                        {q.answerType && <Badge variant="default">{String(q.answerType)}</Badge>}
+                        {Boolean(q.section) && <Badge variant="muted">{String(q.section)}</Badge>}
+                        {Boolean(q.answerType) && <Badge variant="default">{String(q.answerType)}</Badge>}
                       </div>
                     )}
                   </div>

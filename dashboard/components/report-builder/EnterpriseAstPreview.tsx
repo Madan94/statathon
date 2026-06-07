@@ -174,7 +174,7 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
                 <div className="flex items-center gap-2 mb-2">
                   <Badge variant="success">table</Badge>
                   <span className="text-sm font-medium text-text">{String(t.title || `Table ${idx + 1}`)}</span>
-                  {t.source && <Badge variant="muted">{String(t.source)}</Badge>}
+                  {Boolean(t.source) && <Badge variant="muted">{String(t.source)}</Badge>}
                 </div>
                 {Array.isArray(t.columns) && (t.columns as string[]).length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
@@ -209,7 +209,7 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
                   <span className="text-xs font-medium text-text">{String(f.title || f.caption || `Figure ${idx + 1}`)}</span>
                 </div>
                 <p className="text-[10px] text-text-muted">Page: {String(f.page || '—')}</p>
-                {f.description && <p className="text-[10px] text-text-muted mt-1">{String(f.description)}</p>}
+                {Boolean(f.description) && <p className="text-[10px] text-text-muted mt-1">{String(f.description)}</p>}
               </div>
             ))}
             {figures.length === 0 && (
@@ -233,7 +233,7 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
                     <div key={`sn-${node.nodeId || idx}`} className="flex items-center gap-2" style={{ paddingLeft: `${(level - 1) * 16}px` }}>
                       <span className={`w-2 h-2 rounded-full shrink-0 ${level === 1 ? 'bg-primary' : level === 2 ? 'bg-blue-400' : 'bg-gray-300'}`} />
                       <span className="text-xs text-text">{String(node.title || node.name || '—')}</span>
-                      {node.pageSpan && <span className="text-[10px] text-text-muted">p.{JSON.stringify(node.pageSpan)}</span>}
+                      {Boolean(node.pageSpan) && <span className="text-[10px] text-text-muted">p.{JSON.stringify(node.pageSpan)}</span>}
                     </div>
                   );
                 })}
@@ -307,7 +307,7 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
               <div key={`rc-${c.chunkId || idx}`} className="rounded-lg border border-border bg-surface p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Badge variant="muted">chunk {idx + 1}</Badge>
-                  {c.page && <span className="text-[10px] text-text-muted">p.{String(c.page)}</span>}
+                  {Boolean(c.page) && <span className="text-[10px] text-text-muted">p.{String(c.page)}</span>}
                 </div>
                 <p className="text-[10px] text-text line-clamp-3">{String(c.text || c.content || '—').slice(0, 200)}</p>
               </div>

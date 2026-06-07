@@ -50,5 +50,9 @@ export const config = {
     '/reports/:path*',
     '/report-builder',
     '/report-builder/:path*',
+    '/activity',
+    '/activity/:path*',
+    '/profile',
+    '/profile/:path*',
   ],
 };
