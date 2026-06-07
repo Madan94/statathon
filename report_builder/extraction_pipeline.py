@@ -538,7 +538,7 @@ def _extract_toc_hybrid(
         (r"^([A-Z][A-Z\s\-]{10,70})$", 1),              # ALL CAPS line >= 10 chars
     ]
 
-    l1_entries: list[ToCEntry] = []
+    l1_entries_raw: list[ToCEntry] = []
     for page_idx, pt in enumerate(page_texts):
         raw = (pt.get("raw_text") or "").strip()
         for line in raw.splitlines():
@@ -551,10 +551,33 @@ def _extract_toc_hybrid(
                     groups = [g for g in m.groups() if g and g.strip()]
                     title = " ".join(groups).strip()
                     if len(title) >= 4:
-                        l1_entries.append(ToCEntry(title=title, page_index=page_idx, level=level, region_type="regex"))
+                        l1_entries_raw.append(ToCEntry(title=title, page_index=page_idx, level=level, region_type="regex"))
                     break  # first matching pattern wins
 
-    logger.info("[toc_hybrid] L1 regex: %d entries", len(l1_entries))
+    # Deduplicate numbered sections by section number, keeping the LAST page occurrence.
+    # PLFS press releases have a numbered summary on page 0 ("1. LFPR and WPR...")
+    # AND real section headings on later pages ("1. Stable LFPR...").
+    # We keep the last occurrence so the actual section heading wins over the snapshot item.
+    _num_sec_re = _re_toc.compile(r"^(\d{1,2})\s+")
+    _num_best: dict[str, ToCEntry] = {}  # section_number → best entry
+    l1_other: list[ToCEntry] = []       # non-numbered entries (CAPS, Chapter, etc.)
+
+    for entry in l1_entries_raw:
+        m = _num_sec_re.match(entry.title)
+        if m:
+            num = m.group(1)
+            # Always prefer later page (actual heading over snapshot body text)
+            existing = _num_best.get(num)
+            if existing is None or entry.page_index > existing.page_index:
+                _num_best[num] = entry
+        else:
+            l1_other.append(entry)
+
+    # Recombine: numbered sections (deduped) + non-numbered, sorted by page
+    l1_entries = sorted(list(_num_best.values()) + l1_other, key=lambda e: (e.page_index, e.title))
+
+    logger.info("[toc_hybrid] L1 regex: %d entries (raw=%d, deduped numbered=%d, other=%d)",
+                len(l1_entries), len(l1_entries_raw), len(_num_best), len(l1_other))
 
     # L2: font-size hierarchy from pdfplumber words
     # Only fires when L1 is sparse. Requires a real heading-vs-body gap of >= 1.5pt.
@@ -1742,6 +1765,9 @@ def pass2_5_document_knowledge_graph(
         })
 
     logger.info("[pass2.5]   Step 3: %d chapters from ToC", len(chapters))
+    for _ch in chapters[:12]:
+        logger.info("[pass2.5]   Chapter: [p%d-p%d] '%s'",
+                    _ch["pageRange"][0], _ch["pageRange"][1], _ch["title"][:60])
 
     # ── Step 4: Entity Relationship Detection ──
     entity_relationships: list[dict[str, str]] = []
@@ -2187,8 +2213,13 @@ def pass3_two_loop_ast_building(
         top_level_sections = [sp for sp in section_patterns if sp.get("level", 2) == 1][:20]
     logger.info("[pass3] L1: Processing %d chapters (of %d chapters total)",
                 len(top_level_sections), len(chapters_loop1))
+    if top_level_sections:
+        pages = [sp["pageRange"][0] for sp in top_level_sections]
+        logger.info("[pass3] L1: Chapter page starts: %s", pages)
+        titles = [sp["title"][:40] for sp in top_level_sections[:8]]
+        logger.info("[pass3] L1: First 8 chapter titles: %s", titles)
 
-    for sp in top_level_sections:
+    for sp_idx, sp in enumerate(top_level_sections):
         if consecutive_failures >= 3:
             logger.warning("[pass3] L1: %d consecutive failures — stopping", consecutive_failures)
             break
@@ -2288,7 +2319,10 @@ def pass3_two_loop_ast_building(
                 raw_content = r.json()["choices"][0]["message"]["content"].strip()
                 questions = _extract_json_array_from_response(raw_content)
                 if questions:
-                    for q in questions:
+                    for q_i, q in enumerate(questions):
+                        # CRITICAL: globally unique IDs — Qwen always returns q1/q2/q3
+                        # Duplicate IDs cause topic assignment to skip all but chapter 1
+                        q["questionId"] = f"sp{sp_idx + 1:02d}_q{q_i + 1:02d}"
                         q["page"] = page_range[0]
                         q["sectionId"] = sp.get("sectionId", "")
                         q["sectionPattern"] = pattern
@@ -2419,6 +2453,19 @@ def pass3_two_loop_ast_building(
             if pr[0] <= q_page <= pr[1]:
                 question_to_topic[q_id] = ch["chapterId"]
                 break
+
+    # Debug: show how many questions were assigned to each chapter
+    _assigned = {}
+    for q_id, ch_id in question_to_topic.items():
+        _assigned[ch_id] = _assigned.get(ch_id, 0) + 1
+    _unassigned = sum(1 for q in enriched_questions if q.get("questionId", "") not in question_to_topic)
+    logger.info("[pass3] topic assignment: %d chapters got questions, %d questions unassigned",
+                len(_assigned), _unassigned)
+    if _unassigned > 0:
+        _missing_pages = set(q.get("page", -1) for q in enriched_questions if q.get("questionId", "") not in question_to_topic)
+        _chapter_page_spans = [(ch["chapterId"], ch["pageRange"]) for ch in chapters]
+        logger.warning("[pass3] Unassigned question pages: %s | chapter spans (first 10): %s",
+                       _missing_pages, _chapter_page_spans[:10])
 
     topics: list[dict[str, Any]] = []
     for ch in chapters:
