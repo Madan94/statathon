@@ -219,7 +219,7 @@ def pass2_content_extraction(
                 ]},
             ],
             "temperature": 0.1,
-            "max_tokens": 2500,
+            "max_tokens": 800,
         }
 
         # Try Qwen-VL with retry on JSON parse failure
@@ -242,7 +242,7 @@ def pass2_content_extraction(
                     "Output JSON: {\"regions\": [{\"region_idx\": 0, \"type\": \"text\", \"content\": \"...\"}]}"
                 )
                 payload["messages"][0]["content"][1]["text"] = simple_prompt
-                payload["max_tokens"] = 1500
+                payload["max_tokens"] = 600
                 r = requests.post(endpoint, json=payload, timeout=timeout)
                 if r.status_code == 200:
                     content = r.json()["choices"][0]["message"]["content"].strip()
@@ -361,7 +361,7 @@ def pass3_semantic_analysis(
                 {"role": "user", "content": prompt},
             ],
             "temperature": 0.1,
-            "max_tokens": 1200,
+            "max_tokens": 800,
         }
 
         try:
