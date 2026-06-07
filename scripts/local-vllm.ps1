@@ -68,7 +68,7 @@ if (-not (Test-Path $venvPython)) {
     --model $MODEL `
     --host "0.0.0.0" `
     --port $PORT `
-    --gpu-memory-utilization 0.95 `
+    --gpu-memory-utilization 0.80 `
     --max-model-len 2048 `
     --enforce-eager `
     --max-num-seqs 1 `

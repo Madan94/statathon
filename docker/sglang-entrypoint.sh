@@ -50,11 +50,11 @@ echo "  GPU:     ${GPU_NAME:-unknown}"
 echo "  VRAM:    ${GPU_MEM_TOTAL:-?} MB total, ${GPU_MEM_FREE:-?} MB free, ${GPU_MEM_USED:-?} MB used"
 echo "  Driver:  ${DRIVER_VER:-unknown}"
 
-# FAIL FAST: need at least 5000MB for 3B-AWQ (Marlin repacking spike)
-if [ "${GPU_MEM_FREE:-0}" -lt 5000 ]; then
+# FAIL FAST: need at least 4500MB free (model=3.3GB + overhead)
+if [ "${GPU_MEM_FREE:-0}" -lt 4500 ]; then
     echo ""
-    echo "  ✗ FATAL: Only ${GPU_MEM_FREE}MB free VRAM — need at least 5000MB"
-    echo "    → AWQ Marlin repacking needs ~2× weight memory (~5GB peak)"
+    echo "  ✗ FATAL: Only ${GPU_MEM_FREE}MB free VRAM — need at least 4500MB"
+    echo "    → AWQ 3B model needs ~3.3GB + encoder + KV cache"
     echo "    → Close GPU-heavy apps (browsers, games, other models)"
     echo "    → nvidia-smi on host to identify processes"
     echo "    → wsl --shutdown → restart Docker Desktop"
@@ -79,7 +79,7 @@ echo ""
 echo "▶ Configuration:"
 echo "  Model:          ${MODEL}"
 echo "  Port:           ${PORT}"
-echo "  GPU mem util:   0.95 → $(echo "${GPU_MEM_TOTAL:-6144} * 95 / 100" | bc 2>/dev/null || echo "~5830") MB"
+echo "  GPU mem util:   0.80 → $(echo "${GPU_MEM_TOTAL:-6144} * 80 / 100" | bc 2>/dev/null || echo "~4915") MB"
 echo "  Max model len:  2048 tokens"
 echo "  Max pixels:     360448 (~600×600, limits encoder cache to ~100MB)"
 echo "  Max num seqs:   1"
@@ -104,12 +104,13 @@ echo ""
 #   This is FINE for document extraction (pages are processed one at a time)
 #
 # NEW BUDGET:
-#   0.95 × 6.0 = 5.70 GiB budget
+#   0.80 × 6.0 = 4.80 GiB budget (must be ≤ free VRAM at startup)
+#   Free VRAM on this laptop: 4.95 GiB → 0.80 passes preflight check
 #   Model weights: 3.32 GiB
 #   Encoder cache (460 tokens): ~100 MB
 #   KV cache (2048 tok × 1 seq): ~100 MB
 #   Activations: ~200 MB
-#   Total: ~3.72 GiB → 1.98 GiB headroom ✓
+#   Total: ~3.72 GiB → 1.08 GiB headroom ✓
 #
 # ATTENTION BACKEND: FlashAttention JIT-compiles for SM89 on first run (2-7 min).
 # If stuck >10min, override with: VLLM_ATTENTION_BACKEND=FLASHINFER or XFORMERS
@@ -126,7 +127,7 @@ exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
     --port "${PORT}" \
-    --gpu-memory-utilization 0.95 \
+    --gpu-memory-utilization 0.80 \
     --max-model-len 2048 \
     --enforce-eager \
     --max-num-seqs 1 \
