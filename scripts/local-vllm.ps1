@@ -68,10 +68,11 @@ if (-not (Test-Path $venvPython)) {
     --model $MODEL `
     --host "0.0.0.0" `
     --port $PORT `
-    --gpu-memory-utilization 0.90 `
-    --max-model-len 4096 `
+    --gpu-memory-utilization 0.95 `
+    --max-model-len 2048 `
     --enforce-eager `
     --max-num-seqs 1 `
     --limit-mm-per-prompt '{"image": 1}' `
+    --mm-processor-kwargs '{"max_pixels": 360448, "min_pixels": 3136}' `
     --trust-remote-code `
     --download-dir $MODEL_CACHE

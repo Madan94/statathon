@@ -79,8 +79,9 @@ echo ""
 echo "▶ Configuration:"
 echo "  Model:          ${MODEL}"
 echo "  Port:           ${PORT}"
-echo "  GPU mem util:   0.90 → $(echo "${GPU_MEM_TOTAL:-6144} * 90 / 100" | bc 2>/dev/null || echo "~5530") MB"
-echo "  Max model len:  4096 tokens"
+echo "  GPU mem util:   0.95 → $(echo "${GPU_MEM_TOTAL:-6144} * 95 / 100" | bc 2>/dev/null || echo "~5830") MB"
+echo "  Max model len:  2048 tokens"
+echo "  Max pixels:     360448 (~600×600, limits encoder cache to ~100MB)"
 echo "  Max num seqs:   1"
 echo "  Enforce eager:  yes"
 echo ""
@@ -91,13 +92,24 @@ echo ""
 
 # ── Launch vLLM ──────────────────────────────────────────────────────────────
 # Qwen2.5-VL-3B-Instruct-AWQ (4-bit, ~2.5 GB weights):
-#   0.90 × 6.0 = 5.40 GiB budget
-#   AWQ weights (post-Marlin repack): ~2.5 GiB
-#   Vision encoder (fp16 ViT): ~600 MB
-#   KV cache (4096 tok × 1 seq): ~150 MB
+#
+# ACTUAL VRAM BREAKDOWN (from failed attempt):
+#   Model loading: 3.32 GiB (confirmed by vLLM logs)
+#   Encoder cache (16384 vision tokens): ~2.5 GiB ← THIS KILLED IT
+#   Total needed: 5.8 GiB > 5.4 GiB budget → OOM
+#
+# FIX: Limit vision resolution via --mm-processor-kwargs
+#   max_pixels=360448 (~600×600) → ~460 vision tokens instead of 16384
+#   Encoder cache drops from ~2.5 GiB to ~100 MB
+#   This is FINE for document extraction (pages are processed one at a time)
+#
+# NEW BUDGET:
+#   0.95 × 6.0 = 5.70 GiB budget
+#   Model weights: 3.32 GiB
+#   Encoder cache (460 tokens): ~100 MB
+#   KV cache (2048 tok × 1 seq): ~100 MB
 #   Activations: ~200 MB
-#   Total: ~3.5 GiB → 1.9 GiB headroom ✓
-#   Marlin repacking peak (transient): ~5.0 GiB < 5.7 GiB free ✓
+#   Total: ~3.72 GiB → 1.98 GiB headroom ✓
 #
 # ATTENTION BACKEND: FlashAttention JIT-compiles for SM89 on first run (2-7 min).
 # If stuck >10min, override with: VLLM_ATTENTION_BACKEND=FLASHINFER or XFORMERS
@@ -114,10 +126,11 @@ exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
     --port "${PORT}" \
-    --gpu-memory-utilization 0.90 \
-    --max-model-len 4096 \
+    --gpu-memory-utilization 0.95 \
+    --max-model-len 2048 \
     --enforce-eager \
     --max-num-seqs 1 \
     --limit-mm-per-prompt '{"image": 1}' \
+    --mm-processor-kwargs '{"max_pixels": 360448, "min_pixels": 3136}' \
     --trust-remote-code \
     --download-dir "${HF_HOME}"
