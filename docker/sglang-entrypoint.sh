@@ -95,10 +95,22 @@ echo ""
 # ── Launch vLLM ──────────────────────────────────────────────────────────────
 # VRAM math for RTX 4050 (6GB):
 #   0.88 × 6144 MB = 5407 MB allocated to vLLM
-#   Weights: ViT fp16 (1.2GB) + LLM AWQ-Marlin (3.5GB) = 4.7GB
+#   Weights: ViT bf16 (1.2GB) + LLM AWQ-Marlin (3.5GB) = 4.7GB
 #   Remaining for KV: 5407 - 4812 = ~595 MB (plenty for 1024 tokens × 1 seq)
 #
-# Only flags verified working on vllm/vllm-openai:latest (v0.22.1):
+# VERIFIED FLAGS for vllm/vllm-openai:latest (v0.22.1):
+#   --gpu-memory-utilization   ✓ float, % of total VRAM
+#   --max-model-len            ✓ int, caps KV cache token budget
+#   --enforce-eager            ✓ disables CUDA graphs (saves VRAM)
+#   --max-num-seqs             ✓ int, max concurrent sequences
+#   --limit-mm-per-prompt      ✓ JSON string (not key=value!)
+#   --trust-remote-code        ✓ needed for Qwen2.5-VL processor
+#   --download-dir             ✓ model cache path
+#
+# DO NOT USE (will crash on v0.22.1):
+#   --swap-space        → unrecognized argument
+#   --dtype half        → breaks AWQ Marlin kernel (model requires bfloat16)
+#   --max_model_len     → duplicate of --max-model-len (argparse alias)
 exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
@@ -108,6 +120,5 @@ exec python3 -m vllm.entrypoints.openai.api_server \
     --enforce-eager \
     --max-num-seqs 1 \
     --limit-mm-per-prompt '{"image": 1}' \
-    --dtype half \
     --trust-remote-code \
     --download-dir "${HF_HOME}"
