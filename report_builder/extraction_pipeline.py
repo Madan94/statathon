@@ -60,7 +60,8 @@ def pass0_rasterize(pdf_path: Path) -> tuple[list[bytes], list[dict[str, Any]]]:
     # Rasterize pages to PNG
     try:
         import pdf2image
-        images = pdf2image.convert_from_path(str(pdf_path), dpi=200, fmt="png")
+        poppler_path = os.getenv("POPPLER_PATH") or None
+        images = pdf2image.convert_from_path(str(pdf_path), dpi=200, fmt="png", poppler_path=poppler_path)
     except Exception as exc:
         logger.error("[pass0] pdf2image failed: %s — trying Pillow fallback", exc)
         images = []
@@ -160,6 +161,26 @@ def pass2_content_extraction(
     model = os.getenv("SGLANG_MODEL", "Qwen/Qwen2.5-VL-7B-Instruct-AWQ")
     timeout = int(os.getenv("SGLANG_TIMEOUT", "120"))
     total_pages = len(page_images)
+
+    # If no images were rasterized, fall back to text-only extraction from pdfplumber
+    if total_pages == 0 and page_texts:
+        logger.warning("[pass2] No page images available — using pdfplumber text extraction (no VLM)")
+        results: list[dict[str, Any]] = []
+        for i, page_text in enumerate(page_texts):
+            result = {
+                "page_index": i,
+                "width": page_text.get("width", 595),
+                "height": page_text.get("height", 842),
+                "layout_regions": layout_pages[i].get("regions", []) if i < len(layout_pages) else [],
+                "extracted_content": None,
+                "raw_text": page_text.get("raw_text", ""),
+                "headings": page_text.get("headings", []),
+                "tables_raw": page_text.get("tables", []),
+                "word_count": page_text.get("word_count", 0),
+            }
+            results.append(result)
+        logger.info("[pass2] ✓ Built %d text-only pages from pdfplumber (no VLM)", len(results))
+        return results
 
     logger.info("[pass2] ▶ Content extraction: %d pages via Qwen-VL", total_pages)
     t0 = time.monotonic()

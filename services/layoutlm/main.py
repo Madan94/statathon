@@ -279,6 +279,7 @@ async def analyze_pdf(file: UploadFile = File(...)):
     try:
         import pdf2image
 
+        poppler_path = os.getenv("POPPLER_PATH") or None
         t0 = time.monotonic()
         images = pdf2image.convert_from_path(
             str(tmp_path),
@@ -286,6 +287,7 @@ async def analyze_pdf(file: UploadFile = File(...)):
             fmt="png",
             first_page=1,
             last_page=MAX_PAGES,
+            poppler_path=poppler_path,
         )
         logger.info("Rasterized %d pages in %.1fs", len(images), time.monotonic() - t0)
 
