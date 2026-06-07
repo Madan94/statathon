@@ -2278,6 +2278,25 @@ def run_extraction_pipeline(
                 len(ast.get("blueprint", {}).get("entities") or []))
     logger.info("═══════════════════════════════════════════════════════════")
 
+    # ── Persist outputs to disk ──────────────────────────────────────────────
+    # Sanitise template name → valid folder name
+    import re as _re
+    _safe_name = _re.sub(r"[^\w\-]", "_", doc_title).strip("_") or "document"
+    _out_dir = Path(__file__).resolve().parent.parent / "outputs" / _safe_name
+    _out_dir.mkdir(parents=True, exist_ok=True)
+
+    _ast_path = _out_dir / "enterprise_ast.json"
+    _bp_path  = _out_dir / "blueprint.json"
+
+    with open(_ast_path, "w", encoding="utf-8") as _fh:
+        json.dump(ast, _fh, ensure_ascii=False, indent=2, default=str)
+
+    with open(_bp_path, "w", encoding="utf-8") as _fh:
+        json.dump(ast.get("blueprint", {}), _fh, ensure_ascii=False, indent=2, default=str)
+
+    logger.info("  ✓ Saved enterprise_ast.json  → %s", _ast_path)
+    logger.info("  ✓ Saved blueprint.json        → %s", _bp_path)
+
     return ast
 
 
