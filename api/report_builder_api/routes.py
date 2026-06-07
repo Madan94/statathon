@@ -30,7 +30,7 @@ from fastapi import (
     WebSocket, WebSocketDisconnect,
 )
 from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 
 from database.database import SessionLocal
 from database.models import Analysis, Dataset, ReportCorrection, ReportJob, ReportTemplate
@@ -158,7 +158,17 @@ def list_ready_analyses(
     user_id: int = Depends(get_current_user_id),
 ):
     rows = (
-        db.query(Analysis, Dataset)
+        db.query(
+            Analysis.id,
+            Analysis.dataset_id,
+            Analysis.status,
+            Analysis.created_at,
+            Dataset.id,
+            Dataset.filename,
+            Dataset.row_count,
+            Dataset.column_count,
+            Dataset.upload_status,
+        )
         .join(Dataset, Analysis.dataset_id == Dataset.id)
         .filter(Dataset.user_id == user_id, Analysis.status == "complete")
         .order_by(Analysis.id.desc())
@@ -167,16 +177,16 @@ def list_ready_analyses(
     )
     return [
         ReadyAnalysisOut(
-            analysis_id=an.id,
-            dataset_id=ds.id,
-            filename=ds.filename,
-            row_count=ds.row_count or 0,
-            column_count=ds.column_count or 0,
-            status=an.status,
-            upload_status=ds.upload_status,
-            created_at=isoformat_utc(an.created_at),
+            analysis_id=an_id,
+            dataset_id=ds_id,
+            filename=filename,
+            row_count=row_count or 0,
+            column_count=column_count or 0,
+            status=status,
+            upload_status=upload_status,
+            created_at=isoformat_utc(created_at),
         )
-        for an, ds in rows
+        for an_id, ds_id, status, created_at, _, filename, row_count, column_count, upload_status in rows
     ]
 
 

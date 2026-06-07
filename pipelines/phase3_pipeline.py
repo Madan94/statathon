@@ -73,17 +73,17 @@ def run_phase3_intel(df: pd.DataFrame, schema: dict[str, str], state: AnalysisSt
         dataset_context_hint=dataset_ctx,
     )
 
-    # ---- Step 2: Statistical anomaly detection ----
+    # ---- Step 2: Goodness-of-fit + method confidence (no auto detection) ----
     anomaly_bundle = build_anomaly_intelligence(df_coerced, schema)
 
-    # ---- Step 3: Missing value intelligence ----
+    # ---- Step 3: Missing value intelligence (scoring only — no outlier signal yet) ----
     imb = run_imputation_intelligence(
         df_coerced,
         schema,
         cols_meta,
         state.dependency_graph,
         state.schema_graph,
-        anomaly_column_blocks=anomaly_bundle.get("anomaly_results"),
+        anomaly_column_blocks=None,
     )
 
     # ---- Persist results ----
@@ -103,6 +103,8 @@ def run_phase3_intel(df: pd.DataFrame, schema: dict[str, str], state: AnalysisSt
     )
     state.anomaly_results = anomaly_bundle.get("anomaly_results") or []
     state.anomaly_candidates = anomaly_bundle.get("anomaly_candidates") or []
+    state.goodness_of_fit = anomaly_bundle.get("goodness_of_fit") or []
+    state.method_selections = anomaly_bundle.get("method_selections") or {}
     state.imputation_results = imb.get("imputation_results") or []
     state.imputation_candidates = imb.get("imputation_candidates") or []
     if not isinstance(getattr(state, "user_decisions", None), dict):

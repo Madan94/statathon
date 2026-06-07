@@ -9,12 +9,17 @@ from sqlalchemy.orm import Session
 from analysis_state.schema_state import (
     apply_effective_schema_to_payload,
     build_effective_schema,
-    build_phase_state_snapshot,
 )
 from core.json_safe import make_json_safe
-from database.models import Analysis
 from repositories.column_audit_repository import ColumnAuditRepository
 from repositories.dataset_column_repository import DatasetColumnRepository
+from database.models import SemanticProfile
+from services.analysis_query import (
+    get_analysis_meta,
+    get_normalization_version,
+    load_checkpoint_top_keys,
+    set_normalization_meta,
+)
 
 
 class NormalizationService:
@@ -60,40 +65,61 @@ class NormalizationService:
         records = self.columns.list_for_analysis(analysis_id)
         if records:
             return records
-        an = self.db.query(Analysis).filter(Analysis.id == analysis_id).first()
+        an = get_analysis_meta(self.db, analysis_id)
         if not an:
             return []
-        from services.analysis_results_service import resolve_semantic_analysis_payload
+        config = an.config if isinstance(an.config, dict) else {}
+        raw = config.get("raw_schema")
+        if raw:
+            self.columns.seed_from_raw_columns(
+                dataset_id=an.dataset_id,
+                analysis_id=analysis_id,
+                raw_columns=[str(c) for c in raw],
+                inferred_types={},
+                suggested_names={},
+            )
+            self.db.commit()
+            return self.columns.list_for_analysis(analysis_id)
 
-        payload = resolve_semantic_analysis_payload(self.db, analysis_id) or {}
-        raw = payload.get("raw_schema")
-        if not raw:
-            profiles = payload.get("column_profiles") or {}
-            raw = list(profiles.keys()) if isinstance(profiles, dict) else []
-        if not raw:
-            norm = payload.get("column_normalization") or []
-            raw = [
-                str(r.get("original_name") or r.get("column"))
-                for r in norm
-                if isinstance(r, dict) and (r.get("original_name") or r.get("column"))
-            ]
-        if not raw:
-            return []
-        self.seed_from_analysis_payload(
-            dataset_id=an.dataset_id,
-            analysis_id=analysis_id,
-            raw_columns=[str(c) for c in raw],
-            payload=payload,
-        )
-        return self.columns.list_for_analysis(analysis_id)
+        overlay = load_checkpoint_top_keys(self.db, analysis_id)
+        raw = overlay.get("raw_schema")
+        if raw:
+            self.columns.seed_from_raw_columns(
+                dataset_id=an.dataset_id,
+                analysis_id=analysis_id,
+                raw_columns=[str(c) for c in raw],
+                inferred_types={},
+                suggested_names={},
+            )
+            self.db.commit()
+            return self.columns.list_for_analysis(analysis_id)
+
+        profile_cols = [
+            r[0]
+            for r in self.db.query(SemanticProfile.column_name)
+            .filter(SemanticProfile.analysis_id == analysis_id)
+            .order_by(SemanticProfile.column_name)
+            .all()
+        ]
+        if profile_cols:
+            self.columns.seed_from_raw_columns(
+                dataset_id=an.dataset_id,
+                analysis_id=analysis_id,
+                raw_columns=[str(c) for c in profile_cols],
+                inferred_types={},
+                suggested_names={},
+            )
+            self.db.commit()
+            return self.columns.list_for_analysis(analysis_id)
+
+        return []
 
     def get_effective_schema_response(self, analysis_id: int) -> dict[str, Any]:
-        an = self.db.query(Analysis).filter(Analysis.id == analysis_id).first()
+        an = get_analysis_meta(self.db, analysis_id)
         if not an:
             raise ValueError("Analysis not found")
         records = self._ensure_columns_seeded(analysis_id)
-        checkpoint = an.checkpoint if isinstance(an.checkpoint, dict) else {}
-        version = checkpoint.get("normalization_version")
+        version = get_normalization_version(self.db, analysis_id)
         return {
             "dataset_id": an.dataset_id,
             "analysis_id": analysis_id,
@@ -114,14 +140,12 @@ class NormalizationService:
         }
 
     def get_saved_decisions(self, analysis_id: int) -> dict[str, Any] | None:
-        an = self.db.query(Analysis).filter(Analysis.id == analysis_id).first()
-        if not an or not isinstance(an.checkpoint, dict):
-            return None
-        if not an.checkpoint.get("normalization_version"):
+        version = get_normalization_version(self.db, analysis_id)
+        if not version:
             return None
         records = self._ensure_columns_seeded(analysis_id)
         return {
-            "normalization_version": an.checkpoint.get("normalization_version"),
+            "normalization_version": version,
             "columns": [
                 {
                     "column_id": c.id,
@@ -141,7 +165,7 @@ class NormalizationService:
         user_id: int,
         column_updates: list[dict[str, Any]],
     ) -> dict[str, Any]:
-        an = self.db.query(Analysis).filter(Analysis.id == analysis_id).first()
+        an = get_analysis_meta(self.db, analysis_id)
         if not an:
             raise ValueError("Analysis not found")
 
@@ -150,8 +174,7 @@ class NormalizationService:
         if not by_name:
             raise ValueError("Column registry not initialized for this analysis")
 
-        checkpoint = dict(an.checkpoint) if isinstance(an.checkpoint, dict) else {}
-        version = int(checkpoint.get("normalization_version") or 0) + 1
+        version = int(get_normalization_version(self.db, analysis_id) or 0) + 1
         now = datetime.utcnow()
 
         for upd in column_updates:
@@ -234,16 +257,8 @@ class NormalizationService:
         self.db.flush()
         refreshed = self.columns.list_for_analysis(analysis_id)
         effective = build_effective_schema(refreshed)
-
-        raw_schema = checkpoint.get("raw_schema") or [c.name for c in refreshed]
-        phase_state = build_phase_state_snapshot(raw_schema, refreshed, checkpoint)
-        phase_state["normalization_version"] = version
-
-        checkpoint["normalization_version"] = version
-        checkpoint["normalized_schema"] = effective
-        checkpoint["raw_schema"] = raw_schema
-        checkpoint["phase_state"] = phase_state
-        checkpoint["user_normalization"] = make_json_safe(
+        raw_schema = [c.name for c in refreshed]
+        user_norm = make_json_safe(
             [
                 {
                     "column_id": c.id,
@@ -255,7 +270,17 @@ class NormalizationService:
                 for c in refreshed
             ]
         )
-        an.checkpoint = make_json_safe(checkpoint)
+        set_normalization_meta(
+            self.db,
+            analysis_id,
+            version=version,
+            effective_schema=effective,
+            raw_schema=raw_schema,
+            user_normalization=user_norm,
+        )
+        from services.analysis_payload_cache import invalidate_analysis_cache
+
+        invalidate_analysis_cache(analysis_id)
         self.db.commit()
 
         return {
@@ -267,11 +292,7 @@ class NormalizationService:
         }
 
     def apply_to_payload(self, analysis_id: int, payload: dict[str, Any]) -> dict[str, Any]:
-        an = self.db.query(Analysis).filter(Analysis.id == analysis_id).first()
-        if not an:
-            return payload
-        checkpoint = an.checkpoint if isinstance(an.checkpoint, dict) else {}
-        version = checkpoint.get("normalization_version")
+        version = get_normalization_version(self.db, analysis_id)
         if not version:
             return payload
         records = self._ensure_columns_seeded(analysis_id)

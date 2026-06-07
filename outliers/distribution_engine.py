@@ -47,6 +47,7 @@ def distribution_snippet(series: pd.Series,
         # Enriched fields
         "robust_skew": profile.robust_skew,
         "shapiro_p": profile.shapiro_p,
+        "shapiro_w_statistic": profile.shapiro_stat,
         "dagostino_p": profile.dagostino_p,
         "anderson_stat": profile.anderson_stat,
         "anderson_critical_5pct": profile.anderson_critical_5pct,

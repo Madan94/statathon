@@ -167,10 +167,10 @@ class IntentParser:
         if not api_key:
             return None
         try:
-            import google.generativeai as g  # type: ignore
-            g.configure(api_key=api_key)
-            model = g.GenerativeModel(
-                os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash"))
+            from core.gemini_client import get_generative_model
+            model = get_generative_model()
+            if model is None:
+                return None
         except Exception:
             return None
 

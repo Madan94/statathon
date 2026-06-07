@@ -112,16 +112,8 @@ def build_semantic_results_from_db(db: Session, analysis_id: int) -> dict | None
     schema_blueprint_db = None
     dataset_meta: dict[str, Any] | None = None
     knowledge_graph_db: dict[str, Any] = {}
-    intel_ds = (
-        db.query(DatasetIntelligenceRecord).filter(DatasetIntelligenceRecord.analysis_id == analysis_id).first()
-    )
-    intel_col_map = {
-        r.column_name: r.profile_json
-        for r in db.query(ColumnIntelligenceProfile)
-        .filter(ColumnIntelligenceProfile.analysis_id == analysis_id)
-        .order_by(ColumnIntelligenceProfile.column_name)
-        .all()
-    }
+    intel_ds = None
+    intel_col_map: dict[str, Any] = {}
 
     if isinstance(semantic_summary, dict):
         profiling_summary = semantic_summary.get("profiling_summary") or {}
@@ -144,10 +136,24 @@ def build_semantic_results_from_db(db: Session, analysis_id: int) -> dict | None
                 "ontology_macro_type_best_hint": ontology_hint,
             }
 
-    if not dataset_profile_db and intel_ds:
-        dataset_profile_db = intel_ds.rollup_json
-    if not column_profiles_db and intel_col_map:
-        column_profiles_db = intel_col_map
+    if not dataset_profile_db:
+        intel_ds = (
+            db.query(DatasetIntelligenceRecord)
+            .filter(DatasetIntelligenceRecord.analysis_id == analysis_id)
+            .first()
+        )
+        if intel_ds:
+            dataset_profile_db = intel_ds.rollup_json
+    if not column_profiles_db:
+        intel_col_map = {
+            r.column_name: r.profile_json
+            for r in db.query(ColumnIntelligenceProfile)
+            .filter(ColumnIntelligenceProfile.analysis_id == analysis_id)
+            .order_by(ColumnIntelligenceProfile.column_name)
+            .all()
+        }
+        if intel_col_map:
+            column_profiles_db = intel_col_map
 
     return {
         "dataset_context": dataset_context,
@@ -165,14 +171,57 @@ def build_semantic_results_from_db(db: Session, analysis_id: int) -> dict | None
     }
 
 
-def resolve_semantic_analysis_payload(db: Session, analysis_id: int) -> dict | None:
-    """Prefer JSON checkpoint blob; fallback to reconstructed relational semantics."""
-    an = db.query(Analysis).filter(Analysis.id == analysis_id).first()
-    if not an:
-        return None
-    if isinstance(an.checkpoint, dict) and an.checkpoint:
-        return an.checkpoint
-    return build_semantic_results_from_db(db, analysis_id)
+def resolve_semantic_analysis_payload(
+    db: Session,
+    analysis_id: int,
+    *,
+    include_phase3: bool = True,
+    use_cache: bool = True,
+) -> dict | None:
+    """Prefer relational tables; load checkpoint only when semantics are not persisted."""
+    from services.analysis_payload_cache import get_cached_payload, set_cached_payload
+    from services.analysis_query import (
+        build_phase3_from_relational,
+        get_normalization_version,
+        load_analysis_checkpoint,
+        load_checkpoint_json_key,
+        load_checkpoint_top_keys,
+    )
+
+    norm_version = get_normalization_version(db, analysis_id)
+    if use_cache:
+        cached = get_cached_payload(analysis_id, norm_version, include_phase3=include_phase3)
+        if cached is not None:
+            return cached
+
+    built = build_semantic_results_from_db(db, analysis_id)
+    if built:
+        payload = dict(built)
+        payload.update(load_checkpoint_top_keys(db, analysis_id))
+        domain_registry = load_checkpoint_json_key(db, analysis_id, "domain_registry")
+        if isinstance(domain_registry, dict):
+            payload["domain_registry"] = domain_registry
+        if include_phase3:
+            payload["phase3"] = build_phase3_from_relational(db, analysis_id)
+        payload.setdefault("meta", {"analysis_id": analysis_id})
+        if use_cache:
+            set_cached_payload(
+                analysis_id,
+                norm_version,
+                include_phase3=include_phase3,
+                payload=payload,
+            )
+        return payload
+
+    fallback = load_analysis_checkpoint(db, analysis_id)
+    if fallback and use_cache:
+        set_cached_payload(
+            analysis_id,
+            norm_version,
+            include_phase3=include_phase3,
+            payload=fallback,
+        )
+    return fallback
 
 
 def _outliers_map_from_phase3(phase3: dict) -> dict[str, dict]:
@@ -213,7 +262,13 @@ def _outliers_map_from_phase3(phase3: dict) -> dict[str, dict]:
     return outliers
 
 
-def enrich_payload_for_dashboard(db: Session, analysis_id: int, payload: dict) -> dict:
+def enrich_payload_for_dashboard(
+    db: Session,
+    analysis_id: int,
+    payload: dict,
+    *,
+    include_phase3: bool = True,
+) -> dict:
     """Add legacy-friendly fields (health, semantic map, outliers, content_hash) for the UI."""
     enriched = dict(payload)
     profiling = payload.get("profiling_summary") if isinstance(payload.get("profiling_summary"), dict) else {}
@@ -242,15 +297,16 @@ def enrich_payload_for_dashboard(db: Session, analysis_id: int, payload: dict) -
                 semantic[str(col)] = str(meta)
     enriched["semantic"] = semantic
 
-    phase3 = payload.get("phase3")
-    if not isinstance(phase3, dict):
-        intel = db.query(Phase3AnomalyIntel).filter(Phase3AnomalyIntel.analysis_id == analysis_id).first()
-        if intel and isinstance(intel.payload, dict):
-            phase3 = intel.payload
-        else:
-            phase3 = {}
-    enriched["phase3"] = phase3
-    enriched["outliers"] = _outliers_map_from_phase3(phase3)
+    if include_phase3:
+        phase3 = payload.get("phase3")
+        if not isinstance(phase3, dict):
+            intel = db.query(Phase3AnomalyIntel).filter(Phase3AnomalyIntel.analysis_id == analysis_id).first()
+            if intel and isinstance(intel.payload, dict):
+                phase3 = intel.payload
+            else:
+                phase3 = {}
+        enriched["phase3"] = phase3
+        enriched["outliers"] = _outliers_map_from_phase3(phase3)
 
     report_row = (
         db.query(Report)

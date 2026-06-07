@@ -25,12 +25,13 @@ def apply_gemini_domain_adjustment(
         return None
 
     try:
-        import google.generativeai as genai
+        from core.gemini_client import get_generative_model
     except ImportError:
         return None
 
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-1.5-flash"))
+    model = get_generative_model(os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash"))
+    if model is None:
+        return None
 
     prompt = f"""You assist official statistical metadata governance.
 Column name: {column_name}

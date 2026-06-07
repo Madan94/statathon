@@ -384,10 +384,10 @@ def _gemini_plan(query: str, context_summary: str,
     if not api_key:
         return None
     try:
-        import google.generativeai as genai  # type: ignore
-        genai.configure(api_key=api_key)
-        model_name = os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash")
-        model = genai.GenerativeModel(model_name)
+        from core.gemini_client import get_generative_model
+        model = get_generative_model()
+        if model is None:
+            return None
         extra_section = (
             f"\n\nAdditional instructions:\n{extra_system_prompt}\n"
             if extra_system_prompt else ""

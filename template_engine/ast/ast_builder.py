@@ -222,7 +222,7 @@ def _gemini_enrich(
 ) -> list[BlockSpec]:
     """Ask Gemini to add semantic hints (source, verify_numbers, chart_type) to blocks."""
     try:
-        import google.generativeai as g  # type: ignore
+        from core.gemini_client import get_generative_model
     except Exception:
         return blocks
 
@@ -231,8 +231,9 @@ def _gemini_enrich(
         return blocks
 
     try:
-        g.configure(api_key=api_key)
-        model = g.GenerativeModel(os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash"))
+        model = get_generative_model()
+        if model is None:
+            return blocks
         blocks_json = json.dumps([b.to_dict() for b in blocks], indent=2)[:4000]
         pages_json = json.dumps([p for p in page_summaries[:6]], indent=2)[:4000]
 

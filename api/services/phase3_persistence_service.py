@@ -9,7 +9,9 @@ from database.models import (
     Phase3AnomalyIntel,
     Phase3ImputationIntel,
     Phase3ValidationCandidate,
+    ValidationResult,
 )
+from services.analysis_query import VALIDATION_CANDIDATE_PERSIST_LIMIT
 
 
 class Phase3PersistenceService:
@@ -25,9 +27,11 @@ class Phase3PersistenceService:
         ).delete(synchronize_session=False)
 
         batch: list[Phase3ValidationCandidate] = []
-        for cand in state.validation_candidates or []:
-            if not isinstance(cand, dict):
-                continue
+        raw_candidates = [
+            c for c in (state.validation_candidates or []) if isinstance(c, dict)
+        ]
+        total_candidates = len(raw_candidates)
+        for cand in raw_candidates[:VALIDATION_CANDIDATE_PERSIST_LIMIT]:
             batch.append(
                 Phase3ValidationCandidate(
                     dataset_id=dataset_id,
@@ -42,11 +46,33 @@ class Phase3PersistenceService:
             )
         if batch:
             self.db.add_all(batch)
+
+        val_payload = make_json_safe(state.validation_results or {})
+        if total_candidates:
+            val_payload = {
+                **val_payload,
+                "candidate_count": total_candidates,
+                "candidates_persisted": len(batch),
+                "candidates_truncated": total_candidates > len(batch),
+            }
+        self.db.query(ValidationResult).filter(
+            ValidationResult.analysis_id == analysis_id
+        ).delete(synchronize_session=False)
+        if val_payload:
+            self.db.add(
+                ValidationResult(
+                    analysis_id=analysis_id,
+                    stage="phase3_validation",
+                    payload=val_payload,
+                )
+            )
         ar = self.db.query(Phase3AnomalyIntel).filter(Phase3AnomalyIntel.analysis_id == analysis_id).first()
         anomaly_payload = make_json_safe(
             {
                 "anomaly_results": state.anomaly_results,
                 "anomaly_candidates": state.anomaly_candidates,
+                "goodness_of_fit": getattr(state, "goodness_of_fit", None) or [],
+                "method_selections": getattr(state, "method_selections", None) or {},
             }
         )
         if ar:

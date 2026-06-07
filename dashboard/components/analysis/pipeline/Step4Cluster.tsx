@@ -71,11 +71,16 @@ export default function Step4Cluster({ results, analysisId, onProceed, onBack }:
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const existing = results.clusters as ClusterGroup[] | undefined;
+    if (existing?.length) {
+      setLoading(false);
+      return;
+    }
     analysisApi
       .getClusters(analysisId)
       .then(setPayload)
       .finally(() => setLoading(false));
-  }, [analysisId]);
+  }, [analysisId, results.clusters]);
 
   const rawClusters =
     (payload?.clusters ??

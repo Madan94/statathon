@@ -17,9 +17,12 @@ DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{_default_sqlite}")
 _is_sqlite = DATABASE_URL.startswith("sqlite")
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False} if _is_sqlite else {},
+    connect_args={"check_same_thread": False} if _is_sqlite else {"connect_timeout": 15},
     pool_pre_ping=not _is_sqlite,
     pool_recycle=280 if not _is_sqlite else -1,
+    pool_size=15 if not _is_sqlite else 5,
+    max_overflow=15 if not _is_sqlite else 0,
+    pool_timeout=30 if not _is_sqlite else 30,
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 from sqlalchemy.orm import declarative_base

@@ -8,6 +8,7 @@ if hasattr(sys.stdout, "reconfigure"):
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
+        
 
 # Repo root — needed for imports like object_storage/, pipelines/ when cwd is api/
 _API_DIR = Path(__file__).resolve().parent
@@ -108,15 +109,12 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.error(traceback.format_exc())
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
-Base.metadata.create_all(bind=engine)
-
-from database.migrate_auth import migrate_auth_schema
-from database.migrate_report_builder import migrate_report_builder_schema
-from database.migrate_dataset_columns import migrate_dataset_columns_schema
-
-migrate_auth_schema()
-migrate_report_builder_schema()
-migrate_dataset_columns_schema()
+# Schema migrations and create_all run via scripts/migrate_db.py — not at API startup.
+# Startup must remain fast and must not block on Neon/Postgres DDL or large ALTER TABLE.
+logger.info(
+    "Database migrations are disabled at startup. "
+    "Run: python scripts/migrate_db.py --bootstrap"
+)
 
 try:
     from services.analysis_runner import reset_orphaned_analyses
