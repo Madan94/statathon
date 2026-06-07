@@ -933,7 +933,7 @@ def pass0_rasterize(pdf_path: Path) -> tuple[list[bytes], list[dict[str, Any]]]:
                 if not tables:
                     # Borderless tables (common in govt PDFs) need text-alignment strategy
                     try:
-                        tables = page.extract_tables(table_settings={
+                        borderless = page.extract_tables(table_settings={
                             "vertical_strategy": "text",
                             "horizontal_strategy": "text",
                             "snap_tolerance": 5,
@@ -942,6 +942,8 @@ def pass0_rasterize(pdf_path: Path) -> tuple[list[bytes], list[dict[str, Any]]]:
                             "min_words_vertical": 3,
                             "min_words_horizontal": 1,
                         }) or []
+                        # Filter nav-bar artifacts from borderless too
+                        tables = [t for t in borderless if not _is_website_artifact_table(t)]
                     except Exception:
                         tables = []
 
@@ -1639,28 +1641,45 @@ def pass2_5_document_knowledge_graph(
             })
 
     # Also try borderless table detection via text heuristics on pages with no pdfplumber tables
+    import re as _re_nav
+    _NAV_PAGE_RE = _re_nav.compile(
+        r"Press\s*Releas|Information\s*Bur|pib\.gov|mospi\.gov|:\d+\s*[AP]M|\d+/\d+/\d+.*[AP]M",
+        _re_nav.I,
+    )
     for i, pt in enumerate(page_texts):
         if any(ts["page"] == i for ts in table_structures):
-            continue  # already have a table for this page
+            continue  # already have a pdfplumber table for this page
+
+        # Skip if the page raw text looks like a PIB nav-bar page
+        page_raw = pt.get("raw_text") or ""
+        if _NAV_PAGE_RE.search(page_raw[:500]):
+            continue  # nav-bar page — no real table
+
         # Check if LayoutLM detected a table region
         has_layout_table = False
         if i < len(layout_pages):
             has_layout_table = any(r.get("type") == "table" for r in (layout_pages[i].get("regions") or []))
 
-        if has_layout_table or (entity_pages[i].get("structure_type") == "data_table" if i < len(entity_pages) else False):
-            parsed = _extract_table_from_text(pt.get("raw_text") or "")
+        wants_table = has_layout_table or (
+            entity_pages[i].get("structure_type") == "data_table" if i < len(entity_pages) else False
+        )
+        if wants_table:
+            parsed = _extract_table_from_text(page_raw)
             if parsed and parsed["row_count"] >= 3:
-                table_structures.append({
-                    "tableId": f"tbl_{i + 1}_h1",
-                    "page": i,
-                    "columns": parsed["columns"],
-                    "dimensions": [],
-                    "measures": [],
-                    "breakdowns": [],
-                    "layout": "simple",
-                    "row_count": parsed["row_count"],
-                    "description": "Table detected from text heuristics",
-                })
+                # One final artifact check on the parsed column names
+                fake_row = [parsed["columns"]]
+                if not _is_website_artifact_table(fake_row):
+                    table_structures.append({
+                        "tableId": f"tbl_{i + 1}_h1",
+                        "page": i,
+                        "columns": parsed["columns"],
+                        "dimensions": [],
+                        "measures": [],
+                        "breakdowns": [],
+                        "layout": "simple",
+                        "row_count": parsed["row_count"],
+                        "description": "Table detected from text heuristics",
+                    })
 
     logger.info("[pass2.5]   Step 2: %d table structures analyzed", len(table_structures))
 
@@ -1689,7 +1708,8 @@ def pass2_5_document_knowledge_graph(
             })
             # Extend chapter page range
             current_chapter["pageRange"][1] = max(current_chapter["pageRange"][1], entry.page_index)
-        elif entry.level == 1 or (entry.level >= 2 and not current_chapter):
+        elif entry.level >= 2 and not current_chapter:
+            # Level-2 section appears before any level-1 chapter — promote to chapter
             current_chapter = {
                 "chapterId": f"ch_{len(chapters) + 1:02d}",
                 "title": entry.title,
@@ -2090,6 +2110,7 @@ def pass3_two_loop_ast_building(
     document_map: dict[str, Any],
     page_texts: list[dict[str, Any]],
     doc_title: str = "Document",
+    page_images: list[bytes] | None = None,
 ) -> dict[str, Any]:
     """Build questions + entity bindings via two Qwen-VL loops.
 
@@ -2237,16 +2258,26 @@ def pass3_two_loop_ast_building(
             "BAD: 'What does this table show?' or 'What is the LFPR?'\n"
             "GOOD: 'How does LFPR vary across States by Rural/Urban sector?' "
             "or 'What is the trend in Unemployment Rate (Male) across survey rounds?'\n"
-            "Output JSON array:\n"
-            '[{"questionId":"q1","intent":"Specific analytical question referencing real entities?",'
-            '"questionType":"comparison|trend|ranking|distribution|describe",'
-            '"sourceHeading":"exact section title"}]\n'
+            "Output JSON array (questionType must be one of: comparison, trend, ranking, distribution, describe):\n"
+            '[{"questionId":"q1","intent":"How does LFPR vary by gender across Rural/Urban sector?",'
+            '"questionType":"comparison","sourceHeading":"1. Stable Labour Force Participation Rate (LFPR)"}]\n'
             "List 1-3 questions. JSON only."
         )
 
+        # Build multimodal content: always include prompt text; add page image if available
+        page_img_idx = page_range[0]
+        content_parts: list[dict] = []
+        if page_images and 0 <= page_img_idx < len(page_images):
+            try:
+                img_b64 = base64.b64encode(page_images[page_img_idx]).decode("utf-8")
+                content_parts.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}})
+            except Exception:
+                pass  # image encoding failed — text-only fallback
+        content_parts.append({"type": "text", "text": prompt})
+
         payload = {
             "model": model,
-            "messages": [{"role": "user", "content": prompt}],
+            "messages": [{"role": "user", "content": content_parts if len(content_parts) > 1 else prompt}],
             "temperature": 0.15,
             "max_tokens": 600,
         }
@@ -2651,9 +2682,70 @@ def _programmatic_question_fallback(
                 "inferenceMethod": f"archetype:{domain}",
             })
 
-    # Generate summary questions from section patterns
-    for sp in section_patterns:
-        if sp.get("pattern") in ("executive_summary", "descriptive"):
+    # Chapter-based fallback: generate one question per chapter regardless of tables
+    # This ensures narrative press releases (0 tables) still get meaningful questions.
+    if not questions:
+        _MEASURE_HINTS = {"lfpr", "wpr", "ur", "unemployment", "participation", "worker", "earnings",
+                          "wage", "salary", "education", "years", "employment", "consumption"}
+        for ch in chapters:
+            ch_title = ch.get("title", "")
+            ch_page = ch["pageRange"][0]
+            # Find entities on this chapter's pages
+            ch_page_range = ch["pageRange"]
+            ch_ents = [e for e in all_entities if any(ch_page_range[0] <= p <= ch_page_range[1] for p in e.get("pages", []))]
+            ch_measures = [e["name"] for e in ch_ents if e.get("entityType_hint") == "measure"][:3]
+            ch_dims = [e["name"] for e in ch_ents if e.get("entityType_hint") == "dimension"][:2]
+
+            # Pick question type from title keywords
+            title_lower = ch_title.lower()
+            if any(w in title_lower for w in ("trend", "change", "increase", "decline", "growth")):
+                q_type = "trend"
+                has_measure = any(w in title_lower for w in _MEASURE_HINTS)
+                intent = (
+                    f"What is the trend in {ch_measures[0] if ch_measures else 'key indicators'} from 2022 to 2025?"
+                    if has_measure else
+                    f"What trends are observed in '{ch_title}'?"
+                )
+            elif any(w in title_lower for w in ("compare", "differ", "rural", "urban", "gender", "male", "female")):
+                q_type = "comparison"
+                dim = ch_dims[0] if ch_dims else "sector"
+                intent = (
+                    f"How does {ch_measures[0] if ch_measures else 'the key measure'} vary by {dim}?"
+                    if ch_measures else
+                    f"How do outcomes compare across groups in '{ch_title}'?"
+                )
+            else:
+                q_type = "describe"
+                intent = f"What are the key findings and statistics in the section on '{ch_title}'?"
+
+            req_ents = []
+            for ent_name in ch_measures[:2]:
+                req_ents.append({"entityRef": ent_name, "role": "measure"})
+            for ent_name in ch_dims[:1]:
+                req_ents.append({"entityRef": ent_name, "role": "groupBy"})
+
+            q_counter += 1
+            questions.append({
+                "questionId": f"q_{q_counter:03d}",
+                "intent": intent,
+                "questionType": q_type,
+                "page": ch_page,
+                "sourceHeading": ch_title,
+                "requiredEntities": req_ents,
+                "answerStructure": {
+                    "layoutType": "single" if q_type == "describe" else "split",
+                    "components": [
+                        {"type": "narrative_paragraph", "renderOrder": 1},
+                        {"type": "metric_card" if q_type == "describe" else "line_chart" if q_type == "trend" else "grouped_bar_chart", "renderOrder": 2},
+                    ],
+                },
+                "inferenceConfidence": 0.50,
+                "inferenceMethod": "programmatic_chapter",
+            })
+
+    # Generate summary questions from section patterns (kept as supplementary)
+    for sp in section_patterns[:10]:  # cap to avoid hundreds of generic questions
+        if sp.get("pattern") in ("executive_summary",) and len(questions) < len(chapters) * 2:
             q_counter += 1
             questions.append({
                 "questionId": f"q_{q_counter:03d}",
@@ -2718,7 +2810,7 @@ def _enrich_entity_aliases(entities: list[dict]) -> list[dict]:
                 aliases.append(abbrev)
 
         # Add bare name (without parenthetical) as alias
-        bare = _re_alias.sub(r"\([^)]*\)", name).strip().rstrip("-– ").strip()
+        bare = _re_alias.sub(r"\([^)]*\)", "", name).strip().rstrip("- ").strip()
         if bare and bare != name and len(bare) >= 4 and bare not in aliases:
             aliases.append(bare)
 
@@ -2728,12 +2820,12 @@ def _enrich_entity_aliases(entities: list[dict]) -> list[dict]:
 
 
 def _deduplicate_entities(entities: list[dict]) -> list[dict]:
-    """Remove duplicate entities by name+type."""
+    """Remove duplicate entities by lowercased name (case-insensitive dedup)."""
     seen: set[str] = set()
     unique: list[dict] = []
     for e in entities:
-        key = f"{e.get('type', '')}:{e.get('name', '')}".lower()
-        if key not in seen:
+        key = (e.get("name") or "").lower().strip()
+        if key and key not in seen:
             seen.add(key)
             unique.append(e)
     return unique
@@ -3281,7 +3373,7 @@ def run_extraction_pipeline(
     # ── Pass 3: Two-Loop AST Building ──
     _tick("pass3_ast_building", 60)
     t0 = _time.monotonic()
-    ast_result = pass3_two_loop_ast_building(document_map, page_texts, doc_title)
+    ast_result = pass3_two_loop_ast_building(document_map, page_texts, doc_title, page_images=page_images)
     pass3_elapsed = _time.monotonic() - t0
 
     # If both loops produced nothing, try Gemini fallback
