@@ -239,34 +239,52 @@ def enrich_column_features(
     """
     Mutate ColumnFeature.normalized and .representation in-place for columns
     that are cryptic or known survey codes.
+
+    The LLM is the PRIMARY, dataset-agnostic enrichment layer: it expands any
+    cryptic code using usecase + sample-value context, so this generalises to
+    datasets we have never seen. The static lookup table is only a FALLBACK,
+    used when the LLM is unavailable (no key / quota exhausted / offline) or
+    returns nothing for a given column.
     Returns the same dict (mutated in-place).
     """
-    to_enrich_llm: list[tuple[str, ColumnFeature]] = []
-    enriched_count = 0
+    # Candidates needing help: cryptic names OR known coded survey fields.
+    candidates: list[tuple[str, ColumnFeature]] = [
+        (col, feat)
+        for col, feat in features.items()
+        if _is_cryptic(col, feat.normalized) or _lookup(col) is not None
+    ]
+    if not candidates:
+        return features
 
-    for col, feat in features.items():
-        desc = _lookup(col)
+    # PRIMARY — LLM enrichment (works for any dataset, not just known codes).
+    llm_desc: dict[str, str] = {}
+    if use_llm and (_gemini_key() or _groq_key()):
+        llm_desc = _enrich_via_llm(candidates, usecase, dataset_name)
+
+    # Apply: prefer the LLM description, fall back to the static lookup table.
+    enriched_count = llm_used = lookup_used = 0
+    for col, feat in candidates:
+        desc = llm_desc.get(col)
+        source = "llm"
+        if not desc:
+            desc = _lookup(col)
+            source = "lookup"
         if desc:
-            _apply(feat, desc, "lookup")
+            _apply(feat, desc, source)
             enriched_count += 1
-            continue
-        if _is_cryptic(col, feat.normalized):
-            to_enrich_llm.append((col, feat))
-
-    if use_llm and to_enrich_llm:
-        llm_desc = _enrich_via_llm(to_enrich_llm, usecase, dataset_name)
-        for col, feat in to_enrich_llm:
-            desc = llm_desc.get(col)
-            if desc:
-                _apply(feat, desc, "llm")
-                enriched_count += 1
+            if source == "llm":
+                llm_used += 1
+            else:
+                lookup_used += 1
 
     if enriched_count:
         logger.info(
-            "Column enrichment: %d/%d columns expanded (dataset=%s)",
+            "Column enrichment: %d/%d expanded (dataset=%s, llm=%d, lookup=%d)",
             enriched_count,
             len(features),
             dataset_name,
+            llm_used,
+            lookup_used,
         )
     return features
 

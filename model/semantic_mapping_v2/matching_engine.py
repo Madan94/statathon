@@ -43,40 +43,11 @@ logger = logging.getLogger(__name__)
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
 
-# ASI block-code prefix → domain heuristic (Block H=inputs, J=products, F=fixed assets, etc.)
-# Used to boost confidence for cryptic coded column names from Annual Survey of Industries.
-_ASI_BLOCK_DOMAIN: dict[str, str] = {
-    "hi": "raw_materials",   # Block H — inputs
-    "hf": "capital",         # Block H — fixed assets
-    "j1": "production",      # Block J — products sold
-    "fi": "capital",         # Block F — fixed assets
-    "gi": "capital",         # Block G — working capital
-    "ei": "enterprise",      # Block E — basic characteristics
-    "ai": "enterprise",      # Block A — administrative
-    "ae": "enterprise",
-    "aj": "enterprise",
-    "ah": "raw_materials",
-    "yr": "survey_metadata",
-    "blk": "survey_metadata",
-}
-_ASI_CODE_RE = re.compile(r"^([a-z]{1,3})(\d{1,3})$", re.I)
-
-
-def _asi_block_domain(col_name: str) -> str | None:
-    """Return domain hint for ASI-style block codes like 'J11', 'HI3', 'AH01', 'yr', 'blk'."""
-    n = col_name.strip().lower()
-    if n in _ASI_BLOCK_DOMAIN:
-        return _ASI_BLOCK_DOMAIN[n]
-    m = _ASI_CODE_RE.match(n)
-    if m:
-        prefix = m.group(1).lower()
-        if prefix in _ASI_BLOCK_DOMAIN:
-            return _ASI_BLOCK_DOMAIN[prefix]
-        # Two-letter prefix fallback
-        for k in sorted(_ASI_BLOCK_DOMAIN, key=len, reverse=True):
-            if prefix.startswith(k):
-                return _ASI_BLOCK_DOMAIN[k]
-    return None
+# NOTE: dataset-specific code→domain heuristics (e.g. ASI block codes J11/HI3)
+# were removed. Cryptic column codes are now expanded to meaningful English by
+# the LLM-primary enricher (column_enricher.enrich_column_features) BEFORE
+# matching, so the semantic/embedding match generalises to any dataset instead
+# of relying on a hardcoded lookup that only covered one survey family.
 
 # Which dtypes a domain "kind" tends to imply, for the context/statistics signals.
 _NUMERIC_HINT_WORDS = {
@@ -193,25 +164,6 @@ class MatchingEngine:
                 mapping.confidence = max(mapping.confidence, 0.52)
             if kw >= 0.35 and emb >= 0.48:
                 mapping.confidence = max(mapping.confidence, 0.46)
-            # ASI block-code boost: known code prefix → definitive domain match
-            asi_domain = _asi_block_domain(mapping.column)
-            if asi_domain and mapping.domain == asi_domain:
-                mapping.confidence = max(mapping.confidence, 0.78)
-            elif asi_domain and mapping.domain != asi_domain:
-                # Override with the known domain at high confidence
-                for cand in mapping.candidates:
-                    if cand.get("domain") == asi_domain:
-                        mapping.domain = asi_domain
-                        mapping.confidence = max(0.75, cand.get("score", 0.75))
-                        mapping.source = "embedding"
-                        mapping.explanation = f"ASI block code '{mapping.column}' → {asi_domain}"
-                        break
-                else:
-                    # Candidate not found — still override but lower confidence
-                    mapping.domain = asi_domain
-                    mapping.confidence = 0.72
-                    mapping.source = "embedding"
-                    mapping.explanation = f"ASI block code '{mapping.column}' → {asi_domain}"
 
         # Pass 4 — uncorrelated floor (STEP 8).
         for col, mapping in results.items():
@@ -277,17 +229,25 @@ class MatchingEngine:
 
         final, signals, payload = best
         domain_name = str(payload.get("domain_name") or "unknown")
+        # STEP 8 — margin-aware confidence: a winner that clearly separates from
+        # the runner-up is trustworthy; a near-tie stays cautious. Principled
+        # calibration (same idea as the usecase detector), not data-specific.
+        ordered = sorted((c["score"] for c in candidates), reverse=True)
+        runner_up = ordered[1] if len(ordered) > 1 else 0.0
+        margin = max(0.0, final - runner_up)
+        calibrated = final + min(0.30, 1.2 * margin)
+        confidence = round(min(0.99, calibrated), 4)
         return ColumnMapping(
             column=feat.name,
             normalized_name=feat.normalized,
             domain=domain_name,
-            confidence=round(final, 4),
+            confidence=confidence,
             source="embedding",
             domain_type=str(payload.get("domain_type", "static")),
             signals=signals,
             candidates=candidates,
             explanation=(
-                f"Matched '{domain_name}' (score {final:.2f}): "
+                f"Matched '{domain_name}' (score {final:.2f}, margin {margin:.2f}): "
                 f"emb={signals['embedding']:.2f}, kw={signals['keyword']:.2f}, "
                 f"ctx={signals['domain_context']:.2f}."
             ),
