@@ -1244,6 +1244,142 @@ def _entities_from_pdfplumber(page_text: dict[str, Any], page_index: int) -> lis
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Numbered Section Extraction (used by Pass 2.5 Step 7)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _extract_numbered_sections(page_texts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Extract numbered/lettered sections from raw page text without LLM.
+
+    Matches patterns like:
+      "1. Stable LFPR for Persons aged 15 Years..."
+      "A. Introduction"
+      "2.1 Labour Force Participation Rate"
+    Returns list of dicts: {title, number, page_index, level, raw_line}
+    """
+    import re as _re_ns
+    _SECTION_PATS = [
+        (r"^(\d+\.\d+)\s+([A-Z][A-Za-z\s\(\)\-\:]{5,80})$", 2),   # 2.1 Sub-section
+        (r"^(\d+)\.\s+([A-Z][A-Za-z\s\(\)\-\:]{5,80})$", 1),       # 1. Section
+        (r"^([A-Z])\.\s+([A-Z][A-Za-z\s\(\)\-\:]{5,80})$", 1),     # A. Letter section
+        (r"^(Statement\s+\d+[\.\-]\d+)[:\s\-]+(.{5,80})$", 2),      # Statement 5.1
+    ]
+
+    sections: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    for page_idx, pt in enumerate(page_texts):
+        raw = (pt.get("raw_text") or "").strip()
+        for line in raw.splitlines():
+            line = line.strip()
+            if len(line) < 6 or len(line) > 120:
+                continue
+            for pat, level in _SECTION_PATS:
+                m = _re_ns.match(pat, line)
+                if m:
+                    number = m.group(1).strip()
+                    title = m.group(2).strip()
+                    key = title.lower()[:50]
+                    if key not in seen and len(title) >= 5:
+                        seen.add(key)
+                        sections.append({
+                            "number": number,
+                            "title": title,
+                            "page_index": page_idx,
+                            "level": level,
+                            "raw_line": line,
+                        })
+                    break
+
+    return sections
+
+
+def _generate_questions_from_sections(
+    numbered_sections: list[dict[str, Any]],
+    all_entities: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Generate pre-computed analytical questions from section headings (no LLM).
+
+    For each section, produces 1-2 questions based on entity type hints found
+    in the section title. These serve as fallback questions if Pass 3 VLM fails.
+    Returns list of question dicts compatible with Pass 3 output schema.
+    """
+    _MEASURE_KEYWORDS_QG = {
+        "lfpr", "labour force", "worker population", "wpr", "unemployment",
+        "unemployment rate", "ur", "mpce", "consumption", "expenditure",
+        "cpi", "inflation", "earnings", "wage", "salary", "income",
+        "rate", "ratio", "index", "score", "percent", "percentage",
+    }
+    _DIMENSION_KEYWORDS_QG = {
+        "state", "district", "gender", "rural", "urban", "sector",
+        "age", "group", "category", "type", "industry", "occupation",
+    }
+    _TREND_WORDS = {"trend", "change", "growth", "decline", "increase", "decrease", "comparison"}
+
+    questions: list[dict[str, Any]] = []
+    q_id_counter = 0
+
+    # Build entity name set for binding
+    entity_name_lower = {(e.get("name") or "").lower(): e for e in all_entities}
+
+    for sec in numbered_sections:
+        title = sec.get("title", "")
+        title_lower = title.lower()
+        page_idx = sec.get("page_index", 0)
+
+        # Detect measures and dimensions mentioned in the section title
+        found_measures = [k for k in _MEASURE_KEYWORDS_QG if k in title_lower]
+        found_dims = [k for k in _DIMENSION_KEYWORDS_QG if k in title_lower]
+        is_trend = any(w in title_lower for w in _TREND_WORDS)
+
+        if not found_measures and not found_dims:
+            # Generic question for the section
+            q_id_counter += 1
+            questions.append({
+                "questionId": f"pq_{q_id_counter}",
+                "intent": f"What are the key findings in the section on {title}?",
+                "questionType": "describe",
+                "sourceHeading": title,
+                "sourcePageIndex": page_idx,
+                "requiredEntities": [],
+                "_source": "programmatic_section",
+            })
+            continue
+
+        # Comparison question
+        measure_label = found_measures[0].upper() if found_measures else title
+        dim_label = found_dims[0].title() if found_dims else "category"
+
+        if is_trend:
+            q_id_counter += 1
+            questions.append({
+                "questionId": f"pq_{q_id_counter}",
+                "intent": f"What is the trend in {measure_label} across survey years?",
+                "questionType": "trend",
+                "sourceHeading": title,
+                "sourcePageIndex": page_idx,
+                "requiredEntities": [],
+                "_source": "programmatic_section",
+            })
+        else:
+            q_id_counter += 1
+            questions.append({
+                "questionId": f"pq_{q_id_counter}",
+                "intent": (
+                    f"How does {measure_label} vary across {dim_label}?"
+                    if found_dims else
+                    f"What is the {measure_label} and how does it compare across groups?"
+                ),
+                "questionType": "comparison",
+                "sourceHeading": title,
+                "sourcePageIndex": page_idx,
+                "requiredEntities": [],
+                "_source": "programmatic_section",
+            })
+
+    return questions
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Pass 2.5: Document Knowledge Graph (PROGRAMMATIC — no LLM)
 # ─────────────────────────────────────────────────────────────────────────────
 
