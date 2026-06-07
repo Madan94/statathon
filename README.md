@@ -19,25 +19,26 @@
 
 ---
 
-## NEW LAPTOP — COMPLETE SETUP GUIDE
+## NEW GPU LAPTOP — COMPLETE SETUP GUIDE
 
-> **This section covers everything needed to clone, configure, and run the full stack on a fresh Windows machine with an NVIDIA GPU (RTX 4050/4060/4070 6–8 GB VRAM).**
+> **Everything needed to run the full stack on a fresh Windows machine with NVIDIA GPU (RTX 4050/4060/4070, 6–8 GB VRAM). Docker handles Neo4j, Redis, LayoutLM, and vLLM. API + Dashboard run natively for fast dev.**
 
 ### Step 0: Install Prerequisites
 
-| Software | Version | Download |
-|----------|---------|----------|
-| **Git** | Latest | https://git-scm.com/download/win |
-| **Python** | 3.12.x | https://www.python.org/downloads/ (check "Add to PATH") |
-| **Node.js** | 20 LTS+ | https://nodejs.org/ |
-| **Docker Desktop** | Latest | https://www.docker.com/products/docker-desktop/ (enable WSL2 backend) |
-| **Poppler** | 24.x+ | https://github.com/osber/poppler-windows/releases — extract to `C:\poppler` |
-| **NVIDIA Driver** | 550+ | https://www.nvidia.com/drivers |
-| **NVIDIA Container Toolkit** | Latest | Installed via Docker Desktop GPU settings |
+| Software | Version | Download | Notes |
+|----------|---------|----------|-------|
+| **Git** | Latest | https://git-scm.com/download/win | |
+| **Python** | 3.12.x | https://www.python.org/downloads/ | Check "Add to PATH" |
+| **Node.js** | 20 LTS+ | https://nodejs.org/ | |
+| **Docker Desktop** | Latest | https://www.docker.com/products/docker-desktop/ | Enable WSL2 backend + GPU |
+| **Poppler** | 24.x+ | https://github.com/osber/poppler-windows/releases | Extract to `C:\poppler` |
+| **NVIDIA Driver** | 550+ | https://www.nvidia.com/drivers | Required for GPU containers |
 
 After installing Poppler, add `C:\poppler\Library\bin` to your system PATH.
 
-### Step 1: Clone the Repository
+Docker Desktop GPU setup: Settings → Resources → WSL Integration → enable. Then Settings → Docker Engine → confirm `"default-runtime": "nvidia"` or use `--gpus all`.
+
+### Step 1: Clone & Checkout
 
 ```powershell
 cd C:\Users\<you>\projects
@@ -46,21 +47,9 @@ cd statathon
 git checkout feature/rev-template
 ```
 
-### Step 2: Python Virtual Environment + Dependencies
+### Step 2: Create `.env` (Backend)
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-
-# Install all dependencies (Windows wheels)
-pip install -r requirements-windows.txt
-```
-
-This installs: FastAPI, PyTorch (CPU), sentence-transformers, pdfplumber, PyMuPDF, pdf2image, google-genai, reportlab, scikit-learn, pandas, neo4j driver, redis, celery, etc.
-
-### Step 3: Create `.env` (Backend)
-
-Create a file called `.env` in the repo root (`statathon/.env`):
+Create `statathon/.env`:
 
 ```env
 # ─── Core ───────────────────────────────────────────
@@ -70,24 +59,24 @@ DATABASE_URL=sqlite:///./statathon.db
 APP_ENV=development
 LOG_LEVEL=INFO
 
-# ─── CORS (allow dashboard) ────────────────────────
+# ─── CORS ──────────────────────────────────────────
 CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
-# ─── Storage (local) ───────────────────────────────
+# ─── Storage ───────────────────────────────────────
 UPLOAD_STORAGE_PATH=./storage/uploads
 REPORT_STORAGE_PATH=./storage/reports
 OBJECT_STORAGE_DISABLED=true
 
-# ─── Neo4j (disable if not using Docker) ──────────
-NEO4J_ENABLED=false
-# NEO4J_URI=bolt://localhost:7687
-# NEO4J_USER=neo4j
-# NEO4J_PASSWORD=mospi_secure_password
+# ─── Neo4j (Docker handles this — just set enabled) ──
+NEO4J_ENABLED=true
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=mospi_secure_password
 
-# ─── Redis (optional — for Celery workers) ────────
-# REDIS_URL=redis://localhost:6379/0
+# ─── Redis ─────────────────────────────────────────
+REDIS_URL=redis://localhost:6379/0
 
-# ─── Gemini (for report enrichment pass5) ─────────
+# ─── Gemini (for report enrichment pass5) ──────────
 GOOGLE_API_KEY=your-gemini-api-key-here
 
 # ─── Model cache ──────────────────────────────────
@@ -97,14 +86,18 @@ HUGGINGFACE_HUB_CACHE=./model/cache
 EXTRACTION_PIPELINE=v2
 LAYOUTLM_ENDPOINT=http://localhost:8001
 SGLANG_ENDPOINT=http://localhost:8002
+SGLANG_MODEL=Qwen/Qwen2.5-VL-3B-Instruct-AWQ
+SGLANG_TIMEOUT=120
 LAYOUTLM_TIMEOUT=300
 POPPLER_PATH=C:/poppler/Library/bin
+VLM_MAX_IMAGE_DIM=800
+VLM_MAX_CONSECUTIVE_FAIL=3
 
-# ─── Dev auth (auto-creates test officer) ─────────
+# ─── Dev auth ─────────────────────────────────────
 DEV_AUTH_ENABLED=true
 ```
 
-### Step 4: Create `dashboard/.env.local` (Frontend)
+### Step 3: Create `dashboard/.env.local`
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
@@ -113,23 +106,80 @@ MAIL_INTERNAL_SECRET=any-shared-secret-here
 SMTP_DEV_LOG_OTP=true
 ```
 
-### Step 5: Start the API Backend
+### Step 4: Start Docker Services (Neo4j + Redis + LayoutLM + vLLM)
 
 ```powershell
-# From repo root, activate venv
-.\.venv\Scripts\Activate.ps1
+# From repo root — starts Neo4j, Redis (always), LayoutLM + vLLM (gpu profile)
+docker compose --profile gpu up -d
+```
 
-# Start API server
+**What this starts:**
+
+| Container | Image | Port | GPU? | First-boot time |
+|-----------|-------|------|------|-----------------|
+| `redis` | redis:7-alpine | 6379 | No | ~2s |
+| `neo4j` | neo4j:5 | 7474, 7687 | No | ~10s |
+| `layoutlm` | Built from Dockerfile.layoutlm | 8001 | No (CPU) | ~2min (downloads LayoutLMv3-large ~1.4GB) |
+| `sglang` | Built from Dockerfile.sglang | 8002 | Yes | ~2-5min (downloads Qwen2.5-VL-3B ~2.5GB) |
+
+**First run only**: LayoutLM and vLLM download model weights. These are cached in `./model/cache/` — subsequent starts take ~30s.
+
+```powershell
+# Watch vLLM startup (wait for "Uvicorn running on 0.0.0.0:8002")
+docker compose logs -f sglang
+
+# In another terminal, watch LayoutLM
+docker compose logs -f layoutlm
+```
+
+**If images aren't built yet:**
+
+```powershell
+# Build images first (only needed once, or after Dockerfile changes)
+docker compose --profile gpu build layoutlm sglang
+docker compose --profile gpu up -d
+```
+
+### Step 5: Verify Docker Services
+
+```powershell
+# Redis
+docker compose exec redis redis-cli ping
+# → PONG
+
+# Neo4j (wait ~15s after start)
+curl http://localhost:7474
+# → Neo4j browser HTML
+
+# LayoutLM (wait ~2min first time)
+curl http://localhost:8001/health
+# → {"status":"ok"}
+
+# vLLM (wait ~2-5min first time)
+curl http://localhost:8002/v1/models
+# → {"data":[{"id":"Qwen/Qwen2.5-VL-3B-Instruct-AWQ",...}]}
+```
+
+### Step 6: Start API Backend (Native Python)
+
+```powershell
+# New terminal — repo root
+cd statathon
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements-windows.txt
+
+# Start API
 cd api
 $env:PYTHONPATH = (Resolve-Path "..").Path
 python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Verify: open http://localhost:8000/health → `{"status":"ok"}`
+Verify: http://localhost:8000/health → `{"status":"ok"}`
 
 API docs: http://localhost:8000/docs
 
-### Step 6: Start the Dashboard
+### Step 7: Start Dashboard (Native Node.js)
 
 ```powershell
 # New terminal
@@ -138,82 +188,74 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000 — you should see the BharatStat landing page.
+Open http://localhost:3000
 
-### Step 7: (Optional) GPU Services for Report Builder V2
+### Step 8: First Run Workflow
 
-The Report Builder's multi-pass extraction pipeline uses two GPU services:
+1. **Login**: http://localhost:3000/login — with `DEV_AUTH_ENABLED=true`, access without credentials
+2. **Upload**: `/upload` → drag a CSV/XLSX (test files in `test_data/`)
+3. **Analyze**: Open dataset → "Run Analysis" → 5-step wizard
+4. **Report Builder**: `/report-builder` → upload reference PDF → "Extract Template"
+5. **Neo4j Browser**: http://localhost:7474 — user: `neo4j`, password: `mospi_secure_password`
+6. **Generate Report**: Select ready analysis + template → generate PDF
 
-#### 7a. LayoutLM Service (CPU — port 8001)
+---
 
-```powershell
-# In a new terminal from repo root
-.\.venv\Scripts\Activate.ps1
-cd services
-python layoutlm_service.py
-# Starts on http://localhost:8001
-```
+### Docker Compose Profiles
 
-Or via Docker:
+| Command | What starts |
+|---------|-------------|
+| `docker compose up -d` | Redis + Neo4j only |
+| `docker compose --profile gpu up -d` | Redis + Neo4j + LayoutLM + vLLM (GPU) |
+| `docker compose --profile full up -d` | Everything including Dashboard container |
 
-```bash
-docker run -d --name layoutlm -p 8001:8001 \
-  -v ./model/cache:/root/.cache/huggingface \
-  bharatstat/layoutlm-service:latest
-```
+### When Do You Need to Rebuild?
 
-#### 7b. vLLM / Qwen-VL Service (GPU — port 8002)
+| Scenario | Command | Time |
+|----------|---------|------|
+| **First clone** | `docker compose --profile gpu up -d` | ~5min (builds images + downloads models) |
+| **`git pull` with no Dockerfile changes** | `docker compose --profile gpu up -d` | ~30s (reuses cached images + models) |
+| **Dockerfile changed** | `docker compose --profile gpu build && docker compose --profile gpu up -d` | ~2-3min (rebuilds only changed layers) |
+| **Python code changed (API)** | Just restart uvicorn — `--reload` handles it | Instant |
+| **Dashboard code changed** | Auto hot-reload via `npm run dev` | Instant |
+| **docker-compose.yml env vars changed** | `docker compose --profile gpu up -d` | ~30s (recreates containers, reuses images) |
+| **Model cache exists in `./model/cache/`** | No download needed | ~30s startup |
 
-Requires NVIDIA GPU with ≥6 GB VRAM:
+**Key insight**: Model weights are stored in `./model/cache/` (bind mount, not a Docker volume). This means:
+- Models survive `docker compose down`
+- Models survive `docker system prune`
+- Models are shared between LayoutLM, vLLM, and the API
+- Moving to a new machine? Copy `model/cache/` folder to skip downloads
 
-```powershell
-docker run -d --name vllm --gpus all -p 8002:8000 \
-  --shm-size=4g \
-  -v C:\Users\<you>\.cache\huggingface:/root/.cache/huggingface \
-  vllm/vllm-openai:latest \
-  --model Qwen/Qwen2.5-VL-3B-Instruct-AWQ \
-  --gpu-memory-utilization 0.88 \
-  --max-model-len 1024 \
-  --swap-space 4 \
-  --enforce-eager \
-  --max-num-seqs 1 \
-  --trust-remote-code
-```
+### RTX 4050 (6GB) vs RTX 4070+ (8GB+)
 
-Wait ~60s for model load, then verify:
-
-```powershell
-curl http://localhost:8002/v1/models
-# Should list Qwen/Qwen2.5-VL-3B-Instruct-AWQ
-```
-
-### Step 8: (Optional) Docker Compose — Full Stack
-
-If you want everything in containers (except the dashboard for dev):
+Default is `Qwen2.5-VL-3B-Instruct-AWQ` (fits 6GB). For 8GB+ GPUs:
 
 ```powershell
-docker-compose up -d neo4j redis api
-cd dashboard && npm run dev
+$env:VLLM_MODEL = "Qwen/Qwen2.5-VL-7B-Instruct-AWQ"
+docker compose --profile gpu up -d sglang
 ```
 
-### Step 9: Verify Everything Works
+Also update `.env`:
+```
+SGLANG_MODEL=Qwen/Qwen2.5-VL-7B-Instruct-AWQ
+```
 
-| Service | URL | Expected |
-|---------|-----|----------|
-| API health | http://localhost:8000/health | `{"status":"ok"}` |
-| API DB | http://localhost:8000/health/db | `{"status":"ok","backend":"sqlite",...}` |
-| API docs | http://localhost:8000/docs | Swagger UI |
-| Dashboard | http://localhost:3000 | Landing page |
-| LayoutLM | http://localhost:8001/health | `{"status":"ok"}` (if running) |
-| vLLM | http://localhost:8002/v1/models | Model list (if running) |
+### Stopping & Cleanup
 
-### Step 10: First Run Workflow
+```powershell
+# Stop all containers (keeps data)
+docker compose --profile gpu down
 
-1. **Login**: Navigate to http://localhost:3000/login. With `DEV_AUTH_ENABLED=true` and `AUTH_REQUIRED=false`, you can access without credentials.
-2. **Upload**: Go to `/upload` → drag a CSV/XLSX file (test files in `test_data/`).
-3. **Analyze**: Open the dataset → click "Run Analysis" → watch the 5-step wizard.
-4. **Report Builder**: Go to `/report-builder` → upload a reference PDF template → "Extract Template" (needs LayoutLM + vLLM for V2 pipeline).
-5. **Generate Report**: Select a ready analysis + template → generate PDF.
+# Stop and remove volumes (deletes Neo4j data, Redis cache)
+docker compose --profile gpu down -v
+
+# View running containers
+docker compose ps
+
+# View GPU usage
+nvidia-smi
+```
 
 ---
 
@@ -224,26 +266,29 @@ cd dashboard && npm run dev
 | `pip install` fails on torch | Use `requirements-windows.txt` not `requirements.txt` |
 | `pdf2image` fails | Install Poppler, set `POPPLER_PATH` in `.env`, add to system PATH |
 | `ModuleNotFoundError: pipelines` | Set `PYTHONPATH` to repo root before running uvicorn |
-| vLLM OOM / 400 error | Reduce `--max-model-len 512`, increase `--swap-space 8` |
-| Dashboard 500 on API calls | Check `NEXT_PUBLIC_API_URL` matches running API port |
-| `sentence-transformers` slow first run | Downloads `all-MiniLM-L6-v2` (~80MB) on first semantic analysis |
-| Gemini 400 error | Ensure `GOOGLE_API_KEY` is set and model is `gemini-2.5-flash` |
-| Neo4j connection refused | Set `NEO4J_ENABLED=false` or start Neo4j Docker |
-| Port 8000 in use | Kill other Python/uvicorn or change port: `--port 8001` |
+| vLLM OOM / CUDA crash | Pipeline auto-falls back to pdfplumber + Gemini. No action needed |
+| vLLM won't start (CUDA error) | `wsl --shutdown` → restart Docker Desktop → `docker compose --profile gpu up -d sglang` |
+| Dashboard 500 on API calls | Check `NEXT_PUBLIC_API_URL=http://localhost:8000` in `dashboard/.env.local` |
+| `sentence-transformers` slow first run | Downloads `all-MiniLM-L6-v2` (~80MB) on first analysis |
+| Gemini 400 error | Ensure `GOOGLE_API_KEY` is set in `.env` |
+| Neo4j "connection refused" | Wait 15s after `docker compose up`, or check `docker compose logs neo4j` |
+| Port 8000 in use | Kill other processes: `Get-Process -Id (Get-NetTCPConnection -LocalPort 8000).OwningProcess` |
+| LayoutLM timeout | Increase `LAYOUTLM_TIMEOUT=600` in `.env` for large PDFs |
+| Docker "no matching manifest" | Ensure Docker Desktop uses Linux containers (not Windows) |
 
 ---
 
 ### Port Summary
 
-| Port | Service |
-|------|---------|
-| 3000 | Next.js Dashboard |
-| 8000 | FastAPI Backend |
-| 8001 | LayoutLM Service (CPU) |
-| 8002 | vLLM Qwen-VL (GPU) |
-| 7474 | Neo4j Browser (optional) |
-| 7687 | Neo4j Bolt (optional) |
-| 6379 | Redis (optional) |
+| Port | Service | Source |
+|------|---------|--------|
+| 3000 | Next.js Dashboard | Native `npm run dev` |
+| 8000 | FastAPI Backend | Native `uvicorn` |
+| 8001 | LayoutLM (CPU) | Docker |
+| 8002 | vLLM Qwen-VL (GPU) | Docker |
+| 7474 | Neo4j Browser | Docker |
+| 7687 | Neo4j Bolt | Docker |
+| 6379 | Redis | Docker |
 
 ---
 
