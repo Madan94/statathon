@@ -1,0 +1,7036 @@
+{
+  "topics": [
+    {
+      "topicId": "topic_02",
+      "title": "areas",
+      "description": "Questions from chapter: areas",
+      "questions": [
+        {
+          "questionId": "q1",
+          "intent": "What is the unemployment rate for persons aged 15 years?",
+          "questionType": "describe",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 3,
+          "sourceHeading": "Unemployment Rates (UR)",
+          "priority": "high"
+        },
+        {
+          "questionId": "q2",
+          "intent": "How has the unemployment rate for persons aged 15 years changed over time?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q2_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 3,
+          "sourceHeading": "Unemployment Rates (UR)",
+          "priority": "high"
+        },
+        {
+          "questionId": "q3",
+          "intent": "What is the unemployment rate for persons aged 15 years in urban areas?",
+          "questionType": "describe",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q3_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 3,
+          "sourceHeading": "Unemployment Rates (UR)",
+          "priority": "high"
+        },
+        {
+          "questionId": "q4",
+          "intent": "What is the unemployment rate for persons aged 15 years in rural areas?",
+          "questionType": "describe",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "Press Information Bureau",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q4_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 3,
+          "sourceHeading": "Unemployment Rates (UR)",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the unemployment rate for persons aged 15 and above in rural areas?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 3,
+          "sourceHeading": "Unemployment Rates (UR)",
+          "priority": "high"
+        },
+        {
+          "questionId": "q2",
+          "intent": "How has the unemployment rate for persons aged 15 and above in urban areas changed over time?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "Press Information Bureau",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q2_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 3,
+          "sourceHeading": "Unemployment Rates (UR)",
+          "priority": "high"
+        },
+        {
+          "questionId": "q3",
+          "intent": "What is the unemployment rate for males and females aged 15 and above in rural areas?",
+          "questionType": "comparison",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q3_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 3,
+          "sourceHeading": "Unemployment Rates (UR)",
+          "priority": "high"
+        },
+        {
+          "questionId": "q4",
+          "intent": "What is the unemployment rate for males and females aged 15 and above in urban areas?",
+          "questionType": "comparison",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "Press Inform",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q4_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 3,
+          "sourceHeading": "Unemployment Rates (UR)",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the trend in the percentage of workers with regular wage/salary employment?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "increase",
+          "priority": "high"
+        },
+        {
+          "questionId": "q2",
+          "intent": "How has the proportion of workers with regular wage/salary employment changed over time?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q2_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "proportion",
+          "priority": "high"
+        },
+        {
+          "questionId": "q3",
+          "intent": "What is the distribution of workers with regular wage/salary employment across different regions?",
+          "questionType": "distribution",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q3_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "workers",
+          "priority": "high"
+        },
+        {
+          "questionId": "q4",
+          "intent": "Which year saw the highest increase in the proportion of workers with regular wage/salary employment?",
+          "questionType": "ranking",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q4_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "increase",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the trend in the percentage of workers with regular wage/salary employment?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "trend",
+          "priority": "high"
+        },
+        {
+          "questionId": "q2",
+          "intent": "How has the percentage of female workers with regular wage/salary employment changed over time?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q2_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "trend",
+          "priority": "high"
+        },
+        {
+          "questionId": "q3",
+          "intent": "What is the overall increase in the percentage of workers with regular wage/salary employment?",
+          "questionType": "increase",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q3_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "increase",
+          "priority": "high"
+        },
+        {
+          "questionId": "q4",
+          "intent": "What is the percentage of male workers with regular wage/salary employment?",
+          "questionType": "percentage",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q4_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "percentage",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the trend in the percentage of workers with regular wage/salary employment in rural and urban areas over the years?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "Press Inform",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "trend_analysis",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the trend in the percentage of workers with regular wage/salary employment?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "wage/salaried employment",
+          "priority": "high"
+        },
+        {
+          "questionId": "q2",
+          "intent": "How has the percentage of workers with regular wage/salary employment changed over time?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q2_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "wage/salaried employment",
+          "priority": "high"
+        },
+        {
+          "questionId": "q3",
+          "intent": "What is the current percentage of workers with regular wage/salary employment?",
+          "questionType": "comparison",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q3_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "wage/salaried employment",
+          "priority": "high"
+        },
+        {
+          "questionId": "q4",
+          "intent": "What factors might have contributed to the increase in the percentage of workers with regular wage/salary employment?",
+          "questionType": "descriptive",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q4_c1",
+                "renderOrder": 1,
+                "type": "narrative_paragraph",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "wage/salaried employment",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the trend?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "grouped_bar_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "increase",
+          "priority": "high"
+        },
+        {
+          "questionId": "q2",
+          "intent": "What is the proportion?",
+          "questionType": "proportion",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q2_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "proportion",
+          "priority": "high"
+        },
+        {
+          "questionId": "q3",
+          "intent": "Who are the workers?",
+          "questionType": "describe",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q3_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "workers",
+          "priority": "high"
+        },
+        {
+          "questionId": "q4",
+          "intent": "What is the increase?",
+          "questionType": "increase",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q4_c1",
+                "renderOrder": 1,
+                "type": "grouped_bar_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "increase",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the trend in the percentage of workers with regular wage/salary employment in rural and urban areas over the years?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "Press Inform",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "trend_analysis",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the trend in the percentage of workers with regular wage/salary employment?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "trend",
+          "priority": "high"
+        },
+        {
+          "questionId": "q2",
+          "intent": "How has the percentage of workers with regular wage/salary employment changed over time?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q2_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "trend",
+          "priority": "high"
+        },
+        {
+          "questionId": "q3",
+          "intent": "What is the overall trend in the percentage of workers with regular wage/salary employment across different regions?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q3_c1",
+                "renderOrder": 1,
+                "type": "grouped_bar_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "trend",
+          "priority": "high"
+        },
+        {
+          "questionId": "q4",
+          "intent": "Is there an increase or decrease in the percentage of workers with regular wage/salary employment?",
+          "questionType": "comparison",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q4_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "comparison",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the trend in the percentage of workers with regular wage/salary employment in rural and urban areas over the years?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "Press Inform",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "20.2% in 2025, with only marginal variations across gender",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the trend in worker participation?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "grouped_bar_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "Manufacturing and service sectors",
+          "priority": "high"
+        },
+        {
+          "questionId": "q2",
+          "intent": "How has the average earnings of males changed over time?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q2_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "Male earnings",
+          "priority": "high"
+        },
+        {
+          "questionId": "q3",
+          "intent": "What is the distribution of workers in manufacturing and service sectors?",
+          "questionType": "distribution",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q3_c1",
+                "renderOrder": 1,
+                "type": "grouped_bar_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "Employment status",
+          "priority": "high"
+        },
+        {
+          "questionId": "q4",
+          "intent": "What is the average number of years for workers in self-employment?",
+          "questionType": "average",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q4_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "Years in self-employment",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the trend in worker participation in manufacturing and service sectors?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "grouped_bar_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "Manufacturing and service sectors",
+          "priority": "high"
+        },
+        {
+          "questionId": "q2",
+          "intent": "How has the average earnings of male self-employed workers changed over time?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q2_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "Self-employment",
+          "priority": "high"
+        },
+        {
+          "questionId": "q3",
+          "intent": "What is the distribution of workers in various employment statuses across different industries?",
+          "questionType": "distribution",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q3_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "Employment status",
+          "priority": "high"
+        },
+        {
+          "questionId": "q4",
+          "intent": "What is the percentage of workers in self-employment?",
+          "questionType": "percentage",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q4_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "Employment status",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the trend in worker participation across different industries?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "grouped_bar_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "manufacturing and service sectors",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the distribution of workers in manufacturing and service sectors?",
+          "questionType": "distribution",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "manufacturing and service sectors",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the percentage distribution of workers in manufacturing?",
+          "questionType": "distribution",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "pie_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "manufacturing",
+          "priority": "high"
+        },
+        {
+          "questionId": "q2",
+          "intent": "What is the percentage distribution of workers in service?",
+          "questionType": "distribution",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q2_c1",
+                "renderOrder": 1,
+                "type": "pie_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "service",
+          "priority": "high"
+        },
+        {
+          "questionId": "q3",
+          "intent": "How has the percentage of workers in manufacturing changed over time?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q3_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "manufacturing",
+          "priority": "high"
+        },
+        {
+          "questionId": "q4",
+          "intent": "How has the percentage of workers in service changed over time?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q4_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "service",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the trend in worker participation?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "grouped_bar_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "Manufacturing and service sectors",
+          "priority": "high"
+        },
+        {
+          "questionId": "q2",
+          "intent": "How has worker participation changed over time?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q2_c1",
+                "renderOrder": 1,
+                "type": "grouped_bar_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "Manufacturing and service sectors",
+          "priority": "high"
+        },
+        {
+          "questionId": "q3",
+          "intent": "What specific improvements have been observed in worker participation?",
+          "questionType": "descriptive",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q3_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "Manufacturing and service sectors",
+          "priority": "high"
+        },
+        {
+          "questionId": "q4",
+          "intent": "Which industries have seen the most significant improvements?",
+          "questionType": "ranking",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q4_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "Manufacturing and service sectors",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the percentage distribution of workers in manufacturing and service sectors?",
+          "questionType": "distribution",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "Press Inform",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "manufacturing and service sectors",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the trend in male earnings in self-employment?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 6,
+          "sourceHeading": "self-employment",
+          "priority": "high"
+        },
+        {
+          "questionId": "q2",
+          "intent": "How much did male earnings increase in self-employment between 2024 and 2025?",
+          "questionType": "comparison",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "Press Inform",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "q2_c1",
+                "renderOrder": 1,
+                "type": "grouped_bar_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 6,
+          "sourceHeading": "self-employment",
+          "priority": "high"
+        },
+        {
+          "questionId": "q3",
+          "intent": "What was the average number of years of formal education for workers in the manufacturing and service sectors?",
+          "questionType": "average",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q3_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 6,
+          "sourceHeading": "prior",
+          "priority": "high"
+        },
+        {
+          "questionId": "q4",
+          "intent": "What is the objective of the data presented in this section?",
+          "questionType": "brief",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q4_c1",
+                "renderOrder": 1,
+                "type": "narrative_paragraph",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 6,
+          "sourceHeading": "prior",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the trend in male earnings in self-employment between 2024 and 2025?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 6,
+          "sourceHeading": "self-employment earnings",
+          "priority": "high"
+        },
+        {
+          "questionId": "q1",
+          "intent": "What is the average number of years in formal education for workers in India?",
+          "questionType": "trend",
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "q1_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 6,
+          "sourceHeading": "7. Average number of years in formal education",
+          "priority": "high"
+        }
+      ],
+      "pageRange": [
+        3,
+        5
+      ]
+    }
+  ],
+  "entities": [
+    {
+      "entityId": "ent_001",
+      "name": "Press Re",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_002",
+      "name": "lease Pag",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_003",
+      "name": "e | Press Inform",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_004",
+      "name": "ation Bureau",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_005",
+      "name": ":49 AM",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_006",
+      "name": "Press Release Page",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_007",
+      "name": "| Press Information Bu",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_008",
+      "name": "re",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_009",
+      "name": "au",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_010",
+      "name": ":49 AM Press Releas",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_011",
+      "name": "e Page | Press",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_012",
+      "name": "Information",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_013",
+      "name": "Bureau",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_014",
+      "name": ":49 AM Press Release Page",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_015",
+      "name": "| Press Information",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_016",
+      "name": "Press Release",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_017",
+      "name": "Page | Pres",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_018",
+      "name": "s Information Bureau",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_019",
+      "name": "ress Release Page",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_020",
+      "name": "Press Relea",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_021",
+      "name": "se Page | Pres",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_022",
+      "name": "Press Releas",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_023",
+      "name": "Information B",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_024",
+      "name": "ureau",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_025",
+      "name": "se Page | Press",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_026",
+      "name": "Information Bure",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_027",
+      "name": "Scan the QR code below to access MoSPI\nPublications/ Reports",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_028",
+      "name": "Samrat",
+      "entityType": "dimension",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "pageIndex": 10,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_029",
+      "name": "Ministry of Statistics & Programme Implementation 6/6/26, 9:49 AM Press Release Page | Press Information Bureau",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_030",
+      "name": "engaged,",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_031",
+      "name": "those with a diploma/certificate, 79.1%",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_032",
+      "name": "those with graduation",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_033",
+      "name": "83.1%",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_034",
+      "name": "mainly undertaken by them to",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_035",
+      "name": "51.4%",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_036",
+      "name": "6/6/26, 9:49",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_037",
+      "name": "9:49 AM Press Release Page | Press Information Bureau",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_038",
+      "name": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_039",
+      "name": "(WPR) for persons of age 15 years and above",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_040",
+      "name": "male remained robust at 78.4%,",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_041",
+      "name": "78.4%, while WPR for",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_042",
+      "name": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 3/11",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_043",
+      "name": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_044",
+      "name": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and above",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_045",
+      "name": "and genders.",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_046",
+      "name": "areas",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_047",
+      "name": "areas contributed marginal decrease in overall urban UR to 4.8%.",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_048",
+      "name": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 4/11",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_049",
+      "name": "4. Increase in proportion of workers with regular wage/ salary employment",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_050",
+      "name": "52.0%) and female (66.5% to 64.2%).",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_051",
+      "name": "64.2%). This moderation has been",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_052",
+      "name": "wage/salaried employment, which rose from 22.4% to 23.6%;",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_053",
+      "name": "the increase is",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_054",
+      "name": "for both male (25.4%",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_055",
+      "name": "with only marginal",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_056",
+      "name": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 5/11",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_057",
+      "name": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_058",
+      "name": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_059",
+      "name": "workers",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_060",
+      "name": "(in usual status) by industry of work reflects a broadly stable",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_061",
+      "name": "6. Earnings of female workers have seen a notable shift",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_062",
+      "name": "6. Earnings of female workers have seen a notable shift Earnings of workers have shown a notable improvement",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_063",
+      "name": "have shown a notable improvement in recent years across categories, with gains",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_064",
+      "name": "for both male and female in nominal terms. In regular wage/salaried",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_065",
+      "name": "earnings rose from ₹17,126 to ₹18,353",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_066",
+      "name": "(about 7.2% growth).",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_067",
+      "name": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 6/11",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_068",
+      "name": "2025), while female earnings improved from ₹299 to ₹315 (about 5.4% growth).",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_069",
+      "name": "7. Average number of years in formal education",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_070",
+      "name": "persons aged 15 years and above, the average number of years in formal education",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_071",
+      "name": "all-India level in 2025, with male at 10.2 years and female at 9.9 years.",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_072",
+      "name": "year for female),",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_073",
+      "name": "while",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_074",
+      "name": "stand at 9.3",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_075",
+      "name": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 7/11",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_076",
+      "name": "Endnote: A brief about the objective, sample size, changes in sample design, conceptual",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_077",
+      "name": "and",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_078",
+      "name": "comparability of results of the Periodic Labour Force Survey (PLFS):",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_079",
+      "name": "from the July–June",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_080",
+      "name": "cycle",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_081",
+      "name": "(i.e., calendar year) from 2025. The revamped PLFS design is",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_082",
+      "name": "in the Current Weekly Status (CWS) at all-India",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_083",
+      "name": "and urban areas",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_084",
+      "name": "and urban",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_085",
+      "name": "July 2023-June",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_086",
+      "name": "2023-June 2024. Additionally, key employment and unemployment indicators for the",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_087",
+      "name": "years 2021 to 2024",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_088",
+      "name": "also released at the all-India",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_089",
+      "name": "(January 2025-December",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_090",
+      "name": "based on the calendar year (January 2025-December 2025) as the survey period. B. Sample Size",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_091",
+      "name": "allotted for the survey at the all-India",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_092",
+      "name": "(1,48,718 in",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_093",
+      "name": "and number of persons surveyed was 11,48,634",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_094",
+      "name": "(6,56,160 in",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_095",
+      "name": "4,92,474 in urban",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_096",
+      "name": "key",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_097",
+      "name": "market",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_098",
+      "name": "presented",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_099",
+      "name": "2025, are presented below: From January 2025, the revamped design covers both rural and urban",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_100",
+      "name": "consists of the list",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_101",
+      "name": "frame now consists of the list of census villages/sub-units in rural areas and UFS blocks/sub- units in urban areas.",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_102",
+      "name": "Districts",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_103",
+      "name": "treated as basic strata, separately for",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_104",
+      "name": "the",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_105",
+      "name": "with",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_106",
+      "name": "NSS regions. In the remaining parts",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_107",
+      "name": "headquarters/cities and for large urban",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_108",
+      "name": "stratum/sub-stratum",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_109",
+      "name": "month and no provision for independent sub-samples.",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_110",
+      "name": "among the persons in the labour force. d. Activity Status - Usual Status: The",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_111",
+      "name": "The activity status of a person is determined on the basis",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_112",
+      "name": "the activities pursued",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_113",
+      "name": "e. Principal activity status (ps): The activity status on which a person spent relatively",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_114",
+      "name": "long time",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_115",
+      "name": "(major time criterion) during 365 days preceding the date of survey,",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_116",
+      "name": "considered the usual principal activity status of the person. f. Subsidiary economic activity status (ss): The activity",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_117",
+      "name": "The activity status in which a",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_118",
+      "name": "post-January 2025",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_119",
+      "name": "*** Samrat 9:49 AM Press Release Page | Press Information Bureau",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 10,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_120",
+      "name": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 11/11",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 10,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_121",
+      "name": "Labour Force Participation Rate",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_122",
+      "name": "Worker Population Ratio",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_123",
+      "name": "Unemployment rate",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_124",
+      "name": "Periodic",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_125",
+      "name": "Labour",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_126",
+      "name": "Force",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_127",
+      "name": "Survey",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_128",
+      "name": "(PLFS)",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_129",
+      "name": "Annual",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_130",
+      "name": "Report,",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_131",
+      "name": "2025",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_132",
+      "name": "[January,",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_133",
+      "name": "December,",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_134",
+      "name": "2025]",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_135",
+      "name": "Snapshot",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_136",
+      "name": "findings",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_137",
+      "name": "Urban self-employed male",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_138",
+      "name": "Urban female",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_139",
+      "name": "Rural areas",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_140",
+      "name": "Regular wage/salary",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_141",
+      "name": "Casual labour",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_142",
+      "name": "Youth",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_143",
+      "name": "Unemployed persons",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_144",
+      "name": "Formal education",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_145",
+      "name": "Age group 15 years and above",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_146",
+      "name": "Age group 15-29 years",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_147",
+      "name": "Age group 15-59 years",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_148",
+      "name": "Age group 15-24 years",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_149",
+      "name": "Highligts",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_150",
+      "name": "PLFS,",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_151",
+      "name": "Report",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_152",
+      "name": "Stable",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_153",
+      "name": "Participation",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_154",
+      "name": "Rate",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_155",
+      "name": "(LFPR)",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_156",
+      "name": "persons",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_157",
+      "name": "years",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_158",
+      "name": "above",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_159",
+      "name": "for",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_160",
+      "name": "age",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_161",
+      "name": "LFPR",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_162",
+      "name": "Worker Population Ratio (WPR)",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_163",
+      "name": "urban areas",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_164",
+      "name": "males",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_165",
+      "name": "females",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_166",
+      "name": "2022",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_167",
+      "name": "2023",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_168",
+      "name": "2024",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_169",
+      "name": "Worker",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_170",
+      "name": "Population",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_171",
+      "name": "Ratio",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_172",
+      "name": "(WPR)",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_173",
+      "name": "remains",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_174",
+      "name": "sustained",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 2,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_175",
+      "name": "UR estimates",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_176",
+      "name": "unemployment rates",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_177",
+      "name": "persons age 15 years and above",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_178",
+      "name": "Unemployment",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_179",
+      "name": "Rates",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_180",
+      "name": "(UR)",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_181",
+      "name": "reflect",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_182",
+      "name": "stability",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_183",
+      "name": "improvement",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 3,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_184",
+      "name": "UR(%) in usual status (ps+ss) for persons of age 15 years and above in rural areas",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_185",
+      "name": "UR(%) in usual status (ps+ss) for persons of age 15 years and above in urban areas",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_186",
+      "name": "Increase",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_187",
+      "name": "proportion",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_188",
+      "name": "regular",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_189",
+      "name": "wage/",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_190",
+      "name": "salary",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_191",
+      "name": "employment",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 4,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_192",
+      "name": "percentage distribution of workers",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_193",
+      "name": "employment status",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_194",
+      "name": "manufacturing and service sectors",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_195",
+      "name": "female workers",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_196",
+      "name": "Manufacturing",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_197",
+      "name": "service",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_198",
+      "name": "sectors",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_199",
+      "name": "witnessed",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_200",
+      "name": "enhanced",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_201",
+      "name": "Earnings",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_202",
+      "name": "female",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_203",
+      "name": "have",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_204",
+      "name": "seen",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_205",
+      "name": "notable",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_206",
+      "name": "shift",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 5,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_207",
+      "name": "self-employment",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_208",
+      "name": "male earnings",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_209",
+      "name": "female earnings",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_210",
+      "name": "Average",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_211",
+      "name": "number",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_212",
+      "name": "formal",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_213",
+      "name": "education",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 6,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_214",
+      "name": "Periodic Labour Force Survey (PLFS)",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_215",
+      "name": "Current Weekly Status (CWS)",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_216",
+      "name": "Annual Reports",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_217",
+      "name": "Endnote:",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_218",
+      "name": "brief",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_219",
+      "name": "about",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_220",
+      "name": "objective,",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_221",
+      "name": "sample",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_222",
+      "name": "size,",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_223",
+      "name": "changes",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_224",
+      "name": "design,",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_225",
+      "name": "conceptual",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_226",
+      "name": "framework",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_227",
+      "name": "comparability",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_228",
+      "name": "results",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_229",
+      "name": "(PLFS):",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_230",
+      "name": "Introduction",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_231",
+      "name": "Size",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 7,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_232",
+      "name": "PLFS",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_233",
+      "name": "First Visit",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_234",
+      "name": "Annual Report",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_235",
+      "name": "Sample Size",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_236",
+      "name": "Sample Design",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_237",
+      "name": "Changes in Sample Design",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_238",
+      "name": "Frequency and Representativeness",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_239",
+      "name": "Key Labour Market Indicators",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_240",
+      "name": "Sampling Design",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_241",
+      "name": "Sample Design of PLFS",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_242",
+      "name": "Sample Frame",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_243",
+      "name": "Sample Units",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_244",
+      "name": "Sample Schemes",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_245",
+      "name": "First",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_246",
+      "name": "Visit",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_247",
+      "name": "during",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_248",
+      "name": "January",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_249",
+      "name": "December",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_250",
+      "name": "rural",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_251",
+      "name": "urban",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_252",
+      "name": "Report:",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_253",
+      "name": "Design",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_254",
+      "name": "PLFS:",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_255",
+      "name": "Indicators",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_256",
+      "name": "(LFPR):",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_257",
+      "name": "Activity Status - Usual Status",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_258",
+      "name": "Principal activity status",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_259",
+      "name": "Subsidary economic activity status",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_260",
+      "name": "Activity Status - Current Weekly Status",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_261",
+      "name": "(WPR):",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_262",
+      "name": "(UR):",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_263",
+      "name": "Activity",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_264",
+      "name": "Status",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_265",
+      "name": "Usual",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_266",
+      "name": "Status:",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_267",
+      "name": "Principal",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_268",
+      "name": "(ps):",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_269",
+      "name": "Subsidiary",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_270",
+      "name": "economic",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_271",
+      "name": "(ss):",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_272",
+      "name": "Current",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_273",
+      "name": "Weekly",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_274",
+      "name": "(CWS):",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_275",
+      "name": "Compatibility",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_276",
+      "name": "Detailed",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_277",
+      "name": "tables",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_278",
+      "name": "included",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_279",
+      "name": "Scan",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_280",
+      "name": "code",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_281",
+      "name": "below",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_282",
+      "name": "access",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_283",
+      "name": "MoSPI",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_284",
+      "name": "Publications/",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_285",
+      "name": "Reports",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_286",
+      "name": "Release ID: 2246009",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 10,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_287",
+      "name": "Visitor Counter: 40393",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 10,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_288",
+      "name": "***",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "pageIndex": 10,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    }
+  ],
+  "tableStructures": [
+    {
+      "tableId": "tbl_1_1",
+      "page": 0,
+      "columns": [
+        "",
+        "",
+        "",
+        "Press Re",
+        "lease Pag",
+        "e | Press Inform",
+        "ation Bureau",
+        "",
+        "",
+        ""
+      ],
+      "dimensions": [
+        "Press Re",
+        "lease Pag",
+        "e | Press Inform",
+        "ation Bureau"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "row_count": 60,
+      "description": "Table with 10 columns, 60 rows"
+    },
+    {
+      "tableId": "tbl_2_1",
+      "page": 1,
+      "columns": [
+        ":49 AM",
+        "",
+        "",
+        "Press Release Page",
+        "| Press Information Bu",
+        "re",
+        "au",
+        "",
+        ""
+      ],
+      "dimensions": [
+        ":49 AM",
+        "Press Release Page",
+        "| Press Information Bu",
+        "re",
+        "au"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "row_count": 66,
+      "description": "Table with 9 columns, 66 rows"
+    },
+    {
+      "tableId": "tbl_3_1",
+      "page": 2,
+      "columns": [
+        ":49 AM Press Releas",
+        "e Page | Press",
+        "Information",
+        "Bureau",
+        ""
+      ],
+      "dimensions": [
+        ":49 AM Press Releas",
+        "e Page | Press",
+        "Information",
+        "Bureau"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "row_count": 10,
+      "description": "Table with 5 columns, 10 rows"
+    },
+    {
+      "tableId": "tbl_4_1",
+      "page": 3,
+      "columns": [
+        ":49 AM Press Release Page",
+        "| Press Information",
+        "Bureau",
+        ""
+      ],
+      "dimensions": [
+        ":49 AM Press Release Page",
+        "| Press Information",
+        "Bureau"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "row_count": 13,
+      "description": "Table with 4 columns, 13 rows"
+    },
+    {
+      "tableId": "tbl_5_1",
+      "page": 4,
+      "columns": [
+        ":49 AM",
+        "",
+        "",
+        "",
+        "Press Release",
+        "Page | Pres",
+        "s Information Bureau",
+        ""
+      ],
+      "dimensions": [
+        ":49 AM",
+        "Press Release",
+        "Page | Pres",
+        "s Information Bureau"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "row_count": 17,
+      "description": "Table with 8 columns, 17 rows"
+    },
+    {
+      "tableId": "tbl_6_1",
+      "page": 5,
+      "columns": [
+        ":49 AM",
+        "",
+        "P",
+        "ress Release Page",
+        "| Press Information",
+        "Bureau",
+        ""
+      ],
+      "dimensions": [
+        ":49 AM",
+        "P",
+        "ress Release Page",
+        "| Press Information",
+        "Bureau"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "row_count": 22,
+      "description": "Table with 7 columns, 22 rows"
+    },
+    {
+      "tableId": "tbl_7_1",
+      "page": 6,
+      "columns": [
+        ":49 AM",
+        "",
+        "",
+        "",
+        "",
+        "Press Relea",
+        "se Page | Pres",
+        "s Information Bureau",
+        "",
+        ""
+      ],
+      "dimensions": [
+        ":49 AM",
+        "Press Relea",
+        "se Page | Pres",
+        "s Information Bureau"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "row_count": 26,
+      "description": "Table with 10 columns, 26 rows"
+    },
+    {
+      "tableId": "tbl_8_1",
+      "page": 7,
+      "columns": [
+        ":49 AM",
+        "",
+        "Press Releas",
+        "e Page | Press",
+        "Information B",
+        "ureau",
+        ""
+      ],
+      "dimensions": [
+        ":49 AM",
+        "Press Releas",
+        "e Page | Press",
+        "Information B",
+        "ureau"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "row_count": 52,
+      "description": "Table with 7 columns, 52 rows"
+    },
+    {
+      "tableId": "tbl_9_1",
+      "page": 8,
+      "columns": [
+        ":49 AM",
+        "",
+        "Press Relea",
+        "se Page | Press",
+        "Information Bure",
+        "au",
+        ""
+      ],
+      "dimensions": [
+        ":49 AM",
+        "Press Relea",
+        "se Page | Press",
+        "Information Bure",
+        "au"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "row_count": 78,
+      "description": "Table with 7 columns, 78 rows"
+    }
+  ],
+  "documentMap": {
+    "title": "machi_valga",
+    "chapters": [
+      {
+        "chapterId": "ch_01",
+        "title": "Ministry of Statistics & Programme Implementation 6/6/26, 9:49 AM Press Release Page | Press Information Bureau",
+        "pageRange": [
+          0,
+          3
+        ],
+        "level": 2,
+        "sections": [
+          {
+            "sectionId": "sec_01_01",
+            "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025] Posted On: 27 MAR 2026 4:00PM b",
+            "page": 0,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_01_02",
+            "title": "engaged,",
+            "page": 0,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_01_03",
+            "title": "male and female stood at 79.1% and 40.0%, respectively, in 2025. Worker Population Ratio (WPR) in usual status (ps+ss) f",
+            "page": 0,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_01_04",
+            "title": "WPR for male and female was 76.6% and 38.8%, respectively. Among male, 69.8% reported want to continue studies as the ma",
+            "page": 0,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_01_05",
+            "title": "those with a diploma/certificate, 79.1%",
+            "page": 0,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_01_06",
+            "title": "those with graduation",
+            "page": 0,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_01_07",
+            "title": "83.1%",
+            "page": 0,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_01_08",
+            "title": "mainly undertaken by them to",
+            "page": 1,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_01_09",
+            "title": "6/6/26, 9:49",
+            "page": 2,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_01_10",
+            "title": "9:49 AM Press Release Page | Press Information Bureau",
+            "page": 2,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_01_11",
+            "title": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains",
+            "page": 2,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_01_12",
+            "title": "(WPR) for persons of age 15 years and above",
+            "page": 2,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_01_13",
+            "title": "male remained robust at 78.4%,",
+            "page": 2,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_01_14",
+            "title": "78.4%, while WPR for",
+            "page": 2,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_01_15",
+            "title": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 3/11",
+            "page": 2,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_01_16",
+            "title": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15",
+            "page": 3,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_01_17",
+            "title": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and above",
+            "page": 3,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_01_18",
+            "title": "and genders.",
+            "page": 3,
+            "level": 2
+          }
+        ]
+      },
+      {
+        "chapterId": "ch_02",
+        "title": "areas",
+        "pageRange": [
+          3,
+          5
+        ],
+        "level": 1,
+        "sections": [
+          {
+            "sectionId": "sec_02_01",
+            "title": "areas contributed marginal decrease in overall urban UR to 4.8%.",
+            "page": 3,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_02_02",
+            "title": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 4/11",
+            "page": 3,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_02_03",
+            "title": "4. Increase in proportion of workers with regular wage/ salary employment",
+            "page": 4,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_02_04",
+            "title": "52.0%) and female (66.5% to 64.2%).",
+            "page": 4,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_02_05",
+            "title": "64.2%). This moderation has been",
+            "page": 4,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_02_06",
+            "title": "wage/salaried employment, which rose from 22.4% to 23.6%;",
+            "page": 4,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_02_07",
+            "title": "the increase is",
+            "page": 4,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_02_08",
+            "title": "for both male (25.4%",
+            "page": 4,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_02_09",
+            "title": "with only marginal",
+            "page": 4,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_02_10",
+            "title": "20.2% in 2025), with only marginal variations across gender. https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&r",
+            "page": 4,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_02_11",
+            "title": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau",
+            "page": 5,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_02_12",
+            "title": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+            "page": 5,
+            "level": 2
+          }
+        ]
+      },
+      {
+        "chapterId": "ch_03",
+        "title": "workers",
+        "pageRange": [
+          5,
+          6
+        ],
+        "level": 1,
+        "sections": [
+          {
+            "sectionId": "sec_03_01",
+            "title": "(in usual status) by industry of work reflects a broadly stable",
+            "page": 5,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_03_02",
+            "title": "6. Earnings of female workers have seen a notable shift",
+            "page": 5,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_03_03",
+            "title": "6. Earnings of female workers have seen a notable shift Earnings of workers have shown a notable improvement",
+            "page": 5,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_03_04",
+            "title": "have shown a notable improvement in recent years across categories, with gains",
+            "page": 5,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_03_05",
+            "title": "for both male and female in nominal terms. In regular wage/salaried",
+            "page": 5,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_03_06",
+            "title": "In self-employment, male earnings increased from ₹16,893 in 2024 to ₹17,914 6/6/26, 9:49 AM Press Release Page | Press I",
+            "page": 6,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_03_07",
+            "title": "2025), while female earnings improved from ₹299 to ₹315 (about 5.4% growth).",
+            "page": 6,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_03_08",
+            "title": "7. Average number of years in formal education",
+            "page": 6,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_03_09",
+            "title": "persons aged 15 years and above, the average number of years in formal education",
+            "page": 6,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_03_10",
+            "title": "all-India level in 2025, with male at 10.2 years and female at 9.9 years.",
+            "page": 6,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_03_11",
+            "title": "female) compared to rural areas (9.6 years and 9.2 years, respectively). A similar pattern is observed for persons aged ",
+            "page": 6,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_03_12",
+            "title": "year for female),",
+            "page": 6,
+            "level": 3
+          }
+        ]
+      },
+      {
+        "chapterId": "ch_04",
+        "title": "while",
+        "pageRange": [
+          6,
+          7
+        ],
+        "level": 1,
+        "sections": [
+          {
+            "sectionId": "sec_04_01",
+            "title": "Endnote: A brief about the objective, sample size, changes in sample design, conceptual",
+            "page": 7,
+            "level": 2
+          }
+        ]
+      },
+      {
+        "chapterId": "ch_05",
+        "title": "and",
+        "pageRange": [
+          7,
+          7
+        ],
+        "level": 1,
+        "sections": [
+          {
+            "sectionId": "sec_05_01",
+            "title": "comparability of results of the Periodic Labour Force Survey (PLFS):",
+            "page": 7,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_05_02",
+            "title": "from the July–June",
+            "page": 7,
+            "level": 3
+          }
+        ]
+      },
+      {
+        "chapterId": "ch_06",
+        "title": "cycle",
+        "pageRange": [
+          7,
+          8
+        ],
+        "level": 1,
+        "sections": [
+          {
+            "sectionId": "sec_06_01",
+            "title": "(i.e., calendar year) from 2025. The revamped PLFS design is",
+            "page": 7,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_06_02",
+            "title": "in the Current Weekly Status (CWS) at all-India",
+            "page": 7,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_06_03",
+            "title": "urban areas in the Current Weekly Status (CWS) at all-India level to extend the coverage of the Quarterly results of PLF",
+            "page": 7,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_06_04",
+            "title": "allotted for the survey at the all-India",
+            "page": 8,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_06_05",
+            "title": "(1,48,718 in",
+            "page": 8,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_06_06",
+            "title": "and number of persons surveyed was 11,48,634",
+            "page": 8,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_06_07",
+            "title": "(6,56,160 in",
+            "page": 8,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_06_08",
+            "title": "4,92,474 in urban",
+            "page": 8,
+            "level": 2
+          }
+        ]
+      },
+      {
+        "chapterId": "ch_07",
+        "title": "key",
+        "pageRange": [
+          8,
+          8
+        ],
+        "level": 1,
+        "sections": []
+      },
+      {
+        "chapterId": "ch_08",
+        "title": "market",
+        "pageRange": [
+          8,
+          9
+        ],
+        "level": 1,
+        "sections": [
+          {
+            "sectionId": "sec_08_01",
+            "title": "key labour market indicators. The salient features of the revised sampling design, as adopted from January 2025, are pre",
+            "page": 8,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_02",
+            "title": "among the persons in the labour force. d. Activity Status - Usual Status: The",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_03",
+            "title": "The activity status of a person is determined on the basis",
+            "page": 9,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_08_04",
+            "title": "the activities pursued",
+            "page": 9,
+            "level": 2
+          }
+        ]
+      },
+      {
+        "chapterId": "ch_09",
+        "title": "the",
+        "pageRange": [
+          9,
+          10
+        ],
+        "level": 1,
+        "sections": [
+          {
+            "sectionId": "sec_09_01",
+            "title": "e. Principal activity status (ps): The activity status on which a person spent relatively",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_09_02",
+            "title": "long time",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_09_03",
+            "title": "(major time criterion) during 365 days preceding the date of survey,",
+            "page": 9,
+            "level": 3
+          },
+          {
+            "sectionId": "sec_09_04",
+            "title": "considered the usual principal activity status of the person. f. Subsidiary economic activity status (ss): The activity",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_09_05",
+            "title": "*** Samrat 9:49 AM Press Release Page | Press Information Bureau",
+            "page": 10,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_09_06",
+            "title": "(Release ID: 2246009) Visitor Counter : 40393 Read this release in: िह\u0000ी https://www.pib.gov.in/PressReleasePage.aspx?PR",
+            "page": 10,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_09_07",
+            "title": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 11/11",
+            "page": 10,
+            "level": 2
+          }
+        ]
+      }
+    ],
+    "sectionPatterns": [
+      {
+        "sectionId": "sec_01_01",
+        "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025] Posted On: 27 MAR 2026 4:00PM b",
+        "pageRange": [
+          0,
+          0
+        ],
+        "pattern": "demographic_breakdown",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "data_table",
+          "pie_chart"
+        ]
+      },
+      {
+        "sectionId": "sec_01_02",
+        "title": "engaged,",
+        "pageRange": [
+          0,
+          0
+        ],
+        "pattern": "demographic_breakdown",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "data_table",
+          "pie_chart"
+        ]
+      },
+      {
+        "sectionId": "sec_01_03",
+        "title": "male and female stood at 79.1% and 40.0%, respectively, in 2025. Worker Population Ratio (WPR) in usual status (ps+ss) f",
+        "pageRange": [
+          0,
+          0
+        ],
+        "pattern": "demographic_breakdown",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "data_table",
+          "pie_chart"
+        ]
+      },
+      {
+        "sectionId": "sec_01_04",
+        "title": "WPR for male and female was 76.6% and 38.8%, respectively. Among male, 69.8% reported want to continue studies as the ma",
+        "pageRange": [
+          0,
+          0
+        ],
+        "pattern": "demographic_breakdown",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "data_table",
+          "pie_chart"
+        ]
+      },
+      {
+        "sectionId": "sec_01_05",
+        "title": "those with a diploma/certificate, 79.1%",
+        "pageRange": [
+          0,
+          0
+        ],
+        "pattern": "demographic_breakdown",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "data_table",
+          "pie_chart"
+        ]
+      },
+      {
+        "sectionId": "sec_01_06",
+        "title": "those with graduation",
+        "pageRange": [
+          0,
+          0
+        ],
+        "pattern": "demographic_breakdown",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "data_table",
+          "pie_chart"
+        ]
+      },
+      {
+        "sectionId": "sec_01_07",
+        "title": "83.1%",
+        "pageRange": [
+          0,
+          0
+        ],
+        "pattern": "demographic_breakdown",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "data_table",
+          "pie_chart"
+        ]
+      },
+      {
+        "sectionId": "sec_01_08",
+        "title": "mainly undertaken by them to",
+        "pageRange": [
+          1,
+          1
+        ],
+        "pattern": "trend_analysis",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_01_09",
+        "title": "6/6/26, 9:49",
+        "pageRange": [
+          2,
+          2
+        ],
+        "pattern": "trend_analysis",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_01_10",
+        "title": "9:49 AM Press Release Page | Press Information Bureau",
+        "pageRange": [
+          2,
+          2
+        ],
+        "pattern": "trend_analysis",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_01_11",
+        "title": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains",
+        "pageRange": [
+          2,
+          2
+        ],
+        "pattern": "trend_analysis",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_01_12",
+        "title": "(WPR) for persons of age 15 years and above",
+        "pageRange": [
+          2,
+          2
+        ],
+        "pattern": "trend_analysis",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_01_13",
+        "title": "male remained robust at 78.4%,",
+        "pageRange": [
+          2,
+          2
+        ],
+        "pattern": "trend_analysis",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_01_14",
+        "title": "78.4%, while WPR for",
+        "pageRange": [
+          2,
+          2
+        ],
+        "pattern": "trend_analysis",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_01_15",
+        "title": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 3/11",
+        "pageRange": [
+          2,
+          2
+        ],
+        "pattern": "trend_analysis",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_01_16",
+        "title": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15",
+        "pageRange": [
+          3,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_01_17",
+        "title": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and above",
+        "pageRange": [
+          3,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_01_18",
+        "title": "and genders.",
+        "pageRange": [
+          3,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 2,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_02_01",
+        "title": "areas contributed marginal decrease in overall urban UR to 4.8%.",
+        "pageRange": [
+          3,
+          3
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_02_02",
+        "title": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 4/11",
+        "pageRange": [
+          3,
+          3
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_02_03",
+        "title": "4. Increase in proportion of workers with regular wage/ salary employment",
+        "pageRange": [
+          4,
+          4
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_02_04",
+        "title": "52.0%) and female (66.5% to 64.2%).",
+        "pageRange": [
+          4,
+          4
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_02_05",
+        "title": "64.2%). This moderation has been",
+        "pageRange": [
+          4,
+          4
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_02_06",
+        "title": "wage/salaried employment, which rose from 22.4% to 23.6%;",
+        "pageRange": [
+          4,
+          4
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_02_07",
+        "title": "the increase is",
+        "pageRange": [
+          4,
+          4
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_02_08",
+        "title": "for both male (25.4%",
+        "pageRange": [
+          4,
+          4
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_02_09",
+        "title": "with only marginal",
+        "pageRange": [
+          4,
+          4
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_02_10",
+        "title": "20.2% in 2025), with only marginal variations across gender. https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&r",
+        "pageRange": [
+          4,
+          4
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_02_11",
+        "title": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau",
+        "pageRange": [
+          5,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_02_12",
+        "title": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+        "pageRange": [
+          5,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_03_01",
+        "title": "(in usual status) by industry of work reflects a broadly stable",
+        "pageRange": [
+          5,
+          5
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_03_02",
+        "title": "6. Earnings of female workers have seen a notable shift",
+        "pageRange": [
+          5,
+          5
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_03_03",
+        "title": "6. Earnings of female workers have seen a notable shift Earnings of workers have shown a notable improvement",
+        "pageRange": [
+          5,
+          5
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_03_04",
+        "title": "have shown a notable improvement in recent years across categories, with gains",
+        "pageRange": [
+          5,
+          5
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_03_05",
+        "title": "for both male and female in nominal terms. In regular wage/salaried",
+        "pageRange": [
+          5,
+          5
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_03_06",
+        "title": "In self-employment, male earnings increased from ₹16,893 in 2024 to ₹17,914 6/6/26, 9:49 AM Press Release Page | Press I",
+        "pageRange": [
+          6,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_03_07",
+        "title": "2025), while female earnings improved from ₹299 to ₹315 (about 5.4% growth).",
+        "pageRange": [
+          6,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_03_08",
+        "title": "7. Average number of years in formal education",
+        "pageRange": [
+          6,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_03_09",
+        "title": "persons aged 15 years and above, the average number of years in formal education",
+        "pageRange": [
+          6,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_03_10",
+        "title": "all-India level in 2025, with male at 10.2 years and female at 9.9 years.",
+        "pageRange": [
+          6,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_03_11",
+        "title": "female) compared to rural areas (9.6 years and 9.2 years, respectively). A similar pattern is observed for persons aged ",
+        "pageRange": [
+          6,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_03_12",
+        "title": "year for female),",
+        "pageRange": [
+          6,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_04_01",
+        "title": "Endnote: A brief about the objective, sample size, changes in sample design, conceptual",
+        "pageRange": [
+          7,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_05_01",
+        "title": "comparability of results of the Periodic Labour Force Survey (PLFS):",
+        "pageRange": [
+          7,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_05_02",
+        "title": "from the July–June",
+        "pageRange": [
+          7,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_06_01",
+        "title": "(i.e., calendar year) from 2025. The revamped PLFS design is",
+        "pageRange": [
+          7,
+          7
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_06_02",
+        "title": "in the Current Weekly Status (CWS) at all-India",
+        "pageRange": [
+          7,
+          7
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_06_03",
+        "title": "urban areas in the Current Weekly Status (CWS) at all-India level to extend the coverage of the Quarterly results of PLF",
+        "pageRange": [
+          7,
+          7
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_06_04",
+        "title": "allotted for the survey at the all-India",
+        "pageRange": [
+          8,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_06_05",
+        "title": "(1,48,718 in",
+        "pageRange": [
+          8,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_06_06",
+        "title": "and number of persons surveyed was 11,48,634",
+        "pageRange": [
+          8,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_06_07",
+        "title": "(6,56,160 in",
+        "pageRange": [
+          8,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_06_08",
+        "title": "4,92,474 in urban",
+        "pageRange": [
+          8,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "ch_07",
+        "title": "key",
+        "pageRange": [
+          8,
+          10
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_08_01",
+        "title": "key labour market indicators. The salient features of the revised sampling design, as adopted from January 2025, are pre",
+        "pageRange": [
+          8,
+          8
+        ],
+        "pattern": "trend_analysis",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "line_chart",
+          "data_table"
+        ]
+      },
+      {
+        "sectionId": "sec_08_02",
+        "title": "among the persons in the labour force. d. Activity Status - Usual Status: The",
+        "pageRange": [
+          9,
+          10
+        ],
+        "pattern": "executive_summary",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      },
+      {
+        "sectionId": "sec_08_03",
+        "title": "The activity status of a person is determined on the basis",
+        "pageRange": [
+          9,
+          10
+        ],
+        "pattern": "executive_summary",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      },
+      {
+        "sectionId": "sec_08_04",
+        "title": "the activities pursued",
+        "pageRange": [
+          9,
+          10
+        ],
+        "pattern": "executive_summary",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      },
+      {
+        "sectionId": "sec_09_01",
+        "title": "e. Principal activity status (ps): The activity status on which a person spent relatively",
+        "pageRange": [
+          9,
+          9
+        ],
+        "pattern": "executive_summary",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      },
+      {
+        "sectionId": "sec_09_02",
+        "title": "long time",
+        "pageRange": [
+          9,
+          9
+        ],
+        "pattern": "executive_summary",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      },
+      {
+        "sectionId": "sec_09_03",
+        "title": "(major time criterion) during 365 days preceding the date of survey,",
+        "pageRange": [
+          9,
+          9
+        ],
+        "pattern": "executive_summary",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      },
+      {
+        "sectionId": "sec_09_04",
+        "title": "considered the usual principal activity status of the person. f. Subsidiary economic activity status (ss): The activity",
+        "pageRange": [
+          9,
+          9
+        ],
+        "pattern": "executive_summary",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      },
+      {
+        "sectionId": "sec_09_05",
+        "title": "*** Samrat 9:49 AM Press Release Page | Press Information Bureau",
+        "pageRange": [
+          10,
+          10
+        ],
+        "pattern": "executive_summary",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      },
+      {
+        "sectionId": "sec_09_06",
+        "title": "(Release ID: 2246009) Visitor Counter : 40393 Read this release in: िह\u0000ी https://www.pib.gov.in/PressReleasePage.aspx?PR",
+        "pageRange": [
+          10,
+          10
+        ],
+        "pattern": "executive_summary",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      },
+      {
+        "sectionId": "sec_09_07",
+        "title": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 11/11",
+        "pageRange": [
+          10,
+          10
+        ],
+        "pattern": "executive_summary",
+        "level": 1,
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      }
+    ]
+  }
+}
