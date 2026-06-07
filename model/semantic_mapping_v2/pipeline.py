@@ -37,6 +37,7 @@ import numpy as np
 import pandas as pd
 
 from semantic_mapping_v2.clustering import DomainClusteringEngine
+from semantic_mapping_v2.column_enricher import enrich_column_features
 from semantic_mapping_v2.config import validate_weights
 from semantic_mapping_v2.domain_loader import DomainRegistryLoader
 from semantic_mapping_v2.domain_synthesis import UnifiedDomainRegistry
@@ -99,12 +100,7 @@ class SemanticPipelineV2:
         column_names = list(features.keys())
         sample_values = {c: list(f.samples) for c, f in features.items()}
 
-        # One query vector per column, reused by matching/clustering/schema.
-        reps = [features[c].representation for c in column_names]
-        rep_vecs = self.embedder.embed_queries_batch(reps)
-        column_vectors = {c: rep_vecs[i] for i, c in enumerate(column_names)}
-
-        # STEP 1 — usecase detection ----------------------------------------
+        # STEP 1 — usecase detection (before enrichment so filename hints apply) -
         uc = self.detector.detect(
             column_names=column_names,
             dataset_name=dataset_name,
@@ -113,6 +109,21 @@ class SemanticPipelineV2:
             sample_values=sample_values,
             user_usecase=user_usecase,
         )
+
+        # STEP 5b — LLM column name enrichment (cryptic codes → readable text) -
+        # Runs AFTER usecase detection (needs usecase context) and BEFORE
+        # embedding (so enriched representations are used for vector search).
+        enrich_column_features(
+            features,
+            usecase=uc.usecase,
+            dataset_name=dataset_name,
+            use_llm=self.use_llm,
+        )
+
+        # One query vector per column, built from (now-enriched) representations.
+        reps = [features[c].representation for c in column_names]
+        rep_vecs = self.embedder.embed_queries_batch(reps)
+        column_vectors = {c: rep_vecs[i] for i, c in enumerate(column_names)}
 
         # STEP 2-4 — static + dynamic -> unified registry seeded into Qdrant -
         synth = self.registry.build(

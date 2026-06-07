@@ -14,6 +14,17 @@ model/storage/vector_cache/
 # Qdrant embedded-local vector store (regenerated at runtime)
 model/storage/qdrant_local/
 model/storage/qdrant_smoketest/
+model/storage/qdrant_preanomaly_*/
+model/storage/qdrant_run_*/
+model/storage/qdrant_dbg/
+
+# Large local test datasets (>50MB) — keep on disk, do not push to GitHub
+test_data/LEVEL - 02 (Section 3).csv
+test_data/LEVEL - 05 ( Sec 5  6).csv
+test_data/LEVEL - 06 (Section 7).csv
+test_data/LEVEL - 08 (Section 8_1).csv
+test_data/CPERV1.TXT
+test_data/CHHV1.TXT
 model/weights/
 model/phase2_output.json
 .venv/

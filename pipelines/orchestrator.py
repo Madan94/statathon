@@ -65,6 +65,11 @@ def run_pipeline(
         list(df.columns),
         column_enrichment=enrichment or None,
         column_profiles=column_profiles,
+        df=df,
+        dataset_id=str(dataset_id),
+        dataset_name=filename,
+        filename=filename,
+        dataset_domain=None,
     )
     state = build_analysis_state(
         dataset_id=dataset_id,

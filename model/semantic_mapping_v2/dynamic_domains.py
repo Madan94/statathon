@@ -24,14 +24,11 @@ import time
 from typing import Any
 
 from semantic_mapping_v2.domain_loader import Domain
+from semantic_mapping_v2.llm_client import _gemini_key, _groq_key, generate_json
 
 logger = logging.getLogger(__name__)
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
-
-
-def _gemini_key() -> str | None:
-    return os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
 
 def _strip_fence(text: str) -> str:
@@ -61,14 +58,8 @@ class DynamicDomainGenerator:
         sample_values: dict[str, list[Any]] | None = None,
         max_domains: int = 15,
     ) -> list[Domain]:
-        key = _gemini_key()
-        if not key:
-            logger.info("No Gemini key; skipping dynamic domain generation.")
-            return []
-        try:
-            import google.generativeai as genai
-        except ImportError:
-            logger.warning("google.generativeai not installed; skipping dynamic domains.")
+        if not (_gemini_key() or _groq_key()):
+            logger.info("No LLM key (Gemini/Groq); skipping dynamic domain generation.")
             return []
 
         static_names = {_norm(d.domain_name) for d in static_domains}
@@ -86,28 +77,18 @@ class DynamicDomainGenerator:
             max_domains=max_domains,
         )
 
-        genai.configure(api_key=key)
-        model = genai.GenerativeModel(self.model_name)
-        timeout = int(os.getenv("GEMINI_REQUEST_TIMEOUT_SEC", "90"))
-
-        parsed: dict[str, Any] | None = None
-        for attempt in range(3):
-            try:
-                resp = model.generate_content(prompt, request_options={"timeout": timeout})
-                raw = (resp.text or "").strip()
-                if not raw:
-                    return []
-                loaded = json.loads(_strip_fence(raw))
-                if isinstance(loaded, dict):
-                    parsed = loaded
-                break
-            except Exception as exc:  # noqa: BLE001
-                msg = str(exc).lower()
-                if any(k in msg for k in ("429", "rate", "quota", "exhausted")) and attempt < 2:
-                    time.sleep(5 * (2 ** attempt))
-                    continue
-                logger.warning("Dynamic domain generation failed: %s", exc)
-                return []
+        try:
+            loaded = generate_json(
+                prompt,
+                system=(
+                    "You are a MoSPI statistics ontology expert. "
+                    "Respond with valid JSON only."
+                ),
+            )
+            parsed = loaded if isinstance(loaded, dict) else None
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Dynamic domain generation failed: %s", exc)
+            return []
 
         if not isinstance(parsed, dict):
             return []

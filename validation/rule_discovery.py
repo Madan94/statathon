@@ -434,15 +434,28 @@ def discover_from_statistics(
 # ---------------------------------------------------------------------------
 
 
+def _normalize_archetypes(
+    archetypes: list[dict[str, Any] | str] | None,
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for item in archetypes or []:
+        if isinstance(item, dict):
+            out.append(item)
+        elif isinstance(item, str) and item.strip():
+            out.append({"archetype": item.strip(), "score": 0.5})
+    return out
+
+
 def discover_from_archetype(
-    archetypes: list[dict[str, Any]] | None,
+    archetypes: list[dict[str, Any] | str] | None,
     columns_meta: dict[str, dict[str, Any]],
 ) -> list[DiscoveredRule]:
     """Archetype-level defaults — e.g. dataset is a labour survey, so any
     column matching `*_rate` should be 0..100."""
-    if not archetypes:
+    normalized = _normalize_archetypes(archetypes)
+    if not normalized:
         return []
-    top_archetype = max(archetypes, key=lambda a: a.get("score", 0)).get("archetype")
+    top_archetype = max(normalized, key=lambda a: a.get("score", 0)).get("archetype")
     rules: list[DiscoveredRule] = []
     idx = 0
     if top_archetype in ("labour", "economic"):

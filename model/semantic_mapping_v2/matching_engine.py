@@ -37,10 +37,46 @@ from semantic_mapping_v2.domain_loader import Domain
 from semantic_mapping_v2.domain_synthesis import UnifiedDomainRegistry
 from semantic_mapping_v2.embedder import SemanticEmbedder
 from semantic_mapping_v2.feature_extraction import ColumnFeature
+from semantic_mapping_v2.llm_client import _gemini_key, _groq_key, generate_text, strip_json_fence
 
 logger = logging.getLogger(__name__)
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
+
+# ASI block-code prefix → domain heuristic (Block H=inputs, J=products, F=fixed assets, etc.)
+# Used to boost confidence for cryptic coded column names from Annual Survey of Industries.
+_ASI_BLOCK_DOMAIN: dict[str, str] = {
+    "hi": "raw_materials",   # Block H — inputs
+    "hf": "capital",         # Block H — fixed assets
+    "j1": "production",      # Block J — products sold
+    "fi": "capital",         # Block F — fixed assets
+    "gi": "capital",         # Block G — working capital
+    "ei": "enterprise",      # Block E — basic characteristics
+    "ai": "enterprise",      # Block A — administrative
+    "ae": "enterprise",
+    "aj": "enterprise",
+    "ah": "raw_materials",
+    "yr": "survey_metadata",
+    "blk": "survey_metadata",
+}
+_ASI_CODE_RE = re.compile(r"^([a-z]{1,3})(\d{1,3})$", re.I)
+
+
+def _asi_block_domain(col_name: str) -> str | None:
+    """Return domain hint for ASI-style block codes like 'J11', 'HI3', 'AH01', 'yr', 'blk'."""
+    n = col_name.strip().lower()
+    if n in _ASI_BLOCK_DOMAIN:
+        return _ASI_BLOCK_DOMAIN[n]
+    m = _ASI_CODE_RE.match(n)
+    if m:
+        prefix = m.group(1).lower()
+        if prefix in _ASI_BLOCK_DOMAIN:
+            return _ASI_BLOCK_DOMAIN[prefix]
+        # Two-letter prefix fallback
+        for k in sorted(_ASI_BLOCK_DOMAIN, key=len, reverse=True):
+            if prefix.startswith(k):
+                return _ASI_BLOCK_DOMAIN[k]
+    return None
 
 # Which dtypes a domain "kind" tends to imply, for the context/statistics signals.
 _NUMERIC_HINT_WORDS = {
@@ -126,7 +162,12 @@ class MatchingEngine:
             mapping = self._score_column(feat, hits)
             results[col] = mapping
             if use_llm and mapping.confidence < self.llm_threshold:
-                pending.append(col)
+                kw = float(mapping.signals.get("keyword", 0))
+                # Strong lexical + reasonable composite → keep embedding match (save LLM).
+                if kw >= 0.65 and mapping.confidence >= 0.52:
+                    mapping.confidence = max(mapping.confidence, 0.72)
+                else:
+                    pending.append(col)
 
         # Pass 2 — STEP 7 LLM fallback for low-confidence columns in ONE call.
         if pending:
@@ -140,7 +181,39 @@ class MatchingEngine:
                 if llm_map is not None:
                     results[col] = llm_map
 
-        # Pass 3 — uncorrelated floor (STEP 8).
+        # Pass 3 — modest boost for strong lexical + embedding agreement (no LLM).
+        for mapping in results.values():
+            if mapping.source == "llm":
+                continue
+            kw = float(mapping.signals.get("keyword", 0))
+            emb = float(mapping.signals.get("embedding", 0))
+            if kw >= 0.45 and emb >= 0.42:
+                mapping.confidence = max(mapping.confidence, 0.48)
+            if kw >= 0.55 and emb >= 0.38:
+                mapping.confidence = max(mapping.confidence, 0.52)
+            if kw >= 0.35 and emb >= 0.48:
+                mapping.confidence = max(mapping.confidence, 0.46)
+            # ASI block-code boost: known code prefix → definitive domain match
+            asi_domain = _asi_block_domain(mapping.column)
+            if asi_domain and mapping.domain == asi_domain:
+                mapping.confidence = max(mapping.confidence, 0.78)
+            elif asi_domain and mapping.domain != asi_domain:
+                # Override with the known domain at high confidence
+                for cand in mapping.candidates:
+                    if cand.get("domain") == asi_domain:
+                        mapping.domain = asi_domain
+                        mapping.confidence = max(0.75, cand.get("score", 0.75))
+                        mapping.source = "embedding"
+                        mapping.explanation = f"ASI block code '{mapping.column}' → {asi_domain}"
+                        break
+                else:
+                    # Candidate not found — still override but lower confidence
+                    mapping.domain = asi_domain
+                    mapping.confidence = 0.72
+                    mapping.source = "embedding"
+                    mapping.explanation = f"ASI block code '{mapping.column}' → {asi_domain}"
+
+        # Pass 4 — uncorrelated floor (STEP 8).
         for col, mapping in results.items():
             if mapping.confidence < UNCORRELATED_THRESHOLD and mapping.source != "llm":
                 mapping.domain = "uncorrelated"
@@ -306,66 +379,63 @@ class MatchingEngine:
         candidates: dict[str, list[dict[str, Any]]],
     ) -> dict[str, ColumnMapping | None]:
         out: dict[str, ColumnMapping | None] = {c: None for c in pending}
-        key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-        if not key:
-            return out
-        try:
-            import google.generativeai as genai
-        except ImportError:
+        if not (_gemini_key() or _groq_key()):
             return out
 
-        items = []
-        for col, feat in pending.items():
-            items.append(
-                {
-                    "column_name": feat.name,
-                    "normalized": feat.normalized,
-                    "dtype": feat.dtype,
-                    "samples": [str(v)[:30] for v in feat.samples[:6]],
-                    "statistics": feat.statistics,
-                    "candidate_domains": [c["domain"] for c in candidates.get(col, [])[:5]],
-                }
-            )
-        prompt = f"""
-You assign ONE semantic domain to EACH dataset column below, for official
-statistics in the '{usecase}' usecase (dataset: '{dataset_name}').
+        chunk_size = max(1, int(os.getenv("SEMV2_LLM_BATCH_SIZE", "8")))
+        pending_list = list(pending.items())
 
-COLUMNS (JSON array):
+        chunk_delay = float(os.getenv("SEMV2_LLM_CHUNK_DELAY", "2.5"))
+        for start in range(0, len(pending_list), chunk_size):
+            if start > 0:
+                time.sleep(chunk_delay)
+            chunk = pending_list[start : start + chunk_size]
+            items = []
+            for col, feat in chunk:
+                items.append(
+                    {
+                        "column_name": feat.name,
+                        "dtype": feat.dtype,
+                        "samples": [str(v)[:20] for v in feat.samples[:3]],
+                        "candidate_domains": [c["domain"] for c in candidates.get(col, [])[:4]],
+                    }
+                )
+            prompt = f"""Assign ONE semantic domain per column for '{usecase}' dataset '{dataset_name}'.
+
+COLUMNS:
 {json.dumps(items, ensure_ascii=True)}
 
-RULES (apply per column):
-- Prefer one of that column's candidate_domains if any fits.
-- Otherwise return a NEW grounded snake_case domain derived from the column.
-- If the column is meaningless / free-text noise, return domain "uncorrelated".
-- confidence in [0,1] reflecting how sure you are.
-
-OUTPUT — valid JSON ONLY, no markdown, an array with one object per input column
-in the SAME order:
-[{{"column_name": "<name>", "domain": "snake_case_or_uncorrelated", "confidence": 0.0, "reason": "<=12 words"}}]
-"""
-        model_name = os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash")
-        try:
-            genai.configure(api_key=key)
-            model = genai.GenerativeModel(model_name)
-            resp = self._generate_with_retry(model, prompt)
-            raw = (resp.text or "").strip()
-            raw = re.sub(r"^```(?:json)?\s*", "", raw).rstrip("`").strip()
-            data = json.loads(raw)
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("Batched LLM fallback failed (%d cols): %s", len(pending), exc)
-            return out
-
-        if isinstance(data, dict):
-            data = data.get("columns") or data.get("results") or [data]
-        if not isinstance(data, list):
-            return out
-
-        by_name = {str(d.get("column_name", "")).strip(): d for d in data if isinstance(d, dict)}
-        for col, feat in pending.items():
-            entry = by_name.get(col) or by_name.get(feat.name)
-            if entry is None:
+Rules: prefer candidate_domains; else new snake_case domain; else "uncorrelated".
+Return JSON only: {{"columns":[{{"column_name":"...","domain":"...","confidence":0.0}}]}}"""
+            try:
+                raw = generate_text(
+                    prompt,
+                    system="Return valid JSON only.",
+                )
+                data = json.loads(strip_json_fence(raw))
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(
+                    "LLM fallback chunk failed (%d cols): %s",
+                    len(chunk),
+                    exc,
+                )
                 continue
-            out[col] = self._mapping_from_llm(feat, entry, candidates.get(col, []))
+
+            if isinstance(data, dict):
+                data = data.get("columns") or data.get("results") or [data]
+            if not isinstance(data, list):
+                continue
+
+            by_name = {
+                str(d.get("column_name", "")).strip(): d
+                for d in data
+                if isinstance(d, dict)
+            }
+            for col, feat in chunk:
+                entry = by_name.get(col) or by_name.get(feat.name)
+                if entry is None:
+                    continue
+                out[col] = self._mapping_from_llm(feat, entry, candidates.get(col, []))
         return out
 
     @staticmethod
