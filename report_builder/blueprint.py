@@ -326,7 +326,8 @@ def _colpali_extract(pdf_path: str | Path) -> list[dict[str, Any]] | None:
             import pdf2image  # type: ignore
 
             model = ColPali.from_pretrained(os.getenv("COLPALI_MODEL", "vidore/colpali-v1.2"))
-            images = pdf2image.convert_from_path(str(pdf_path))
+            poppler_path = os.getenv("POPPLER_PATH") or None
+            images = pdf2image.convert_from_path(str(pdf_path), poppler_path=poppler_path)
             spatial = process_images(model, images)
             # Adapt ColPali output (per-page bbox + caption tokens) to our shape.
             out = []
