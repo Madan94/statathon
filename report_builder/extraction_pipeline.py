@@ -1,4 +1,4 @@
-﻿﻿"""Multi-Pass Extraction Pipeline — LayoutLM + Qwen-VL.
+"""Multi-Pass Extraction Pipeline — LayoutLM + Qwen-VL.
 
 Orchestrates the 7-pass extraction flow for Enterprise Document AST + Blueprint:
     Pass 0: PDF rasterization (pdf2image 150dpi + pdfplumber raw text/tables/words)
