@@ -14,6 +14,7 @@ const TABS = [
   'Figures',
   'Semantic',
   'Graphs',
+  'Blueprint',
   'Retrieval',
   'Quality',
 ] as const;
@@ -35,7 +36,12 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
   const layoutAST = (ast.layoutAST as Record<string, unknown>) || {};
   const pages = Array.isArray(layoutAST.pages) ? (layoutAST.pages as Array<Record<string, unknown>>) : [];
   const contentAST = (ast.contentAST as Record<string, unknown>) || {};
-  const blocks = Array.isArray(contentAST.blocks) ? (contentAST.blocks as Array<Record<string, unknown>>) : [];
+  // v3 pipeline produces contentAST.paragraphs; fall back to .blocks for legacy
+  const blocks = Array.isArray(contentAST.paragraphs)
+    ? (contentAST.paragraphs as Array<Record<string, unknown>>)
+    : Array.isArray(contentAST.blocks)
+    ? (contentAST.blocks as Array<Record<string, unknown>>)
+    : [];
   const tableAST = (ast.tableAST as Record<string, unknown>) || {};
   const tables = Array.isArray(tableAST.tables) ? (tableAST.tables as Array<Record<string, unknown>>) : [];
   const figureAST = (ast.figureAST as Record<string, unknown>) || {};
@@ -129,7 +135,7 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
       case 'Content':
         return (
           <div className="space-y-3">
-            <p className="text-xs text-text-muted">{blocks.length} content blocks</p>
+            <p className="text-xs text-text-muted">{blocks.length} content paragraphs</p>
             {blocks.length > 0 && (
               <div className="overflow-x-auto rounded-lg border border-border">
                 <table className="w-full text-xs">
@@ -176,7 +182,33 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
                   <span className="text-sm font-medium text-text">{String(t.title || `Table ${idx + 1}`)}</span>
                   {Boolean(t.source) && <Badge variant="muted">{String(t.source)}</Badge>}
                 </div>
-                {Array.isArray(t.columns) && (t.columns as string[]).length > 0 && (
+                {/* dimensions, measures, breakdowns — v3 pipeline fields */}
+                {Array.isArray(t.dimensions) && (t.dimensions as string[]).length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-1">
+                    <span className="text-[10px] text-blue-500 font-medium mr-1">dims:</span>
+                    {(t.dimensions as string[]).slice(0, 8).map((col, ci) => (
+                      <span key={ci} className="text-[10px] bg-blue-50 text-blue-700 rounded px-1.5 py-0.5 border border-blue-200">{col}</span>
+                    ))}
+                  </div>
+                )}
+                {Array.isArray(t.measures) && (t.measures as string[]).length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-1">
+                    <span className="text-[10px] text-green-500 font-medium mr-1">measures:</span>
+                    {(t.measures as string[]).slice(0, 8).map((col, ci) => (
+                      <span key={ci} className="text-[10px] bg-green-50 text-green-700 rounded px-1.5 py-0.5 border border-green-200">{col}</span>
+                    ))}
+                  </div>
+                )}
+                {Array.isArray(t.breakdowns) && (t.breakdowns as string[]).length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-1">
+                    <span className="text-[10px] text-purple-500 font-medium mr-1">breakdowns:</span>
+                    {(t.breakdowns as string[]).slice(0, 6).map((col, ci) => (
+                      <span key={ci} className="text-[10px] bg-purple-50 text-purple-700 rounded px-1.5 py-0.5 border border-purple-200">{col}</span>
+                    ))}
+                  </div>
+                )}
+                {/* fallback: legacy columns array */}
+                {!Array.isArray(t.dimensions) && Array.isArray(t.columns) && (t.columns as string[]).length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
                     {(t.columns as string[]).slice(0, 12).map((col, ci) => (
                       <span key={ci} className="text-[10px] bg-green-50 text-green-700 rounded px-1.5 py-0.5 border border-green-200">{col}</span>
@@ -271,6 +303,14 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
                     <div key={`e-${e.entityId || idx}`} className="flex items-center gap-2 text-[10px]">
                       <span className={`rounded-full px-1.5 py-0.5 ${entityTypeColors[String(e.type)] || 'bg-gray-100 text-gray-600'}`}>{String(e.type)}</span>
                       <span className="text-text font-medium">{String(e.name || '—')}</span>
+                      {Boolean(e.entityType) && (
+                        <span className={`rounded-full px-1.5 py-0.5 text-[9px] ${
+                          e.entityType === 'dimension' ? 'bg-blue-100 text-blue-700' :
+                          e.entityType === 'measure' ? 'bg-green-100 text-green-700' :
+                          e.entityType === 'filter' ? 'bg-orange-100 text-orange-700' :
+                          'bg-gray-100 text-gray-500'
+                        }`}>{String(e.entityType)}</span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -298,6 +338,115 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
             </details>
           </div>
         );
+
+      case 'Blueprint': {
+        const enterpriseAst = (ast.enterprise_ast as Record<string, unknown>) || {};
+        const blueprint = (enterpriseAst.blueprint as Record<string, unknown>) || {};
+        const bpTopics = Array.isArray(blueprint.topics) ? (blueprint.topics as Array<Record<string, unknown>>) : [];
+        const bpEntities = Array.isArray(blueprint.entities) ? (blueprint.entities as Array<Record<string, unknown>>) : [];
+        const bpTables = Array.isArray(blueprint.tableStructures) ? (blueprint.tableStructures as Array<Record<string, unknown>>) : [];
+        return (
+          <div className="space-y-4">
+            {bpTopics.length === 0 && bpEntities.length === 0 ? (
+              <p className="text-xs text-text-muted italic">Blueprint not yet generated. Re-run extraction.</p>
+            ) : (
+              <>
+                <p className="text-xs text-text-muted">
+                  {bpTopics.length} topics · {bpEntities.length} entities · {bpTables.length} table structures
+                </p>
+                {/* Topics */}
+                {bpTopics.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold text-text">Topics</h4>
+                    {bpTopics.map((topic, ti) => {
+                      const questions = Array.isArray(topic.questions) ? (topic.questions as Array<Record<string, unknown>>) : [];
+                      return (
+                        <details key={`bp-topic-${ti}`} className="rounded-lg border border-border bg-surface">
+                          <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-text flex items-center gap-2">
+                            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[10px] font-bold shrink-0">
+                              {ti + 1}
+                            </span>
+                            {String(topic.title || topic.topicId || `Topic ${ti + 1}`)}
+                            <span className="ml-auto text-[10px] text-text-muted">{questions.length} questions</span>
+                          </summary>
+                          <div className="px-3 pb-3 space-y-2">
+                            {questions.slice(0, 8).map((q, qi) => (
+                              <div key={`bp-q-${qi}`} className="rounded border border-border/50 bg-white p-2">
+                                <div className="flex items-start gap-2 mb-1">
+                                  <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium ${
+                                    q.questionType === 'comparison' ? 'bg-blue-100 text-blue-700' :
+                                    q.questionType === 'trend' ? 'bg-green-100 text-green-700' :
+                                    q.questionType === 'ranking' ? 'bg-amber-100 text-amber-700' :
+                                    q.questionType === 'distribution' ? 'bg-purple-100 text-purple-700' :
+                                    'bg-gray-100 text-gray-600'
+                                  }`}>{String(q.questionType || 'describe')}</span>
+                                  <span className="text-xs text-text">{String(q.intent || q.questionId || '—')}</span>
+                                </div>
+                                {Array.isArray(q.requiredEntities) && (q.requiredEntities as Array<Record<string,unknown>>).length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {(q.requiredEntities as Array<Record<string, unknown>>).slice(0, 5).map((re, ri) => (
+                                      <span key={ri} className="text-[9px] bg-indigo-50 text-indigo-700 rounded px-1.5 py-0.5">
+                                        {String(re.entityRef || '?')} <span className="opacity-60">({String(re.role || '?')})</span>
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                            {questions.length > 8 && (
+                              <p className="text-[10px] text-text-muted pl-1">…and {questions.length - 8} more questions</p>
+                            )}
+                          </div>
+                        </details>
+                      );
+                    })}
+                  </div>
+                )}
+                {/* Blueprint Entities */}
+                {bpEntities.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-text mb-2">Template Entities ({bpEntities.length})</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {bpEntities.slice(0, 40).map((e, ei) => (
+                        <span key={ei} className={`text-[10px] rounded-full px-2 py-0.5 border ${
+                          e.entityType === 'dimension' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                          e.entityType === 'measure' ? 'bg-green-50 text-green-700 border-green-200' :
+                          e.entityType === 'filter' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                          'bg-gray-50 text-gray-600 border-gray-200'
+                        }`}>
+                          {String(e.name || e.entityId || '—')}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Blueprint Table Structures */}
+                {bpTables.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-text mb-2">Table Structures ({bpTables.length})</h4>
+                    {bpTables.slice(0, 6).map((t, ti) => (
+                      <div key={ti} className="rounded border border-border bg-surface p-2 mb-2">
+                        <p className="text-xs font-medium text-text mb-1">{String(t.title || `Table ${ti + 1}`)}</p>
+                        {Array.isArray(t.dimensions) && (
+                          <div className="flex flex-wrap gap-1">
+                            {(t.dimensions as string[]).map((d, di) => (
+                              <span key={di} className="text-[9px] bg-blue-50 text-blue-700 rounded px-1.5 py-0.5">{d}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <details className="rounded border border-border">
+                  <summary className="cursor-pointer px-3 py-2 text-xs text-text-muted">Raw Blueprint JSON</summary>
+                  <pre className="px-3 pb-3 text-[10px] overflow-auto max-h-48">{JSON.stringify(blueprint, null, 2)}</pre>
+                </details>
+              </>
+            )}
+          </div>
+        );
+      }
 
       case 'Retrieval':
         return (

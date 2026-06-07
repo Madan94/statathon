@@ -255,7 +255,23 @@ def pass0_rasterize(pdf_path: Path) -> tuple[list[bytes], list[dict[str, Any]]]:
             for page in pdf.pages:
                 raw_text = page.extract_text() or ""
                 words = page.extract_words(extra_attrs=["fontname", "size"], use_text_flow=True) or []
+
+                # ── Table extraction: default first, then borderless fallback ──
                 tables = page.extract_tables() or []
+                if not tables:
+                    # Borderless tables (common in govt PDFs) need text-alignment strategy
+                    try:
+                        tables = page.extract_tables(table_settings={
+                            "vertical_strategy": "text",
+                            "horizontal_strategy": "text",
+                            "snap_tolerance": 5,
+                            "join_tolerance": 3,
+                            "edge_min_length": 3,
+                            "min_words_vertical": 3,
+                            "min_words_horizontal": 1,
+                        }) or []
+                    except Exception:
+                        tables = []
 
                 # Detect headings from font analysis
                 headings: list[str] = []
@@ -265,13 +281,38 @@ def pass0_rasterize(pdf_path: Path) -> tuple[list[bytes], list[dict[str, Any]]]:
                         if text and len(text) > 3:
                             headings.append(text)
 
+                # ── Embedded image / chart detection ──
+                # PDF embedded images that are large relative to the page
+                # are almost certainly charts or figures.
+                page_w = float(page.width or 595)
+                page_h = float(page.height or 842)
+                page_area = page_w * page_h
+                embedded_figures: list[dict[str, Any]] = []
+                try:
+                    for img_obj in (page.images or []):
+                        x0 = float(img_obj.get("x0") or 0)
+                        y0 = float(img_obj.get("top") or img_obj.get("y0") or 0)
+                        x1 = float(img_obj.get("x1") or page_w)
+                        y1 = float(img_obj.get("bottom") or img_obj.get("y1") or page_h)
+                        img_area = max(0.0, (x1 - x0) * (y1 - y0))
+                        # Heuristic: embedded image covering >8% of page = likely figure/chart
+                        if page_area > 0 and img_area / page_area >= 0.08:
+                            embedded_figures.append({
+                                "bbox": [round(x0, 1), round(y0, 1), round(x1, 1), round(y1, 1)],
+                                "area_fraction": round(img_area / page_area, 3),
+                                "source": "pdf_embedded",
+                            })
+                except Exception:
+                    pass
+
                 page_texts.append({
                     "raw_text": raw_text,
                     "words": words,
                     "tables": tables,
                     "headings": headings,
-                    "width": float(page.width or 595),
-                    "height": float(page.height or 842),
+                    "embedded_figures": embedded_figures,
+                    "width": page_w,
+                    "height": page_h,
                     "word_count": len(raw_text.split()),
                 })
     except Exception as exc:
@@ -399,18 +440,28 @@ def pass2_entity_structure_extraction(
 
                 # Concise region hint from LayoutLM
                 region_types = ", ".join(set(r.get("type", "?") for r in regions[:10])) or "none"
+                # Hint if pdfplumber detected embedded images (likely charts)
+                n_embedded = len(page_text.get("embedded_figures") or [])
+                image_hint = f" (PDF has {n_embedded} embedded image(s) — likely charts/figures)" if n_embedded else ""
 
                 prompt = (
                     f"Page {i + 1}/{total_pages} of \"{doc_title}\".\n"
-                    f"Detected layout regions: {region_types}\n\n"
-                    "List ALL entities/concepts on this page (organizations, metrics, "
-                    "demographics, time periods, locations). Identify the page structure. "
-                    "Output ONLY this compact JSON:\n"
+                    f"Detected layout regions: {region_types}{image_hint}\n\n"
+                    "Examine this page carefully. Your tasks:\n"
+                    "1. List ALL data entities/concepts (organizations, statistical indicators, "
+                    "demographics, time periods, geographic regions, numeric metrics).\n"
+                    "2. Identify if the page contains any charts or graphs — look for: "
+                    "bar charts, line charts, pie/donut charts, scatter plots, area charts, "
+                    "histograms, stacked bars, choropleth maps, infographics.\n"
+                    "3. If charts are present, provide their visible titles.\n"
+                    "4. Classify the dominant page structure.\n"
+                    "Output ONLY this JSON (no prose, no markdown):\n"
                     '{"entities":["entity1","entity2"],'
                     '"structure_type":"data_table|chart_page|narrative|title_page|appendix|mixed",'
                     '"description":"one-line summary",'
-                    '"chart_types":["bar","line","pie"]}\n'
-                    "Keep entities as short names. JSON only, no explanation."
+                    '"chart_types":["bar_chart","line_chart","pie_chart","scatter_plot","area_chart","map"],'
+                    '"chart_titles":["visible chart title if any"]}\n'
+                    "chart_types MUST be [] if absolutely no charts visible. JSON only."
                 )
 
                 payload = {
@@ -475,27 +526,38 @@ def pass2_entity_structure_extraction(
                 "structure_type": vlm_result.get("structure_type", "mixed"),
                 "description": str(vlm_result.get("description", ""))[:200],
                 "chart_types": vlm_result.get("chart_types") or [],
+                "chart_titles": [str(t).strip() for t in (vlm_result.get("chart_titles") or []) if str(t).strip()],
                 "vlm_used": True,
             })
         else:
             # Fallback: pdfplumber only
             has_tables = bool(page_text.get("tables"))
-            has_charts = any(r.get("type") in ("chart", "figure") for r in regions)
-            if has_tables and has_charts:
+            # LayoutLM chart regions OR pdfplumber embedded images → chart_page
+            has_charts_layoutlm = any(r.get("type") in ("chart", "figure") for r in regions)
+            has_embedded = bool(page_text.get("embedded_figures"))
+            if has_tables and (has_charts_layoutlm or has_embedded):
                 stype = "mixed"
             elif has_tables:
                 stype = "data_table"
-            elif has_charts:
+            elif has_charts_layoutlm or has_embedded:
                 stype = "chart_page"
             else:
                 stype = "narrative"
+
+            # Build chart_types from embedded figures if no VLM
+            fallback_chart_types = []
+            if has_charts_layoutlm:
+                fallback_chart_types.append("chart")
+            elif has_embedded:
+                fallback_chart_types.append("figure")
 
             results.append({
                 "page_index": i,
                 "entities": pdfplumber_entities,
                 "structure_type": stype,
                 "description": "",
-                "chart_types": [],
+                "chart_types": fallback_chart_types,
+                "chart_titles": [],
                 "vlm_used": False,
             })
 
@@ -763,6 +825,7 @@ def pass2_5_document_knowledge_graph(
                 "chapterId": f"ch_{len(chapters) + 1:02d}",
                 "title": entry.title,
                 "pageRange": [entry.page_index, entry.page_index],
+                "level": 1,
                 "sections": [],
             }
         elif entry.level >= 2 and current_chapter:
@@ -779,6 +842,7 @@ def pass2_5_document_knowledge_graph(
                 "chapterId": f"ch_{len(chapters) + 1:02d}",
                 "title": entry.title,
                 "pageRange": [entry.page_index, entry.page_index],
+                "level": entry.level,
                 "sections": [],
             }
 
@@ -943,6 +1007,7 @@ def pass2_5_document_knowledge_graph(
                 "title": sec.get("title", ch["title"]),
                 "pageRange": [sec_page, sec_end],
                 "pattern": pattern,
+                "level": ch.get("level", 2),  # propagate ToC level for Loop 1 filtering
                 "suggested_components": components,
             })
 
@@ -1166,13 +1231,23 @@ def pass3_two_loop_ast_building(
         entity_summary = entity_summary[:300] + "..."
 
     # ═══════════════════════════════════════════════════════════════════
-    # LOOP 1: Question Extraction per Section
+    # LOOP 1: Question Extraction per Section (top-level chapters only)
     # ═══════════════════════════════════════════════════════════════════
     logger.info("[pass3] ── Loop 1: Question extraction ──")
     raw_questions: list[dict[str, Any]] = []
     consecutive_failures = 0
 
-    for sp in section_patterns:
+    # Use level-1 chapters as the primary loop targets to avoid
+    # iterating 80+ sub-sections. Fallback to top-20 if no level-1 exist.
+    top_level_sections = [sp for sp in section_patterns if sp.get("level", 2) == 1]
+    if not top_level_sections:
+        top_level_sections = section_patterns[:20]
+    else:
+        top_level_sections = top_level_sections[:20]  # hard cap
+    logger.info("[pass3] L1: Processing %d top-level sections (of %d total)",
+                len(top_level_sections), len(section_patterns))
+
+    for sp in top_level_sections:
         if consecutive_failures >= 3:
             logger.warning("[pass3] L1: %d consecutive failures — stopping", consecutive_failures)
             break
@@ -1248,7 +1323,7 @@ def pass3_two_loop_ast_building(
             logger.debug("[pass3] L1: Error: %s", exc)
             consecutive_failures += 1
 
-    logger.info("[pass3] L1: Extracted %d raw questions from %d sections", len(raw_questions), len(section_patterns))
+    logger.info("[pass3] L1: Extracted %d raw questions from %d top-level sections", len(raw_questions), len(top_level_sections))
 
     # If Loop 1 produced nothing, fall back
     if not raw_questions:
@@ -1338,16 +1413,39 @@ def pass3_two_loop_ast_building(
             consecutive_failures += 1
             enriched_questions.append(_default_question_binding(q, all_entities, section_patterns))
 
-    # ── Build topics from chapters ──
+    # ── Build topics from chapters (exclusive assignment) ──
+    # Each question is assigned to the NARROWEST chapter whose pageRange
+    # contains the question's page. This prevents the 10k duplication bug
+    # that occurs when overlapping chapter ranges all claim the same question.
+    def _chapter_span(ch: dict) -> int:
+        pr = ch.get("pageRange", [0, 0])
+        return pr[1] - pr[0]
+
+    # Sort chapters by span ascending so narrowest gets priority
+    chapters_by_narrowness = sorted(chapters, key=_chapter_span)
+
+    question_to_topic: dict[str, str] = {}  # questionId → chapterId
+    for q in enriched_questions:
+        q_page = q.get("page", -1)
+        q_id = q.get("questionId", "")
+        if q_id in question_to_topic:
+            continue  # already claimed by a narrower chapter
+        for ch in chapters_by_narrowness:
+            pr = ch.get("pageRange", [0, 0])
+            if pr[0] <= q_page <= pr[1]:
+                question_to_topic[q_id] = ch["chapterId"]
+                break
+
     topics: list[dict[str, Any]] = []
     for ch in chapters:
+        ch_id = ch["chapterId"]
         ch_questions = [
             q for q in enriched_questions
-            if ch["pageRange"][0] <= q.get("page", -1) <= ch["pageRange"][1]
+            if question_to_topic.get(q.get("questionId", "")) == ch_id
         ]
         if ch_questions:
             topics.append({
-                "topicId": ch["chapterId"].replace("ch_", "topic_"),
+                "topicId": ch_id.replace("ch_", "topic_"),
                 "title": ch["title"],
                 "description": f"Questions from chapter: {ch['title']}",
                 "questionIds": [q.get("questionId", f"q_{i}") for i, q in enumerate(ch_questions)],
@@ -1610,6 +1708,7 @@ def pass4_assemble_ast(
     ast_result: dict[str, Any],
     doc_title: str = "Document",
     source_hash: str = "",
+    entity_pages: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Assemble Enterprise AST + embedded blueprint subtree.
 
@@ -1729,22 +1828,96 @@ def pass4_assemble_ast(
     # ── figureAST + chartAST ──
     figures = []
     charts = []
+    _seen_figure_pages: set[int] = set()
+
+    # Source 1: LayoutLM-detected chart/figure regions
     for i, page in enumerate(layout_pages or []):
         for j, region in enumerate(page.get("regions") or []):
             if region.get("type") == "chart":
+                chart_id = f"chart_{i + 1}_{j + 1}"
                 charts.append({
-                    "chartId": f"chart_{i + 1}_{j + 1}",
+                    "chartId": chart_id,
                     "type": "chart",
+                    "chartType": "unknown",
                     "title": (region.get("text") or "")[:200],
+                    "page": i,
                     "pageRef": f"page_{i + 1:03d}",
+                    "description": "",
+                    "detectionSource": "layoutlm",
                 })
+                _seen_figure_pages.add(i)
             elif region.get("type") == "figure":
                 figures.append({
                     "figureId": f"fig_{i + 1}_{j + 1}",
+                    "type": "figure",
                     "caption": (region.get("text") or "")[:200],
                     "description": "",
+                    "page": i,
                     "pageRef": f"page_{i + 1:03d}",
+                    "detectionSource": "layoutlm",
                 })
+                _seen_figure_pages.add(i)
+
+    # Source 2: VLM-detected charts from pass2 entity_pages
+    if entity_pages:
+        for ep in entity_pages:
+            pg_idx = ep.get("page_index", 0)
+            chart_types = ep.get("chart_types") or []
+            chart_titles = ep.get("chart_titles") or []
+            description = ep.get("description", "")
+            if chart_types:
+                for ci, ct in enumerate(chart_types):
+                    ct_str = str(ct).strip().lower()
+                    if not ct_str:
+                        continue
+                    title = chart_titles[ci] if ci < len(chart_titles) else ""
+                    chart_id = f"chart_vlm_{pg_idx + 1}_{ci + 1}"
+                    # Avoid exact duplicates with LayoutLM results on same page
+                    if pg_idx not in _seen_figure_pages or ci > 0:
+                        charts.append({
+                            "chartId": chart_id,
+                            "type": "chart",
+                            "chartType": ct_str,
+                            "title": title or description[:120] or f"{ct_str.replace('_', ' ').title()} on page {pg_idx + 1}",
+                            "page": pg_idx,
+                            "pageRef": f"page_{pg_idx + 1:03d}",
+                            "description": description,
+                            "detectionSource": "vlm",
+                        })
+                    _seen_figure_pages.add(pg_idx)
+            elif ep.get("structure_type") == "chart_page" and pg_idx not in _seen_figure_pages:
+                # VLM said chart_page but couldn't name type — add generic entry
+                charts.append({
+                    "chartId": f"chart_vlm_{pg_idx + 1}",
+                    "type": "chart",
+                    "chartType": "chart",
+                    "title": description[:120] or f"Chart on page {pg_idx + 1}",
+                    "page": pg_idx,
+                    "pageRef": f"page_{pg_idx + 1:03d}",
+                    "description": description,
+                    "detectionSource": "vlm",
+                })
+                _seen_figure_pages.add(pg_idx)
+
+    # Source 3: pdfplumber embedded images (not yet covered by LayoutLM or VLM)
+    for i, pt in enumerate(page_texts):
+        for k, emb in enumerate(pt.get("embedded_figures") or []):
+            if i not in _seen_figure_pages:
+                charts.append({
+                    "chartId": f"chart_img_{i + 1}_{k + 1}",
+                    "type": "figure",
+                    "chartType": "embedded_image",
+                    "title": f"Figure on page {i + 1}",
+                    "page": i,
+                    "pageRef": f"page_{i + 1:03d}",
+                    "description": f"Embedded image ({round(emb.get('area_fraction', 0) * 100)}% of page)",
+                    "detectionSource": "pdfplumber_image",
+                    "bbox": emb.get("bbox"),
+                })
+                _seen_figure_pages.add(i)
+
+    # Merge figures + charts into the figures list for figureAST
+    all_figures = figures + [{**c, "figureId": c.pop("chartId", f"fig_{c.get('page', 0)}")} for c in charts]
 
     # ── semanticAST (from chapter hierarchy) ──
     semantic_hierarchy = []
@@ -1904,7 +2077,7 @@ def pass4_assemble_ast(
         "semanticAST": {"hierarchy": semantic_hierarchy},
         "contentAST": {"paragraphs": paragraphs, "lists": [], "quotes": []},
         "tableAST": {"tables": tables},
-        "figureAST": {"figures": figures},
+        "figureAST": {"figures": all_figures},
         "chartAST": {"charts": charts},
         "entityGraph": {"entities": entity_graph_entries},
         "knowledgeGraph": {"concepts": [], "relationships": document_map.get("entity_relationships") or []},
@@ -2001,8 +2174,8 @@ def run_extraction_pipeline(
         "total_regions": total_regions,
     }
 
-    # Build ToC from layout
-    toc = build_toc_from_regions(layout_pages)
+    # Build ToC from layout — pass page_texts for font-size level inference
+    toc = build_toc_from_regions(layout_pages, page_texts)
     pipeline_trace["passes"]["pass1_layout"]["toc_entries"] = len(toc)
 
     # ── Pass 2: Entity + Structure Extraction ──
@@ -2013,11 +2186,16 @@ def run_extraction_pipeline(
 
     vlm_success = sum(1 for p in entity_pages if p.get("vlm_used"))
     total_entities = sum(len(p.get("entities") or []) for p in entity_pages)
+    chart_pages_detected = sum(1 for p in entity_pages if p.get("chart_types") or p.get("structure_type") == "chart_page")
+    total_charts = sum(len(p.get("chart_types") or []) for p in entity_pages)
     pipeline_trace["passes"]["pass2_entities"] = {
         "elapsed_s": round(pass2_elapsed, 1),
         "pages_total": len(entity_pages),
         "vlm_success": vlm_success,
+        "vlm_success_rate": round(vlm_success / max(len(entity_pages), 1) * 100),
         "total_entities": total_entities,
+        "chart_pages_detected": chart_pages_detected,
+        "total_chart_types": total_charts,
     }
 
     # ── Pass 2.5: Document Knowledge Graph ──
@@ -2058,12 +2236,15 @@ def run_extraction_pipeline(
     # ── Pass 4: AST Assembly + Blueprint ──
     _tick("pass4_ast_assembly", 80)
     t0 = _time.monotonic()
-    ast = pass4_assemble_ast(layout_pages, page_texts, document_map, ast_result, doc_title, source_hash)
+    ast = pass4_assemble_ast(layout_pages, page_texts, document_map, ast_result, doc_title, source_hash, entity_pages)
     pass4_elapsed = _time.monotonic() - t0
     pipeline_trace["passes"]["pass4_assembly"] = {
         "elapsed_s": round(pass4_elapsed, 1),
         "paragraphs": len(ast.get("contentAST", {}).get("paragraphs") or []),
         "tables": len(ast.get("tableAST", {}).get("tables") or []),
+        "figures": len(ast.get("figureAST", {}).get("figures") or []),
+        "charts_detected": len([f for f in (ast.get("figureAST", {}).get("figures") or []) if f.get("type") == "chart" or f.get("chartType")]),
+        "chart_pages": len(set(f.get("page", -1) for f in (ast.get("figureAST", {}).get("figures") or []) if f.get("type") == "chart" or f.get("chartType"))),
         "blueprint_topics": len(ast.get("blueprint", {}).get("topics") or []),
         "blueprint_entities": len(ast.get("blueprint", {}).get("entities") or []),
     }

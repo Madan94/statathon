@@ -42,11 +42,24 @@ class DocumentChunk:
     toc_position: str  # e.g., "Section 3 of 7"
 
 
-def build_toc_from_regions(pages: list[dict[str, Any]]) -> list[ToCEntry]:
+def build_toc_from_regions(
+    pages: list[dict[str, Any]],
+    page_texts: list[dict[str, Any]] | None = None,
+) -> list[ToCEntry]:
     """Extract Table of Contents from LayoutLM-detected heading regions.
 
+    Uses pdfplumber word font sizes (when available) to infer heading level:
+        level 1 (chapter):    font size in top 15% of page  OR LayoutLM 'title'
+        level 2 (section):    font size in top 15-40%       OR non-indented 'heading'
+        level 3 (subsection): font size below top 40%       OR indented 'heading'
+
+    This replaces the naive rtype=='title'→level=1 heuristic which causes
+    LayoutLM to produce 80+ level-1 entries on dense government PDFs.
+
     Args:
-        pages: LayoutLM output with regions per page.
+        pages:      LayoutLM output with regions per page.
+        page_texts: Optional pdfplumber word data per page (list of
+                    {words: [{text, size, fontname, ...}]} dicts).
 
     Returns:
         Ordered list of ToCEntry objects representing document structure.
@@ -56,10 +69,40 @@ def build_toc_from_regions(pages: list[dict[str, Any]]) -> list[ToCEntry]:
     MAX_PER_PAGE = 8
     MIN_CONFIDENCE = 0.5
 
+    # ── Pre-compute per-page font-size thresholds from pdfplumber words ──
+    # Build a map: page_idx → (p85_size, p70_size, median_size)
+    # Headings with font_size >= p85 → level 1, >= p70 → level 2, else → level 3
+    page_font_thresholds: dict[int, tuple[float, float, float]] = {}
+    if page_texts:
+        for i, pt in enumerate(page_texts):
+            sizes = [
+                w.get("size", 0)
+                for w in (pt.get("words") or [])
+                if w.get("size", 0) > 0
+            ]
+            if sizes:
+                sizes_sorted = sorted(sizes)
+                n = len(sizes_sorted)
+                p85 = sizes_sorted[int(n * 0.85)]
+                p70 = sizes_sorted[int(n * 0.70)]
+                median = sizes_sorted[n // 2]
+                page_font_thresholds[i] = (p85, p70, median)
+
+    def _get_word_font_size(page_idx: int, heading_text: str) -> float:
+        """Look up the font size of a heading by matching text in pdfplumber words."""
+        if not page_texts or page_idx >= len(page_texts):
+            return 0.0
+        needle = heading_text.lower().strip()[:30]
+        for w in (page_texts[page_idx].get("words") or []):
+            if needle in str(w.get("text", "")).lower():
+                return float(w.get("size", 0))
+        return 0.0
+
     for page in pages:
         page_idx = page.get("page_index", 0)
         regions = page.get("regions") or []
         page_headings = 0
+        thresholds = page_font_thresholds.get(page_idx)
 
         for region in regions:
             if page_headings >= MAX_PER_PAGE:
@@ -73,7 +116,6 @@ def build_toc_from_regions(pages: list[dict[str, Any]]) -> list[ToCEntry]:
                 continue
             if confidence < MIN_CONFIDENCE:
                 continue
-            # Skip very short or very long entries (noise)
             if len(text) < 3 or len(text) > 150:
                 continue
 
@@ -83,17 +125,31 @@ def build_toc_from_regions(pages: list[dict[str, Any]]) -> list[ToCEntry]:
                 continue
             seen_titles.add(dedup_key)
 
-            # Estimate heading level from region type + bbox width
-            bbox = region.get("bbox", [0, 0, 0, 0])
-            page_width = page.get("width", 1000)
-            x_start_pct = (bbox[0] / page_width * 100) if page_width > 0 else 0
-
-            if rtype == "title":
-                level = 1
-            elif x_start_pct > 15:
-                level = 3  # indented = subsection
+            # ── Level inference (font-size preferred over LayoutLM type) ──
+            if thresholds:
+                p85, p70, _ = thresholds
+                font_size = _get_word_font_size(page_idx, text)
+                if font_size >= p85 and p85 > 0:
+                    level = 1
+                elif font_size >= p70 and p70 > 0:
+                    level = 2
+                else:
+                    # Fall back to LayoutLM type + bbox for level 3 vs 2
+                    bbox = region.get("bbox", [0, 0, 0, 0])
+                    page_width = page.get("width", 1000)
+                    x_start_pct = (bbox[0] / page_width * 100) if page_width > 0 else 0
+                    level = 3 if x_start_pct > 15 else 2
             else:
-                level = 2
+                # No font data — use original bbox heuristic
+                bbox = region.get("bbox", [0, 0, 0, 0])
+                page_width = page.get("width", 1000)
+                x_start_pct = (bbox[0] / page_width * 100) if page_width > 0 else 0
+                if rtype == "title":
+                    level = 1
+                elif x_start_pct > 15:
+                    level = 3
+                else:
+                    level = 2
 
             toc.append(ToCEntry(
                 title=text[:120],
@@ -103,7 +159,11 @@ def build_toc_from_regions(pages: list[dict[str, Any]]) -> list[ToCEntry]:
             ))
             page_headings += 1
 
-    logger.info("[chunking] Built ToC with %d entries from %d pages", len(toc), len(pages))
+    level_counts = {1: sum(1 for e in toc if e.level == 1),
+                    2: sum(1 for e in toc if e.level == 2),
+                    3: sum(1 for e in toc if e.level == 3)}
+    logger.info("[chunking] Built ToC with %d entries from %d pages (L1=%d, L2=%d, L3=%d)",
+                len(toc), len(pages), level_counts[1], level_counts[2], level_counts[3])
     return toc
 
 
