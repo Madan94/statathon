@@ -44,16 +44,16 @@ if command -v nvidia-smi &>/dev/null; then
     echo "  VRAM:    ${GPU_MEM_TOTAL:-?} MB total, ${GPU_MEM_FREE:-?} MB free, ${GPU_MEM_USED:-?} MB used"
     echo "  Driver:  ${DRIVER_VER:-unknown}"
 
-    # FAIL FAST: if less than 4500MB free, model won't fit
-    if [ "${GPU_MEM_FREE:-0}" -lt 4500 ]; then
+    # FAIL FAST: if less than 4000MB free, model won't fit
+    if [ "${GPU_MEM_FREE:-0}" -lt 4000 ]; then
         echo ""
-        echo "  ✗ FATAL: Only ${GPU_MEM_FREE}MB free VRAM — need at least 4500MB"
+        echo "  ✗ FATAL: Only ${GPU_MEM_FREE}MB free VRAM — need at least 4000MB"
         echo "    → Close GPU-heavy apps (browsers with HW accel, games, other models)"
         echo "    → Run: nvidia-smi on host to see what's using VRAM"
         echo "    → WSL2 fix: wsl --shutdown → restart Docker Desktop"
         exit 1
     fi
-    echo "  ✓ Sufficient VRAM (${GPU_MEM_FREE}MB free, need ~5000MB)"
+    echo "  ✓ Sufficient VRAM (${GPU_MEM_FREE}MB free, need ~4800MB)"
 else
     echo "  ✗ nvidia-smi not found — no GPU access!"
     echo "  → Ensure: docker run --gpus all ..."
@@ -80,7 +80,7 @@ echo ""
 echo "▶ Launch Configuration:"
 echo "  Model:            ${MODEL}"
 echo "  Port:             ${PORT}"
-echo "  GPU mem util:     0.88 (5407 MB of ${GPU_MEM_TOTAL:-6144} MB)"
+echo "  GPU mem util:     0.80 (4800 MB of ${GPU_MEM_TOTAL:-6144} MB)"
 echo "  Max model len:    1024 tokens (minimal KV cache for page-by-page)"
 echo "  Max num seqs:     1 (sequential processing)"
 echo "  Enforce eager:    yes (saves ~500MB vs CUDA graphs)"
@@ -93,29 +93,27 @@ echo "════════════════════════�
 echo ""
 
 # ── Launch vLLM ──────────────────────────────────────────────────────────────
-# VRAM math for RTX 4050 (6GB):
-#   0.88 × 6144 MB = 5407 MB allocated to vLLM
-#   Weights: ViT bf16 (1.2GB) + LLM AWQ-Marlin (3.5GB) = 4.7GB
-#   Remaining for KV: 5407 - 4812 = ~595 MB (plenty for 1024 tokens × 1 seq)
+# VRAM math for RTX 4050 Laptop (6 GiB total, ~4.95 GiB free):
+#
+#   CONSTRAINT: gpu_memory_utilization × total_vram must be < free_vram
+#   4.95 / 6.0 = 0.825 → max safe value is 0.82
+#
+#   At 0.80: 0.80 × 6.0 = 4.80 GiB allocated to vLLM
+#   Qwen2.5-VL-7B-AWQ weights:
+#     - ViT (307M params × 2 bytes bf16) = ~614 MB
+#     - LLM (6.7B params × 0.5 bytes AWQ-4bit) = ~3350 MB
+#     - Total weights in VRAM: ~3964 MB (~3.87 GiB)
+#   Remaining for KV cache + activations: 4.80 - 3.87 = ~0.93 GiB
+#   KV cache (1024 tokens × 1 seq × 28 layers): ~50 MB
+#   Plenty of headroom.
 #
 # VERIFIED FLAGS for vllm/vllm-openai:latest (v0.22.1):
-#   --gpu-memory-utilization   ✓ float, % of total VRAM
-#   --max-model-len            ✓ int, caps KV cache token budget
-#   --enforce-eager            ✓ disables CUDA graphs (saves VRAM)
-#   --max-num-seqs             ✓ int, max concurrent sequences
-#   --limit-mm-per-prompt      ✓ JSON string (not key=value!)
-#   --trust-remote-code        ✓ needed for Qwen2.5-VL processor
-#   --download-dir             ✓ model cache path
-#
-# DO NOT USE (will crash on v0.22.1):
-#   --swap-space        → unrecognized argument
-#   --dtype half        → breaks AWQ Marlin kernel (model requires bfloat16)
-#   --max_model_len     → duplicate of --max-model-len (argparse alias)
+# DO NOT ADD: --swap-space, --dtype half, --max_model_len (all crash)
 exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
     --port "${PORT}" \
-    --gpu-memory-utilization 0.88 \
+    --gpu-memory-utilization 0.80 \
     --max-model-len 1024 \
     --enforce-eager \
     --max-num-seqs 1 \
