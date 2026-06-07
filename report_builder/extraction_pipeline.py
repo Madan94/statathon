@@ -262,9 +262,13 @@ _PROMPT_ECHO_PHRASES: frozenset[str] = frozenset({
 def _is_valid_entity_name(name: str) -> bool:
     """Return True if name is a valid entity (not a stopword / noise / reference)."""
     cleaned = name.strip()
-    if len(cleaned) < 3:
+    # Minimum 4 chars (not 3) — "and", "the", "for" are 3-char stopwords
+    if len(cleaned) < 4:
         return False
     if not any(c.isalpha() for c in cleaned):
+        return False
+    # Reject pure single-word lowercase (likely body-text noise)
+    if " " not in cleaned and cleaned == cleaned.lower() and len(cleaned) < 8:
         return False
     if cleaned.lower() in _ENGLISH_STOPWORDS:
         return False
@@ -283,6 +287,18 @@ def _is_valid_entity_name(name: str) -> bool:
         return False
     # Reject pure parenthetical abbreviations like "(PLFS)" "(WPR):"
     if _PAREN_ABBREV_RE.match(cleaned):
+        return False
+    # Reject single common words even if capitalised (Press, Page, Bureau, Release)
+    _COMMON_NOISE_WORDS: frozenset[str] = frozenset({
+        "press", "page", "bureau", "release", "information", "ministry", "government",
+        "india", "click", "here", "home", "back", "next", "previous", "download",
+        "total", "number", "value", "data", "report", "result", "table", "figure",
+        "note", "source", "item", "area", "time", "period", "year", "date",
+        "january", "february", "march", "april", "may", "june", "july",
+        "august", "september", "october", "november", "december",
+        "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+    })
+    if cleaned.lower() in _COMMON_NOISE_WORDS:
         return False
     return True
 
@@ -526,49 +542,67 @@ def _extract_toc_hybrid(
     logger.info("[toc_hybrid] L1 regex: %d entries", len(l1_entries))
 
     # L2: font-size hierarchy from pdfplumber words
+    # Only fires when L1 is sparse. Requires a real heading-vs-body gap of >= 1.5pt.
     l2_entries: list[ToCEntry] = []
     if len(l1_entries) < 3:
+        import statistics as _stats
         all_sizes: list[float] = []
         for pt in page_texts:
             for w in (pt.get("words") or []):
                 sz = w.get("size") or w.get("fontsize") or 0
-                if isinstance(sz, (int, float)) and sz >= 8:
+                if isinstance(sz, (int, float)) and 6 <= sz <= 72:
                     all_sizes.append(float(sz))
 
         if all_sizes:
-            sorted_sizes = sorted(set(all_sizes), reverse=True)
-            h1_sz = sorted_sizes[0] if len(sorted_sizes) > 0 else 99
-            h2_sz = sorted_sizes[1] if len(sorted_sizes) > 1 else 99
-            h3_sz = sorted_sizes[2] if len(sorted_sizes) > 2 else 99
+            # Compute body text size as the mode/median (most common), NOT just "3rd largest"
+            try:
+                body_size = _stats.median(all_sizes)
+            except Exception:
+                body_size = sorted(all_sizes)[len(all_sizes) // 2]
 
-            for page_idx, pt in enumerate(page_texts):
-                words = pt.get("words") or []
-                # group words by y-position (same line)
-                lines_by_y: dict[int, list[dict]] = {}
-                for w in words:
-                    sz = w.get("size") or w.get("fontsize") or 0
-                    if not isinstance(sz, (int, float)):
-                        continue
-                    sz = float(sz)
-                    if sz >= h3_sz - 0.5:
-                        y_key = int((w.get("top") or 0) // 5) * 5
-                        lines_by_y.setdefault(y_key, []).append({"text": w.get("text", ""), "size": sz})
+            # Only treat a line as a heading if it's meaningfully larger than body text
+            heading_threshold = body_size + 1.5   # must be at least 1.5pt above body
+            h1_threshold = body_size + 3.0         # 3pt+ above body → H1
 
-                for y_key in sorted(lines_by_y):
-                    grp = lines_by_y[y_key]
-                    line_text = " ".join(g["text"] for g in grp).strip()
-                    if len(line_text) < 4 or line_text.isdigit():
-                        continue
-                    max_sz = max(g["size"] for g in grp)
-                    if max_sz >= h1_sz - 0.5:
-                        lvl = 1
-                    elif max_sz >= h2_sz - 0.5:
-                        lvl = 2
-                    else:
-                        lvl = 3
-                    l2_entries.append(ToCEntry(title=line_text, page_index=page_idx, level=lvl, region_type="font_size"))
+            # Collect unique sizes that qualify as headings
+            heading_sizes = sorted(
+                {s for s in all_sizes if s >= heading_threshold},
+                reverse=True,
+            )
+            if not heading_sizes:
+                logger.info("[toc_hybrid] L2 font-size: 0 entries (no size larger than body %.1fpt)", body_size)
+            else:
+                h1_sz = heading_sizes[0]
+                h2_sz = heading_sizes[1] if len(heading_sizes) > 1 else h1_sz
 
-        logger.info("[toc_hybrid] L2 font-size: %d entries", len(l2_entries))
+                for page_idx, pt in enumerate(page_texts):
+                    words = pt.get("words") or []
+                    lines_by_y: dict[int, list[dict]] = {}
+                    for w in words:
+                        sz = w.get("size") or w.get("fontsize") or 0
+                        if not isinstance(sz, (int, float)):
+                            continue
+                        sz = float(sz)
+                        if sz >= heading_threshold:
+                            y_key = int((w.get("top") or 0) // 4) * 4
+                            lines_by_y.setdefault(y_key, []).append({"text": w.get("text", ""), "size": sz})
+
+                    page_l2_count = 0
+                    for y_key in sorted(lines_by_y):
+                        if page_l2_count >= 3:  # max 3 L2 headings per page
+                            break
+                        grp = lines_by_y[y_key]
+                        line_text = " ".join(g["text"] for g in grp).strip()
+                        # Must have >= 2 words, >= 8 chars, not a page number
+                        if len(line_text) < 8 or line_text.isdigit() or len(line_text.split()) < 2:
+                            continue
+                        max_sz = max(g["size"] for g in grp)
+                        lvl = 1 if max_sz >= h1_sz - 0.5 else 2
+                        l2_entries.append(ToCEntry(title=line_text, page_index=page_idx, level=lvl, region_type="font_size"))
+                        page_l2_count += 1
+
+        logger.info("[toc_hybrid] L2 font-size: %d entries (body=%.1fpt threshold)",
+                    len(l2_entries), body_size if all_sizes else 0.0)
 
     # L3: Gemini last resort
     l3_entries: list[ToCEntry] = []
@@ -1645,6 +1679,15 @@ def pass2_5_document_knowledge_graph(
         current_chapter["pageRange"][1] = max(current_chapter["pageRange"][1], total_pages - 1)
         chapters.append(current_chapter)
 
+    # Cap chapters: at most 2 per page (prevents L2 noise from creating 80+ chapters)
+    max_chapters = max(5, total_pages * 2)
+    if len(chapters) > max_chapters:
+        logger.warning("[pass2.5] Capping chapters %d → %d (noise suppression)", len(chapters), max_chapters)
+        chapters = chapters[:max_chapters]
+        # Extend last retained chapter to end of document
+        if chapters:
+            chapters[-1]["pageRange"][1] = total_pages - 1
+
     # If no ToC found, create a single chapter for the whole document
     if not chapters:
         chapters.append({
@@ -1827,12 +1870,16 @@ def pass2_5_document_knowledge_graph(
                 pattern = "descriptive"
                 components = ["narrative_paragraph"]
 
+            # level: use section's own level if it's a subsection, else chapter level
+            # This ensures Loop 1 can distinguish chapter-level vs sub-section patterns
+            sec_level = sec.get("level", ch.get("level", 1))
             section_patterns.append({
                 "sectionId": sec.get("sectionId", ch["chapterId"]),
                 "title": sec.get("title", ch["title"]),
                 "pageRange": [sec_page, sec_end],
                 "pattern": pattern,
-                "level": ch.get("level", 2),  # propagate ToC level for Loop 1 filtering
+                "level": sec_level,
+                "chapterId": ch["chapterId"],
                 "suggested_components": components,
             })
 
@@ -2067,21 +2114,34 @@ def pass3_two_loop_ast_building(
         entity_summary = entity_summary[:300] + "..."
 
     # ═══════════════════════════════════════════════════════════════════
-    # LOOP 1: Question Extraction per Section (top-level chapters only)
+    # LOOP 1: Question Extraction per Chapter (one call per real chapter)
     # ═══════════════════════════════════════════════════════════════════
     logger.info("[pass3] ── Loop 1: Question extraction ──")
     raw_questions: list[dict[str, Any]] = []
     consecutive_failures = 0
 
-    # Use level-1 chapters as the primary loop targets to avoid
-    # iterating 80+ sub-sections. Fallback to top-20 if no level-1 exist.
-    top_level_sections = [sp for sp in section_patterns if sp.get("level", 2) == 1]
-    if not top_level_sections:
-        top_level_sections = section_patterns[:20]
+    # Use document_map chapters directly — each chapter gets ONE Qwen call.
+    # This guarantees each chapter's questions get the chapter's real page range,
+    # producing distinct page values → distinct topic assignments in pass3.
+    # Fall back to section_patterns level-1 slice if chapters unavailable.
+    chapters_loop1 = document_map.get("chapters") or []
+    if chapters_loop1:
+        top_level_sections = [
+            {
+                "sectionId": ch["chapterId"],
+                "title": ch["title"],
+                "pageRange": ch["pageRange"],
+                "pattern": "descriptive",
+                "level": 1,
+                "chapterId": ch["chapterId"],
+                "suggested_components": ["narrative_paragraph"],
+            }
+            for ch in chapters_loop1[:20]  # hard cap at 20 chapters
+        ]
     else:
-        top_level_sections = top_level_sections[:20]  # hard cap
-    logger.info("[pass3] L1: Processing %d top-level sections (of %d total)",
-                len(top_level_sections), len(section_patterns))
+        top_level_sections = [sp for sp in section_patterns if sp.get("level", 2) == 1][:20]
+    logger.info("[pass3] L1: Processing %d chapters (of %d chapters total)",
+                len(top_level_sections), len(chapters_loop1))
 
     for sp in top_level_sections:
         if consecutive_failures >= 3:
