@@ -482,6 +482,145 @@ def _fix_unicode_artifacts(text: str) -> str:
     text = text.replace(_A, _EN)               # lone a -> en dash
     return text
 
+def _extract_toc_hybrid(
+    page_texts: list[dict[str, Any]],
+    layout_pages: list[dict[str, Any]],
+    toc_layoutlm: list[ToCEntry],
+) -> list[ToCEntry]:
+    """3-level hybrid ToC cascade: L1 regex patterns -> L2 font-size -> L3 Gemini (last resort).
+
+    L1 (regex): Numbered/all-caps patterns common in MoSPI/NSSO publications.
+    L2 (font-size): pdfplumber word-level font sizes when L1 is sparse.
+    L3 (Gemini): Last resort if L1+L2 together find fewer than 3 chapters.
+    Always merges with LayoutLM output; caller gets the best combined result.
+    """
+    import re as _re_toc
+    from difflib import SequenceMatcher as _SM
+
+    # Regex patterns for MoSPI headings (returns (title, level))
+    _PATTERNS: list[tuple[str, int]] = [
+        (r"^(?:CHAPTER|Chapter)\s+([IVXLC0-9]+)[:\.\s]*(.*)", 1),
+        (r"^(?:SECTION|Section)\s+([IVXA-Z0-9]+)[:\.\s]*(.*)", 1),
+        (r"^(?:Statement)\s+(\d+[\.\-]\d+)[:\s\-]*(.*)", 2),
+        (r"^(?:ANNEXURE|Annexure|APPENDIX|Appendix)\s+([A-Z0-9]+)[:\.\s]*(.*)", 2),
+        (r"^(\d+)\.\s+([A-Z][A-Za-z\s]{5,60})$", 2),   # "1. Labour Force Participation"
+        (r"^([A-Z][A-Z\s\-]{10,70})$", 1),              # ALL CAPS line >= 10 chars
+    ]
+
+    l1_entries: list[ToCEntry] = []
+    for page_idx, pt in enumerate(page_texts):
+        raw = (pt.get("raw_text") or "").strip()
+        for line in raw.splitlines():
+            line = line.strip()
+            if len(line) < 5 or len(line) > 120:
+                continue
+            for pat, level in _PATTERNS:
+                m = _re_toc.match(pat, line)
+                if m:
+                    groups = [g for g in m.groups() if g and g.strip()]
+                    title = " ".join(groups).strip()
+                    if len(title) >= 4:
+                        l1_entries.append(ToCEntry(title=title, page_index=page_idx, level=level, region_type="regex"))
+                    break  # first matching pattern wins
+
+    logger.info("[toc_hybrid] L1 regex: %d entries", len(l1_entries))
+
+    # L2: font-size hierarchy from pdfplumber words
+    l2_entries: list[ToCEntry] = []
+    if len(l1_entries) < 3:
+        all_sizes: list[float] = []
+        for pt in page_texts:
+            for w in (pt.get("words") or []):
+                sz = w.get("size") or w.get("fontsize") or 0
+                if isinstance(sz, (int, float)) and sz >= 8:
+                    all_sizes.append(float(sz))
+
+        if all_sizes:
+            sorted_sizes = sorted(set(all_sizes), reverse=True)
+            h1_sz = sorted_sizes[0] if len(sorted_sizes) > 0 else 99
+            h2_sz = sorted_sizes[1] if len(sorted_sizes) > 1 else 99
+            h3_sz = sorted_sizes[2] if len(sorted_sizes) > 2 else 99
+
+            for page_idx, pt in enumerate(page_texts):
+                words = pt.get("words") or []
+                # group words by y-position (same line)
+                lines_by_y: dict[int, list[dict]] = {}
+                for w in words:
+                    sz = w.get("size") or w.get("fontsize") or 0
+                    if not isinstance(sz, (int, float)):
+                        continue
+                    sz = float(sz)
+                    if sz >= h3_sz - 0.5:
+                        y_key = int((w.get("top") or 0) // 5) * 5
+                        lines_by_y.setdefault(y_key, []).append({"text": w.get("text", ""), "size": sz})
+
+                for y_key in sorted(lines_by_y):
+                    grp = lines_by_y[y_key]
+                    line_text = " ".join(g["text"] for g in grp).strip()
+                    if len(line_text) < 4 or line_text.isdigit():
+                        continue
+                    max_sz = max(g["size"] for g in grp)
+                    if max_sz >= h1_sz - 0.5:
+                        lvl = 1
+                    elif max_sz >= h2_sz - 0.5:
+                        lvl = 2
+                    else:
+                        lvl = 3
+                    l2_entries.append(ToCEntry(title=line_text, page_index=page_idx, level=lvl, region_type="font_size"))
+
+        logger.info("[toc_hybrid] L2 font-size: %d entries", len(l2_entries))
+
+    # L3: Gemini last resort
+    l3_entries: list[ToCEntry] = []
+    combined_so_far = len(l1_entries) + len(l2_entries) + len(toc_layoutlm)
+    if combined_so_far < 3:
+        try:
+            api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+            if api_key:
+                sample_text = "\n\n".join(
+                    (pt.get("raw_text") or "")[:800]
+                    for pt in page_texts[:12]
+                )
+                prompt = (
+                    "Extract the table of contents from this government statistical document.\n"
+                    "Output JSON array: [{\"title\": \"Chapter title\", \"page\": 1, \"level\": 1}, ...]\n"
+                    "level 1=chapter, 2=section, 3=subsection. JSON only.\n\n"
+                    + sample_text[:6000]
+                )
+                gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+                try:
+                    from google import genai as _genai
+                    client = _genai.Client(api_key=api_key)
+                    resp = client.models.generate_content(model=gemini_model, contents=prompt)
+                    raw = (resp.text or "").strip()
+                except ImportError:
+                    import google.generativeai as _legacy
+                    _legacy.configure(api_key=api_key)
+                    resp = _legacy.GenerativeModel(gemini_model).generate_content(prompt)
+                    raw = (resp.text or "").strip()
+
+                parsed = _extract_json_array_from_response(raw)
+                if parsed:
+                    for item in parsed:
+                        if not isinstance(item, dict):
+                            continue
+                        title = (item.get("title") or "").strip()
+                        page = int(item.get("page") or 1) - 1
+                        level = int(item.get("level") or 1)
+                        if title and 0 <= page < len(page_texts):
+                            l3_entries.append(ToCEntry(title=title, page_index=max(0, page), level=level, region_type="gemini"))
+                    logger.info("[toc_hybrid] L3 Gemini: %d entries", len(l3_entries))
+        except Exception as exc:
+            logger.warning("[toc_hybrid] L3 Gemini failed (non-fatal): %s", exc)
+
+    # Merge all sources: start from LayoutLM, add L1, L2, L3 (dedup by page+title)
+    all_new = l1_entries + l2_entries + l3_entries
+    merged = _merge_toc_sources(toc_layoutlm, all_new)
+    logger.info("[toc_hybrid] merged: %d total entries (L1=%d L2=%d L3=%d layoutlm=%d)",
+                len(merged), len(l1_entries), len(l2_entries), len(l3_entries), len(toc_layoutlm))
+    return merged
+
+
 def _merge_toc_sources(layoutlm: list[ToCEntry], new_entries: list[ToCEntry]) -> list[ToCEntry]:
     """Merge LayoutLM ToC with pattern/font/Gemini entries, deduplicated and sorted."""
     combined = list(layoutlm)
