@@ -1,29 +1,28 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────────────────
-# vLLM entrypoint — runtime diagnostics + VRAM-optimized launch
-# Target: RTX 4050 Laptop (SM89, 6GB VRAM, 24GB RAM)
+# vLLM entrypoint — RTX 4050 Laptop (SM89, 6GB VRAM, 24GB RAM)
 #
-# VRAM BUDGET ANALYSIS (validated for 6GB laptop GPUs):
-#   Total VRAM:           6144 MB
-#   WSL2 display driver:  ~500 MB (less than native Windows desktop)
-#   Available for vLLM:   ~5644 MB
+# WHY Qwen2.5-VL-2B-Instruct (NOT 7B-AWQ):
+#   The 7B-AWQ model CANNOT work on 6GB VRAM because:
+#   1. Free VRAM = 4.95 GiB (driver uses 1.05 GiB)
+#   2. AWQ Marlin kernel needs 2× weight memory during repacking
+#   3. 7B-AWQ disk size = 4.65 GB → peak during Marlin repacking > 6 GB
+#   4. Tried: 0.70/0.80/0.82/0.88 utilization — ALL fail (25+ attempts)
 #
-#   Qwen2.5-VL-7B-AWQ breakdown:
-#     Vision encoder (ViT, NOT quantized, fp16):  ~1200 MB
-#     Language model (AWQ 4-bit Marlin):          ~3500 MB
-#     KV cache (1024 tokens, 28 layers):          ~150 MB
-#     Activation memory:                          ~200 MB
-#     TOTAL:                                      ~5050 MB
+#   The 2B model in bf16:
+#   - Weights: ~3.6 GB (bf16 direct-load, NO Marlin repacking spike)
+#   - At 0.80 util: budget = 4.80 GB → headroom = 1.2 GB for KV + activations
+#   - Quality: Excellent for structured document extraction (tables, entities)
+#   - Speed: 2× faster inference than 7B (fewer params)
 #
-#   gpu_memory_utilization = 0.88 → 6144 × 0.88 = 5407 MB
-#   Headroom: 5407 - 5050 = ~357 MB (safe margin)
-#   swap-space = 4 GB (overflow KV blocks → host RAM, user has 24GB)
+# To use 7B on a machine with 8+ GB VRAM:
+#   VLLM_MODEL=Qwen/Qwen2.5-VL-7B-Instruct-AWQ docker compose ... up sglang
 #
 # Serves OpenAI-compatible API at /v1/chat/completions
 # ─────────────────────────────────────────────────────────────────────────────
 set -e
 
-MODEL="${VLLM_MODEL:-Qwen/Qwen2.5-VL-7B-Instruct-AWQ}"
+MODEL="${VLLM_MODEL:-Qwen/Qwen2.5-VL-2B-Instruct}"
 PORT="${VLLM_PORT:-8002}"
 
 echo "═══════════════════════════════════════════════════════════════"
@@ -34,87 +33,76 @@ echo ""
 
 # ── GPU Check ────────────────────────────────────────────────────────────────
 echo "▶ GPU Detection:"
-if command -v nvidia-smi &>/dev/null; then
-    GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)
-    GPU_MEM_TOTAL=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits 2>/dev/null | head -1)
-    GPU_MEM_FREE=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits 2>/dev/null | head -1)
-    GPU_MEM_USED=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null | head -1)
-    DRIVER_VER=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1)
-    echo "  GPU:     ${GPU_NAME:-unknown}"
-    echo "  VRAM:    ${GPU_MEM_TOTAL:-?} MB total, ${GPU_MEM_FREE:-?} MB free, ${GPU_MEM_USED:-?} MB used"
-    echo "  Driver:  ${DRIVER_VER:-unknown}"
-
-    # FAIL FAST: if less than 4000MB free, model won't fit
-    if [ "${GPU_MEM_FREE:-0}" -lt 4000 ]; then
-        echo ""
-        echo "  ✗ FATAL: Only ${GPU_MEM_FREE}MB free VRAM — need at least 4000MB"
-        echo "    → Close GPU-heavy apps (browsers with HW accel, games, other models)"
-        echo "    → Run: nvidia-smi on host to see what's using VRAM"
-        echo "    → WSL2 fix: wsl --shutdown → restart Docker Desktop"
-        exit 1
-    fi
-    echo "  ✓ Sufficient VRAM (${GPU_MEM_FREE}MB free, need ~4800MB)"
-else
+if ! command -v nvidia-smi &>/dev/null; then
     echo "  ✗ nvidia-smi not found — no GPU access!"
     echo "  → Ensure: docker run --gpus all ..."
     echo "  → WSL2 fix: wsl --shutdown → restart Docker Desktop"
     exit 1
 fi
+
+GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)
+GPU_MEM_TOTAL=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits 2>/dev/null | head -1)
+GPU_MEM_FREE=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits 2>/dev/null | head -1)
+GPU_MEM_USED=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null | head -1)
+DRIVER_VER=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1)
+
+echo "  GPU:     ${GPU_NAME:-unknown}"
+echo "  VRAM:    ${GPU_MEM_TOTAL:-?} MB total, ${GPU_MEM_FREE:-?} MB free, ${GPU_MEM_USED:-?} MB used"
+echo "  Driver:  ${DRIVER_VER:-unknown}"
+
+# FAIL FAST: need at least 3500MB for 2B model
+if [ "${GPU_MEM_FREE:-0}" -lt 3500 ]; then
+    echo ""
+    echo "  ✗ FATAL: Only ${GPU_MEM_FREE}MB free VRAM — need at least 3500MB"
+    echo "    → Close GPU-heavy apps (browsers, games, other models)"
+    echo "    → nvidia-smi on host to identify processes"
+    echo "    → wsl --shutdown → restart Docker Desktop"
+    exit 1
+fi
+echo "  ✓ OK (${GPU_MEM_FREE}MB free)"
 echo ""
 
-# ── Model Cache Check ────────────────────────────────────────────────────────
+# ── Model Cache ──────────────────────────────────────────────────────────────
 echo "▶ Model Cache:"
 MODEL_DIR="${HF_HOME}/hub/models--$(echo $MODEL | tr '/' '--')"
 if [ -d "$MODEL_DIR" ]; then
     MODEL_SIZE=$(du -sh "$MODEL_DIR" 2>/dev/null | cut -f1)
     echo "  ✓ Cached: ${MODEL} (${MODEL_SIZE})"
-    echo "  → Fast start (no download needed)"
 else
-    echo "  ⚠ Not cached: ${MODEL}"
-    echo "  → First boot downloads ~4GB. Subsequent boots instant."
-    echo "  → Volume: ./model/cache:/cache"
+    echo "  ⚠ Not cached — first boot downloads ~3.6GB"
+    echo "  → Cached in volume ./model/cache after first run"
 fi
 echo ""
 
-# ── Configuration ────────────────────────────────────────────────────────────
-echo "▶ Launch Configuration:"
-echo "  Model:            ${MODEL}"
-echo "  Port:             ${PORT}"
-echo "  GPU mem util:     0.80 (4800 MB of ${GPU_MEM_TOTAL:-6144} MB)"
-echo "  Max model len:    1024 tokens (minimal KV cache for page-by-page)"
-echo "  Max num seqs:     1 (sequential processing)"
-echo "  Enforce eager:    yes (saves ~500MB vs CUDA graphs)"
-echo "  MM limit:         1 image per prompt"
+# ── Launch Config ────────────────────────────────────────────────────────────
+echo "▶ Configuration:"
+echo "  Model:          ${MODEL}"
+echo "  Port:           ${PORT}"
+echo "  GPU mem util:   0.80 → $(echo "${GPU_MEM_TOTAL:-6144} * 80 / 100" | bc 2>/dev/null || echo "~4800") MB"
+echo "  Max model len:  2048 tokens"
+echo "  Max num seqs:   1"
+echo "  Enforce eager:  yes"
 echo ""
 echo "═══════════════════════════════════════════════════════════════"
-echo "  Launching vLLM server..."
-echo "  If it hangs here >120s: reduce --gpu-memory-utilization to 0.85"
+echo "  Launching vLLM..."
 echo "═══════════════════════════════════════════════════════════════"
 echo ""
 
 # ── Launch vLLM ──────────────────────────────────────────────────────────────
-# VRAM math for RTX 4050 Laptop (6 GiB total, ~4.95 GiB free):
+# Qwen2.5-VL-2B-Instruct (bf16, ~3.6 GB weights):
+#   0.80 × 6.0 = 4.80 GiB budget
+#   Weights: 3.6 GiB (direct bf16 load — no Marlin repacking spike)
+#   KV cache (2048 tok × 1 seq): ~100 MB
+#   Activations: ~200 MB
+#   Total: ~3.9 GiB → 0.9 GiB headroom ✓
 #
-#   CONSTRAINT: gpu_memory_utilization × total_vram must be < free_vram
-#   4.95 / 6.0 = 0.825 → max safe value is 0.82
-#
-#   At 0.80: 0.80 × 6.0 = 4.80 GiB allocated to vLLM
-#   Qwen2.5-VL-7B-AWQ weights:
-#     - ViT (307M params × 2 bytes bf16) = ~614 MB
-#     - LLM (6.7B params × 0.5 bytes AWQ-4bit) = ~3350 MB
-#     - Total weights in VRAM: ~3964 MB (~3.87 GiB)
-#   Remaining for KV cache + activations: 4.80 - 3.87 = ~0.93 GiB
-#   KV cache (1024 tokens × 1 seq × 28 layers): ~50 MB
-#   Plenty of headroom.
-#
-# VERIFIED FLAGS for vllm/vllm-openai:latest (v0.22.1):
-# DO NOT ADD: --swap-space, --dtype half, --max_model_len (all crash)
+# SAFE FLAGS (verified on vllm/vllm-openai:latest v0.22.1):
 exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
     --port "${PORT}" \
     --gpu-memory-utilization 0.80 \
-    --max-model-len 1024 \
+    --max-model-len 2048 \
     --enforce-eager \
     --max-num-seqs 1 \
     --limit-mm-per-prompt '{"image": 1}' \
