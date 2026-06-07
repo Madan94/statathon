@@ -52,29 +52,56 @@ def build_toc_from_regions(pages: list[dict[str, Any]]) -> list[ToCEntry]:
         Ordered list of ToCEntry objects representing document structure.
     """
     toc: list[ToCEntry] = []
+    seen_titles: set[str] = set()
+    MAX_PER_PAGE = 8
+    MIN_CONFIDENCE = 0.5
 
     for page in pages:
         page_idx = page.get("page_index", 0)
         regions = page.get("regions") or []
+        page_headings = 0
 
         for region in regions:
+            if page_headings >= MAX_PER_PAGE:
+                break
+
             rtype = region.get("type", "")
             text = (region.get("text") or "").strip()
+            confidence = region.get("confidence", 0.5)
 
-            if rtype in ("title", "heading") and text:
-                # Estimate heading level from font size / position / type
-                level = 1 if rtype == "title" else 2
-                # Subsection heuristic: indented or smaller font
-                bbox = region.get("bbox", [0, 0, 0, 0])
-                if bbox[0] > 100:  # indented (normalized 0-1000 scale)
-                    level = 3
+            if rtype not in ("title", "heading") or not text:
+                continue
+            if confidence < MIN_CONFIDENCE:
+                continue
+            # Skip very short or very long entries (noise)
+            if len(text) < 3 or len(text) > 150:
+                continue
 
-                toc.append(ToCEntry(
-                    title=text[:120],  # cap title length
-                    page_index=page_idx,
-                    level=level,
-                    region_type=rtype,
-                ))
+            # Deduplicate (case-insensitive, strip numbers/punctuation)
+            dedup_key = text.lower().strip("0123456789.-: ")
+            if dedup_key in seen_titles:
+                continue
+            seen_titles.add(dedup_key)
+
+            # Estimate heading level from region type + bbox width
+            bbox = region.get("bbox", [0, 0, 0, 0])
+            page_width = page.get("width", 1000)
+            x_start_pct = (bbox[0] / page_width * 100) if page_width > 0 else 0
+
+            if rtype == "title":
+                level = 1
+            elif x_start_pct > 15:
+                level = 3  # indented = subsection
+            else:
+                level = 2
+
+            toc.append(ToCEntry(
+                title=text[:120],
+                page_index=page_idx,
+                level=level,
+                region_type=rtype,
+            ))
+            page_headings += 1
 
     logger.info("[chunking] Built ToC with %d entries from %d pages", len(toc), len(pages))
     return toc

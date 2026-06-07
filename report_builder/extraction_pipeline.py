@@ -219,10 +219,10 @@ def pass2_content_extraction(
                 ]},
             ],
             "temperature": 0.1,
-            "max_tokens": 1500,
+            "max_tokens": 2500,
         }
 
-        # Try Qwen-VL
+        # Try Qwen-VL with retry on JSON parse failure
         extracted = None
         try:
             r = requests.post(endpoint, json=payload, timeout=timeout)
@@ -233,6 +233,24 @@ def pass2_content_extraction(
                 if content.startswith("```"):
                     content = content.split("\n", 1)[-1].rsplit("```", 1)[0]
                 extracted = json.loads(content)
+        except json.JSONDecodeError:
+            # Retry with simpler prompt asking only for text extraction
+            logger.debug("[pass2] Page %d JSON parse failed — retrying with simple prompt", i)
+            try:
+                simple_prompt = (
+                    f"Extract all text from page {i + 1}. "
+                    "Output JSON: {\"regions\": [{\"region_idx\": 0, \"type\": \"text\", \"content\": \"...\"}]}"
+                )
+                payload["messages"][0]["content"][1]["text"] = simple_prompt
+                payload["max_tokens"] = 1500
+                r = requests.post(endpoint, json=payload, timeout=timeout)
+                if r.status_code == 200:
+                    content = r.json()["choices"][0]["message"]["content"].strip()
+                    if content.startswith("```"):
+                        content = content.split("\n", 1)[-1].rsplit("```", 1)[0]
+                    extracted = json.loads(content)
+            except Exception:
+                pass
         except Exception as exc:
             logger.debug("[pass2] Page %d Qwen-VL failed: %s", i, exc)
 
@@ -445,34 +463,75 @@ def pass4_assemble_ast(
     # ── contentAST ──
     paragraphs = []
     for i, page in enumerate(content_pages):
-        text = page.get("raw_text") or ""
-        if text:
-            paragraphs.append({
-                "id": f"p_{i + 1:03d}",
-                "type": "paragraph",
-                "content": text[:2000],
-                "pageRef": f"page_{i + 1:03d}",
-            })
+        vlm_content = page.get("extracted_content")
+        if vlm_content and isinstance(vlm_content, dict):
+            # Use Qwen-VL structured extraction per region
+            for r_idx, region in enumerate(vlm_content.get("regions") or []):
+                rtype = region.get("type", "text")
+                content = region.get("content", {})
+                if rtype in ("text", "heading", "paragraph", "narrative"):
+                    text_val = content if isinstance(content, str) else content.get("text", "")
+                    if text_val:
+                        para_type = "heading" if rtype == "heading" else "paragraph"
+                        paragraphs.append({
+                            "id": f"p_{i + 1:03d}_{r_idx + 1:02d}",
+                            "type": para_type,
+                            "content": str(text_val)[:2000],
+                            "pageRef": f"page_{i + 1:03d}",
+                            "regionIdx": region.get("region_idx", r_idx),
+                        })
+        else:
+            # Fallback: use raw pdfplumber text as single paragraph per page
+            text = page.get("raw_text") or ""
+            if text:
+                paragraphs.append({
+                    "id": f"p_{i + 1:03d}",
+                    "type": "paragraph",
+                    "content": text[:2000],
+                    "pageRef": f"page_{i + 1:03d}",
+                })
 
     # ── tableAST ──
     tables = []
     for i, page in enumerate(content_pages):
-        for j, table in enumerate(page.get("tables_raw") or []):
-            if table and len(table) >= 2:
-                headers = [str(c or "") for c in table[0]] if table[0] else []
-                sample_rows = []
-                for row in table[1:3]:
-                    sample_rows.append({
-                        f"col_{k}": str(c or "") for k, c in enumerate(row or [])
+        # Priority 1: Qwen-VL extracted table structures
+        vlm_content = page.get("extracted_content")
+        if vlm_content and isinstance(vlm_content, dict):
+            for r_idx, region in enumerate(vlm_content.get("regions") or []):
+                if region.get("type") == "table":
+                    content = region.get("content", {})
+                    headers = content.get("columns") or content.get("column_headers") or []
+                    sample_rows = content.get("rows") or content.get("sample_rows") or []
+                    if headers or sample_rows:
+                        tables.append({
+                            "tableId": f"table_{i + 1}_{r_idx + 1}",
+                            "title": content.get("title", f"Table on page {i + 1}"),
+                            "pageRef": f"page_{i + 1:03d}",
+                            "columns": [str(h) for h in headers][:20],
+                            "sampleRows": sample_rows[:3] if isinstance(sample_rows, list) else [],
+                            "rowCount": content.get("row_count", len(sample_rows)),
+                            "source": "qwen-vl",
+                        })
+        # Priority 2: pdfplumber tables (if VLM didn't find any for this page)
+        page_vlm_tables = [t for t in tables if t.get("pageRef") == f"page_{i + 1:03d}"]
+        if not page_vlm_tables:
+            for j, table in enumerate(page.get("tables_raw") or []):
+                if table and len(table) >= 2:
+                    headers = [str(c or "") for c in table[0]] if table[0] else []
+                    sample_rows = []
+                    for row in table[1:3]:
+                        sample_rows.append({
+                            f"col_{k}": str(c or "") for k, c in enumerate(row or [])
+                        })
+                    tables.append({
+                        "tableId": f"table_{i + 1}_{j + 1}",
+                        "title": f"Table on page {i + 1}",
+                        "pageRef": f"page_{i + 1:03d}",
+                        "columns": headers,
+                        "sampleRows": sample_rows,
+                        "rowCount": len(table) - 1,
+                        "source": "pdfplumber",
                     })
-                tables.append({
-                    "tableId": f"table_{i + 1}_{j + 1}",
-                    "title": f"Table on page {i + 1}",
-                    "pageRef": f"page_{i + 1:03d}",
-                    "columns": headers,
-                    "sampleRows": sample_rows,
-                    "rowCount": len(table) - 1,
-                })
 
     # ── figureAST + chartAST ──
     figures = []
@@ -561,9 +620,14 @@ def run_extraction_pipeline(
     Returns:
         Enterprise Document AST dict.
     """
+    import time as _time
+
     def _tick(stage: str, pct: int, data: Any = None):
         if progress_callback:
             progress_callback(stage, pct, data)
+
+    pipeline_trace: dict[str, Any] = {"passes": {}, "total_elapsed": 0}
+    pipeline_start = _time.monotonic()
 
     logger.info("═══════════════════════════════════════════════════════════")
     logger.info("  Multi-Pass Extraction Pipeline")
@@ -572,47 +636,115 @@ def run_extraction_pipeline(
 
     # ── Pass 0: Rasterize ──
     _tick("pass0_rasterization", 10)
+    t0 = _time.monotonic()
     page_images, page_texts = pass0_rasterize(pdf_path)
+    pass0_elapsed = _time.monotonic() - t0
+    pipeline_trace["passes"]["pass0_rasterize"] = {
+        "elapsed_s": round(pass0_elapsed, 1),
+        "images": len(page_images),
+        "text_pages": len(page_texts),
+    }
 
     if not page_images and not page_texts:
         raise RuntimeError("Pass 0 failed: could not rasterize or extract text from PDF")
 
     # ── Pass 1: Layout Detection ──
     _tick("pass1_layout_detection", 25)
+    t0 = _time.monotonic()
     layout_pages = pass1_layout_detection(pdf_path)
+    pass1_elapsed = _time.monotonic() - t0
 
     # Fallback: build basic layout from pdfplumber headings if LayoutLM unavailable
+    layoutlm_used = layout_pages is not None
     if not layout_pages:
         logger.warning("[pipeline] LayoutLM unavailable — building layout from pdfplumber")
         layout_pages = _fallback_layout_from_text(page_texts)
 
+    total_regions = sum(len(p.get("regions") or []) for p in layout_pages)
+    pipeline_trace["passes"]["pass1_layout"] = {
+        "elapsed_s": round(pass1_elapsed, 1),
+        "layoutlm_used": layoutlm_used,
+        "pages_with_regions": len(layout_pages),
+        "total_regions": total_regions,
+    }
+
     # Build ToC from layout
     toc = build_toc_from_regions(layout_pages)
+    pipeline_trace["passes"]["pass1_layout"]["toc_entries"] = len(toc)
 
     # ── Pass 2: Content Extraction ──
     _tick("pass2_content_extraction", 50)
+    t0 = _time.monotonic()
     content_pages = pass2_content_extraction(page_images, layout_pages, page_texts, doc_title)
+    pass2_elapsed = _time.monotonic() - t0
+
+    vlm_success = sum(1 for p in content_pages if p.get("extracted_content") is not None)
+    pipeline_trace["passes"]["pass2_vlm"] = {
+        "elapsed_s": round(pass2_elapsed, 1),
+        "pages_total": len(content_pages),
+        "vlm_success": vlm_success,
+        "vlm_success_rate": round(vlm_success / max(len(content_pages), 1) * 100, 1),
+        "mode": "qwen-vl" if page_images else "text-only-fallback",
+    }
 
     # ── Pass 3: Semantic Analysis ──
     _tick("pass3_semantic_analysis", 75)
+    t0 = _time.monotonic()
     semantic = pass3_semantic_analysis(content_pages, toc, doc_title)
+    pass3_elapsed = _time.monotonic() - t0
 
+    semantic_source = "qwen-vl"
     # If local model produced nothing, try Gemini fallback
     if not semantic.get("entities") and not semantic.get("semantic_hierarchy"):
         logger.info("[pipeline] Local semantic analysis empty — trying Gemini fallback")
+        t0_fb = _time.monotonic()
         semantic = _gemini_semantic_fallback(content_pages, toc, doc_title)
+        pass3_elapsed += _time.monotonic() - t0_fb
+        semantic_source = "gemini-fallback"
+
+    pipeline_trace["passes"]["pass3_semantic"] = {
+        "elapsed_s": round(pass3_elapsed, 1),
+        "source": semantic_source,
+        "hierarchy_nodes": len(semantic.get("semantic_hierarchy") or []),
+        "entities": len(semantic.get("entities") or []),
+        "template_slots": len(semantic.get("template_slots") or []),
+        "questions": len(semantic.get("questions") or []),
+    }
 
     # ── Pass 4: AST Assembly ──
     _tick("pass4_ast_assembly", 90)
+    t0 = _time.monotonic()
     ast = pass4_assemble_ast(content_pages, layout_pages, semantic, page_texts, doc_title, source_hash)
+    pass4_elapsed = _time.monotonic() - t0
+    pipeline_trace["passes"]["pass4_assembly"] = {
+        "elapsed_s": round(pass4_elapsed, 1),
+        "paragraphs": len(ast.get("contentAST", {}).get("paragraphs") or []),
+        "tables": len(ast.get("tableAST", {}).get("tables") or []),
+        "figures": len(ast.get("figureAST", {}).get("figures") or []),
+        "charts": len(ast.get("chartAST", {}).get("charts") or []),
+    }
 
     # ── Pass 5: Gemini Enrichment (entities, slots, facts, questions) ──
     _tick("pass5_gemini_enrichment", 95)
+    t0 = _time.monotonic()
     try:
         from report_builder.gemini_enrichment import gemini_full_enrichment
         ast = gemini_full_enrichment(ast)
+        gemini_status = "success"
     except Exception as exc:
         logger.warning("[pipeline] Gemini enrichment failed (non-fatal): %s", exc)
+        gemini_status = f"failed: {exc}"
+    pass5_elapsed = _time.monotonic() - t0
+    pipeline_trace["passes"]["pass5_gemini"] = {
+        "elapsed_s": round(pass5_elapsed, 1),
+        "status": gemini_status,
+        "facts": len(ast.get("factGraph", {}).get("facts") or []),
+        "questions": len(ast.get("questions") or []),
+    }
+
+    # Finalize trace
+    pipeline_trace["total_elapsed"] = round(_time.monotonic() - pipeline_start, 1)
+    ast["pipeline_trace"] = pipeline_trace
 
     _tick("completed", 100)
     logger.info("═══════════════════════════════════════════════════════════")

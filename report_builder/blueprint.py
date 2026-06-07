@@ -540,15 +540,24 @@ def compile_template_production(
         )
         # Build TemplateAST from enterprise AST for backward compat
         v2_blocks: list[BlockSpec] = []
-        for para in (enterprise_ast.get("contentAST", {}).get("paragraphs") or [])[:40]:
+
+        # Use semantic hierarchy for section-level blocks
+        hierarchy = enterprise_ast.get("semanticAST", {}).get("hierarchy") or []
+        for node in hierarchy[:30]:
+            node_id = node.get("nodeId") or node.get("id") or f"sec_{len(v2_blocks)}"
+            title = node.get("title", "Section")[:80]
+            level = node.get("level", 2)
+            kind = "heading" if level <= 1 else "narrative"
             v2_blocks.append(BlockSpec(
-                block_id=para.get("id", f"blk_{len(v2_blocks)}"),
-                kind="narrative",
-                title=para.get("content", "")[:60],
+                block_id=node_id,
+                kind=kind,
+                title=title,
                 section="body",
                 required=True,
-                hints={},
+                hints={"level": level},
             ))
+
+        # Add table blocks from tableAST
         for tbl in (enterprise_ast.get("tableAST", {}).get("tables") or [])[:20]:
             v2_blocks.append(BlockSpec(
                 block_id=tbl.get("tableId", f"tbl_{len(v2_blocks)}"),
@@ -558,6 +567,39 @@ def compile_template_production(
                 required=True,
                 hints={"columns": tbl.get("columns", [])},
             ))
+
+        # Add figure/chart blocks
+        for fig in (enterprise_ast.get("figureAST", {}).get("figures") or [])[:10]:
+            v2_blocks.append(BlockSpec(
+                block_id=fig.get("figureId", f"fig_{len(v2_blocks)}"),
+                kind="chart",
+                title=fig.get("caption", "Figure")[:80],
+                section="body",
+                required=False,
+                hints={},
+            ))
+        for chart in (enterprise_ast.get("chartAST", {}).get("charts") or [])[:10]:
+            v2_blocks.append(BlockSpec(
+                block_id=chart.get("chartId", f"chart_{len(v2_blocks)}"),
+                kind="chart",
+                title=chart.get("title", "Chart")[:80],
+                section="body",
+                required=False,
+                hints={"chartType": chart.get("type", "unknown")},
+            ))
+
+        # If hierarchy was empty, fall back to page-level narrative blocks
+        if not v2_blocks:
+            for para in (enterprise_ast.get("contentAST", {}).get("paragraphs") or [])[:40]:
+                v2_blocks.append(BlockSpec(
+                    block_id=para.get("id", f"blk_{len(v2_blocks)}"),
+                    kind="narrative",
+                    title=para.get("content", "")[:60],
+                    section="body",
+                    required=True,
+                    hints={},
+                ))
+
         if not v2_blocks:
             v2_blocks = list(DEFAULT_MOSPI_TEMPLATE.blocks)
 
@@ -573,6 +615,9 @@ def compile_template_production(
         payload["extracted_assets"] = enterprise_ast.get("extracted_assets", {})
         payload["questions"] = enterprise_ast.get("questions", [])
         payload["templateSlots"] = enterprise_ast.get("templateSlots", {})
+        payload["pipeline_trace"] = enterprise_ast.get("pipeline_trace", {})
+        payload["doc_id"] = enterprise_ast.get("metadata", {}).get("documentId", "MOSPI_TPL_01")
+        diagnostics["blueprint_payload"] = payload
         diagnostics["stages"]["v2_pipeline"] = {"status": "completed"}
         _tick(PRODUCTION_STAGE_ORDER[5], 100, {"status": "completed"})
         return ast, diagnostics
