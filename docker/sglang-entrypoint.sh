@@ -61,7 +61,7 @@ echo "▶ Configuration:"
 echo "  Model:          ${MODEL}"
 echo "  Port:           ${PORT}"
 echo "  Max model len:  2048 (vision model needs more VRAM for image tokens)"
-echo "  GPU mem util:   0.82 (reserves 4.92GB — tight fit for 7B-AWQ vision)"
+echo "  GPU mem util:   0.70 (reserves 4.20GB — safe for 6GB cards)"
 echo "  Enforce eager:  yes (saves VRAM vs CUDA graphs)"
 echo ""
 echo "═══════════════════════════════════════════════════════════════"
@@ -73,11 +73,11 @@ echo ""
 # VRAM Budget (RTX 4050/3050 Laptop, 6GB total):
 #   Display driver uses ~1.05GB → only 4.95GB free
 #   gpu_memory_utilization is % of TOTAL (6GB), not FREE (4.95GB)
-#   So: 0.82 × 6.0 = 4.92GB requested ≈ 4.95GB free (tight but fits)
-#   Qwen2.5-VL-7B-AWQ ~4.0GB weights + KV cache ~0.5GB = 4.5GB
+#   So: 0.70 × 6.0 = 4.20GB requested (safe margin for 6GB cards)
+#   Qwen2.5-VL-7B-AWQ ~3.5GB weights + KV cache ~0.5GB = 4.0GB
 #
-#   --gpu-memory-utilization 0.82  → reserve 4.92GB (tight fit, validated)
-#   --max-model-len 2048           → smaller KV cache for vision model
+#   --gpu-memory-utilization 0.70  → reserve 4.20GB (safe for 6GB GPUs)
+#   --max-model-len 2048           → caps KV cache size (prevents 4096 default)
 #   --enforce-eager                → disables CUDA graphs (saves ~500MB VRAM)
 #   --max-num-seqs 1               → single request (saves KV cache memory)
 #   --limit-mm-per-prompt image=1  → one image per request (page-by-page)
@@ -86,10 +86,10 @@ exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
     --port "${PORT}" \
-    --gpu-memory-utilization 0.82 \
+    --gpu-memory-utilization 0.70 \
     --max-model-len 2048 \
     --enforce-eager \
     --max-num-seqs 1 \
-    --limit-mm-per-prompt image=1 \
+    --limit-mm-per-prompt "image=1" \
     --trust-remote-code \
     --download-dir "${HF_HOME}"
