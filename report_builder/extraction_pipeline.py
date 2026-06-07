@@ -1,4 +1,4 @@
-﻿"""Multi-Pass Extraction Pipeline — LayoutLM + Qwen-VL.
+﻿﻿"""Multi-Pass Extraction Pipeline — LayoutLM + Qwen-VL.
 
 Orchestrates the 7-pass extraction flow for Enterprise Document AST + Blueprint:
     Pass 0: PDF rasterization (pdf2image 150dpi + pdfplumber raw text/tables/words)
@@ -453,320 +453,34 @@ def _is_website_artifact_table(table: list[list]) -> bool:
 
 
 def _fix_unicode_artifacts(text: str) -> str:
-    """Fix common PDF-to-text encoding artifacts (en/em dashes, Rupee sign, etc.)."""
+    """Remove control chars and fix common PDF encoding garbling.
+    Patterns are expressed as raw byte/hex sequences for pure-ASCII source.
+    """
     import re as _re_uni
-    text = _re_uni.sub(r'[\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b]', '', text)
-    text = text.replace("â€"", "–")   # en dash
-    text = text.replace("â€"", "—")   # em dash
-    text = text.replace("â", "–")     # partial artifact -> en dash
-    text = text.replace("â¹", "₹")    # Rupee sign
-    text = text.replace("â€œ", "“").replace("â€", "”")
+    # Remove control characters
+    text = _re_uni.sub(r"[\x00-\x08\x0e-\x1b]", "", text)
+    # Fix garbled en/em dashes and Rupee sign using hex-encoded search patterns
+    # UTF-8 E2 80 93 (en dash) mis-decoded as Win-1252: bytes E2=xE2 80=x80 93=x93
+    _EN = chr(0x2013)  # en dash
+    _EM = chr(0x2014)  # em dash
+    _RS = chr(0x20b9)  # Rupee sign
+    _LQ = chr(0x201c)  # left curly quote
+    _AP = chr(0x2019)  # apostrophe
+    _A  = chr(0x00e2)  # a with circumflex (mis-decoded byte E2)
+    _EU = chr(0x20ac)  # euro sign (mis-decoded byte 80 in Win-1252)
+    _LC = chr(0x201c)  # left curly quote (mis-decoded byte 93 in Win-1252)
+    _RC = chr(0x201d)  # right curly quote (mis-decoded byte 94 in Win-1252)
+    _OE = chr(0x0153)  # oe ligature (mis-decoded byte 9C in Win-1252)
+    _TM = chr(0x2122)  # trade mark (mis-decoded byte 99 in Win-1252)
+    _S1 = chr(0x00b9)  # superscript 1 (mis-decoded byte B9)
+    text = text.replace(_A + _EU + _LC, _EN)  # a+euro+ldquote -> en dash
+    text = text.replace(_A + _EU + _RC, _EM)  # a+euro+rdquote -> em dash
+    text = text.replace(_A + _EU + _OE, _LQ)  # a+euro+oe -> left quote
+    text = text.replace(_A + _EU + _TM, _AP)  # a+euro+TM -> apostrophe
+    text = text.replace(_A + _S1, _RS)         # a+sup1 -> Rupee
+    text = text.replace(_A + _EU, _EM)         # a+euro alone -> em dash
+    text = text.replace(_A, _EN)               # lone a -> en dash
     return text
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Hybrid ToC Extraction (Improvement 2)
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _extract_numbered_sections(page_texts: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Extract numbered sections (1., 2., 3.) from raw text without any LLM.
-
-    Works on PIB press releases, PLFS annual reports, and similar narrative PDFs
-    that use numbered sections like "1. Stable LFPR" or "A. Introduction".
-
-    Returns list of {title, page, level} dicts.
-    """
-    import re as _re_sec
-    sections = []
-    seen: set[str] = set()
-
-    # Match "1. Title Words..." "2. Title..." at start of line or after newline
-    _NUM_SEC_RE = _re_sec.compile(r"(?:^|\n)(\d{1,2})\.\s+([A-Z][^\n]{5,100})", _re_sec.M)
-    # Match "A. Title" "B. Sample Size" etc.
-    _ALPHA_SEC_RE = _re_sec.compile(r"(?:^|\n)([A-Z])\.\s+([A-Z][^\n]{5,80})", _re_sec.M)
-    # Match "Key Highlights" "Key findings" "Snapshot" — common press release headings
-    _KEYWORD_SEC_RE = _re_sec.compile(
-        r"(?:^|\n)(Snapshot|Key\s+(?:findings|Highlights?|Highligts?))[:\s]",
-        _re_sec.I | _re_sec.M,
-    )
-
-    for page_idx, pt in enumerate(page_texts):
-        raw = pt.get("raw_text") or ""
-
-        for m in _NUM_SEC_RE.finditer(raw):
-            num = m.group(1)
-            title = f"{num}. {m.group(2).strip()}"
-            key = title[:40].lower()
-            if key not in seen and _is_valid_entity_name(m.group(2).strip()):
-                seen.add(key)
-                sections.append({"title": title, "page": page_idx, "level": 1})
-
-        for m in _ALPHA_SEC_RE.finditer(raw):
-            letter = m.group(1)
-            title = f"{letter}. {m.group(2).strip()}"
-            key = title[:40].lower()
-            if key not in seen and _is_valid_entity_name(m.group(2).strip()):
-                seen.add(key)
-                sections.append({"title": title, "page": page_idx, "level": 2})
-
-        for m in _KEYWORD_SEC_RE.finditer(raw):
-            title = m.group(1).strip()
-            key = title.lower()
-            if key not in seen:
-                seen.add(key)
-                sections.append({"title": title, "page": page_idx, "level": 1})
-
-    return sections
-
-
-def _generate_questions_from_sections(
-    sections: list[dict[str, Any]],
-    all_entities: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
-    """Turn numbered document sections into analytical questions programmatically.
-
-    Uses entity typing (measure/dimension) from pass2_6 to build grounded questions.
-    No LLM required.
-    """
-    questions = []
-    # Index measures and dimensions from entities
-    measure_names = [e["name"] for e in all_entities if e.get("entityType_hint") == "measure"][:10]
-    dim_names = [e["name"] for e in all_entities if e.get("entityType_hint") == "dimension"][:10]
-
-    # Question template patterns keyed by section title keywords
-    _SECTION_QUESTION_MAP = [
-        (["lfpr", "labour force participation"], "trend",
-         "How has Labour Force Participation Rate (LFPR) changed from 2022 to 2025 by Rural/Urban and Gender?"),
-        (["wpr", "worker population ratio"], "trend",
-         "What is the trend in Worker Population Ratio (WPR) for Rural and Urban areas from 2022 to 2025?"),
-        (["unemployment", "ur "], "comparison",
-         "How do Unemployment Rates (UR) differ across Rural vs Urban areas by Gender in 2025?"),
-        (["regular wage", "salary", "employment status"], "comparison",
-         "How has the distribution of workers across self-employed, regular wage, and casual labour changed from 2024 to 2025?"),
-        (["manufacturing", "sector", "industry"], "comparison",
-         "How has the sectoral distribution of employment (Agriculture, Manufacturing, Services) shifted from 2024 to 2025?"),
-        (["earning", "wage", "income"], "trend",
-         "How do earnings from regular wage/salaried employment compare between Male and Female workers in 2024 vs 2025?"),
-        (["education", "formal education", "literacy"], "comparison",
-         "How does average years of formal education differ between Rural and Urban areas by Gender in 2025?"),
-        (["snapshot", "key findings", "highlights"], "describe",
-         "What are the key labour force indicators (LFPR, WPR, UR) for 2025 compared to 2024?"),
-        (["methodology", "sample", "conceptual"], "describe",
-         "What methodology and sample design was used for PLFS 2025?"),
-    ]
-
-    q_counter = 0
-    used_intents: set[str] = set()
-
-    for sec in sections:
-        sec_title_lower = sec["title"].lower()
-        matched_intent = None
-        q_type = "describe"
-
-        for keywords, qt, intent in _SECTION_QUESTION_MAP:
-            if any(kw in sec_title_lower for kw in keywords):
-                if intent not in used_intents:
-                    matched_intent = intent
-                    q_type = qt
-                    used_intents.add(intent)
-                    break
-
-        if not matched_intent:
-            # Generic fallback for unmatched sections
-            matched_intent = f"What are the key findings in the section: {sec['title'][:60]}?"
-
-        q_counter += 1
-        # Build required entities from measures/dimensions relevant to this section
-        req_entities = []
-        if measure_names:
-            req_entities.append({"entityRef": measure_names[0], "role": "measure"})
-        if dim_names:
-            req_entities.append({"entityRef": dim_names[0], "role": "groupBy"})
-
-        questions.append({
-            "questionId": f"q_sec_{q_counter:03d}",
-            "intent": matched_intent,
-            "questionType": q_type,
-            "page": sec["page"],
-            "sourceHeading": sec["title"],
-            "sectionPattern": "narrative",
-            "requiredEntities": req_entities,
-            "answerStructure": {
-                "layoutType": "split" if q_type in ("comparison", "trend") else "single",
-                "components": [
-                    {"type": "narrative_paragraph", "renderOrder": 1},
-                    {"type": "metric_card" if q_type == "describe" else "grouped_bar_chart", "renderOrder": 2},
-                ],
-            },
-            "inferenceConfidence": 0.72,
-            "inferenceMethod": "programmatic_section",
-        })
-
-    return questions
-
-
-def _extract_toc_hybrid(
-    page_texts: list[dict[str, Any]],
-    layout_pages: list[dict[str, Any]],
-    toc_from_layoutlm: list[ToCEntry],
-) -> list[ToCEntry]:
-    """Build a reliable chapter hierarchy using a 3-level cascade.
-
-    Level 1 — Pattern-based regex on raw text (fast, high precision for MoSPI docs)
-    Level 2 — Font-size hierarchy from pdfplumber words
-    Level 3 — Gemini ToC extraction from first 12 pages (last resort)
-
-    Returns the best ToC found, merged with any LayoutLM results.
-    """
-    import re as _re
-
-    # ── Level 1: Pattern-based regex ──
-    pattern_entries: list[ToCEntry] = []
-    seen_l1: set[str] = set()
-
-    for page_idx, pt in enumerate(page_texts):
-        raw = pt.get("raw_text") or ""
-        for line in raw.split("\n"):
-            line = line.strip()
-            if not line or len(line) < 4:
-                continue
-            for pattern, level in _MOSPI_HEADING_PATTERNS:
-                m = _re.match(pattern, line)
-                if m:
-                    # Reconstruct full title from capture groups
-                    groups = [g for g in m.groups() if g]
-                    title = " ".join(groups).strip()
-                    if not title or len(title) < 3:
-                        title = line.strip()
-                    dedup = title.lower().strip()[:60]
-                    if dedup not in seen_l1 and _is_valid_entity_name(title):
-                        seen_l1.add(dedup)
-                        pattern_entries.append(ToCEntry(
-                            title=title[:200],
-                            page_index=page_idx,
-                            level=level,
-                            region_type="pattern",
-                        ))
-                    break
-
-    distinct_chapters_l1 = len({e.page_index for e in pattern_entries if e.level == 1})
-    logger.info("[toc-hybrid] L1 pattern: %d entries (%d distinct L1 chapters)", len(pattern_entries), distinct_chapters_l1)
-
-    # If L1 found a good hierarchy, merge with LayoutLM and return
-    if distinct_chapters_l1 >= 2 and len(pattern_entries) >= 3:
-        merged = _merge_toc_sources(toc_from_layoutlm, pattern_entries)
-        logger.info("[toc-hybrid] Using L1 pattern ToC (%d entries after merge)", len(merged))
-        return merged
-
-    # ── Level 2: Font-size hierarchy from pdfplumber words ──
-    fontsize_entries: list[ToCEntry] = []
-    if page_texts:
-        # Collect all font sizes across document to find the top 3
-        all_sizes: list[float] = []
-        for pt in page_texts:
-            for w in (pt.get("words") or []):
-                s = float(w.get("size") or 0)
-                if s > 6:
-                    all_sizes.append(s)
-
-        if all_sizes:
-            unique_sizes = sorted(set(round(s, 1) for s in all_sizes), reverse=True)
-            h1_size = unique_sizes[0] if len(unique_sizes) > 0 else 0
-            h2_size = unique_sizes[1] if len(unique_sizes) > 1 else 0
-
-            for page_idx, pt in enumerate(page_texts):
-                words = pt.get("words") or []
-                # Group words by y-position (same line ≈ within 3pt)
-                lines_by_y: dict[int, list[dict]] = {}
-                for w in words:
-                    y_bucket = int(float(w.get("top") or w.get("y0") or 0) // 3)
-                    lines_by_y.setdefault(y_bucket, []).append(w)
-
-                for y_bucket, line_words in sorted(lines_by_y.items()):
-                    sizes = [float(w.get("size") or 0) for w in line_words if w.get("size")]
-                    if not sizes:
-                        continue
-                    max_size = max(sizes)
-                    if max_size < h2_size * 0.9:
-                        continue
-
-                    line_text = " ".join(str(w.get("text") or "") for w in line_words).strip()
-                    if not line_text or len(line_text) < 4 or not any(c.isalpha() for c in line_text):
-                        continue
-                    # Skip pure numbers (page numbers)
-                    if _re.match(r"^\d+$", line_text.strip()):
-                        continue
-
-                    level = 1 if max_size >= h1_size * 0.95 else 2
-                    dedup = line_text.lower().strip()[:60]
-                    if dedup not in seen_l1:
-                        seen_l1.add(dedup)
-                        fontsize_entries.append(ToCEntry(
-                            title=line_text[:200],
-                            page_index=page_idx,
-                            level=level,
-                            region_type="fontsize",
-                        ))
-
-    combined_so_far = pattern_entries + fontsize_entries
-    distinct_combined = len({e.page_index for e in combined_so_far if e.level == 1})
-    logger.info("[toc-hybrid] L2 fontsize: %d entries (%d total L1 chapters so far)", len(fontsize_entries), distinct_combined)
-
-    if distinct_combined >= 2:
-        merged = _merge_toc_sources(toc_from_layoutlm, combined_so_far)
-        logger.info("[toc-hybrid] Using L1+L2 ToC (%d entries after merge)", len(merged))
-        return merged
-
-    # ── Level 3: Gemini ToC extraction (last resort) ──
-    gemini_entries: list[ToCEntry] = []
-    try:
-        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-        if api_key:
-            first_pages_text = "\n\n--- PAGE BREAK ---\n\n".join(
-                pt.get("raw_text") or "" for pt in page_texts[:12]
-            )[:6000]
-            gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-            prompt = (
-                "Extract the Table of Contents structure from the following document pages.\n"
-                "Return JSON array: [{\"title\": \"Chapter title\", \"page\": 0, \"level\": 1}]\n"
-                "level: 1=chapter/part, 2=section/statement, 3=subsection\n"
-                "page: 0-based page index where section starts\n"
-                "Return only the JSON array, no prose.\n\n"
-                f"Document text (first 12 pages):\n{first_pages_text}"
-            )
-            try:
-                from google import genai as _genai
-                client = _genai.Client(api_key=api_key)
-                resp = client.models.generate_content(model=gemini_model, contents=prompt)
-                raw = (resp.text or "").strip()
-            except ImportError:
-                import google.generativeai as _legacy
-                _legacy.configure(api_key=api_key)
-                resp = _legacy.GenerativeModel(gemini_model).generate_content(prompt)
-                raw = (resp.text or "").strip()
-
-            toc_data = _extract_json_array_from_response(raw)
-            if toc_data:
-                for item in toc_data:
-                    title = str(item.get("title") or "").strip()
-                    page = int(item.get("page") or 0)
-                    level = int(item.get("level") or 1)
-                    if title and _is_valid_entity_name(title):
-                        gemini_entries.append(ToCEntry(
-                            title=title[:200],
-                            page_index=page,
-                            level=level,
-                            region_type="gemini",
-                        ))
-            logger.info("[toc-hybrid] L3 Gemini: %d entries", len(gemini_entries))
-    except Exception as exc:
-        logger.warning("[toc-hybrid] L3 Gemini failed: %s", exc)
-
-    all_entries = combined_so_far + gemini_entries
-    merged = _merge_toc_sources(toc_from_layoutlm, all_entries)
-    logger.info("[toc-hybrid] Final merged ToC: %d entries", len(merged))
-    return merged
-
 
 def _merge_toc_sources(layoutlm: list[ToCEntry], new_entries: list[ToCEntry]) -> list[ToCEntry]:
     """Merge LayoutLM ToC with pattern/font/Gemini entries, deduplicated and sorted."""

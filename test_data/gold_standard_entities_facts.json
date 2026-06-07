@@ -1,0 +1,401 @@
+{
+  "_meta": {
+    "description": "Gold standard entityGraph + factGraph for PLFS 2025 Annual Report (PIB press release PDF)",
+    "source_pdf": "test.pdf (PLFS 2025 press release, 11 pages)",
+    "created": "2026-06-08",
+    "version": "1.0",
+    "note": "Entity count should be 10-40 (not 200+). All entities must be real statistical concepts, not website fragments."
+  },
+
+  "entityGraph": {
+    "entities": [
+      {
+        "entityId": "ent_lfpr",
+        "name": "Labour Force Participation Rate (LFPR)",
+        "entityType": "measure",
+        "sourceType": "heading",
+        "confidence": 0.98,
+        "pages": [0, 1, 2, 3, 4, 5, 6, 7, 8],
+        "_evaluation": "REQUIRED — must be present and typed as 'measure'"
+      },
+      {
+        "entityId": "ent_wpr",
+        "name": "Worker Population Ratio (WPR)",
+        "entityType": "measure",
+        "sourceType": "heading",
+        "confidence": 0.98,
+        "pages": [0, 2, 3, 8, 9],
+        "_evaluation": "REQUIRED — must be present and typed as 'measure'"
+      },
+      {
+        "entityId": "ent_ur",
+        "name": "Unemployment Rate (UR)",
+        "entityType": "measure",
+        "sourceType": "heading",
+        "confidence": 0.98,
+        "pages": [0, 1, 3, 8, 9],
+        "_evaluation": "REQUIRED — must be present and typed as 'measure'"
+      },
+      {
+        "entityId": "ent_gender",
+        "name": "Gender",
+        "entityType": "dimension",
+        "sourceType": "heading",
+        "confidence": 0.95,
+        "pages": [0, 1, 2, 3, 4, 5, 6],
+        "_evaluation": "REQUIRED — must be present. Aliases should include Male/Female"
+      },
+      {
+        "entityId": "ent_rural_urban",
+        "name": "Rural/Urban Sector",
+        "entityType": "dimension",
+        "sourceType": "heading",
+        "confidence": 0.95,
+        "pages": [0, 1, 2, 3, 4, 5, 6, 7, 8],
+        "_evaluation": "REQUIRED — must be present"
+      },
+      {
+        "entityId": "ent_survey_year",
+        "name": "Survey Year",
+        "entityType": "dimension",
+        "sourceType": "heading",
+        "confidence": 0.92,
+        "pages": [0, 1, 2, 3, 4, 5, 6, 7, 8],
+        "_evaluation": "REQUIRED — must be present"
+      },
+      {
+        "entityId": "ent_age_group",
+        "name": "Age Group",
+        "entityType": "dimension",
+        "sourceType": "heading",
+        "confidence": 0.90,
+        "pages": [0, 1],
+        "_evaluation": "REQUIRED — must be present"
+      },
+      {
+        "entityId": "ent_employment_status",
+        "name": "Status in Employment",
+        "entityType": "dimension",
+        "sourceType": "heading",
+        "confidence": 0.92,
+        "pages": [4, 5, 6],
+        "_evaluation": "REQUIRED — self-employed / regular wage / casual labour dimension"
+      },
+      {
+        "entityId": "ent_earnings",
+        "name": "Average Earnings",
+        "entityType": "measure",
+        "sourceType": "vlm",
+        "confidence": 0.92,
+        "pages": [5, 6],
+        "_evaluation": "REQUIRED — Rupee-denominated earnings measure"
+      },
+      {
+        "entityId": "ent_industry",
+        "name": "Industry of Work",
+        "entityType": "dimension",
+        "sourceType": "heading",
+        "confidence": 0.88,
+        "pages": [5],
+        "_evaluation": "REQUIRED — agriculture/manufacturing/services sector dimension"
+      },
+      {
+        "entityId": "ent_formal_education",
+        "name": "Average number of years in formal education",
+        "entityType": "measure",
+        "sourceType": "vlm",
+        "confidence": 0.90,
+        "pages": [6, 7],
+        "_evaluation": "REQUIRED — education attainment measure"
+      },
+      {
+        "entityId": "ent_usual_status",
+        "name": "Usual Status (ps+ss)",
+        "entityType": "filter",
+        "sourceType": "heading",
+        "confidence": 0.95,
+        "pages": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        "_evaluation": "REQUIRED — the measurement framework filter"
+      },
+      {
+        "entityId": "ent_plfs",
+        "name": "Periodic Labour Force Survey (PLFS)",
+        "entityType": "metadata",
+        "sourceType": "heading",
+        "confidence": 0.98,
+        "pages": [0, 7, 8, 9],
+        "_evaluation": "REQUIRED — the survey name as metadata"
+      }
+    ],
+
+    "_evaluation": {
+      "required_entity_names": [
+        "Labour Force Participation Rate", "LFPR",
+        "Worker Population Ratio", "WPR",
+        "Unemployment Rate", "UR",
+        "Gender", "Rural", "Urban"
+      ],
+      "forbidden_entity_names": [
+        "Press Re", "lease Pag", "e | Press Inform", "ation Bureau",
+        ":49 AM", "Press Release Page", "| Press Information Bu",
+        "ExactColumnHeader", "MetricName", "Samrat",
+        "and", "the", "while", "cycle", "key", "market"
+      ],
+      "required_entity_types": {
+        "measure": ["LFPR", "WPR", "Unemployment Rate"],
+        "dimension": ["Gender", "Rural/Urban", "Survey Year"],
+        "filter": ["Usual Status"],
+        "metadata": ["PLFS"]
+      },
+      "count_range": {"min": 10, "max": 40},
+      "fail_if_count_above": 80,
+      "fail_reason_above_80": "Entity pipeline is registering word-level noise (stopwords, URL fragments, etc.)"
+    }
+  },
+
+  "factGraph": {
+    "facts": [
+      {
+        "factId": "fact_lfpr_2025_overall",
+        "statement": "LFPR in usual status (ps+ss) for persons aged 15+ was 59.3% in 2025, stable compared to 2024.",
+        "entityRefs": ["ent_lfpr"],
+        "confidence": 0.99,
+        "sourcePageIndex": 0,
+        "numeric_value": 59.3,
+        "unit": "%",
+        "year": 2025,
+        "_evaluation": "REQUIRED fact — must be in output"
+      },
+      {
+        "factId": "fact_lfpr_male_2025",
+        "statement": "LFPR for male aged 15+ was 79.1% in 2025.",
+        "entityRefs": ["ent_lfpr", "ent_gender"],
+        "confidence": 0.99,
+        "sourcePageIndex": 0,
+        "numeric_value": 79.1,
+        "unit": "%",
+        "year": 2025
+      },
+      {
+        "factId": "fact_lfpr_female_2025",
+        "statement": "LFPR for female aged 15+ was 40.0% in 2025.",
+        "entityRefs": ["ent_lfpr", "ent_gender"],
+        "confidence": 0.99,
+        "sourcePageIndex": 0,
+        "numeric_value": 40.0,
+        "unit": "%",
+        "year": 2025
+      },
+      {
+        "factId": "fact_lfpr_rural_male_2025",
+        "statement": "Rural male LFPR remained at 80.5% in 2025.",
+        "entityRefs": ["ent_lfpr", "ent_rural_urban", "ent_gender"],
+        "confidence": 0.99,
+        "sourcePageIndex": 1,
+        "numeric_value": 80.5,
+        "unit": "%",
+        "year": 2025
+      },
+      {
+        "factId": "fact_lfpr_rural_female_2025",
+        "statement": "Rural female LFPR held steady at 45.9% in 2025.",
+        "entityRefs": ["ent_lfpr", "ent_rural_urban", "ent_gender"],
+        "confidence": 0.99,
+        "sourcePageIndex": 1,
+        "numeric_value": 45.9,
+        "unit": "%",
+        "year": 2025
+      },
+      {
+        "factId": "fact_wpr_2025_overall",
+        "statement": "WPR in usual status (ps+ss) for persons aged 15+ was 57.4% in 2025.",
+        "entityRefs": ["ent_wpr"],
+        "confidence": 0.99,
+        "sourcePageIndex": 0,
+        "numeric_value": 57.4,
+        "unit": "%",
+        "year": 2025,
+        "_evaluation": "REQUIRED fact — must be in output"
+      },
+      {
+        "factId": "fact_wpr_rural_male_2025",
+        "statement": "WPR for rural male was 78.4% in 2025.",
+        "entityRefs": ["ent_wpr", "ent_rural_urban", "ent_gender"],
+        "confidence": 0.99,
+        "sourcePageIndex": 2,
+        "numeric_value": 78.4,
+        "unit": "%",
+        "year": 2025
+      },
+      {
+        "factId": "fact_wpr_rural_female_2025",
+        "statement": "WPR for rural female was 44.9% in 2025.",
+        "entityRefs": ["ent_wpr", "ent_rural_urban", "ent_gender"],
+        "confidence": 0.99,
+        "sourcePageIndex": 2,
+        "numeric_value": 44.9,
+        "unit": "%",
+        "year": 2025
+      },
+      {
+        "factId": "fact_ur_2025_overall",
+        "statement": "UR in usual status (ps+ss) for persons aged 15+ was 3.1% for both male and female in 2025.",
+        "entityRefs": ["ent_ur", "ent_gender"],
+        "confidence": 0.99,
+        "sourcePageIndex": 0,
+        "numeric_value": 3.1,
+        "unit": "%",
+        "year": 2025,
+        "_evaluation": "REQUIRED fact — must be in output"
+      },
+      {
+        "factId": "fact_ur_rural_2025",
+        "statement": "Overall rural unemployment rate in 2025 was 2.4%.",
+        "entityRefs": ["ent_ur", "ent_rural_urban"],
+        "confidence": 0.99,
+        "sourcePageIndex": 3,
+        "numeric_value": 2.4,
+        "unit": "%",
+        "year": 2025
+      },
+      {
+        "factId": "fact_ur_urban_2025",
+        "statement": "Overall urban unemployment rate in 2025 was 4.8%.",
+        "entityRefs": ["ent_ur", "ent_rural_urban"],
+        "confidence": 0.99,
+        "sourcePageIndex": 3,
+        "numeric_value": 4.8,
+        "unit": "%",
+        "year": 2025
+      },
+      {
+        "factId": "fact_self_employment_2025",
+        "statement": "Share of self-employment declined from 57.5% in 2024 to 56.2% in 2025.",
+        "entityRefs": ["ent_employment_status"],
+        "confidence": 0.99,
+        "sourcePageIndex": 4,
+        "value_2024": 57.5,
+        "value_2025": 56.2,
+        "unit": "%"
+      },
+      {
+        "factId": "fact_regular_wage_2025",
+        "statement": "Share of regular wage/salaried employment rose from 22.4% in 2024 to 23.6% in 2025.",
+        "entityRefs": ["ent_employment_status"],
+        "confidence": 0.99,
+        "sourcePageIndex": 4,
+        "value_2024": 22.4,
+        "value_2025": 23.6,
+        "unit": "%"
+      },
+      {
+        "factId": "fact_earnings_male_regular_2025",
+        "statement": "Average earnings for male in regular wage/salaried employment increased from ₹22,891 in 2024 to ₹24,217 in 2025 (~5.8% growth).",
+        "entityRefs": ["ent_earnings", "ent_gender"],
+        "confidence": 0.99,
+        "sourcePageIndex": 5,
+        "value_2024": 22891,
+        "value_2025": 24217,
+        "unit": "INR/month",
+        "growth_pct": 5.8
+      },
+      {
+        "factId": "fact_earnings_female_regular_2025",
+        "statement": "Average earnings for female in regular wage/salaried employment rose from ₹17,126 in 2024 to ₹18,353 in 2025 (~7.2% growth).",
+        "entityRefs": ["ent_earnings", "ent_gender"],
+        "confidence": 0.99,
+        "sourcePageIndex": 5,
+        "value_2024": 17126,
+        "value_2025": 18353,
+        "unit": "INR/month",
+        "growth_pct": 7.2
+      },
+      {
+        "factId": "fact_education_years_2025",
+        "statement": "Average years of formal education for persons 15+ was 10.0 years in 2025 (male: 10.2, female: 9.9).",
+        "entityRefs": ["ent_formal_education", "ent_gender", "ent_age_group"],
+        "confidence": 0.99,
+        "sourcePageIndex": 6,
+        "numeric_value": 10.0,
+        "unit": "years",
+        "breakdown": {"male": 10.2, "female": 9.9}
+      },
+      {
+        "factId": "fact_youth_ur_2025",
+        "statement": "Youth (15-29 years) unemployment rate declined to 9.9% in 2025 from 10.3% in 2024.",
+        "entityRefs": ["ent_ur", "ent_age_group"],
+        "confidence": 0.99,
+        "sourcePageIndex": 1,
+        "value_2024": 10.3,
+        "value_2025": 9.9,
+        "unit": "%"
+      },
+      {
+        "factId": "fact_agriculture_share_2025",
+        "statement": "Agriculture sector share of employment decreased from 44.8% in 2024 to 43.0% in 2025.",
+        "entityRefs": ["ent_employment_status", "ent_industry"],
+        "confidence": 0.99,
+        "sourcePageIndex": 5,
+        "value_2024": 44.8,
+        "value_2025": 43.0,
+        "unit": "%"
+      },
+      {
+        "factId": "fact_workers_total_2025",
+        "statement": "On average, 61.6 crore persons (aged 15+) were employed in India during January–December 2025, of which 41.6 crore male and 20.0 crore female.",
+        "entityRefs": ["ent_gender"],
+        "confidence": 0.99,
+        "sourcePageIndex": 1,
+        "numeric_value": 616000000,
+        "unit": "persons",
+        "breakdown": {"male": 416000000, "female": 200000000}
+      }
+    ],
+
+    "_evaluation": {
+      "required_fact_ids": [
+        "fact_lfpr_2025_overall",
+        "fact_wpr_2025_overall",
+        "fact_ur_2025_overall"
+      ],
+      "required_numeric_values": {
+        "LFPR_2025": 59.3,
+        "WPR_2025": 57.4,
+        "UR_2025": 3.1,
+        "LFPR_rural_male_2025": 80.5,
+        "WPR_rural_male_2025": 78.4,
+        "UR_rural_2025": 2.4,
+        "UR_urban_2025": 4.8,
+        "earnings_male_regular_2025": 24217,
+        "earnings_female_regular_2025": 18353
+      },
+      "count_range": {"min": 10, "max": 25},
+      "fail_if": "factGraph.facts is empty OR none of the required_fact_ids are present"
+    }
+  },
+
+  "pipeline_quality_matrix": {
+    "description": "Score card for comparing actual output vs this gold standard",
+    "scoring": {
+      "entity_precision": {
+        "formula": "len(good_entities) / len(total_entities)",
+        "target": ">= 0.60",
+        "good_entity": "entity.name not in FORBIDDEN_NAMES AND entity.entityType in ['measure','dimension','filter','metadata']"
+      },
+      "topic_recall": {
+        "formula": "len(matched_topics) / len(gold_topics)",
+        "target": ">= 0.75",
+        "match_criteria": "fuzzy match of title with gold topic titles"
+      },
+      "question_quality": {
+        "formula": "len(non_placeholder_questions) / len(total_questions)",
+        "target": ">= 0.80",
+        "placeholder_pattern": "intent == 'Specific analytical question referencing real entities?' OR questionType contains '|'"
+      },
+      "fact_coverage": {
+        "formula": "len(facts_with_required_values) / len(required_numeric_values)",
+        "target": ">= 0.70"
+      }
+    }
+  }
+}

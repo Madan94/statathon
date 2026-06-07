@@ -1,7 +1,12 @@
 # syntax=docker/dockerfile:1
 # ─────────────────────────────────────────────────────────────────────────────
-# vLLM OpenAI-compatible LLM server (Qwen2.5-VL-7B-AWQ vision model)
+# vLLM OpenAI-compatible LLM server (Qwen2.5-VL vision model)
 # Replaces SGLang — sglang's sgl_kernel only ships SM100 (Blackwell) builds.
+#
+# DEFAULT: Qwen2.5-VL-3B-Instruct-AWQ (RTX 4050 6GB, RTX 3060 6GB)
+#   3B-AWQ (~2.5 GB weights) → fits in 6GB with vision encoder + KV cache.
+#   Override for larger GPUs: VLLM_MODEL=Qwen/Qwen2.5-VL-7B-Instruct-AWQ
+#   7B-AWQ (~4.65 GB) needs 8+ GB VRAM (RTX 4070, RTX 3080, A4000+).
 #
 # DESIGN: Fail-fast + maximum cache + future-proof
 #   - Base image already has vLLM + CUDA + Python
@@ -17,13 +22,16 @@
 #   ✓ Official Docker image tested on Ada Lovelace + Ampere GPUs
 #   ✓ AWQ auto-detection (no --quantization flag needed)
 #
-# Build:  docker compose -f docker-compose.gpu.yml --profile gpu build sglang
-# Run:    docker compose -f docker-compose.gpu.yml --profile gpu up sglang
+# Build:  docker compose --profile gpu build sglang
+# Run:    docker compose --profile gpu up sglang
+# GPU 8+GB: VLLM_MODEL=Qwen/Qwen2.5-VL-7B-Instruct-AWQ docker compose --profile gpu up sglang
 # ─────────────────────────────────────────────────────────────────────────────
 FROM vllm/vllm-openai:latest
 
+# DEFAULT to 3B — safe for all 6GB VRAM GPUs (RTX 4050, 3060, etc.)
+# Override at runtime: -e VLLM_MODEL=Qwen/Qwen2.5-VL-7B-Instruct-AWQ
 ENV HF_HOME=/cache \
-    VLLM_MODEL=Qwen/Qwen2.5-VL-7B-Instruct-AWQ \
+    VLLM_MODEL=Qwen/Qwen2.5-VL-3B-Instruct-AWQ \
     VLLM_PORT=8002 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1

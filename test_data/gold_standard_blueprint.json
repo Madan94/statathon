@@ -1,0 +1,423 @@
+{
+  "_meta": {
+    "description": "Gold standard blueprint.json for PLFS 2025 Annual Report (PIB press release PDF)",
+    "source_pdf": "test.pdf (PLFS 2025 press release, 11 pages)",
+    "document_type": "narrative_press_release",
+    "created": "2026-06-08",
+    "version": "1.0",
+    "note": "Use this to evaluate extraction quality. Real pipeline output should match topic structure, entity names, and question intents."
+  },
+
+  "topics": [
+    {
+      "topicId": "topic_snapshot",
+      "title": "Snapshot & Key findings",
+      "description": "Summary of key PLFS 2025 labour force indicators compared to 2024",
+      "pageRange": [0, 1],
+      "questions": [
+        {
+          "questionId": "q_snap_01",
+          "intent": "What are the key Labour Force Participation Rate (LFPR), Worker Population Ratio (WPR), and Unemployment Rate (UR) figures for 2025 compared to 2024?",
+          "questionType": "comparison",
+          "inferenceMethod": "programmatic_section",
+          "inferenceConfidence": 0.92,
+          "requiredEntities": [
+            {"entityId": "ent_lfpr", "role": "measure", "confidence": 0.95, "bindingMethod": "keyword"},
+            {"entityId": "ent_wpr", "role": "measure", "confidence": 0.95, "bindingMethod": "keyword"},
+            {"entityId": "ent_ur", "role": "measure", "confidence": 0.90, "bindingMethod": "keyword"},
+            {"entityId": "ent_year", "role": "groupBy", "confidence": 0.88, "bindingMethod": "keyword"}
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {"componentId": "q_snap_01_c1", "renderOrder": 1, "type": "metric_card", "constraints": {"metrics": ["LFPR", "WPR", "UR"]}, "refs": {}},
+              {"componentId": "q_snap_01_c2", "renderOrder": 2, "type": "narrative_paragraph", "constraints": {}, "refs": {}}
+            ]
+          },
+          "sourceHeading": "Snapshot",
+          "priority": "high"
+        },
+        {
+          "questionId": "q_snap_02",
+          "intent": "How did the Unemployment Rate among educated persons (secondary and above) change from 2024 to 2025?",
+          "questionType": "trend",
+          "inferenceMethod": "programmatic_section",
+          "inferenceConfidence": 0.88,
+          "requiredEntities": [
+            {"entityId": "ent_ur", "role": "measure", "confidence": 0.95, "bindingMethod": "keyword"},
+            {"entityId": "ent_education_level", "role": "filter", "confidence": 0.80, "bindingMethod": "keyword"},
+            {"entityId": "ent_year", "role": "groupBy", "confidence": 0.88, "bindingMethod": "keyword"}
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {"componentId": "q_snap_02_c1", "renderOrder": 1, "type": "narrative_paragraph", "constraints": {}, "refs": {}},
+              {"componentId": "q_snap_02_c2", "renderOrder": 2, "type": "metric_card", "constraints": {}, "refs": {}}
+            ]
+          },
+          "sourceHeading": "Key findings",
+          "priority": "high"
+        }
+      ]
+    },
+    {
+      "topicId": "topic_lfpr",
+      "title": "1. Stable Labour Force Participation Rate (LFPR)",
+      "description": "LFPR trends for persons 15+ by gender and Rural/Urban sector, 2022-2025",
+      "pageRange": [1, 2],
+      "questions": [
+        {
+          "questionId": "q_lfpr_01",
+          "intent": "How has LFPR for Rural male and Rural female changed from 2022 to 2025?",
+          "questionType": "trend",
+          "inferenceMethod": "programmatic_section",
+          "inferenceConfidence": 0.92,
+          "requiredEntities": [
+            {"entityId": "ent_lfpr", "role": "measure", "confidence": 0.95, "bindingMethod": "keyword"},
+            {"entityId": "ent_sector", "role": "filter", "confidence": 0.88, "bindingMethod": "keyword"},
+            {"entityId": "ent_gender", "role": "breakdown", "confidence": 0.85, "bindingMethod": "keyword"},
+            {"entityId": "ent_year", "role": "groupBy", "confidence": 0.90, "bindingMethod": "keyword"}
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {"componentId": "q_lfpr_01_c1", "renderOrder": 1, "type": "narrative_paragraph", "constraints": {}, "refs": {}},
+              {"componentId": "q_lfpr_01_c2", "renderOrder": 2, "type": "line_chart", "constraints": {"x_axis": "Year", "series": ["Rural Male", "Rural Female", "Rural Person"]}, "refs": {}},
+              {"componentId": "q_lfpr_01_c3", "renderOrder": 3, "type": "data_table", "constraints": {}, "refs": {}}
+            ]
+          },
+          "sourceHeading": "1. Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+          "priority": "high"
+        },
+        {
+          "questionId": "q_lfpr_02",
+          "intent": "How does LFPR compare between Urban male and Urban female in 2025 vs 2022?",
+          "questionType": "comparison",
+          "inferenceMethod": "programmatic_section",
+          "inferenceConfidence": 0.88,
+          "requiredEntities": [
+            {"entityId": "ent_lfpr", "role": "measure", "confidence": 0.95, "bindingMethod": "keyword"},
+            {"entityId": "ent_sector", "role": "filter", "confidence": 0.88, "bindingMethod": "keyword"},
+            {"entityId": "ent_gender", "role": "breakdown", "confidence": 0.85, "bindingMethod": "keyword"}
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {"componentId": "q_lfpr_02_c1", "renderOrder": 1, "type": "narrative_paragraph", "constraints": {}, "refs": {}},
+              {"componentId": "q_lfpr_02_c2", "renderOrder": 2, "type": "grouped_bar_chart", "constraints": {"series": ["Male", "Female", "Person"], "group_by": "Year"}, "refs": {}}
+            ]
+          },
+          "sourceHeading": "Fig 1(b): LFPR(%) for urban areas",
+          "priority": "high"
+        }
+      ]
+    },
+    {
+      "topicId": "topic_wpr",
+      "title": "2. Worker Population Ratio (WPR) remains sustained",
+      "description": "WPR trends for Rural/Urban by gender, 2022-2025",
+      "pageRange": [2, 3],
+      "questions": [
+        {
+          "questionId": "q_wpr_01",
+          "intent": "What is the trend in Worker Population Ratio (WPR) for Rural male (78.4%) and Rural female (44.9%) in 2025?",
+          "questionType": "trend",
+          "inferenceMethod": "programmatic_section",
+          "inferenceConfidence": 0.92,
+          "requiredEntities": [
+            {"entityId": "ent_wpr", "role": "measure", "confidence": 0.95, "bindingMethod": "keyword"},
+            {"entityId": "ent_sector", "role": "filter", "confidence": 0.88, "bindingMethod": "keyword"},
+            {"entityId": "ent_gender", "role": "breakdown", "confidence": 0.85, "bindingMethod": "keyword"},
+            {"entityId": "ent_year", "role": "groupBy", "confidence": 0.90, "bindingMethod": "keyword"}
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {"componentId": "q_wpr_01_c1", "renderOrder": 1, "type": "narrative_paragraph", "constraints": {}, "refs": {}},
+              {"componentId": "q_wpr_01_c2", "renderOrder": 2, "type": "line_chart", "constraints": {"series": ["Rural Male", "Rural Female", "Rural Person"]}, "refs": {}}
+            ]
+          },
+          "sourceHeading": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+          "priority": "high"
+        }
+      ]
+    },
+    {
+      "topicId": "topic_ur",
+      "title": "3. Unemployment Rates (UR) reflect stability and improvement",
+      "description": "UR by Rural/Urban and Gender, 2022-2025",
+      "pageRange": [3, 4],
+      "questions": [
+        {
+          "questionId": "q_ur_01",
+          "intent": "How does Unemployment Rate (UR) differ between Rural (2.4%) and Urban (4.8%) areas in 2025?",
+          "questionType": "comparison",
+          "inferenceMethod": "programmatic_section",
+          "inferenceConfidence": 0.90,
+          "requiredEntities": [
+            {"entityId": "ent_ur", "role": "measure", "confidence": 0.95, "bindingMethod": "keyword"},
+            {"entityId": "ent_sector", "role": "groupBy", "confidence": 0.88, "bindingMethod": "keyword"},
+            {"entityId": "ent_gender", "role": "breakdown", "confidence": 0.85, "bindingMethod": "keyword"}
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {"componentId": "q_ur_01_c1", "renderOrder": 1, "type": "narrative_paragraph", "constraints": {}, "refs": {}},
+              {"componentId": "q_ur_01_c2", "renderOrder": 2, "type": "grouped_bar_chart", "constraints": {"series": ["Male", "Female", "Person"], "group_by": "Rural/Urban"}, "refs": {}}
+            ]
+          },
+          "sourceHeading": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and above",
+          "priority": "high"
+        },
+        {
+          "questionId": "q_ur_02",
+          "intent": "What is the Youth (15-29 years) unemployment rate in 2025 vs 2024, for Rural and Urban separately?",
+          "questionType": "comparison",
+          "inferenceMethod": "programmatic_section",
+          "inferenceConfidence": 0.88,
+          "requiredEntities": [
+            {"entityId": "ent_ur", "role": "measure", "confidence": 0.95, "bindingMethod": "keyword"},
+            {"entityId": "ent_age_group", "role": "filter", "confidence": 0.85, "bindingMethod": "keyword"},
+            {"entityId": "ent_sector", "role": "breakdown", "confidence": 0.88, "bindingMethod": "keyword"}
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {"componentId": "q_ur_02_c1", "renderOrder": 1, "type": "narrative_paragraph", "constraints": {}, "refs": {}},
+              {"componentId": "q_ur_02_c2", "renderOrder": 2, "type": "metric_card", "constraints": {"metrics": ["Youth_UR_rural_2024:8.7%", "Youth_UR_rural_2025:8.3%", "Youth_UR_urban_2024:14.3%", "Youth_UR_urban_2025:13.6%"]}, "refs": {}}
+            ]
+          },
+          "sourceHeading": "Youth unemployment rate (15-29 years)",
+          "priority": "medium"
+        }
+      ]
+    },
+    {
+      "topicId": "topic_emp_status",
+      "title": "4. Increase in proportion of workers with regular wage/salary employment",
+      "description": "Distribution by employment status: self-employed, regular wage, casual labour, 2024-2025",
+      "pageRange": [4, 5],
+      "questions": [
+        {
+          "questionId": "q_emp_01",
+          "intent": "How has the share of self-employment (57.5%→56.2%) and regular wage/salary (22.4%→23.6%) changed from 2024 to 2025 by gender?",
+          "questionType": "comparison",
+          "inferenceMethod": "programmatic_section",
+          "inferenceConfidence": 0.90,
+          "requiredEntities": [
+            {"entityId": "ent_employment_share", "role": "measure", "confidence": 0.90, "bindingMethod": "keyword"},
+            {"entityId": "ent_emp_type", "role": "groupBy", "confidence": 0.88, "bindingMethod": "keyword"},
+            {"entityId": "ent_gender", "role": "breakdown", "confidence": 0.85, "bindingMethod": "keyword"},
+            {"entityId": "ent_year", "role": "filter", "confidence": 0.90, "bindingMethod": "keyword"}
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {"componentId": "q_emp_01_c1", "renderOrder": 1, "type": "narrative_paragraph", "constraints": {}, "refs": {}},
+              {"componentId": "q_emp_01_c2", "renderOrder": 2, "type": "grouped_bar_chart", "constraints": {"series": ["Self-employed", "Regular wage/salary", "Casual labour"], "group_by": "2024 vs 2025"}, "refs": {}},
+              {"componentId": "q_emp_01_c3", "renderOrder": 3, "type": "data_table", "constraints": {}, "refs": {}}
+            ]
+          },
+          "sourceHeading": "4. Increase in proportion of workers with regular wage/ salary employment",
+          "priority": "high"
+        }
+      ]
+    },
+    {
+      "topicId": "topic_sectoral",
+      "title": "5. Manufacturing and service sectors — worker participation",
+      "description": "Percentage distribution of workers by industry, 2024-2025",
+      "pageRange": [5, 5],
+      "questions": [
+        {
+          "questionId": "q_sec_01",
+          "intent": "How has the sectoral distribution of employment (Agriculture 44.8%→43.0%, Manufacturing 11.6%→12.1%) changed from 2024 to 2025?",
+          "questionType": "comparison",
+          "inferenceMethod": "programmatic_section",
+          "inferenceConfidence": 0.88,
+          "requiredEntities": [
+            {"entityId": "ent_employment_share", "role": "measure", "confidence": 0.90, "bindingMethod": "keyword"},
+            {"entityId": "ent_industry", "role": "groupBy", "confidence": 0.88, "bindingMethod": "keyword"},
+            {"entityId": "ent_year", "role": "breakdown", "confidence": 0.85, "bindingMethod": "keyword"}
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {"componentId": "q_sec_01_c1", "renderOrder": 1, "type": "narrative_paragraph", "constraints": {}, "refs": {}},
+              {"componentId": "q_sec_01_c2", "renderOrder": 2, "type": "grouped_bar_chart", "constraints": {"series": ["2024", "2025"], "group_by": "Industry"}, "refs": {}}
+            ]
+          },
+          "sourceHeading": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+          "priority": "medium"
+        }
+      ]
+    },
+    {
+      "topicId": "topic_earnings",
+      "title": "6. Earnings of female workers have seen a notable shift",
+      "description": "Average earnings by employment type and gender, 2022-2025",
+      "pageRange": [5, 6],
+      "questions": [
+        {
+          "questionId": "q_earn_01",
+          "intent": "How do average monthly earnings in regular wage/salaried employment compare between male (₹22,891→₹24,217) and female (₹17,126→₹18,353) from 2024 to 2025?",
+          "questionType": "comparison",
+          "inferenceMethod": "programmatic_section",
+          "inferenceConfidence": 0.90,
+          "requiredEntities": [
+            {"entityId": "ent_earnings", "role": "measure", "confidence": 0.92, "bindingMethod": "keyword"},
+            {"entityId": "ent_emp_type", "role": "filter", "confidence": 0.88, "bindingMethod": "keyword"},
+            {"entityId": "ent_gender", "role": "groupBy", "confidence": 0.90, "bindingMethod": "keyword"}
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {"componentId": "q_earn_01_c1", "renderOrder": 1, "type": "narrative_paragraph", "constraints": {}, "refs": {}},
+              {"componentId": "q_earn_01_c2", "renderOrder": 2, "type": "grouped_bar_chart", "constraints": {"series": ["Regular wage/salary", "Self-employed", "Casual labour"], "group_by": "Male vs Female"}, "refs": {}}
+            ]
+          },
+          "sourceHeading": "6. Earnings of female workers have seen a notable shift",
+          "priority": "medium"
+        }
+      ]
+    },
+    {
+      "topicId": "topic_education",
+      "title": "7. Average number of years in formal education",
+      "description": "Education attainment by age group, gender, Rural/Urban, 2025",
+      "pageRange": [6, 7],
+      "questions": [
+        {
+          "questionId": "q_edu_01",
+          "intent": "How does average years of formal education differ between Urban (11.2 male, 10.9 female) and Rural (9.6 male, 9.2 female) areas in 2025?",
+          "questionType": "comparison",
+          "inferenceMethod": "programmatic_section",
+          "inferenceConfidence": 0.85,
+          "requiredEntities": [
+            {"entityId": "ent_edu_years", "role": "measure", "confidence": 0.90, "bindingMethod": "keyword"},
+            {"entityId": "ent_sector", "role": "groupBy", "confidence": 0.88, "bindingMethod": "keyword"},
+            {"entityId": "ent_gender", "role": "breakdown", "confidence": 0.85, "bindingMethod": "keyword"}
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {"componentId": "q_edu_01_c1", "renderOrder": 1, "type": "narrative_paragraph", "constraints": {}, "refs": {}},
+              {"componentId": "q_edu_01_c2", "renderOrder": 2, "type": "grouped_bar_chart", "constraints": {"group_by": "Rural/Urban", "series": ["Male", "Female", "Person"]}, "refs": {}}
+            ]
+          },
+          "sourceHeading": "7. Average number of years in formal education",
+          "priority": "medium"
+        }
+      ]
+    },
+    {
+      "topicId": "topic_methodology",
+      "title": "Endnote: Methodology and Conceptual Framework",
+      "description": "PLFS 2025 sample design, definitions, and compatibility notes",
+      "pageRange": [7, 10],
+      "questions": [
+        {
+          "questionId": "q_meth_01",
+          "intent": "What changes were made to the PLFS sampling design from January 2025, and how does this affect comparability with earlier years?",
+          "questionType": "describe",
+          "inferenceMethod": "programmatic_section",
+          "inferenceConfidence": 0.80,
+          "requiredEntities": [
+            {"entityId": "ent_plfs", "role": "metadata", "confidence": 0.95, "bindingMethod": "keyword"}
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {"componentId": "q_meth_01_c1", "renderOrder": 1, "type": "narrative_paragraph", "constraints": {}, "refs": {}}
+            ]
+          },
+          "sourceHeading": "C. Changes in Sample Design of PLFS",
+          "priority": "low"
+        }
+      ]
+    }
+  ],
+
+  "entities": [
+    {"entityId": "ent_lfpr", "name": "Labour Force Participation Rate (LFPR)", "entityType": "measure", "sourceType": "heading", "confidence": 0.98, "aliases": ["LFPR", "Labour Force Participation Rate"], "pageIndex": 0, "sourceContext": "LFPR and WPR, based on usual status (ps+ss) remained stable in the year 2025", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_wpr", "name": "Worker Population Ratio (WPR)", "entityType": "measure", "sourceType": "heading", "confidence": 0.98, "aliases": ["WPR", "Worker Population Ratio"], "pageIndex": 0, "sourceContext": "Worker Population Ratio (WPR) in usual status (ps+ss) for persons of age 15 years and above estimated as 57.4%", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_ur", "name": "Unemployment Rate (UR)", "entityType": "measure", "sourceType": "heading", "confidence": 0.98, "aliases": ["UR", "Unemployment Rate"], "pageIndex": 0, "sourceContext": "Unemployment rate in usual status (ps+ss) among educated persons reduced to 6.5% in 2025", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_gender", "name": "Gender", "entityType": "dimension", "sourceType": "heading", "confidence": 0.95, "aliases": ["Male", "Female", "Persons"], "pageIndex": 0, "sourceContext": "The same for male and female stood at 79.1% and 40.0%", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_sector", "name": "Rural/Urban Sector", "entityType": "dimension", "sourceType": "heading", "confidence": 0.95, "aliases": ["Rural", "Urban", "Rural/Urban"], "pageIndex": 0, "sourceContext": "rural male labour force participation remained strong at 80.5%", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_year", "name": "Survey Year", "entityType": "dimension", "sourceType": "heading", "confidence": 0.92, "aliases": ["2022", "2023", "2024", "2025"], "pageIndex": 0, "sourceContext": "remained stable compared to 2024", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_age_group", "name": "Age Group", "entityType": "dimension", "sourceType": "heading", "confidence": 0.90, "aliases": ["15+", "15-29", "15-59", "25+"], "pageIndex": 0, "sourceContext": "persons of age 15 years and above", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_emp_type", "name": "Status in Employment", "entityType": "dimension", "sourceType": "heading", "confidence": 0.92, "aliases": ["Self-employed", "Regular wage/salary", "Casual labour"], "pageIndex": 4, "sourceContext": "percentage distribution of workers (in usual status) by status in employment", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_employment_share", "name": "Share of Employment", "entityType": "measure", "sourceType": "heading", "confidence": 0.90, "aliases": ["Percentage distribution", "proportion"], "pageIndex": 4, "sourceContext": "share of self-employment declined slightly from 57.5% in 2024 to 56.2% in 2025", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_earnings", "name": "Average Earnings", "entityType": "measure", "sourceType": "vlm", "confidence": 0.92, "aliases": ["Earning from regular wage/salary", "Earning from casual labour"], "pageIndex": 5, "sourceContext": "earnings for male increased from ₹22,891 in 2024 to ₹24,217 in 2025", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_industry", "name": "Industry of Work", "entityType": "dimension", "sourceType": "heading", "confidence": 0.88, "aliases": ["Agriculture", "Manufacturing", "Construction", "Services"], "pageIndex": 5, "sourceContext": "percentage distribution of workers (in usual status) by industry of work", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_edu_years", "name": "Average number of years in formal education", "entityType": "measure", "sourceType": "vlm", "confidence": 0.90, "aliases": ["years of education", "formal education"], "pageIndex": 6, "sourceContext": "average number of years in formal education stands at 10.0 years at the all-India level in 2025", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_usual_status", "name": "Usual Status (ps+ss)", "entityType": "filter", "sourceType": "heading", "confidence": 0.95, "aliases": ["usual status", "ps+ss", "principal and subsidiary status"], "pageIndex": 0, "sourceContext": "LFPR and WPR, based on usual status (ps+ss)", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_education_level", "name": "Education Level", "entityType": "dimension", "sourceType": "heading", "confidence": 0.85, "aliases": ["secondary and above", "diploma/certificate", "graduation", "post-graduation"], "pageIndex": 0, "sourceContext": "Unemployment rate among educated persons (secondary and above)", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_plfs", "name": "Periodic Labour Force Survey (PLFS)", "entityType": "metadata", "sourceType": "heading", "confidence": 0.98, "aliases": ["PLFS", "Labour Force Survey"], "pageIndex": 0, "sourceContext": "Periodic Labour Force Survey (PLFS) Annual Report, 2025", "scope": "global", "crossRefs": []},
+    {"entityId": "ent_mospi", "name": "Ministry of Statistics & Programme Implementation (MoSPI)", "entityType": "metadata", "sourceType": "heading", "confidence": 0.98, "aliases": ["MoSPI", "Ministry of Statistics"], "pageIndex": 0, "sourceContext": "Ministry of Statistics & Programme Implementation", "scope": "global", "crossRefs": []}
+  ],
+
+  "tableStructures": [],
+
+  "documentMap": {
+    "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+    "documentType": "narrative_press_release",
+    "publisher": "Ministry of Statistics & Programme Implementation (MoSPI)",
+    "published": "27 MAR 2026",
+    "note": "This is a PIB press release narrative document. No structured data tables — all charts are embedded PNG images. Data is embedded in narrative text and figure captions.",
+    "chapters": [
+      {"chapterId": "ch_snapshot", "title": "Snapshot & Key findings", "pageRange": [0, 1], "level": 1, "sections": []},
+      {"chapterId": "ch_lfpr", "title": "1. Stable Labour Force Participation Rate (LFPR)", "pageRange": [1, 2], "level": 1, "sections": []},
+      {"chapterId": "ch_wpr", "title": "2. Worker Population Ratio (WPR) remains sustained", "pageRange": [2, 3], "level": 1, "sections": []},
+      {"chapterId": "ch_ur", "title": "3. Unemployment Rates (UR) reflect stability and improvement", "pageRange": [3, 4], "level": 1, "sections": []},
+      {"chapterId": "ch_emp_status", "title": "4. Increase in proportion with regular wage/salary employment", "pageRange": [4, 5], "level": 1, "sections": []},
+      {"chapterId": "ch_sectoral", "title": "5. Manufacturing and service sectors", "pageRange": [5, 5], "level": 1, "sections": []},
+      {"chapterId": "ch_earnings", "title": "6. Earnings of female workers have seen a notable shift", "pageRange": [5, 6], "level": 1, "sections": []},
+      {"chapterId": "ch_education", "title": "7. Average number of years in formal education", "pageRange": [6, 7], "level": 1, "sections": []},
+      {"chapterId": "ch_methodology", "title": "Endnote: Methodology and Conceptual Framework", "pageRange": [7, 10], "level": 1, "sections": [
+        {"sectionId": "sec_intro", "title": "A. Introduction", "page": 7, "level": 2},
+        {"sectionId": "sec_sample", "title": "B. Sample Size", "page": 8, "level": 2},
+        {"sectionId": "sec_design", "title": "C. Changes in Sample Design of PLFS", "page": 8, "level": 2},
+        {"sectionId": "sec_framework", "title": "D. Conceptual Framework of Key Indicators", "page": 8, "level": 2},
+        {"sectionId": "sec_compat", "title": "E. Compatibility of PLFS 2025 results", "page": 9, "level": 2}
+      ]}
+    ]
+  },
+
+  "_evaluation_checklist": {
+    "topics": {
+      "expected_count": 8,
+      "expected_titles": [
+        "Snapshot & Key findings",
+        "1. Stable Labour Force Participation Rate (LFPR)",
+        "2. Worker Population Ratio (WPR) remains sustained",
+        "3. Unemployment Rates (UR) reflect stability and improvement",
+        "4. Increase in proportion of workers with regular wage/salary employment",
+        "5. Manufacturing and service sectors",
+        "6. Earnings of female workers",
+        "7. Average number of years in formal education"
+      ],
+      "fail_if": "topics.length < 4 OR topics[0].title contains only single word OR any topic.title is 'and' or 'areas' or 'while'"
+    },
+    "entities": {
+      "expected_count_min": 10,
+      "expected_count_max": 40,
+      "required_entities": ["LFPR", "WPR", "Unemployment Rate", "Rural", "Urban", "Male", "Female"],
+      "forbidden_entities": ["Press Re", "lease Pag", ":49 AM", "ExactColumnHeader", "MetricName", "Samrat"],
+      "fail_if": "any entity.name is in forbidden_entities OR entities.length < 10"
+    },
+    "questions": {
+      "expected_per_topic_min": 1,
+      "fail_if": "any question.intent equals 'Specific analytical question referencing real entities?' OR any question.questionType contains '|'"
+    },
+    "tableStructures": {
+      "expected_count": 0,
+      "note": "This PDF has NO real data tables — all 9 tables in current output are website nav bars",
+      "fail_if": "any tableStructure.columns contains ':49 AM' or 'Press Re'"
+    },
+    "documentTitle": {
+      "expected": "Periodic Labour Force Survey (PLFS) Annual Report, 2025",
+      "fail_if": "title equals 'madhan_oliga' or 'machi_valga' (filename used instead of document title)"
+    }
+  }
+}
