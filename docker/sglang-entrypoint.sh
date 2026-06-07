@@ -80,8 +80,9 @@ echo ""
 #   --max-model-len 2048           → caps KV cache size (prevents 4096 default)
 #   --enforce-eager                → disables CUDA graphs (saves ~500MB VRAM)
 #   --max-num-seqs 1               → single request (saves KV cache memory)
-#   --limit-mm-per-prompt image=1  → one image per request (page-by-page)
+#   --limit-mm-per-prompt JSON     → one image per request (page-by-page)
 #   NOTE: No --quantization flag needed — vLLM auto-detects from model config
+#   NOTE: vLLM 0.22+ requires JSON for --limit-mm-per-prompt (not key=value)
 exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
@@ -90,6 +91,6 @@ exec python3 -m vllm.entrypoints.openai.api_server \
     --max-model-len 2048 \
     --enforce-eager \
     --max-num-seqs 1 \
-    --limit-mm-per-prompt "image=1" \
+    --limit-mm-per-prompt '{"image": 1}' \
     --trust-remote-code \
     --download-dir "${HF_HOME}"
