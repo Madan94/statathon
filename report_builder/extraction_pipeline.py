@@ -500,6 +500,8 @@ def pass4_assemble_ast(
             for r_idx, region in enumerate(vlm_content.get("regions") or []):
                 if region.get("type") == "table":
                     content = region.get("content", {})
+                    if not isinstance(content, dict):
+                        content = {}
                     headers = content.get("columns") or content.get("column_headers") or []
                     sample_rows = content.get("rows") or content.get("sample_rows") or []
                     if headers or sample_rows:
