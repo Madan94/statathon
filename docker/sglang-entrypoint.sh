@@ -83,7 +83,6 @@ echo "  Port:             ${PORT}"
 echo "  GPU mem util:     0.88 (5407 MB of ${GPU_MEM_TOTAL:-6144} MB)"
 echo "  Max model len:    1024 tokens (minimal KV cache for page-by-page)"
 echo "  Max num seqs:     1 (sequential processing)"
-echo "  Swap space:       4 GB (KV overflow → host RAM)"
 echo "  Enforce eager:    yes (saves ~500MB vs CUDA graphs)"
 echo "  MM limit:         1 image per prompt"
 echo ""
@@ -94,16 +93,12 @@ echo "════════════════════════�
 echo ""
 
 # ── Launch vLLM ──────────────────────────────────────────────────────────────
-# Key flags explained:
-#   --gpu-memory-utilization 0.88  → use 88% of 6GB = 5.4GB (fits weights + minimal KV)
-#   --max-model-len 1024           → tiny KV cache (we process 1 page at a time)
-#   --enforce-eager                → no CUDA graphs (saves ~500MB)
-#   --max-num-seqs 1               → only 1 concurrent request (saves KV slots)
-#   --swap-space 4                 → 4GB host RAM for KV cache overflow
-#   --limit-mm-per-prompt JSON     → 1 image per request (page-by-page extraction)
-#   --dtype half                   → force fp16 (some configs default to bf16 which can be slower)
-#   --trust-remote-code            → needed for Qwen2.5-VL processor
-#   --download-dir                 → persistent cache volume
+# VRAM math for RTX 4050 (6GB):
+#   0.88 × 6144 MB = 5407 MB allocated to vLLM
+#   Weights: ViT fp16 (1.2GB) + LLM AWQ-Marlin (3.5GB) = 4.7GB
+#   Remaining for KV: 5407 - 4812 = ~595 MB (plenty for 1024 tokens × 1 seq)
+#
+# Only flags verified working on vllm/vllm-openai:latest (v0.22.1):
 exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
@@ -112,7 +107,6 @@ exec python3 -m vllm.entrypoints.openai.api_server \
     --max-model-len 1024 \
     --enforce-eager \
     --max-num-seqs 1 \
-    --swap-space 4 \
     --limit-mm-per-prompt '{"image": 1}' \
     --dtype half \
     --trust-remote-code \
