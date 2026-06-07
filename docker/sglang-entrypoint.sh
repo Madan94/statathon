@@ -99,6 +99,16 @@ echo ""
 #   Total: ~3.5 GiB → 1.9 GiB headroom ✓
 #   Marlin repacking peak (transient): ~5.0 GiB < 5.7 GiB free ✓
 #
+# ATTENTION BACKEND: FlashAttention JIT-compiles for SM89 on first run (2-7 min).
+# If stuck >10min, override with: VLLM_ATTENTION_BACKEND=FLASHINFER or XFORMERS
+# e.g.: docker run -e VLLM_ATTENTION_BACKEND=XFORMERS ...
+VLLM_ATTENTION_BACKEND="${VLLM_ATTENTION_BACKEND:-}"
+EXTRA_ARGS=""
+if [ -n "$VLLM_ATTENTION_BACKEND" ]; then
+    echo "  ▶ Attention backend override: ${VLLM_ATTENTION_BACKEND}"
+    export VLLM_ATTENTION_BACKEND
+fi
+
 # SAFE FLAGS (verified on vllm/vllm-openai:latest v0.22.1):
 exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
