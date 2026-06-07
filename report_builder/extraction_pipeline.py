@@ -1,4 +1,4 @@
-"""Multi-Pass Extraction Pipeline — LayoutLM + Qwen-VL.
+﻿"""Multi-Pass Extraction Pipeline — LayoutLM + Qwen-VL.
 
 Orchestrates the 7-pass extraction flow for Enterprise Document AST + Blueprint:
     Pass 0: PDF rasterization (pdf2image 150dpi + pdfplumber raw text/tables/words)
@@ -247,6 +247,16 @@ _FIGREF_RE = _re_entity.compile(
     _re_entity.I,
 )
 _NUMERIC_ONLY_RE = _re_entity.compile(r"^[\d,.\-+%\s/()]+$")
+_URL_RE = _re_entity.compile(r"https?://|www\.", _re_entity.I)
+_TIMESTAMP_RE = _re_entity.compile(r"^\d+/\d+/\d+|^\d+:\d+\s*[AP]M", _re_entity.I)
+_PAREN_ABBREV_RE = _re_entity.compile(r"^\([A-Z+]{2,10}\):?$")
+
+# Phrases that Qwen echoes verbatim from the prompt template
+_PROMPT_ECHO_PHRASES: frozenset[str] = frozenset({
+    "exactcolumnheader", "metricname", "sectiontitle", "entity1", "entity2",
+    "specific analytical question", "one-line summary", "visible chart title",
+    "exact column header", "exact section title", "metric name",
+})
 
 
 def _is_valid_entity_name(name: str) -> bool:
@@ -258,9 +268,21 @@ def _is_valid_entity_name(name: str) -> bool:
         return False
     if cleaned.lower() in _ENGLISH_STOPWORDS:
         return False
+    if cleaned.lower() in _PROMPT_ECHO_PHRASES:
+        return False
     if _FIGREF_RE.match(cleaned):
         return False
     if _NUMERIC_ONLY_RE.match(cleaned):
+        return False
+    if _URL_RE.search(cleaned):
+        return False
+    if _TIMESTAMP_RE.match(cleaned):
+        return False
+    # Reject fragment artifacts like "size," "engaged," "the increase is"
+    if cleaned[-1] in ".,;:" and len(cleaned.split()) <= 3:
+        return False
+    # Reject pure parenthetical abbreviations like "(PLFS)" "(WPR):"
+    if _PAREN_ABBREV_RE.match(cleaned):
         return False
     return True
 
@@ -387,16 +409,201 @@ _MOSPI_HEADING_PATTERNS = [
     (r"^(Statement)\s+(\d+\.\d+)[:\s—\-]+(.*)", 2),
     (r"^(Table)\s+(\d+\.\d+)[:\.\s]+(.*)", 2),
     (r"^(ANNEXURE|Annexure|APPENDIX|Appendix)\s+([A-Z0-9\-]+)[:\.\s]*(.*)", 2),
-    # Numbered sections (e.g. "1.2 Labour Force")
+    # Numbered sections (e.g. "1.2 Labour Force" or "1. Stable Labour Force")
     (r"^\d+\.\d+\s+[A-Z][A-Za-z\s]{5,}", 2),
+    # Single-digit numbered sections: "1. Stable LFPR" "2. Worker Population" etc.
+    (r"^(\d+)\.\s+([A-Z][A-Za-z\s,/\(\)]{8,})", 1),
     # ALL CAPS lines (≥ 8 chars, not just a label)
     (r"^([A-Z][A-Z\s\-/]{7,80})$", 1),
+    # Letter-dot sections: "A. Introduction" "B. Sample Size"
+    (r"^([A-Z])\.\s+([A-Z][A-Za-z\s]{5,})", 2),
 ]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Website Artifact Detection
+# ─────────────────────────────────────────────────────────────────────────────
+
+_WEBSITE_NAV_PATTERNS = [
+    r"^\d+/\d+/\d+,?\s+\d+:\d+\s*[AP]M",   # "6/6/26, 9:49 AM"
+    r"^:\d+\s*[AP]M",                         # ":49 AM"
+    r"Press\s+(Release|Information)\s*(Page|Bureau)",
+    r"www\.\w+\.gov\.in",
+    r"https?://",
+    r"^\d+/\d+$",                             # "1/11" page numbers
+    r"\.aspx\?",                               # ASP.NET URLs
+]
+_WEBSITE_NAV_RE = [_re_entity.compile(p, _re_entity.I) for p in _WEBSITE_NAV_PATTERNS]
+
+
+def _is_website_artifact_table(table: list[list]) -> bool:
+    """Return True if this table is a website nav-bar artifact, not real data."""
+    if not table or not table[0]:
+        return False
+    header_text = " ".join(str(c or "") for c in table[0])
+    for rx in _WEBSITE_NAV_RE:
+        if rx.search(header_text):
+            return True
+    # Also detect if all non-empty columns are fragments of the same nav phrase
+    non_empty = [str(c).strip() for c in table[0] if str(c or "").strip()]
+    if non_empty:
+        combined = "".join(non_empty)
+        if _re_entity.search(r"Press\s*Releas|Information\s*Bur|AM\s*Press", combined, _re_entity.I):
+            return True
+    return False
+
+
+def _fix_unicode_artifacts(text: str) -> str:
+    """Fix common PDF-to-text encoding artifacts (en/em dashes, Rupee sign, etc.)."""
+    import re as _re_uni
+    text = _re_uni.sub(r'[\x00\x01\x02\x03\x04\x05\x06\x07\x08\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b]', '', text)
+    text = text.replace("â€"", "–")   # en dash
+    text = text.replace("â€"", "—")   # em dash
+    text = text.replace("â", "–")     # partial artifact -> en dash
+    text = text.replace("â¹", "₹")    # Rupee sign
+    text = text.replace("â€œ", "“").replace("â€", "”")
+    return text
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Hybrid ToC Extraction (Improvement 2)
 # ─────────────────────────────────────────────────────────────────────────────
+
+def _extract_numbered_sections(page_texts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Extract numbered sections (1., 2., 3.) from raw text without any LLM.
+
+    Works on PIB press releases, PLFS annual reports, and similar narrative PDFs
+    that use numbered sections like "1. Stable LFPR" or "A. Introduction".
+
+    Returns list of {title, page, level} dicts.
+    """
+    import re as _re_sec
+    sections = []
+    seen: set[str] = set()
+
+    # Match "1. Title Words..." "2. Title..." at start of line or after newline
+    _NUM_SEC_RE = _re_sec.compile(r"(?:^|\n)(\d{1,2})\.\s+([A-Z][^\n]{5,100})", _re_sec.M)
+    # Match "A. Title" "B. Sample Size" etc.
+    _ALPHA_SEC_RE = _re_sec.compile(r"(?:^|\n)([A-Z])\.\s+([A-Z][^\n]{5,80})", _re_sec.M)
+    # Match "Key Highlights" "Key findings" "Snapshot" — common press release headings
+    _KEYWORD_SEC_RE = _re_sec.compile(
+        r"(?:^|\n)(Snapshot|Key\s+(?:findings|Highlights?|Highligts?))[:\s]",
+        _re_sec.I | _re_sec.M,
+    )
+
+    for page_idx, pt in enumerate(page_texts):
+        raw = pt.get("raw_text") or ""
+
+        for m in _NUM_SEC_RE.finditer(raw):
+            num = m.group(1)
+            title = f"{num}. {m.group(2).strip()}"
+            key = title[:40].lower()
+            if key not in seen and _is_valid_entity_name(m.group(2).strip()):
+                seen.add(key)
+                sections.append({"title": title, "page": page_idx, "level": 1})
+
+        for m in _ALPHA_SEC_RE.finditer(raw):
+            letter = m.group(1)
+            title = f"{letter}. {m.group(2).strip()}"
+            key = title[:40].lower()
+            if key not in seen and _is_valid_entity_name(m.group(2).strip()):
+                seen.add(key)
+                sections.append({"title": title, "page": page_idx, "level": 2})
+
+        for m in _KEYWORD_SEC_RE.finditer(raw):
+            title = m.group(1).strip()
+            key = title.lower()
+            if key not in seen:
+                seen.add(key)
+                sections.append({"title": title, "page": page_idx, "level": 1})
+
+    return sections
+
+
+def _generate_questions_from_sections(
+    sections: list[dict[str, Any]],
+    all_entities: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Turn numbered document sections into analytical questions programmatically.
+
+    Uses entity typing (measure/dimension) from pass2_6 to build grounded questions.
+    No LLM required.
+    """
+    questions = []
+    # Index measures and dimensions from entities
+    measure_names = [e["name"] for e in all_entities if e.get("entityType_hint") == "measure"][:10]
+    dim_names = [e["name"] for e in all_entities if e.get("entityType_hint") == "dimension"][:10]
+
+    # Question template patterns keyed by section title keywords
+    _SECTION_QUESTION_MAP = [
+        (["lfpr", "labour force participation"], "trend",
+         "How has Labour Force Participation Rate (LFPR) changed from 2022 to 2025 by Rural/Urban and Gender?"),
+        (["wpr", "worker population ratio"], "trend",
+         "What is the trend in Worker Population Ratio (WPR) for Rural and Urban areas from 2022 to 2025?"),
+        (["unemployment", "ur "], "comparison",
+         "How do Unemployment Rates (UR) differ across Rural vs Urban areas by Gender in 2025?"),
+        (["regular wage", "salary", "employment status"], "comparison",
+         "How has the distribution of workers across self-employed, regular wage, and casual labour changed from 2024 to 2025?"),
+        (["manufacturing", "sector", "industry"], "comparison",
+         "How has the sectoral distribution of employment (Agriculture, Manufacturing, Services) shifted from 2024 to 2025?"),
+        (["earning", "wage", "income"], "trend",
+         "How do earnings from regular wage/salaried employment compare between Male and Female workers in 2024 vs 2025?"),
+        (["education", "formal education", "literacy"], "comparison",
+         "How does average years of formal education differ between Rural and Urban areas by Gender in 2025?"),
+        (["snapshot", "key findings", "highlights"], "describe",
+         "What are the key labour force indicators (LFPR, WPR, UR) for 2025 compared to 2024?"),
+        (["methodology", "sample", "conceptual"], "describe",
+         "What methodology and sample design was used for PLFS 2025?"),
+    ]
+
+    q_counter = 0
+    used_intents: set[str] = set()
+
+    for sec in sections:
+        sec_title_lower = sec["title"].lower()
+        matched_intent = None
+        q_type = "describe"
+
+        for keywords, qt, intent in _SECTION_QUESTION_MAP:
+            if any(kw in sec_title_lower for kw in keywords):
+                if intent not in used_intents:
+                    matched_intent = intent
+                    q_type = qt
+                    used_intents.add(intent)
+                    break
+
+        if not matched_intent:
+            # Generic fallback for unmatched sections
+            matched_intent = f"What are the key findings in the section: {sec['title'][:60]}?"
+
+        q_counter += 1
+        # Build required entities from measures/dimensions relevant to this section
+        req_entities = []
+        if measure_names:
+            req_entities.append({"entityRef": measure_names[0], "role": "measure"})
+        if dim_names:
+            req_entities.append({"entityRef": dim_names[0], "role": "groupBy"})
+
+        questions.append({
+            "questionId": f"q_sec_{q_counter:03d}",
+            "intent": matched_intent,
+            "questionType": q_type,
+            "page": sec["page"],
+            "sourceHeading": sec["title"],
+            "sectionPattern": "narrative",
+            "requiredEntities": req_entities,
+            "answerStructure": {
+                "layoutType": "split" if q_type in ("comparison", "trend") else "single",
+                "components": [
+                    {"type": "narrative_paragraph", "renderOrder": 1},
+                    {"type": "metric_card" if q_type == "describe" else "grouped_bar_chart", "renderOrder": 2},
+                ],
+            },
+            "inferenceConfidence": 0.72,
+            "inferenceMethod": "programmatic_section",
+        })
+
+    return questions
+
 
 def _extract_toc_hybrid(
     page_texts: list[dict[str, Any]],
@@ -814,11 +1021,13 @@ def pass0_rasterize(pdf_path: Path) -> tuple[list[bytes], list[dict[str, Any]]]:
     try:
         with pdfplumber.open(str(pdf_path)) as pdf:
             for page in pdf.pages:
-                raw_text = page.extract_text() or ""
+                raw_text = _fix_unicode_artifacts(page.extract_text() or "")
                 words = page.extract_words(extra_attrs=["fontname", "size"], use_text_flow=True) or []
 
                 # ── Table extraction: default first, then borderless fallback ──
                 tables = page.extract_tables() or []
+                # Filter out website navigation bar artifacts immediately
+                tables = [t for t in tables if not _is_website_artifact_table(t)]
                 if not tables:
                     # Borderless tables (common in govt PDFs) need text-alignment strategy
                     try:
@@ -1640,6 +1849,15 @@ def pass2_5_document_knowledge_graph(
 
     logger.info("[pass2.5]   Step 6: %d section patterns detected", len(section_patterns))
 
+    # ── Step 7: Numbered section extraction + programmatic question pre-generation ──
+    # Done here so questions are available even if Qwen Pass 3 fails completely.
+    numbered_sections = _extract_numbered_sections(page_texts)
+    fact_questions = []
+    if numbered_sections:
+        fact_questions = _generate_questions_from_sections(numbered_sections, all_entities)
+    logger.info("[pass2.5]   Step 7: %d numbered sections → %d pre-generated questions",
+                len(numbered_sections), len(fact_questions))
+
     # ── Assemble Document Knowledge Graph ──
     document_map = {
         "title": doc_title,
@@ -1650,6 +1868,8 @@ def pass2_5_document_knowledge_graph(
         "entity_relationships": entity_relationships,
         "section_patterns": section_patterns,
         "per_page_context_scripts": per_page_context_scripts,
+        "_numbered_sections": numbered_sections,
+        "_fact_questions": fact_questions,
     }
 
     elapsed = time.monotonic() - t0
@@ -2379,6 +2599,13 @@ def _programmatic_question_fallback(
                 "inferenceMethod": "pattern",
             })
 
+    # ── Fact-driven question generation for narrative PDFs ──
+    # If we have factGraph facts but no table-driven questions, generate from facts.
+    # This is the primary source for PIB press releases, annual reports, etc.
+    fact_questions = document_map.get("_fact_questions") or []
+    if fact_questions:
+        questions.extend(fact_questions)
+
     # Build topics
     topics: list[dict[str, Any]] = []
     for ch in chapters:
@@ -2634,6 +2861,10 @@ def pass4_assemble_ast(
     all_figures = figures + [{**c, "figureId": c.pop("chartId", f"fig_{c.get('page', 0)}")} for c in charts]
 
     # ── semanticAST (from chapter hierarchy) ──
+    # Check if Gemini enrichment has already produced a better hierarchy (via semanticAST.nodes)
+    # If it has non-stopword chapter titles, prefer it over the programmatic one.
+    _gemini_nodes = ast_result.get("semanticAST_nodes") or []
+
     semantic_hierarchy = []
     for ch in chapters:
         node = {
@@ -2651,6 +2882,15 @@ def pass4_assemble_ast(
                 "pageSpan": [sec.get("page", 0), sec.get("page", 0)],
             })
         semantic_hierarchy.append(node)
+
+    # Quality check: if most chapter titles are single-word stopwords, mark for Gemini override
+    bad_titles = sum(
+        1 for ch in chapters
+        if len(ch.get("title", "").split()) <= 1 and ch.get("title", "").lower() in _ENGLISH_STOPWORDS
+    )
+    _hierarchy_quality = "poor" if chapters and bad_titles > len(chapters) * 0.4 else "ok"
+    logger.info("[pass4] semanticAST hierarchy quality: %s (%d/%d bad titles)",
+                _hierarchy_quality, bad_titles, len(chapters))
 
     # ── entityGraph — use pass2_6 entityType_hint (dimension/measure/filter/metadata) ──
     entity_graph_entries = []
@@ -2783,7 +3023,7 @@ def pass4_assemble_ast(
         "geometryAST": {"nodes": geometry_nodes},
         "assetAST": {"assets": []},
         "annotationAST": {"headers": [], "footers": [], "footnotes": []},
-        "semanticAST": {"hierarchy": semantic_hierarchy},
+        "semanticAST": {"hierarchy": semantic_hierarchy, "_quality": _hierarchy_quality},
         "contentAST": {"paragraphs": paragraphs, "lists": [], "quotes": []},
         "tableAST": {"tables": tables},
         "figureAST": {"figures": all_figures},
