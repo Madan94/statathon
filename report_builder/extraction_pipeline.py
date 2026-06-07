@@ -668,15 +668,12 @@ def _gemini_semantic_fallback(
 ) -> dict[str, Any]:
     """Use Gemini as fallback for semantic analysis when local model fails."""
     try:
-        import google.generativeai as genai
-
         api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         if not api_key:
             logger.warning("[gemini-fallback] No API key — skipping")
             return {"semantic_hierarchy": [], "entities": [], "template_slots": [], "questions": []}
 
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-flash"))
+        gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
         # Build document summary for Gemini
         doc_text = ""
@@ -700,8 +697,19 @@ def _gemini_semantic_fallback(
             "Output ONLY valid JSON with these 4 keys."
         )
 
-        response = model.generate_content(prompt)
-        text = response.text.strip()
+        # Prefer new google-genai SDK
+        try:
+            from google import genai
+            client = genai.Client(api_key=api_key)
+            response = client.models.generate_content(model=gemini_model, contents=prompt)
+            text = (response.text or "").strip()
+        except ImportError:
+            import google.generativeai as legacy_genai
+            legacy_genai.configure(api_key=api_key)
+            model = legacy_genai.GenerativeModel(gemini_model)
+            response = model.generate_content(prompt)
+            text = (response.text or "").strip()
+
         if text.startswith("```"):
             text = text.split("\n", 1)[-1].rsplit("```", 1)[0]
 

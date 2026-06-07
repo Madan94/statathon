@@ -36,26 +36,43 @@ _GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 _CACHE_DIR = Path(os.getenv("CHECKPOINT_DIR", "./checkpoints")) / "gemini_cache"
 
 
-def _get_gemini_model():
-    """Initialize Gemini model with fail-fast on missing credentials."""
-    import google.generativeai as genai
-
+def _get_genai_client():
+    """Get google.genai Client with fail-fast on missing credentials."""
     api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY not set — cannot use Gemini enrichment")
 
-    genai.configure(api_key=api_key)
-    return genai.GenerativeModel(_GEMINI_MODEL)
+    try:
+        from google import genai  # new SDK (google-genai >= 1.0)
+        return genai.Client(api_key=api_key)
+    except ImportError:
+        return None
 
 
 def _call_gemini_json(prompt: str, max_retries: int = 2) -> dict[str, Any] | None:
     """Call Gemini and parse JSON response. Retries on parse failure."""
-    model = _get_gemini_model()
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        logger.error("[gemini] No API key set")
+        return None
 
     for attempt in range(max_retries):
         try:
-            response = model.generate_content(prompt)
-            text = response.text.strip()
+            # Prefer new google-genai SDK
+            try:
+                from google import genai
+                client = genai.Client(api_key=api_key)
+                response = client.models.generate_content(
+                    model=_GEMINI_MODEL, contents=prompt
+                )
+                text = (response.text or "").strip()
+            except ImportError:
+                # Fall back to deprecated google-generativeai SDK
+                import google.generativeai as legacy_genai
+                legacy_genai.configure(api_key=api_key)
+                model = legacy_genai.GenerativeModel(_GEMINI_MODEL)
+                response = model.generate_content(prompt)
+                text = (response.text or "").strip()
 
             # Strip markdown code fences
             if text.startswith("```"):
