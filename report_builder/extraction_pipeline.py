@@ -452,18 +452,30 @@ _WEBSITE_NAV_RE = [_re_entity.compile(p, _re_entity.I) for p in _WEBSITE_NAV_PAT
 
 
 def _is_website_artifact_table(table: list[list]) -> bool:
-    """Return True if this table is a website nav-bar artifact, not real data."""
-    if not table or not table[0]:
+    """Return True if this table is a website nav-bar artifact, not real data.
+
+    PIB press release PDFs contain HTML nav-bar tables that pdfplumber falsely
+    detects as data tables. They contain fragments like "Press Re", ":49 AM",
+    "| Press Information Bu", split across cells. Scan ALL rows.
+    """
+    if not table:
         return False
-    header_text = " ".join(str(c or "") for c in table[0])
-    for rx in _WEBSITE_NAV_RE:
-        if rx.search(header_text):
+    # Scan first 4 rows (nav bars are always at top/bottom of page)
+    for row in table[:4]:
+        if not row:
+            continue
+        row_text = " ".join(str(c or "") for c in row)
+        combined = "".join(str(c or "") for c in row)
+        for rx in _WEBSITE_NAV_RE:
+            if rx.search(row_text):
+                return True
+        if _re_entity.search(r"Press\s*Releas|Information\s*Bur|AM\s*Press|\d+/\d+/\d+.*[AP]M", combined, _re_entity.I):
             return True
-    # Also detect if all non-empty columns are fragments of the same nav phrase
-    non_empty = [str(c).strip() for c in table[0] if str(c or "").strip()]
-    if non_empty:
-        combined = "".join(non_empty)
-        if _re_entity.search(r"Press\s*Releas|Information\s*Bur|AM\s*Press", combined, _re_entity.I):
+    # Additional check: small tables (<=8 non-empty cells) with nav phrases anywhere
+    all_cells = [str(c or "").strip() for row in table for c in row if str(c or "").strip()]
+    if 0 < len(all_cells) <= 8:
+        all_text = " ".join(all_cells)
+        if _re_entity.search(r"Press|Bureau|pib\.gov|mospi\.gov|:\d+\s*[AP]M|Release\s*Page", all_text, _re_entity.I):
             return True
     return False
 
@@ -519,7 +531,10 @@ def _extract_toc_hybrid(
         (r"^(?:SECTION|Section)\s+([IVXA-Z0-9]+)[:\.\s]*(.*)", 1),
         (r"^(?:Statement)\s+(\d+[\.\-]\d+)[:\s\-]*(.*)", 2),
         (r"^(?:ANNEXURE|Annexure|APPENDIX|Appendix)\s+([A-Z0-9]+)[:\.\s]*(.*)", 2),
-        (r"^(\d+)\.\s+([A-Z][A-Za-z\s]{5,60})$", 2),   # "1. Labour Force Participation"
+        # Numbered sections like "1. Stable LFPR..." — level 1 (primary chapter in PLFS/NSSO)
+        (r"^(\d{1,2})\.\s+(.{8,})", 1),
+        # Letter sections like "A. Introduction" — level 2 (endnotes/appendix sub-sections)
+        (r"^([A-Z])\.\s+([A-Z].{5,})", 2),
         (r"^([A-Z][A-Z\s\-]{10,70})$", 1),              # ALL CAPS line >= 10 chars
     ]
 
@@ -528,7 +543,7 @@ def _extract_toc_hybrid(
         raw = (pt.get("raw_text") or "").strip()
         for line in raw.splitlines():
             line = line.strip()
-            if len(line) < 5 or len(line) > 120:
+            if len(line) < 5 or len(line) > 250:
                 continue
             for pat, level in _PATTERNS:
                 m = _re_toc.match(pat, line)
@@ -1292,10 +1307,10 @@ def _extract_numbered_sections(page_texts: list[dict[str, Any]]) -> list[dict[st
     """
     import re as _re_ns
     _SECTION_PATS = [
-        (r"^(\d+\.\d+)\s+([A-Z][A-Za-z\s\(\)\-\:]{5,80})$", 2),   # 2.1 Sub-section
-        (r"^(\d+)\.\s+([A-Z][A-Za-z\s\(\)\-\:]{5,80})$", 1),       # 1. Section
-        (r"^([A-Z])\.\s+([A-Z][A-Za-z\s\(\)\-\:]{5,80})$", 1),     # A. Letter section
-        (r"^(Statement\s+\d+[\.\-]\d+)[:\s\-]+(.{5,80})$", 2),      # Statement 5.1
+        (r"^(\d+\.\d+)\s+(.{8,})", 2),                 # 2.1 Sub-section
+        (r"^(\d{1,2})\.\s+(.{8,})", 1),                 # 1. Section (PLFS numbered chapters)
+        (r"^([A-Z])\.\s+([A-Z].{5,})", 2),              # A. Letter section (endnotes)
+        (r"^(Statement\s+\d+[\.\-]\d+)[:\s\-]+(.{5,})", 2),  # Statement 5.1
     ]
 
     sections: list[dict[str, Any]] = []
@@ -1531,6 +1546,15 @@ def pass2_5_document_knowledge_graph(
     for ent in entity_index.values():
         del ent["_priority"]
         all_entities.append(ent)
+
+    all_entities = _deduplicate_entities(all_entities)
+    all_entities = _enrich_entity_aliases(all_entities)
+    # Cap entities: prioritize table_header > heading > vlm > bold_word, max 60 total
+    if len(all_entities) > 60:
+        _ENT_PRIORITY = {"table_header": 0, "heading": 1, "vlm": 2, "bold_word": 3}
+        all_entities.sort(key=lambda e: (_ENT_PRIORITY.get(e.get("source", "vlm"), 2), -len(e.get("pages") or [0])))
+        all_entities = all_entities[:60]
+        logger.info("[pass2.5]   Entity count capped to 60 (was more)")
 
     logger.info("[pass2.5]   Step 1: %d unique entities from %d pages", len(all_entities), total_pages)
 
@@ -2675,6 +2699,34 @@ def _programmatic_question_fallback(
     return {"questions": questions, "topics": topics}
 
 
+def _enrich_entity_aliases(entities: list[dict]) -> list[dict]:
+    """Extract parenthetical abbreviations as aliases and add to each entity.
+
+    If entity name is "Labour Force Participation Rate (LFPR)", extracts "LFPR" as alias.
+    """
+    import re as _re_alias
+    _ABBREV_RE = _re_alias.compile(r"\(([A-Z][A-Z0-9\+\-]{1,12})\)")
+
+    for ent in entities:
+        name = ent.get("name") or ""
+        aliases: list[str] = list(ent.get("aliases") or [])
+
+        # Extract abbreviations like "(LFPR)", "(WPR)", "(ps+ss)"
+        for m in _ABBREV_RE.finditer(name):
+            abbrev = m.group(1)
+            if abbrev not in aliases and abbrev != name:
+                aliases.append(abbrev)
+
+        # Add bare name (without parenthetical) as alias
+        bare = _re_alias.sub(r"\([^)]*\)", name).strip().rstrip("-– ").strip()
+        if bare and bare != name and len(bare) >= 4 and bare not in aliases:
+            aliases.append(bare)
+
+        ent["aliases"] = aliases
+
+    return entities
+
+
 def _deduplicate_entities(entities: list[dict]) -> list[dict]:
     """Remove duplicate entities by name+type."""
     seen: set[str] = set()
@@ -2960,6 +3012,7 @@ def pass4_assemble_ast(
             "sourceType": ent.get("source", "unknown"),
             "confidence": 0.8 if ent.get("source") == "table_header" else 0.5,
             "pages": ent.get("pages", []),
+            "aliases": ent.get("aliases") or [],
         })
 
     # ══════════════════════════════════════════════════════════════════
@@ -3031,7 +3084,7 @@ def pass4_assemble_ast(
             "entityType": ent["entityType"],
             "sourceType": ent["sourceType"],
             "confidence": ent["confidence"],
-            "aliases": [],
+            "aliases": ent.get("aliases") or [],
             "pageIndex": ent["pages"][0] if ent.get("pages") else -1,
             "sourceContext": "",
             "scope": "global",
