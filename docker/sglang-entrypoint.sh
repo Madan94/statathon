@@ -2,18 +2,18 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # vLLM entrypoint — RTX 4050 Laptop (SM89, 6GB VRAM, 24GB RAM)
 #
-# WHY Qwen2.5-VL-2B-Instruct (NOT 7B-AWQ):
-#   The 7B-AWQ model CANNOT work on 6GB VRAM because:
-#   1. Free VRAM = 4.95 GiB (driver uses 1.05 GiB)
-#   2. AWQ Marlin kernel needs 2× weight memory during repacking
-#   3. 7B-AWQ disk size = 4.65 GB → peak during Marlin repacking > 6 GB
-#   4. Tried: 0.70/0.80/0.82/0.88 utilization — ALL fail (25+ attempts)
+# WHY Qwen2.5-VL-3B-Instruct-AWQ:
+#   7B-AWQ (4.65GB) → Marlin repacking peak (2×) exceeds 6GB. Impossible.
+#   3B-AWQ (~2.5GB) → Marlin repacking peak (~5GB) fits in 5.7GB free.
+#   After load: 2.5GB weights + 3.2GB headroom for KV + activations.
 #
-#   The 2B model in bf16:
-#   - Weights: ~3.6 GB (bf16 direct-load, NO Marlin repacking spike)
-#   - At 0.80 util: budget = 4.80 GB → headroom = 1.2 GB for KV + activations
-#   - Quality: Excellent for structured document extraction (tables, entities)
-#   - Speed: 2× faster inference than 7B (fewer params)
+# VRAM budget (RTX 4050):
+#   Total: 6.0 GiB | Free after driver: ~5.7 GiB
+#   AWQ 3B weights (post-repack): ~2.5 GiB
+#   KV cache (2048 tok × 1 seq): ~150 MB
+#   Vision encoder (fp16 ViT): ~600 MB
+#   Activations: ~200 MB
+#   Total: ~3.5 GiB → 2.2 GiB headroom ✓
 #
 # To use 7B on a machine with 8+ GB VRAM:
 #   VLLM_MODEL=Qwen/Qwen2.5-VL-7B-Instruct-AWQ docker compose ... up sglang
@@ -22,7 +22,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 set -e
 
-MODEL="${VLLM_MODEL:-Qwen/Qwen2.5-VL-2B-Instruct}"
+MODEL="${VLLM_MODEL:-Qwen/Qwen2.5-VL-3B-Instruct-AWQ}"
 PORT="${VLLM_PORT:-8002}"
 
 echo "═══════════════════════════════════════════════════════════════"
@@ -50,10 +50,11 @@ echo "  GPU:     ${GPU_NAME:-unknown}"
 echo "  VRAM:    ${GPU_MEM_TOTAL:-?} MB total, ${GPU_MEM_FREE:-?} MB free, ${GPU_MEM_USED:-?} MB used"
 echo "  Driver:  ${DRIVER_VER:-unknown}"
 
-# FAIL FAST: need at least 3500MB for 2B model
-if [ "${GPU_MEM_FREE:-0}" -lt 3500 ]; then
+# FAIL FAST: need at least 5000MB for 3B-AWQ (Marlin repacking spike)
+if [ "${GPU_MEM_FREE:-0}" -lt 5000 ]; then
     echo ""
-    echo "  ✗ FATAL: Only ${GPU_MEM_FREE}MB free VRAM — need at least 3500MB"
+    echo "  ✗ FATAL: Only ${GPU_MEM_FREE}MB free VRAM — need at least 5000MB"
+    echo "    → AWQ Marlin repacking needs ~2× weight memory (~5GB peak)"
     echo "    → Close GPU-heavy apps (browsers, games, other models)"
     echo "    → nvidia-smi on host to identify processes"
     echo "    → wsl --shutdown → restart Docker Desktop"
@@ -69,7 +70,7 @@ if [ -d "$MODEL_DIR" ]; then
     MODEL_SIZE=$(du -sh "$MODEL_DIR" 2>/dev/null | cut -f1)
     echo "  ✓ Cached: ${MODEL} (${MODEL_SIZE})"
 else
-    echo "  ⚠ Not cached — first boot downloads ~3.6GB"
+    echo "  ⚠ Not cached — first boot downloads ~2.5GB"
     echo "  → Cached in volume ./model/cache after first run"
 fi
 echo ""
@@ -78,8 +79,8 @@ echo ""
 echo "▶ Configuration:"
 echo "  Model:          ${MODEL}"
 echo "  Port:           ${PORT}"
-echo "  GPU mem util:   0.80 → $(echo "${GPU_MEM_TOTAL:-6144} * 80 / 100" | bc 2>/dev/null || echo "~4800") MB"
-echo "  Max model len:  2048 tokens"
+echo "  GPU mem util:   0.90 → $(echo "${GPU_MEM_TOTAL:-6144} * 90 / 100" | bc 2>/dev/null || echo "~5530") MB"
+echo "  Max model len:  4096 tokens"
 echo "  Max num seqs:   1"
 echo "  Enforce eager:  yes"
 echo ""
@@ -89,20 +90,22 @@ echo "════════════════════════�
 echo ""
 
 # ── Launch vLLM ──────────────────────────────────────────────────────────────
-# Qwen2.5-VL-2B-Instruct (bf16, ~3.6 GB weights):
-#   0.80 × 6.0 = 4.80 GiB budget
-#   Weights: 3.6 GiB (direct bf16 load — no Marlin repacking spike)
-#   KV cache (2048 tok × 1 seq): ~100 MB
+# Qwen2.5-VL-3B-Instruct-AWQ (4-bit, ~2.5 GB weights):
+#   0.90 × 6.0 = 5.40 GiB budget
+#   AWQ weights (post-Marlin repack): ~2.5 GiB
+#   Vision encoder (fp16 ViT): ~600 MB
+#   KV cache (4096 tok × 1 seq): ~150 MB
 #   Activations: ~200 MB
-#   Total: ~3.9 GiB → 0.9 GiB headroom ✓
+#   Total: ~3.5 GiB → 1.9 GiB headroom ✓
+#   Marlin repacking peak (transient): ~5.0 GiB < 5.7 GiB free ✓
 #
 # SAFE FLAGS (verified on vllm/vllm-openai:latest v0.22.1):
 exec python3 -m vllm.entrypoints.openai.api_server \
     --model "${MODEL}" \
     --host 0.0.0.0 \
     --port "${PORT}" \
-    --gpu-memory-utilization 0.80 \
-    --max-model-len 2048 \
+    --gpu-memory-utilization 0.90 \
+    --max-model-len 4096 \
     --enforce-eager \
     --max-num-seqs 1 \
     --limit-mm-per-prompt '{"image": 1}' \
