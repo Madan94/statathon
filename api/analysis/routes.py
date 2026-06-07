@@ -14,10 +14,27 @@ from services.analysis_runner import (
     run_semantic_analysis_pipeline,
     supersede_inflight_analyses,
 )
-from services.apply_service import apply_analysis_decisions
-from analysis.schemas import AnalysisDecisionsRequest, NormalizationSaveRequest
-from auth.permissions import require_analysis_owner, require_dataset_owner
+from services.apply_service import apply_analysis_decisions, get_lineage
+from analysis.schemas import (
+    AnalysisDecisionsRequest,
+    ImputationDecisionsRequest,
+    ImputationMethodRequest,
+    NormalizationSaveRequest,
+    OutlierDetectRequest,
+    OutlierMethodSelectRequest,
+    OutlierRowDecisionsRequest,
+    ValidationAcknowledgeRequest,
+    ValidationDecisionsRequest,
+)
+from auth.permissions import require_analysis_owner, require_analysis_owner_meta, require_dataset_owner
 from deps import get_current_user_id
+from services.analysis_light_service import (
+    build_clusters_response,
+    build_domains_response,
+    build_graph_response,
+    build_knowledge_graph_response,
+    build_summary_response,
+)
 from services.analysis_results_service import (
     enrich_payload_for_dashboard,
     resolve_semantic_analysis_payload,
@@ -25,6 +42,10 @@ from services.analysis_results_service import (
 from analysis_state.cluster_utils import normalize_clusters_payload
 from services.decision_service import DecisionService
 from services.normalization_service import NormalizationService
+from services.outlier_workflow_service import OutlierWorkflowService
+from services.validation_workflow_service import ValidationWorkflowService
+from services.imputation_workflow_service import ImputationWorkflowService
+from services.phase_audit_service import PhaseAuditService
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
@@ -39,7 +60,7 @@ def get_db():
 
 def _analysis_meta_or_raise(analysis_id: int, db: Session, user_id: int | None = None) -> Analysis:
     if user_id is not None:
-        an = require_analysis_owner(db, analysis_id, user_id)
+        an = require_analysis_owner_meta(db, analysis_id, user_id)
     else:
         an = db.query(Analysis).filter(Analysis.id == analysis_id).first()
         if not an:
@@ -77,8 +98,17 @@ def _normalize_priority_edges(payload: dict) -> list:
     return flat
 
 
-def _payload_for_analysis(db: Session, analysis_id: int) -> dict | None:
-    payload = resolve_semantic_analysis_payload(db, analysis_id)
+def _payload_for_analysis(
+    db: Session,
+    analysis_id: int,
+    *,
+    include_phase3: bool = False,
+) -> dict | None:
+    payload = resolve_semantic_analysis_payload(
+        db,
+        analysis_id,
+        include_phase3=include_phase3,
+    )
     if not payload:
         return None
     return NormalizationService(db).apply_to_payload(analysis_id, payload)
@@ -87,14 +117,20 @@ def _payload_for_analysis(db: Session, analysis_id: int) -> dict | None:
 @router.get("/{analysis_id}/results")
 def get_analysis_results(
     analysis_id: int,
+    include_phase3: bool = False,
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
-    payload = _payload_for_analysis(db, analysis_id)
+    payload = _payload_for_analysis(db, analysis_id, include_phase3=include_phase3)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
-    return enrich_payload_for_dashboard(db, analysis_id, payload)
+    return enrich_payload_for_dashboard(
+        db,
+        analysis_id,
+        payload,
+        include_phase3=include_phase3,
+    )
 
 
 @router.get("/{analysis_id}/status")
@@ -103,7 +139,7 @@ def get_analysis_status(
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user_id),
 ):
-    an = require_analysis_owner(db, analysis_id, user_id)
+    an = require_analysis_owner_meta(db, analysis_id, user_id)
     return {
         "analysis_id": an.id,
         "dataset_id": an.dataset_id,
@@ -121,9 +157,33 @@ def apply_decisions(
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
     try:
-        return apply_analysis_decisions(db, analysis_id)
+        return apply_analysis_decisions(db, analysis_id, user_id=user_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/{analysis_id}/lineage")
+def get_dataset_lineage(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return get_lineage(db, analysis_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+
+
+@router.get("/{analysis_id}/audit")
+def list_audit_events(
+    analysis_id: int,
+    phase: str | None = None,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    return PhaseAuditService(db).list_events(analysis_id, phase=phase)
 
 
 @router.post("/{analysis_id}/decisions")
@@ -139,6 +199,142 @@ def submit_analysis_decisions(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     return result
+
+
+@router.post("/{analysis_id}/validation/acknowledge")
+def acknowledge_validation_gate(
+    analysis_id: int,
+    body: ValidationAcknowledgeRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    return ValidationWorkflowService(db).acknowledge_validation(
+        analysis_id,
+        user_id=user_id,
+        meta=body.model_dump(),
+    )
+
+
+@router.post("/{analysis_id}/validation/decisions")
+def save_validation_decisions(
+    analysis_id: int,
+    body: ValidationDecisionsRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    return ValidationWorkflowService(db).save_decisions(
+        analysis_id,
+        [d.model_dump() for d in body.decisions],
+        user_id=user_id,
+    )
+
+
+@router.post("/{analysis_id}/imputation/method")
+def select_imputation_method(
+    analysis_id: int,
+    body: ImputationMethodRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    return ImputationWorkflowService(db).select_method(analysis_id, body.column, body.method)
+
+
+@router.post("/{analysis_id}/imputation/decisions")
+def save_imputation_decisions(
+    analysis_id: int,
+    body: ImputationDecisionsRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    return ImputationWorkflowService(db).save_decisions(
+        analysis_id,
+        body.column,
+        method=body.method,
+        decisions=body.decisions if body.decisions else None,
+        user_id=user_id,
+    )
+
+
+@router.get("/{analysis_id}/anomaly/review-progress")
+def get_anomaly_review_progress(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    return OutlierWorkflowService(db).review_progress(analysis_id)
+
+
+@router.get("/{analysis_id}/imputation/review-progress")
+def get_imputation_review_progress(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    return ImputationWorkflowService(db).review_progress(analysis_id)
+
+
+@router.post("/{analysis_id}/outliers/method")
+def select_outlier_method(
+    analysis_id: int,
+    body: OutlierMethodSelectRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return OutlierWorkflowService(db).select_method(analysis_id, body.column, body.method)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.post("/{analysis_id}/outliers/detect")
+def run_outlier_detection(
+    analysis_id: int,
+    body: OutlierDetectRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return OutlierWorkflowService(db).run_detection(analysis_id, body.column)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.post("/{analysis_id}/outliers/decisions")
+def save_outlier_row_decisions(
+    analysis_id: int,
+    body: OutlierRowDecisionsRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return OutlierWorkflowService(db).save_row_decisions(
+            analysis_id,
+            body.column,
+            [d.model_dump() for d in body.decisions],
+            user_id=user_id,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/{analysis_id}/outliers/decisions")
+def list_outlier_row_decisions(
+    analysis_id: int,
+    column: str | None = None,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    return OutlierWorkflowService(db).list_decisions(analysis_id, column)
 
 
 @router.get("/{analysis_id}/normalization")
@@ -190,19 +386,7 @@ def get_analysis_summary(
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
-    payload = resolve_semantic_analysis_payload(db, analysis_id)
-    if not payload:
-        raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
-    meta = payload.get("dataset_metadata") or payload.get("meta") or {}
-    return {
-        "meta": {"analysis_id": analysis_id},
-        "dataset_context": payload.get("dataset_context"),
-        "dataset_profile": payload.get("dataset_profile"),
-        "dataset_name": meta.get("filename") if isinstance(meta, dict) else None,
-        "column_profiles_keys": sorted((payload.get("column_profiles") or {}).keys()),
-        "profiling_summary": payload.get("profiling_summary"),
-        "embedding_cache_refs": payload.get("embedding_cache_refs"),
-    }
+    return build_summary_response(db, analysis_id)
 
 
 @router.get("/{analysis_id}/domains")
@@ -212,48 +396,7 @@ def get_analysis_domains(
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
-    payload = _payload_for_analysis(db, analysis_id)
-    if not payload:
-        raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
-
-    ctx = payload.get("dataset_context") or {}
-    archetype = ctx.get("dataset_type") or ctx.get("ontology_macro_type_best_hint") or "unknown"
-    ontology_macro = ctx.get("ontology_macro_type_best_hint")
-
-    # Prefer full domain_registry emitted by the new pipeline
-    domain_registry = payload.get("domain_registry") or {}
-
-    # Fallback: build from static_domains (raw ontology) filtered for this archetype
-    if not domain_registry and payload.get("static_domains"):
-        sd = payload["static_domains"]
-        archetype_entry = sd.get(archetype) or sd.get("dataset_types", {}).get(archetype, {})
-        subdomains = {}
-        for k, v in (archetype_entry.get("subdomains") or {}).items():
-            subdomains[k] = {"description": f"{k} domain for {archetype}", "keywords": list(v or [])[:8]}
-        domain_registry = {
-            "active_archetype": archetype,
-            "universal_domains": ["identifier", "survey_metadata", "geography", "demographic", "household", "uncorrelated_metadata"],
-            "static_ontology": {archetype: {"label": archetype_entry.get("label", archetype), "domains": list(subdomains.keys()), "keywords_sample": {k: v["keywords"] for k, v in subdomains.items()}}},
-            "dynamic_domains": {},
-        }
-
-    # Legacy flat format: static_domains_taxonomy for old frontends
-    static_taxonomy: dict = {}
-    for tier_name, tier_data in (domain_registry.get("static_ontology") or {}).items():
-        for dom in (tier_data.get("domains") or []):
-            kws = (tier_data.get("keywords_sample") or {}).get(dom, [])
-            static_taxonomy[dom] = {"description": f"{dom} — {tier_name} dataset domain", "keywords": kws}
-    for dom in (domain_registry.get("universal_domains") or []):
-        static_taxonomy[dom] = {"description": f"Universal: {dom}", "keywords": []}
-
-    return {
-        "meta": {"analysis_id": analysis_id},
-        "dataset_context": ctx,
-        "domain_registry": domain_registry,
-        "static_domains_taxonomy": static_taxonomy,
-        "ontology_macro_type_best_hint": ontology_macro or archetype,
-        "effective_schema": payload.get("effective_schema"),
-    }
+    return build_domains_response(db, analysis_id)
 
 
 @router.get("/{analysis_id}/clusters")
@@ -263,10 +406,11 @@ def get_analysis_clusters(
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
-    payload = _payload_for_analysis(db, analysis_id)
-    if not payload:
-        raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
-    return {"meta": {"analysis_id": analysis_id}, "clusters": normalize_clusters_payload(payload.get("clusters") or [])}
+    payload = build_clusters_response(db, analysis_id)
+    return {
+        "meta": payload["meta"],
+        "clusters": normalize_clusters_payload(payload.get("clusters") or []),
+    }
 
 
 @router.get("/{analysis_id}/graph")
@@ -276,17 +420,7 @@ def get_analysis_graph(
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
-    payload = _payload_for_analysis(db, analysis_id)
-    if not payload:
-        raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
-    graph = payload.get("schema_graph") or {}
-    return {
-        "meta": {"analysis_id": analysis_id},
-        "nodes": graph.get("nodes") or [],
-        "edges": graph.get("edges") or [],
-        "priority_dependencies": _normalize_priority_edges(payload),
-        "dataset_metadata": payload.get("dataset_metadata"),
-    }
+    return build_graph_response(db, analysis_id)
 
 
 @router.get("/{analysis_id}/knowledge-graph")
@@ -296,13 +430,7 @@ def get_analysis_knowledge_graph(
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
-    payload = resolve_semantic_analysis_payload(db, analysis_id)
-    if not payload:
-        raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
-    return {
-        "meta": {"analysis_id": analysis_id},
-        "knowledge_graph": payload.get("knowledge_graph") or {},
-    }
+    return build_knowledge_graph_response(db, analysis_id)
 
 
 @router.get("/{analysis_id}/blueprint")

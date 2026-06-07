@@ -12,6 +12,7 @@ from sqlalchemy import (
     JSON,
     UniqueConstraint,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -172,7 +173,7 @@ class Analysis(Base):
     dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False)
     status = Column(String(32), default="pending")
     config = Column(JSON, nullable=True)
-    checkpoint = Column(JSON, nullable=True)
+    checkpoint = Column(JSON().with_variant(JSONB, "postgresql"), nullable=True)
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
@@ -188,7 +189,21 @@ class Analysis(Base):
     anomaly_decisions = relationship(
         "Phase3AnomalyDecision", back_populates="analysis", cascade="all, delete-orphan"
     )
-
+    outlier_decisions = relationship(
+        "OutlierDecision", back_populates="analysis", cascade="all, delete-orphan"
+    )
+    validation_decisions = relationship(
+        "ValidationDecision", back_populates="analysis", cascade="all, delete-orphan"
+    )
+    imputation_row_decisions = relationship(
+        "ImputationRowDecision", back_populates="analysis", cascade="all, delete-orphan"
+    )
+    phase_audit_events = relationship(
+        "PhaseAuditEvent", back_populates="analysis", cascade="all, delete-orphan"
+    )
+    lineage_snapshots = relationship(
+        "DatasetLineageSnapshot", back_populates="analysis", cascade="all, delete-orphan"
+    )
 
     imputation_intel = relationship(
         "Phase3ImputationIntel", back_populates="analysis", uselist=False, cascade="all, delete-orphan"
@@ -365,6 +380,106 @@ class Phase3AnomalyDecision(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     analysis = relationship("Analysis", back_populates="anomaly_decisions")
+
+
+class OutlierDecision(Base):
+    """Row-level outlier handler decisions (KEEP / NORMALIZE / DELETE_VALUE / etc.)."""
+
+    __tablename__ = "outlier_decisions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    column_name = Column(String(512), nullable=False, index=True)
+    row_index = Column(Integer, nullable=False)
+    method = Column(String(32), nullable=False)
+    severity = Column(String(32), nullable=True)
+    decision = Column(String(32), nullable=False)
+    old_value = Column(Text, nullable=True)
+    new_value = Column(Text, nullable=True)
+    confidence = Column(Float, nullable=True)
+    reviewed_by = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    analysis = relationship("Analysis", back_populates="outlier_decisions")
+
+
+class ValidationDecision(Base):
+    """Row-level rule validation decisions."""
+
+    __tablename__ = "validation_decisions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    rule_id = Column(String(128), nullable=False)
+    rule_type = Column(String(64), nullable=False, default="single")
+    column_name = Column(String(512), nullable=False, index=True)
+    row_index = Column(Integer, nullable=True)
+    severity = Column(String(32), nullable=True)
+    confidence = Column(Float, nullable=True)
+    decision = Column(String(32), nullable=False)
+    old_value = Column(Text, nullable=True)
+    new_value = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    analysis = relationship("Analysis", back_populates="validation_decisions")
+
+
+class ImputationRowDecision(Base):
+    """Row-level imputation decisions per column."""
+
+    __tablename__ = "imputation_row_decisions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    column_name = Column(String(512), nullable=False, index=True)
+    row_index = Column(Integer, nullable=True)
+    method = Column(String(32), nullable=False)
+    decision = Column(String(32), nullable=False)
+    original_value = Column(Text, nullable=True)
+    imputed_value = Column(Text, nullable=True)
+    confidence = Column(Float, nullable=True)
+    reviewed_by = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    analysis = relationship("Analysis", back_populates="imputation_row_decisions")
+
+
+class PhaseAuditEvent(Base):
+    """Unified audit trail for all pipeline phases (validation, anomaly, imputation, apply)."""
+
+    __tablename__ = "phase_audit_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    phase = Column(String(64), nullable=False, index=True)
+    action = Column(String(64), nullable=False)
+    entity_type = Column(String(64), nullable=True)
+    entity_id = Column(String(256), nullable=True)
+    old_value = Column(Text, nullable=True)
+    new_value = Column(Text, nullable=True)
+    payload = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    analysis = relationship("Analysis", back_populates="phase_audit_events")
+
+
+class DatasetLineageSnapshot(Base):
+    """Versioned dataset artifact at each pipeline stage."""
+
+    __tablename__ = "dataset_lineage_snapshots"
+    __table_args__ = (
+        UniqueConstraint("analysis_id", "stage", "version", name="uq_lineage_analysis_stage_ver"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    stage = Column(String(64), nullable=False, index=True)
+    version = Column(Integer, nullable=False, default=1)
+    storage_path = Column(String(1024), nullable=True)
+    object_key = Column(String(1024), nullable=True)
+    row_count = Column(Integer, nullable=True)
+    column_count = Column(Integer, nullable=True)
+    meta = Column("metadata", JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    analysis = relationship("Analysis", back_populates="lineage_snapshots")
 
 
 class Phase3ImputationIntel(Base):

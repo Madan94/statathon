@@ -186,15 +186,21 @@ export default function Step5SchemaKG({ results, analysisId, onProceed, onBack }
   const [kgView, setKgView] = useState<'graph' | 'raw'>('graph');
 
   useEffect(() => {
+    const hasGraph = (results.schema_graph?.edges?.length ?? 0) > 0;
+    const hasKg = results.knowledge_graph && Object.keys(results.knowledge_graph).length > 0;
+    if (hasGraph && hasKg) {
+      setLoading(false);
+      return;
+    }
     Promise.all([
-      analysisApi.getGraph(analysisId).catch(() => null),
-      analysisApi.getKnowledgeGraph(analysisId).catch(() => null),
+      hasGraph ? Promise.resolve(null) : analysisApi.getGraph(analysisId).catch(() => null),
+      hasKg ? Promise.resolve(null) : analysisApi.getKnowledgeGraph(analysisId).catch(() => null),
     ]).then(([g, kg]) => {
       if (g) setGraphPayload(g);
       if (kg) setKgPayload((kg as { knowledge_graph?: Record<string, unknown> }).knowledge_graph ?? (kg as Record<string, unknown>));
       setLoading(false);
     });
-  }, [analysisId]);
+  }, [analysisId, results.schema_graph, results.knowledge_graph]);
 
   const edges: GraphEdge[] =
     (graphPayload?.edges as GraphEdge[] | undefined) ??

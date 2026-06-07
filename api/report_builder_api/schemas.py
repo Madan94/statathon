@@ -75,6 +75,21 @@ class GenerateRequest(BaseModel):
     filter_config: Optional[DataFilterSpecIn | dict[str, Any]] = None
 
 
+class CoordGenerateRequest(BaseModel):
+    """Coordinate-exact report (fina-ast layout + Deep BI fill)."""
+    analysis_id: int
+    ast_path: Optional[str] = None  # default: test_data/fina-ast.json in repo
+    domain: str = "economics"  # economics | energy
+    use_gemini: bool = True
+
+
+class CoordGenerateOut(BaseModel):
+    job_id: int
+    status: str
+    stage: Optional[str] = None
+    message: str = ""
+
+
 class JobOut(BaseModel):
     id: int
     analysis_id: int

@@ -216,17 +216,18 @@ def _gemini_classify_sections(page_summaries: list[dict[str, Any]]) -> list[Bloc
     if not page_summaries:
         return []
     try:
-        import google.generativeai as g  # type: ignore
+        from core.gemini_client import get_generative_model
     except Exception:
-        logger.info("google-generativeai not available; using heuristic classification")
+        logger.info("google-genai not available; using heuristic classification")
         return _heuristic_classify_sections(page_summaries)
 
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         return _heuristic_classify_sections(page_summaries)
     try:
-        g.configure(api_key=api_key)
-        model = g.GenerativeModel(os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash"))
+        model = get_generative_model()
+        if model is None:
+            return _heuristic_classify_sections(page_summaries)
         prompt = (
             "You are a report-template compiler. Given a list of pages with detected "
             "headings and layout signals, output a JSON list of block specs. Each item "

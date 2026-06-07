@@ -161,17 +161,79 @@ def filter_phase3_by_columns(phase3: dict[str, Any], column_records: list[Any]) 
     active_effective = set(build_effective_schema(column_records))
     name_map = build_name_map(column_records)
     effective_from_orig = set(name_map.values())
+    active_orig = build_active_original_names(column_records)
 
-    def _col_active(col: str) -> bool:
+    def _remap_col_name(col: str) -> str | None:
         c = str(col)
-        return c in active_effective or c in effective_from_orig or c in build_active_original_names(column_records)
+        if c in name_map:
+            return name_map[c]
+        if c in active_effective or c in effective_from_orig:
+            return c
+        if c in active_orig:
+            return name_map.get(c, c)
+        return None
 
     out = dict(phase3)
     for key in ("anomaly_candidates", "validation_candidates", "imputation_candidates"):
         items = out.get(key)
         if not isinstance(items, list):
             continue
-        out[key] = [i for i in items if isinstance(i, dict) and _col_active(str(i.get("column") or ""))]
+        remapped: list[dict[str, Any]] = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            col = str(item.get("column") or "")
+            new_col = _remap_col_name(col)
+            if new_col is None:
+                continue
+            row = dict(item)
+            row["column"] = new_col
+            if new_col != col:
+                row["original_column"] = col
+            remapped.append(row)
+        out[key] = remapped
+
+    anomaly_results = out.get("anomaly_results")
+    if isinstance(anomaly_results, list):
+        remapped_results: list[dict[str, Any]] = []
+        for block in anomaly_results:
+            if not isinstance(block, dict):
+                continue
+            col = str(block.get("column") or "")
+            new_col = _remap_col_name(col)
+            if new_col is None:
+                continue
+            nb = dict(block)
+            nb["column"] = new_col
+            if new_col != col:
+                nb["original_column"] = col
+            remapped_results.append(nb)
+        out["anomaly_results"] = remapped_results
+
+    gof = out.get("goodness_of_fit")
+    if isinstance(gof, list):
+        remapped_gof: list[dict[str, Any]] = []
+        for row in gof:
+            if not isinstance(row, dict):
+                continue
+            col = str(row.get("column") or "")
+            new_col = _remap_col_name(col)
+            if new_col is None:
+                continue
+            gr = dict(row)
+            gr["column"] = new_col
+            remapped_gof.append(gr)
+        out["goodness_of_fit"] = remapped_gof
+
+    method_selections = out.get("method_selections")
+    if isinstance(method_selections, dict):
+        remapped_sel: dict[str, str] = {}
+        for col, method in method_selections.items():
+            new_col = _remap_col_name(str(col))
+            if new_col is not None:
+                remapped_sel[new_col] = method
+        out["method_selections"] = remapped_sel
+
     return out
 
 
@@ -203,6 +265,18 @@ def apply_effective_schema_to_payload(
     if isinstance(graph, dict):
         out["schema_graph"] = filter_graph_nodes_edges(graph, column_records)
     out["column_profiles"] = filter_column_profiles(out.get("column_profiles") or {}, column_records)
+    profiling = out.get("profiling_summary")
+    if isinstance(profiling, dict) and isinstance(profiling.get("schema"), dict):
+        prof_schema = profiling["schema"]
+        remapped_schema: dict[str, str] = {}
+        name_map = build_name_map(column_records)
+        for orig, dtype in prof_schema.items():
+            if str(orig) not in build_active_original_names(column_records):
+                continue
+            remapped_schema[name_map.get(str(orig), str(orig))] = dtype
+        profiling = dict(profiling)
+        profiling["schema"] = remapped_schema
+        out["profiling_summary"] = profiling
     phase3 = out.get("phase3")
     if isinstance(phase3, dict):
         out["phase3"] = filter_phase3_by_columns(phase3, column_records)

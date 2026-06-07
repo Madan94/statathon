@@ -351,15 +351,13 @@ def _deterministic_narrative(
 
 def _gemini_model():
     try:
-        import google.generativeai as g  # type: ignore
+        from core.gemini_client import get_generative_model
     except Exception:
         return None
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
+    if not os.getenv("GEMINI_API_KEY"):
         return None
     try:
-        g.configure(api_key=api_key)
-        return g.GenerativeModel(os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash"))
+        return get_generative_model()
     except Exception as exc:
         logger.warning("Gemini init: %s", exc)
         return None

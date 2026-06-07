@@ -222,8 +222,12 @@ export default function Step3Semantic({
   const [showScores, setShowScores] = useState(false);
 
   useEffect(() => {
+    if (results.domain_registry) {
+      setDomainsLoading(false);
+      return;
+    }
     analysisApi.getDomains(analysisId).then(setDomainsPayload).finally(() => setDomainsLoading(false));
-  }, [analysisId]);
+  }, [analysisId, results.domain_registry]);
 
   const mappingRows: SemanticMappingRow[] = results.semantic_mapping ?? [];
 

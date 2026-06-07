@@ -9,7 +9,8 @@ export const PIPELINE_STEPS = [
   { id: 3, label: 'Semantic', sublabel: 'Domain mapping' },
   { id: 4, label: 'Clustering', sublabel: 'Column groups' },
   { id: 5, label: 'Schema & KG', sublabel: 'Graph outputs' },
-  { id: 6, label: 'Column Analysis', sublabel: 'Anomaly & missing' },
+  { id: 6, label: 'Rule Validation', sublabel: 'Single & multi column' },
+  { id: 7, label: 'Column Analysis', sublabel: 'Anomaly & missing' },
 ] as const;
 
 interface AnalysisStepperProps {

@@ -40,6 +40,8 @@ class AnalysisState:
     validation_candidates: list[dict[str, Any]] = field(default_factory=list)
     anomaly_results: list[dict[str, Any]] = field(default_factory=list)
     anomaly_candidates: list[dict[str, Any]] = field(default_factory=list)
+    goodness_of_fit: list[dict[str, Any]] = field(default_factory=list)
+    method_selections: dict[str, str] = field(default_factory=dict)
     imputation_results: list[dict[str, Any]] = field(default_factory=list)
     imputation_candidates: list[dict[str, Any]] = field(default_factory=list)
     user_decisions: dict[str, Any] = field(default_factory=dict)
@@ -86,6 +88,8 @@ class AnalysisState:
                 "validation_candidates": self.validation_candidates,
                 "anomaly_results": self.anomaly_results,
                 "anomaly_candidates": self.anomaly_candidates,
+                "goodness_of_fit": self.goodness_of_fit,
+                "method_selections": self.method_selections,
                 "imputation_results": self.imputation_results,
                 "imputation_candidates": self.imputation_candidates,
                 "user_decisions": self.user_decisions,

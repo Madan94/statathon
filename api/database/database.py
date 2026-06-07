@@ -15,12 +15,18 @@ else:
 _default_sqlite = (_api_root / "statathon.db").resolve().as_posix()
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{_default_sqlite}")
 _is_sqlite = DATABASE_URL.startswith("sqlite")
+
+
 def _make_engine(url: str):
+    is_sqlite = url.startswith("sqlite")
     return create_engine(
         url,
-        connect_args={"check_same_thread": False} if url.startswith("sqlite") else {},
-        pool_pre_ping=not url.startswith("sqlite"),
-        pool_recycle=280 if not url.startswith("sqlite") else -1,
+        connect_args={"check_same_thread": False} if is_sqlite else {"connect_timeout": 15},
+        pool_pre_ping=not is_sqlite,
+        pool_recycle=280 if not is_sqlite else -1,
+        pool_size=15 if not is_sqlite else 5,
+        max_overflow=15 if not is_sqlite else 0,
+        pool_timeout=30 if not is_sqlite else 30,
     )
 
 

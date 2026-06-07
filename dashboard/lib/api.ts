@@ -189,8 +189,43 @@ export interface GraphPayload {
 
 export interface AnomalyExplain {
   primary_method?: string;
+  method_used?: string;
   metric?: number | null;
+  z_abs?: number | null;
+  iqr_excess?: number | null;
+  lower_fence?: number | null;
+  upper_fence?: number | null;
+  reason?: string;
   isolation_forest?: boolean;
+}
+
+export type OutlierRowDecision =
+  | 'KEEP'
+  | 'NORMALIZE'
+  | 'DELETE_VALUE'
+  | 'DELETE_ROW'
+  | 'EDIT_VALUE';
+
+export interface GoodnessOfFitResult {
+  column: string;
+  mean?: number;
+  median?: number;
+  standard_deviation?: number;
+  skewness?: number;
+  kurtosis?: number;
+  shapiro_w_statistic?: number | null;
+  p_value?: number | null;
+}
+
+export interface AnomalyColumnBlock {
+  column: string;
+  recommended?: string;
+  z_score_confidence?: number;
+  iqr_confidence?: number;
+  reason?: string[];
+  method_selected?: string | null;
+  detection_run?: boolean;
+  goodness_of_fit?: GoodnessOfFitResult;
 }
 
 export interface AnomalyCandidate {
@@ -368,6 +403,31 @@ export interface ValidationCandidate {
   severity?: string;
   candidate_action?: string;
   row?: number;
+  value?: string | number | null;
+  rule_id?: string;
+  /** Rule id string or legacy nested rule object */
+  rule?: string | { rule_id?: string; rule_expression?: string };
+  reason?: string;
+  expected?: string;
+  explanation?: string;
+  domain?: string;
+  confidence?: number;
+  confidence_band?: string;
+  rule_source?: string;
+  kg_relationships?: unknown;
+  rule_params?: Record<string, unknown>;
+}
+
+export interface ValidationDecisionItem {
+  rule_id?: string;
+  column: string;
+  row_index?: number | null;
+  rule_type?: string;
+  severity?: string;
+  confidence?: number;
+  decision: string;
+  old_value?: string | number | null;
+  new_value?: string | number | null;
 }
 
 export interface ImputationCandidate {
@@ -418,6 +478,7 @@ export interface AnalysisResult {
   dataset_context?: Record<string, unknown>;
   clusters?: Array<Record<string, unknown>>;
   schema_graph?: { nodes?: unknown[]; edges?: unknown[] };
+  knowledge_graph?: Record<string, unknown>;
   profiling_summary?: Record<string, unknown>;
   column_profiles?: Record<string, unknown>;
   priority_dependencies?: Record<string, unknown> | unknown[];
@@ -635,8 +696,10 @@ export const analysisApi = {
     }
     throw new Error('Analysis timed out');
   },
-  getResults: async (id: number): Promise<AnalysisResult> => {
-    const { data } = await api.get(`/analysis/${id}/results`);
+  getResults: async (id: number, options?: { includePhase3?: boolean }): Promise<AnalysisResult> => {
+    const { data } = await api.get(`/analysis/${id}/results`, {
+      params: { include_phase3: options?.includePhase3 ?? false },
+    });
     return data;
   },
   getNormalization: async (id: number): Promise<{ normalization_version: number | null; columns: NormalizationColumnRecord[] }> => {
@@ -663,6 +726,89 @@ export const analysisApi = {
   },
   submitDecisions: async (id: number, decisions: Record<string, 'keep' | 'delete' | 'normalize'>) => {
     const { data } = await api.post(`/analysis/${id}/decisions`, { decisions });
+    return data;
+  },
+  selectOutlierMethod: async (id: number, column: string, method: 'Z_SCORE' | 'IQR') => {
+    const { data } = await api.post(`/analysis/${id}/outliers/method`, { column, method });
+    return data;
+  },
+  runOutlierDetection: async (id: number, column: string) => {
+    const { data } = await api.post(`/analysis/${id}/outliers/detect`, { column });
+    return data;
+  },
+  saveOutlierDecisions: async (
+    id: number,
+    column: string,
+    decisions: Array<{
+      row_index: number;
+      method: string;
+      severity: string;
+      decision: OutlierRowDecision;
+      old_value?: string | number | null;
+      new_value?: string | number | null;
+      confidence?: number;
+      methodology?: string;
+    }>,
+  ) => {
+    const { data } = await api.post(`/analysis/${id}/outliers/decisions`, { column, decisions });
+    return data as { success?: boolean; saved: number; analysis_id: number; column: string };
+  },
+  getOutlierDecisions: async (id: number, column?: string) => {
+    const { data } = await api.get(`/analysis/${id}/outliers/decisions`, {
+      params: column ? { column } : undefined,
+    });
+    return data;
+  },
+  getAnomalyReviewProgress: async (id: number) => {
+    const { data } = await api.get(`/analysis/${id}/anomaly/review-progress`);
+    return data as {
+      total_anomalies: number;
+      reviewed: number;
+      remaining: number;
+      progress_pct: number;
+      complete: boolean;
+    };
+  },
+  getImputationReviewProgress: async (id: number) => {
+    const { data } = await api.get(`/analysis/${id}/imputation/review-progress`);
+    return data as {
+      columns_with_missing: number;
+      reviewed_columns: number;
+      remaining_columns: number;
+      progress_pct: number;
+      complete: boolean;
+    };
+  },
+  acknowledgeValidation: async (
+    id: number,
+    meta: { critical_count?: number; candidate_count?: number },
+  ) => {
+    const { data } = await api.post(`/analysis/${id}/validation/acknowledge`, meta);
+    return data;
+  },
+  saveValidationDecisions: async (id: number, decisions: ValidationDecisionItem[]) => {
+    const { data } = await api.post(`/analysis/${id}/validation/decisions`, { decisions });
+    return data;
+  },
+  saveImputationDecisions: async (
+    id: number,
+    column: string,
+    method: string,
+    decisions?: Array<Record<string, unknown>>,
+  ) => {
+    const { data } = await api.post(`/analysis/${id}/imputation/decisions`, {
+      column,
+      method,
+      decisions: decisions ?? [],
+    });
+    return data as { success?: boolean; saved: number; column: string; method: string };
+  },
+  applyLineage: async (id: number) => {
+    const { data } = await api.post(`/analysis/${id}/apply`);
+    return data;
+  },
+  getLineage: async (id: number) => {
+    const { data } = await api.get(`/analysis/${id}/lineage`);
     return data;
   },
   applyDecisions: async (id: number) => {
@@ -960,6 +1106,19 @@ export const reportBuilderApi = {
       analysis_id: analysisId,
       template_id: templateId ?? null,
       filter_config: filterConfig ?? null,
+    });
+    return data;
+  },
+  /** Coordinate-exact PDF from fina-ast layout + Deep BI (economics domain default). */
+  coordGenerate: async (
+    analysisId: number,
+    options?: { astPath?: string; domain?: string; useGemini?: boolean }
+  ): Promise<{ job_id: number; status: string; stage?: string; message: string }> => {
+    const { data } = await api.post('/report-builder/coord-generate', {
+      analysis_id: analysisId,
+      ast_path: options?.astPath,
+      domain: options?.domain ?? 'economics',
+      use_gemini: options?.useGemini ?? true,
     });
     return data;
   },

@@ -30,7 +30,7 @@ from fastapi import (
     WebSocket, WebSocketDisconnect,
 )
 from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 
 from database.database import SessionLocal
 from database.models import Analysis, Dataset, ReportCorrection, ReportJob, ReportTemplate
@@ -51,9 +51,10 @@ from report_builder.pipeline import generate_report
 from .access import filter_config_dict, require_job_access, require_template_access
 from .template_validation import validate_ast_payload
 from .schemas import (
-    ChatIn, CorrectionIn, DeliverRequest, GenerateRequest, InsertBlockIn, JobOut,
-    MoveBlockIn, ReadyAnalysisOut, TemplateCreateOut, TemplateExtractionJobOut,
-    TemplateImportJsonIn, TemplateOut, TemplateUpdateIn,
+    ChatIn, CoordGenerateOut, CoordGenerateRequest, CorrectionIn, DeliverRequest,
+    GenerateRequest, InsertBlockIn, JobOut, MoveBlockIn, ReadyAnalysisOut,
+    TemplateCreateOut, TemplateExtractionJobOut, TemplateImportJsonIn, TemplateOut,
+    TemplateUpdateIn,
 )
 from . import delivery as delivery_mod
 
@@ -157,7 +158,17 @@ def list_ready_analyses(
     user_id: int = Depends(get_current_user_id),
 ):
     rows = (
-        db.query(Analysis, Dataset)
+        db.query(
+            Analysis.id,
+            Analysis.dataset_id,
+            Analysis.status,
+            Analysis.created_at,
+            Dataset.id,
+            Dataset.filename,
+            Dataset.row_count,
+            Dataset.column_count,
+            Dataset.upload_status,
+        )
         .join(Dataset, Analysis.dataset_id == Dataset.id)
         .filter(Dataset.user_id == user_id, Analysis.status == "complete")
         .order_by(Analysis.id.desc())
@@ -166,16 +177,16 @@ def list_ready_analyses(
     )
     return [
         ReadyAnalysisOut(
-            analysis_id=an.id,
-            dataset_id=ds.id,
-            filename=ds.filename,
-            row_count=ds.row_count or 0,
-            column_count=ds.column_count or 0,
-            status=an.status,
-            upload_status=ds.upload_status,
-            created_at=isoformat_utc(an.created_at),
+            analysis_id=an_id,
+            dataset_id=ds_id,
+            filename=filename,
+            row_count=row_count or 0,
+            column_count=column_count or 0,
+            status=status,
+            upload_status=upload_status,
+            created_at=isoformat_utc(created_at),
         )
-        for an, ds in rows
+        for an_id, ds_id, status, created_at, _, filename, row_count, column_count, upload_status in rows
     ]
 
 
@@ -591,6 +602,131 @@ def _run_job(job_id: int):
             pass
     finally:
         db.close()
+
+
+def _run_coord_report_job(job_id: int, ast_path: str, domain: str, use_gemini: bool) -> None:
+    """Background: coordinate AST + Deep BI → PDF (same pipeline as CLI)."""
+    db = SessionLocal()
+    try:
+        job = db.query(ReportJob).filter(ReportJob.id == job_id).first()
+        if not job:
+            return
+        analysis = db.query(Analysis).filter(Analysis.id == job.analysis_id).first()
+        dataset = (
+            db.query(Dataset).filter(Dataset.id == analysis.dataset_id).first()
+            if analysis
+            else None
+        )
+        if not analysis or not dataset:
+            job.status = "failed"
+            job.error_message = "Analysis or dataset missing"
+            db.commit()
+            return
+
+        job.status = "running"
+        job.stage = "coord_load_ast"
+        db.commit()
+
+        repo = Path(__file__).resolve().parents[2]
+        ast_file = Path(ast_path) if ast_path else repo / "test_data" / "fina-ast.json"
+        if not ast_file.is_absolute():
+            ast_file = repo / ast_file
+        if domain == "economics":
+            data_file = repo / "test_data" / "Economics - MoSPI.csv"
+        else:
+            store = try_build_default_store() if dataset.object_key else None
+            df = dataframe_for_uploaded_dataset(
+                dataset_storage_path=dataset.storage_path,
+                dataset_object_key=dataset.object_key,
+                filename=dataset.filename,
+                object_store=store,
+            )
+            tmp = repo / "storage" / "reports" / f"_coord_tmp_{job_id}.csv"
+            tmp.parent.mkdir(parents=True, exist_ok=True)
+            df.to_csv(tmp, index=False)
+            data_file = tmp
+
+        out_dir = Path(os.getenv("REPORT_STORAGE_PATH", str(repo / "storage" / "reports")))
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_pdf = out_dir / f"coord_report_job_{job_id}.pdf"
+
+        from ast_core.coord_deep_bi_orchestrator import run_coord_report_strict
+
+        job.stage = "coord_deep_bi"
+        db.commit()
+
+        result = run_coord_report_strict(
+            ast_path=str(ast_file),
+            data_path=str(data_file),
+            out_pdf=str(out_pdf),
+            domain=domain,
+            use_gemini=use_gemini,
+        )
+        job.status = "exported"
+        job.stage = "coord_done"
+        job.final_pdf_path = result.pdf_path
+        job.content_hash = hashlib.sha256(
+            Path(result.pdf_path).read_bytes()
+        ).hexdigest()
+        br = result.bind_report
+        job.blocks_json = {
+            "pipeline": "coord_report_strict_deep_bi",
+            "domain": domain,
+            "bound_ast_path": result.bound_ast_path,
+            "content_bound": br.content.paragraphs_bound,
+            "tables_bound": br.tables.tables_bound,
+            "figures_bound": br.figures.figures_bound,
+            "figures_fallback": br.figures.figures_from_fallback,
+            "errors": br.errors[:20],
+        }
+        db.commit()
+    except Exception as exc:
+        logger.exception("Coord report job %s failed", job_id)
+        try:
+            job = db.query(ReportJob).filter(ReportJob.id == job_id).first()
+            if job:
+                job.status = "failed"
+                job.error_message = str(exc)[:8000]
+                db.commit()
+        except Exception:
+            pass
+    finally:
+        db.close()
+
+
+@router.post("/coord-generate", response_model=CoordGenerateOut)
+def coord_generate(
+    req: CoordGenerateRequest,
+    background: BackgroundTasks,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Coordinate-exact MoSPI PDF from fina-ast + dataset (economics domain default)."""
+    require_analysis_owner(db, req.analysis_id, user_id)
+    analysis = db.query(Analysis).filter(Analysis.id == req.analysis_id).first()
+    if analysis.status != "complete":
+        raise HTTPException(409, f"Analysis status is '{analysis.status}', must be 'complete'")
+
+    job = ReportJob(
+        analysis_id=req.analysis_id,
+        template_id=None,
+        status="pending",
+        stage="coord_queued",
+    )
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+
+    ast_path = req.ast_path or "test_data/fina-ast.json"
+    background.add_task(
+        _run_coord_report_job, job.id, ast_path, req.domain, req.use_gemini,
+    )
+    return CoordGenerateOut(
+        job_id=job.id,
+        status=job.status,
+        stage=job.stage,
+        message="Coordinate report job queued (same pipeline as generate_coord_report.py CLI).",
+    )
 
 
 @router.post("/generate", response_model=JobOut)

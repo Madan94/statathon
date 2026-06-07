@@ -4,6 +4,7 @@ ensure_paths()
 
 from core.ingestion import dataframe_for_uploaded_dataset, infer_schema, health_summary
 from core.json_safe import make_json_safe
+from services.analysis_query import slim_checkpoint_payload
 from core.rule_validator import normalize_schema
 from reports.ingestion_reporter import write_ingestion_report
 from reports.math_vault import write_math_vault
@@ -100,11 +101,13 @@ def run_pipeline(
         weight_col = analysis_cfg_row.config.get("weight_column")
     state.weighted_profile = compute_survey_weight_profile(df, schema, weight_column=weight_col)
     SemanticPersistenceService(db).persist_state(state)
+    db.commit()
     Phase3PersistenceService(db).persist_state(state)
+    db.commit()
 
     analysis_row = db.query(Analysis).filter(Analysis.id == analysis_id).first()
     if analysis_row:
-        cp = make_json_safe(state.to_api_payload())
+        cp = slim_checkpoint_payload(make_json_safe(state.to_api_payload()))
         cp["raw_schema"] = [str(c) for c in df.columns]
         analysis_row.checkpoint = cp
 
@@ -117,7 +120,7 @@ def run_pipeline(
         payload=analysis_row.checkpoint if analysis_row and isinstance(analysis_row.checkpoint, dict) else state.to_api_payload(),
     )
 
-    db.flush()
+    db.commit()
 
     semantic_labels = {}
     for col in df.columns:
