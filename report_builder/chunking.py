@@ -215,10 +215,22 @@ def _summarize_chunk(pages: list[dict[str, Any]], max_chars: int = 150) -> str:
     """Extract brief text summary from chunk pages for context injection."""
     texts: list[str] = []
     for p in pages:
-        # Try raw_text first (normalized pages), then text (raw ColPali)
-        text = p.get("raw_text") or p.get("text") or ""
-        if text:
-            texts.append(text[:200])
+        # Use blocks if available (from pass 2.5 merge)
+        blocks = p.get("blocks") or []
+        if blocks:
+            for block in blocks[:5]:
+                if block.get("type") in ("heading", "paragraph"):
+                    content = block.get("content", "")
+                    if content:
+                        texts.append(content[:100])
+                elif block.get("type") == "table":
+                    cols = block.get("columns", [])
+                    texts.append(f"Table({','.join(cols[:3])})")
+        else:
+            # Fallback to raw_text
+            text = p.get("raw_text") or p.get("text") or ""
+            if text:
+                texts.append(text[:200])
 
     combined = " ".join(texts)[:max_chars]
     return combined.strip() if combined.strip() else ""
