@@ -61,13 +61,19 @@ def pass0_rasterize(pdf_path: Path) -> tuple[list[bytes], list[dict[str, Any]]]:
     try:
         import pdf2image
         poppler_path = os.getenv("POPPLER_PATH") or None
-        images = pdf2image.convert_from_path(str(pdf_path), dpi=200, fmt="png", poppler_path=poppler_path)
+        images = pdf2image.convert_from_path(str(pdf_path), dpi=150, fmt="png", poppler_path=poppler_path)
     except Exception as exc:
         logger.error("[pass0] pdf2image failed: %s — trying Pillow fallback", exc)
         images = []
 
+    # Resize images to fit within max dimension to reduce VLM token count
+    _max_dim = int(os.getenv("VLM_MAX_IMAGE_DIM", "800"))
     page_images: list[bytes] = []
     for img in images:
+        w, h = img.size
+        if max(w, h) > _max_dim:
+            scale = _max_dim / max(w, h)
+            img = img.resize((int(w * scale), int(h * scale)), resample=1)
         buf = io.BytesIO()
         img.save(buf, format="PNG")
         page_images.append(buf.getvalue())
@@ -162,8 +168,20 @@ def pass2_content_extraction(
     timeout = int(os.getenv("SGLANG_TIMEOUT", "120"))
     total_pages = len(page_images)
 
-    # If no images were rasterized, fall back to text-only extraction from pdfplumber
-    if total_pages == 0 and page_texts:
+    # Pre-flight: check if vLLM is alive before sending pages
+    vlm_alive = False
+    if total_pages > 0:
+        try:
+            health_url = _SGLANG_ENDPOINT.rstrip("/") + "/v1/models"
+            hr = requests.get(health_url, timeout=5)
+            vlm_alive = hr.status_code == 200
+        except Exception:
+            pass
+        if not vlm_alive:
+            logger.warning("[pass2] vLLM not reachable — falling back to pdfplumber text")
+
+    # If no images or vLLM is down, fall back to text-only extraction
+    if (total_pages == 0 or not vlm_alive) and page_texts:
         logger.warning("[pass2] No page images available — using pdfplumber text extraction (no VLM)")
         results: list[dict[str, Any]] = []
         for i, page_text in enumerate(page_texts):
@@ -186,75 +204,80 @@ def pass2_content_extraction(
     t0 = time.monotonic()
 
     results: list[dict[str, Any]] = []
+    consecutive_failures = 0
+    _max_consecutive_fail = int(os.getenv("VLM_MAX_CONSECUTIVE_FAIL", "3"))
+    vlm_skipped = False
 
     for i, img_bytes in enumerate(page_images):
         page_layout = layout_pages[i] if i < len(layout_pages) else {}
         page_text = page_texts[i] if i < len(page_texts) else {}
         regions = page_layout.get("regions") or []
 
-        # Build region description for prompt
-        region_desc = _format_regions_for_prompt(regions)
-
-        # Encode image as base64 for vLLM vision API
-        img_b64 = base64.b64encode(img_bytes).decode("utf-8")
-
-        # Build prompt
-        prompt = (
-            f"You are analyzing page {i + 1} of {total_pages} of document \"{doc_title}\".\n"
-            f"Layout analysis detected these regions:\n{region_desc}\n\n"
-            "For each region, extract:\n"
-            "- text regions: verbatim text content\n"
-            "- table regions: column headers, row labels, and 2 sample data rows\n"
-            "- figure/chart regions: type (bar/line/pie), title, axis labels, series names\n"
-            "- heading regions: heading text and hierarchy level (1=chapter, 2=section, 3=sub)\n\n"
-            "Output JSON: {\"regions\": [{\"region_idx\": 0, \"type\": \"...\", \"content\": {...}}]}"
-        )
-
-        payload = {
-            "model": model,
-            "messages": [
-                {"role": "user", "content": [
-                    {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
-                    {"type": "text", "text": prompt},
-                ]},
-            ],
-            "temperature": 0.1,
-            "max_tokens": 800,
-        }
-
-        # Try Qwen-VL with retry on JSON parse failure
         extracted = None
-        try:
-            r = requests.post(endpoint, json=payload, timeout=timeout)
-            if r.status_code == 200:
-                content = r.json()["choices"][0]["message"]["content"]
-                # Parse JSON from response
-                content = content.strip()
-                if content.startswith("```"):
-                    content = content.split("\n", 1)[-1].rsplit("```", 1)[0]
-                extracted = json.loads(content)
-        except json.JSONDecodeError:
-            # Retry with simpler prompt asking only for text extraction
-            logger.debug("[pass2] Page %d JSON parse failed — retrying with simple prompt", i)
+
+        # Skip VLM if too many consecutive failures (GPU likely crashed)
+        if vlm_skipped:
+            pass
+        elif consecutive_failures >= _max_consecutive_fail:
+            logger.warning("[pass2] %d consecutive VLM failures — skipping VLM for remaining pages", consecutive_failures)
+            vlm_skipped = True
+        else:
             try:
-                simple_prompt = (
-                    f"Extract all text from page {i + 1}. "
-                    "Output JSON: {\"regions\": [{\"region_idx\": 0, \"type\": \"text\", \"content\": \"...\"}]}"
+                # Build region description for prompt
+                region_desc = _format_regions_for_prompt(regions)
+
+                # Encode image as base64 for vLLM vision API
+                img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+
+                # Build prompt
+                prompt = (
+                    f"You are analyzing page {i + 1} of {total_pages} of document \"{doc_title}\".\n"
+                    f"Layout analysis detected these regions:\n{region_desc}\n\n"
+                    "For each region, extract:\n"
+                    "- text regions: verbatim text content\n"
+                    "- table regions: column headers, row labels, and 2 sample data rows\n"
+                    "- figure/chart regions: type (bar/line/pie), title, axis labels, series names\n"
+                    "- heading regions: heading text and hierarchy level (1=chapter, 2=section, 3=sub)\n\n"
+                    "Output JSON: {\"regions\": [{\"region_idx\": 0, \"type\": \"...\", \"content\": {...}}]}"
                 )
-                payload["messages"][0]["content"][1]["text"] = simple_prompt
-                payload["max_tokens"] = 600
+
+                payload = {
+                    "model": model,
+                    "messages": [
+                        {"role": "user", "content": [
+                            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
+                            {"type": "text", "text": prompt},
+                        ]},
+                    ],
+                    "temperature": 0.1,
+                    "max_tokens": 512,
+                }
+
                 r = requests.post(endpoint, json=payload, timeout=timeout)
                 if r.status_code == 200:
-                    content = r.json()["choices"][0]["message"]["content"].strip()
-                    if content.startswith("```"):
-                        content = content.split("\n", 1)[-1].rsplit("```", 1)[0]
-                    extracted = json.loads(content)
-            except Exception:
-                pass
-        except Exception as exc:
-            logger.debug("[pass2] Page %d Qwen-VL failed: %s", i, exc)
+                    raw = r.json()["choices"][0]["message"]["content"].strip()
+                    if raw.startswith("```"):
+                        raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0]
+                    extracted = json.loads(raw)
+                    consecutive_failures = 0
+                elif r.status_code >= 500:
+                    # Server error (likely CUDA crash) — count as failure
+                    logger.warning("[pass2] Page %d VLM returned %d", i, r.status_code)
+                    consecutive_failures += 1
+                else:
+                    logger.debug("[pass2] Page %d VLM returned %d", i, r.status_code)
+                    consecutive_failures += 1
+            except json.JSONDecodeError:
+                logger.debug("[pass2] Page %d JSON parse failed", i)
+                consecutive_failures += 1
+            except (requests.ConnectionError, requests.Timeout) as exc:
+                logger.warning("[pass2] Page %d VLM connection failed: %s", i, type(exc).__name__)
+                consecutive_failures += 1
+            except Exception as exc:
+                logger.warning("[pass2] Page %d VLM unexpected error: %s", i, exc)
+                consecutive_failures += 1
 
-        # Build result (with pdfplumber fallback for text)
+        # Build result (always succeeds — pdfplumber text is the floor)
         result = {
             "page_index": i,
             "width": page_layout.get("width", page_text.get("width", 595)),
@@ -269,7 +292,8 @@ def pass2_content_extraction(
         results.append(result)
 
         if (i + 1) % 5 == 0 or i == total_pages - 1:
-            logger.info("[pass2]   processed %d/%d pages", i + 1, total_pages)
+            logger.info("[pass2]   processed %d/%d pages (vlm_ok=%d)", i + 1, total_pages,
+                        sum(1 for r in results if r.get("extracted_content")))
 
     elapsed = time.monotonic() - t0
     logger.info("[pass2] ✓ Content extracted from %d pages (%.1fs)", len(results), elapsed)
@@ -320,6 +344,18 @@ def pass3_semantic_analysis(
     logger.info("[pass3] ▶ Semantic analysis with late chunking")
     t0 = time.monotonic()
 
+    # Pre-flight: check if vLLM is alive
+    vlm_alive = False
+    try:
+        hr = requests.get(_SGLANG_ENDPOINT.rstrip("/") + "/v1/models", timeout=5)
+        vlm_alive = hr.status_code == 200
+    except Exception:
+        pass
+
+    if not vlm_alive:
+        logger.warning("[pass3] vLLM not reachable — skipping local semantic (will try Gemini fallback)")
+        return {"semantic_hierarchy": [], "entities": [], "template_slots": [], "questions": []}
+
     # Build chunks with context prefixes
     chunks = split_into_chunks(content_pages, toc, doc_title=doc_title)
 
@@ -327,8 +363,14 @@ def pass3_semantic_analysis(
     all_hierarchy: list[dict] = []
     all_questions: list[dict] = []
     all_slots: list[dict] = []
+    consecutive_failures = 0
 
     for chunk in chunks:
+        # If 3+ consecutive failures, vLLM likely crashed — stop trying
+        if consecutive_failures >= 3:
+            logger.warning("[pass3] %d consecutive failures — aborting local semantic", consecutive_failures)
+            break
+
         # Build page text for this chunk
         chunk_text = ""
         for p in chunk.content:
@@ -361,7 +403,7 @@ def pass3_semantic_analysis(
                 {"role": "user", "content": prompt},
             ],
             "temperature": 0.1,
-            "max_tokens": 800,
+            "max_tokens": 512,
         }
 
         try:
@@ -377,8 +419,16 @@ def pass3_semantic_analysis(
                 all_entities.extend(data.get("entities") or [])
                 all_slots.extend(data.get("template_slots") or [])
                 all_questions.extend(data.get("questions") or [])
+                consecutive_failures = 0
+            else:
+                logger.debug("[pass3] Chunk %d returned %d", chunk.chunk_id, r.status_code)
+                consecutive_failures += 1
+        except (requests.ConnectionError, requests.Timeout) as exc:
+            logger.warning("[pass3] Chunk %d connection failed: %s", chunk.chunk_id, type(exc).__name__)
+            consecutive_failures += 1
         except Exception as exc:
             logger.debug("[pass3] Chunk %d failed: %s", chunk.chunk_id, exc)
+            consecutive_failures += 1
 
     elapsed = time.monotonic() - t0
     logger.info(
@@ -449,13 +499,16 @@ def pass4_assemble_ast(
     geometry_nodes = []
     for i, page in enumerate(layout_pages or []):
         for j, region in enumerate(page.get("regions") or []):
+            bbox = region.get("bbox") or [0, 0, 0, 0]
+            if not isinstance(bbox, (list, tuple)) or len(bbox) < 4:
+                bbox = [0, 0, 0, 0]
             geometry_nodes.append({
                 "nodeId": f"b{i + 1}_{j + 1}",
                 "bbox": {
-                    "x": region.get("bbox", [0])[0],
-                    "y": region.get("bbox", [0, 0])[1],
-                    "width": region.get("bbox", [0, 0, 0])[2] - region.get("bbox", [0])[0],
-                    "height": region.get("bbox", [0, 0, 0, 0])[3] - region.get("bbox", [0, 0])[1],
+                    "x": bbox[0],
+                    "y": bbox[1],
+                    "width": bbox[2] - bbox[0],
+                    "height": bbox[3] - bbox[1],
                 },
                 "pageRef": f"page_{i + 1:03d}",
             })
@@ -463,25 +516,39 @@ def pass4_assemble_ast(
     # ── contentAST ──
     paragraphs = []
     for i, page in enumerate(content_pages):
-        vlm_content = page.get("extracted_content")
-        if vlm_content and isinstance(vlm_content, dict):
-            # Use Qwen-VL structured extraction per region
-            for r_idx, region in enumerate(vlm_content.get("regions") or []):
-                rtype = region.get("type", "text")
-                content = region.get("content", {})
-                if rtype in ("text", "heading", "paragraph", "narrative"):
-                    text_val = content if isinstance(content, str) else content.get("text", "")
-                    if text_val:
-                        para_type = "heading" if rtype == "heading" else "paragraph"
-                        paragraphs.append({
-                            "id": f"p_{i + 1:03d}_{r_idx + 1:02d}",
-                            "type": para_type,
-                            "content": str(text_val)[:2000],
-                            "pageRef": f"page_{i + 1:03d}",
-                            "regionIdx": region.get("region_idx", r_idx),
-                        })
-        else:
-            # Fallback: use raw pdfplumber text as single paragraph per page
+        try:
+            vlm_content = page.get("extracted_content")
+            if vlm_content and isinstance(vlm_content, dict):
+                # Use Qwen-VL structured extraction per region
+                for r_idx, region in enumerate(vlm_content.get("regions") or []):
+                    if not isinstance(region, dict):
+                        continue
+                    rtype = region.get("type", "text")
+                    content = region.get("content", {})
+                    if rtype in ("text", "heading", "paragraph", "narrative"):
+                        text_val = content if isinstance(content, str) else (content.get("text", "") if isinstance(content, dict) else str(content))
+                        if text_val:
+                            para_type = "heading" if rtype == "heading" else "paragraph"
+                            paragraphs.append({
+                                "id": f"p_{i + 1:03d}_{r_idx + 1:02d}",
+                                "type": para_type,
+                                "content": str(text_val)[:2000],
+                                "pageRef": f"page_{i + 1:03d}",
+                                "regionIdx": region.get("region_idx", r_idx),
+                            })
+            else:
+                # Fallback: use raw pdfplumber text as single paragraph per page
+                text = page.get("raw_text") or ""
+                if text:
+                    paragraphs.append({
+                        "id": f"p_{i + 1:03d}",
+                        "type": "paragraph",
+                        "content": text[:2000],
+                        "pageRef": f"page_{i + 1:03d}",
+                    })
+        except Exception as exc:
+            logger.debug("[pass4] contentAST page %d error: %s", i, exc)
+            # Fallback to raw text
             text = page.get("raw_text") or ""
             if text:
                 paragraphs.append({
@@ -494,46 +561,51 @@ def pass4_assemble_ast(
     # ── tableAST ──
     tables = []
     for i, page in enumerate(content_pages):
-        # Priority 1: Qwen-VL extracted table structures
-        vlm_content = page.get("extracted_content")
-        if vlm_content and isinstance(vlm_content, dict):
-            for r_idx, region in enumerate(vlm_content.get("regions") or []):
-                if region.get("type") == "table":
-                    content = region.get("content", {})
-                    if not isinstance(content, dict):
-                        content = {}
-                    headers = content.get("columns") or content.get("column_headers") or []
-                    sample_rows = content.get("rows") or content.get("sample_rows") or []
-                    if headers or sample_rows:
+        try:
+            # Priority 1: Qwen-VL extracted table structures
+            vlm_content = page.get("extracted_content")
+            if vlm_content and isinstance(vlm_content, dict):
+                for r_idx, region in enumerate(vlm_content.get("regions") or []):
+                    if not isinstance(region, dict):
+                        continue
+                    if region.get("type") == "table":
+                        content = region.get("content", {})
+                        if not isinstance(content, dict):
+                            content = {}
+                        headers = content.get("columns") or content.get("column_headers") or []
+                        sample_rows = content.get("rows") or content.get("sample_rows") or []
+                        if headers or sample_rows:
+                            tables.append({
+                                "tableId": f"table_{i + 1}_{r_idx + 1}",
+                                "title": content.get("title", f"Table on page {i + 1}"),
+                                "pageRef": f"page_{i + 1:03d}",
+                                "columns": [str(h) for h in headers][:20],
+                                "sampleRows": sample_rows[:3] if isinstance(sample_rows, list) else [],
+                                "rowCount": content.get("row_count", len(sample_rows) if isinstance(sample_rows, list) else 0),
+                                "source": "qwen-vl",
+                            })
+            # Priority 2: pdfplumber tables (if VLM didn't find any for this page)
+            page_vlm_tables = [t for t in tables if t.get("pageRef") == f"page_{i + 1:03d}"]
+            if not page_vlm_tables:
+                for j, table in enumerate(page.get("tables_raw") or []):
+                    if table and len(table) >= 2:
+                        headers = [str(c or "") for c in table[0]] if table[0] else []
+                        sample_rows = []
+                        for row in table[1:3]:
+                            sample_rows.append({
+                                f"col_{k}": str(c or "") for k, c in enumerate(row or [])
+                            })
                         tables.append({
-                            "tableId": f"table_{i + 1}_{r_idx + 1}",
-                            "title": content.get("title", f"Table on page {i + 1}"),
+                            "tableId": f"table_{i + 1}_{j + 1}",
+                            "title": f"Table on page {i + 1}",
                             "pageRef": f"page_{i + 1:03d}",
-                            "columns": [str(h) for h in headers][:20],
-                            "sampleRows": sample_rows[:3] if isinstance(sample_rows, list) else [],
-                            "rowCount": content.get("row_count", len(sample_rows)),
-                            "source": "qwen-vl",
+                            "columns": headers,
+                            "sampleRows": sample_rows,
+                            "rowCount": len(table) - 1,
+                            "source": "pdfplumber",
                         })
-        # Priority 2: pdfplumber tables (if VLM didn't find any for this page)
-        page_vlm_tables = [t for t in tables if t.get("pageRef") == f"page_{i + 1:03d}"]
-        if not page_vlm_tables:
-            for j, table in enumerate(page.get("tables_raw") or []):
-                if table and len(table) >= 2:
-                    headers = [str(c or "") for c in table[0]] if table[0] else []
-                    sample_rows = []
-                    for row in table[1:3]:
-                        sample_rows.append({
-                            f"col_{k}": str(c or "") for k, c in enumerate(row or [])
-                        })
-                    tables.append({
-                        "tableId": f"table_{i + 1}_{j + 1}",
-                        "title": f"Table on page {i + 1}",
-                        "pageRef": f"page_{i + 1:03d}",
-                        "columns": headers,
-                        "sampleRows": sample_rows,
-                        "rowCount": len(table) - 1,
-                        "source": "pdfplumber",
-                    })
+        except Exception as exc:
+            logger.debug("[pass4] tableAST page %d error: %s", i, exc)
 
     # ── figureAST + chartAST ──
     figures = []
@@ -649,6 +721,10 @@ def run_extraction_pipeline(
 
     if not page_images and not page_texts:
         raise RuntimeError("Pass 0 failed: could not rasterize or extract text from PDF")
+
+    # Ensure page_texts covers all images (pad if pdfplumber extracted fewer)
+    while len(page_texts) < len(page_images):
+        page_texts.append({"raw_text": "", "words": [], "tables": [], "headings": [], "width": 595, "height": 842, "word_count": 0})
 
     # ── Pass 1: Layout Detection ──
     _tick("pass1_layout_detection", 25)
