@@ -1,0 +1,153 @@
+{
+  "_comment": "MoSPI question archetype library. Each domain has trigger_entities (substring match) and archetypes with template slots.",
+
+  "labour_force": {
+    "trigger_entities": ["lfpr", "wpr", "ur", "labour force", "worker population", "unemployment"],
+    "archetypes": [
+      {
+        "template": "How does {measure} vary across States and Union Territories by {breakdown}?",
+        "questionType": "comparison",
+        "layout": "state_comparison",
+        "components": ["narrative_paragraph", "data_table", "grouped_bar_chart"]
+      },
+      {
+        "template": "What is the trend in {measure} ({gender}) across survey rounds?",
+        "questionType": "trend",
+        "layout": "trend_analysis",
+        "components": ["narrative_paragraph", "line_chart", "data_table"]
+      },
+      {
+        "template": "Compare {measure} for Rural and Urban population across States",
+        "questionType": "comparison",
+        "layout": "split",
+        "components": ["narrative_paragraph", "grouped_bar_chart"]
+      },
+      {
+        "template": "Which States have the highest and lowest {measure} for {breakdown}?",
+        "questionType": "ranking",
+        "layout": "state_comparison",
+        "components": ["narrative_paragraph", "data_table", "grouped_bar_chart"]
+      },
+      {
+        "template": "What is the distribution of workers by {dimension} in {sector} areas?",
+        "questionType": "distribution",
+        "layout": "split",
+        "components": ["narrative_paragraph", "pie_chart", "data_table"]
+      }
+    ]
+  },
+
+  "consumption": {
+    "trigger_entities": ["mpce", "consumption", "monthly per capita", "household expenditure", "expenditure"],
+    "archetypes": [
+      {
+        "template": "What is the MPCE distribution across {dimension} in Rural and Urban areas?",
+        "questionType": "distribution",
+        "layout": "split",
+        "components": ["narrative_paragraph", "data_table", "grouped_bar_chart"]
+      },
+      {
+        "template": "How does {measure} vary across household size and {dimension}?",
+        "questionType": "comparison",
+        "layout": "multi-panel",
+        "components": ["narrative_paragraph", "data_table", "line_chart"]
+      },
+      {
+        "template": "What is the share of {dimension} in total household expenditure?",
+        "questionType": "composition",
+        "layout": "split",
+        "components": ["narrative_paragraph", "pie_chart", "data_table"]
+      }
+    ]
+  },
+
+  "employment": {
+    "trigger_entities": ["employment", "occupation", "industry", "worker", "workforce", "job"],
+    "archetypes": [
+      {
+        "template": "What is the distribution of workers by {dimension} across States?",
+        "questionType": "distribution",
+        "layout": "state_comparison",
+        "components": ["narrative_paragraph", "data_table", "grouped_bar_chart"]
+      },
+      {
+        "template": "How does {measure} differ by occupation and industry type?",
+        "questionType": "comparison",
+        "layout": "split",
+        "components": ["narrative_paragraph", "data_table", "grouped_bar_chart"]
+      },
+      {
+        "template": "What proportion of workers are engaged in {dimension} activities?",
+        "questionType": "composition",
+        "layout": "split",
+        "components": ["narrative_paragraph", "pie_chart", "data_table"]
+      }
+    ]
+  },
+
+  "price_inflation": {
+    "trigger_entities": ["cpi", "wpi", "inflation", "price index", "consumer price"],
+    "archetypes": [
+      {
+        "template": "What is the trend in {measure} across months and years?",
+        "questionType": "trend",
+        "layout": "trend_analysis",
+        "components": ["narrative_paragraph", "line_chart", "data_table"]
+      },
+      {
+        "template": "How does {measure} differ between Rural and Urban areas?",
+        "questionType": "comparison",
+        "layout": "split",
+        "components": ["narrative_paragraph", "grouped_bar_chart", "data_table"]
+      }
+    ]
+  },
+
+  "education": {
+    "trigger_entities": ["literacy", "enrolment", "education", "school", "student"],
+    "archetypes": [
+      {
+        "template": "What is the {measure} rate across States by {breakdown}?",
+        "questionType": "comparison",
+        "layout": "state_comparison",
+        "components": ["narrative_paragraph", "data_table", "grouped_bar_chart"]
+      },
+      {
+        "template": "How has {measure} changed over survey years?",
+        "questionType": "trend",
+        "layout": "trend_analysis",
+        "components": ["narrative_paragraph", "line_chart", "data_table"]
+      }
+    ]
+  },
+
+  "generic_tabular": {
+    "trigger_entities": [],
+    "archetypes": [
+      {
+        "template": "How does {measure} vary by {dimension} across the dataset?",
+        "questionType": "comparison",
+        "layout": "split",
+        "components": ["narrative_paragraph", "data_table", "grouped_bar_chart"]
+      },
+      {
+        "template": "What is the distribution of {measure} across {dimension}?",
+        "questionType": "distribution",
+        "layout": "split",
+        "components": ["narrative_paragraph", "data_table", "pie_chart"]
+      },
+      {
+        "template": "Which {dimension} has the highest {measure}?",
+        "questionType": "ranking",
+        "layout": "single",
+        "components": ["narrative_paragraph", "data_table"]
+      },
+      {
+        "template": "What is the overall trend in {measure} over time?",
+        "questionType": "trend",
+        "layout": "single",
+        "components": ["narrative_paragraph", "line_chart"]
+      }
+    ]
+  }
+}

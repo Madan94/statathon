@@ -46,6 +46,7 @@ import requests
 from report_builder.chunking import (
     ToCEntry,
     build_toc_from_regions,
+    extract_caption_entities_from_layout,
 )
 
 logger = logging.getLogger(__name__)
@@ -208,6 +209,566 @@ def _repair_truncated_json(text: str) -> str | None:
     # Append closers
     suffix = "]" * max(open_brackets, 0) + "}" * max(open_braces, 0)
     return cleaned + suffix if suffix else None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Entity Name Validation — shared by all passes
+# ─────────────────────────────────────────────────────────────────────────────
+
+_ENGLISH_STOPWORDS: frozenset[str] = frozenset({
+    "a", "an", "the", "and", "or", "but", "if", "in", "on", "at", "to",
+    "for", "of", "with", "by", "from", "up", "into", "then", "than",
+    "this", "that", "these", "those", "is", "are", "was", "were", "be",
+    "been", "being", "have", "has", "had", "do", "does", "did", "will",
+    "would", "could", "should", "may", "might", "shall", "can", "not",
+    "no", "nor", "so", "yet", "both", "either", "each", "all", "any",
+    "few", "more", "most", "other", "some", "such", "own", "same",
+    "too", "very", "just", "as", "while", "also", "its", "it", "he",
+    "she", "they", "we", "you", "i", "me", "him", "her", "us", "them",
+    "our", "your", "their", "my", "note", "fig", "tab", "sl", "sr",
+    "viz", "viz.", "etc", "etc.", "per", "as", "re", "vs", "vs.",
+})
+
+# Known header qualifiers for MoSPI/NSSO tables — used in multi-row header merge
+_HEADER_QUALIFIERS: frozenset[str] = frozenset({
+    "rural", "urban", "total", "male", "female", "persons", "both",
+    "code", "name", "number", "percent", "%", "rate", "ratio", "index",
+    "0-14", "15-29", "30-44", "45-59", "60+", "15+", "15-59",
+    "cws", "ups", "usps", "uss", "cwss",
+    "q1", "q2", "q3", "q4", "jul-sep", "oct-dec", "jan-mar", "apr-jun",
+    "2018-19", "2019-20", "2020-21", "2021-22", "2022-23", "2023-24",
+    "annual", "quarterly", "monthly",
+})
+
+import re as _re_entity
+
+_FIGREF_RE = _re_entity.compile(
+    r"^(table|figure|fig|chart|diagram|annex|appendix|statement|box|exhibit)\s+[\d.]+",
+    _re_entity.I,
+)
+_NUMERIC_ONLY_RE = _re_entity.compile(r"^[\d,.\-+%\s/()]+$")
+
+
+def _is_valid_entity_name(name: str) -> bool:
+    """Return True if name is a valid entity (not a stopword / noise / reference)."""
+    cleaned = name.strip()
+    if len(cleaned) < 3:
+        return False
+    if not any(c.isalpha() for c in cleaned):
+        return False
+    if cleaned.lower() in _ENGLISH_STOPWORDS:
+        return False
+    if _FIGREF_RE.match(cleaned):
+        return False
+    if _NUMERIC_ONLY_RE.match(cleaned):
+        return False
+    return True
+
+
+def _merge_multirow_headers(table: list[list]) -> tuple[list[str], int]:
+    """Merge multi-row spanning headers common in MoSPI/NSSO PDFs.
+
+    Example (PLFS table):
+        Row 0: "State/UT", None,    "LFPR",    None,    None,    "WPR",    None,    None
+        Row 1: "Code",     "Rural", "Urban",   "Total", "Rural", "Urban",  "Total"
+        → merged: ["State/UT Code", "LFPR Rural", "LFPR Urban", "LFPR Total",
+                   "WPR Rural", "WPR Urban", "WPR Total"]
+
+    Returns:
+        (merged_header_list, data_start_row_index)
+    """
+    if not table:
+        return [], 0
+
+    row0 = [str(c or "").strip() for c in table[0]]
+    if len(table) < 2:
+        return row0, 1
+
+    row1 = [str(c or "").strip() for c in table[1]]
+    total_cols = max(len(row0), len(row1))
+    if total_cols == 0:
+        return row0, 1
+
+    # Count truly empty cells in row 0
+    empty_in_row0 = sum(1 for c in row0 if not c)
+
+    # Single-row header: fewer than 25% empty cells
+    if empty_in_row0 < max(1, total_cols * 0.25):
+        return row0, 1
+
+    # Decide if row 1 looks like qualifiers (not data rows)
+    non_empty_r1 = [c for c in row1 if c]
+    if not non_empty_r1:
+        return row0, 1
+
+    qualifier_hits = sum(
+        1 for c in non_empty_r1
+        if c.lower() in _HEADER_QUALIFIERS or len(c) <= 12
+    )
+    row1_is_qualifier = qualifier_hits >= len(non_empty_r1) * 0.5
+
+    if not row1_is_qualifier:
+        return row0, 1
+
+    # Forward-fill row 0: propagate non-empty values rightward across merged cells
+    filled_row0: list[str] = []
+    last_val = ""
+    for cell in row0:
+        if cell:
+            last_val = cell
+            filled_row0.append(cell)
+        else:
+            filled_row0.append(last_val)
+
+    # Combine: for positions where row0 was empty, prefix(filled) + qualifier(row1)
+    merged: list[str] = []
+    for j in range(total_cols):
+        orig0 = row0[j] if j < len(row0) else ""
+        fill0 = filled_row0[j] if j < len(filled_row0) else ""
+        r1 = row1[j] if j < len(row1) else ""
+
+        if orig0 and r1 and r1.lower() != orig0.lower():
+            # Both have distinct content → "State/UT Code"
+            merged.append(f"{orig0} {r1}".strip())
+        elif orig0:
+            merged.append(orig0)
+        elif fill0 and r1:
+            # Span fill + qualifier → "LFPR Rural"
+            merged.append(f"{fill0} {r1}".strip())
+        elif r1:
+            merged.append(r1)
+        elif fill0:
+            merged.append(fill0)
+        else:
+            merged.append(f"col_{j}")
+
+    return merged, 2  # actual data starts at row index 2
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MoSPI Domain Keywords — used in entity classification and question generation
+# ─────────────────────────────────────────────────────────────────────────────
+
+_MOSPI_MEASURE_KEYWORDS: frozenset[str] = frozenset({
+    "lfpr", "wpr", "ur", "rate", "ratio", "index", "score", "percent", "%",
+    "count", "total", "sum", "average", "mean", "median", "growth", "change",
+    "mpce", "cpi", "gdp", "nsdp", "gsdp", "nva", "gva", "value", "amount",
+    "expenditure", "income", "wage", "salary", "earning", "cost", "price",
+    "production", "output", "yield", "area", "quantity", "volume",
+    "population", "workforce", "worker", "employment", "unemployment",
+    "participation", "enrolment", "literacy", "mortality", "fertility",
+    "prevalence", "incidence", "coverage", "penetration",
+})
+
+_MOSPI_DIMENSION_KEYWORDS: frozenset[str] = frozenset({
+    "state", "district", "region", "zone", "division", "block", "village",
+    "urban", "rural", "sector", "gender", "male", "female", "sex",
+    "age", "group", "cohort", "category", "class", "type", "kind",
+    "occupation", "industry", "activity", "enterprise", "household",
+    "social", "religion", "caste", "education", "qualification",
+    "year", "quarter", "month", "period", "round", "survey",
+    "annual", "quarterly", "monthly", "weekly", "daily",
+})
+
+_MOSPI_METADATA_KEYWORDS: frozenset[str] = frozenset({
+    "source", "note", "notes", "methodology", "definition", "concept",
+    "nsso", "census", "ministry", "mospi", "plfs", "nss", "cso",
+    "government", "india", "reference", "base", "revision",
+    "remark", "footnote", "abbreviation",
+})
+
+# MoSPI heading patterns for hybrid ToC extraction
+_MOSPI_HEADING_PATTERNS = [
+    # Chapter / Part patterns
+    (r"^(CHAPTER|Chapter)\s+([IVXLC0-9]+)[:\.\s]+(.*)", 1),
+    (r"^(PART|Part)\s+([IVXLCA-Z0-9]+)[:\.\s]+(.*)", 1),
+    (r"^(SECTION|Section)\s+([IVXA-Z0-9]+)[:\.\s]+(.*)", 1),
+    # Statement / Table / Annexure
+    (r"^(Statement)\s+(\d+\.\d+)[:\s—\-]+(.*)", 2),
+    (r"^(Table)\s+(\d+\.\d+)[:\.\s]+(.*)", 2),
+    (r"^(ANNEXURE|Annexure|APPENDIX|Appendix)\s+([A-Z0-9\-]+)[:\.\s]*(.*)", 2),
+    # Numbered sections (e.g. "1.2 Labour Force")
+    (r"^\d+\.\d+\s+[A-Z][A-Za-z\s]{5,}", 2),
+    # ALL CAPS lines (≥ 8 chars, not just a label)
+    (r"^([A-Z][A-Z\s\-/]{7,80})$", 1),
+]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Hybrid ToC Extraction (Improvement 2)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _extract_toc_hybrid(
+    page_texts: list[dict[str, Any]],
+    layout_pages: list[dict[str, Any]],
+    toc_from_layoutlm: list[ToCEntry],
+) -> list[ToCEntry]:
+    """Build a reliable chapter hierarchy using a 3-level cascade.
+
+    Level 1 — Pattern-based regex on raw text (fast, high precision for MoSPI docs)
+    Level 2 — Font-size hierarchy from pdfplumber words
+    Level 3 — Gemini ToC extraction from first 12 pages (last resort)
+
+    Returns the best ToC found, merged with any LayoutLM results.
+    """
+    import re as _re
+
+    # ── Level 1: Pattern-based regex ──
+    pattern_entries: list[ToCEntry] = []
+    seen_l1: set[str] = set()
+
+    for page_idx, pt in enumerate(page_texts):
+        raw = pt.get("raw_text") or ""
+        for line in raw.split("\n"):
+            line = line.strip()
+            if not line or len(line) < 4:
+                continue
+            for pattern, level in _MOSPI_HEADING_PATTERNS:
+                m = _re.match(pattern, line)
+                if m:
+                    # Reconstruct full title from capture groups
+                    groups = [g for g in m.groups() if g]
+                    title = " ".join(groups).strip()
+                    if not title or len(title) < 3:
+                        title = line.strip()
+                    dedup = title.lower().strip()[:60]
+                    if dedup not in seen_l1 and _is_valid_entity_name(title):
+                        seen_l1.add(dedup)
+                        pattern_entries.append(ToCEntry(
+                            title=title[:200],
+                            page_index=page_idx,
+                            level=level,
+                            region_type="pattern",
+                        ))
+                    break
+
+    distinct_chapters_l1 = len({e.page_index for e in pattern_entries if e.level == 1})
+    logger.info("[toc-hybrid] L1 pattern: %d entries (%d distinct L1 chapters)", len(pattern_entries), distinct_chapters_l1)
+
+    # If L1 found a good hierarchy, merge with LayoutLM and return
+    if distinct_chapters_l1 >= 2 and len(pattern_entries) >= 3:
+        merged = _merge_toc_sources(toc_from_layoutlm, pattern_entries)
+        logger.info("[toc-hybrid] Using L1 pattern ToC (%d entries after merge)", len(merged))
+        return merged
+
+    # ── Level 2: Font-size hierarchy from pdfplumber words ──
+    fontsize_entries: list[ToCEntry] = []
+    if page_texts:
+        # Collect all font sizes across document to find the top 3
+        all_sizes: list[float] = []
+        for pt in page_texts:
+            for w in (pt.get("words") or []):
+                s = float(w.get("size") or 0)
+                if s > 6:
+                    all_sizes.append(s)
+
+        if all_sizes:
+            unique_sizes = sorted(set(round(s, 1) for s in all_sizes), reverse=True)
+            h1_size = unique_sizes[0] if len(unique_sizes) > 0 else 0
+            h2_size = unique_sizes[1] if len(unique_sizes) > 1 else 0
+
+            for page_idx, pt in enumerate(page_texts):
+                words = pt.get("words") or []
+                # Group words by y-position (same line ≈ within 3pt)
+                lines_by_y: dict[int, list[dict]] = {}
+                for w in words:
+                    y_bucket = int(float(w.get("top") or w.get("y0") or 0) // 3)
+                    lines_by_y.setdefault(y_bucket, []).append(w)
+
+                for y_bucket, line_words in sorted(lines_by_y.items()):
+                    sizes = [float(w.get("size") or 0) for w in line_words if w.get("size")]
+                    if not sizes:
+                        continue
+                    max_size = max(sizes)
+                    if max_size < h2_size * 0.9:
+                        continue
+
+                    line_text = " ".join(str(w.get("text") or "") for w in line_words).strip()
+                    if not line_text or len(line_text) < 4 or not any(c.isalpha() for c in line_text):
+                        continue
+                    # Skip pure numbers (page numbers)
+                    if _re.match(r"^\d+$", line_text.strip()):
+                        continue
+
+                    level = 1 if max_size >= h1_size * 0.95 else 2
+                    dedup = line_text.lower().strip()[:60]
+                    if dedup not in seen_l1:
+                        seen_l1.add(dedup)
+                        fontsize_entries.append(ToCEntry(
+                            title=line_text[:200],
+                            page_index=page_idx,
+                            level=level,
+                            region_type="fontsize",
+                        ))
+
+    combined_so_far = pattern_entries + fontsize_entries
+    distinct_combined = len({e.page_index for e in combined_so_far if e.level == 1})
+    logger.info("[toc-hybrid] L2 fontsize: %d entries (%d total L1 chapters so far)", len(fontsize_entries), distinct_combined)
+
+    if distinct_combined >= 2:
+        merged = _merge_toc_sources(toc_from_layoutlm, combined_so_far)
+        logger.info("[toc-hybrid] Using L1+L2 ToC (%d entries after merge)", len(merged))
+        return merged
+
+    # ── Level 3: Gemini ToC extraction (last resort) ──
+    gemini_entries: list[ToCEntry] = []
+    try:
+        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        if api_key:
+            first_pages_text = "\n\n--- PAGE BREAK ---\n\n".join(
+                pt.get("raw_text") or "" for pt in page_texts[:12]
+            )[:6000]
+            gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+            prompt = (
+                "Extract the Table of Contents structure from the following document pages.\n"
+                "Return JSON array: [{\"title\": \"Chapter title\", \"page\": 0, \"level\": 1}]\n"
+                "level: 1=chapter/part, 2=section/statement, 3=subsection\n"
+                "page: 0-based page index where section starts\n"
+                "Return only the JSON array, no prose.\n\n"
+                f"Document text (first 12 pages):\n{first_pages_text}"
+            )
+            try:
+                from google import genai as _genai
+                client = _genai.Client(api_key=api_key)
+                resp = client.models.generate_content(model=gemini_model, contents=prompt)
+                raw = (resp.text or "").strip()
+            except ImportError:
+                import google.generativeai as _legacy
+                _legacy.configure(api_key=api_key)
+                resp = _legacy.GenerativeModel(gemini_model).generate_content(prompt)
+                raw = (resp.text or "").strip()
+
+            toc_data = _extract_json_array_from_response(raw)
+            if toc_data:
+                for item in toc_data:
+                    title = str(item.get("title") or "").strip()
+                    page = int(item.get("page") or 0)
+                    level = int(item.get("level") or 1)
+                    if title and _is_valid_entity_name(title):
+                        gemini_entries.append(ToCEntry(
+                            title=title[:200],
+                            page_index=page,
+                            level=level,
+                            region_type="gemini",
+                        ))
+            logger.info("[toc-hybrid] L3 Gemini: %d entries", len(gemini_entries))
+    except Exception as exc:
+        logger.warning("[toc-hybrid] L3 Gemini failed: %s", exc)
+
+    all_entries = combined_so_far + gemini_entries
+    merged = _merge_toc_sources(toc_from_layoutlm, all_entries)
+    logger.info("[toc-hybrid] Final merged ToC: %d entries", len(merged))
+    return merged
+
+
+def _merge_toc_sources(layoutlm: list[ToCEntry], new_entries: list[ToCEntry]) -> list[ToCEntry]:
+    """Merge LayoutLM ToC with pattern/font/Gemini entries, deduplicated and sorted."""
+    combined = list(layoutlm)
+    seen = {(e.page_index, e.title.lower().strip()[:40]) for e in layoutlm}
+    for e in new_entries:
+        key = (e.page_index, e.title.lower().strip()[:40])
+        if key not in seen:
+            seen.add(key)
+            combined.append(e)
+    combined.sort(key=lambda e: (e.page_index, e.level))
+    return combined
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Pass 2.6: Entity Type Classification (Improvement 3)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def pass2_6_entity_classification(document_map: dict[str, Any]) -> dict[str, Any]:
+    """Classify entities as dimension / measure / filter / metadata.
+
+    Step 1 (always): Programmatic classification from table structure + keyword lists.
+    Step 2 (optional): Gemini batch classification for ambiguous entities.
+
+    Writes `entityType_hint` onto each entity in document_map["all_entities"].
+    Returns the updated document_map.
+    """
+    all_entities = document_map.get("all_entities") or []
+    table_structures = document_map.get("table_structures") or []
+
+    if not all_entities:
+        return document_map
+
+    logger.info("[pass2.6] ▶ Entity type classification (%d entities)", len(all_entities))
+
+    # Build lookup sets from table structures
+    table_measures: set[str] = set()
+    table_dimensions: set[str] = set()
+    table_filter_values: set[str] = set()
+
+    for ts in table_structures:
+        for m in (ts.get("measures") or []):
+            table_measures.add(m.lower())
+        for d in (ts.get("dimensions") or []):
+            table_dimensions.add(d.lower())
+        for bd in (ts.get("breakdowns") or []):
+            for v in (bd.get("values") or []):
+                table_filter_values.add(v.lower())
+
+    # ── Step 1: Programmatic classification ──
+    ambiguous: list[dict[str, Any]] = []
+
+    for ent in all_entities:
+        name = ent.get("name") or ""
+        name_lower = name.lower()
+
+        # Table structure membership (highest confidence)
+        if name_lower in table_measures:
+            ent["entityType_hint"] = "measure"
+            continue
+        if name_lower in table_dimensions:
+            ent["entityType_hint"] = "dimension"
+            continue
+        if name_lower in table_filter_values:
+            ent["entityType_hint"] = "filter"
+            continue
+
+        # Metadata patterns
+        if any(k in name_lower for k in _MOSPI_METADATA_KEYWORDS):
+            ent["entityType_hint"] = "metadata"
+            continue
+
+        # Known measure keywords (whole word match)
+        if any(k in name_lower.split() or name_lower == k for k in _MOSPI_MEASURE_KEYWORDS):
+            ent["entityType_hint"] = "measure"
+            continue
+
+        # Known dimension keywords
+        if any(k in name_lower.split() or name_lower == k for k in _MOSPI_DIMENSION_KEYWORDS):
+            ent["entityType_hint"] = "dimension"
+            continue
+
+        # Source-type heuristics
+        source = ent.get("source") or ""
+        if source == "table_header":
+            # Table headers: first column is dimension, others are likely measures
+            # Use position in table to guess
+            is_first_col = False
+            for ts in table_structures:
+                cols_lower = [c.lower() for c in (ts.get("columns") or [])]
+                if cols_lower and cols_lower[0] == name_lower:
+                    is_first_col = True
+                    break
+            ent["entityType_hint"] = "dimension" if is_first_col else "measure"
+        elif source == "heading":
+            ent["entityType_hint"] = "dimension"
+        elif source == "vlm":
+            ambiguous.append(ent)
+            ent["entityType_hint"] = "dimension"  # default until Gemini updates
+        else:
+            ent["entityType_hint"] = "dimension"
+
+    logger.info("[pass2.6]   Step 1 programmatic: %d measures, %d dimensions, %d metadata, %d ambiguous",
+                sum(1 for e in all_entities if e.get("entityType_hint") == "measure"),
+                sum(1 for e in all_entities if e.get("entityType_hint") == "dimension"),
+                sum(1 for e in all_entities if e.get("entityType_hint") == "metadata"),
+                len(ambiguous))
+
+    # ── Step 2: Gemini batch classification for ambiguous entities ──
+    ambiguous_to_classify = [e for e in ambiguous if e.get("entityType_hint") == "dimension"][:40]
+    if ambiguous_to_classify:
+        try:
+            api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+            if api_key:
+                doc_title = document_map.get("title", "document")
+                entity_lines = "\n".join(
+                    f'  "{e["name"]}"' for e in ambiguous_to_classify
+                )
+                table_ctx = ""
+                for ts in table_structures[:5]:
+                    table_ctx += f"Table cols: {', '.join(ts['columns'][:6])}\n"
+
+                prompt = (
+                    f'Document: "{doc_title}" (Indian government statistical report)\n'
+                    f"Table structures:\n{table_ctx}\n"
+                    "Classify each entity as one of: dimension, measure, filter, metadata\n"
+                    "  dimension = categorical grouping variable (State, Gender, Sector, Year)\n"
+                    "  measure = numeric metric to aggregate (LFPR, WPR, rate, count, total)\n"
+                    "  filter = threshold or conditional value (Rural, Urban, Male, Female)\n"
+                    "  metadata = source, methodology, notes (NSSO, Source, Note)\n\n"
+                    f"Entities to classify:\n{entity_lines}\n\n"
+                    'Output JSON array: [{"name": "LFPR", "type": "measure"}, ...]\n'
+                    "JSON only."
+                )
+                gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+                try:
+                    from google import genai as _genai
+                    client = _genai.Client(api_key=api_key)
+                    resp = client.models.generate_content(model=gemini_model, contents=prompt)
+                    raw = (resp.text or "").strip()
+                except ImportError:
+                    import google.generativeai as _legacy
+                    _legacy.configure(api_key=api_key)
+                    resp = _legacy.GenerativeModel(gemini_model).generate_content(prompt)
+                    raw = (resp.text or "").strip()
+
+                classifications = _extract_json_array_from_response(raw)
+                if classifications:
+                    name_to_type: dict[str, str] = {
+                        item.get("name", "").lower(): item.get("type", "dimension")
+                        for item in classifications
+                        if isinstance(item, dict)
+                    }
+                    updated = 0
+                    for ent in ambiguous_to_classify:
+                        classified = name_to_type.get(ent["name"].lower())
+                        if classified in ("dimension", "measure", "filter", "metadata"):
+                            ent["entityType_hint"] = classified
+                            updated += 1
+                    logger.info("[pass2.6]   Step 2 Gemini: classified %d ambiguous entities", updated)
+        except Exception as exc:
+            logger.warning("[pass2.6]   Step 2 Gemini failed (non-fatal): %s", exc)
+
+    logger.info("[pass2.6] ✓ Classification complete: %d entities typed",
+                sum(1 for e in all_entities if e.get("entityType_hint")))
+    return document_map
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Entity Reference Resolver — fuzzy name → entityId (Improvement 5)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _resolve_entity_ref(ref_name: str, all_entities: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Resolve an entity reference string to an entity dict via exact → alias → fuzzy match.
+
+    Used in Pass 3 Loop 2 and Pass 4 to convert Qwen-returned entity names
+    (which may differ from how they are stored in the KG) to real entity dicts.
+    """
+    if not ref_name or not all_entities:
+        return None
+
+    ref_lower = ref_name.lower().strip()
+
+    # 1. Exact match (case-insensitive)
+    for e in all_entities:
+        if e.get("name", "").lower() == ref_lower:
+            return e
+
+    # 2. Alias match
+    for e in all_entities:
+        for alias in (e.get("aliases") or []):
+            if str(alias).lower() == ref_lower:
+                return e
+
+    # 3. Substring match (ref contains entity name or vice versa)
+    for e in all_entities:
+        ename = e.get("name", "").lower()
+        if ename and (ref_lower in ename or ename in ref_lower) and len(ename) >= 3:
+            return e
+
+    # 4. Fuzzy match (SequenceMatcher)
+    from difflib import SequenceMatcher
+    best: dict[str, Any] | None = None
+    best_score = 0.0
+    for e in all_entities:
+        score = SequenceMatcher(None, ref_lower, e.get("name", "").lower()).ratio()
+        if score > best_score and score >= 0.70:
+            best, best_score = e, score
+    return best
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -448,20 +1009,28 @@ def pass2_entity_structure_extraction(
                     f"Page {i + 1}/{total_pages} of \"{doc_title}\".\n"
                     f"Detected layout regions: {region_types}{image_hint}\n\n"
                     "Examine this page carefully. Your tasks:\n"
-                    "1. List ALL data entities/concepts (organizations, statistical indicators, "
-                    "demographics, time periods, geographic regions, numeric metrics).\n"
-                    "2. Identify if the page contains any charts or graphs — look for: "
-                    "bar charts, line charts, pie/donut charts, scatter plots, area charts, "
-                    "histograms, stacked bars, choropleth maps, infographics.\n"
-                    "3. If charts are present, provide their visible titles.\n"
-                    "4. Classify the dominant page structure.\n"
+                    "1. List ONLY entities that appear VERBATIM as column headers, section titles, "
+                    "or metric names visible on the page. Do NOT invent anything not explicitly "
+                    "printed. Examples: 'LFPR', 'State/UT', 'Rural', 'Urban', "
+                    "'Labour Force Participation Rate', 'Unemployment Rate', 'MPCE'. "
+                    "Exclude articles ('the','a'), prepositions ('of','in'), "
+                    "figure references ('Table 1','Figure 2.3'), pure numbers.\n"
+                    "2. If a table is present, extract its exact visible title or statement number "
+                    "(e.g. 'Statement 5.1', 'Table 3.2 — LFPR by State'). Use empty string if none.\n"
+                    "3. If a section/chapter heading is visible, extract it exactly "
+                    "(e.g. 'Chapter 3: Key Labour Market Indicators'). Use empty string if none.\n"
+                    "4. Identify charts/graphs if visible: bar, line, pie, scatter, area, map.\n"
+                    "5. Provide visible chart titles if any.\n"
+                    "6. Classify the dominant page structure.\n"
                     "Output ONLY this JSON (no prose, no markdown):\n"
-                    '{"entities":["entity1","entity2"],'
+                    '{"entities":["ExactColumnHeader","MetricName"],'
                     '"structure_type":"data_table|chart_page|narrative|title_page|appendix|mixed",'
                     '"description":"one-line summary",'
+                    '"table_title":"Statement X.Y or table title if present else empty",'
+                    '"section_heading":"Chapter or section heading if present else empty",'
                     '"chart_types":["bar_chart","line_chart","pie_chart","scatter_plot","area_chart","map"],'
                     '"chart_titles":["visible chart title if any"]}\n'
-                    "chart_types MUST be [] if absolutely no charts visible. JSON only."
+                    "chart_types MUST be [] if no charts visible. JSON only."
                 )
 
                 payload = {
@@ -504,27 +1073,36 @@ def pass2_entity_structure_extraction(
 
         if vlm_result:
             vlm_entities = vlm_result.get("entities") or []
-            # Normalize: VLM returns list of strings
-            vlm_entity_names = [str(e).strip() for e in vlm_entities if isinstance(e, str) and e.strip()]
+            # Normalize and validate: VLM returns list of strings; filter noise/stopwords
+            vlm_entity_names = [
+                str(e).strip() for e in vlm_entities
+                if isinstance(e, str) and _is_valid_entity_name(str(e).strip())
+            ]
             # Merge: VLM + pdfplumber, dedup by lowered name
             seen_lower: set[str] = set()
             merged_entities: list[dict[str, Any]] = []
             for name in vlm_entity_names:
                 key = name.lower().strip()
-                if key not in seen_lower and len(key) > 1:
+                if key not in seen_lower:
                     seen_lower.add(key)
                     merged_entities.append({"name": name, "source": "vlm", "page": i})
             for ent in pdfplumber_entities:
                 key = ent["name"].lower().strip()
-                if key not in seen_lower and len(key) > 1:
+                if key not in seen_lower:
                     seen_lower.add(key)
                     merged_entities.append(ent)
+
+            # Extract table_title and section_heading — feed to ToC hybrid cascade
+            table_title = str(vlm_result.get("table_title") or "").strip()
+            section_heading = str(vlm_result.get("section_heading") or "").strip()
 
             results.append({
                 "page_index": i,
                 "entities": merged_entities,
                 "structure_type": vlm_result.get("structure_type", "mixed"),
                 "description": str(vlm_result.get("description", ""))[:200],
+                "table_title": table_title,
+                "section_heading": section_heading,
                 "chart_types": vlm_result.get("chart_types") or [],
                 "chart_titles": [str(t).strip() for t in (vlm_result.get("chart_titles") or []) if str(t).strip()],
                 "vlm_used": True,
@@ -572,39 +1150,33 @@ def pass2_entity_structure_extraction(
 
 
 def _entities_from_pdfplumber(page_text: dict[str, Any], page_index: int) -> list[dict[str, Any]]:
-    """Extract entity candidates from pdfplumber data (headings + table headers + bold words).
+    """Extract entity candidates from pdfplumber data (table headers + headings).
 
-    Priority: table headers > headings > bold/large words.
+    Priority: merged table headers > headings.
+    Bold/large-font individual words are intentionally excluded — they produce
+    stopwords and word fragments as entities.
     """
     entities: list[dict[str, Any]] = []
     seen: set[str] = set()
 
     def _add(name: str, source: str):
         key = name.lower().strip()
-        if key and key not in seen and len(key) > 1:
+        if key and key not in seen and _is_valid_entity_name(name) and len(name) < 100:
             seen.add(key)
             entities.append({"name": name.strip(), "source": source, "page": page_index})
 
-    # Priority 1: Table headers (most reliable entity source for govt reports)
+    # Priority 1: Table headers — use multi-row merge to handle MoSPI spanning headers
     for table in (page_text.get("tables") or []):
-        if table and len(table) >= 1 and table[0]:
-            for cell in table[0]:
-                cell_str = str(cell or "").strip()
-                if cell_str and len(cell_str) > 1 and len(cell_str) < 80:
-                    _add(cell_str, "table_header")
+        if table and len(table) >= 1:
+            headers, _ = _merge_multirow_headers(table)
+            for h in headers:
+                if h:
+                    _add(h, "table_header")
 
-    # Priority 2: Headings
+    # Priority 2: Headings (section/chapter titles from font analysis)
     for h in (page_text.get("headings") or []):
         if isinstance(h, str) and h.strip():
             _add(h.strip(), "heading")
-
-    # Priority 3: Bold / large font words
-    for w in (page_text.get("words") or []):
-        font_size = w.get("size", 0)
-        font_name = str(w.get("fontname", ""))
-        text = str(w.get("text", "")).strip()
-        if (font_size >= 12 or "Bold" in font_name) and text and len(text) > 2 and len(text) < 60:
-            _add(text, "bold_word")
 
     return entities
 
@@ -650,7 +1222,8 @@ def pass2_5_document_knowledge_graph(
 
     def _register_entity(name: str, source: str, page: int, priority: int):
         key = name.lower().strip()
-        if not key or len(key) <= 1:
+        # Reject stopwords, noise, figure references, pure numbers
+        if not key or not _is_valid_entity_name(name) or len(name) >= 100:
             return
         if key in entity_index:
             ent = entity_index[key]
@@ -670,13 +1243,14 @@ def pass2_5_document_knowledge_graph(
             }
 
     # Source 1 (priority 0): pdfplumber table headers — most reliable
+    # Use multi-row merge to reconstruct MoSPI/NSSO spanning headers
     for i, pt in enumerate(page_texts):
         for table in (pt.get("tables") or []):
-            if table and len(table) >= 1 and table[0]:
-                for cell in table[0]:
-                    cell_str = str(cell or "").strip()
-                    if cell_str and 1 < len(cell_str) < 80:
-                        _register_entity(cell_str, "table_header", i, 0)
+            if table and len(table) >= 1:
+                merged_headers, _ = _merge_multirow_headers(table)
+                for h in merged_headers:
+                    if h:
+                        _register_entity(h, "table_header", i, 0)
 
     # Source 2 (priority 1): LayoutLM heading region text
     for i, page in enumerate(layout_pages or []):
@@ -686,7 +1260,22 @@ def pass2_5_document_knowledge_graph(
                 if text and 2 < len(text) < 120:
                     _register_entity(text, "heading", i, 1)
 
-    # Source 3 (priority 2): VLM-extracted entities
+    # Source 2b (priority 0): LayoutLM caption region texts — table/figure titles
+    # These are gold-standard: "Statement 5.1 — LFPR by State" → LFPR, State, Statement 5.1
+    caption_map = extract_caption_entities_from_layout(layout_pages or [])
+    for page_idx, captions in caption_map.items():
+        for cap_text in captions:
+            # Register the full caption as an entity (high priority, same as table_header)
+            _register_entity(cap_text, "caption", page_idx, 0)
+            # Also split on " — ", " : ", " by " to extract sub-entities
+            import re as _re_cap
+            parts = _re_cap.split(r"\s+[—\-–:]\s+|\s+by\s+", cap_text, flags=_re_cap.I)
+            for part in parts:
+                part = part.strip()
+                if _is_valid_entity_name(part) and len(part) < 80:
+                    _register_entity(part, "caption_part", page_idx, 0)
+
+    # Source 3 (priority 2): VLM-extracted entities (already filtered by Pass 2)
     for ep in entity_pages:
         page_idx = ep.get("page_index", 0)
         for ent in (ep.get("entities") or []):
@@ -694,14 +1283,16 @@ def pass2_5_document_knowledge_graph(
             if name.strip():
                 _register_entity(name, "vlm", page_idx, 2)
 
-    # Source 4 (priority 3): pdfplumber bold/large font words
-    for i, pt in enumerate(page_texts):
-        for w in (pt.get("words") or []):
-            font_size = w.get("size", 0)
-            font_name = str(w.get("fontname", ""))
-            text = str(w.get("text", "")).strip()
-            if (font_size >= 12 or "Bold" in font_name) and 2 < len(text) < 60:
-                _register_entity(text, "bold_word", i, 3)
+        # Source 3b (priority 1): VLM table_title and section_heading from Pass 2
+        table_title = ep.get("table_title") or ""
+        section_heading = ep.get("section_heading") or ""
+        if table_title:
+            _register_entity(table_title, "table_title", page_idx, 1)
+        if section_heading:
+            _register_entity(section_heading, "section_heading", page_idx, 1)
+
+    # Source 4 (bold_word) intentionally removed — individual bold words are too
+    # noisy and register stopwords ("and", "the"), single letters, and word fragments.
 
     # Finalize entities
     all_entities = []
@@ -717,7 +1308,9 @@ def pass2_5_document_knowledge_graph(
         for t_idx, table in enumerate(pt.get("tables") or []):
             if not table or len(table) < 2:
                 continue
-            headers = [str(c or "").strip() for c in table[0]] if table[0] else []
+
+            # Merge multi-row spanning headers (critical for MoSPI/NSSO PDFs)
+            headers, data_start = _merge_multirow_headers(table)
             if not headers or len(headers) < 2:
                 continue
 
@@ -726,8 +1319,8 @@ def pass2_5_document_knowledge_graph(
             measures: list[str] = []
             breakdowns: list[dict[str, str]] = []
 
-            # Analyze data rows to infer column types
-            data_rows = table[1:min(6, len(table))]  # sample up to 5 data rows
+            # Analyze data rows — start after merged header rows
+            data_rows = table[data_start:min(data_start + 5, len(table))]
             for col_idx, header in enumerate(headers):
                 if not header:
                     continue
@@ -749,14 +1342,17 @@ def pass2_5_document_knowledge_graph(
                 else:
                     dimensions.append(header)
 
-            # Detect breakdowns: repeated prefix + qualifier (e.g., "LFPR Male", "LFPR Female")
-            import re as _re
+            # Detect breakdowns: repeated prefix + known qualifier
+            # (e.g., "LFPR Rural", "LFPR Urban", "LFPR Total" → prefix="LFPR", quals=["Rural","Urban","Total"])
             prefix_groups: dict[str, list[str]] = {}
             for h in headers:
-                # Split on last space to get potential prefix
                 parts = h.rsplit(" ", 1)
                 if len(parts) == 2 and len(parts[0]) > 2:
-                    prefix_groups.setdefault(parts[0], []).append(parts[1])
+                    qualifier = parts[1].strip()
+                    prefix = parts[0].strip()
+                    # Only group if qualifier looks like a known categorical split
+                    if qualifier.lower() in _HEADER_QUALIFIERS or len(qualifier) <= 10:
+                        prefix_groups.setdefault(prefix, []).append(qualifier)
 
             for prefix, qualifiers in prefix_groups.items():
                 if len(qualifiers) >= 2:
@@ -922,7 +1518,23 @@ def pass2_5_document_knowledge_graph(
         table_desc = ""
         if page_tables:
             t = page_tables[0]
-            table_desc = f"Table: {len(t['columns'])} cols ({', '.join(t['dimensions'][:3])}) × ({', '.join(t['measures'][:3])})"
+            dims_str = ", ".join(t["dimensions"][:3]) or "?"
+            meas_str = ", ".join(t["measures"][:3]) or "?"
+            bds_str = " | ".join(
+                f"{b['measure']}×({','.join(b['values'][:3])})"
+                for b in (t.get("breakdowns") or [])[:2]
+            )
+            table_desc = f"Table: dims=[{dims_str}] measures=[{meas_str}]"
+            if bds_str:
+                table_desc += f" breakdowns=[{bds_str}]"
+
+        # Caption/table_title from VLM Pass 2 — adds statement number context
+        page_ep = entity_pages[i] if i < len(entity_pages) else {}
+        vl_table_title = page_ep.get("table_title") or ""
+        vl_section_heading = page_ep.get("section_heading") or ""
+
+        # LayoutLM caption texts for this page
+        page_captions = caption_map.get(i) or []
 
         # Build condensed prior summary
         prior_summary = ""
@@ -939,26 +1551,41 @@ def pass2_5_document_knowledge_graph(
                 next_section = f"Next: \"{entry.title}\""
                 break
 
-        # Assemble context script
+        # Assemble context script — richer with VLM table_title, section_heading, captions
         parts = [
             f'[Doc: "{doc_title}" ({total_pages}p)',
             f'Ch: "{chapter_title}" (p{chapter_range[0] + 1}-{chapter_range[1] + 1})',
         ]
+        if vl_section_heading:
+            parts.append(f'Heading: "{vl_section_heading}"')
         if prior_summary:
             parts.append(prior_summary)
         parts.append(f"This page: {stype}")
         if page_desc:
             parts.append(page_desc)
-        if table_desc:
+        if vl_table_title:
+            parts.append(f'Table: "{vl_table_title}"')
+        elif table_desc:
             parts.append(table_desc)
-        if chapter_entities:
-            parts.append(f"Entities: {', '.join(chapter_entities[:10])}")
+        if page_captions:
+            parts.append(f'Captions: {"; ".join(page_captions[:2])}')
+        # Include typed entities (dimension vs measure) for Pass 3 guidance
+        typed_ents = []
+        for ename in chapter_entities[:10]:
+            ent_obj = next((e for e in all_entities if e["name"] == ename), None)
+            if ent_obj:
+                etype = ent_obj.get("entityType_hint", "?")
+                typed_ents.append(f"{ename}({etype[0]})")  # e.g. "LFPR(m)" "State(d)"
+            else:
+                typed_ents.append(ename)
+        if typed_ents:
+            parts.append(f"Entities: {', '.join(typed_ents)}")
         if next_section:
             parts.append(next_section)
         parts.append("]")
 
         script = ". ".join(parts)
-        per_page_context_scripts.append(script[:500])  # hard cap
+        per_page_context_scripts.append(script[:600])  # slightly wider cap
 
     logger.info("[pass2.5]   Step 5: %d context scripts generated", len(per_page_context_scripts))
 
@@ -1105,7 +1732,7 @@ def _extract_table_from_text(raw_text: str) -> dict | None:
         if len(line.strip()) < 10:
             continue
         # Check if line has 2+ segments separated by 2+ spaces
-        parts = re.split(r"  {2,}", line.strip())
+        parts = re.split(r" {2,}", line.strip())
         if len(parts) >= 3:
             multi_space_lines.append(parts)
 
@@ -1279,23 +1906,56 @@ def pass3_two_loop_ast_building(
 
         section_summary = section_summary[:600]  # cap
 
+        # Build typed entity context for this section (dimension vs measure)
+        sp_page_start = page_range[0]
+        sec_typed_ents = []
+        for e in all_entities:
+            if any(sp_page_start <= p <= page_range[1] for p in e.get("pages", [])):
+                etype = e.get("entityType_hint", "")
+                label = f"{e['name']}({'measure' if etype == 'measure' else 'dim' if etype == 'dimension' else etype or '?'})"
+                sec_typed_ents.append(label)
+        typed_entity_context = ", ".join(sec_typed_ents[:15]) or "none detected"
+
+        # Build table structure context
+        sec_tables = [ts for ts in table_structures if page_range[0] <= ts["page"] <= page_range[1]]
+        table_context_lines = []
+        for ts in sec_tables[:3]:
+            dims = ", ".join(ts.get("dimensions", [])[:4]) or "—"
+            meas = ", ".join(ts.get("measures", [])[:4]) or "—"
+            bds = " | ".join(
+                f"{b['measure']}×({','.join(b['values'][:3])})"
+                for b in (ts.get("breakdowns") or [])[:2]
+            )
+            line = f"  dims=[{dims}] measures=[{meas}]"
+            if bds:
+                line += f" breakdowns=[{bds}]"
+            table_context_lines.append(line)
+        table_context = "\n".join(table_context_lines) or "  (no tables)"
+
         prompt = (
             f"{ctx}\n\n"
             f"Section: \"{sec_title}\" (pages {page_range[0] + 1}-{page_range[1] + 1})\n"
-            f"Pattern: {pattern}\n"
-            f"Content:\n{section_summary}\n\n"
-            "What analytical questions does this section answer? "
+            f"Typed entities: {typed_entity_context}\n"
+            f"Table structures:\n{table_context}\n"
+            f"Content preview:\n{section_summary}\n\n"
+            "Generate 1-3 specific analytical questions this section answers.\n"
+            "RULES: (1) Reference the exact entity names listed above. "
+            "(2) Questions must be quantitative and comparative — MoSPI report style.\n"
+            "BAD: 'What does this table show?' or 'What is the LFPR?'\n"
+            "GOOD: 'How does LFPR vary across States by Rural/Urban sector?' "
+            "or 'What is the trend in Unemployment Rate (Male) across survey rounds?'\n"
             "Output JSON array:\n"
-            '[{"questionId":"q1","intent":"What is...?","questionType":"comparison|trend|ranking|distribution|describe",'
-            '"sourceHeading":"..."}]\n'
-            "List 1-4 questions. JSON only."
+            '[{"questionId":"q1","intent":"Specific analytical question referencing real entities?",'
+            '"questionType":"comparison|trend|ranking|distribution|describe",'
+            '"sourceHeading":"exact section title"}]\n'
+            "List 1-3 questions. JSON only."
         )
 
         payload = {
             "model": model,
             "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.2,
-            "max_tokens": 512,
+            "temperature": 0.15,
+            "max_tokens": 600,
         }
 
         try:
@@ -1582,75 +2242,129 @@ def _default_question_binding(
     return question
 
 
+_ARCHETYPES_CACHE: dict | None = None
+
+
+def _load_archetypes() -> dict:
+    """Load MoSPI question archetypes JSON (cached after first load)."""
+    global _ARCHETYPES_CACHE
+    if _ARCHETYPES_CACHE is not None:
+        return _ARCHETYPES_CACHE
+    try:
+        archetypes_path = Path(__file__).resolve().parent / "mospi_question_archetypes.json"
+        with open(archetypes_path, encoding="utf-8") as f:
+            data = json.load(f)
+        _ARCHETYPES_CACHE = {k: v for k, v in data.items() if not k.startswith("_")}
+        logger.info("[archetypes] Loaded %d domains from mospi_question_archetypes.json", len(_ARCHETYPES_CACHE))
+    except Exception as exc:
+        logger.warning("[archetypes] Failed to load archetypes: %s", exc)
+        _ARCHETYPES_CACHE = {}
+    return _ARCHETYPES_CACHE
+
+
+def _detect_domain(entity_names: list[str], archetypes: dict) -> str:
+    """Detect which archetype domain best matches the entity names."""
+    names_lower = {n.lower() for n in entity_names}
+    best_domain = "generic_tabular"
+    best_hits = 0
+    for domain, cfg in archetypes.items():
+        if domain == "generic_tabular":
+            continue
+        triggers = [t.lower() for t in (cfg.get("trigger_entities") or [])]
+        hits = sum(1 for t in triggers if any(t in n for n in names_lower))
+        if hits > best_hits:
+            best_hits = hits
+            best_domain = domain
+    return best_domain
+
+
 def _programmatic_question_fallback(
     document_map: dict[str, Any],
     page_texts: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Generate questions programmatically when VLM is unavailable.
+    """Generate domain-specific questions programmatically using MoSPI archetypes.
 
-    Uses table structures + section patterns to infer likely questions.
+    Uses archetype library (mospi_question_archetypes.json) when available,
+    falling back to generic templates for unknown document types.
     """
     all_entities = document_map.get("all_entities") or []
     table_structures = document_map.get("table_structures") or []
     section_patterns = document_map.get("section_patterns") or []
     chapters = document_map.get("chapters") or []
+    archetypes = _load_archetypes()
 
     questions: list[dict[str, Any]] = []
     q_counter = 0
 
-    # Generate questions from table structures
+    # Generate questions from table structures using domain archetypes
     for ts in table_structures:
         dims = ts.get("dimensions") or []
         measures = ts.get("measures") or []
+        breakdowns = ts.get("breakdowns") or []
         if not dims and not measures:
             continue
 
-        q_counter += 1
-        intent = ""
-        q_type = "comparison"
+        # Detect domain from all entity names on this page
+        page_ent_names = [e["name"] for e in all_entities if ts["page"] in e.get("pages", [])]
+        domain = _detect_domain(page_ent_names + dims + measures, archetypes)
+        domain_cfg = archetypes.get(domain) or archetypes.get("generic_tabular", {})
+        domain_archetypes = domain_cfg.get("archetypes") or []
 
-        if dims and measures:
-            intent = f"How does {measures[0]} vary across {dims[0]}?"
-            q_type = "comparison"
-        elif measures:
-            intent = f"What is the distribution of {measures[0]}?"
-            q_type = "distribution"
-        elif dims:
-            intent = f"What categories of {dims[0]} are present?"
-            q_type = "describe"
+        for arch in domain_archetypes[:3]:  # max 3 questions per table
+            template = arch.get("template", "")
+            if not template:
+                continue
 
-        required_entities = []
-        if dims:
-            required_entities.append({"entityRef": dims[0], "role": "groupBy"})
-        if measures:
-            required_entities.append({"entityRef": measures[0], "role": "measure"})
+            # Fill template slots with real entity names
+            measure_val = measures[0] if measures else (dims[1] if len(dims) > 1 else "metric")
+            dim_val = dims[0] if dims else "category"
+            breakdown_val = breakdowns[0]["values"][0] if breakdowns else "sub-category"
+            gender_val = "Male/Female" if any("gender" in d.lower() or "male" in d.lower() or "female" in d.lower() for d in dims + measures) else "Persons"
 
-        questions.append({
-            "questionId": f"q_{q_counter:03d}",
-            "intent": intent,
-            "questionType": q_type,
-            "page": ts["page"],
-            "sourceHeading": ts.get("description", ""),
-            "requiredEntities": required_entities,
-            "answerStructure": {
-                "layoutType": "split",
-                "components": [
-                    {"type": "narrative_paragraph", "renderOrder": 1},
-                    {"type": "data_table", "renderOrder": 2},
-                    {"type": "grouped_bar_chart", "renderOrder": 3},
-                ],
-            },
-            "inferenceConfidence": 0.3,
-            "inferenceMethod": "programmatic",
-        })
+            intent = template.format(
+                measure=measure_val,
+                dimension=dim_val,
+                breakdown=breakdown_val,
+                gender=gender_val,
+                sector="Rural/Urban",
+                year_start="2018-19",
+                year_end="2022-23",
+            )
 
-    # Generate questions from section patterns
+            required_entities = []
+            if dims:
+                required_entities.append({"entityRef": dims[0], "role": "groupBy"})
+            if measures:
+                required_entities.append({"entityRef": measures[0], "role": "measure"})
+            if breakdowns:
+                required_entities.append({"entityRef": breakdowns[0]["measure"], "role": "breakdown"})
+
+            q_counter += 1
+            questions.append({
+                "questionId": f"q_{q_counter:03d}",
+                "intent": intent,
+                "questionType": arch.get("questionType", "comparison"),
+                "page": ts["page"],
+                "sourceHeading": ts.get("description", ""),
+                "requiredEntities": required_entities,
+                "answerStructure": {
+                    "layoutType": arch.get("layout", "split"),
+                    "components": [
+                        {"type": c, "renderOrder": idx + 1}
+                        for idx, c in enumerate(arch.get("components", ["narrative_paragraph", "data_table"]))
+                    ],
+                },
+                "inferenceConfidence": 0.55,  # higher than before: domain-matched
+                "inferenceMethod": f"archetype:{domain}",
+            })
+
+    # Generate summary questions from section patterns
     for sp in section_patterns:
         if sp.get("pattern") in ("executive_summary", "descriptive"):
             q_counter += 1
             questions.append({
                 "questionId": f"q_{q_counter:03d}",
-                "intent": f"What is the summary of {sp['title']}?",
+                "intent": f"What are the key findings in '{sp['title']}'?",
                 "questionType": "describe",
                 "page": sp["pageRange"][0],
                 "sourceHeading": sp["title"],
@@ -1661,8 +2375,8 @@ def _programmatic_question_fallback(
                         {"type": "narrative_paragraph", "renderOrder": 1},
                     ],
                 },
-                "inferenceConfidence": 0.2,
-                "inferenceMethod": "programmatic",
+                "inferenceConfidence": 0.25,
+                "inferenceMethod": "pattern",
             })
 
     # Build topics
@@ -1938,18 +2652,17 @@ def pass4_assemble_ast(
             })
         semantic_hierarchy.append(node)
 
-    # ── entityGraph (with type hints from table structure analysis) ──
+    # ── entityGraph — use pass2_6 entityType_hint (dimension/measure/filter/metadata) ──
     entity_graph_entries = []
     for ent in all_entities:
-        # Infer entityType hint from table structure
-        entity_type = "dimension"  # default
-        for ts in table_structures:
-            if ent["name"] in ts.get("measures", []):
-                entity_type = "measure"
-                break
-            if ent["name"] in ts.get("dimensions", []):
-                entity_type = "dimension"
-                break
+        # Use pass2_6 classification if available; fall back to table structure check
+        entity_type = ent.get("entityType_hint") or "dimension"
+        if entity_type == "dimension":
+            # Double-check table structure (may have been updated after pass2_6)
+            for ts in table_structures:
+                if ent["name"] in ts.get("measures", []):
+                    entity_type = "measure"
+                    break
 
         entity_graph_entries.append({
             "entityId": ent["entityId"],
@@ -1983,17 +2696,13 @@ def pass4_assemble_ast(
                         "refs": {},
                     })
 
-                # Build entity bindings
+                # Build entity bindings — fuzzy resolution via _resolve_entity_ref
                 entity_bindings = []
                 for eb in (q.get("requiredEntities") or []):
-                    # Resolve entityRef to entityId
                     ref_name = eb.get("entityRef", "")
-                    matched_ent = next(
-                        (e for e in all_entities if e["name"].lower() == ref_name.lower()),
-                        None,
-                    )
+                    matched_ent = _resolve_entity_ref(ref_name, all_entities)
                     entity_bindings.append({
-                        "entityId": matched_ent["entityId"] if matched_ent else ref_name,
+                        "entityId": matched_ent["entityId"] if matched_ent else f"unresolved_{ref_name[:20]}",
                         "role": eb.get("role", "required"),
                         "confidence": 0.7,
                         "bindingMethod": q.get("inferenceMethod", "vlm"),
@@ -2174,9 +2883,11 @@ def run_extraction_pipeline(
         "total_regions": total_regions,
     }
 
-    # Build ToC from layout — pass page_texts for font-size level inference
-    toc = build_toc_from_regions(layout_pages, page_texts)
+    # Build initial ToC from LayoutLM, then improve with hybrid cascade
+    toc_layoutlm = build_toc_from_regions(layout_pages, page_texts)
+    toc = _extract_toc_hybrid(page_texts, layout_pages, toc_layoutlm)
     pipeline_trace["passes"]["pass1_layout"]["toc_entries"] = len(toc)
+    pipeline_trace["passes"]["pass1_layout"]["toc_l1_chapters"] = sum(1 for e in toc if e.level == 1)
 
     # ── Pass 2: Entity + Structure Extraction ──
     _tick("pass2_entity_extraction", 30)
@@ -2210,6 +2921,19 @@ def run_extraction_pipeline(
         "table_structures": len(document_map.get("table_structures") or []),
         "chapters": len(document_map.get("chapters") or []),
         "section_patterns": len(document_map.get("section_patterns") or []),
+    }
+
+    # ── Pass 2.6: Entity Type Classification ──
+    _tick("pass2_6_entity_classification", 55)
+    t0 = _time.monotonic()
+    document_map = pass2_6_entity_classification(document_map)
+    pass26_elapsed = _time.monotonic() - t0
+    pipeline_trace["passes"]["pass2_6_classification"] = {
+        "elapsed_s": round(pass26_elapsed, 1),
+        "measures": sum(1 for e in (document_map.get("all_entities") or []) if e.get("entityType_hint") == "measure"),
+        "dimensions": sum(1 for e in (document_map.get("all_entities") or []) if e.get("entityType_hint") == "dimension"),
+        "filters": sum(1 for e in (document_map.get("all_entities") or []) if e.get("entityType_hint") == "filter"),
+        "metadata": sum(1 for e in (document_map.get("all_entities") or []) if e.get("entityType_hint") == "metadata"),
     }
 
     # ── Pass 3: Two-Loop AST Building ──

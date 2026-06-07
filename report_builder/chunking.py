@@ -66,8 +66,8 @@ def build_toc_from_regions(
     """
     toc: list[ToCEntry] = []
     seen_titles: set[str] = set()
-    MAX_PER_PAGE = 8
-    MIN_CONFIDENCE = 0.5
+    # No per-page cap — MoSPI PDFs can have many valid headings per page
+    MIN_CONFIDENCE = 0.3  # LayoutLM is generally accurate; 0.5 was too aggressive
 
     # ── Pre-compute per-page font-size thresholds from pdfplumber words ──
     # Build a map: page_idx → (p85_size, p70_size, median_size)
@@ -101,23 +101,24 @@ def build_toc_from_regions(
     for page in pages:
         page_idx = page.get("page_index", 0)
         regions = page.get("regions") or []
-        page_headings = 0
         thresholds = page_font_thresholds.get(page_idx)
 
         for region in regions:
-            if page_headings >= MAX_PER_PAGE:
-                break
-
             rtype = region.get("type", "")
             text = (region.get("text") or "").strip()
             confidence = region.get("confidence", 0.5)
+
+            # Skip page-running headers/footers — these are not real section titles
+            if rtype in ("header", "footer"):
+                continue
 
             if rtype not in ("title", "heading") or not text:
                 continue
             if confidence < MIN_CONFIDENCE:
                 continue
-            if len(text) < 3 or len(text) > 150:
+            if len(text) < 3:
                 continue
+            # Removed upper length cap — MoSPI section titles can be descriptive
 
             # Deduplicate (case-insensitive, strip numbers/punctuation)
             dedup_key = text.lower().strip("0123456789.-: ")
@@ -152,12 +153,11 @@ def build_toc_from_regions(
                     level = 2
 
             toc.append(ToCEntry(
-                title=text[:120],
+                title=text,  # full title — no truncation
                 page_index=page_idx,
                 level=level,
                 region_type=rtype,
             ))
-            page_headings += 1
 
     level_counts = {1: sum(1 for e in toc if e.level == 1),
                     2: sum(1 for e in toc if e.level == 2),
@@ -271,8 +271,12 @@ def _format_toc_summary(toc: list[ToCEntry], current_page: int, max_entries: int
     return " | ".join(parts)
 
 
-def _summarize_chunk(pages: list[dict[str, Any]], max_chars: int = 150) -> str:
-    """Extract brief text summary from chunk pages for context injection."""
+def _summarize_chunk(pages: list[dict[str, Any]], max_chars: int = 200) -> str:
+    """Extract brief text summary from chunk pages for context injection.
+
+    Now pulls caption, chart, and figure region texts from LayoutLM output
+    to give richer semantic context about tables and charts on each page.
+    """
     texts: list[str] = []
     for p in pages:
         # Use blocks if available (from pass 2.5 merge)
@@ -290,7 +294,39 @@ def _summarize_chunk(pages: list[dict[str, Any]], max_chars: int = 150) -> str:
             # Fallback to raw_text
             text = p.get("raw_text") or p.get("text") or ""
             if text:
-                texts.append(text[:200])
+                texts.append(text[:150])
+
+        # Pull LayoutLM caption/chart/figure region texts for richer context
+        for region in (p.get("regions") or []):
+            rtype = region.get("type", "")
+            rtext = (region.get("text") or "").strip()
+            if rtype in ("caption", "chart", "figure") and rtext and len(rtext) > 5:
+                texts.append(f"[{rtype}: {rtext[:80]}]")
 
     combined = " ".join(texts)[:max_chars]
     return combined.strip() if combined.strip() else ""
+
+
+def extract_caption_entities_from_layout(
+    layout_pages: list[dict[str, Any]],
+) -> dict[int, list[str]]:
+    """Extract table/figure caption texts from LayoutLM regions, keyed by page index.
+
+    These are high-quality entity sources: "Statement 5.1 — LFPR by State" tells us
+    the table title, the measure (LFPR), and the dimension (State) in one string.
+
+    Returns:
+        Dict mapping page_index → list of caption/chart-title strings
+    """
+    result: dict[int, list[str]] = {}
+    for page in layout_pages:
+        page_idx = page.get("page_index", 0)
+        captions: list[str] = []
+        for region in (page.get("regions") or []):
+            rtype = region.get("type", "")
+            rtext = (region.get("text") or "").strip()
+            if rtype in ("caption", "chart") and rtext and len(rtext) > 5:
+                captions.append(rtext)
+        if captions:
+            result[page_idx] = captions
+    return result
