@@ -55,6 +55,8 @@ services:
       - NVIDIA_VISIBLE_DEVICES=all
       - VLLM_MODEL=${SGLANG_MODEL:-Qwen/Qwen2.5-VL-2B-Instruct}
       - VLLM_PORT=8002
+      - HF_TOKEN=${HF_TOKEN:-}
+      - HF_HOME=/cache
     volumes:
       - ./model/cache:/cache
     ports:
