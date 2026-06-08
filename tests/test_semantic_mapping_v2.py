@@ -35,7 +35,7 @@ from semantic_mapping_v2.pipeline import SemanticPipelineV2
 
 _CSV = _REPO_ROOT / "test_data" / "unified_energy_reserves_dataset.csv"
 _OUTPUT_KEYS = {
-    "semantic_mapping", "domains", "dynamic_domains",
+    "semantic_mapping", "column_normalization", "domains", "dynamic_domains",
     "clusters", "cluster_confidence", "usecase",
     "schema_graph", "knowledge_graph", "meta",
 }
@@ -53,21 +53,30 @@ def test_v2_pipeline_structure() -> dict:
     missing = _OUTPUT_KEYS - set(result)
     assert not missing, f"missing output keys: {missing}"
 
-    # 2. Every column is mapped with a confidence + source.
+    # 2. Every column is mapped (now keyed by the canonical normalized name),
+    #    with provenance back to the raw header via column_normalization.
     mapping = result["semantic_mapping"]
-    assert set(mapping) == set(df.columns), "every column must be mapped"
+    colnorm = result["column_normalization"]
+    assert len(mapping) == len(df.columns), "every column must be mapped"
+    assert len(colnorm) == len(df.columns), "column_normalization must cover every column"
+    raw_seen = {str(r["original_name"]) for r in colnorm}
+    canon_seen = {str(r["canonical_name"]) for r in colnorm}
+    assert raw_seen == set(map(str, df.columns)), "column_normalization must map every raw header"
+    assert canon_seen == set(mapping), "canonical names must match the mapping keys"
     for col, m in mapping.items():
         assert "domain" in m and "confidence" in m and "source" in m, col
         assert 0.0 <= m["confidence"] <= 1.0, f"{col} confidence out of range"
+        assert m.get("original_name"), f"{col} missing original_name provenance"
+        assert m.get("display_name"), f"{col} missing display_name"
 
     # 3. Usecase detected (energy expected for this CSV).
     uc = result["usecase"]
     assert uc["usecase"], "usecase must be set"
     print(f"usecase: {uc['usecase']} ({uc['confidence']:.2f})")
 
-    # 4. Clusters cover every column exactly once; confidence map aligns.
+    # 4. Clusters cover every column exactly once (by canonical name).
     clustered_cols = [c for cl in result["clusters"].values() for c in cl["columns"]]
-    assert sorted(clustered_cols) == sorted(df.columns), "clusters must cover all columns once"
+    assert sorted(clustered_cols) == sorted(mapping), "clusters must cover all columns once"
     assert set(result["clusters"]) == set(result["cluster_confidence"])
 
     # 5. Schema graph + KG are well-formed.

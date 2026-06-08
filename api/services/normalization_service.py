@@ -45,11 +45,18 @@ class NormalizationService:
         for row in payload.get("column_normalization") or []:
             if not isinstance(row, dict):
                 continue
-            orig = row.get("original_name") or row.get("column")
-            if not orig:
+            # Key by the canonical identity (matches the renamed df columns that
+            # are seeded as raw_columns); fall back to the raw original name.
+            key = (
+                row.get("canonical_name")
+                or row.get("normalized_name")
+                or row.get("original_name")
+                or row.get("column")
+            )
+            if not key:
                 continue
-            suggested[str(orig)] = str(
-                row.get("display_name") or row.get("normalized_name") or orig
+            suggested[str(key)] = str(
+                row.get("display_name") or row.get("normalized_name") or key
             )
 
         self.columns.seed_from_raw_columns(

@@ -54,7 +54,7 @@ def v2_to_legacy_bundle(v2: dict[str, Any]) -> dict[str, Any]:
         "domain_registry": v2.get("domains") or {},
         "unified_domains": list((v2.get("domains") or {}).values()),
         "priority_dependencies": {},
-        "column_normalization": [],
+        "column_normalization": v2.get("column_normalization") or [],
         "audit_records": [],
         "semantic_v2_meta": v2.get("meta") or {},
         "semantic_v2_usecase": uc,

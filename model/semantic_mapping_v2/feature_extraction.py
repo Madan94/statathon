@@ -36,6 +36,10 @@ class ColumnFeature:
     cardinality: int = 0
     missing_ratio: float = 0.0
     representation: str = ""
+    # Set by the canonicalizer after the normalization layer runs. ``name``
+    # becomes the canonical identity; these preserve provenance + the UI label.
+    original_name: str = ""
+    display_name: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -47,6 +51,8 @@ class ColumnFeature:
             "cardinality": self.cardinality,
             "missing_ratio": round(self.missing_ratio, 4),
             "representation": self.representation,
+            "original_name": self.original_name,
+            "display_name": self.display_name,
         }
 
 

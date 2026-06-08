@@ -46,6 +46,7 @@ from semantic_mapping_v2.embedder import SemanticEmbedder
 from semantic_mapping_v2.feature_extraction import FeatureExtractor
 from semantic_mapping_v2.kg_builder import KnowledgeGraphBuilder, SchemaGraphV2
 from semantic_mapping_v2.matching_engine import MatchingEngine
+from semantic_mapping_v2.name_canonicalizer import NameRecord, canonicalize_features
 from semantic_mapping_v2.usecase_detector import UsecaseDetector
 
 logger = logging.getLogger(__name__)
@@ -120,6 +121,22 @@ class SemanticPipelineV2:
             use_llm=self.use_llm,
         )
 
+        # STEP 5c — canonical identity. Turn each corrected header phrase into a
+        # unique snake_case key and re-key `features` by it, so EVERY later step
+        # (embedding, matching, clustering, schema, KG) and all downstream
+        # analysis run on the normalized name instead of the raw/cryptic one.
+        name_records = canonicalize_features(features)
+        renamed: dict[str, Any] = {}
+        for raw, feat in features.items():
+            rec = name_records[str(raw)]
+            feat.original_name = rec.original_name
+            feat.name = rec.canonical_name
+            feat.display_name = rec.display_name
+            renamed[rec.canonical_name] = feat
+        features = renamed
+        column_names = list(features.keys())
+        sample_values = {c: list(f.samples) for c, f in features.items()}
+
         # One query vector per column, built from (now-enriched) representations.
         reps = [features[c].representation for c in column_names]
         rep_vecs = self.embedder.embed_queries_batch(reps)
@@ -177,6 +194,7 @@ class SemanticPipelineV2:
             domains_map=domains_map,
             mappings=mappings,
             features=features,
+            name_records=name_records,
             clusters=clusters,
             schema=schema,
             knowledge_graph=knowledge_graph,
@@ -199,6 +217,7 @@ class SemanticPipelineV2:
         domains_map: dict[str, dict[str, Any]],
         mappings: dict[str, Any],
         features: dict[str, Any],
+        name_records: dict[str, NameRecord],
         clusters: list[Any],
         schema: SchemaGraphV2,
         knowledge_graph: dict[str, Any],
@@ -208,7 +227,19 @@ class SemanticPipelineV2:
         for col, m in mappings.items():
             d = m.to_dict()
             d["dtype"] = features[col].dtype
+            # Carry identity provenance + UI label on every mapping entry.
+            d["original_name"] = features[col].original_name
+            d["display_name"] = features[col].display_name
             semantic_mapping[col] = d
+
+        # Raw header -> corrected identity map, persisted for the API/UI overlay.
+        column_normalization = [
+            {
+                **rec.to_dict(),
+                "domain": (semantic_mapping.get(rec.canonical_name) or {}).get("domain"),
+            }
+            for rec in name_records.values()
+        ]
 
         dynamic_domains = {
             name: meta for name, meta in domains_map.items()
@@ -224,6 +255,7 @@ class SemanticPipelineV2:
 
         return {
             "semantic_mapping": semantic_mapping,
+            "column_normalization": column_normalization,
             "domains": domains_map,
             "dynamic_domains": dynamic_domains,
             "clusters": clusters_out,
