@@ -1,0 +1,2516 @@
+﻿{
+  "$schema": "bharatstat/template-blueprint/v1",
+  "templateMeta": {
+    "templateId": "doc_05408b8c",
+    "name": "test 7",
+    "domain": "general",
+    "locale": "en-IN",
+    "version": "3.0",
+    "valueFree": true,
+    "proseFree": true,
+    "sourceDocument": "test 7"
+  },
+  "entities": [
+    {
+      "entityId": "ent_001",
+      "name": "Labour Force Participation Rate",
+      "canonicalName": "Labour Force Participation Rate",
+      "entityType": "measure",
+      "sourceType": "pre_seeded",
+      "confidence": 0.5,
+      "aliases": [
+        "LFPR"
+      ],
+      "unit": "percent",
+      "dtypeHint": "float",
+      "defaultFormat": "0.0%",
+      "valueDomain": null,
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_002",
+      "name": "Worker Population Ratio",
+      "canonicalName": "Worker Population Ratio",
+      "entityType": "measure",
+      "sourceType": "pre_seeded",
+      "confidence": 0.5,
+      "aliases": [
+        "WPR"
+      ],
+      "unit": "percent",
+      "dtypeHint": "float",
+      "defaultFormat": "0.0%",
+      "valueDomain": null,
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_003",
+      "name": "Unemployment Rate",
+      "canonicalName": "Unemployment Rate",
+      "entityType": "measure",
+      "sourceType": "pre_seeded",
+      "confidence": 0.5,
+      "aliases": [
+        "UR"
+      ],
+      "unit": "percent",
+      "dtypeHint": "float",
+      "defaultFormat": "0.0%",
+      "valueDomain": null,
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_004",
+      "name": "Gender",
+      "canonicalName": "Gender",
+      "entityType": "dimension",
+      "sourceType": "pre_seeded",
+      "confidence": 0.5,
+      "aliases": [
+        "Male",
+        "Female",
+        "Persons"
+      ],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": {
+        "domainType": "closed",
+        "members": [
+          "Male",
+          "Female",
+          "Transgender"
+        ]
+      },
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_005",
+      "name": "Rural/Urban Sector",
+      "canonicalName": "Rural/Urban Sector",
+      "entityType": "dimension",
+      "sourceType": "pre_seeded",
+      "confidence": 0.5,
+      "aliases": [
+        "Rural",
+        "Urban"
+      ],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": {
+        "domainType": "closed",
+        "members": [
+          "Rural",
+          "Urban"
+        ]
+      },
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_006",
+      "name": "Survey Year",
+      "canonicalName": "Survey Year",
+      "entityType": "dimension",
+      "sourceType": "pre_seeded",
+      "confidence": 0.5,
+      "aliases": [
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_007",
+      "name": "Age Group",
+      "canonicalName": "Age Group",
+      "entityType": "dimension",
+      "sourceType": "pre_seeded",
+      "confidence": 0.5,
+      "aliases": [
+        "15+",
+        "15-29",
+        "15-59",
+        "Youth"
+      ],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_008",
+      "name": "Status in Employment",
+      "canonicalName": "Status in Employment",
+      "entityType": "measure",
+      "sourceType": "pre_seeded",
+      "confidence": 0.5,
+      "aliases": [
+        "Self-employed",
+        "Regular wage",
+        "Casual labour"
+      ],
+      "unit": null,
+      "dtypeHint": "float",
+      "defaultFormat": null,
+      "valueDomain": null,
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_009",
+      "name": "Usual Status (ps+ss)",
+      "canonicalName": "Usual Status",
+      "entityType": "dimension",
+      "sourceType": "pre_seeded",
+      "confidence": 0.5,
+      "aliases": [
+        "ps+ss",
+        "usual status",
+        "Usual Status"
+      ],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_010",
+      "name": "Periodic Labour Force Survey",
+      "canonicalName": "Periodic Labour Force Survey",
+      "entityType": "dimension",
+      "sourceType": "pre_seeded",
+      "confidence": 0.5,
+      "aliases": [
+        "PLFS"
+      ],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_011",
+      "name": "MoSPI",
+      "canonicalName": "MoSPI",
+      "entityType": "metadata",
+      "sourceType": "pre_seeded",
+      "confidence": 0.5,
+      "aliases": [
+        "Ministry of Statistics"
+      ],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": null,
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_013",
+      "name": "Periodic Labour Force Survey (PLFS) Annual",
+      "canonicalName": "Periodic Labour Force Survey Annual",
+      "entityType": "metadata",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [
+        "PLFS",
+        "Periodic Labour Force Survey Annual"
+      ],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": null,
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_016",
+      "name": "Key Highligts of PLFS, Annual Report 2025",
+      "canonicalName": "Key Highligts of PLFS, Annual Report 2025",
+      "entityType": "metadata",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": null,
+      "glossaryRef": null,
+      "pageIndex": 1,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_019",
+      "name": "C. Changes in Sample Design of PLFS",
+      "canonicalName": "C. Changes in Sample Design of PLFS",
+      "entityType": "metadata",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": null,
+      "glossaryRef": null,
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_020",
+      "name": "PLFS: Changes in 2025",
+      "canonicalName": "PLFS: Changes in 2025",
+      "entityType": "metadata",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": null,
+      "glossaryRef": null,
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_022",
+      "name": "Labour Force Participation Rate (LFPR):",
+      "canonicalName": "Labour Force Participation Rate :",
+      "entityType": "measure",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [
+        "LFPR",
+        "Labour Force Participation Rate :"
+      ],
+      "unit": "percent",
+      "dtypeHint": "float",
+      "defaultFormat": "0.0%",
+      "valueDomain": null,
+      "glossaryRef": "lfpr",
+      "pageIndex": 8,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_024",
+      "name": "Activity Status Current Weekly Status (CWS):",
+      "canonicalName": "Activity Status Current Weekly Status :",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [
+        "CWS",
+        "Activity Status Current Weekly Status :"
+      ],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "glossaryRef": null,
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_025",
+      "name": "E. Compatibility of PLFS 2025 results",
+      "canonicalName": "E. Compatibility of PLFS 2025 results",
+      "entityType": "metadata",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": null,
+      "glossaryRef": null,
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_027",
+      "name": "Scan the QR code below to access MoSPI",
+      "canonicalName": "Scan the QR code below to access MoSPI",
+      "entityType": "metadata",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": null,
+      "glossaryRef": null,
+      "pageIndex": 9,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_029",
+      "name": "LFPR",
+      "canonicalName": "LFPR",
+      "entityType": "measure",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "unit": "percent",
+      "dtypeHint": "float",
+      "defaultFormat": "0.0%",
+      "valueDomain": null,
+      "glossaryRef": "lfpr",
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_031",
+      "name": "Rural",
+      "canonicalName": "Rural",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_032",
+      "name": "Urban",
+      "canonicalName": "Urban",
+      "entityType": "dimension",
+      "sourceType": "vlm",
+      "confidence": 0.5,
+      "aliases": [],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_012",
+      "name": "Samrat (Release I",
+      "canonicalName": "Samrat (Release I",
+      "entityType": "measure",
+      "sourceType": "table_header",
+      "confidence": 0.8,
+      "aliases": [],
+      "unit": null,
+      "dtypeHint": "float",
+      "defaultFormat": null,
+      "valueDomain": null,
+      "glossaryRef": null,
+      "pageIndex": 10,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_014",
+      "name": "Report, 2025 [January, 2025 December, 2025]",
+      "canonicalName": "Report, 2025 [January, 2025 December, 2025]",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    },
+    {
+      "entityId": "ent_015",
+      "name": "Key findings",
+      "canonicalName": "Key findings",
+      "entityType": "dimension",
+      "sourceType": "heading",
+      "confidence": 0.5,
+      "aliases": [],
+      "unit": null,
+      "dtypeHint": "string",
+      "defaultFormat": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "glossaryRef": null,
+      "pageIndex": 0,
+      "sourceContext": "",
+      "scope": "global",
+      "crossRefs": []
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Periodic Labour Force Survey (PLFS) Annual",
+      "description": "Questions from chapter: Periodic Labour Force Survey (PLFS) Annual",
+      "questions": [
+        {
+          "questionId": "sp01_q01",
+          "intent": "Compare the Unemployment Rate (UR) for males and females in the PLFS survey.",
+          "questionType": "comparison",
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "Unemployment Rate"
+            },
+            "groupBy": [
+              {
+                "entityRef": "Gender"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp01_q01_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 0,
+          "sourceHeading": "Periodic Labour Force Survey (PLFS) Annual",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp01_q02",
+          "intent": "Determine if there was an increase or decrease in the Unemployment Rate (UR) over the period from 2024 to 2025.",
+          "questionType": "trend",
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "Unemployment Rate"
+            },
+            "groupBy": [],
+            "filters": [],
+            "time": null,
+            "sort": null,
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "sp01_q02_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 0,
+          "sourceHeading": "Periodic Labour Force Survey (PLFS) Annual",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp01_q03",
+          "intent": "Identify the distribution of Unemployment Rate (UR) across different age groups in the PLFS survey.",
+          "questionType": "distribution",
+          "analyticsSpec": {
+            "operation": "distribution",
+            "measure": {
+              "entityRef": "Unemployment Rate"
+            },
+            "groupBy": [
+              {
+                "entityRef": "Age Group"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": null,
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_007",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp01_q03_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 0,
+          "sourceHeading": "Periodic Labour Force Survey (PLFS) Annual",
+          "priority": "high"
+        }
+      ],
+      "pageRange": [
+        0,
+        0
+      ]
+    },
+    {
+      "topicId": "topic_02",
+      "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "description": "Questions from chapter: 1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "questions": [
+        {
+          "questionId": "sp02_q01",
+          "intent": "What is the difference in the LFPR between males and females?",
+          "questionType": "comparison",
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": null,
+            "groupBy": [
+              {
+                "entityRef": "Gender"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "sp02_q01_c1",
+                "renderOrder": 1,
+                "type": "narrative_paragraph",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 1,
+          "sourceHeading": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp02_q02",
+          "intent": "How has the LFPR changed from rural to urban areas over the past few years?",
+          "questionType": "trend",
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": null,
+            "groupBy": [
+              {
+                "entityRef": "LFPR"
+              }
+            ],
+            "filters": [
+              {
+                "entityRef": "Rural/Urban Sector"
+              }
+            ],
+            "time": null,
+            "sort": null,
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_029",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_005",
+              "role": "filter",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp02_q02_c1",
+                "renderOrder": 1,
+                "type": "narrative_paragraph",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 1,
+          "sourceHeading": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp02_q03",
+          "intent": "What is the LFPR for individuals aged 15-29 compared to those aged 15-59?",
+          "questionType": "composition",
+          "analyticsSpec": {
+            "operation": "share",
+            "measure": null,
+            "groupBy": [
+              {
+                "entityRef": "Age Group"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": null,
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_007",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp02_q03_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 1,
+          "sourceHeading": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+          "priority": "high"
+        }
+      ],
+      "pageRange": [
+        1,
+        1
+      ]
+    },
+    {
+      "topicId": "topic_03",
+      "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "description": "Questions from chapter: 2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "questions": [
+        {
+          "questionId": "sp03_q01",
+          "intent": "How did the Worker Population Ratio (WPR) for males compare to females in 2025?",
+          "questionType": "comparison",
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": null,
+            "groupBy": [
+              {
+                "entityRef": "Worker Population Ratio"
+              }
+            ],
+            "filters": [
+              {
+                "entityRef": "Gender"
+              }
+            ],
+            "time": null,
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_004",
+              "role": "filter",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp03_q01_c1",
+                "renderOrder": 1,
+                "type": "narrative_paragraph",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 2,
+          "sourceHeading": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp03_q02",
+          "intent": "What was the distribution of the Worker Population Ratio (WPR) between rural and urban areas in 2025?",
+          "questionType": "distribution",
+          "analyticsSpec": {
+            "operation": "distribution",
+            "measure": {
+              "entityRef": "Worker Population Ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "Rural/Urban Sector"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": null,
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_005",
+              "role": "breakdown",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp03_q02_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 2,
+          "sourceHeading": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp03_q03",
+          "intent": "How did the Worker Population Ratio (WPR) for males and females differ in terms of their composition in 2025?",
+          "questionType": "composition",
+          "analyticsSpec": {
+            "operation": "share",
+            "measure": null,
+            "groupBy": [
+              {
+                "entityRef": "Worker Population Ratio"
+              }
+            ],
+            "filters": [
+              {
+                "entityRef": "Gender"
+              }
+            ],
+            "time": null,
+            "sort": null,
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_004",
+              "role": "filter",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp03_q03_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 2,
+          "sourceHeading": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+          "priority": "high"
+        }
+      ],
+      "pageRange": [
+        2,
+        2
+      ]
+    },
+    {
+      "topicId": "topic_04",
+      "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "description": "Questions from chapter: 3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "questions": [
+        {
+          "questionId": "sp04_q01",
+          "intent": "What is the difference in unemployment rate between males and females?",
+          "questionType": "comparison",
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "Unemployment Rate"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "Gender"
+              }
+            ],
+            "time": null,
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_004",
+              "role": "filter",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp04_q01_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 3,
+          "sourceHeading": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp04_q02",
+          "intent": "How much did the unemployment rate in rural areas decrease from 2022 to 2025?",
+          "questionType": "trend",
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "Unemployment Rate"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "Rural/Urban Sector"
+              }
+            ],
+            "time": null,
+            "sort": null,
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_005",
+              "role": "filter",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp04_q02_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 3,
+          "sourceHeading": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp04_q03",
+          "intent": "Which age group had the highest unemployment rate in 2025?",
+          "questionType": "ranking",
+          "analyticsSpec": {
+            "operation": "rank",
+            "measure": null,
+            "groupBy": [
+              {
+                "entityRef": "Age Group"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": 10,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_007",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "sp04_q03_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 3,
+          "sourceHeading": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+          "priority": "high"
+        }
+      ],
+      "pageRange": [
+        3,
+        3
+      ]
+    },
+    {
+      "topicId": "topic_05",
+      "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+      "description": "Questions from chapter: 4 Increase in proportion of workers with regular wage/ salary employment",
+      "questions": [
+        {
+          "questionId": "sp05_q01",
+          "intent": "How did the proportion of workers with regular wage/salary employment change from 2022 to 2025?",
+          "questionType": "trend",
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "Survey Year"
+            },
+            "groupBy": [
+              {
+                "entityRef": "Labour Force Participation Rate"
+              },
+              {
+                "entityRef": "Worker Population Ratio"
+              },
+              {
+                "entityRef": "Unemployment Rate"
+              },
+              {
+                "entityRef": "Gender"
+              },
+              {
+                "entityRef": "Rural/Urban Sector"
+              },
+              {
+                "entityRef": "Age Group"
+              },
+              {
+                "entityRef": "Status in Employment"
+              },
+              {
+                "entityRef": "Usual Status (ps+ss)"
+              },
+              {
+                "entityRef": "Periodic Labour Force Survey"
+              },
+              {
+                "entityRef": "MoSPI"
+              },
+              {
+                "entityRef": "Key Highligts of PLFS"
+              },
+              {
+                "entityRef": "Annual Report 2025"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": null,
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_002",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_003",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_005",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_006",
+              "role": "measure",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_007",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_008",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_009",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_010",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_011",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_016",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_016",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "multi-panel",
+            "components": [
+              {
+                "componentId": "sp05_q01_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "4. Increase in proportion of workers with regular wage/ salary employment",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp05_q02",
+          "intent": "What was the difference in the proportion of male workers with regular wage/salary employment between 2022 and 2025?",
+          "questionType": "comparison",
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": null,
+            "groupBy": [
+              {
+                "entityRef": "Gender"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp05_q02_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "4. Increase in proportion of workers with regular wage/ salary employment",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp05_q03",
+          "intent": "How did the proportion of female workers with regular wage/salary employment compare to that of males in 2025?",
+          "questionType": "composition",
+          "analyticsSpec": {
+            "operation": "share",
+            "measure": null,
+            "groupBy": [
+              {
+                "entityRef": "Gender"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": null,
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp05_q03_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 4,
+          "sourceHeading": "4. Increase in proportion of workers with regular wage/ salary employment",
+          "priority": "high"
+        }
+      ],
+      "pageRange": [
+        4,
+        4
+      ]
+    },
+    {
+      "topicId": "topic_06",
+      "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "description": "Questions from chapter: 5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "questions": [
+        {
+          "questionId": "sp06_q01",
+          "intent": "How did the unemployment rate in manufacturing and service sectors compare between 2024 and 2025?",
+          "questionType": "comparison",
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "Unemployment Rate"
+            },
+            "groupBy": [],
+            "filters": [],
+            "time": null,
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp06_q01_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp06_q02",
+          "intent": "What was the change in the unemployment rate for males in manufacturing and service sectors from 2024 to 2025?",
+          "questionType": "trend",
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "Unemployment Rate"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "Gender"
+              }
+            ],
+            "time": null,
+            "sort": null,
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            },
+            {
+              "entityId": "ent_004",
+              "role": "filter",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp06_q02_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp06_q03",
+          "intent": "In what year did the unemployment rate in manufacturing and service sectors reach its highest value?",
+          "questionType": "ranking",
+          "analyticsSpec": {
+            "operation": "rank",
+            "measure": {
+              "entityRef": "Unemployment Rate"
+            },
+            "groupBy": [],
+            "filters": [],
+            "time": null,
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": 10,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "sp06_q03_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp07_q01",
+          "intent": "How did the average earnings of male workers change from 2024 to 2025?",
+          "questionType": "trend",
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": null,
+            "groupBy": [
+              {
+                "entityRef": "Gender"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": null,
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "sp07_q01_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "6. Earnings of female workers have seen a notable shift",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp07_q02",
+          "intent": "What was the percentage increase in the average earnings of female workers between 2024 and 2025?",
+          "questionType": "comparison",
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": null,
+            "groupBy": [
+              {
+                "entityRef": "Gender"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "sp07_q02_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "6. Earnings of female workers have seen a notable shift",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp07_q03",
+          "intent": "Which sector saw the highest increase in the average earnings of female workers between 2024 and 2025?",
+          "questionType": "ranking",
+          "analyticsSpec": {
+            "operation": "rank",
+            "measure": null,
+            "groupBy": [
+              {
+                "entityRef": "Gender"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": 10,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "sp07_q03_c1",
+                "renderOrder": 1,
+                "type": "metric_card",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 5,
+          "sourceHeading": "6. Earnings of female workers have seen a notable shift",
+          "priority": "high"
+        }
+      ],
+      "pageRange": [
+        5,
+        5
+      ]
+    },
+    {
+      "topicId": "topic_08",
+      "title": "7 Average number of years in formal education",
+      "description": "Questions from chapter: 7 Average number of years in formal education",
+      "questions": [
+        {
+          "questionId": "sp08_q01",
+          "intent": "Compare the average number of years in formal education for males and females.",
+          "questionType": "comparison",
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": null,
+            "groupBy": [
+              {
+                "entityRef": "Gender"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp08_q01_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 6,
+          "sourceHeading": "7 Average number of years in formal education",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp08_q02",
+          "intent": "Determine the difference in the average number of years in formal education between urban and rural areas.",
+          "questionType": "comparison",
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": null,
+            "groupBy": [
+              {
+                "entityRef": "Rural/Urban Sector"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_005",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "split",
+            "components": [
+              {
+                "componentId": "sp08_q02_c1",
+                "renderOrder": 1,
+                "type": "data_table",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 6,
+          "sourceHeading": "7 Average number of years in formal education",
+          "priority": "high"
+        },
+        {
+          "questionId": "sp08_q03",
+          "intent": "Describe the trend in the average number of years in formal education over the past five years.",
+          "questionType": "trend",
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": null,
+            "groupBy": [
+              {
+                "entityRef": "Survey Year"
+              }
+            ],
+            "filters": [],
+            "time": null,
+            "sort": null,
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "inferenceMethod": "vlm",
+          "inferenceConfidence": 0.8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_006",
+              "role": "groupBy",
+              "confidence": 0.7,
+              "bindingMethod": "vlm"
+            }
+          ],
+          "answerStructure": {
+            "layoutType": "single",
+            "components": [
+              {
+                "componentId": "sp08_q03_c1",
+                "renderOrder": 1,
+                "type": "line_chart",
+                "constraints": {},
+                "refs": {}
+              }
+            ]
+          },
+          "pageIndex": 6,
+          "sourceHeading": "7 Average number of years in formal education",
+          "priority": "high"
+        }
+      ],
+      "pageRange": [
+        6,
+        10
+      ]
+    }
+  ],
+  "tableTemplates": [],
+  "documentMap": {
+    "title": "test 7",
+    "chapters": [
+      {
+        "chapterId": "ch_01",
+        "title": "Periodic Labour Force Survey (PLFS) Annual",
+        "pageRange": [
+          0,
+          0
+        ],
+        "level": 2,
+        "sections": [
+          {
+            "sectionId": "sec_01_01",
+            "title": "Report, 2025 [January, 2025 December, 2025]",
+            "page": 0,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_01_02",
+            "title": "Key findings",
+            "page": 0,
+            "level": 2
+          }
+        ]
+      },
+      {
+        "chapterId": "ch_02",
+        "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+        "pageRange": [
+          1,
+          1
+        ],
+        "level": 1,
+        "sections": [
+          {
+            "sectionId": "sec_02_01",
+            "title": "Key Highligts of PLFS, Annual Report 2025",
+            "page": 1,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_02_02",
+            "title": "1. Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+            "page": 1,
+            "level": 2
+          }
+        ]
+      },
+      {
+        "chapterId": "ch_03",
+        "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+        "pageRange": [
+          2,
+          2
+        ],
+        "level": 1,
+        "sections": [
+          {
+            "sectionId": "sec_03_01",
+            "title": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+            "page": 2,
+            "level": 2
+          }
+        ]
+      },
+      {
+        "chapterId": "ch_04",
+        "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+        "pageRange": [
+          3,
+          3
+        ],
+        "level": 1,
+        "sections": [
+          {
+            "sectionId": "sec_04_01",
+            "title": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+            "page": 3,
+            "level": 2
+          }
+        ]
+      },
+      {
+        "chapterId": "ch_05",
+        "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+        "pageRange": [
+          4,
+          4
+        ],
+        "level": 1,
+        "sections": [
+          {
+            "sectionId": "sec_05_01",
+            "title": "4. Increase in proportion of workers with regular wage/ salary employment",
+            "page": 4,
+            "level": 2
+          }
+        ]
+      },
+      {
+        "chapterId": "ch_06",
+        "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+        "pageRange": [
+          5,
+          5
+        ],
+        "level": 1,
+        "sections": []
+      },
+      {
+        "chapterId": "ch_07",
+        "title": "6 Earnings of female workers have seen a notable shift",
+        "pageRange": [
+          5,
+          5
+        ],
+        "level": 1,
+        "sections": [
+          {
+            "sectionId": "sec_07_01",
+            "title": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+            "page": 5,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_07_02",
+            "title": "6. Earnings of female workers have seen notable shift",
+            "page": 5,
+            "level": 2
+          }
+        ]
+      },
+      {
+        "chapterId": "ch_08",
+        "title": "7 Average number of years in formal education",
+        "pageRange": [
+          6,
+          10
+        ],
+        "level": 1,
+        "sections": [
+          {
+            "sectionId": "sec_08_01",
+            "title": "7. Average number of years in formal education",
+            "page": 6,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_02",
+            "title": "Endnote: brief about the objective, sample size, changes in sample design, conceptual",
+            "page": 7,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_03",
+            "title": "framework and comparability of results of the Periodic Labour Force Survey (PLFS):",
+            "page": 7,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_04",
+            "title": "A. Introduction",
+            "page": 7,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_05",
+            "title": "B. Sample Size",
+            "page": 7,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_06",
+            "title": "A Introduction",
+            "page": 7,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_07",
+            "title": "B Sample Size",
+            "page": 7,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_08",
+            "title": "Sample Size for First Visit during January 2025 December 2025 in rural and urban areas for",
+            "page": 8,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_09",
+            "title": "the Annual Report:",
+            "page": 8,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_10",
+            "title": "C. Changes in Sample Design of PLFS",
+            "page": 8,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_11",
+            "title": "PLFS: Changes in 2025",
+            "page": 8,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_12",
+            "title": "D. Conceptual Framework of Key Indicators",
+            "page": 8,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_13",
+            "title": "Labour Force Participation Rate (LFPR):",
+            "page": 8,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_14",
+            "title": "C Changes in Sample Design of PLFS",
+            "page": 8,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_15",
+            "title": "D Conceptual Framework of Key Indicators",
+            "page": 8,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_16",
+            "title": "Worker Population Ratio (WPR):",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_17",
+            "title": "Unemployment Rate (UR):",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_18",
+            "title": "Activity Status Usual Status:",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_19",
+            "title": "Principal activity status (ps):",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_20",
+            "title": "Subsidiary economic activity status (ss):",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_21",
+            "title": "Activity Status Current Weekly Status (CWS):",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_22",
+            "title": "E. Compatibility of PLFS 2025 results",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_23",
+            "title": "E. Detailed tables included in the Annual Report",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_24",
+            "title": "Scan the QR code below to access MoSPI",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_25",
+            "title": "Publications/ Reports",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_26",
+            "title": "E Compatibility of PLFS 2025 results",
+            "page": 9,
+            "level": 2
+          },
+          {
+            "sectionId": "sec_08_27",
+            "title": "E Detailed tables included in the Annual Report",
+            "page": 9,
+            "level": 2
+          }
+        ]
+      }
+    ],
+    "sectionPatterns": [
+      {
+        "sectionId": "sec_01_01",
+        "title": "Report, 2025 [January, 2025 December, 2025]",
+        "pageRange": [
+          0,
+          10
+        ],
+        "pattern": "descriptive",
+        "level": 2,
+        "chapterId": "ch_01",
+        "suggested_components": [
+          "narrative_paragraph"
+        ]
+      },
+      {
+        "sectionId": "sec_01_02",
+        "title": "Key findings",
+        "pageRange": [
+          0,
+          10
+        ],
+        "pattern": "descriptive",
+        "level": 2,
+        "chapterId": "ch_01",
+        "suggested_components": [
+          "narrative_paragraph"
+        ]
+      },
+      {
+        "sectionId": "sec_02_01",
+        "title": "Key Highligts of PLFS, Annual Report 2025",
+        "pageRange": [
+          1,
+          10
+        ],
+        "pattern": "descriptive",
+        "level": 2,
+        "chapterId": "ch_02",
+        "suggested_components": [
+          "narrative_paragraph"
+        ]
+      },
+      {
+        "sectionId": "sec_02_02",
+        "title": "1. Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+        "pageRange": [
+          1,
+          10
+        ],
+        "pattern": "descriptive",
+        "level": 2,
+        "chapterId": "ch_02",
+        "suggested_components": [
+          "narrative_paragraph"
+        ]
+      },
+      {
+        "sectionId": "sec_03_01",
+        "title": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+        "pageRange": [
+          2,
+          10
+        ],
+        "pattern": "descriptive",
+        "level": 2,
+        "chapterId": "ch_03",
+        "suggested_components": [
+          "narrative_paragraph"
+        ]
+      },
+      {
+        "sectionId": "sec_04_01",
+        "title": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+        "pageRange": [
+          3,
+          10
+        ],
+        "pattern": "descriptive",
+        "level": 2,
+        "chapterId": "ch_04",
+        "suggested_components": [
+          "narrative_paragraph"
+        ]
+      },
+      {
+        "sectionId": "sec_05_01",
+        "title": "4. Increase in proportion of workers with regular wage/ salary employment",
+        "pageRange": [
+          4,
+          10
+        ],
+        "pattern": "descriptive",
+        "level": 2,
+        "chapterId": "ch_05",
+        "suggested_components": [
+          "narrative_paragraph"
+        ]
+      },
+      {
+        "sectionId": "ch_06",
+        "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+        "pageRange": [
+          5,
+          10
+        ],
+        "pattern": "descriptive",
+        "level": 1,
+        "chapterId": "ch_06",
+        "suggested_components": [
+          "narrative_paragraph"
+        ]
+      },
+      {
+        "sectionId": "sec_07_01",
+        "title": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+        "pageRange": [
+          5,
+          10
+        ],
+        "pattern": "descriptive",
+        "level": 2,
+        "chapterId": "ch_07",
+        "suggested_components": [
+          "narrative_paragraph"
+        ]
+      },
+      {
+        "sectionId": "sec_07_02",
+        "title": "6. Earnings of female workers have seen notable shift",
+        "pageRange": [
+          5,
+          10
+        ],
+        "pattern": "descriptive",
+        "level": 2,
+        "chapterId": "ch_07",
+        "suggested_components": [
+          "narrative_paragraph"
+        ]
+      },
+      {
+        "sectionId": "sec_08_01",
+        "title": "7. Average number of years in formal education",
+        "pageRange": [
+          6,
+          6
+        ],
+        "pattern": "executive_summary",
+        "level": 2,
+        "chapterId": "ch_08",
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      },
+      {
+        "sectionId": "sec_08_02",
+        "title": "Endnote: brief about the objective, sample size, changes in sample design, conceptual",
+        "pageRange": [
+          7,
+          7
+        ],
+        "pattern": "executive_summary",
+        "level": 2,
+        "chapterId": "ch_08",
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      },
+      {
+        "sectionId": "sec_08_03",
+        "title": "framework and comparability of results of the Periodic Labour Force Survey (PLFS):",
+        "pageRange": [
+          7,
+          7
+        ],
+        "pattern": "executive_summary",
+        "level": 2,
+        "chapterId": "ch_08",
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      },
+      {
+        "sectionId": "sec_08_04",
+        "title": "A. Introduction",
+        "pageRange": [
+          7,
+          7
+        ],
+        "pattern": "executive_summary",
+        "level": 2,
+        "chapterId": "ch_08",
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      },
+      {
+        "sectionId": "sec_08_05",
+        "title": "B. Sample Size",
+        "pageRange": [
+          7,
+          7
+        ],
+        "pattern": "executive_summary",
+        "level": 2,
+        "chapterId": "ch_08",
+        "suggested_components": [
+          "narrative_paragraph",
+          "metric_card"
+        ]
+      }
+    ]
+  },
+  "glossary": {
+    "LFPR": "Labour Force Participation Rate ΓÇö share of population in the labour force."
+  },
+  "palette": {
+    "paletteId": "mospi_default",
+    "sequential": [
+      "#DEEBF7",
+      "#9ECAE1",
+      "#4292C6",
+      "#08519C"
+    ],
+    "categorical": {
+      "Rural": "#1F7A1F",
+      "Urban": "#0B5394",
+      "Male": "#0B5394",
+      "Female": "#CC4125",
+      "Total": "#666666"
+    },
+    "semantic": {
+      "positive": "#548235",
+      "negative": "#C55A11",
+      "neutral": "#9DC3E6"
+    }
+  },
+  "renderProfile": {
+    "numberFormat": {
+      "locale": "en-IN",
+      "grouping": "lakh-crore",
+      "decimalSeparator": "."
+    },
+    "percentFormat": {
+      "decimals": 1,
+      "suffix": "%"
+    },
+    "currencyFormat": {
+      "symbol": "Γé╣",
+      "grouping": "lakh-crore",
+      "decimals": 0
+    },
+    "fontFamily": "Noto Sans",
+    "pageSize": "A4"
+  },
+  "figureTemplates": []
+}

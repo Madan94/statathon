@@ -1,0 +1,1427 @@
+﻿{
+  "$schema": "bharatstat/template-ast/v1",
+  "metadata": {
+    "templateId": "doc_05408b8c",
+    "blueprintRef": "doc_05408b8c",
+    "name": "test 7",
+    "locale": "en-IN",
+    "version": "3.0",
+    "valueFree": true,
+    "generatedFrom": "test 7"
+  },
+  "styleAST": {
+    "styles": []
+  },
+  "semanticAST": {
+    "hierarchy": [
+      {
+        "nodeId": "ch_01",
+        "level": 1,
+        "title": "Periodic Labour Force Survey (PLFS) Annual",
+        "pageSpan": [
+          0,
+          0
+        ],
+        "children": [
+          {
+            "nodeId": "sec_01_01",
+            "level": 2,
+            "title": "Report, 2025 [January, 2025 December, 2025]",
+            "pageSpan": [
+              0,
+              0
+            ]
+          },
+          {
+            "nodeId": "sec_01_02",
+            "level": 2,
+            "title": "Key findings",
+            "pageSpan": [
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      {
+        "nodeId": "ch_02",
+        "level": 1,
+        "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+        "pageSpan": [
+          1,
+          1
+        ],
+        "children": [
+          {
+            "nodeId": "sec_02_01",
+            "level": 2,
+            "title": "Key Highligts of PLFS, Annual Report 2025",
+            "pageSpan": [
+              1,
+              1
+            ]
+          },
+          {
+            "nodeId": "sec_02_02",
+            "level": 2,
+            "title": "1. Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+            "pageSpan": [
+              1,
+              1
+            ]
+          }
+        ]
+      },
+      {
+        "nodeId": "ch_03",
+        "level": 1,
+        "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+        "pageSpan": [
+          2,
+          2
+        ],
+        "children": [
+          {
+            "nodeId": "sec_03_01",
+            "level": 2,
+            "title": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+            "pageSpan": [
+              2,
+              2
+            ]
+          }
+        ]
+      },
+      {
+        "nodeId": "ch_04",
+        "level": 1,
+        "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+        "pageSpan": [
+          3,
+          3
+        ],
+        "children": [
+          {
+            "nodeId": "sec_04_01",
+            "level": 2,
+            "title": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+            "pageSpan": [
+              3,
+              3
+            ]
+          }
+        ]
+      },
+      {
+        "nodeId": "ch_05",
+        "level": 1,
+        "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+        "pageSpan": [
+          4,
+          4
+        ],
+        "children": [
+          {
+            "nodeId": "sec_05_01",
+            "level": 2,
+            "title": "4. Increase in proportion of workers with regular wage/ salary employment",
+            "pageSpan": [
+              4,
+              4
+            ]
+          }
+        ]
+      },
+      {
+        "nodeId": "ch_06",
+        "level": 1,
+        "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+        "pageSpan": [
+          5,
+          5
+        ],
+        "children": []
+      },
+      {
+        "nodeId": "ch_07",
+        "level": 1,
+        "title": "6 Earnings of female workers have seen a notable shift",
+        "pageSpan": [
+          5,
+          5
+        ],
+        "children": [
+          {
+            "nodeId": "sec_07_01",
+            "level": 2,
+            "title": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+            "pageSpan": [
+              5,
+              5
+            ]
+          },
+          {
+            "nodeId": "sec_07_02",
+            "level": 2,
+            "title": "6. Earnings of female workers have seen notable shift",
+            "pageSpan": [
+              5,
+              5
+            ]
+          }
+        ]
+      },
+      {
+        "nodeId": "ch_08",
+        "level": 1,
+        "title": "7 Average number of years in formal education",
+        "pageSpan": [
+          6,
+          10
+        ],
+        "children": [
+          {
+            "nodeId": "sec_08_01",
+            "level": 2,
+            "title": "7. Average number of years in formal education",
+            "pageSpan": [
+              6,
+              6
+            ]
+          },
+          {
+            "nodeId": "sec_08_02",
+            "level": 2,
+            "title": "Endnote: brief about the objective, sample size, changes in sample design, conceptual",
+            "pageSpan": [
+              7,
+              7
+            ]
+          },
+          {
+            "nodeId": "sec_08_03",
+            "level": 2,
+            "title": "framework and comparability of results of the Periodic Labour Force Survey (PLFS):",
+            "pageSpan": [
+              7,
+              7
+            ]
+          },
+          {
+            "nodeId": "sec_08_04",
+            "level": 2,
+            "title": "A. Introduction",
+            "pageSpan": [
+              7,
+              7
+            ]
+          },
+          {
+            "nodeId": "sec_08_05",
+            "level": 2,
+            "title": "B. Sample Size",
+            "pageSpan": [
+              7,
+              7
+            ]
+          },
+          {
+            "nodeId": "sec_08_06",
+            "level": 2,
+            "title": "A Introduction",
+            "pageSpan": [
+              7,
+              7
+            ]
+          },
+          {
+            "nodeId": "sec_08_07",
+            "level": 2,
+            "title": "B Sample Size",
+            "pageSpan": [
+              7,
+              7
+            ]
+          },
+          {
+            "nodeId": "sec_08_08",
+            "level": 2,
+            "title": "Sample Size for First Visit during January 2025 December 2025 in rural and urban areas for",
+            "pageSpan": [
+              8,
+              8
+            ]
+          },
+          {
+            "nodeId": "sec_08_09",
+            "level": 2,
+            "title": "the Annual Report:",
+            "pageSpan": [
+              8,
+              8
+            ]
+          },
+          {
+            "nodeId": "sec_08_10",
+            "level": 2,
+            "title": "C. Changes in Sample Design of PLFS",
+            "pageSpan": [
+              8,
+              8
+            ]
+          },
+          {
+            "nodeId": "sec_08_11",
+            "level": 2,
+            "title": "PLFS: Changes in 2025",
+            "pageSpan": [
+              8,
+              8
+            ]
+          },
+          {
+            "nodeId": "sec_08_12",
+            "level": 2,
+            "title": "D. Conceptual Framework of Key Indicators",
+            "pageSpan": [
+              8,
+              8
+            ]
+          },
+          {
+            "nodeId": "sec_08_13",
+            "level": 2,
+            "title": "Labour Force Participation Rate (LFPR):",
+            "pageSpan": [
+              8,
+              8
+            ]
+          },
+          {
+            "nodeId": "sec_08_14",
+            "level": 2,
+            "title": "C Changes in Sample Design of PLFS",
+            "pageSpan": [
+              8,
+              8
+            ]
+          },
+          {
+            "nodeId": "sec_08_15",
+            "level": 2,
+            "title": "D Conceptual Framework of Key Indicators",
+            "pageSpan": [
+              8,
+              8
+            ]
+          },
+          {
+            "nodeId": "sec_08_16",
+            "level": 2,
+            "title": "Worker Population Ratio (WPR):",
+            "pageSpan": [
+              9,
+              9
+            ]
+          },
+          {
+            "nodeId": "sec_08_17",
+            "level": 2,
+            "title": "Unemployment Rate (UR):",
+            "pageSpan": [
+              9,
+              9
+            ]
+          },
+          {
+            "nodeId": "sec_08_18",
+            "level": 2,
+            "title": "Activity Status Usual Status:",
+            "pageSpan": [
+              9,
+              9
+            ]
+          },
+          {
+            "nodeId": "sec_08_19",
+            "level": 2,
+            "title": "Principal activity status (ps):",
+            "pageSpan": [
+              9,
+              9
+            ]
+          },
+          {
+            "nodeId": "sec_08_20",
+            "level": 2,
+            "title": "Subsidiary economic activity status (ss):",
+            "pageSpan": [
+              9,
+              9
+            ]
+          },
+          {
+            "nodeId": "sec_08_21",
+            "level": 2,
+            "title": "Activity Status Current Weekly Status (CWS):",
+            "pageSpan": [
+              9,
+              9
+            ]
+          },
+          {
+            "nodeId": "sec_08_22",
+            "level": 2,
+            "title": "E. Compatibility of PLFS 2025 results",
+            "pageSpan": [
+              9,
+              9
+            ]
+          },
+          {
+            "nodeId": "sec_08_23",
+            "level": 2,
+            "title": "E. Detailed tables included in the Annual Report",
+            "pageSpan": [
+              9,
+              9
+            ]
+          },
+          {
+            "nodeId": "sec_08_24",
+            "level": 2,
+            "title": "Scan the QR code below to access MoSPI",
+            "pageSpan": [
+              9,
+              9
+            ]
+          },
+          {
+            "nodeId": "sec_08_25",
+            "level": 2,
+            "title": "Publications/ Reports",
+            "pageSpan": [
+              9,
+              9
+            ]
+          },
+          {
+            "nodeId": "sec_08_26",
+            "level": 2,
+            "title": "E Compatibility of PLFS 2025 results",
+            "pageSpan": [
+              9,
+              9
+            ]
+          },
+          {
+            "nodeId": "sec_08_27",
+            "level": 2,
+            "title": "E Detailed tables included in the Annual Report",
+            "pageSpan": [
+              9,
+              9
+            ]
+          }
+        ]
+      }
+    ],
+    "_quality": "ok"
+  },
+  "contentAST": {
+    "blocks": [
+      {
+        "blockId": "p_sp01_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp01_q01",
+        "templateQuestion": "Compare the Unemployment Rate (UR) for males and females in the PLFS survey.",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp01_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp01_q02",
+        "templateQuestion": "Determine if there was an increase or decrease in the Unemployment Rate (UR) over the period from 2024 to 2025.",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp01_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp01_q03",
+        "templateQuestion": "Identify the distribution of Unemployment Rate (UR) across different age groups in the PLFS survey.",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp02_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp02_q01",
+        "templateQuestion": "What is the difference in the LFPR between males and females?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp02_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp02_q02",
+        "templateQuestion": "How has the LFPR changed from rural to urban areas over the past few years?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp02_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp02_q03",
+        "templateQuestion": "What is the LFPR for individuals aged 15-29 compared to those aged 15-59?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp03_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp03_q01",
+        "templateQuestion": "How did the Worker Population Ratio (WPR) for males compare to females in 2025?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp03_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp03_q02",
+        "templateQuestion": "What was the distribution of the Worker Population Ratio (WPR) between rural and urban areas in 2025?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp03_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp03_q03",
+        "templateQuestion": "How did the Worker Population Ratio (WPR) for males and females differ in terms of their composition in 2025?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp04_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp04_q01",
+        "templateQuestion": "What is the difference in unemployment rate between males and females?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp04_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp04_q02",
+        "templateQuestion": "How much did the unemployment rate in rural areas decrease from 2022 to 2025?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp04_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp04_q03",
+        "templateQuestion": "Which age group had the highest unemployment rate in 2025?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp05_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp05_q01",
+        "templateQuestion": "How did the proportion of workers with regular wage/salary employment change from 2022 to 2025?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp05_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp05_q02",
+        "templateQuestion": "What was the difference in the proportion of male workers with regular wage/salary employment between 2022 and 2025?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp05_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp05_q03",
+        "templateQuestion": "How did the proportion of female workers with regular wage/salary employment compare to that of males in 2025?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp06_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp06_q01",
+        "templateQuestion": "How did the unemployment rate in manufacturing and service sectors compare between 2024 and 2025?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp06_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp06_q02",
+        "templateQuestion": "What was the change in the unemployment rate for males in manufacturing and service sectors from 2024 to 2025?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp06_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp06_q03",
+        "templateQuestion": "In what year did the unemployment rate in manufacturing and service sectors reach its highest value?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp07_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp07_q01",
+        "templateQuestion": "How did the average earnings of male workers change from 2024 to 2025?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp07_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp07_q02",
+        "templateQuestion": "What was the percentage increase in the average earnings of female workers between 2024 and 2025?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp07_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp07_q03",
+        "templateQuestion": "Which sector saw the highest increase in the average earnings of female workers between 2024 and 2025?",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp08_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp08_q01",
+        "templateQuestion": "Compare the average number of years in formal education for males and females.",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp08_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp08_q02",
+        "templateQuestion": "Determine the difference in the average number of years in formal education between urban and rural areas.",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp08_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp08_q03",
+        "templateQuestion": "Describe the trend in the average number of years in formal education over the past five years.",
+        "slot": {
+          "status": "empty"
+        }
+      }
+    ],
+    "lists": [],
+    "quotes": []
+  },
+  "tableAST": {
+    "tables": []
+  },
+  "chartAST": {
+    "charts": [
+      {
+        "type": "chart",
+        "chartType": "bar_chart",
+        "title": "The Worker Population Ratio (WPR) for persons aged 15 years and above remains sustained in 2025.",
+        "page": 2,
+        "pageRef": "page_003",
+        "description": "The Worker Population Ratio (WPR) for persons aged 15 years and above remains sustained in 2025.",
+        "detectionSource": "vlm",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "type": "chart",
+        "chartType": "line_chart",
+        "title": "The Worker Population Ratio (WPR) for persons aged 15 years and above remains sustained in 2025.",
+        "page": 2,
+        "pageRef": "page_003",
+        "description": "The Worker Population Ratio (WPR) for persons aged 15 years and above remains sustained in 2025.",
+        "detectionSource": "vlm",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "type": "chart",
+        "chartType": "bar_chart",
+        "title": "The press release discusses unemployment rates and their stability across different regions and genders.",
+        "page": 3,
+        "pageRef": "page_004",
+        "description": "The press release discusses unemployment rates and their stability across different regions and genders.",
+        "detectionSource": "vlm",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "type": "chart",
+        "chartType": "line_chart",
+        "title": "The press release discusses unemployment rates and their stability across different regions and genders.",
+        "page": 3,
+        "pageRef": "page_004",
+        "description": "The press release discusses unemployment rates and their stability across different regions and genders.",
+        "detectionSource": "vlm",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "type": "chart",
+        "chartType": "bar_chart",
+        "title": "The press release discusses changes in employment status distribution, including the proportion of workers with regular ",
+        "page": 4,
+        "pageRef": "page_005",
+        "description": "The press release discusses changes in employment status distribution, including the proportion of workers with regular wage/salary employment.",
+        "detectionSource": "vlm",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "type": "chart",
+        "chartType": "line_chart",
+        "title": "The press release discusses changes in employment status distribution, including the proportion of workers with regular ",
+        "page": 4,
+        "pageRef": "page_005",
+        "description": "The press release discusses changes in employment status distribution, including the proportion of workers with regular wage/salary employment.",
+        "detectionSource": "vlm",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "type": "chart",
+        "chartType": "bar_chart",
+        "title": "government press release with two embedded images",
+        "page": 5,
+        "pageRef": "page_006",
+        "description": "government press release with two embedded images",
+        "detectionSource": "vlm",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "type": "chart",
+        "chartType": "line_chart",
+        "title": "government press release with two embedded images",
+        "page": 5,
+        "pageRef": "page_006",
+        "description": "government press release with two embedded images",
+        "detectionSource": "vlm",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "type": "chart",
+        "chartType": "bar_chart",
+        "title": "Government press release discussing earnings from self-employment and casual labour work, along with average years in fo",
+        "page": 6,
+        "pageRef": "page_007",
+        "description": "Government press release discussing earnings from self-employment and casual labour work, along with average years in formal education.",
+        "detectionSource": "vlm",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "type": "chart",
+        "chartType": "line_chart",
+        "title": "Government press release discussing earnings from self-employment and casual labour work, along with average years in fo",
+        "page": 6,
+        "pageRef": "page_007",
+        "description": "Government press release discussing earnings from self-employment and casual labour work, along with average years in formal education.",
+        "detectionSource": "vlm",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "type": "chart",
+        "chartType": "bar_chart",
+        "title": "One-line summary of the entities mentioned in the text.",
+        "page": 7,
+        "pageRef": "page_008",
+        "description": "One-line summary of the entities mentioned in the text.",
+        "detectionSource": "vlm",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "type": "chart",
+        "chartType": "line_chart",
+        "title": "One-line summary of the entities mentioned in the text.",
+        "page": 7,
+        "pageRef": "page_008",
+        "description": "One-line summary of the entities mentioned in the text.",
+        "detectionSource": "vlm",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "type": "chart",
+        "chartType": "bar_chart",
+        "title": "one-line summary",
+        "page": 10,
+        "pageRef": "page_011",
+        "description": "one-line summary",
+        "detectionSource": "vlm",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "type": "chart",
+        "chartType": "line_chart",
+        "title": "one-line summary",
+        "page": 10,
+        "pageRef": "page_011",
+        "description": "one-line summary",
+        "detectionSource": "vlm",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      }
+    ]
+  },
+  "figureAST": {
+    "figures": [
+      {
+        "chartId": "chart_vlm_3_1",
+        "type": "chart",
+        "chartType": "bar_chart",
+        "title": "The Worker Population Ratio (WPR) for persons aged 15 years and above remains sustained in 2025.",
+        "page": 2,
+        "pageRef": "page_003",
+        "description": "The Worker Population Ratio (WPR) for persons aged 15 years and above remains sustained in 2025.",
+        "detectionSource": "vlm",
+        "figureId": "chart_vlm_3_1",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_vlm_3_2",
+        "type": "chart",
+        "chartType": "line_chart",
+        "title": "The Worker Population Ratio (WPR) for persons aged 15 years and above remains sustained in 2025.",
+        "page": 2,
+        "pageRef": "page_003",
+        "description": "The Worker Population Ratio (WPR) for persons aged 15 years and above remains sustained in 2025.",
+        "detectionSource": "vlm",
+        "figureId": "chart_vlm_3_2",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_vlm_4_1",
+        "type": "chart",
+        "chartType": "bar_chart",
+        "title": "The press release discusses unemployment rates and their stability across different regions and genders.",
+        "page": 3,
+        "pageRef": "page_004",
+        "description": "The press release discusses unemployment rates and their stability across different regions and genders.",
+        "detectionSource": "vlm",
+        "figureId": "chart_vlm_4_1",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_vlm_4_2",
+        "type": "chart",
+        "chartType": "line_chart",
+        "title": "The press release discusses unemployment rates and their stability across different regions and genders.",
+        "page": 3,
+        "pageRef": "page_004",
+        "description": "The press release discusses unemployment rates and their stability across different regions and genders.",
+        "detectionSource": "vlm",
+        "figureId": "chart_vlm_4_2",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_vlm_5_1",
+        "type": "chart",
+        "chartType": "bar_chart",
+        "title": "The press release discusses changes in employment status distribution, including the proportion of workers with regular ",
+        "page": 4,
+        "pageRef": "page_005",
+        "description": "The press release discusses changes in employment status distribution, including the proportion of workers with regular wage/salary employment.",
+        "detectionSource": "vlm",
+        "figureId": "chart_vlm_5_1",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_vlm_5_2",
+        "type": "chart",
+        "chartType": "line_chart",
+        "title": "The press release discusses changes in employment status distribution, including the proportion of workers with regular ",
+        "page": 4,
+        "pageRef": "page_005",
+        "description": "The press release discusses changes in employment status distribution, including the proportion of workers with regular wage/salary employment.",
+        "detectionSource": "vlm",
+        "figureId": "chart_vlm_5_2",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_vlm_6_1",
+        "type": "chart",
+        "chartType": "bar_chart",
+        "title": "government press release with two embedded images",
+        "page": 5,
+        "pageRef": "page_006",
+        "description": "government press release with two embedded images",
+        "detectionSource": "vlm",
+        "figureId": "chart_vlm_6_1",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_vlm_6_2",
+        "type": "chart",
+        "chartType": "line_chart",
+        "title": "government press release with two embedded images",
+        "page": 5,
+        "pageRef": "page_006",
+        "description": "government press release with two embedded images",
+        "detectionSource": "vlm",
+        "figureId": "chart_vlm_6_2",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_vlm_7_1",
+        "type": "chart",
+        "chartType": "bar_chart",
+        "title": "Government press release discussing earnings from self-employment and casual labour work, along with average years in fo",
+        "page": 6,
+        "pageRef": "page_007",
+        "description": "Government press release discussing earnings from self-employment and casual labour work, along with average years in formal education.",
+        "detectionSource": "vlm",
+        "figureId": "chart_vlm_7_1",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_vlm_7_2",
+        "type": "chart",
+        "chartType": "line_chart",
+        "title": "Government press release discussing earnings from self-employment and casual labour work, along with average years in fo",
+        "page": 6,
+        "pageRef": "page_007",
+        "description": "Government press release discussing earnings from self-employment and casual labour work, along with average years in formal education.",
+        "detectionSource": "vlm",
+        "figureId": "chart_vlm_7_2",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_vlm_8_1",
+        "type": "chart",
+        "chartType": "bar_chart",
+        "title": "One-line summary of the entities mentioned in the text.",
+        "page": 7,
+        "pageRef": "page_008",
+        "description": "One-line summary of the entities mentioned in the text.",
+        "detectionSource": "vlm",
+        "figureId": "chart_vlm_8_1",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_vlm_8_2",
+        "type": "chart",
+        "chartType": "line_chart",
+        "title": "One-line summary of the entities mentioned in the text.",
+        "page": 7,
+        "pageRef": "page_008",
+        "description": "One-line summary of the entities mentioned in the text.",
+        "detectionSource": "vlm",
+        "figureId": "chart_vlm_8_2",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_vlm_11_1",
+        "type": "chart",
+        "chartType": "bar_chart",
+        "title": "one-line summary",
+        "page": 10,
+        "pageRef": "page_011",
+        "description": "one-line summary",
+        "detectionSource": "vlm",
+        "figureId": "chart_vlm_11_1",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_vlm_11_2",
+        "type": "chart",
+        "chartType": "line_chart",
+        "title": "one-line summary",
+        "page": 10,
+        "pageRef": "page_011",
+        "description": "one-line summary",
+        "detectionSource": "vlm",
+        "figureId": "chart_vlm_11_2",
+        "slot": {
+          "status": "empty"
+        }
+      }
+    ]
+  },
+  "layoutAST": {
+    "pages": [
+      {
+        "pageId": "pg_1",
+        "size": "A4",
+        "regions": [
+          {
+            "regionId": "rg_ch_01",
+            "role": "heading",
+            "bindsTo": "ch_01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_ch_02",
+            "role": "heading",
+            "bindsTo": "ch_02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_ch_03",
+            "role": "heading",
+            "bindsTo": "ch_03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_ch_04",
+            "role": "heading",
+            "bindsTo": "ch_04",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_ch_05",
+            "role": "heading",
+            "bindsTo": "ch_05",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_ch_06",
+            "role": "heading",
+            "bindsTo": "ch_06",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_ch_07",
+            "role": "heading",
+            "bindsTo": "ch_07",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_ch_08",
+            "role": "heading",
+            "bindsTo": "ch_08",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp01_q01",
+            "role": "body",
+            "bindsTo": "p_sp01_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp01_q02",
+            "role": "body",
+            "bindsTo": "p_sp01_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp01_q03",
+            "role": "body",
+            "bindsTo": "p_sp01_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp02_q01",
+            "role": "body",
+            "bindsTo": "p_sp02_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp02_q02",
+            "role": "body",
+            "bindsTo": "p_sp02_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp02_q03",
+            "role": "body",
+            "bindsTo": "p_sp02_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp03_q01",
+            "role": "body",
+            "bindsTo": "p_sp03_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp03_q02",
+            "role": "body",
+            "bindsTo": "p_sp03_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp03_q03",
+            "role": "body",
+            "bindsTo": "p_sp03_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp04_q01",
+            "role": "body",
+            "bindsTo": "p_sp04_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp04_q02",
+            "role": "body",
+            "bindsTo": "p_sp04_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp04_q03",
+            "role": "body",
+            "bindsTo": "p_sp04_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp05_q01",
+            "role": "body",
+            "bindsTo": "p_sp05_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp05_q02",
+            "role": "body",
+            "bindsTo": "p_sp05_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp05_q03",
+            "role": "body",
+            "bindsTo": "p_sp05_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp06_q01",
+            "role": "body",
+            "bindsTo": "p_sp06_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp06_q02",
+            "role": "body",
+            "bindsTo": "p_sp06_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp06_q03",
+            "role": "body",
+            "bindsTo": "p_sp06_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp07_q01",
+            "role": "body",
+            "bindsTo": "p_sp07_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp07_q02",
+            "role": "body",
+            "bindsTo": "p_sp07_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp07_q03",
+            "role": "body",
+            "bindsTo": "p_sp07_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp08_q01",
+            "role": "body",
+            "bindsTo": "p_sp08_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp08_q02",
+            "role": "body",
+            "bindsTo": "p_sp08_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp08_q03",
+            "role": "body",
+            "bindsTo": "p_sp08_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_chart_vlm_3_1",
+            "role": "figure",
+            "bindsTo": "chart_vlm_3_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_chart_vlm_3_2",
+            "role": "figure",
+            "bindsTo": "chart_vlm_3_2",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_chart_vlm_4_1",
+            "role": "figure",
+            "bindsTo": "chart_vlm_4_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_chart_vlm_4_2",
+            "role": "figure",
+            "bindsTo": "chart_vlm_4_2",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_chart_vlm_5_1",
+            "role": "figure",
+            "bindsTo": "chart_vlm_5_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_chart_vlm_5_2",
+            "role": "figure",
+            "bindsTo": "chart_vlm_5_2",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_chart_vlm_6_1",
+            "role": "figure",
+            "bindsTo": "chart_vlm_6_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_chart_vlm_6_2",
+            "role": "figure",
+            "bindsTo": "chart_vlm_6_2",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_chart_vlm_7_1",
+            "role": "figure",
+            "bindsTo": "chart_vlm_7_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_chart_vlm_7_2",
+            "role": "figure",
+            "bindsTo": "chart_vlm_7_2",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_chart_vlm_8_1",
+            "role": "figure",
+            "bindsTo": "chart_vlm_8_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_chart_vlm_8_2",
+            "role": "figure",
+            "bindsTo": "chart_vlm_8_2",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_chart_vlm_11_1",
+            "role": "figure",
+            "bindsTo": "chart_vlm_11_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_chart_vlm_11_2",
+            "role": "figure",
+            "bindsTo": "chart_vlm_11_2",
+            "bbox": null
+          }
+        ]
+      }
+    ]
+  },
+  "geometryAST": {
+    "_doc": "Relative flow only. Absolute bounding boxes are computed by the layout engine at render time.",
+    "flow": [
+      "rg_ch_01",
+      "rg_ch_02",
+      "rg_ch_03",
+      "rg_ch_04",
+      "rg_ch_05",
+      "rg_ch_06",
+      "rg_ch_07",
+      "rg_ch_08",
+      "rg_p_sp01_q01",
+      "rg_p_sp01_q02",
+      "rg_p_sp01_q03",
+      "rg_p_sp02_q01",
+      "rg_p_sp02_q02",
+      "rg_p_sp02_q03",
+      "rg_p_sp03_q01",
+      "rg_p_sp03_q02",
+      "rg_p_sp03_q03",
+      "rg_p_sp04_q01",
+      "rg_p_sp04_q02",
+      "rg_p_sp04_q03",
+      "rg_p_sp05_q01",
+      "rg_p_sp05_q02",
+      "rg_p_sp05_q03",
+      "rg_p_sp06_q01",
+      "rg_p_sp06_q02",
+      "rg_p_sp06_q03",
+      "rg_p_sp07_q01",
+      "rg_p_sp07_q02",
+      "rg_p_sp07_q03",
+      "rg_p_sp08_q01",
+      "rg_p_sp08_q02",
+      "rg_p_sp08_q03",
+      "rg_chart_vlm_3_1",
+      "rg_chart_vlm_3_2",
+      "rg_chart_vlm_4_1",
+      "rg_chart_vlm_4_2",
+      "rg_chart_vlm_5_1",
+      "rg_chart_vlm_5_2",
+      "rg_chart_vlm_6_1",
+      "rg_chart_vlm_6_2",
+      "rg_chart_vlm_7_1",
+      "rg_chart_vlm_7_2",
+      "rg_chart_vlm_8_1",
+      "rg_chart_vlm_8_2",
+      "rg_chart_vlm_11_1",
+      "rg_chart_vlm_11_2"
+    ]
+  }
+}

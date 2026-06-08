@@ -158,3 +158,199 @@ def test_compaction_and_conform_idempotent():
     assert again["layoutAST"] == skeleton["layoutAST"]
     bp = build_value_free_blueprint(_AST)
     assert conform_blueprint(copy.deepcopy(bp)) == bp
+
+
+# ── chart de-duplication + figure-template synthesis (test 7 regression) ──
+
+def test_is_chart_kind_recognizes_specific_kinds():
+    from report_builder.template_emit import _is_chart_kind
+
+    for k in ("chart", "line_chart", "bar_chart", "grouped_bar_chart", "pie_chart",
+              "scatter_plot", "geographic_map", "map"):
+        assert _is_chart_kind(k), k
+    for k in ("data_table", "metric_card", "narrative_paragraph", "", None):
+        assert not _is_chart_kind(k), k
+
+
+def test_dedupe_charts_collapses_speculative_bar_line_pairs():
+    """A small VLM echoes bar+line per page (same title, empty series) — merge to one."""
+    from report_builder.template_emit import dedupe_charts
+
+    charts = [
+        {"chartId": "c2_1", "chartType": "bar_chart", "title": "WPR sustained in 2025", "page": 2, "series": []},
+        {"chartId": "c2_2", "chartType": "line_chart", "title": "WPR sustained in 2025", "page": 2, "series": []},
+        {"chartId": "c3_1", "chartType": "bar_chart", "title": "Unemployment stable", "page": 3, "series": []},
+        {"chartId": "c3_2", "chartType": "line_chart", "title": "Unemployment stable", "page": 3, "series": []},
+    ]
+    out = dedupe_charts(charts)
+    assert len(out) == 2                                   # 4 → 2 (one per page/title)
+    assert out[0]["chartTypes"] == ["bar_chart", "line_chart"]
+
+
+def test_synthesize_figure_templates_matches_specific_chart_kind():
+    """A ``line_chart`` component must yield a figure template (was dropped before)."""
+    from report_builder.template_emit import synthesize_figure_templates
+
+    bp = {"topics": [{"title": "WPR", "questions": [
+        {"questionId": "q1", "intent": "Trend of WPR",
+         "answerStructure": {"components": [
+             {"componentId": "q1_c1", "kind": "line_chart", "refs": {}},
+         ]}},
+    ]}]}
+    ft = synthesize_figure_templates(bp)
+    assert len(ft) == 1 and ft[0]["chartId"] == "q1_c1"
+
+
+def test_figure_templates_seeded_from_detected_charts():
+    """Detected charts surface as figure templates even when no question wires them."""
+    ast = {
+        "metadata": {"documentId": "doc", "title": "T"},
+        "chartAST": {"charts": [
+            {"chartId": "ch_a", "chartType": "bar_chart", "title": "A", "page": 1},
+            {"chartId": "ch_a2", "chartType": "line_chart", "title": "A", "page": 1},
+            {"chartId": "ch_b", "chartType": "pie_chart", "title": "B", "page": 2},
+        ]},
+        "figureAST": {"figures": [
+            {"figureId": "ch_a", "chartId": "ch_a", "type": "chart", "chartType": "bar_chart", "title": "A", "page": 1},
+            {"figureId": "ch_a2", "chartId": "ch_a2", "type": "chart", "chartType": "line_chart", "title": "A", "page": 1},
+            {"figureId": "ch_b", "chartId": "ch_b", "type": "chart", "chartType": "pie_chart", "title": "B", "page": 2},
+        ]},
+        "blueprint": {"entities": [], "topics": [], "tableStructures": [], "documentMap": {}},
+    }
+    bp = build_value_free_blueprint(ast)
+    ft = bp["figureTemplates"]
+    assert len(ft) == 2                                    # A (bar+line merged) + B
+    assert {f["chartId"] for f in ft} == {"ch_a", "ch_b"}
+
+
+def test_compaction_dedupes_chart_and_figure_asts():
+    """Compaction collapses the mirrored bar+line figures so counts reflect reality."""
+    import copy
+
+    ast = copy.deepcopy(_AST)
+    ast["chartAST"] = {"charts": [
+        {"chartId": "c1", "chartType": "bar_chart", "title": "WPR", "page": 2, "series": [1]},
+        {"chartId": "c2", "chartType": "line_chart", "title": "WPR", "page": 2, "series": [2]},
+    ]}
+    ast["figureAST"] = {"figures": [
+        {"figureId": "c1", "chartId": "c1", "type": "chart", "chartType": "bar_chart", "title": "WPR", "page": 2},
+        {"figureId": "c2", "chartId": "c2", "type": "chart", "chartType": "line_chart", "title": "WPR", "page": 2},
+    ]}
+    skeleton = build_value_free_skeleton(ast)
+    assert len(skeleton["chartAST"]["charts"]) == 1        # 2 → 1
+    assert len(skeleton["figureAST"]["figures"]) == 1
+    assert skeleton["chartAST"]["charts"][0]["chartTypes"] == ["bar_chart", "line_chart"]
+
+
+# ── full schema conformance vs gold (test 7 regression: tables/styles/entities/refs) ──
+
+def test_ast_and_blueprint_carry_doc_provenance():
+    """Both files must carry the gold top-level ``_doc`` string."""
+    skeleton = build_value_free_skeleton(_AST)
+    bp = build_value_free_blueprint(_AST)
+    assert skeleton["_doc"].startswith("VALUE-FREE render skeleton")
+    assert bp["_doc"].startswith("VALUE-FREE + PROSE-FREE")
+
+
+def test_styleast_backfilled_when_empty():
+    """An empty styleAST is backfilled so ``styleRef: s_body`` never dangles."""
+    import copy
+
+    ast = copy.deepcopy(_AST)
+    ast["styleAST"] = {"styles": []}
+    skeleton = build_value_free_skeleton(ast)
+    style_ids = {s["styleId"] for s in skeleton["styleAST"]["styles"]}
+    assert {"s_h1", "s_body", "s_table", "s_caption"} <= style_ids
+    # The per-question content block references s_body — it must now resolve.
+    assert skeleton["contentAST"]["blocks"][0]["styleRef"] == "s_body"
+
+
+def test_semanticast_strips_internal_diagnostics():
+    """Internal ``_quality`` diagnostics are not part of the template."""
+    import copy
+
+    ast = copy.deepcopy(_AST)
+    ast["semanticAST"]["_quality"] = {"score": 0.4, "notes": "noisy"}
+    skeleton = build_value_free_skeleton(ast)
+    assert "_quality" not in skeleton["semanticAST"]
+    assert "hierarchy" in skeleton["semanticAST"]
+
+
+def test_documentmap_conforms_to_gold_order():
+    """Legacy ``{title, chapters}`` documentMap → gold ``{order, frontMatter, backMatter}``."""
+    bp = build_value_free_blueprint(_AST)
+    dm = bp["documentMap"]
+    assert sorted(dm.keys()) == ["backMatter", "frontMatter", "order"]
+    assert dm["order"] == ["tp1"]
+    assert dm["frontMatter"] == ["title_page", "toc"]
+
+
+def test_entities_drop_unreferenced_noise_and_backfill_name():
+    """``metadata`` scaffolding entities are pruned unless a question needs them."""
+    import copy
+
+    ast = copy.deepcopy(_AST)
+    ast["blueprint"]["entities"] = [
+        {"entityId": "e1", "name": "WPR", "entityType": "measure"},
+        {"entityId": "noise_pg", "name": "page 4", "entityType": "metadata"},
+        {"entityId": "src_ctx", "name": "source", "entityType": "metadata"},
+    ]
+    bp = build_value_free_blueprint(ast)
+    ids = {e["entityId"] for e in bp["entities"]}
+    assert ids == {"e1"}                                   # both metadata noise dropped
+    assert all(e.get("canonicalName") for e in bp["entities"])
+
+
+def test_metadata_entity_kept_when_referenced():
+    """A metadata entity referenced by a question must NOT be pruned (no dangling ref)."""
+    import copy
+
+    ast = copy.deepcopy(_AST)
+    ast["blueprint"]["entities"] = [
+        {"entityId": "e1", "name": "WPR", "entityType": "measure"},
+        {"entityId": "meta_period", "name": "round", "entityType": "metadata"},
+    ]
+    ast["blueprint"]["topics"][0]["questions"][0]["requiredEntities"] = [
+        {"entityId": "meta_period", "role": "time"},
+    ]
+    bp = build_value_free_blueprint(ast)
+    assert {"e1", "meta_period"} <= {e["entityId"] for e in bp["entities"]}
+
+
+def test_components_normalized_to_gold_kind_and_refs_wired():
+    """Legacy ``{type, renderOrder, constraints, refs:{}}`` → gold ``{kind, order, refs}``."""
+    import copy
+
+    ast = copy.deepcopy(_AST)
+    ast["blueprint"]["topics"][0]["questions"][0]["answerStructure"]["components"] = [
+        {"componentId": "q1_c1", "type": "narrative_paragraph", "renderOrder": 1, "constraints": {}, "refs": {}},
+        {"componentId": "q1_c2", "type": "line_chart", "renderOrder": 2, "constraints": {}, "refs": {}},
+        {"componentId": "q1_c3", "type": "data_table", "renderOrder": 3, "constraints": {}, "refs": {}},
+    ]
+    bp = build_value_free_blueprint(ast)
+    comps = bp["topics"][0]["questions"][0]["answerStructure"]["components"]
+    by_id = {c["componentId"]: c for c in comps}
+    # generic kind + specific preserved; legacy keys gone
+    assert by_id["q1_c1"]["kind"] == "narrative" and by_id["q1_c1"]["componentKind"] == "narrative_paragraph"
+    assert by_id["q1_c2"]["kind"] == "chart"
+    assert by_id["q1_c3"]["kind"] == "table"
+    assert all("type" not in c and "renderOrder" not in c and "constraints" not in c for c in comps)
+    assert all("order" in c and "outputContract" in c for c in comps)
+    # deterministic ref wiring
+    assert by_id["q1_c1"]["refs"]["contentRef"] == "p_q1"
+    assert by_id["q1_c2"]["refs"]["chartRef"] and by_id["q1_c2"]["refs"]["figureRef"]
+
+
+def test_content_slot_fillfrom_points_at_first_component():
+    """Each content block's slot.fillFrom names the question's first component."""
+    import copy
+
+    ast = copy.deepcopy(_AST)
+    ast["blueprint"]["topics"][0]["questions"][0]["answerStructure"]["components"] = [
+        {"componentId": "q1_c1", "type": "narrative_paragraph", "renderOrder": 1, "refs": {}},
+    ]
+    skeleton = build_value_free_skeleton(ast)
+    block = skeleton["contentAST"]["blocks"][0]
+    assert block["slot"]["fillFrom"] == "q1_c1"
+    assert block["slot"]["status"] == "empty"
+

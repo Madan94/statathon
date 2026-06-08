@@ -147,8 +147,7 @@
   "confirmations": {
     "ent_wpr": {
       "entityId": "ent_wpr",
-      "status": "confirmed",
-      "note": "auto-accepted (--accept-proposed)"
+      "status": "confirmed"
     },
     "ent_lfpr": {
       "entityId": "ent_lfpr",
@@ -186,5 +185,5 @@
       "note": "auto-accepted (--accept-proposed)"
     }
   },
-  "updatedAt": 1780928401.4471092
+  "updatedAt": 1780951058.758497
 }

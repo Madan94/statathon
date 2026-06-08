@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Upload as UploadIcon, Loader2, Trash2, RefreshCw } from 'lucide-react';
+import { Upload as UploadIcon, Loader2, Trash2, RefreshCw, Link2, ArrowRight } from 'lucide-react';
 
 import PageHeader from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
@@ -172,6 +172,13 @@ function ReportBuilderContent() {
       <PageHeader
         title="Report Builder"
         description="Reverse-engineered AST · Knowledge graph · Hallucination firewall · Block-based AGUI"
+        actions={
+          <Link href="/report-builder/binding">
+            <Button variant="outline" size="sm">
+              <Link2 className="h-4 w-4" /> Bind dataset
+            </Button>
+          </Link>
+        }
       />
 
       <TemplateExtractionModal
@@ -244,7 +251,7 @@ function ReportBuilderContent() {
           </Card>
 
           {/* Generate */}
-          <Card title="2. Generate report">
+          <Card title="3. Generate report">
             <form onSubmit={onGenerate} className="space-y-3">
               <div>
                 <label className="text-xs text-text-muted mb-1 block">
@@ -292,6 +299,32 @@ function ReportBuilderContent() {
             </form>
           </Card>
         </div>
+
+        {/* Phase 1: bind dataset to template (value-free datasetAST · bindingAST) */}
+        <Link href="/report-builder/binding" className="group block">
+          <Card className="transition-colors group-hover:border-accent/60">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Link2 className="h-5 w-5" aria-hidden />
+                </span>
+                <div>
+                  <h2 className="text-lg font-semibold text-text">
+                    2. Bind dataset to template
+                  </h2>
+                  <p className="mt-1 max-w-xl text-sm text-text-muted">
+                    Map your dataset&apos;s columns to the template&apos;s entities — confirm every match —
+                    then clear the coverage gate before generating. Optional, but recommended for new datasets.
+                  </p>
+                </div>
+              </div>
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+                Open binding
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </span>
+            </div>
+          </Card>
+        </Link>
 
         {extractedTemplateAst && (
           <Card
@@ -454,7 +487,29 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
 
   // V3 figureAST (charts + figures merged)
   const figureAST = (ast.figureAST as Record<string, unknown>) || {};
-  const allFigures = Array.isArray(figureAST.figures) ? (figureAST.figures as Array<Record<string, unknown>>) : [];
+  const rawFigures = Array.isArray(figureAST.figures) ? (figureAST.figures as Array<Record<string, unknown>>) : [];
+  // De-duplicate speculative chart pairs: a small vision model often emits a bar + line
+  // guess for the SAME figure (identical page + title, empty series), doubling the count.
+  // Collapse by (page, title) and keep the candidate types — mirrors the backend template.
+  const allFigures = Object.values(
+    rawFigures.reduce<Record<string, Record<string, unknown>>>((acc, f, idx) => {
+      const title = String(f.title || f.caption || f.description || '')
+        .trim().toLowerCase().replace(/\s+/g, ' ');
+      const key = title ? `${String(f.page ?? '')}|${title}` : `__${idx}`;
+      if (title && acc[key]) {
+        const tgt = acc[key];
+        const types = Array.isArray(tgt.chartTypes)
+          ? (tgt.chartTypes as string[])
+          : tgt.chartType ? [String(tgt.chartType)] : [];
+        const ct = f.chartType ? String(f.chartType) : '';
+        if (ct && !types.includes(ct)) types.push(ct);
+        tgt.chartTypes = types;
+        return acc;
+      }
+      acc[key] = { ...f };
+      return acc;
+    }, {})
+  );
   const chartFigures = allFigures.filter(f => f.type === 'chart' || Boolean(f.chartType));
   const pureFigures = allFigures.filter(f => f.type === 'figure' && !f.chartType);
 

@@ -1078,4 +1078,197 @@ export const reportBuilderApi = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Binding phase — datasetAST · bindingAST · coverage  (confirm-every-binding)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface DatasetColumnProfile {
+  name: string;
+  dtype: string;
+  role: 'dimension' | 'measure' | 'time' | 'id' | 'metadata';
+  cardinality: number;
+  sampleValues: unknown[];
+  unit?: string | null;
+  minValue?: number | null;
+  maxValue?: number | null;
+  nullPct: number;
+}
+
+export interface DatasetColumnGroup {
+  stem: string;
+  kind: 'measureGroup' | 'periodGroup';
+  members: string[];
+}
+
+export interface DatasetAst {
+  datasetId: string;
+  sourceFile: string;
+  rowCount: number;
+  archetype: string;
+  columns: DatasetColumnProfile[];
+  columnGroups: DatasetColumnGroup[];
+  reshape: unknown[];
+}
+
+export interface BoundColumn {
+  column: string;
+  confidence: number;
+  method: string;
+}
+
+export type BindingMethod =
+  | 'exact'
+  | 'alias'
+  | 'glossary'
+  | 'synonym'
+  | 'embedding'
+  | 'manual';
+export type BindingStatus =
+  | 'proposed'
+  | 'confirmed'
+  | 'overridden'
+  | 'rejected'
+  | 'unresolved';
+export type Cardinality = 'oneToOne' | 'memberSet' | 'composite' | 'timeSeries';
+
+export interface EntityBinding {
+  entityId: string;
+  entityName: string;
+  entityType: 'dimension' | 'measure' | 'time' | 'filter' | 'metadata';
+  cardinality: Cardinality;
+  columns: BoundColumn[];
+  combine: string;
+  confidence: number;
+  method: BindingMethod;
+  status: BindingStatus;
+  alternatives: BoundColumn[];
+  typeMismatch?: boolean;
+  notes?: string[];
+}
+
+export interface ResolvedFilter {
+  column: string;
+  op: string;
+  value: unknown;
+  filterApplied: boolean;
+}
+
+export interface ResolvedTime {
+  column: string | null;
+  periods: Record<string, unknown>;
+  timeResolved: boolean;
+}
+
+export interface ResolvedRoles {
+  measures: string[];
+  dimensions: string[];
+  filters: ResolvedFilter[];
+  time: ResolvedTime;
+}
+
+export type QuestionStatus = 'executable' | 'blocked' | 'degraded';
+
+export interface QuestionBinding {
+  questionId: string;
+  status: QuestionStatus;
+  resolvedRoles: ResolvedRoles;
+  unresolvedEntities: string[];
+  notes: string[];
+}
+
+export type CoverageSeverity = 'error' | 'warn' | 'info';
+
+export interface CoverageIssue {
+  severity: CoverageSeverity;
+  code: string;
+  message: string;
+  entityId?: string;
+  questionId?: string;
+}
+
+export interface CoverageReport {
+  entities: { bound: number; pending: number; unresolved: number };
+  questions: { executable: number; blocked: number; degraded: number };
+  issues: CoverageIssue[];
+}
+
+export interface BindingStartResult {
+  template_id: string;
+  signature: string;
+  dataset_id: string;
+  dataset_ast: DatasetAst;
+  proposals: EntityBinding[];
+  confirmations: Record<string, unknown>;
+  pending: string[];
+}
+
+export interface BindingProposalsResult {
+  template_id: string;
+  signature: string;
+  dataset_id: string;
+  proposals: EntityBinding[];
+  confirmations: Record<string, unknown>;
+  pending: string[];
+}
+
+export interface BindingFinalizeResult {
+  template_id: string;
+  signature: string;
+  coverage: CoverageReport;
+  question_bindings: QuestionBinding[];
+  binding_ast: Record<string, unknown>;
+  has_errors: boolean;
+}
+
+export type BindingAction = 'confirm' | 'override' | 'reject';
+
+export const bindingPhaseApi = {
+  /** S0 profile + S1 propose. Optional blueprint file; defaults to the bundled gold PLFS template. */
+  start: async (
+    datasetFile: File,
+    templateId = 'tpl_plfs_annual_v1',
+    blueprintFile?: File
+  ): Promise<BindingStartResult> => {
+    const form = new FormData();
+    form.append('template_id', templateId);
+    form.append('dataset', datasetFile);
+    if (blueprintFile) form.append('blueprint', blueprintFile);
+    const { data } = await api.post('/report-builder/binding-phase/start', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  },
+  getProposals: async (
+    templateId: string,
+    signature: string
+  ): Promise<BindingProposalsResult> => {
+    const { data } = await api.get(
+      `/report-builder/binding-phase/${templateId}/${signature}/proposals`
+    );
+    return data;
+  },
+  /** Record one human decision (confirm / override-with-columns / reject). */
+  confirm: async (
+    templateId: string,
+    signature: string,
+    body: { entity_id: string; action: BindingAction; columns?: string[]; note?: string }
+  ): Promise<unknown> => {
+    const { data } = await api.post(
+      `/report-builder/binding-phase/${templateId}/${signature}/confirm`,
+      body
+    );
+    return data;
+  },
+  /** Apply confirmations, resolve every question (S3) + compute the coverage gate (B6). */
+  finalize: async (
+    templateId: string,
+    signature: string
+  ): Promise<BindingFinalizeResult> => {
+    const { data } = await api.post(
+      `/report-builder/binding-phase/${templateId}/${signature}/finalize`
+    );
+    return data;
+  },
+};
+
 export default api;

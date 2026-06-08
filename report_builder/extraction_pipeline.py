@@ -1370,7 +1370,9 @@ def pass2_entity_structure_extraction(
                         "figure references, or nav-bar fragments.\n"
                         "section_heading: The numbered section title if visible (e.g. '1. Stable LFPR...'). "
                         "Empty string otherwise.\n"
-                        "chart_types: bar_chart, line_chart, pie_chart, etc. if charts visible.\n"
+                        "chart_types: list each DISTINCT chart actually visible, once each "
+                        "(bar_chart, line_chart, pie_chart, …). [] if none. Do NOT guess and "
+                        "do NOT copy the example below.\n"
                         "structure_type: narrative (most pages), chart_page (if chart dominates), "
                         "title_page (cover), appendix (endnote).\n"
                         "Output ONLY this JSON:\n"
@@ -1379,7 +1381,7 @@ def pass2_entity_structure_extraction(
                         '"description":"one-line summary",'
                         '"table_title":"",'
                         '"section_heading":"numbered section title if visible else empty",'
-                        '"chart_types":["bar_chart","line_chart"],'
+                        '"chart_types":[],'
                         '"chart_titles":[]}\n'
                         "JSON only."
                     )
@@ -1399,7 +1401,8 @@ def pass2_entity_structure_extraction(
                         "(e.g. 'Statement 5.1', 'Table 3.2 — LFPR by State'). Use empty string if none.\n"
                         "3. If a section/chapter heading is visible, extract it exactly. "
                         "Use empty string if none.\n"
-                        "4. Identify charts/graphs if visible: bar, line, pie, scatter, area, map.\n"
+                        "4. Identify charts/graphs ONLY if actually visible: bar, line, pie, "
+                        "scatter, area, map. List each DISTINCT chart once; do not guess.\n"
                         "5. Provide visible chart titles if any.\n"
                         "6. Classify the dominant page structure.\n"
                         "Output ONLY this JSON (no prose, no markdown):\n"
@@ -1408,9 +1411,10 @@ def pass2_entity_structure_extraction(
                         '"description":"one-line summary",'
                         '"table_title":"Statement X.Y or table title if present else empty",'
                         '"section_heading":"Chapter or section heading if present else empty",'
-                        '"chart_types":["bar_chart","line_chart","pie_chart","scatter_plot","area_chart","map"],'
-                        '"chart_titles":["visible chart title if any"]}\n'
-                        "chart_types MUST be [] if no charts visible. JSON only."
+                        '"chart_types":[],'
+                        '"chart_titles":[]}\n'
+                        "chart_types MUST be [] if no charts visible; one entry per distinct "
+                        "chart, never a guessed pair. Do NOT copy the example. JSON only."
                     )
 
                 raw = llm_vision_call(
@@ -3609,25 +3613,44 @@ def pass4_assemble_ast(
             chart_titles = ep.get("chart_titles") or []
             description = ep.get("description", "")
             if chart_types:
+                # Collapse speculative duplicates: small VLMs emit several chart_types
+                # for one figure (often an echoed bar+line pair) with no distinct title.
+                # Group by resolved title so each real figure becomes ONE chart that
+                # records its candidate types, instead of doubling the chart count.
+                groups: dict[str, dict[str, Any]] = {}
+                order: list[str] = []
                 for ci, ct in enumerate(chart_types):
                     ct_str = str(ct).strip().lower()
                     if not ct_str:
                         continue
-                    title = chart_titles[ci] if ci < len(chart_titles) else ""
-                    chart_id = f"chart_vlm_{pg_idx + 1}_{ci + 1}"
-                    # Avoid exact duplicates with LayoutLM results on same page
-                    if pg_idx not in _seen_figure_pages or ci > 0:
-                        charts.append({
-                            "chartId": chart_id,
-                            "type": "chart",
-                            "chartType": ct_str,
-                            "title": title or description[:120] or f"{ct_str.replace('_', ' ').title()} on page {pg_idx + 1}",
-                            "page": pg_idx,
-                            "pageRef": f"page_{pg_idx + 1:03d}",
-                            "description": description,
-                            "detectionSource": "vlm",
-                        })
-                    _seen_figure_pages.add(pg_idx)
+                    raw_title = chart_titles[ci] if ci < len(chart_titles) else ""
+                    title = raw_title or description[:120] or f"Chart on page {pg_idx + 1}"
+                    gkey = " ".join(title.lower().split())
+                    if gkey not in groups:
+                        groups[gkey] = {"title": title, "types": [], "explicit": bool(raw_title)}
+                        order.append(gkey)
+                    if ct_str not in groups[gkey]["types"]:
+                        groups[gkey]["types"].append(ct_str)
+                for gi, gkey in enumerate(order):
+                    g = groups[gkey]
+                    # Skip the first untitled group when LayoutLM already logged a figure
+                    # on this page (it would duplicate that detection).
+                    if pg_idx in _seen_figure_pages and gi == 0 and not g["explicit"]:
+                        continue
+                    chart = {
+                        "chartId": f"chart_vlm_{pg_idx + 1}_{gi + 1}",
+                        "type": "chart",
+                        "chartType": g["types"][0],
+                        "title": g["title"],
+                        "page": pg_idx,
+                        "pageRef": f"page_{pg_idx + 1:03d}",
+                        "description": description,
+                        "detectionSource": "vlm",
+                    }
+                    if len(g["types"]) > 1:
+                        chart["chartTypes"] = g["types"]
+                    charts.append(chart)
+                _seen_figure_pages.add(pg_idx)
             elif ep.get("structure_type") == "chart_page" and pg_idx not in _seen_figure_pages:
                 # VLM said chart_page but couldn't name type — add generic entry
                 charts.append({
