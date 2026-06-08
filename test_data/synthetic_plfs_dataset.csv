@@ -1,0 +1,11 @@
+Sector,Age_Group,Year,State,Gender,Worker_Population_Ratio,Labour_Force_Participation_Rate,Unemployment_Rate
+Rural,15+,2023-24,All India,Male,53.2,57.1,3.1
+Rural,15+,2023-24,All India,Female,29.8,32.4,3.0
+Urban,15+,2023-24,All India,Male,55.1,59.8,4.2
+Urban,15+,2023-24,All India,Female,21.3,24.1,5.8
+Rural,15+,2022-23,All India,Male,52.1,56.0,3.3
+Rural,15+,2022-23,All India,Female,28.9,31.5,3.2
+Urban,15+,2022-23,All India,Male,54.3,58.9,4.5
+Urban,15+,2022-23,All India,Female,20.1,22.9,6.1
+Rural,15-29,2023-24,All India,Male,48.5,53.2,8.1
+Urban,15-29,2023-24,All India,Female,18.2,22.0,17.3
