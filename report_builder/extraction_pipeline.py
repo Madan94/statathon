@@ -259,13 +259,31 @@ _PROMPT_ECHO_PHRASES: frozenset[str] = frozenset({
 })
 
 
+_COMMON_NOISE_WORDS: frozenset[str] = frozenset({
+    "press", "page", "bureau", "release", "information", "ministry", "government",
+    "india", "click", "here", "home", "back", "next", "previous", "download",
+    "total", "number", "value", "data", "report", "result", "table", "figure",
+    "note", "source", "item", "area", "time", "period", "year", "date",
+    "january", "february", "march", "april", "may", "june", "july",
+    "august", "september", "october", "november", "december",
+    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+    "samrat", "cycle", "areas", "workers", "while", "engaged", "sustained",
+    "market", "presented", "long", "mainly", "mainly",
+})
+
+import re as _re_entity_extra
+
+
 def _is_valid_entity_name(name: str) -> bool:
     """Return True if name is a valid entity (not a stopword / noise / reference)."""
     cleaned = name.strip()
-    # Minimum 4 chars (not 3) — "and", "the", "for" are 3-char stopwords
+    # Minimum 4 chars
     if len(cleaned) < 4:
         return False
     if not any(c.isalpha() for c in cleaned):
+        return False
+    # Max 80 chars — no full sentences or section headings
+    if len(cleaned) > 80:
         return False
     # Reject pure single-word lowercase (likely body-text noise)
     if " " not in cleaned and cleaned == cleaned.lower() and len(cleaned) < 8:
@@ -282,22 +300,18 @@ def _is_valid_entity_name(name: str) -> bool:
         return False
     if _TIMESTAMP_RE.match(cleaned):
         return False
-    # Reject fragment artifacts like "size," "engaged," "the increase is"
-    if cleaned[-1] in ".,;:" and len(cleaned.split()) <= 3:
+    # Section headings like "2. Worker Population Ratio..." — not entities
+    if _re_entity_extra.match(r'^\d{1,2}\.\s+[A-Z]', cleaned):
+        return False
+    # Data value fragments containing mid-string percentages (e.g., "WPR for male 78.4%,")
+    if _re_entity_extra.search(r'\d+\.?\d*%', cleaned) and len(cleaned) > 25:
+        return False
+    # Reject fragment artifacts ending with comma/semicolon
+    if cleaned[-1] in ".,;:—–" and len(cleaned.split()) <= 4:
         return False
     # Reject pure parenthetical abbreviations like "(PLFS)" "(WPR):"
     if _PAREN_ABBREV_RE.match(cleaned):
         return False
-    # Reject single common words even if capitalised (Press, Page, Bureau, Release)
-    _COMMON_NOISE_WORDS: frozenset[str] = frozenset({
-        "press", "page", "bureau", "release", "information", "ministry", "government",
-        "india", "click", "here", "home", "back", "next", "previous", "download",
-        "total", "number", "value", "data", "report", "result", "table", "figure",
-        "note", "source", "item", "area", "time", "period", "year", "date",
-        "january", "february", "march", "april", "may", "june", "july",
-        "august", "september", "october", "november", "december",
-        "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
-    })
     if cleaned.lower() in _COMMON_NOISE_WORDS:
         return False
     return True
@@ -1574,12 +1588,27 @@ def pass2_5_document_knowledge_graph(
 
     all_entities = _deduplicate_entities(all_entities)
     all_entities = _enrich_entity_aliases(all_entities)
-    # Cap entities: prioritize table_header > heading > vlm > bold_word, max 60 total
+
+    # Cap entities: protect known MoSPI core names first, then sort by source priority
+    _MOSPI_CORE_KEYWORDS = frozenset({
+        "lfpr", "wpr", "ur", "labour force participation", "worker population",
+        "unemployment rate", "unemployment", "gender", "rural", "urban", "plfs",
+        "usual status", "age group", "earnings", "employment", "education",
+        "casual labour", "self-employed", "regular wage", "manufacturing",
+        "agriculture", "sector", "survey year", "mospi", "nsso",
+    })
+    for _ent in all_entities:
+        _n = (_ent.get("name") or "").lower()
+        _ent["_priority_protect"] = any(k in _n for k in _MOSPI_CORE_KEYWORDS)
+
     if len(all_entities) > 60:
+        _protected = [e for e in all_entities if e.get("_priority_protect")]
+        _remainder = [e for e in all_entities if not e.get("_priority_protect")]
         _ENT_PRIORITY = {"table_header": 0, "heading": 1, "vlm": 2, "bold_word": 3}
-        all_entities.sort(key=lambda e: (_ENT_PRIORITY.get(e.get("source", "vlm"), 2), -len(e.get("pages") or [0])))
-        all_entities = all_entities[:60]
-        logger.info("[pass2.5]   Entity count capped to 60 (was more)")
+        _remainder.sort(key=lambda e: (_ENT_PRIORITY.get(e.get("source", "vlm"), 2), -len(e.get("pages") or [0])))
+        _cap = max(0, 60 - len(_protected))
+        all_entities = _protected + _remainder[:_cap]
+        logger.info("[pass2.5]   Entity count capped to 60 (protected=%d, others=%d)", len(_protected), _cap)
 
     logger.info("[pass2.5]   Step 1: %d unique entities from %d pages", len(all_entities), total_pages)
 
@@ -1764,6 +1793,33 @@ def pass2_5_document_knowledge_graph(
             "sections": [],
         })
 
+    # ── Filter junk chapters ──
+    # Remove single-word stopword chapters, PIB nav-bar chapters, and very short titles
+    import re as _re_ch_filter
+    _NAV_TITLE_RE_CH = _re_ch_filter.compile(
+        r"Press\s*(Release|Information)|pib\.gov|mospi\.gov|\d+/\d+/\d+.*[AP]M|:\d+\s*[AP]M|"
+        r"Visitor Counter|Release ID|Read this release",
+        _re_ch_filter.I,
+    )
+    chapters_before_filter = len(chapters)
+    chapters = [
+        ch for ch in chapters
+        if (
+            len(ch["title"].split()) >= 2          # at least 2 words
+            and len(ch["title"]) >= 8              # at least 8 chars
+            and ch["title"].lower().strip() not in _ENGLISH_STOPWORDS
+            and ch["title"].lower().strip() not in _COMMON_NOISE_WORDS
+            and not _NAV_TITLE_RE_CH.search(ch["title"])
+        )
+    ]
+    if chapters_before_filter != len(chapters):
+        logger.info("[pass2.5]   Chapter filter: %d → %d (removed %d junk chapters)",
+                    chapters_before_filter, len(chapters), chapters_before_filter - len(chapters))
+
+    # Re-assign chapterIds after filtering (keep ordering, fix numbering)
+    for _i, _ch in enumerate(chapters):
+        _ch["chapterId"] = f"ch_{_i + 1:02d}"
+
     logger.info("[pass2.5]   Step 3: %d chapters from ToC", len(chapters))
     for _ch in chapters[:12]:
         logger.info("[pass2.5]   Chapter: [p%d-p%d] '%s'",
@@ -1902,9 +1958,15 @@ def pass2_5_document_knowledge_graph(
 
     # ── Step 6: MoSPI Section Pattern Detection ──
     section_patterns: list[dict[str, Any]] = []
+    _patterns_per_chapter: dict[str, int] = {}
 
     for ch in chapters:
+        _ch_id = ch["chapterId"]
         for sec in ch.get("sections") or [{"sectionId": ch["chapterId"], "title": ch["title"], "page": ch["pageRange"][0]}]:
+            # Cap section patterns per chapter to avoid hundreds of patterns
+            if _patterns_per_chapter.get(_ch_id, 0) >= 5:
+                break
+            _patterns_per_chapter[_ch_id] = _patterns_per_chapter.get(_ch_id, 0) + 1
             sec_page = sec.get("page", ch["pageRange"][0])
             # Gather structure types for pages in this section
             sec_end = total_pages - 1
@@ -2277,21 +2339,37 @@ def pass3_two_loop_ast_building(
             table_context_lines.append(line)
         table_context = "\n".join(table_context_lines) or "  (no tables)"
 
+        # Extract keywords from section title to guide question generation
+        _sec_title_lower = sec_title.lower()
+        _topic_hint = (
+            "LFPR/Labour Force Participation" if "lfpr" in _sec_title_lower or "labour force participation" in _sec_title_lower
+            else "WPR/Worker Population Ratio" if "wpr" in _sec_title_lower or "worker population" in _sec_title_lower
+            else "UR/Unemployment Rate" if "ur" in _sec_title_lower or "unemployment" in _sec_title_lower
+            else "Employment status/wage composition" if "wage" in _sec_title_lower or "salary" in _sec_title_lower or "regular" in _sec_title_lower
+            else "Sectoral employment distribution" if "manufactur" in _sec_title_lower or "sector" in _sec_title_lower or "agricult" in _sec_title_lower
+            else "Earnings/wages by gender" if "earning" in _sec_title_lower or "female worker" in _sec_title_lower
+            else "Education attainment" if "education" in _sec_title_lower or "formal" in _sec_title_lower
+            else sec_title[:40]
+        )
+
         prompt = (
             f"{ctx}\n\n"
-            f"Section: \"{sec_title}\" (pages {page_range[0] + 1}-{page_range[1] + 1})\n"
+            f"SECTION TOPIC: \"{sec_title}\"\n"
+            f"This section is SPECIFICALLY about: {_topic_hint}\n"
+            f"Pages: {page_range[0] + 1}-{page_range[1] + 1}\n"
             f"Typed entities: {typed_entity_context}\n"
             f"Table structures:\n{table_context}\n"
             f"Content preview:\n{section_summary}\n\n"
-            "Generate 1-3 specific analytical questions this section answers.\n"
-            "RULES: (1) Reference the exact entity names listed above. "
-            "(2) Questions must be quantitative and comparative — MoSPI report style.\n"
-            "BAD: 'What does this table show?' or 'What is the LFPR?'\n"
-            "GOOD: 'How does LFPR vary across States by Rural/Urban sector?' "
-            "or 'What is the trend in Unemployment Rate (Male) across survey rounds?'\n"
+            f"Generate 1-3 analytical questions SPECIFICALLY about '{sec_title}'.\n"
+            "CRITICAL RULES:\n"
+            f"(1) Questions MUST be about {_topic_hint} — do NOT ask about other sections.\n"
+            "(2) Reference the exact entity names listed above.\n"
+            "(3) Questions must be quantitative and comparative — MoSPI report style.\n"
+            "BAD: 'What does this section show?' or generic LFPR questions for a WPR section.\n"
+            f"GOOD example for this section: A question specifically asking about {_topic_hint} by gender or Rural/Urban.\n"
             "Output JSON array (questionType must be one of: comparison, trend, ranking, distribution, describe):\n"
-            '[{"questionId":"q1","intent":"How does LFPR vary by gender across Rural/Urban sector?",'
-            '"questionType":"comparison","sourceHeading":"1. Stable Labour Force Participation Rate (LFPR)"}]\n'
+            '[{"questionId":"q1","intent":"Specific question about this section topic?",'
+            '"questionType":"comparison","sourceHeading":"exact section title here"}]\n'
             "List 1-3 questions. JSON only."
         )
 
@@ -2342,6 +2420,21 @@ def pass3_two_loop_ast_building(
             consecutive_failures += 1
 
     logger.info("[pass3] L1: Extracted %d raw questions from %d top-level sections", len(raw_questions), len(top_level_sections))
+
+    # ── Deduplicate questions by normalized intent ──
+    # Qwen 3B-AWQ often generates identical questions for different chapters.
+    # Keep the first occurrence per normalized intent; preserve page diversity.
+    import re as _re_dedup
+    _seen_intents: set[str] = set()
+    _deduped: list[dict[str, Any]] = []
+    for _q in raw_questions:
+        _intent_key = _re_dedup.sub(r"\s+", " ", (_q.get("intent") or "").lower().strip())[:80]
+        if _intent_key not in _seen_intents:
+            _seen_intents.add(_intent_key)
+            _deduped.append(_q)
+    if len(_deduped) < len(raw_questions):
+        logger.info("[pass3] L1: Deduped %d → %d unique questions", len(raw_questions), len(_deduped))
+    raw_questions = _deduped
 
     # If Loop 1 produced nothing, fall back
     if not raw_questions:
@@ -2842,12 +2935,17 @@ def _enrich_entity_aliases(entities: list[dict]) -> list[dict]:
     """Extract parenthetical abbreviations as aliases and add to each entity.
 
     If entity name is "Labour Force Participation Rate (LFPR)", extracts "LFPR" as alias.
+    Also applies unicode artifact fix to entity names (Rupee sign, dashes, etc.).
     """
     import re as _re_alias
     _ABBREV_RE = _re_alias.compile(r"\(([A-Z][A-Z0-9\+\-]{1,12})\)")
 
     for ent in entities:
-        name = ent.get("name") or ""
+        # Fix unicode artifacts in entity name (Rupee sign, dashes garbled by pdfplumber)
+        raw_name = ent.get("name") or ""
+        name = _fix_unicode_artifacts(raw_name)
+        if name != raw_name:
+            ent["name"] = name
         aliases: list[str] = list(ent.get("aliases") or [])
 
         # Extract abbreviations like "(LFPR)", "(WPR)", "(ps+ss)"
@@ -2856,8 +2954,9 @@ def _enrich_entity_aliases(entities: list[dict]) -> list[dict]:
             if abbrev not in aliases and abbrev != name:
                 aliases.append(abbrev)
 
-        # Add bare name (without parenthetical) as alias
-        bare = _re_alias.sub(r"\([^)]*\)", "", name).strip().rstrip("- ").strip()
+        # Add bare name (without parenthetical) as alias — normalize whitespace
+        bare = _re_alias.sub(r"\([^)]*\)", "", name)
+        bare = _re_alias.sub(r"\s+", " ", bare).strip().rstrip("- ").strip()
         if bare and bare != name and len(bare) >= 4 and bare not in aliases:
             aliases.append(bare)
 
