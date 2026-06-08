@@ -27,8 +27,25 @@ Environment variables:
     LAYOUTLM_ENDPOINT       = http://localhost:8001
     SGLANG_ENDPOINT         = http://localhost:8002
     SGLANG_MODEL            = Qwen/Qwen2.5-VL-3B-Instruct-AWQ
+    SGLANG_TIMEOUT          = 120
     PIPELINE_GPU_MODE       = sequential | concurrent | gemini_only
     GEMINI_MODEL            = gemini-2.5-flash
+    GEMINI_API_KEY          (or GOOGLE_API_KEY)
+    GROQ_API_KEY
+    GROQ_MODEL              = meta-llama/llama-4-scout-17b-16e-instruct
+    GROQ_VISION_MODEL       = meta-llama/llama-4-maverick-17b-128e-instruct
+
+Model switching (see report_builder/llm_router.py for full details):
+    VLM_PROVIDER            Vision tasks:   qwen (default) | gemini | groq
+    REASONING_PROVIDER      Text tasks:     qwen (default) | gemini | groq
+    Per-task overrides (override the provider for one task without changing the global):
+    PROVIDER_ENTITY_EXTRACTION    (pass 2  — image+entity extraction)
+    PROVIDER_QUESTION_GENERATION  (pass 3 L1 — question generation)
+    PROVIDER_ENTITY_BINDING       (pass 3 L2 — entity binding)
+    PROVIDER_TOC_EXTRACTION       (hybrid ToC L3 — last resort)
+    PROVIDER_GAP_FILL             (question gap fill)
+    PROVIDER_FACT_EXTRACTION      (fact extraction)
+    PROVIDER_SEMANTIC_FALLBACK    (semantic fallback when local model fails)
 """
 from __future__ import annotations
 
@@ -48,11 +65,29 @@ from report_builder.chunking import (
     build_toc_from_regions,
     extract_caption_entities_from_layout,
 )
+from report_builder.llm_router import llm_text_call, llm_vision_call, is_provider_available
 
 logger = logging.getLogger(__name__)
 
 _LAYOUTLM_ENDPOINT = os.getenv("LAYOUTLM_ENDPOINT", "http://localhost:8001")
 _SGLANG_ENDPOINT = os.getenv("SGLANG_ENDPOINT", "http://localhost:8002")
+
+# ── LLM call parameters — all read from env, never hardcoded ──────────────────
+# Defaults match .env.example. Change via env only.
+_T = {
+    "entity_extraction":   (int(os.getenv("ENTITY_EXTRACTION_MAX_TOKENS",   "256")),  float(os.getenv("ENTITY_EXTRACTION_TEMPERATURE",   "0.1"))),
+    "question_generation": (int(os.getenv("QUESTION_GENERATION_MAX_TOKENS", "600")),  float(os.getenv("QUESTION_GENERATION_TEMPERATURE", "0.15"))),
+    "entity_binding":      (int(os.getenv("ENTITY_BINDING_MAX_TOKENS",      "384")),  float(os.getenv("ENTITY_BINDING_TEMPERATURE",      "0.1"))),
+    "toc_extraction":      (int(os.getenv("TOC_EXTRACTION_MAX_TOKENS",      "1000")), float(os.getenv("TOC_EXTRACTION_TEMPERATURE",      "0.1"))),
+    "gap_fill":            (int(os.getenv("GAP_FILL_MAX_TOKENS",            "1000")), float(os.getenv("GAP_FILL_TEMPERATURE",            "0.2"))),
+    "fact_extraction":     (int(os.getenv("FACT_EXTRACTION_MAX_TOKENS",     "1200")), float(os.getenv("FACT_EXTRACTION_TEMPERATURE",     "0.15"))),
+    "semantic_fallback":   (int(os.getenv("SEMANTIC_FALLBACK_MAX_TOKENS",   "2000")), float(os.getenv("SEMANTIC_FALLBACK_TEMPERATURE",   "0.2"))),
+    "entity_classification":(int(os.getenv("ENTITY_CLASSIFICATION_MAX_TOKENS","600")),float(os.getenv("ENTITY_CLASSIFICATION_TEMPERATURE","0.1"))),
+}
+
+def _tok(task: str) -> tuple[int, float]:
+    """Return (max_tokens, temperature) for a task from env config."""
+    return _T.get(task, (800, 0.15))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -273,6 +308,84 @@ _COMMON_NOISE_WORDS: frozenset[str] = frozenset({
 
 import re as _re_entity_extra
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Document Type Detection + PLFS Core Entity Seeds
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Pre-seeded entities for PLFS press releases — always present regardless of extraction
+_PLFS_CORE_ENTITIES: list[dict[str, Any]] = [
+    {"name": "Labour Force Participation Rate", "aliases": ["LFPR"], "entityType": "measure", "source": "pre_seeded"},
+    {"name": "Worker Population Ratio", "aliases": ["WPR"], "entityType": "measure", "source": "pre_seeded"},
+    {"name": "Unemployment Rate", "aliases": ["UR"], "entityType": "measure", "source": "pre_seeded"},
+    {"name": "Gender", "aliases": ["Male", "Female", "Persons"], "entityType": "dimension", "source": "pre_seeded"},
+    {"name": "Rural/Urban Sector", "aliases": ["Rural", "Urban"], "entityType": "dimension", "source": "pre_seeded"},
+    {"name": "Survey Year", "aliases": ["2022", "2023", "2024", "2025"], "entityType": "dimension", "source": "pre_seeded"},
+    {"name": "Age Group", "aliases": ["15+", "15-29", "15-59", "Youth"], "entityType": "dimension", "source": "pre_seeded"},
+    {"name": "Status in Employment", "aliases": ["Self-employed", "Regular wage", "Casual labour"], "entityType": "dimension", "source": "pre_seeded"},
+    {"name": "Usual Status (ps+ss)", "aliases": ["ps+ss", "usual status"], "entityType": "filter", "source": "pre_seeded"},
+    {"name": "Periodic Labour Force Survey", "aliases": ["PLFS"], "entityType": "metadata", "source": "pre_seeded"},
+    {"name": "MoSPI", "aliases": ["Ministry of Statistics"], "entityType": "metadata", "source": "pre_seeded"},
+]
+
+# Document-type-specific configuration
+_DOC_TYPE_CONFIG: dict[str, dict[str, Any]] = {
+    "pib_press_release": {
+        "entity_cap": 25,        # pre-seeded 11 + up to 14 from extraction
+        "table_cap": 0,           # PIB press releases have NO real data tables
+        "q_per_chapter": 2,
+        "seed_entities": True,    # inject _PLFS_CORE_ENTITIES
+    },
+    "statistical_annual_report": {
+        "entity_cap": 80,
+        "table_cap": 30,
+        "q_per_chapter": 3,
+        "seed_entities": False,
+    },
+}
+
+
+def _detect_document_type(page_texts: list[dict[str, Any]], doc_title: str = "") -> str:
+    """Detect whether this PDF is a PIB press release or a statistical annual report.
+
+    Returns 'pib_press_release' or 'statistical_annual_report'.
+    Uses page 0 text signals only — no LLM needed.
+    """
+    import re as _re_dt
+    if not page_texts:
+        return "statistical_annual_report"
+
+    p0 = (page_texts[0].get("raw_text") or "").lower()
+    title_lower = doc_title.lower()
+
+    # Strong PIB press release signals
+    pib_signals = [
+        "press information bureau",
+        "pib delhi",
+        "posted on:",
+        "press release page",
+        "release id:",
+        "visitor counter",
+    ]
+    if any(s in p0 for s in pib_signals):
+        return "pib_press_release"
+
+    # Snapshot + LFPR/WPR on short document → PLFS press release
+    has_snapshot = "snapshot" in p0 or "key findings" in p0
+    has_labour = any(x in p0 for x in ["labour force participation", "lfpr", "wpr", "unemployment rate"])
+    if has_snapshot and has_labour and len(page_texts) <= 15:
+        return "pib_press_release"
+
+    # Statistical report signals (statement-numbered tables)
+    stat_signals = [
+        _re_dt.search(r"statement\s+\d+\.\d+", p0),
+        _re_dt.search(r"table\s+\d+\.\d+", p0),
+        len(page_texts) > 30,
+    ]
+    if any(stat_signals):
+        return "statistical_annual_report"
+
+    return "statistical_annual_report"
+
 
 def _is_valid_entity_name(name: str) -> bool:
     """Return True if name is a valid entity (not a stopword / noise / reference)."""
@@ -303,8 +416,12 @@ def _is_valid_entity_name(name: str) -> bool:
     # Section headings like "2. Worker Population Ratio..." — not entities
     if _re_entity_extra.match(r'^\d{1,2}\.\s+[A-Z]', cleaned):
         return False
-    # Data value fragments containing mid-string percentages (e.g., "WPR for male 78.4%,")
-    if _re_entity_extra.search(r'\d+\.?\d*%', cleaned) and len(cleaned) > 25:
+    # Any entity containing an embedded percentage is a data value fragment, not an entity name
+    # Real entities are named concepts (LFPR, WPR, Gender); their values are separate.
+    if _re_entity_extra.search(r'\d+\.?\d*%', cleaned):
+        return False
+    # Entities starting with a digit are data values, not entity names
+    if _re_entity_extra.match(r'^\d', cleaned) and len(cleaned) > 5:
         return False
     # Reject fragment artifacts ending with comma/semicolon
     if cleaned[-1] in ".,;:—–" and len(cleaned.split()) <= 4:
@@ -656,35 +773,23 @@ def _extract_toc_hybrid(
         logger.info("[toc_hybrid] L2 font-size: %d entries (body=%.1fpt threshold)",
                     len(l2_entries), body_size if all_sizes else 0.0)
 
-    # L3: Gemini last resort
+    # L3: LLM last resort (provider = PROVIDER_TOC_EXTRACTION or REASONING_PROVIDER, default gemini)
     l3_entries: list[ToCEntry] = []
     combined_so_far = len(l1_entries) + len(l2_entries) + len(toc_layoutlm)
     if combined_so_far < 3:
         try:
-            api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-            if api_key:
-                sample_text = "\n\n".join(
-                    (pt.get("raw_text") or "")[:800]
-                    for pt in page_texts[:12]
-                )
-                prompt = (
-                    "Extract the table of contents from this government statistical document.\n"
-                    "Output JSON array: [{\"title\": \"Chapter title\", \"page\": 1, \"level\": 1}, ...]\n"
-                    "level 1=chapter, 2=section, 3=subsection. JSON only.\n\n"
-                    + sample_text[:6000]
-                )
-                gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-                try:
-                    from google import genai as _genai
-                    client = _genai.Client(api_key=api_key)
-                    resp = client.models.generate_content(model=gemini_model, contents=prompt)
-                    raw = (resp.text or "").strip()
-                except ImportError:
-                    import google.generativeai as _legacy
-                    _legacy.configure(api_key=api_key)
-                    resp = _legacy.GenerativeModel(gemini_model).generate_content(prompt)
-                    raw = (resp.text or "").strip()
-
+            sample_text = "\n\n".join(
+                (pt.get("raw_text") or "")[:800]
+                for pt in page_texts[:12]
+            )
+            prompt = (
+                "Extract the table of contents from this government statistical document.\n"
+                "Output JSON array: [{\"title\": \"Chapter title\", \"page\": 1, \"level\": 1}, ...]\n"
+                "level 1=chapter, 2=section, 3=subsection. JSON only.\n\n"
+                + sample_text[:6000]
+            )
+            raw = llm_text_call(prompt, task="toc_extraction", max_tokens=_tok("toc_extraction")[0], temperature=_tok("toc_extraction")[1])
+            if raw:
                 parsed = _extract_json_array_from_response(raw)
                 if parsed:
                     for item in parsed:
@@ -694,10 +799,10 @@ def _extract_toc_hybrid(
                         page = int(item.get("page") or 1) - 1
                         level = int(item.get("level") or 1)
                         if title and 0 <= page < len(page_texts):
-                            l3_entries.append(ToCEntry(title=title, page_index=max(0, page), level=level, region_type="gemini"))
-                    logger.info("[toc_hybrid] L3 Gemini: %d entries", len(l3_entries))
+                            l3_entries.append(ToCEntry(title=title, page_index=max(0, page), level=level, region_type="llm_l3"))
+                    logger.info("[toc_hybrid] L3 LLM: %d entries", len(l3_entries))
         except Exception as exc:
-            logger.warning("[toc_hybrid] L3 Gemini failed (non-fatal): %s", exc)
+            logger.warning("[toc_hybrid] L3 LLM failed (non-fatal): %s", exc)
 
     # Merge all sources: start from LayoutLM, add L1, L2, L3 (dedup by page+title)
     all_new = l1_entries + l2_entries + l3_entries
@@ -814,44 +919,32 @@ def pass2_6_entity_classification(document_map: dict[str, Any]) -> dict[str, Any
                 sum(1 for e in all_entities if e.get("entityType_hint") == "metadata"),
                 len(ambiguous))
 
-    # ── Step 2: Gemini batch classification for ambiguous entities ──
+    # ── Step 2: LLM batch classification for ambiguous entities ──
     ambiguous_to_classify = [e for e in ambiguous if e.get("entityType_hint") == "dimension"][:40]
     if ambiguous_to_classify:
         try:
-            api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-            if api_key:
-                doc_title = document_map.get("title", "document")
-                entity_lines = "\n".join(
-                    f'  "{e["name"]}"' for e in ambiguous_to_classify
-                )
-                table_ctx = ""
-                for ts in table_structures[:5]:
-                    table_ctx += f"Table cols: {', '.join(ts['columns'][:6])}\n"
+            doc_title = document_map.get("title", "document")
+            entity_lines = "\n".join(
+                f'  "{e["name"]}"' for e in ambiguous_to_classify
+            )
+            table_ctx = ""
+            for ts in table_structures[:5]:
+                table_ctx += f"Table cols: {', '.join(ts['columns'][:6])}\n"
 
-                prompt = (
-                    f'Document: "{doc_title}" (Indian government statistical report)\n'
-                    f"Table structures:\n{table_ctx}\n"
-                    "Classify each entity as one of: dimension, measure, filter, metadata\n"
-                    "  dimension = categorical grouping variable (State, Gender, Sector, Year)\n"
-                    "  measure = numeric metric to aggregate (LFPR, WPR, rate, count, total)\n"
-                    "  filter = threshold or conditional value (Rural, Urban, Male, Female)\n"
-                    "  metadata = source, methodology, notes (NSSO, Source, Note)\n\n"
-                    f"Entities to classify:\n{entity_lines}\n\n"
-                    'Output JSON array: [{"name": "LFPR", "type": "measure"}, ...]\n'
-                    "JSON only."
-                )
-                gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-                try:
-                    from google import genai as _genai
-                    client = _genai.Client(api_key=api_key)
-                    resp = client.models.generate_content(model=gemini_model, contents=prompt)
-                    raw = (resp.text or "").strip()
-                except ImportError:
-                    import google.generativeai as _legacy
-                    _legacy.configure(api_key=api_key)
-                    resp = _legacy.GenerativeModel(gemini_model).generate_content(prompt)
-                    raw = (resp.text or "").strip()
-
+            prompt = (
+                f'Document: "{doc_title}" (Indian government statistical report)\n'
+                f"Table structures:\n{table_ctx}\n"
+                "Classify each entity as one of: dimension, measure, filter, metadata\n"
+                "  dimension = categorical grouping variable (State, Gender, Sector, Year)\n"
+                "  measure = numeric metric to aggregate (LFPR, WPR, rate, count, total)\n"
+                "  filter = threshold or conditional value (Rural, Urban, Male, Female)\n"
+                "  metadata = source, methodology, notes (NSSO, Source, Note)\n\n"
+                f"Entities to classify:\n{entity_lines}\n\n"
+                'Output JSON array: [{"name": "LFPR", "type": "measure"}, ...]\n'
+                "JSON only."
+            )
+            raw = llm_text_call(prompt, task="entity_classification", max_tokens=_tok("entity_classification")[0], temperature=_tok("entity_classification")[1])
+            if raw:
                 classifications = _extract_json_array_from_response(raw)
                 if classifications:
                     name_to_type: dict[str, str] = {
@@ -861,13 +954,22 @@ def pass2_6_entity_classification(document_map: dict[str, Any]) -> dict[str, Any
                     }
                     updated = 0
                     for ent in ambiguous_to_classify:
-                        classified = name_to_type.get(ent["name"].lower())
+                        name_key = ent["name"].lower()
+                        classified = name_to_type.get(name_key)
+                        if not classified:
+                            # Prefix fallback: "labour force participation rate" → "labour force"
+                            classified = next(
+                                (v for k, v in name_to_type.items() if name_key[:20] in k or k[:20] in name_key),
+                                None,
+                            )
                         if classified in ("dimension", "measure", "filter", "metadata"):
                             ent["entityType_hint"] = classified
                             updated += 1
-                    logger.info("[pass2.6]   Step 2 Gemini: classified %d ambiguous entities", updated)
+                        else:
+                            logger.debug("[pass2.6]   No classification for entity '%s'", ent["name"])
+                    logger.info("[pass2.6]   Step 2 LLM: classified %d ambiguous entities", updated)
         except Exception as exc:
-            logger.warning("[pass2.6]   Step 2 Gemini failed (non-fatal): %s", exc)
+            logger.warning("[pass2.6]   Step 2 LLM failed (non-fatal): %s", exc)
 
     logger.info("[pass2.6] ✓ Classification complete: %d entities typed",
                 sum(1 for e in all_entities if e.get("entityType_hint")))
@@ -938,7 +1040,8 @@ def pass0_rasterize(pdf_path: Path) -> tuple[list[bytes], list[dict[str, Any]]]:
     try:
         import pdf2image
         poppler_path = os.getenv("POPPLER_PATH") or None
-        images = pdf2image.convert_from_path(str(pdf_path), dpi=150, fmt="png", poppler_path=poppler_path)
+        _pdf_dpi = int(os.getenv("PDF_DPI", "150"))
+        images = pdf2image.convert_from_path(str(pdf_path), dpi=_pdf_dpi, fmt="png", poppler_path=poppler_path)
     except Exception as exc:
         logger.error("[pass0] pdf2image failed: %s — trying Pillow fallback", exc)
         images = []
@@ -984,13 +1087,25 @@ def pass0_rasterize(pdf_path: Path) -> tuple[list[bytes], list[dict[str, Any]]]:
                     except Exception:
                         tables = []
 
-                # Detect headings from font analysis
-                headings: list[str] = []
+                # Detect headings from font analysis — group bold words by line (y-position)
+                # Individual bold single words ("areas", "workers") are noise; require 2+ words.
+                _bold_lines: dict[int, list[str]] = {}
                 for w in words:
                     if w.get("size", 0) >= 12 or "Bold" in str(w.get("fontname", "")):
-                        text = str(w.get("text", "")).strip()
-                        if text and len(text) > 3:
-                            headings.append(text)
+                        wtext = str(w.get("text", "")).strip()
+                        if wtext and len(wtext) > 1:
+                            y_key = int((w.get("top") or 0) // 3) * 3
+                            _bold_lines.setdefault(y_key, []).append(wtext)
+                headings: list[str] = []
+                for _line_words in _bold_lines.values():
+                    _phrase = " ".join(_line_words).strip()
+                    # Only include multi-word phrases (single words are noisy)
+                    # OR known short statistical abbreviations
+                    _known_abbrevs = {"LFPR", "WPR", "UR", "MPCE", "CPI", "GDP", "NSO", "PLFS", "CWS"}
+                    if len(_line_words) >= 2 and len(_phrase) > 5:
+                        headings.append(_phrase)
+                    elif _phrase.upper() in _known_abbrevs:
+                        headings.append(_phrase)
 
                 # ── Embedded image / chart detection ──
                 # PDF embedded images that are large relative to the page
@@ -1074,6 +1189,7 @@ def pass2_entity_structure_extraction(
     layout_pages: list[dict[str, Any]],
     page_texts: list[dict[str, Any]],
     doc_title: str = "Document",
+    doc_type: str = "statistical_annual_report",
 ) -> list[dict[str, Any]]:
     """Extract ENTITIES + STRUCTURE TYPE + DESCRIPTION per page using Qwen-VL.
 
@@ -1091,24 +1207,16 @@ def pass2_entity_structure_extraction(
     Returns:
         List of per-page dicts with {page_index, entities[], structure_type, description, chart_types[]}.
     """
-    endpoint = _SGLANG_ENDPOINT.rstrip("/") + "/v1/chat/completions"
-    model = os.getenv("SGLANG_MODEL", "Qwen/Qwen2.5-VL-3B-Instruct-AWQ")
-    timeout = int(os.getenv("SGLANG_TIMEOUT", "120"))
     total_pages = len(page_images)
 
-    # Pre-flight: check if vLLM is alive
-    vlm_alive = False
-    if total_pages > 0:
-        try:
-            health_url = _SGLANG_ENDPOINT.rstrip("/") + "/v1/models"
-            hr = requests.get(health_url, timeout=5)
-            vlm_alive = hr.status_code == 200
-        except Exception:
-            pass
-        if not vlm_alive:
-            logger.warning("[pass2] vLLM not reachable — falling back to pdfplumber-only entities")
+    # Pre-flight: check if the configured VLM provider is reachable
+    import os as _os_p2
+    _p2_provider = (_os_p2.getenv("PROVIDER_ENTITY_EXTRACTION") or _os_p2.getenv("VLM_PROVIDER", "qwen")).strip().lower()
+    vlm_alive = is_provider_available(_p2_provider, vision=True)
+    if total_pages > 0 and not vlm_alive:
+        logger.warning("[pass2] Provider '%s' not reachable — falling back to pdfplumber-only entities", _p2_provider)
 
-    # If vLLM is down, extract entities from pdfplumber only
+    # If provider is down, extract entities from pdfplumber only
     if not vlm_alive or total_pages == 0:
         results: list[dict[str, Any]] = []
         for i, page_text in enumerate(page_texts):
@@ -1125,7 +1233,7 @@ def pass2_entity_structure_extraction(
         logger.info("[pass2] ✓ Built %d entity pages from pdfplumber (no VLM)", len(results))
         return results
 
-    logger.info("[pass2] ▶ Entity+structure extraction: %d pages via Qwen-VL", total_pages)
+    logger.info("[pass2] ▶ Entity+structure extraction: %d pages via %s", total_pages, _p2_provider)
     t0 = time.monotonic()
 
     results: list[dict[str, Any]] = []
@@ -1147,73 +1255,86 @@ def pass2_entity_structure_extraction(
             vlm_skipped = True
         else:
             try:
-                img_b64 = base64.b64encode(img_bytes).decode("utf-8")
-
                 # Concise region hint from LayoutLM
                 region_types = ", ".join(set(r.get("type", "?") for r in regions[:10])) or "none"
                 # Hint if pdfplumber detected embedded images (likely charts)
                 n_embedded = len(page_text.get("embedded_figures") or [])
                 image_hint = f" (PDF has {n_embedded} embedded image(s) — likely charts/figures)" if n_embedded else ""
 
-                prompt = (
-                    f"Page {i + 1}/{total_pages} of \"{doc_title}\".\n"
-                    f"Detected layout regions: {region_types}{image_hint}\n\n"
-                    "Examine this page carefully. Your tasks:\n"
-                    "1. List ONLY entities that appear VERBATIM as column headers, section titles, "
-                    "or metric names visible on the page. Do NOT invent anything not explicitly "
-                    "printed. Examples: 'LFPR', 'State/UT', 'Rural', 'Urban', "
-                    "'Labour Force Participation Rate', 'Unemployment Rate', 'MPCE'. "
-                    "Exclude articles ('the','a'), prepositions ('of','in'), "
-                    "figure references ('Table 1','Figure 2.3'), pure numbers.\n"
-                    "2. If a table is present, extract its exact visible title or statement number "
-                    "(e.g. 'Statement 5.1', 'Table 3.2 — LFPR by State'). Use empty string if none.\n"
-                    "3. If a section/chapter heading is visible, extract it exactly "
-                    "(e.g. 'Chapter 3: Key Labour Market Indicators'). Use empty string if none.\n"
-                    "4. Identify charts/graphs if visible: bar, line, pie, scatter, area, map.\n"
-                    "5. Provide visible chart titles if any.\n"
-                    "6. Classify the dominant page structure.\n"
-                    "Output ONLY this JSON (no prose, no markdown):\n"
-                    '{"entities":["ExactColumnHeader","MetricName"],'
-                    '"structure_type":"data_table|chart_page|narrative|title_page|appendix|mixed",'
-                    '"description":"one-line summary",'
-                    '"table_title":"Statement X.Y or table title if present else empty",'
-                    '"section_heading":"Chapter or section heading if present else empty",'
-                    '"chart_types":["bar_chart","line_chart","pie_chart","scatter_plot","area_chart","map"],'
-                    '"chart_titles":["visible chart title if any"]}\n'
-                    "chart_types MUST be [] if no charts visible. JSON only."
+                # Build doc-type-aware entity extraction prompt
+                if doc_type == "pib_press_release":
+                    prompt = (
+                        f"Page {i + 1}/{total_pages} of \"{doc_title}\" (PIB Press Release).\n"
+                        f"Layout: {region_types}{image_hint}\n\n"
+                        "This is a government press release. Extract ONLY:\n"
+                        "entities: Statistical indicator names and dimension names ONLY. "
+                        "Examples: 'LFPR', 'WPR', 'Unemployment Rate', 'Gender', 'Rural', 'Urban', "
+                        "'Age Group', 'Self-employed', 'Regular wage'. "
+                        "DO NOT include: website text, dates, percentages, full sentences, "
+                        "figure references, or nav-bar fragments.\n"
+                        "section_heading: The numbered section title if visible (e.g. '1. Stable LFPR...'). "
+                        "Empty string otherwise.\n"
+                        "chart_types: bar_chart, line_chart, pie_chart, etc. if charts visible.\n"
+                        "structure_type: narrative (most pages), chart_page (if chart dominates), "
+                        "title_page (cover), appendix (endnote).\n"
+                        "Output ONLY this JSON:\n"
+                        '{"entities":["LFPR","WPR","Gender","Rural","Urban"],'
+                        '"structure_type":"narrative|chart_page|title_page|appendix|mixed",'
+                        '"description":"one-line summary",'
+                        '"table_title":"",'
+                        '"section_heading":"numbered section title if visible else empty",'
+                        '"chart_types":["bar_chart","line_chart"],'
+                        '"chart_titles":[]}\n'
+                        "JSON only."
+                    )
+                else:
+                    # Statistical annual report — rich table extraction prompt
+                    prompt = (
+                        f"Page {i + 1}/{total_pages} of \"{doc_title}\".\n"
+                        f"Detected layout regions: {region_types}{image_hint}\n\n"
+                        "Examine this page carefully. Your tasks:\n"
+                        "1. List ONLY entities that appear VERBATIM as column headers, section titles, "
+                        "or metric names visible on the page. Do NOT invent anything not explicitly "
+                        "printed. Examples: 'LFPR', 'State/UT', 'Rural', 'Urban', "
+                        "'Labour Force Participation Rate', 'Unemployment Rate', 'MPCE'. "
+                        "Exclude articles ('the','a'), prepositions ('of','in'), "
+                        "figure references ('Table 1','Figure 2.3'), pure numbers.\n"
+                        "2. If a table is present, extract its exact visible title or statement number "
+                        "(e.g. 'Statement 5.1', 'Table 3.2 — LFPR by State'). Use empty string if none.\n"
+                        "3. If a section/chapter heading is visible, extract it exactly. "
+                        "Use empty string if none.\n"
+                        "4. Identify charts/graphs if visible: bar, line, pie, scatter, area, map.\n"
+                        "5. Provide visible chart titles if any.\n"
+                        "6. Classify the dominant page structure.\n"
+                        "Output ONLY this JSON (no prose, no markdown):\n"
+                        '{"entities":["ExactColumnHeader","MetricName"],'
+                        '"structure_type":"data_table|chart_page|narrative|title_page|appendix|mixed",'
+                        '"description":"one-line summary",'
+                        '"table_title":"Statement X.Y or table title if present else empty",'
+                        '"section_heading":"Chapter or section heading if present else empty",'
+                        '"chart_types":["bar_chart","line_chart","pie_chart","scatter_plot","area_chart","map"],'
+                        '"chart_titles":["visible chart title if any"]}\n'
+                        "chart_types MUST be [] if no charts visible. JSON only."
+                    )
+
+                raw = llm_vision_call(
+                    prompt=prompt,
+                    image_bytes=img_bytes,
+                    task="entity_extraction",
+                    max_tokens=_tok("entity_extraction")[0],
+                    temperature=_tok("entity_extraction")[1],
                 )
-
-                payload = {
-                    "model": model,
-                    "messages": [
-                        {"role": "user", "content": [
-                            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
-                            {"type": "text", "text": prompt},
-                        ]},
-                    ],
-                    "temperature": 0.1,
-                    "max_tokens": 256,
-                }
-
-                r = requests.post(endpoint, json=payload, timeout=timeout)
-                if r.status_code == 200:
-                    raw = r.json()["choices"][0]["message"]["content"].strip()
+                if raw:
                     vlm_result = _extract_json_from_response(raw)
                     if vlm_result:
                         hard_failures = 0
-                        logger.debug("[pass2] Page %d VLM OK — %d entities", i,
+                        logger.debug("[pass2] Page %d OK — %d entities", i,
                                      len(vlm_result.get("entities") or []))
                     else:
-                        logger.info("[pass2] Page %d VLM returned text but no valid JSON", i)
-                elif r.status_code >= 500:
-                    logger.warning("[pass2] Page %d VLM returned %d (hard failure)", i, r.status_code)
-                    hard_failures += 1
+                        logger.info("[pass2] Page %d returned text but no valid JSON", i)
+                        hard_failures += 1
                 else:
-                    logger.debug("[pass2] Page %d VLM returned %d", i, r.status_code)
                     hard_failures += 1
-            except (requests.ConnectionError, requests.Timeout) as exc:
-                logger.warning("[pass2] Page %d connection failed: %s", i, type(exc).__name__)
-                hard_failures += 1
             except Exception as exc:
                 logger.warning("[pass2] Page %d error: %s", i, exc)
                 hard_failures += 1
@@ -1477,6 +1598,7 @@ def pass2_5_document_knowledge_graph(
     page_texts: list[dict[str, Any]],
     toc: list[ToCEntry],
     doc_title: str = "Document",
+    doc_type: str = "statistical_annual_report",
 ) -> dict[str, Any]:
     """Build a complete Document Knowledge Graph programmatically (no LLM).
 
@@ -1506,6 +1628,8 @@ def pass2_5_document_knowledge_graph(
     # ── Step 1: Entity Collection + Dedup ──
     entity_index: dict[str, dict[str, Any]] = {}  # key=lowered name → entity dict
 
+    _entity_id_seq = [len(_PLFS_CORE_ENTITIES) + 1]  # start after pre-seeded IDs
+
     def _register_entity(name: str, source: str, page: int, priority: int):
         key = name.lower().strip()
         # Reject stopwords, noise, figure references, pure numbers
@@ -1520,8 +1644,10 @@ def pass2_5_document_knowledge_graph(
                 ent["source"] = source
                 ent["_priority"] = priority
         else:
+            eid = _entity_id_seq[0]
+            _entity_id_seq[0] += 1
             entity_index[key] = {
-                "entityId": f"ent_{len(entity_index) + 1:03d}",
+                "entityId": f"ent_{eid:03d}",
                 "name": name.strip(),
                 "source": source,
                 "pages": [page],
@@ -1580,8 +1706,30 @@ def pass2_5_document_knowledge_graph(
     # Source 4 (bold_word) intentionally removed — individual bold words are too
     # noisy and register stopwords ("and", "the"), single letters, and word fragments.
 
-    # Finalize entities
-    all_entities = []
+    # ── Pre-seed known entities for PIB press releases ──
+    # These entities are guaranteed to appear in PLFS press releases and anchor
+    # the entity graph even when extraction quality is poor.
+    all_entities: list[dict[str, Any]] = []
+    _ent_id_counter = 1
+
+    cfg = _DOC_TYPE_CONFIG.get(doc_type, _DOC_TYPE_CONFIG["statistical_annual_report"])
+
+    if cfg.get("seed_entities"):
+        for _seed in _PLFS_CORE_ENTITIES:
+            _eid = f"ent_{_ent_id_counter:03d}"
+            _ent_id_counter += 1
+            all_entities.append({
+                "entityId": _eid,
+                "name": _seed["name"],
+                "source": _seed["source"],
+                "pages": list(range(len(page_texts))),  # appears across all pages
+                "entityType_hint": _seed["entityType"],
+                "aliases": list(_seed.get("aliases") or []),
+                "_priority_protect": True,
+            })
+        logger.info("[pass2.5]   Pre-seeded %d core entities for %s", len(all_entities), doc_type)
+
+    # Finalize entities from extraction
     for ent in entity_index.values():
         del ent["_priority"]
         all_entities.append(ent)
@@ -1599,16 +1747,18 @@ def pass2_5_document_knowledge_graph(
     })
     for _ent in all_entities:
         _n = (_ent.get("name") or "").lower()
-        _ent["_priority_protect"] = any(k in _n for k in _MOSPI_CORE_KEYWORDS)
+        if not _ent.get("_priority_protect"):
+            _ent["_priority_protect"] = any(k in _n for k in _MOSPI_CORE_KEYWORDS)
 
-    if len(all_entities) > 60:
+    _ent_cap = cfg.get("entity_cap", 60)
+    if len(all_entities) > _ent_cap:
         _protected = [e for e in all_entities if e.get("_priority_protect")]
         _remainder = [e for e in all_entities if not e.get("_priority_protect")]
-        _ENT_PRIORITY = {"table_header": 0, "heading": 1, "vlm": 2, "bold_word": 3}
+        _ENT_PRIORITY = {"table_header": 0, "heading": 1, "vlm": 2, "bold_word": 3, "pre_seeded": -1}
         _remainder.sort(key=lambda e: (_ENT_PRIORITY.get(e.get("source", "vlm"), 2), -len(e.get("pages") or [0])))
-        _cap = max(0, 60 - len(_protected))
+        _cap = max(0, _ent_cap - len(_protected))
         all_entities = _protected + _remainder[:_cap]
-        logger.info("[pass2.5]   Entity count capped to 60 (protected=%d, others=%d)", len(_protected), _cap)
+        logger.info("[pass2.5]   Entity count capped to %d (protected=%d, others=%d)", _ent_cap, len(_protected), _cap)
 
     logger.info("[pass2.5]   Step 1: %d unique entities from %d pages", len(all_entities), total_pages)
 
@@ -2216,11 +2366,12 @@ def pass3_two_loop_ast_building(
             "topics": [{topicId, title, questionIds, pageRange}],
         }
     """
-    endpoint = _SGLANG_ENDPOINT.rstrip("/") + "/v1/chat/completions"
-    model = os.getenv("SGLANG_MODEL", "Qwen/Qwen2.5-VL-3B-Instruct-AWQ")
-    timeout = int(os.getenv("SGLANG_TIMEOUT", "120"))
+    import os as _os_p3
+    _p3_qgen_provider = (_os_p3.getenv("PROVIDER_QUESTION_GENERATION") or _os_p3.getenv("VLM_PROVIDER", "qwen")).strip().lower()
+    _p3_bind_provider = (_os_p3.getenv("PROVIDER_ENTITY_BINDING") or _os_p3.getenv("REASONING_PROVIDER", "qwen")).strip().lower()
 
-    logger.info("[pass3] ▶ Two-loop AST building via Qwen-VL")
+    logger.info("[pass3] ▶ Two-loop AST building | question_gen=%s entity_binding=%s",
+                _p3_qgen_provider, _p3_bind_provider)
     t0 = time.monotonic()
 
     chapters = document_map.get("chapters") or []
@@ -2229,16 +2380,11 @@ def pass3_two_loop_ast_building(
     section_patterns = document_map.get("section_patterns") or []
     context_scripts = document_map.get("per_page_context_scripts") or []
 
-    # Pre-flight: check if vLLM is alive
-    vlm_alive = False
-    try:
-        hr = requests.get(_SGLANG_ENDPOINT.rstrip("/") + "/v1/models", timeout=5)
-        vlm_alive = hr.status_code == 200
-    except Exception:
-        pass
+    # Pre-flight: check if the configured provider is reachable
+    vlm_alive = is_provider_available(_p3_qgen_provider, vision=True)
 
     if not vlm_alive:
-        logger.warning("[pass3] vLLM not reachable — generating stub questions programmatically")
+        logger.warning("[pass3] Provider '%s' not reachable — generating stub questions programmatically", _p3_qgen_provider)
         return _programmatic_question_fallback(document_map, page_texts)
 
     # ── Build entity summary for Loop 2 (shared across all questions) ──
@@ -2373,28 +2519,24 @@ def pass3_two_loop_ast_building(
             "List 1-3 questions. JSON only."
         )
 
-        # Build multimodal content: always include prompt text; add page image if available
+        # Attach page image if available
         page_img_idx = page_range[0]
-        content_parts: list[dict] = []
+        img_bytes_l1: bytes | None = None
         if page_images and 0 <= page_img_idx < len(page_images):
             try:
-                img_b64 = base64.b64encode(page_images[page_img_idx]).decode("utf-8")
-                content_parts.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}})
+                img_bytes_l1 = page_images[page_img_idx]
             except Exception:
-                pass  # image encoding failed — text-only fallback
-        content_parts.append({"type": "text", "text": prompt})
-
-        payload = {
-            "model": model,
-            "messages": [{"role": "user", "content": content_parts if len(content_parts) > 1 else prompt}],
-            "temperature": 0.15,
-            "max_tokens": 600,
-        }
+                pass
 
         try:
-            r = requests.post(endpoint, json=payload, timeout=timeout)
-            if r.status_code == 200:
-                raw_content = r.json()["choices"][0]["message"]["content"].strip()
+            raw_content = llm_vision_call(
+                prompt=prompt,
+                image_bytes=img_bytes_l1,
+                task="question_generation",
+                max_tokens=_tok("question_generation")[0],
+                temperature=_tok("question_generation")[1],
+            )
+            if raw_content:
                 questions = _extract_json_array_from_response(raw_content)
                 if questions:
                     for q_i, q in enumerate(questions):
@@ -2410,11 +2552,7 @@ def pass3_two_loop_ast_building(
                 else:
                     logger.debug("[pass3] L1: No valid JSON from section \"%s\"", sec_title)
             else:
-                logger.debug("[pass3] L1: VLM returned %d for section \"%s\"", r.status_code, sec_title)
                 consecutive_failures += 1
-        except (requests.ConnectionError, requests.Timeout) as exc:
-            logger.warning("[pass3] L1: Connection failed: %s", type(exc).__name__)
-            consecutive_failures += 1
         except Exception as exc:
             logger.debug("[pass3] L1: Error: %s", exc)
             consecutive_failures += 1
@@ -2487,17 +2625,14 @@ def pass3_two_loop_ast_building(
             "JSON only."
         )
 
-        payload = {
-            "model": model,
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.1,
-            "max_tokens": 384,
-        }
-
         try:
-            r = requests.post(endpoint, json=payload, timeout=timeout)
-            if r.status_code == 200:
-                raw_content = r.json()["choices"][0]["message"]["content"].strip()
+            raw_content = llm_text_call(
+                prompt=prompt,
+                task="entity_binding",
+                max_tokens=_tok("entity_binding")[0],
+                temperature=_tok("entity_binding")[1],
+            )
+            if raw_content:
                 binding = _extract_json_from_response(raw_content)
                 if binding:
                     q.update({
@@ -2512,13 +2647,8 @@ def pass3_two_loop_ast_building(
                 else:
                     enriched_questions.append(_default_question_binding(q, all_entities, section_patterns))
             else:
-                logger.debug("[pass3] L2: VLM returned %d", r.status_code)
                 consecutive_failures += 1
                 enriched_questions.append(_default_question_binding(q, all_entities, section_patterns))
-        except (requests.ConnectionError, requests.Timeout) as exc:
-            logger.warning("[pass3] L2: Connection failed: %s", type(exc).__name__)
-            consecutive_failures += 1
-            enriched_questions.append(_default_question_binding(q, all_entities, section_patterns))
         except Exception as exc:
             logger.debug("[pass3] L2: Error: %s", exc)
             consecutive_failures += 1
@@ -2740,6 +2870,76 @@ def _detect_domain(entity_names: list[str], archetypes: dict) -> str:
             best_hits = hits
             best_domain = domain
     return best_domain
+
+
+def _extract_facts_programmatic(page_texts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Extract numeric facts from page texts using regex patterns.
+
+    Targets PLFS-style facts: LFPR X.X%, WPR X.X%, etc.
+    Returns fact dicts compatible with factGraph schema.
+    """
+    import re as _re_facts
+    facts: list[dict[str, Any]] = []
+    seen_values: set[str] = set()
+
+    _FACT_PATS = [
+        # "LFPR ... X.X% in 2025"
+        (r"(?P<entity>LFPR|WPR|Unemployment Rate|UR)\b.*?(?P<value>\d+\.\d)\s*%.*?(?:in\s+)?(?P<year>20\d\d)",
+         "rate_fact"),
+        # "Labour Force Participation Rate ... X.X%"
+        (r"Labour Force Participation Rate.*?(?P<value>\d+\.\d)\s*%",
+         "lfpr_fact"),
+        # "Worker Population Ratio ... X.X%"
+        (r"Worker Population Ratio.*?(?P<value>\d+\.\d)\s*%",
+         "wpr_fact"),
+        # "rural male ... X.X%"
+        (r"rural\s+male.*?(?P<value>\d+\.\d)\s*%",
+         "rural_male_fact"),
+        # "rural female ... X.X%"
+        (r"rural\s+female.*?(?P<value>\d+\.\d)\s*%",
+         "rural_female_fact"),
+        # "urban ... X.X%"
+        (r"urban.*?(?P<value>\d+\.\d)\s*%.*?(?:in\s+)?(?P<year>20\d\d)",
+         "urban_fact"),
+    ]
+
+    fact_id = 1
+    for page_idx, pt in enumerate(page_texts):
+        raw = (pt.get("raw_text") or "").replace("\n", " ")
+        if not raw:
+            continue
+        for pat, fact_type in _FACT_PATS:
+            for m in _re_facts.finditer(pat, raw, _re_facts.I):
+                try:
+                    value = float(m.group("value"))
+                    year = int(m.group("year")) if "year" in m.groupdict() and m.group("year") else None
+                    val_key = f"{fact_type}_{value}_{year}"
+                    if val_key in seen_values:
+                        continue
+                    seen_values.add(val_key)
+
+                    # Build statement from context (30 chars before + match + 30 chars after)
+                    start = max(0, m.start() - 30)
+                    end = min(len(raw), m.end() + 30)
+                    statement = raw[start:end].strip()
+
+                    facts.append({
+                        "factId": f"pf_{fact_id:03d}",
+                        "statement": statement[:200],
+                        "entityRef": m.group("entity") if "entity" in m.groupdict() and m.group("entity") else fact_type,
+                        "numericValue": value,
+                        "unit": "%",
+                        "year": year,
+                        "sourcePageIndex": page_idx,
+                        "extractionMethod": "programmatic",
+                    })
+                    fact_id += 1
+                except (IndexError, ValueError, AttributeError):
+                    continue
+        if len(facts) >= 20:  # cap at 20 programmatic facts
+            break
+
+    return facts
 
 
 def _programmatic_question_fallback(
@@ -3440,6 +3640,11 @@ def run_extraction_pipeline(
     if not page_images and not page_texts:
         raise RuntimeError("Pass 0 failed: could not rasterize or extract text from PDF")
 
+    # ── Document Type Detection (programmatic, no LLM) ──
+    doc_type = _detect_document_type(page_texts, doc_title)
+    logger.info("[pipeline] Document type: %s (pages=%d)", doc_type, len(page_texts))
+    pipeline_trace["doc_type"] = doc_type
+
     # Ensure page_texts covers all images
     while len(page_texts) < len(page_images):
         page_texts.append({"raw_text": "", "words": [], "tables": [], "headings": [], "width": 595, "height": 842, "word_count": 0})
@@ -3472,7 +3677,7 @@ def run_extraction_pipeline(
     # ── Pass 2: Entity + Structure Extraction ──
     _tick("pass2_entity_extraction", 30)
     t0 = _time.monotonic()
-    entity_pages = pass2_entity_structure_extraction(page_images, layout_pages, page_texts, doc_title)
+    entity_pages = pass2_entity_structure_extraction(page_images, layout_pages, page_texts, doc_title, doc_type=doc_type)
     pass2_elapsed = _time.monotonic() - t0
 
     vlm_success = sum(1 for p in entity_pages if p.get("vlm_used"))
@@ -3492,7 +3697,7 @@ def run_extraction_pipeline(
     # ── Pass 2.5: Document Knowledge Graph ──
     _tick("pass2_5_knowledge_graph", 45)
     t0 = _time.monotonic()
-    document_map = pass2_5_document_knowledge_graph(entity_pages, layout_pages, page_texts, toc, doc_title)
+    document_map = pass2_5_document_knowledge_graph(entity_pages, layout_pages, page_texts, toc, doc_title, doc_type=doc_type)
     pass25_elapsed = _time.monotonic() - t0
 
     pipeline_trace["passes"]["pass2_5_kg"] = {
@@ -3522,12 +3727,20 @@ def run_extraction_pipeline(
     ast_result = pass3_two_loop_ast_building(document_map, page_texts, doc_title, page_images=page_images)
     pass3_elapsed = _time.monotonic() - t0
 
-    # If both loops produced nothing, try Gemini fallback
-    if not ast_result.get("questions"):
-        logger.info("[pipeline] Pass 3 produced 0 questions — trying Gemini fallback")
-        t0_fb = _time.monotonic()
+    # ── Gemini Safety: Question gap fill (Mode 2) ──
+    # Only trigger if <50% of chapters have questions assigned
+    chapters_count = len(document_map.get("chapters") or [])
+    topics_count = len(ast_result.get("topics") or [])
+    coverage = topics_count / max(chapters_count, 1)
+
+    if coverage < 0.5:
+        logger.info("[pipeline] Question coverage %.0f%% (%d/%d chapters) — triggering Gemini gap fill",
+                    coverage * 100, topics_count, chapters_count)
+        ast_result = _gemini_question_gap_fill(ast_result, document_map, doc_title)
+    elif not ast_result.get("questions"):
+        # Complete failure — use full Gemini fallback
+        logger.info("[pipeline] Pass 3 produced 0 questions — trying Gemini semantic fallback")
         gemini_result = _gemini_semantic_fallback(document_map, toc, doc_title)
-        pass3_elapsed += _time.monotonic() - t0_fb
         if gemini_result.get("questions"):
             ast_result = gemini_result
 
@@ -3552,6 +3765,12 @@ def run_extraction_pipeline(
         "blueprint_topics": len(ast.get("blueprint", {}).get("topics") or []),
         "blueprint_entities": len(ast.get("blueprint", {}).get("entities") or []),
     }
+
+    # ── Gemini Safety: Fact extraction (Mode 4) ──
+    # Only if factGraph is empty AND API key available
+    if not (ast.get("factGraph") or {}).get("facts"):
+        logger.info("[pipeline] factGraph empty — triggering Gemini fact extraction")
+        ast = _gemini_fact_extraction(ast, page_texts[:4])
 
     # ── Pass 5: Gemini Enhancement (optional) ──
     _tick("pass5_gemini_enhancement", 90)
@@ -3580,6 +3799,17 @@ def run_extraction_pipeline(
                 len(ast.get("blueprint", {}).get("topics") or []),
                 sum(len(t.get("questions", [])) for t in ast.get("blueprint", {}).get("topics", [])),
                 len(ast.get("blueprint", {}).get("entities") or []))
+    logger.info("  ✓ Document type: %s | Facts: %d",
+                doc_type,
+                len((ast.get("factGraph") or {}).get("facts") or []))
+    # Coverage check
+    _bp_topics = len(ast.get("blueprint", {}).get("topics") or [])
+    _ch_count = len(document_map.get("chapters") or [])
+    _coverage = f"{_bp_topics}/{_ch_count}"
+    logger.info("  ✓ Chapter coverage: %s | Tables: %d | Charts: %d",
+                _coverage,
+                len(ast.get("blueprint", {}).get("tableStructures") or []),
+                len(ast.get("chartAST", {}).get("charts") or []))
     logger.info("═══════════════════════════════════════════════════════════")
 
     # ── Persist outputs to disk ──────────────────────────────────────────────
@@ -3643,6 +3873,166 @@ def _fallback_layout_from_text(page_texts: list[dict[str, Any]]) -> list[dict[st
     return pages
 
 
+def _gemini_question_gap_fill(
+    ast_result: dict[str, Any],
+    document_map: dict[str, Any],
+    doc_title: str,
+) -> dict[str, Any]:
+    """Gemini Mode 2: Generate 1 question per chapter that has no questions yet.
+
+    Only called when <50% of chapters have questions assigned.
+    Generates minimally — 1 question per uncovered chapter, not full extraction.
+    """
+    covered_chapter_ids = {
+        topic.get("topicId", "").replace("topic_", "ch_")
+        for topic in (ast_result.get("topics") or [])
+    }
+    chapters = document_map.get("chapters") or []
+    uncovered = [ch for ch in chapters if ch["chapterId"] not in covered_chapter_ids]
+
+    if not uncovered:
+        return ast_result
+
+    all_entities = document_map.get("all_entities") or []
+    entity_names = ", ".join(e["name"] for e in all_entities[:15]) or "LFPR, WPR, UR"
+
+    chapter_list = "\n".join(
+        f"- Chapter '{ch['title']}' (pages {ch['pageRange'][0]+1}-{ch['pageRange'][1]+1})"
+        for ch in uncovered[:10]
+    )
+
+    prompt = (
+        f"Document: \"{doc_title}\" (Indian government statistical report)\n"
+        f"Available entities: {entity_names}\n\n"
+        f"These chapters have no analytical questions yet. Generate exactly 1 specific "
+        f"analytical question per chapter. Questions must reference real entities and be "
+        f"quantitative/comparative in MoSPI style.\n\n"
+        f"Chapters:\n{chapter_list}\n\n"
+        f"Output JSON array — one entry per chapter:\n"
+        f'[{{"chapter": "chapter title", "question": "specific analytical question?",'
+        f'"questionType": "comparison|trend|ranking|describe"}}]\n'
+        f"JSON only."
+    )
+
+    try:
+        raw = llm_text_call(prompt, task="gap_fill", max_tokens=_tok("gap_fill")[0], temperature=_tok("gap_fill")[1])
+        if not raw:
+            logger.info("[gap_fill] No response from LLM — skipping")
+            return ast_result
+
+        parsed = _extract_json_array_from_response(raw)
+        if not parsed:
+            logger.warning("[gap_fill] Could not parse JSON array from response: %s", raw[:200])
+            return ast_result
+
+        # Build synthetic questions + topics for uncovered chapters
+        import uuid as _uuid
+        new_questions = []
+        new_topics = []
+        existing_questions = list(ast_result.get("questions") or [])
+        existing_topics = list(ast_result.get("topics") or [])
+
+        for item in parsed:
+            if not isinstance(item, dict):
+                continue
+            ch_title = item.get("chapter", "")
+            q_intent = item.get("question", "")
+            q_type = item.get("questionType", "describe")
+            if not q_intent:
+                continue
+
+            # Find the matching chapter
+            matched_ch = next(
+                (ch for ch in uncovered if ch_title.lower()[:30] in ch["title"].lower()[:30] or
+                 ch["title"].lower()[:30] in ch_title.lower()[:30]),
+                None
+            )
+            if not matched_ch:
+                continue
+
+            q_id = f"gemini_gf_{_uuid.uuid4().hex[:6]}"
+            q = {
+                "questionId": q_id,
+                "intent": q_intent,
+                "questionType": q_type,
+                "page": matched_ch["pageRange"][0],
+                "sourceHeading": matched_ch["title"],
+                "requiredEntities": [],
+                "answerStructure": {
+                    "layoutType": "single",
+                    "components": [{"type": "narrative_paragraph", "renderOrder": 1}],
+                },
+                "inferenceConfidence": 0.45,
+                "inferenceMethod": "gemini_gap_fill",
+            }
+            new_questions.append(q)
+            new_topics.append({
+                "topicId": matched_ch["chapterId"].replace("ch_", "topic_"),
+                "title": matched_ch["title"],
+                "description": f"Questions from chapter: {matched_ch['title']}",
+                "questionIds": [q_id],
+                "pageRange": matched_ch["pageRange"],
+            })
+
+        logger.info("[gemini] Question gap fill: added %d questions for %d uncovered chapters",
+                    len(new_questions), len(uncovered))
+        return {
+            "questions": existing_questions + new_questions,
+            "topics": existing_topics + new_topics,
+        }
+
+    except Exception as exc:
+        logger.warning("[gemini] Question gap fill failed (non-fatal): %s", exc)
+        return ast_result
+
+
+def _gemini_fact_extraction(
+    ast: dict[str, Any],
+    page_texts: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Gemini Mode 4: Extract numeric facts from the document text.
+
+    Only called when factGraph.facts is empty. Costs 1 Gemini call (~800 tokens).
+    """
+    # Build context from first 3 pages
+    context_text = "\n\n".join(
+        (pt.get("raw_text") or "")[:1200]
+        for pt in page_texts[:3]
+    )[:4000]
+
+    entity_names = ", ".join(
+        e.get("name", "") for e in (ast.get("blueprint", {}).get("entities") or [])[:15]
+    ) or "LFPR, WPR, UR"
+
+    prompt = (
+        f"Extract 5-10 numeric facts from this government statistical document.\n"
+        f"Focus on: {entity_names}\n\n"
+        f"For each fact, include the numeric value and the year.\n"
+        f"Output JSON array:\n"
+        f'[{{"factId":"f1","statement":"LFPR was 59.3% in 2025",'
+        f'"entityRef":"Labour Force Participation Rate",'
+        f'"numericValue":59.3,"unit":"%","year":2025,"sourcePageIndex":0}}]\n'
+        f"JSON only. Text:\n\n{context_text}"
+    )
+
+    try:
+        raw = llm_text_call(prompt, task="fact_extraction", max_tokens=_tok("fact_extraction")[0], temperature=_tok("fact_extraction")[1])
+        if not raw:
+            logger.info("[fact_extraction] No response from LLM provider")
+            return ast
+        parsed = _extract_json_array_from_response(raw)
+        if parsed:
+            ast["factGraph"] = {"facts": parsed}
+            logger.info("[fact_extraction] %d facts extracted", len(parsed))
+        else:
+            logger.warning("[fact_extraction] Could not parse JSON array from response (first 200 chars): %s", raw[:200])
+        return ast
+
+    except Exception as exc:
+        logger.warning("[fact_extraction] Failed (non-fatal): %s", exc)
+        return ast
+
+
 def _gemini_semantic_fallback(
     document_map: dict[str, Any],
     toc: list[ToCEntry],
@@ -3653,13 +4043,6 @@ def _gemini_semantic_fallback(
     Returns same format as pass3_two_loop_ast_building output.
     """
     try:
-        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            logger.warning("[gemini-fallback] No API key — skipping")
-            return {"questions": [], "topics": []}
-
-        gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-
         # Build entity + table summary from document_map
         all_entities = document_map.get("all_entities") or []
         table_structures = document_map.get("table_structures") or []
@@ -3688,17 +4071,9 @@ def _gemini_semantic_fallback(
             "Output 3-8 questions. JSON only."
         )
 
-        try:
-            from google import genai
-            client = genai.Client(api_key=api_key)
-            response = client.models.generate_content(model=gemini_model, contents=prompt)
-            text = (response.text or "").strip()
-        except ImportError:
-            import google.generativeai as legacy_genai
-            legacy_genai.configure(api_key=api_key)
-            model_obj = legacy_genai.GenerativeModel(gemini_model)
-            response = model_obj.generate_content(prompt)
-            text = (response.text or "").strip()
+        text = llm_text_call(prompt, task="semantic_fallback", max_tokens=_tok("semantic_fallback")[0], temperature=_tok("semantic_fallback")[1])
+        if not text:
+            return {"questions": [], "topics": []}
 
         data = _extract_json_from_response(text)
         if not data:
@@ -3735,9 +4110,9 @@ def _gemini_semantic_fallback(
         for q in questions:
             q["inferenceMethod"] = "gemini"
 
-        logger.info("[gemini-fallback] ✓ Got %d questions in %d topics", len(questions), len(topics))
+        logger.info("[semantic_fallback] ✓ Got %d questions in %d topics", len(questions), len(topics))
         return {"questions": questions, "topics": topics}
 
     except Exception as exc:
-        logger.error("[gemini-fallback] Failed: %s", exc)
+        logger.error("[semantic_fallback] Failed: %s", exc)
         return {"questions": [], "topics": []}

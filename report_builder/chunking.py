@@ -116,9 +116,18 @@ def build_toc_from_regions(
                 continue
             if confidence < MIN_CONFIDENCE:
                 continue
-            if len(text) < 3:
+            if len(text) < 6:
                 continue
-            # Removed upper length cap — MoSPI section titles can be descriptive
+            # Single-word entries are LayoutLM false positives on dense government PDFs
+            if " " not in text and text.upper() not in {"LFPR", "WPR", "UR", "MPCE", "CPI", "GDP", "NSO"}:
+                continue
+            # PIB nav-bar artifacts — reject entries containing timestamps or "Press Information"
+            import re as _re_toc_filter
+            if _re_toc_filter.search(
+                r"Press\s*(Release|Information)|pib\.gov|\d+:\d+\s*[AP]M|\d+/\d+/\d+|Visitor Counter",
+                text, _re_toc_filter.I
+            ):
+                continue
 
             # Deduplicate (case-insensitive, strip numbers/punctuation)
             dedup_key = text.lower().strip("0123456789.-: ")

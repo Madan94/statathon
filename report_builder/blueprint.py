@@ -426,7 +426,7 @@ def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]
         try:
             import requests  # type: ignore
 
-            model = os.getenv("SGLANG_MODEL", "Qwen/Qwen2.5-VL-7B-Instruct-AWQ")
+            model = os.getenv("SGLANG_MODEL") or "Qwen/Qwen2.5-VL-3B-Instruct-AWQ"
             # Truncate page data to ~3000 chars so input fits in 4096 context
             pages_text = _json.dumps(page_summaries)[:3000]
             prompt = (
