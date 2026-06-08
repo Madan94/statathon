@@ -291,6 +291,9 @@ _NUMERIC_ONLY_RE = _re_entity.compile(r"^[\d,.\-+%\s/()]+$")
 _URL_RE = _re_entity.compile(r"https?://|www\.", _re_entity.I)
 _TIMESTAMP_RE = _re_entity.compile(r"^\d+/\d+/\d+|^\d+:\d+\s*[AP]M", _re_entity.I)
 _PAREN_ABBREV_RE = _re_entity.compile(r"^\([A-Z+]{2,10}\):?$")
+# Synthetic table-header placeholders emitted when a column has no extractable header
+# text (e.g. ``col_0`` … ``col_N``). These are artifacts, not entity candidates.
+_PLACEHOLDER_HEADER_RE = _re_entity.compile(r"^col_\d+$", _re_entity.I)
 
 # Phrases that Qwen echoes verbatim from the prompt template
 _PROMPT_ECHO_PHRASES: frozenset[str] = frozenset({
@@ -421,6 +424,9 @@ def _classify_entity_name(name: str) -> str | None:
     """
     cleaned = name.strip()
     low = cleaned.lower()
+    # Synthetic table-header placeholder (col_0 … col_N): a zero-signal artifact.
+    if _PLACEHOLDER_HEADER_RE.match(cleaned):
+        return "synthetic_placeholder"
     # Minimum 4 chars
     if len(cleaned) < 4:
         return "too_short"
@@ -1728,6 +1734,9 @@ def pass2_5_document_knowledge_graph(
         # Reject stopwords, noise, figure refs, web chrome — quarantine with reason (Q7), don't drop
         reason = _classify_entity_name(name) if len(name) < 100 else "too_long"
         if reason is not None:
+            # Synthetic placeholders (col_N) carry no signal — drop entirely, don't even quarantine.
+            if reason == "synthetic_placeholder":
+                return
             if key not in entity_index and key not in rejected_index:
                 rejected_index[key] = {
                     "name": name.strip(), "reason": reason, "source": source, "page": page,
