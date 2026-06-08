@@ -51,7 +51,21 @@ _RESOLVED_STATUSES = ("proposed", "confirmed", "overridden")
 
 
 def _index_bindings(bindings: list[EntityBinding]) -> dict[str, EntityBinding]:
-    return {b.entityId: b for b in bindings}
+    """Index bindings for lookup by entityId *or* canonical entity name.
+
+    Questions reference entities by id on the Gemini path
+    (``requiredEntities[].entityId``) but by **name** on the programmatic-fallback
+    path (``requiredEntities[].entityRef`` = the entity's display name). Indexing
+    both shapes lets S3 resolve either; ids win over names on any collision.
+    """
+    idx: dict[str, EntityBinding] = {}
+    for b in bindings:
+        if b.entityName:
+            idx.setdefault(b.entityName.strip().lower(), b)
+    for b in bindings:  # second pass: entityId takes precedence over a name clash
+        if b.entityId:
+            idx[b.entityId] = b
+    return idx
 
 
 def _is_resolved(b: EntityBinding | None) -> bool:
@@ -68,12 +82,18 @@ def _distinct_values(
 
 
 def _filter_specs(analytics_spec: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    """Index analyticsSpec.filters by entityRef → {op, valueFrom}."""
+    """Index analyticsSpec.filters by entityRef → {op, valueFrom}.
+
+    Keyed by the raw ref and a lowercased alias so a filter declared by entity
+    *name* still matches a requiredEntity declared by id (and vice versa).
+    """
     out: dict[str, dict[str, Any]] = {}
     for f in (analytics_spec.get("filters") or []):
         ref = f.get("entityRef") or f.get("entityId")
         if ref:
-            out[str(ref)] = {"op": f.get("op", "eq"), "valueFrom": f.get("valueFrom")}
+            spec = {"op": f.get("op", "eq"), "valueFrom": f.get("valueFrom")}
+            out[str(ref)] = spec
+            out.setdefault(str(ref).strip().lower(), spec)
     return out
 
 
@@ -116,7 +136,9 @@ def bind_question(
         ent_id = str(req.get("entityId") or req.get("entityRef") or "")
         role = str(req.get("role") or "")
         is_required = bool(req.get("required", True))
-        binding = bindings_by_id.get(ent_id)
+        # Resolve by entityId (Gemini path) or by display name (programmatic
+        # fallback emits requiredEntities[].entityRef = the entity's name).
+        binding = bindings_by_id.get(ent_id) or bindings_by_id.get(ent_id.strip().lower())
         resolved = _is_resolved(binding)
 
         # ---- time is special: missing → snapshot (degrade), not block ----
@@ -155,7 +177,12 @@ def bind_question(
         elif role == "grouping":
             roles.dimensions.extend(c for c in cols if c not in roles.dimensions)
         elif role == "filter":
-            fspec = filter_specs.get(ent_id, {})
+            fspec = (
+                filter_specs.get(ent_id)
+                or filter_specs.get(ent_id.strip().lower())
+                or (filter_specs.get((binding.entityName or "").strip().lower()) if binding else None)
+                or {}
+            )
             op = str(fspec.get("op") or req.get("op") or "eq")
             canonical = (
                 req.get("defaultMember")

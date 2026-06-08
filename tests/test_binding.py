@@ -157,6 +157,30 @@ def test_question_binder_executable(plfs_df: pd.DataFrame, blueprint: dict):
     assert any(f.column == "Age_Group" and f.filterApplied for f in flt)
 
 
+def test_question_binder_resolves_entities_by_name(plfs_df: pd.DataFrame, blueprint: dict):
+    """Programmatic-fallback questions reference entities by NAME (``entityRef``)
+    and use the ``groupBy`` role — unlike the Gemini path's ``entityId``/``grouping``.
+    The binder must resolve either shape (id-or-name index + role catch-all)."""
+    d = profile_dataframe(plfs_df, dataset_id="plfs")
+    ebs = resolve_entities(blueprint["entities"], d)
+    name_bp = {
+        "topics": [{"questions": [{
+            "questionId": "q_byname",
+            "intent": "Compare WPR across sector.",
+            "questionType": "comparison",
+            "requiredEntities": [
+                {"entityRef": "Worker Population Ratio", "role": "measure"},
+                {"entityRef": "Sector", "role": "groupBy"},
+            ],
+            "analyticsSpec": {"operation": "group_aggregate", "filters": []},
+        }]}],
+    }
+    q = {qb.questionId: qb for qb in bind_questions(name_bp, ebs, d, df=plfs_df)}["q_byname"]
+    assert q.status == "executable"
+    assert q.resolvedRoles.measures == ["Worker_Population_Ratio"]
+    assert q.resolvedRoles.dimensions == ["Sector"]      # 'groupBy' role → dimension
+
+
 def test_question_binder_blocks_on_missing_required(blueprint: dict):
     # dataset without Sector → q_wpr_01 (requires ent_sector grouping) is blocked
     df = pd.DataFrame({"Year": ["2023-24"], "Worker_Population_Ratio": [52.1]})
