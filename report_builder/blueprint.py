@@ -77,6 +77,32 @@ PRODUCTION_STAGE_ORDER = (
 )
 
 
+def _layout_extraction_tools(extraction_method: str, *, sequential: bool = False) -> list[str]:
+    """Tool chips surfaced in template extraction UI (stage 2)."""
+    m = (extraction_method or "").lower()
+    tools: list[str] = []
+    if "colpali" in m:
+        tools.append("ColPali")
+    if "pdfplumber" in m:
+        tools.append("pdfplumber")
+    if "pymupdf" in m or "fitz" in m:
+        tools.append("PyMuPDF")
+    if "layoutlm" in m or "qwen-vl" in m:
+        tools.extend(["LayoutLM", "Qwen-VL"])
+    if sequential:
+        tools.append("GPU orchestrator")
+    return tools or ["pdfplumber", "PyMuPDF"]
+
+
+def _blueprint_extraction_tools(*, sequential: bool, used_sglang: bool) -> list[str]:
+    """Tool chips for stage 3 semantic blueprint extraction."""
+    if sequential and used_sglang:
+        return ["SGLang", "Qwen2.5-3B"]
+    if used_sglang:
+        return ["SGLang", "Gemini fallback"]
+    return ["Gemini", "Heuristics"]
+
+
 # ---------------- Built-in default (MoSPI-style) ----------------
 
 DEFAULT_MOSPI_TEMPLATE = TemplateAST(
@@ -742,6 +768,7 @@ def compile_template_production(
         "section_hierarchy": section_hierarchy[:25],
         "page_layout_preview": page_layout_preview,
         "layout_extractors": {"paragraphs": True, "tables": True},
+        "tools": _layout_extraction_tools(extraction_method, sequential=_sequential),
         "status": "completed",
     }
     _tick(PRODUCTION_STAGE_ORDER[1], 45, diagnostics["stages"][PRODUCTION_STAGE_ORDER[1]])
@@ -750,6 +777,7 @@ def compile_template_production(
 
     # ── Sequential GPU mode: use orchestrator for SGLang too
     inferred_blocks: list[BlockSpec] = []
+    used_sglang = False
     if _sequential:
         from report_builder.gpu_orchestrator import compile_with_sglang
         raw_blocks = compile_with_sglang(pages)
@@ -767,6 +795,7 @@ def compile_template_production(
                 except Exception:
                     continue
             if inferred_blocks:
+                used_sglang = True
                 logger.info(
                     "[blueprint] ✓ sequential SGLang   blocks=%d", len(inferred_blocks)
                 )
@@ -791,7 +820,12 @@ def compile_template_production(
     _tick(
         PRODUCTION_STAGE_ORDER[2],
         65,
-        {"questions_count": len(generalized_questions), "status": "completed"},
+        {
+            "questions_count": len(generalized_questions),
+            "block_count": len(inferred_blocks),
+            "tools": _blueprint_extraction_tools(sequential=_sequential, used_sglang=used_sglang),
+            "status": "completed",
+        },
     )
 
     _tick(PRODUCTION_STAGE_ORDER[3], 75, {"status": "started"})

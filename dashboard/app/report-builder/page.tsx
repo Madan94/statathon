@@ -10,6 +10,9 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Alert } from '@/components/ui/Alert';
+import TemplateExtractionModal, {
+  type TemplateExtractionModalPhase,
+} from '@/components/report-builder/TemplateExtractionModal';
 import {
   reportBuilderApi,
   ReportTemplate,
@@ -36,6 +39,11 @@ function ReportBuilderContent() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [extractJob, setExtractJob] = useState<TemplateExtractionJob | null>(null);
+  const [extractionModalOpen, setExtractionModalOpen] = useState(false);
+  const [extractionModalPhase, setExtractionModalPhase] =
+    useState<TemplateExtractionModalPhase>('running');
+  const [extractionError, setExtractionError] = useState<string | null>(null);
+  const [pendingTemplateName, setPendingTemplateName] = useState('');
   const [extractedTemplateAst, setExtractedTemplateAst] = useState<Record<string, unknown> | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,11 +77,24 @@ function ReportBuilderContent() {
     }
   }, [searchParams]);
 
+  const loadExtractedTemplate = async (templateId: number) => {
+    const tpl = await reportBuilderApi.getTemplate(templateId);
+    setExtractedTemplateAst(
+      tpl && typeof tpl === 'object' && 'ast' in tpl
+        ? (tpl as { ast: Record<string, unknown> }).ast
+        : null
+    );
+  };
+
   const onUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadFile || !uploadName.trim()) return;
     setUploading(true);
     setExtractJob(null);
+    setExtractionError(null);
+    setExtractionModalPhase('running');
+    setPendingTemplateName(uploadName.trim());
+    setExtractionModalOpen(true);
     setError(null);
     try {
       const queued = await reportBuilderApi.extractTemplateAsync(uploadName.trim(), uploadFile);
@@ -81,24 +102,34 @@ function ReportBuilderContent() {
       const final = await reportBuilderApi.pollTemplateExtractJob(queued.id, (job) => {
         setExtractJob(job);
       });
+      setExtractJob(final);
       if (final.status === 'failed') {
-        throw new Error(final.error_message || 'Template extraction failed');
+        setExtractionModalPhase('failed');
+        setExtractionError(final.error_message || 'Template extraction failed');
+        return;
       }
       if (final.created_template_id) {
-        const tpl = await reportBuilderApi.getTemplate(final.created_template_id);
-        setExtractedTemplateAst(
-          tpl && typeof tpl === 'object' && 'ast' in tpl
-            ? (tpl as { ast: Record<string, unknown> }).ast
-            : null
-        );
+        await loadExtractedTemplate(final.created_template_id);
       }
+      setExtractionModalPhase('success');
       setUploadName('');
       setUploadFile(null);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Template upload failed');
+      const msg = err instanceof Error ? err.message : 'Template upload failed';
+      setExtractionModalPhase('failed');
+      setExtractionError(msg);
+      setError(msg);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const closeExtractionModal = () => {
+    setExtractionModalOpen(false);
+    setExtractionError(null);
+    if (extractionModalPhase !== 'success') {
+      setExtractJob(null);
     }
   };
 
@@ -143,8 +174,19 @@ function ReportBuilderContent() {
         description="Reverse-engineered AST · Knowledge graph · Hallucination firewall · Block-based AGUI"
       />
 
+      <TemplateExtractionModal
+        open={extractionModalOpen}
+        templateName={pendingTemplateName || uploadName || 'Template'}
+        job={extractJob}
+        phase={extractionModalPhase}
+        errorMessage={extractionError}
+        onClose={closeExtractionModal}
+        onViewBlueprint={closeExtractionModal}
+        onRetry={closeExtractionModal}
+      />
+
       <div className="space-y-6">
-        {error && <Alert variant="error">{error}</Alert>}
+        {error && !extractionModalOpen && <Alert variant="error">{error}</Alert>}
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Phase 0: upload template */}
@@ -198,25 +240,6 @@ function ReportBuilderContent() {
                   </>
                 )}
               </Button>
-              {extractJob && (
-                <div className="rounded-lg border border-border bg-surface px-3 py-2">
-                  <p className="text-xs text-text-muted">
-                    Stage: <span className="font-medium text-text">{extractJob.stage || 'queued'}</span>
-                    {' · '}
-                    Progress: <span className="font-medium text-text">{extractJob.progress_pct}%</span>
-                  </p>
-                  {extractJob.source_hash && (
-                    <p className="text-[11px] text-text-muted mt-1">
-                      SHA256: <span className="font-mono">{extractJob.source_hash}</span>
-                    </p>
-                  )}
-                  {extractJob.vault_object_key && (
-                    <p className="text-[11px] text-text-muted mt-1">
-                      Vault key: <span className="font-mono break-all">{extractJob.vault_object_key}</span>
-                    </p>
-                  )}
-                </div>
-              )}
             </form>
           </Card>
 

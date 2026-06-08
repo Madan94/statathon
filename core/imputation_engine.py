@@ -1,11 +1,15 @@
 import pandas as pd
 import numpy as np
-from sklearn.impute import KNNImputer
+
 
 def knn_impute_numeric(df: pd.DataFrame, cols: list[str], n_neighbors: int = 5) -> pd.DataFrame:
     out = df.copy()
     numeric = [c for c in cols if c in out.columns and pd.api.types.is_numeric_dtype(out[c])]
     if not numeric:
+        return out
+    try:
+        from sklearn.impute import KNNImputer
+    except (ImportError, OSError):
         return out
     imputer = KNNImputer(n_neighbors=min(n_neighbors, len(out)))
     out[numeric] = imputer.fit_transform(out[numeric])
