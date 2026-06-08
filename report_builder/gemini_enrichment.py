@@ -314,6 +314,14 @@ def gemini_full_enrichment(ast_dict: dict[str, Any]) -> dict[str, Any]:
     """
     logger.info("[gemini-enrich] ▶ Starting full Gemini enrichment pass")
 
+    # Offline / air-gapped or no credentials → skip cleanly (deterministic output).
+    if (os.getenv("LLM_DISABLED") or "").strip().lower() in ("1", "true", "yes", "on"):
+        logger.info("[gemini-enrich] LLM_DISABLED set — skipping enrichment")
+        return ast_dict
+    if not (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")):
+        logger.info("[gemini-enrich] No Gemini API key — skipping enrichment")
+        return ast_dict
+
     # Build pages_text from extracted_assets or contentAST
     pages_text = []
     extracted = ast_dict.get("extracted_assets", {})

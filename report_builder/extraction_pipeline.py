@@ -54,6 +54,7 @@ import io
 import json
 import logging
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -66,6 +67,11 @@ from report_builder.chunking import (
     extract_caption_entities_from_layout,
 )
 from report_builder.llm_router import llm_text_call, llm_vision_call, is_provider_available
+from report_builder.llm_schemas import (
+    ENTITY_BINDING_SCHEMA,
+    ENTITY_CLASSIFICATION_SCHEMA,
+    QUESTION_LIST_SCHEMA,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -306,6 +312,25 @@ _COMMON_NOISE_WORDS: frozenset[str] = frozenset({
     "market", "presented", "long", "mainly", "mainly",
 })
 
+# D1 fix (loop decision Q6): blocklist of PIB / web-export chrome that leaks as "entities".
+# Exact multi-word phrases (lowercased, punctuation-stripped) that are never statistical entities.
+_ENTITY_BLOCKLIST_PHRASES: frozenset[str] = frozenset({
+    "press re", "press release", "press information bureau", "pib delhi",
+    "posted on", "release id", "visitor counter", "skip to main content",
+    "read more", "click here", "main menu", "last updated", "font size",
+    "all rights reserved", "terms of use", "privacy policy", "related links",
+    "share on facebook", "print this page", "go to navigation", "site map",
+    "screen reader access", "help desk", "contact us", "about us",
+})
+# Substrings that mark web/markup artifacts anywhere in the candidate.
+_ENTITY_BLOCKLIST_SUBSTR: tuple[str, ...] = (
+    "javascript", "cookie", "copyright", "breadcrumb", "hyperlink",
+    "http", "www.", ".html", ".aspx", "@", "©",
+)
+# Leading punctuation / time fragments like ":49 AM", "10:49", "- contd" — never entity starts.
+_LEADING_PUNCT = ":;,.–—/)]}%&*"
+_TIME_FRAGMENT_RE = _re_entity.compile(r"^[:\d]{1,5}\s*(am|pm)?$|^\d{1,2}:\d{2}", _re_entity.I)
+
 import re as _re_entity_extra
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -387,131 +412,189 @@ def _detect_document_type(page_texts: list[dict[str, Any]], doc_title: str = "")
     return "statistical_annual_report"
 
 
-def _is_valid_entity_name(name: str) -> bool:
-    """Return True if name is a valid entity (not a stopword / noise / reference)."""
+def _classify_entity_name(name: str) -> str | None:
+    """Classify an entity-name candidate. Returns None if valid, else a short reject reason.
+
+    This is the single source of truth for entity hygiene (D1). ``_is_valid_entity_name``
+    is a thin boolean wrapper so existing call sites keep working, while callers that want
+    to quarantine rejects (loop decision Q7) can record the reason.
+    """
     cleaned = name.strip()
+    low = cleaned.lower()
     # Minimum 4 chars
     if len(cleaned) < 4:
-        return False
+        return "too_short"
     if not any(c.isalpha() for c in cleaned):
-        return False
+        return "no_alpha"
     # Max 80 chars — no full sentences or section headings
     if len(cleaned) > 80:
-        return False
+        return "too_long"
+    # D1: leading punctuation / time fragments (":49 AM", "10:49", "- contd")
+    if cleaned[0] in _LEADING_PUNCT:
+        return "leading_punct"
+    if _TIME_FRAGMENT_RE.match(cleaned):
+        return "time_fragment"
+    # D1: PIB / web-export chrome blocklist
+    _phrase = _re_entity_extra.sub(r"[^a-z0-9 ]", "", low).strip()
+    if _phrase in _ENTITY_BLOCKLIST_PHRASES:
+        return "blocklist_phrase"
+    if any(s in low for s in _ENTITY_BLOCKLIST_SUBSTR):
+        return "blocklist_substr"
     # Reject pure single-word lowercase (likely body-text noise)
     if " " not in cleaned and cleaned == cleaned.lower() and len(cleaned) < 8:
-        return False
-    if cleaned.lower() in _ENGLISH_STOPWORDS:
-        return False
-    if cleaned.lower() in _PROMPT_ECHO_PHRASES:
-        return False
+        return "lowercase_fragment"
+    if low in _ENGLISH_STOPWORDS:
+        return "stopword"
+    if low in _PROMPT_ECHO_PHRASES:
+        return "prompt_echo"
     if _FIGREF_RE.match(cleaned):
-        return False
+        return "figure_reference"
     if _NUMERIC_ONLY_RE.match(cleaned):
-        return False
+        return "numeric_only"
     if _URL_RE.search(cleaned):
-        return False
+        return "url"
     if _TIMESTAMP_RE.match(cleaned):
-        return False
+        return "timestamp"
     # Section headings like "2. Worker Population Ratio..." — not entities
     if _re_entity_extra.match(r'^\d{1,2}\.\s+[A-Z]', cleaned):
-        return False
+        return "section_heading"
     # Any entity containing an embedded percentage is a data value fragment, not an entity name
-    # Real entities are named concepts (LFPR, WPR, Gender); their values are separate.
     if _re_entity_extra.search(r'\d+\.?\d*%', cleaned):
-        return False
+        return "embedded_percent"
     # Entities starting with a digit are data values, not entity names
     if _re_entity_extra.match(r'^\d', cleaned) and len(cleaned) > 5:
-        return False
+        return "starts_with_digit"
     # Reject fragment artifacts ending with comma/semicolon
     if cleaned[-1] in ".,;:—–" and len(cleaned.split()) <= 4:
-        return False
+        return "trailing_punct_fragment"
     # Reject pure parenthetical abbreviations like "(PLFS)" "(WPR):"
     if _PAREN_ABBREV_RE.match(cleaned):
+        return "paren_abbrev"
+    if low in _COMMON_NOISE_WORDS:
+        return "noise_word"
+    # D1: multi-word candidate whose every token is a noise word ("Press Re", "Page Back")
+    _tokens = [t for t in _phrase.split() if t]
+    if len(_tokens) >= 2 and all(t in _COMMON_NOISE_WORDS for t in _tokens):
+        return "all_noise_words"
+    return None
+
+
+def _is_valid_entity_name(name: str) -> bool:
+    """Return True if name is a valid entity (not a stopword / noise / reference)."""
+    return _classify_entity_name(name) is None
+
+
+def _looks_like_data_row(row: list, min_numeric_frac: float = 0.5) -> bool:
+    """True if a row is mostly numeric cells (i.e. a data row, not a header row)."""
+    cells = [str(c or "").strip() for c in row]
+    nonempty = [c for c in cells if c]
+    if not nonempty:
         return False
-    if cleaned.lower() in _COMMON_NOISE_WORDS:
-        return False
-    return True
+    numeric = 0
+    for c in nonempty:
+        v = c.replace(",", "").replace("%", "").replace("\u20b9", "").replace("(", "").replace(")", "").strip()
+        try:
+            float(v)
+            numeric += 1
+        except (ValueError, TypeError):
+            pass
+    return numeric >= len(nonempty) * min_numeric_frac
+
+
+def _forward_fill_row(row: list, width: int) -> list[str]:
+    """Forward-fill a header row so a spanning label propagates across its empty cells."""
+    out: list[str] = []
+    last = ""
+    for j in range(width):
+        cell = str(row[j] or "").strip() if j < len(row) else ""
+        if cell:
+            last = cell
+        out.append(cell if cell else last)
+    return out
+
+
+def _detect_header_row_count(table: list[list], max_header_rows: int = 3) -> int:
+    """Number of leading header rows = rows before the first data-looking row (1..max)."""
+    n = 0
+    for r in range(min(max_header_rows, max(1, len(table) - 1))):
+        if _looks_like_data_row(table[r]):
+            break
+        n += 1
+    return max(1, n)
+
+
+def _analyze_table_header(table: list[list]) -> dict[str, Any]:
+    """Analyze an N-row spanning header (D2 fix).
+
+    Handles the 1\u20133 row fragmented headers common in MoSPI/NSSO/PIB exports by
+    forward-filling spanning bands and merging top\u2192bottom into flat column names,
+    while also emitting ``columnGroups`` for the spanning bands (loop decision Q9:
+    geometry-span + repetition).
+
+    Returns: {headers, columnGroups, data_start, headerRows}
+    """
+    if not table:
+        return {"headers": [], "columnGroups": [], "data_start": 0, "headerRows": 0}
+
+    total_cols = max((len(r) for r in table), default=0)
+    if total_cols == 0:
+        return {"headers": [], "columnGroups": [], "data_start": 1, "headerRows": 1}
+
+    n_header = _detect_header_row_count(table)
+    filled = [_forward_fill_row(table[r], total_cols) for r in range(n_header)]
+    raw = [[str(table[r][j] or "").strip() if j < len(table[r]) else "" for j in range(total_cols)]
+           for r in range(n_header)]
+
+    # Merge each column top→bottom, de-duplicating consecutive equal parts.
+    headers: list[str] = []
+    for j in range(total_cols):
+        parts: list[str] = []
+        for r in range(n_header):
+            val = filled[r][j]
+            if val and (not parts or parts[-1].lower() != val.lower()):
+                parts.append(val)
+        headers.append(" ".join(parts).strip() or f"col_{j}")
+
+    # columnGroups: maximal runs of consecutive columns sharing the same top-band label,
+    # where the band genuinely spans (>= 2 columns). Repetition of the leaf qualifiers
+    # under each band corroborates a real cross-tabulation.
+    column_groups: list[dict[str, Any]] = []
+    if n_header >= 2:
+        top = filled[0]
+        j = 0
+        gid = 0
+        while j < total_cols:
+            label = top[j]
+            k = j
+            while k + 1 < total_cols and top[k + 1] == label:
+                k += 1
+            span = k - j + 1
+            if label and span >= 2:
+                gid += 1
+                column_groups.append({
+                    "groupId": f"grp_{gid}",
+                    "label": label,
+                    "columnIndices": list(range(j, k + 1)),
+                    "span": span,
+                })
+            j = k + 1
+
+    return {
+        "headers": headers,
+        "columnGroups": column_groups,
+        "data_start": n_header,
+        "headerRows": n_header,
+    }
 
 
 def _merge_multirow_headers(table: list[list]) -> tuple[list[str], int]:
-    """Merge multi-row spanning headers common in MoSPI/NSSO PDFs.
+    """Backward-compatible wrapper around :func:`_analyze_table_header`.
 
-    Example (PLFS table):
-        Row 0: "State/UT", None,    "LFPR",    None,    None,    "WPR",    None,    None
-        Row 1: "Code",     "Rural", "Urban",   "Total", "Rural", "Urban",  "Total"
-        → merged: ["State/UT Code", "LFPR Rural", "LFPR Urban", "LFPR Total",
-                   "WPR Rural", "WPR Urban", "WPR Total"]
-
-    Returns:
-        (merged_header_list, data_start_row_index)
+    Returns ``(merged_header_list, data_start_row_index)`` for the many call sites that
+    only need the flat header list (entity collection, etc.).
     """
-    if not table:
-        return [], 0
-
-    row0 = [str(c or "").strip() for c in table[0]]
-    if len(table) < 2:
-        return row0, 1
-
-    row1 = [str(c or "").strip() for c in table[1]]
-    total_cols = max(len(row0), len(row1))
-    if total_cols == 0:
-        return row0, 1
-
-    # Count truly empty cells in row 0
-    empty_in_row0 = sum(1 for c in row0 if not c)
-
-    # Single-row header: fewer than 25% empty cells
-    if empty_in_row0 < max(1, total_cols * 0.25):
-        return row0, 1
-
-    # Decide if row 1 looks like qualifiers (not data rows)
-    non_empty_r1 = [c for c in row1 if c]
-    if not non_empty_r1:
-        return row0, 1
-
-    qualifier_hits = sum(
-        1 for c in non_empty_r1
-        if c.lower() in _HEADER_QUALIFIERS or len(c) <= 12
-    )
-    row1_is_qualifier = qualifier_hits >= len(non_empty_r1) * 0.5
-
-    if not row1_is_qualifier:
-        return row0, 1
-
-    # Forward-fill row 0: propagate non-empty values rightward across merged cells
-    filled_row0: list[str] = []
-    last_val = ""
-    for cell in row0:
-        if cell:
-            last_val = cell
-            filled_row0.append(cell)
-        else:
-            filled_row0.append(last_val)
-
-    # Combine: for positions where row0 was empty, prefix(filled) + qualifier(row1)
-    merged: list[str] = []
-    for j in range(total_cols):
-        orig0 = row0[j] if j < len(row0) else ""
-        fill0 = filled_row0[j] if j < len(filled_row0) else ""
-        r1 = row1[j] if j < len(row1) else ""
-
-        if orig0 and r1 and r1.lower() != orig0.lower():
-            # Both have distinct content → "State/UT Code"
-            merged.append(f"{orig0} {r1}".strip())
-        elif orig0:
-            merged.append(orig0)
-        elif fill0 and r1:
-            # Span fill + qualifier → "LFPR Rural"
-            merged.append(f"{fill0} {r1}".strip())
-        elif r1:
-            merged.append(r1)
-        elif fill0:
-            merged.append(fill0)
-        else:
-            merged.append(f"col_{j}")
-
-    return merged, 2  # actual data starts at row index 2
+    info = _analyze_table_header(table)
+    return info["headers"], info["data_start"]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -943,7 +1026,7 @@ def pass2_6_entity_classification(document_map: dict[str, Any]) -> dict[str, Any
                 'Output JSON array: [{"name": "LFPR", "type": "measure"}, ...]\n'
                 "JSON only."
             )
-            raw = llm_text_call(prompt, task="entity_classification", max_tokens=_tok("entity_classification")[0], temperature=_tok("entity_classification")[1])
+            raw = llm_text_call(prompt, task="entity_classification", max_tokens=_tok("entity_classification")[0], temperature=_tok("entity_classification")[1], schema=ENTITY_CLASSIFICATION_SCHEMA)
             if raw:
                 classifications = _extract_json_array_from_response(raw)
                 if classifications:
@@ -1159,6 +1242,13 @@ def pass1_layout_detection(pdf_path: Path) -> list[dict[str, Any]] | None:
     Returns:
         List of page dicts with regions, or None on failure.
     """
+    # Offline / air-gapped: skip the LayoutLM service entirely (caller falls back
+    # to pdfplumber-derived layout). Treats LayoutLM like an LLM service for
+    # reproducible no-network simulations.
+    if (os.getenv("LLM_DISABLED") or "").strip().lower() in ("1", "true", "yes", "on"):
+        logger.info("[pass1] LLM_DISABLED set — skipping LayoutLM, using pdfplumber layout")
+        return None
+
     endpoint = _LAYOUTLM_ENDPOINT.rstrip("/") + "/analyze"
     timeout = int(os.getenv("LAYOUTLM_TIMEOUT", "300"))
 
@@ -1627,13 +1717,21 @@ def pass2_5_document_knowledge_graph(
 
     # ── Step 1: Entity Collection + Dedup ──
     entity_index: dict[str, dict[str, Any]] = {}  # key=lowered name → entity dict
+    rejected_index: dict[str, dict[str, Any]] = {}  # key=lowered name → reject record (D1 quarantine, Q7)
 
     _entity_id_seq = [len(_PLFS_CORE_ENTITIES) + 1]  # start after pre-seeded IDs
 
     def _register_entity(name: str, source: str, page: int, priority: int):
         key = name.lower().strip()
-        # Reject stopwords, noise, figure references, pure numbers
-        if not key or not _is_valid_entity_name(name) or len(name) >= 100:
+        if not key:
+            return
+        # Reject stopwords, noise, figure refs, web chrome — quarantine with reason (Q7), don't drop
+        reason = _classify_entity_name(name) if len(name) < 100 else "too_long"
+        if reason is not None:
+            if key not in entity_index and key not in rejected_index:
+                rejected_index[key] = {
+                    "name": name.strip(), "reason": reason, "source": source, "page": page,
+                }
             return
         if key in entity_index:
             ent = entity_index[key]
@@ -1737,6 +1835,13 @@ def pass2_5_document_knowledge_graph(
     all_entities = _deduplicate_entities(all_entities)
     all_entities = _enrich_entity_aliases(all_entities)
 
+    # Quarantined rejects (D1/Q7) — surfaced for audit + threshold tuning, never silently dropped.
+    entities_rejected = sorted(
+        rejected_index.values(), key=lambda r: (r["reason"], r["name"].lower())
+    )[:200]
+    if entities_rejected:
+        logger.info("[pass2.5]   Quarantined %d noisy entity candidate(s)", len(rejected_index))
+
     # Cap entities: protect known MoSPI core names first, then sort by source priority
     _MOSPI_CORE_KEYWORDS = frozenset({
         "lfpr", "wpr", "ur", "labour force participation", "worker population",
@@ -1770,7 +1875,10 @@ def pass2_5_document_knowledge_graph(
                 continue
 
             # Merge multi-row spanning headers (critical for MoSPI/NSSO PDFs)
-            headers, data_start = _merge_multirow_headers(table)
+            header_info = _analyze_table_header(table)
+            headers = header_info["headers"]
+            data_start = header_info["data_start"]
+            column_groups = header_info["columnGroups"]
             if not headers or len(headers) < 2:
                 continue
 
@@ -1797,7 +1905,14 @@ def pass2_5_document_knowledge_graph(
                             if val:
                                 text_count += 1
 
+                # Keyword backstop (D2): when data sampling is inconclusive, fall back to
+                # the header's domain keywords so measures are not lost on sparse tables.
+                hl = header.lower()
+                kw_measure = any(k in hl for k in _MOSPI_MEASURE_KEYWORDS)
+                kw_dimension = any(k in hl for k in _MOSPI_DIMENSION_KEYWORDS)
                 if numeric_count > text_count:
+                    measures.append(header)
+                elif numeric_count == text_count and kw_measure and not kw_dimension:
                     measures.append(header)
                 else:
                     dimensions.append(header)
@@ -1834,11 +1949,14 @@ def pass2_5_document_knowledge_graph(
                 "tableId": f"tbl_{i + 1}_{t_idx + 1}",
                 "page": i,
                 "columns": headers,
+                "columnGroups": column_groups,
                 "dimensions": dimensions,
                 "measures": measures,
                 "breakdowns": breakdowns,
                 "layout": layout_type,
                 "row_count": len(table) - 1,
+                "headerRows": header_info["headerRows"],
+                "needsReview": not measures,  # Q10: flag, do not drop
                 "description": f"Table with {len(headers)} columns, {len(table) - 1} rows",
             })
 
@@ -1875,11 +1993,14 @@ def pass2_5_document_knowledge_graph(
                         "tableId": f"tbl_{i + 1}_h1",
                         "page": i,
                         "columns": parsed["columns"],
+                        "columnGroups": [],
                         "dimensions": [],
                         "measures": [],
                         "breakdowns": [],
                         "layout": "simple",
                         "row_count": parsed["row_count"],
+                        "headerRows": 1,
+                        "needsReview": True,
                         "description": "Table detected from text heuristics",
                     })
 
@@ -2182,6 +2303,7 @@ def pass2_5_document_knowledge_graph(
         "page_count": total_pages,
         "chapters": chapters,
         "all_entities": all_entities,
+        "entities_rejected": entities_rejected,
         "table_structures": table_structures,
         "entity_relationships": entity_relationships,
         "section_patterns": section_patterns,
@@ -2370,6 +2492,14 @@ def pass3_two_loop_ast_building(
     _p3_qgen_provider = (_os_p3.getenv("PROVIDER_QUESTION_GENERATION") or _os_p3.getenv("VLM_PROVIDER", "qwen")).strip().lower()
     _p3_bind_provider = (_os_p3.getenv("PROVIDER_ENTITY_BINDING") or _os_p3.getenv("REASONING_PROVIDER", "qwen")).strip().lower()
 
+    from report_builder.question_quality import (
+        archetype_questions,
+        build_analytics_spec,
+        is_stub_question,
+        normalise_question_type,
+        route_unassigned,
+    )
+
     logger.info("[pass3] ▶ Two-loop AST building | question_gen=%s entity_binding=%s",
                 _p3_qgen_provider, _p3_bind_provider)
     t0 = time.monotonic()
@@ -2513,9 +2643,11 @@ def pass3_two_loop_ast_building(
             "(3) Questions must be quantitative and comparative — MoSPI report style.\n"
             "BAD: 'What does this section show?' or generic LFPR questions for a WPR section.\n"
             f"GOOD example for this section: A question specifically asking about {_topic_hint} by gender or Rural/Urban.\n"
-            "Output JSON array (questionType must be one of: comparison, trend, ranking, distribution, describe):\n"
-            '[{"questionId":"q1","intent":"Specific question about this section topic?",'
-            '"questionType":"comparison","sourceHeading":"exact section title here"}]\n'
+            "Output a JSON array. Each item has keys: questionId, intent, questionType, sourceHeading.\n"
+            "  - intent: a complete, quantitative question ending in '?' that names real entities.\n"
+            "  - questionType: EXACTLY ONE of comparison, trend, ranking, distribution, composition, correlation, describe.\n"
+            "  - sourceHeading: the exact section title.\n"
+            "Do NOT copy these instructions or any placeholder text into the output.\n"
             "List 1-3 questions. JSON only."
         )
 
@@ -2535,6 +2667,7 @@ def pass3_two_loop_ast_building(
                 task="question_generation",
                 max_tokens=_tok("question_generation")[0],
                 temperature=_tok("question_generation")[1],
+                schema=QUESTION_LIST_SCHEMA,
             )
             if raw_content:
                 questions = _extract_json_array_from_response(raw_content)
@@ -2573,6 +2706,19 @@ def pass3_two_loop_ast_building(
     if len(_deduped) < len(raw_questions):
         logger.info("[pass3] L1: Deduped %d → %d unique questions", len(raw_questions), len(_deduped))
     raw_questions = _deduped
+
+    # ── D3/D4 post-validation: drop stub/echoed intents; normalise questionType ──
+    _validated: list[dict[str, Any]] = []
+    _stub_dropped = 0
+    for _q in raw_questions:
+        if is_stub_question(_q.get("intent", "")):
+            _stub_dropped += 1
+            continue
+        _q["questionType"] = normalise_question_type(_q.get("questionType"))
+        _validated.append(_q)
+    if _stub_dropped:
+        logger.info("[pass3] L1: Dropped %d stub/echoed question(s) (D3)", _stub_dropped)
+    raw_questions = _validated
 
     # If Loop 1 produced nothing, fall back
     if not raw_questions:
@@ -2631,6 +2777,7 @@ def pass3_two_loop_ast_building(
                 task="entity_binding",
                 max_tokens=_tok("entity_binding")[0],
                 temperature=_tok("entity_binding")[1],
+                schema=ENTITY_BINDING_SCHEMA,
             )
             if raw_content:
                 binding = _extract_json_from_response(raw_content)
@@ -2705,6 +2852,66 @@ def pass3_two_loop_ast_building(
                 "questionIds": [q.get("questionId", f"q_{i}") for i, q in enumerate(ch_questions)],
                 "pageRange": ch["pageRange"],
             })
+
+    # ── D5/Q15: route unassigned questions to nearest topic; NEVER drop ──
+    _general_topic: dict[str, Any] | None = None
+    for q in enriched_questions:
+        q_id = q.get("questionId", "")
+        if q_id in question_to_topic:
+            continue
+        target = route_unassigned(q, topics)
+        _dest = next((t for t in topics if t.get("topicId") == target), None)
+        if _dest is None:
+            if _general_topic is None:
+                _general_topic = {
+                    "topicId": "topic_general",
+                    "title": "General",
+                    "description": "Questions not matched to a specific chapter.",
+                    "questionIds": [],
+                    "pageRange": [0, 0],
+                }
+                topics.append(_general_topic)
+            _dest = _general_topic
+        _dest["questionIds"].append(q_id)
+        question_to_topic[q_id] = _dest["topicId"]
+    if _general_topic is not None:
+        logger.info("[pass3] D5: routed %d unassigned question(s) (General topic created)",
+                    len(_general_topic["questionIds"]))
+
+    # ── Q12: guarantee ≥1 question per topic that has a measure (archetype fallback) ──
+    _arch_added = 0
+    _qid_seq = len(enriched_questions)
+    for t in topics:
+        if t.get("questionIds"):
+            continue
+        pr = t.get("pageRange", [0, 0])
+        topic_ents = [
+            {
+                "name": e["name"],
+                "entityId": e.get("entityId") or e["name"],
+                "entityType": e.get("entityType_hint", "dimension"),
+            }
+            for e in all_entities
+            if any(pr[0] <= p <= pr[1] for p in e.get("pages", []))
+        ]
+        for aq in archetype_questions(t.get("title", ""), topic_ents):
+            _qid_seq += 1
+            qid = f"arch_q{_qid_seq}"
+            aq["questionId"] = qid
+            aq.setdefault("answerStructure", {})
+            aq.setdefault("inferenceConfidence", 0.4)
+            enriched_questions.append(aq)
+            t["questionIds"].append(qid)
+            question_to_topic[qid] = t["topicId"]
+            _arch_added += 1
+    if _arch_added:
+        logger.info("[pass3] Q12: added %d archetype question(s) for empty topics", _arch_added)
+
+    # ── D8/Q13: attach a deterministic analyticsSpec to every question ──
+    for q in enriched_questions:
+        if not q.get("analyticsSpec"):
+            q["analyticsSpec"] = build_analytics_spec(
+                q.get("questionType", "comparison"), q.get("requiredEntities") or [])
 
     elapsed = time.monotonic() - t0
     logger.info(
@@ -2942,6 +3149,34 @@ def _extract_facts_programmatic(page_texts: list[dict[str, Any]]) -> list[dict[s
     return facts
 
 
+_PLACEHOLDER_COL_RE = re.compile(
+    r"^(?:unnamed(?:[_\s:]?\d+)?|(?:col|column|field|c)[_\s]?\d+)$",
+    re.IGNORECASE,
+)
+
+
+def _is_placeholder_colname(name: str) -> bool:
+    """True for generic positional column names (col_0, column_3, unnamed, field 2…).
+
+    Such names appear when header detection fails on borderless/garbled tables; they
+    must never become question entity references.
+    """
+    s = (name or "").strip()
+    if not s:
+        return True
+    return bool(_PLACEHOLDER_COL_RE.match(s))
+
+
+def _is_clean_qlabel(name: str) -> bool:
+    """True if a column label is safe to use as a question entity reference.
+
+    Rejects placeholders (col_0…) and anything failing entity hygiene (D1) — too long
+    (>80 chars / blobs), numeric-only, noise, etc. Keeps real short labels like
+    "States/ UTs" or "Coal Reserves".
+    """
+    return bool(name) and not _is_placeholder_colname(name) and _is_valid_entity_name(name)
+
+
 def _programmatic_question_fallback(
     document_map: dict[str, Any],
     page_texts: list[dict[str, Any]],
@@ -2962,9 +3197,16 @@ def _programmatic_question_fallback(
 
     # Generate questions from table structures using domain archetypes
     for ts in table_structures:
-        dims = ts.get("dimensions") or []
-        measures = ts.get("measures") or []
-        breakdowns = ts.get("breakdowns") or []
+        # Only build questions from clean, short, real column labels. This drops both
+        # generic placeholders (col_0, column_3…) and garbled blobs (whole-page text or
+        # multi-line table titles >80 chars) that pdfplumber sometimes yields offline,
+        # so questions never embed "How does col_1 vary by col_0" or paragraph blobs.
+        dims = [d for d in (ts.get("dimensions") or []) if _is_clean_qlabel(d)]
+        measures = [m for m in (ts.get("measures") or []) if _is_clean_qlabel(m)]
+        breakdowns = [
+            b for b in (ts.get("breakdowns") or [])
+            if _is_clean_qlabel(b.get("measure", ""))
+        ]
         if not dims and not measures:
             continue
 
@@ -3110,6 +3352,16 @@ def _programmatic_question_fallback(
     fact_questions = document_map.get("_fact_questions") or []
     if fact_questions:
         questions.extend(fact_questions)
+
+    # ── D4/D8: normalise questionType + attach analyticsSpec to every question ──
+    from report_builder.question_quality import (
+        build_analytics_spec as _bas_pf,
+        normalise_question_type as _normqt_pf,
+    )
+    for _q in questions:
+        _q["questionType"] = _normqt_pf(_q.get("questionType"))
+        if not _q.get("analyticsSpec"):
+            _q["analyticsSpec"] = _bas_pf(_q["questionType"], _q.get("requiredEntities") or [])
 
     # Build topics
     topics: list[dict[str, Any]] = []
@@ -3297,11 +3549,13 @@ def pass4_assemble_ast(
             "title": ts.get("description", f"Table on page {ts['page'] + 1}"),
             "pageRef": f"page_{ts['page'] + 1:03d}",
             "columns": ts["columns"],
+            "columnGroups": ts.get("columnGroups") or [],
             "dimensions": ts.get("dimensions") or [],
             "measures": ts.get("measures") or [],
             "breakdowns": ts.get("breakdowns") or [],
             "layout": ts.get("layout", "simple"),
             "rowCount": ts.get("row_count", 0),
+            "needsReview": ts.get("needsReview", False),
             "source": "pdfplumber",
         })
 
@@ -3451,6 +3705,13 @@ def pass4_assemble_ast(
             "confidence": 0.8 if ent.get("source") == "table_header" else 0.5,
             "pages": ent.get("pages", []),
             "aliases": ent.get("aliases") or [],
+            # P5 enrichment (pass 2.7)
+            "canonicalName": ent.get("canonicalName") or ent["name"],
+            "unit": ent.get("unit"),
+            "dtypeHint": ent.get("dtypeHint"),
+            "defaultFormat": ent.get("defaultFormat"),
+            "valueDomain": ent.get("valueDomain"),
+            "glossaryRef": ent.get("glossaryRef"),
         })
 
     # ══════════════════════════════════════════════════════════════════
@@ -3492,6 +3753,7 @@ def pass4_assemble_ast(
                     "questionId": q_id,
                     "intent": q.get("intent", ""),
                     "questionType": q.get("questionType", "comparison"),
+                    "analyticsSpec": q.get("analyticsSpec") or {},
                     "inferenceMethod": q.get("inferenceMethod", "vlm"),
                     "inferenceConfidence": q.get("inferenceConfidence", 0.5),
                     "requiredEntities": entity_bindings,
@@ -3519,10 +3781,16 @@ def pass4_assemble_ast(
         blueprint_entities.append({
             "entityId": ent["entityId"],
             "name": ent["name"],
+            "canonicalName": ent.get("canonicalName") or ent["name"],
             "entityType": ent["entityType"],
             "sourceType": ent["sourceType"],
             "confidence": ent["confidence"],
             "aliases": ent.get("aliases") or [],
+            "unit": ent.get("unit"),
+            "dtypeHint": ent.get("dtypeHint"),
+            "defaultFormat": ent.get("defaultFormat"),
+            "valueDomain": ent.get("valueDomain"),
+            "glossaryRef": ent.get("glossaryRef"),
             "pageIndex": ent["pages"][0] if ent.get("pages") else -1,
             "sourceContext": "",
             "scope": "global",
@@ -3532,6 +3800,9 @@ def pass4_assemble_ast(
     blueprint = {
         "topics": blueprint_topics,
         "entities": blueprint_entities,
+        "entitiesRejected": document_map.get("entities_rejected") or [],
+        "glossary": document_map.get("glossary") or [],
+        "palette": document_map.get("palette") or {},
         "tableStructures": [ts for ts in table_structures],
         "documentMap": {
             "title": doc_title,
@@ -3721,6 +3992,26 @@ def run_extraction_pipeline(
         "metadata": sum(1 for e in (document_map.get("all_entities") or []) if e.get("entityType_hint") == "metadata"),
     }
 
+    # ── Pass 2.7: Entity Enrichment (units/format/valueDomain + glossary + palette) ──
+    _tick("pass2_7_entity_enrichment", 58)
+    t0 = _time.monotonic()
+    try:
+        from report_builder.entity_enrichment import enrich_document_map as _enrich_dm
+        document_map = _enrich_dm(document_map)
+        _enrich_ok = True
+    except Exception as _enrich_exc:
+        logger.warning("[pass2.7] Enrichment failed (non-fatal): %s", _enrich_exc)
+        _enrich_ok = False
+    pass27_elapsed = _time.monotonic() - t0
+    _enr_ents = document_map.get("all_entities") or []
+    pipeline_trace["passes"]["pass2_7_enrichment"] = {
+        "elapsed_s": round(pass27_elapsed, 1),
+        "ok": _enrich_ok,
+        "with_unit": sum(1 for e in _enr_ents if e.get("unit")),
+        "with_value_domain": sum(1 for e in _enr_ents if e.get("valueDomain")),
+        "glossary_terms": len(document_map.get("glossary") or []),
+    }
+
     # ── Pass 3: Two-Loop AST Building ──
     _tick("pass3_ast_building", 60)
     t0 = _time.monotonic()
@@ -3819,18 +4110,22 @@ def run_extraction_pipeline(
     _out_dir = Path(__file__).resolve().parent.parent / "outputs" / _safe_name
     _out_dir.mkdir(parents=True, exist_ok=True)
 
-    _ast_path = _out_dir / "enterprise_ast.json"
-    _bp_path  = _out_dir / "blueprint.json"
+    # New canonical output (migration plan P1): value-free ① template.ast.json + ② template.blueprint.json
+    from report_builder.template_emit import emit_templates, legacy_emit_enabled
+    _emit_report = emit_templates(ast, _out_dir)
 
-    with open(_ast_path, "w", encoding="utf-8") as _fh:
-        json.dump(ast, _fh, ensure_ascii=False, indent=2, default=str)
+    # Legacy blended AST — emitted only when EXTRACTION_EMIT_LEGACY is set (loop decision Q3).
+    if legacy_emit_enabled():
+        _ast_path = _out_dir / "enterprise_ast.json"
+        _bp_path = _out_dir / "blueprint.json"
+        with open(_ast_path, "w", encoding="utf-8") as _fh:
+            json.dump(ast, _fh, ensure_ascii=False, indent=2, default=str)
+        with open(_bp_path, "w", encoding="utf-8") as _fh:
+            json.dump(ast.get("blueprint", {}), _fh, ensure_ascii=False, indent=2, default=str)
+        logger.info("  ✓ Saved enterprise_ast.json  → %s (legacy)", _ast_path)
+        logger.info("  ✓ Saved blueprint.json        → %s (legacy)", _bp_path)
 
-    with open(_bp_path, "w", encoding="utf-8") as _fh:
-        json.dump(ast.get("blueprint", {}), _fh, ensure_ascii=False, indent=2, default=str)
-
-    logger.info("  ✓ Saved enterprise_ast.json  → %s", _ast_path)
-    logger.info("  ✓ Saved blueprint.json        → %s", _bp_path)
-
+    ast["_template_emit"] = _emit_report
     return ast
 
 
@@ -4062,10 +4357,13 @@ def _gemini_semantic_fallback(
             f"Table structures:\n{table_summary}\n\n"
             "Generate analytical questions this document answers. For each question, "
             "specify which entities are needed and what visualization components suit it.\n\n"
-            "Output JSON:\n"
-            '{"questions":[{"questionId":"q1","intent":"...","questionType":"comparison|trend|ranking|distribution|describe",'
-            '"sourceHeading":"...","page":0,'
-            '"requiredEntities":[{"entityRef":"entity_name","role":"groupBy|measure|filter"}],'
+            "Each question's intent must be a complete, quantitative question ending in '?' that names "
+            "real entities from the list above. questionType must be EXACTLY ONE of: comparison, trend, "
+            "ranking, distribution, composition, correlation, describe. Do NOT copy placeholder text.\n\n"
+            "Output JSON with this shape (replace all placeholders with real values):\n"
+            '{"questions":[{"questionId":"q1","intent":"<real question>?","questionType":"<one type>",'
+            '"sourceHeading":"<section title>","page":0,'
+            '"requiredEntities":[{"entityRef":"<real entity name>","role":"groupBy|measure|filter"}],'
             '"answerStructure":{"layoutType":"single|split","components":[{"type":"narrative_paragraph|data_table|grouped_bar_chart|line_chart|pie_chart|metric_card","renderOrder":1}]},'
             '"inferenceConfidence":0.6}]}\n'
             "Output 3-8 questions. JSON only."
@@ -4081,7 +4379,21 @@ def _gemini_semantic_fallback(
 
         questions = data.get("questions") or []
 
-        # Build topics from chapters
+        # ── D3/D4/D8: drop stubs, normalise questionType, attach analyticsSpec ──
+        from report_builder.question_quality import (
+            build_analytics_spec as _bas,
+            is_stub_question as _isstub,
+            normalise_question_type as _normqt,
+        )
+        _clean: list[dict[str, Any]] = []
+        for _q in questions:
+            if _isstub(_q.get("intent", "")):
+                continue
+            _q["questionType"] = _normqt(_q.get("questionType"))
+            if not _q.get("analyticsSpec"):
+                _q["analyticsSpec"] = _bas(_q["questionType"], _q.get("requiredEntities") or [])
+            _clean.append(_q)
+        questions = _clean
         topics: list[dict[str, Any]] = []
         for ch in chapters:
             ch_questions = [

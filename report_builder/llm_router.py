@@ -6,9 +6,13 @@ Switch providers by changing environment variables — no code changes needed.
 Environment variables
 ---------------------
 VLM_PROVIDER        Vision+text tasks (entity extraction, structure analysis, question gen)
-                    Values: qwen (default) | gemini | groq
+                    Values: qwen (default) | gemini | groq | openai
 REASONING_PROVIDER  Text-only tasks (ToC extraction, gap fill, fact extraction, binding)
-                    Values: qwen (default) | gemini | groq
+                    Values: qwen (default) | gemini | groq | openai
+
+Offline / air-gapped:
+    LLM_DISABLED=1  Skip ALL LLM/VLM calls; pipeline runs on deterministic
+                    pdfplumber + programmatic fallbacks (no key/server needed).
 
 Per-task overrides (override the provider for a specific task only):
     PROVIDER_ENTITY_EXTRACTION   (pass 2  — image+text entity extraction)
@@ -28,6 +32,15 @@ Model overrides:
     GROQ_API_KEY
     GROQ_MODEL        = meta-llama/llama-4-scout-17b-16e-instruct
     GROQ_VISION_MODEL = meta-llama/llama-4-maverick-17b-128e-instruct
+    OPENAI_API_KEY    (not required for local servers like Ollama/LM Studio)
+    OPENAI_BASE_URL   = https://api.openai.com/v1
+    OPENAI_MODEL      = gpt-4o-mini
+    OPENAI_VISION_MODEL = gpt-4o-mini
+    OPENAI_TIMEOUT    = 120
+
+The 'openai' provider speaks the OpenAI /chat/completions wire format, so a single
+provider covers OpenAI, OpenRouter, Together, DeepSeek, Ollama and LM Studio — just
+point OPENAI_BASE_URL at the server and set OPENAI_MODEL.
 
 Quick switch examples (set on GPU laptop, no code changes):
     # Use Gemini for everything:
@@ -38,6 +51,9 @@ Quick switch examples (set on GPU laptop, no code changes):
 
     # Use Groq for reasoning only:
     REASONING_PROVIDER=groq
+
+    # Use a local Ollama model for reasoning (no key, fully offline):
+    REASONING_PROVIDER=openai OPENAI_BASE_URL=http://localhost:11434/v1 OPENAI_MODEL=qwen2.5:7b
 
     # Override one specific task:
     PROVIDER_GAP_FILL=gemini
@@ -60,6 +76,7 @@ from __future__ import annotations
 import base64
 import logging
 import os
+from collections.abc import Callable
 from typing import Any
 
 import requests
@@ -96,6 +113,18 @@ def _resolve_provider(task: str) -> str:
     return (os.getenv("REASONING_PROVIDER") or "qwen").strip().lower()
 
 
+def llm_disabled() -> bool:
+    """Air-gapped / offline switch: when set, ALL LLM calls are skipped.
+
+    Set ``LLM_DISABLED=1`` to run the pipeline with no network/model access at all.
+    Every ``llm_text_call`` / ``llm_vision_call`` returns ``None`` immediately and
+    ``is_provider_available`` reports ``False``, so the pipeline takes its
+    deterministic pdfplumber + programmatic-fallback paths. Useful for air-gapped
+    deployments, CI without GPUs, and reproducible offline simulations.
+    """
+    return (os.getenv("LLM_DISABLED") or "").strip().lower() in ("1", "true", "yes", "on")
+
+
 def _detect_image_mime(image_bytes: bytes) -> str:
     """Detect image MIME type from magic bytes (PNG or JPEG)."""
     if image_bytes[:8] == b"\x89PNG\r\n\x1a\n":
@@ -107,9 +136,33 @@ def _detect_image_mime(image_bytes: bytes) -> str:
     return "image/png"  # safe default for Qwen which prefers PNG
 
 
+def guided_json_enabled() -> bool:
+    """Q20: whether to send vLLM ``guided_json`` schema-constrained decoding.
+
+    Default ON. Set ``GUIDED_JSON=0`` to disable globally (e.g. for backends that
+    do not support vLLM's structured-outputs extension).
+    """
+    return (os.getenv("GUIDED_JSON") or "1").strip().lower() not in ("0", "false", "no", "off")
+
+
+def _apply_guided_json(payload: dict, schema: dict | None) -> None:
+    """Attach a vLLM ``guided_json`` constraint to a chat-completions payload.
+
+    vLLM reads ``extra_body.guided_json``; we set it at the top level of the JSON
+    body (the OpenAI server merges ``extra_body`` into the request) and also under
+    ``response_format`` as a json_schema for OpenAI-compatible servers that prefer it.
+    No-op when schema is falsy or the feature is disabled.
+    """
+    if not schema or not guided_json_enabled():
+        return
+    payload["guided_json"] = schema
+    payload["guided_decoding_backend"] = os.getenv("GUIDED_JSON_BACKEND") or "outlines"
+
+
 # ── Backend implementations ────────────────────────────────────────────────────
 
-def _call_qwen_text(prompt: str, max_tokens: int, temperature: float) -> str | None:
+def _call_qwen_text(prompt: str, max_tokens: int, temperature: float,
+                    schema: dict | None = None) -> str | None:
     endpoint = (os.getenv("SGLANG_ENDPOINT") or "http://localhost:8002").rstrip("/") + "/v1/chat/completions"
     model = os.getenv("SGLANG_MODEL") or "Qwen/Qwen2.5-VL-3B-Instruct-AWQ"
     timeout = int(os.getenv("SGLANG_TIMEOUT") or "120")
@@ -119,6 +172,7 @@ def _call_qwen_text(prompt: str, max_tokens: int, temperature: float) -> str | N
         "temperature": temperature,
         "max_tokens": max_tokens,
     }
+    _apply_guided_json(payload, schema)
     try:
         r = requests.post(endpoint, json=payload, timeout=timeout)
         if r.status_code == 200:
@@ -129,7 +183,8 @@ def _call_qwen_text(prompt: str, max_tokens: int, temperature: float) -> str | N
     return None
 
 
-def _call_qwen_vision(prompt: str, image_bytes: bytes, max_tokens: int, temperature: float) -> str | None:
+def _call_qwen_vision(prompt: str, image_bytes: bytes, max_tokens: int, temperature: float,
+                      schema: dict | None = None) -> str | None:
     endpoint = (os.getenv("SGLANG_ENDPOINT") or "http://localhost:8002").rstrip("/") + "/v1/chat/completions"
     model = os.getenv("SGLANG_MODEL") or "Qwen/Qwen2.5-VL-3B-Instruct-AWQ"
     timeout = int(os.getenv("SGLANG_TIMEOUT") or "120")
@@ -145,6 +200,7 @@ def _call_qwen_vision(prompt: str, image_bytes: bytes, max_tokens: int, temperat
         "temperature": temperature,
         "max_tokens": max_tokens,
     }
+    _apply_guided_json(payload, schema)
     try:
         r = requests.post(endpoint, json=payload, timeout=timeout)
         if r.status_code == 200:
@@ -242,6 +298,52 @@ def _call_groq(prompt: str, image_bytes: bytes | None, max_tokens: int, temperat
     return None
 
 
+def _call_openai(prompt: str, image_bytes: bytes | None, max_tokens: int, temperature: float) -> str | None:
+    """Call any OpenAI-compatible /chat/completions endpoint (OpenAI, OpenRouter, Ollama, LM Studio).
+
+    Uses plain HTTP (no openai package needed). A key is only required when talking to
+    api.openai.com; local servers (Ollama/LM Studio) work without one.
+    """
+    base = (os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1").rstrip("/")
+    api_key = os.getenv("OPENAI_API_KEY") or ""
+    if not api_key and "api.openai.com" in base:
+        logger.info("[llm_router][openai] No OPENAI_API_KEY for api.openai.com — skipping")
+        return None
+    if image_bytes:
+        model = os.getenv("OPENAI_VISION_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+    else:
+        model = os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+    timeout = int(os.getenv("OPENAI_TIMEOUT") or "120")
+    if image_bytes:
+        mime = _detect_image_mime(image_bytes)
+        img_b64 = base64.b64encode(image_bytes).decode("utf-8")
+        content: list[dict[str, Any]] = [
+            {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{img_b64}"}},
+            {"type": "text", "text": prompt},
+        ]
+        messages: list[dict[str, Any]] = [{"role": "user", "content": content}]
+    else:
+        messages = [{"role": "user", "content": prompt}]
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    try:
+        r = requests.post(f"{base}/chat/completions", json=payload, headers=headers, timeout=timeout)
+        if r.status_code == 200:
+            content_out = r.json()["choices"][0]["message"]["content"]
+            return content_out.strip() if content_out else None
+        logger.warning("[llm_router][openai] HTTP %d: %s", r.status_code, r.text[:200])
+    except Exception as exc:
+        logger.warning("[llm_router][openai] Request failed: %s", exc)
+    return None
+
+
 # ── Input validation helper ────────────────────────────────────────────────────
 
 def _validated_params(
@@ -266,6 +368,7 @@ def llm_text_call(
     task: str = "reasoning",
     max_tokens: int = 800,
     temperature: float = 0.15,
+    schema: dict | None = None,
 ) -> str | None:
     """Call an LLM with a text-only prompt.
 
@@ -274,6 +377,8 @@ def llm_text_call(
         task:        Task identifier — controls provider selection via env vars.
         max_tokens:  Maximum tokens to generate (clamped to [1, 32000]).
         temperature: Sampling temperature (clamped to [0, 2]).
+        schema:      Optional JSON schema for vLLM ``guided_json`` constrained decoding
+                     (qwen path only; ignored by other providers).
 
     Returns:
         Raw text output string, or None on failure/empty response.
@@ -281,6 +386,8 @@ def llm_text_call(
     Provider resolution (first match wins):
         PROVIDER_<TASK_ENV>  →  VLM_PROVIDER / REASONING_PROVIDER  →  'qwen'
     """
+    if llm_disabled():
+        return None
     validated = _validated_params(prompt, task, max_tokens, temperature)
     if not validated:
         return None
@@ -293,8 +400,10 @@ def llm_text_call(
         return _call_gemini(prompt, None, max_tokens, temperature)
     if provider == "groq":
         return _call_groq(prompt, None, max_tokens, temperature)
+    if provider == "openai":
+        return _call_openai(prompt, None, max_tokens, temperature)
     # default: qwen
-    return _call_qwen_text(prompt, max_tokens, temperature)
+    return _call_qwen_text(prompt, max_tokens, temperature, schema=schema)
 
 
 def llm_vision_call(
@@ -303,6 +412,7 @@ def llm_vision_call(
     task: str = "entity_extraction",
     max_tokens: int = 400,
     temperature: float = 0.15,
+    schema: dict | None = None,
 ) -> str | None:
     """Call an LLM with an image + text prompt (or text-only if image_bytes is None).
 
@@ -312,6 +422,8 @@ def llm_vision_call(
         task:        Task identifier — controls provider selection via env vars.
         max_tokens:  Maximum tokens to generate (clamped to [1, 32000]).
         temperature: Sampling temperature (clamped to [0, 2]).
+        schema:      Optional JSON schema for vLLM ``guided_json`` constrained decoding
+                     (qwen path only; ignored by other providers).
 
     Returns:
         Raw text output string, or None on failure/empty response.
@@ -319,6 +431,8 @@ def llm_vision_call(
     Provider resolution (first match wins):
         PROVIDER_<TASK_ENV>  →  VLM_PROVIDER  →  'qwen'
     """
+    if llm_disabled():
+        return None
     validated = _validated_params(prompt, task, max_tokens, temperature)
     if not validated:
         return None
@@ -332,10 +446,87 @@ def llm_vision_call(
         return _call_gemini(prompt, image_bytes if has_image else None, max_tokens, temperature)
     if provider == "groq":
         return _call_groq(prompt, image_bytes if has_image else None, max_tokens, temperature)
+    if provider == "openai":
+        return _call_openai(prompt, image_bytes if has_image else None, max_tokens, temperature)
     # default: qwen
     if has_image:
-        return _call_qwen_vision(prompt, image_bytes, max_tokens, temperature)  # type: ignore[arg-type]
-    return _call_qwen_text(prompt, max_tokens, temperature)
+        return _call_qwen_vision(prompt, image_bytes, max_tokens, temperature, schema=schema)  # type: ignore[arg-type]
+    return _call_qwen_text(prompt, max_tokens, temperature, schema=schema)
+
+
+def self_consistency_enabled() -> bool:
+    """Q21: whether confidence-gated self-consistency re-sampling is active.
+
+    Default ON. Set ``SELF_CONSISTENCY=0`` to disable (single-pass everywhere).
+    Because the local vLLM runs ``--max-num-seqs 1`` (serialized), re-sampling is
+    gated on low confidence so the common case stays single-pass.
+    """
+    return (os.getenv("SELF_CONSISTENCY") or "1").strip().lower() not in ("0", "false", "no", "off")
+
+
+def _confidence_threshold(default: float = 0.6) -> float:
+    try:
+        return float(os.getenv("SELF_CONSISTENCY_THRESHOLD") or default)
+    except (TypeError, ValueError):
+        return default
+
+
+def llm_consistent_call(
+    prompt: str,
+    parse: Callable[[str], tuple[Any, float] | None],
+    *,
+    task: str = "reasoning",
+    image_bytes: bytes | None = None,
+    max_tokens: int = 800,
+    temperature: float = 0.15,
+    schema: dict | None = None,
+    threshold: float | None = None,
+    resample_temperature: float = 0.7,
+) -> tuple[Any, dict[str, Any]]:
+    """Q21: confidence-gated self-consistency wrapper around a single LLM call.
+
+    Runs one pass. ``parse`` maps the raw response to ``(value, confidence)`` or
+    ``None`` on parse failure. If confidence ≥ threshold (or self-consistency is
+    disabled), the first result is returned unchanged — the common, cheap path.
+    Otherwise a second pass is sampled at ``resample_temperature`` and the higher-
+    confidence of the two parsed results wins. Falls back gracefully to whichever
+    pass parsed successfully.
+
+    Returns ``(value, meta)`` where ``meta`` records ``passes``, ``confidence`` and
+    ``resampled``. ``value`` is ``None`` only if every pass failed to parse.
+    """
+    thr = _confidence_threshold() if threshold is None else threshold
+    meta: dict[str, Any] = {"passes": 0, "confidence": 0.0, "resampled": False}
+
+    def _one(temp: float) -> tuple[Any, float] | None:
+        meta["passes"] += 1
+        raw = llm_vision_call(
+            prompt, image_bytes=image_bytes, task=task,
+            max_tokens=max_tokens, temperature=temp, schema=schema,
+        )
+        if not raw:
+            return None
+        try:
+            return parse(raw)
+        except Exception as exc:  # parser must never crash the pipeline
+            logger.debug("[llm_router][consistency] parse error: %s", exc)
+            return None
+
+    first = _one(temperature)
+    if first is not None:
+        meta["confidence"] = first[1]
+    # Accept first pass when confident enough or feature disabled.
+    if first is not None and (first[1] >= thr or not self_consistency_enabled()):
+        return first[0], meta
+
+    second = _one(resample_temperature)
+    meta["resampled"] = True
+    candidates = [c for c in (first, second) if c is not None]
+    if not candidates:
+        return None, meta
+    best = max(candidates, key=lambda c: c[1])
+    meta["confidence"] = best[1]
+    return best[0], meta
 
 
 def is_provider_available(provider: str, vision: bool = False) -> bool:
@@ -348,6 +539,8 @@ def is_provider_available(provider: str, vision: bool = False) -> bool:
     Note: Returns True for Gemini/Groq even if offline — the actual call will fail
     gracefully and return None, triggering pdfplumber fallback in the pipeline.
     """
+    if llm_disabled():
+        return False
     provider = provider.strip().lower()
     if provider == "qwen":
         endpoint = (os.getenv("SGLANG_ENDPOINT") or "http://localhost:8002").rstrip("/") + "/v1/models"
@@ -360,5 +553,15 @@ def is_provider_available(provider: str, vision: bool = False) -> bool:
         return bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"))
     if provider == "groq":
         return bool(os.getenv("GROQ_API_KEY"))
+    if provider == "openai":
+        base = (os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1").rstrip("/")
+        if "api.openai.com" in base:
+            return bool(os.getenv("OPENAI_API_KEY"))
+        # Local/proxy server (Ollama, LM Studio, vLLM): ping the models endpoint.
+        try:
+            r = requests.get(f"{base}/models", timeout=5)
+            return r.status_code == 200
+        except Exception:
+            return False
     logger.warning("[llm_router] Unknown provider '%s' — treating as unavailable", provider)
     return False

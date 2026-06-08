@@ -27,5 +27,13 @@ storage/templates/
 storage/derived/
 storage/uploads/
 
+# Extraction pipeline generated outputs (template.ast.json, rendered PDFs, filled ASTs)
+outputs/
+
+# Local vector-store / checkpoint state
+model/storage/qdrant_local/
+model/storage/qdrant_smoketest/
+checkpoints/
+
 # Local-only requirements workarounds
 requirements-windows-noxlrd.txt

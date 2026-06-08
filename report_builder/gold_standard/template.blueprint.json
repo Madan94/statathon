@@ -1,0 +1,262 @@
+{
+  "$schema": "bharatstat/template-blueprint/v1",
+  "_doc": "VALUE-FREE + PROSE-FREE analytic brain. Defines WHAT to compute and HOW to render. Contains NO numbers, NO sentences, NO dataset. Pairs 1:1 with template.ast.json by shared IDs.",
+  "templateMeta": {
+    "templateId": "tpl_plfs_annual_v1",
+    "name": "PLFS Annual Report \u2014 Employment Indicators",
+    "domain": "labour_force",
+    "locale": "en-IN",
+    "version": "1.0.0",
+    "sourceDocument": "Periodic Labour Force Survey \u2014 Annual Report",
+    "valueFree": true,
+    "proseFree": true,
+    "description": "Skeleton blueprint extracted from a reference PDF. Reusable across datasets and survey rounds."
+  },
+  "glossary": {
+    "WPR": "Worker Population Ratio \u2014 percentage of employed persons in the population.",
+    "LFPR": "Labour Force Participation Rate \u2014 percentage of the population in the labour force (working or seeking work).",
+    "UR": "Unemployment Rate \u2014 percentage of the labour force that is unemployed.",
+    "usual_status": "Activity status over the 365 days preceding the survey (principal + subsidiary, ps+ss).",
+    "sector": "Rural or Urban classification of the household."
+  },
+  "palette": {
+    "paletteId": "pal_mospi_default",
+    "sequential": ["#0B5394", "#3D85C6", "#6FA8DC", "#9FC5E8", "#CFE2F3"],
+    "categorical": {
+      "Rural": "#1F7A1F",
+      "Urban": "#0B5394",
+      "Male": "#0B5394",
+      "Female": "#CC4125",
+      "Total": "#666666"
+    },
+    "semantic": { "positive": "#1F7A1F", "negative": "#CC0000", "neutral": "#666666" }
+  },
+  "renderProfile": {
+    "numberFormat": { "locale": "en-IN", "grouping": "lakh-crore", "decimalSeparator": "." },
+    "percentFormat": { "decimals": 1, "suffix": "%" },
+    "currencyFormat": { "symbol": "\u20b9", "grouping": "lakh-crore", "decimals": 0 },
+    "fontFamily": "Noto Sans",
+    "pageSize": "A4"
+  },
+  "entities": [
+    {
+      "entityId": "ent_wpr",
+      "canonicalName": "Worker Population Ratio",
+      "entityType": "measure",
+      "aliases": ["WPR", "Worker Population Ratio", "worker-population ratio", "WPR (in %)"],
+      "unit": "percent",
+      "format": "percent.1",
+      "valueDomain": { "kind": "ratio", "min": 0, "max": 100 },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": "WPR",
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_lfpr",
+      "canonicalName": "Labour Force Participation Rate",
+      "entityType": "measure",
+      "aliases": ["LFPR", "Labour Force Participation Rate", "participation rate"],
+      "unit": "percent",
+      "format": "percent.1",
+      "valueDomain": { "kind": "ratio", "min": 0, "max": 100 },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": "LFPR",
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_ur",
+      "canonicalName": "Unemployment Rate",
+      "entityType": "measure",
+      "aliases": ["UR", "Unemployment Rate", "unemployment"],
+      "unit": "percent",
+      "format": "percent.1",
+      "valueDomain": { "kind": "ratio", "min": 0, "max": 100 },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": "UR",
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_sector",
+      "canonicalName": "Sector",
+      "entityType": "dimension",
+      "aliases": ["Sector", "rural/urban", "area", "rural-urban"],
+      "valueDomain": { "kind": "categorical", "members": ["Rural", "Urban"], "allowOther": false },
+      "cardinalityHint": "low",
+      "glossaryRef": "sector",
+      "scope": "classifier",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_gender",
+      "canonicalName": "Gender",
+      "entityType": "dimension",
+      "aliases": ["Gender", "Sex", "Male/Female"],
+      "valueDomain": { "kind": "categorical", "members": ["Male", "Female", "Transgender"], "allowOther": true },
+      "cardinalityHint": "low",
+      "scope": "classifier",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_state",
+      "canonicalName": "State/UT",
+      "entityType": "dimension",
+      "aliases": ["State", "State/UT", "State or UT", "region"],
+      "valueDomain": { "kind": "categorical", "members": "open", "expectedCardinality": 36 },
+      "cardinalityHint": "high",
+      "scope": "classifier",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_age_group",
+      "canonicalName": "Age Group",
+      "entityType": "dimension",
+      "aliases": ["Age", "Age group", "age-band"],
+      "valueDomain": { "kind": "ordinal", "members": ["15-29", "15-59", "15+", "All ages"], "allowOther": true },
+      "cardinalityHint": "low",
+      "scope": "filter",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_period",
+      "canonicalName": "Survey Period",
+      "entityType": "time",
+      "aliases": ["Year", "Survey period", "round", "PLFS round"],
+      "valueDomain": { "kind": "temporal", "granularity": "annual", "format": "YYYY-YY" },
+      "scope": "time",
+      "confidence": null
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_wpr",
+      "title": "Worker Population Ratio",
+      "order": 1,
+      "semanticRef": "sec_wpr",
+      "questions": [
+        {
+          "questionId": "q_wpr_01",
+          "intent": "Compare Worker Population Ratio across sector (Rural vs Urban) for the current period.",
+          "questionType": "comparison",
+          "priority": 1,
+          "requiredEntities": [
+            { "entityId": "ent_wpr", "role": "measure", "required": true },
+            { "entityId": "ent_sector", "role": "grouping", "required": true },
+            { "entityId": "ent_age_group", "role": "filter", "required": false, "defaultMember": "15+" },
+            { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": { "entityRef": "ent_wpr", "agg": "weighted_ratio" },
+            "groupBy": [{ "entityRef": "ent_sector" }],
+            "filters": [{ "entityRef": "ent_age_group", "op": "eq", "valueFrom": "defaultMember" }],
+            "sort": { "by": "measure", "order": "desc" },
+            "topN": null,
+            "compare": { "kind": "across_group", "baseline": null }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_wpr_01_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": { "type": "prose", "minWords": 40, "maxWords": 90 },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": ["ent_wpr", "ent_sector"],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": { "contentRef": "p_wpr_intro", "analyticsRef": "", "evidenceRef": "" }
+              },
+              {
+                "componentId": "q_wpr_01_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": { "type": "chart", "chartType": "grouped_bar", "xAxis": "ent_sector", "yAxis": "ent_wpr" },
+                "refs": { "chartRef": "chart_wpr_sector", "figureRef": "fig_wpr_01", "analyticsRef": "", "evidenceRef": "" }
+              },
+              {
+                "componentId": "q_wpr_01_c3",
+                "kind": "table",
+                "order": 3,
+                "outputContract": { "type": "table", "tableTemplateRef": "tt_wpr_state" },
+                "refs": { "tableRef": "table_wpr_state", "analyticsRef": "", "evidenceRef": "" }
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_wpr_02",
+          "intent": "Rank States/UTs by Worker Population Ratio for the current period.",
+          "questionType": "ranking",
+          "priority": 2,
+          "requiredEntities": [
+            { "entityId": "ent_wpr", "role": "measure", "required": true },
+            { "entityId": "ent_state", "role": "grouping", "required": true },
+            { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
+          ],
+          "analyticsSpec": {
+            "operation": "rank",
+            "measure": { "entityRef": "ent_wpr", "agg": "weighted_ratio" },
+            "groupBy": [{ "entityRef": "ent_state" }],
+            "filters": [],
+            "sort": { "by": "measure", "order": "desc" },
+            "topN": 10,
+            "compare": { "kind": "none" }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_wpr_02_c1",
+                "kind": "table",
+                "order": 1,
+                "outputContract": { "type": "table", "tableTemplateRef": "tt_wpr_state" },
+                "refs": { "tableRef": "table_wpr_state", "analyticsRef": "", "evidenceRef": "" }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "tableTemplates": [
+    {
+      "tableTemplateId": "tt_wpr_state",
+      "title": "Worker Population Ratio by State/UT and Sector",
+      "columnGroups": [
+        { "groupId": "grp_rural", "label": "Rural", "spanRefs": ["col_rural_person"] },
+        { "groupId": "grp_urban", "label": "Urban", "spanRefs": ["col_urban_person"] }
+      ],
+      "columns": [
+        { "columnId": "col_state", "header": "State/UT", "role": "dimension", "entityRef": "ent_state", "dtype": "string", "align": "left", "format": null },
+        { "columnId": "col_rural_person", "header": "Rural", "role": "measure", "entityRef": "ent_wpr", "group": "grp_rural", "filterContext": { "ent_sector": "Rural" }, "dtype": "number", "unit": "percent", "format": "percent.1", "align": "right" },
+        { "columnId": "col_urban_person", "header": "Urban", "role": "measure", "entityRef": "ent_wpr", "group": "grp_urban", "filterContext": { "ent_sector": "Urban" }, "dtype": "number", "unit": "percent", "format": "percent.1", "align": "right" }
+      ],
+      "dimensions": ["ent_state"],
+      "measures": ["ent_wpr"],
+      "breakdowns": ["ent_sector"],
+      "footnotes": [
+        { "noteId": "fn_source", "marker": "Source", "textTemplate": "Source: {{dataset.title}}, {{period.current}}." },
+        { "noteId": "fn_wpr", "marker": "Note", "textTemplate": "WPR computed on usual status (ps+ss) for persons aged {{filter.age_group}}." }
+      ],
+      "sort": { "by": "col_rural_person", "order": "desc" },
+      "emptyPolicy": "show_dash"
+    }
+  ],
+  "figureTemplates": [
+    {
+      "figureTemplateId": "ft_wpr_01",
+      "captionTemplate": "Worker Population Ratio by Sector, {{period.current}}",
+      "chartId": "chart_wpr_sector",
+      "numbering": "Figure {{topic.order}}.{{seq}}"
+    }
+  ],
+  "documentMap": {
+    "order": ["topic_wpr"],
+    "frontMatter": ["title_page", "toc"],
+    "backMatter": ["glossary", "notes"]
+  }
+}
