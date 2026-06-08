@@ -28,7 +28,7 @@ storage/derived/
 storage/uploads/
 
 # Extraction pipeline generated outputs (template.ast.json, rendered PDFs, filled ASTs)
-outputs/
+
 
 # Local vector-store / checkpoint state
 model/storage/qdrant_local/
