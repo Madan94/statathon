@@ -882,6 +882,14 @@ def _fix_unicode_artifacts(text: str) -> str:
     text = text.replace(_A + _S1, _RS)         # a+sup1 -> Rupee
     text = text.replace(_A + _EU, _EM)         # a+euro alone -> em dash
     text = text.replace(_A, _EN)               # lone a -> en dash
+    # Normalize Unicode dashes/quotes to ASCII for clean display
+    text = text.replace('\u2013', '-')    # en dash -> hyphen
+    text = text.replace('\u2014', '-')    # em dash -> hyphen
+    text = text.replace('\u2018', "'")    # left single quote
+    text = text.replace('\u2019', "'")    # right single quote / apostrophe
+    text = text.replace('\u201c', '"')    # left double quote
+    text = text.replace('\u201d', '"')    # right double quote
+    text = text.replace('\u00a0', ' ')    # non-breaking space
     return text
 
 def _extract_toc_hybrid(
@@ -3889,11 +3897,21 @@ def pass4_assemble_ast(
                 y_label = entity_map.get(y_entity, {}).get("name", "Value")
                 y_unit = entity_map.get(y_entity, {}).get("unit", "")
 
+                # Build a better title: use question text if y/x labels are generic
+                _chart_title = f"{y_label} by {x_label}"
+                if y_label == "Value" or x_label == "Category":
+                    # Fall back to question text for a meaningful title
+                    _q_text = q.get("questionText", "")
+                    if _q_text and len(_q_text) < 60:
+                        _chart_title = _q_text.rstrip("?.").strip()
+                    elif y_label != "Value":
+                        _chart_title = y_label
+
                 charts_ast.append({
                     "chartId": chart_id,
                     "biQuery": q_id,
                     "chartType": chart_type,
-                    "title": f"{y_label} by {x_label}",
+                    "title": _chart_title,
                     "xAxis": {"entityRef": x_entity, "label": x_label},
                     "yAxis": {"entityRef": y_entity, "label": f"{y_label} ({y_unit})" if y_unit else y_label, "unit": y_unit or None},
                     "paletteRef": "pal_mospi_default",
@@ -4046,10 +4064,67 @@ def pass4_assemble_ast(
     # ════════════════════════════════════════════════════════════════════════════
     # BLUEPRINT — the analytic brain
     # ════════════════════════════════════════════════════════════════════════════
+
+    def _compute_entity_confidence(ent: dict) -> float:
+        """Differentiated confidence based on source and page coverage."""
+        source = ent.get("source", "vlm")
+        pages = ent.get("pages") or []
+        page_count_e = len(pages) if isinstance(pages, list) else 1
+        if source == "table_header":
+            return 0.85
+        if source == "pre_seeded":
+            return 0.65
+        if page_count_e >= 5:
+            return 0.80
+        if page_count_e >= 3:
+            return 0.70
+        if page_count_e >= 2:
+            return 0.60
+        return 0.45  # single-mention VLM entity
+
     # Build blueprint entities with full gold-standard fields
+    # ── Entity deduplication: merge entities whose names are aliases of another ──
+    _dedup_names: dict[str, int] = {}  # lowercase name -> index in all_entities
+    _to_remove: set[int] = set()
+    for idx, ent in enumerate(all_entities):
+        name_low = (ent.get("name") or "").strip().lower().rstrip(":")
+        aliases_low = {a.lower() for a in (ent.get("aliases") or [])}
+        # Check if this entity's name is an alias of an existing one
+        if name_low in _dedup_names:
+            # Merge: keep the first, absorb this one's pages
+            first_idx = _dedup_names[name_low]
+            first_pages = set(all_entities[first_idx].get("pages") or [])
+            first_pages.update(ent.get("pages") or [])
+            all_entities[first_idx]["pages"] = sorted(first_pages)
+            _to_remove.add(idx)
+            continue
+        # Check if any existing entity has this name as an alias
+        for prev_name, prev_idx in _dedup_names.items():
+            prev_aliases = {a.lower() for a in (all_entities[prev_idx].get("aliases") or [])}
+            if name_low in prev_aliases or prev_name in aliases_low:
+                first_pages = set(all_entities[prev_idx].get("pages") or [])
+                first_pages.update(ent.get("pages") or [])
+                all_entities[prev_idx]["pages"] = sorted(first_pages)
+                _to_remove.add(idx)
+                break
+        else:
+            _dedup_names[name_low] = idx
+            # Also register aliases
+            for a in aliases_low:
+                if a and a not in _dedup_names:
+                    _dedup_names[a] = idx
+
+    if _to_remove:
+        all_entities = [e for i, e in enumerate(all_entities) if i not in _to_remove]
+        logger.info("[pass4] Deduplicated %d entities (merged into existing)", len(_to_remove))
+
     blueprint_entities = []
     for ent in all_entities:
         eid = ent.get("entityId", "")
+        # Clean trailing colon/space from entity names
+        _ent_name = (ent.get("canonicalName") or ent.get("name", "")).rstrip(": ")
+        ent["name"] = _ent_name
+        ent["canonicalName"] = _ent_name
         e_type = ent.get("entityType_hint") or ent.get("entityType") or "dimension"
         # Infer from table structures
         if e_type == "dimension":
@@ -4083,7 +4158,7 @@ def pass4_assemble_ast(
             "glossaryRef": ent.get("glossaryRef"),
             "scope": "indicator" if e_type == "measure" else ("classifier" if e_type == "dimension" else "filter" if e_type == "filter" else "time"),
             "cardinalityHint": "high" if "state" in ent.get("name", "").lower() else "low",
-            "confidence": ent.get("confidence") or (0.8 if ent.get("source") == "table_header" else 0.5),
+            "confidence": ent.get("confidence") or _compute_entity_confidence(ent),
         })
 
     # Build blueprint topics with full question structure
@@ -4344,7 +4419,11 @@ def pass4_assemble_ast(
             "generatedFrom": doc_title,
         },
         "styleAST": style_ast,
-        "semanticAST": {"sections": semantic_sections},
+        "semanticAST": {
+            "sections": semantic_sections,
+            "entities": [{"entityId": e["entityId"], "name": e["canonicalName"], "type": e["entityType"], "confidence": e.get("confidence", 0.5)} for e in blueprint_entities],
+            "topics": [{"topicId": t["topicId"], "title": t["title"]} for t in blueprint_topics],
+        },
         "contentAST": {"blocks": content_blocks},
         "tableAST": {"tables": tables_ast},
         "chartAST": {"charts": charts_ast},
