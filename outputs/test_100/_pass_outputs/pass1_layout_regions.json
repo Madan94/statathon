@@ -1,0 +1,548 @@
+{
+  "layoutlm_used": true,
+  "total_regions": 73,
+  "toc_entries": [
+    {
+      "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+      "page": 0,
+      "level": 2
+    },
+    {
+      "title": "Key findings",
+      "page": 0,
+      "level": 2
+    },
+    {
+      "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "page": 1,
+      "level": 1
+    },
+    {
+      "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "page": 2,
+      "level": 1
+    },
+    {
+      "title": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "page": 2,
+      "level": 2
+    },
+    {
+      "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "page": 3,
+      "level": 1
+    },
+    {
+      "title": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and above",
+      "page": 3,
+      "level": 2
+    },
+    {
+      "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+      "page": 4,
+      "level": 1
+    },
+    {
+      "title": "4. Increase in proportion of workers with regular wage/ salary employment",
+      "page": 4,
+      "level": 2
+    },
+    {
+      "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "page": 5,
+      "level": 1
+    },
+    {
+      "title": "6 Earnings of female workers have seen a notable shift",
+      "page": 5,
+      "level": 1
+    },
+    {
+      "title": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "6. Earnings of female workers have seen a notable shift",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "7 Average number of years in formal education",
+      "page": 6,
+      "level": 1
+    },
+    {
+      "title": "7. Average number of years in formal education",
+      "page": 6,
+      "level": 2
+    },
+    {
+      "title": "framework and comparability of results of the Periodic Labour Force Survey (PLFS): A. Introduction",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "A Introduction",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "B Sample Size",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "C. Changes in Sample Design of PLFS",
+      "page": 8,
+      "level": 2
+    },
+    {
+      "title": "C Changes in Sample Design of PLFS",
+      "page": 8,
+      "level": 2
+    },
+    {
+      "title": "D Conceptual Framework of Key Indicators",
+      "page": 8,
+      "level": 2
+    },
+    {
+      "title": "E. Compatibility of PLFS 2025 results",
+      "page": 9,
+      "level": 2
+    },
+    {
+      "title": "E Compatibility of PLFS 2025 results",
+      "page": 9,
+      "level": 2
+    },
+    {
+      "title": "E Detailed tables included in the Annual Report",
+      "page": 9,
+      "level": 2
+    }
+  ],
+  "pages": [
+    {
+      "page": 0,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.999,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau"
+        },
+        {
+          "type": "text",
+          "confidence": 0.953,
+          "text": "Ministry of Statistics & Programme Implementation"
+        },
+        {
+          "type": "title",
+          "confidence": 0.996,
+          "text": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]"
+        },
+        {
+          "type": "text",
+          "confidence": 0.995,
+          "text": "Posted On: 27 MAR 2026 4:00PM by PIB Delhi"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.998,
+          "text": "Snapshot"
+        },
+        {
+          "type": "list",
+          "confidence": 1.0,
+          "text": "LFPR and WPR, based on usual status (ps+ss) remained stable in the year 2025 compared with 2024. Une"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.997,
+          "text": "Key findings"
+        },
+        {
+          "type": "list",
+          "confidence": 1.0,
+          "text": "Labour Force Participation Rate (LFPR) in usual status (ps+ss) for persons of age 15 years and above"
+        }
+      ]
+    },
+    {
+      "page": 1,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.999,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau"
+        },
+        {
+          "type": "text",
+          "confidence": 1.0,
+          "text": "Urban self-employed male worked about 17.5 hours more per week than their female counterpart, while "
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.999,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau"
+        },
+        {
+          "type": "caption",
+          "confidence": 0.998,
+          "text": ""
+        },
+        {
+          "type": "figure",
+          "confidence": 0.999,
+          "text": ""
+        },
+        {
+          "type": "caption",
+          "confidence": 0.998,
+          "text": ""
+        },
+        {
+          "type": "figure",
+          "confidence": 0.998,
+          "text": ""
+        },
+        {
+          "type": "heading",
+          "confidence": 0.989,
+          "text": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained"
+        },
+        {
+          "type": "text",
+          "confidence": 0.962,
+          "text": "The WPR (according to usual status (ps+ss)) shows a broad stability in 2025 compared with 2024. In 2"
+        },
+        {
+          "type": "footer",
+          "confidence": 0.992,
+          "text": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 3/11"
+        }
+      ]
+    },
+    {
+      "page": 3,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.999,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau"
+        },
+        {
+          "type": "caption",
+          "confidence": 0.997,
+          "text": ""
+        },
+        {
+          "type": "figure",
+          "confidence": 0.999,
+          "text": ""
+        },
+        {
+          "type": "caption",
+          "confidence": 0.996,
+          "text": ""
+        },
+        {
+          "type": "figure",
+          "confidence": 0.999,
+          "text": ""
+        },
+        {
+          "type": "heading",
+          "confidence": 0.617,
+          "text": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and above"
+        },
+        {
+          "type": "text",
+          "confidence": 0.998,
+          "text": "The UR estimates (in usual status (ps+ss)) indicate sustained progress in reducing unemployment acro"
+        },
+        {
+          "type": "footer",
+          "confidence": 0.996,
+          "text": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 4/11"
+        }
+      ]
+    },
+    {
+      "page": 4,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.999,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau"
+        },
+        {
+          "type": "caption",
+          "confidence": 0.996,
+          "text": ""
+        },
+        {
+          "type": "figure",
+          "confidence": 0.995,
+          "text": ""
+        },
+        {
+          "type": "caption",
+          "confidence": 0.995,
+          "text": ""
+        },
+        {
+          "type": "figure",
+          "confidence": 0.99,
+          "text": ""
+        },
+        {
+          "type": "heading",
+          "confidence": 0.995,
+          "text": "4. Increase in proportion of workers with regular wage/ salary employment"
+        },
+        {
+          "type": "text",
+          "confidence": 1.0,
+          "text": "The percentage distribution of workers (in usual status) by status in employment indicates a modest "
+        },
+        {
+          "type": "footer",
+          "confidence": 0.993,
+          "text": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 5/11"
+        }
+      ]
+    },
+    {
+      "page": 5,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.999,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau"
+        },
+        {
+          "type": "caption",
+          "confidence": 0.993,
+          "text": ""
+        },
+        {
+          "type": "figure",
+          "confidence": 0.994,
+          "text": ""
+        },
+        {
+          "type": "heading",
+          "confidence": 0.977,
+          "text": "5. Manufacturing and service sectors witnessed enhanced worker participation"
+        },
+        {
+          "type": "text",
+          "confidence": 0.998,
+          "text": "The percentage distribution of workers (in usual status) by industry of work reflects a broadly stab"
+        },
+        {
+          "type": "caption",
+          "confidence": 0.993,
+          "text": ""
+        },
+        {
+          "type": "figure",
+          "confidence": 0.986,
+          "text": ""
+        },
+        {
+          "type": "heading",
+          "confidence": 0.979,
+          "text": "6. Earnings of female workers have seen a notable shift"
+        },
+        {
+          "type": "text",
+          "confidence": 0.997,
+          "text": "Earnings of workers have shown a notable improvement in recent years across categories, with gains o"
+        },
+        {
+          "type": "footer",
+          "confidence": 0.994,
+          "text": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 6/11"
+        }
+      ]
+    },
+    {
+      "page": 6,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.999,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau"
+        },
+        {
+          "type": "text",
+          "confidence": 1.0,
+          "text": "In self-employment, male earnings increased from ₹16,893 in 2024 to ₹17,914 in 2025 (around 6.0% gro"
+        },
+        {
+          "type": "caption",
+          "confidence": 0.999,
+          "text": ""
+        },
+        {
+          "type": "figure",
+          "confidence": 0.999,
+          "text": ""
+        },
+        {
+          "type": "caption",
+          "confidence": 0.998,
+          "text": ""
+        },
+        {
+          "type": "figure",
+          "confidence": 0.997,
+          "text": ""
+        },
+        {
+          "type": "heading",
+          "confidence": 0.995,
+          "text": "7. Average number of years in formal education"
+        },
+        {
+          "type": "text",
+          "confidence": 1.0,
+          "text": "For persons aged 15 years and above, the average number of years in formal education stands at 10.0 "
+        },
+        {
+          "type": "footer",
+          "confidence": 0.997,
+          "text": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 7/11"
+        }
+      ]
+    },
+    {
+      "page": 7,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.997,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau"
+        },
+        {
+          "type": "figure",
+          "confidence": 0.958,
+          "text": ""
+        },
+        {
+          "type": "heading",
+          "confidence": 0.794,
+          "text": "framework and comparability of results of the Periodic Labour Force Survey (PLFS): A. Introduction"
+        },
+        {
+          "type": "text",
+          "confidence": 1.0,
+          "text": "Considering the need to generate high-frequency labour force indicators with enhanced coverage, the "
+        },
+        {
+          "type": "list",
+          "confidence": 0.998,
+          "text": "to estimate the key employment and unemployment indicators (viz. Labour Force Participation Rate, Wo"
+        },
+        {
+          "type": "text",
+          "confidence": 0.998,
+          "text": "Seven Annual Reports based on Periodic Labour Force Survey (PLFS) covering both rural and urban area"
+        }
+      ]
+    },
+    {
+      "page": 8,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.999,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau"
+        },
+        {
+          "type": "text",
+          "confidence": 1.0,
+          "text": "Sample Size for First Visit during January 2025 – December 2025 in rural and urban areas for the Ann"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.994,
+          "text": "C. Changes in Sample Design of PLFS"
+        },
+        {
+          "type": "text",
+          "confidence": 1.0,
+          "text": "To achieve the objectives, the sampling design of PLFS has been revised with effect from January 202"
+        },
+        {
+          "type": "list",
+          "confidence": 1.0,
+          "text": "From January 2025, the revamped design covers both rural and urban sectors, with four consecutive mo"
+        }
+      ]
+    },
+    {
+      "page": 9,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.999,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau"
+        },
+        {
+          "type": "list",
+          "confidence": 1.0,
+          "text": "b. Worker Population Ratio (WPR): WPR is defined as the percentage of employed persons in the popula"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.996,
+          "text": "E. Compatibility of PLFS 2025 results"
+        },
+        {
+          "type": "text",
+          "confidence": 1.0,
+          "text": "From 2025, the sampling design of the Periodic Labour Force Survey (PLFS) has been modified with the"
+        }
+      ]
+    },
+    {
+      "page": 10,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.999,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau"
+        },
+        {
+          "type": "text",
+          "confidence": 0.945,
+          "text": ""
+        },
+        {
+          "type": "heading",
+          "confidence": 0.997,
+          "text": "Samrat"
+        },
+        {
+          "type": "text",
+          "confidence": 1.0,
+          "text": "(Release ID: 2246009) Visitor Counter : 40393 Read this release in: िह\u0000ी"
+        },
+        {
+          "type": "footer",
+          "confidence": 0.991,
+          "text": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2246009&reg=3&lang=1 11/11"
+        }
+      ]
+    }
+  ]
+}
