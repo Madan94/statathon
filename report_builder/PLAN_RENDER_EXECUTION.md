@@ -387,6 +387,8 @@ Commit `feat(render): LaTeX/Tectonic premium PDF engine (--engine latex)`.
 | R1.3 tables | ✅ done | `9d72ed8` | tables.py: column groups, measure fmt, subtotal bold (opt-in), em-dash blanks, footnote markers, header-repeat CSS; renderer delegates; 8 tests; gate 127 green; gold table intact |
 | R1.4 document | ✅ done | `5696de8` | document.py: cover, TOC (target-counter), @page header/footer + page#, fig/table numbering, provenance appendix — all opt-in via render_html kwargs; 9 tests; gate 136 green; default output unchanged |
 | R1.5 blocks+bilingual | ✅ done (R1 EXIT) | `2e89fb4` | blocks.py per-question group; loc() bilingual {en,hi} threaded through tables/charts/blocks; Devanagari font; golden structural snapshot; 6 tests; **gate 142 green**; gold report renders cover+TOC+numbering+appendix+@page |
+| R2 weasyprint pdf | ✅ done | (this commit) | render/pdf.py engine dispatch + pdf_available(); render_pdf chrome-on default; GET /report.pdf endpoint (503 when engine absent, 400 unknown engine, 404 no report); dashboard reportPdfUrl(); 9 tests (+1 skip w/o WeasyPrint); gate 151 green. NOTE: exporter.py retirement DEFERRED until WeasyPrint verified on a host with native libs |
+| R3 react preview | 🔄 next | — | ECharts + tables + provenance drawer |
 | R1.3 tables | pending | — | |
 | R1.4 document | pending | — | |
 | R1.5 blocks+bilingual | pending | — | R1 exit |

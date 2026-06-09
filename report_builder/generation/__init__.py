@@ -39,6 +39,7 @@ from .filler import fill_visuals
 from .narrator import narrate, validate_numbers
 from .assembler import assemble_report, validate_report
 from .renderer import render_html, render_pdf
+from .render.pdf import pdf_available
 
 __all__ = [
     "build_plan",
@@ -51,6 +52,7 @@ __all__ = [
     "validate_report",
     "render_html",
     "render_pdf",
+    "pdf_available",
     "Aggregation",
     "AggregationRow",
     "AnalyticsAST",

@@ -28,6 +28,7 @@ from .document import (
 from .blocks import (
     render_question_group, render_child, render_paragraph, render_figure,
 )
+from .pdf import pdf_available, SUPPORTED_ENGINES, DEFAULT_ENGINE
 
 __all__ = [
     "render_html",
@@ -54,6 +55,9 @@ __all__ = [
     "render_child",
     "render_paragraph",
     "render_figure",
+    "pdf_available",
+    "SUPPORTED_ENGINES",
+    "DEFAULT_ENGINE",
 ]
 
 

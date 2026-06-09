@@ -1312,6 +1312,20 @@ export const generatePhaseApi = {
   /** Absolute URL of the rendered standalone HTML report (for an iframe / new tab). */
   reportHtmlUrl: (templateId: string, signature: string): string =>
     `${API_BASE}/report-builder/generate-phase/${templateId}/${signature}/report.html`,
+  /** Absolute URL of the on-demand PDF (cover + TOC + appendix). Returns 503 if
+   *  the server's PDF engine is unavailable — fall back to the HTML report. */
+  reportPdfUrl: (
+    templateId: string,
+    signature: string,
+    opts: { engine?: string; locale?: string; theme?: string } = {}
+  ): string => {
+    const qs = new URLSearchParams();
+    if (opts.engine) qs.set('engine', opts.engine);
+    if (opts.locale) qs.set('locale', opts.locale);
+    if (opts.theme) qs.set('theme', opts.theme);
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return `${API_BASE}/report-builder/generate-phase/${templateId}/${signature}/report.pdf${suffix}`;
+  },
 };
 
 export default api;

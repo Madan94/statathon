@@ -175,20 +175,21 @@ def render_pdf(
     title: str | None = None,
     theme: Any = None,
     locale: str = "en-IN",
-    include_cover: bool = False,
-    include_toc: bool = False,
-    include_appendix: bool = False,
-    number_elements: bool = False,
+    engine: str = "weasyprint",
+    include_cover: bool = True,
+    include_toc: bool = True,
+    include_appendix: bool = True,
+    number_elements: bool = True,
 ) -> bytes | None:
-    """Render to PDF via WeasyPrint if available; returns None when unavailable."""
-    try:
-        from weasyprint import HTML  # type: ignore
-    except Exception as exc:  # pragma: no cover - optional dependency
-        logger.info("[S6] PDF skipped (WeasyPrint unavailable): %s", exc)
-        return None
-    html_str = render_html(
-        report, title=title, theme=theme, locale=locale,
+    """Render to PDF via the selected engine; returns None when unavailable.
+
+    Document chrome (cover/TOC/appendix/numbering) defaults on for PDF — the
+    downloadable report is the formal deliverable. Delegates to
+    :mod:`report_builder.generation.render.pdf`.
+    """
+    from .render.pdf import render_pdf as _render_pdf
+    return _render_pdf(
+        report, title=title, theme=theme, locale=locale, engine=engine,
         include_cover=include_cover, include_toc=include_toc,
         include_appendix=include_appendix, number_elements=number_elements,
     )
-    return HTML(string=html_str).write_pdf()

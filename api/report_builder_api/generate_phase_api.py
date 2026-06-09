@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel
 
 from report_builder.binding import review as R
@@ -33,7 +33,9 @@ from report_builder.generation import (
     build_plans,
     fill_visuals,
     narrate,
+    pdf_available,
     render_html,
+    render_pdf,
     run_analytics,
     validate_report,
 )
@@ -257,3 +259,47 @@ def get_report_html(template_id: str, signature: str) -> HTMLResponse:
     if not path.exists():
         raise HTTPException(status_code=404, detail="no report generated yet — call /generate first")
     return HTMLResponse(content=path.read_text(encoding="utf-8"))
+
+
+@router.get("/{template_id}/{signature}/report.pdf")
+def get_report_pdf(
+    template_id: str,
+    signature: str,
+    engine: str = "weasyprint",
+    locale: str = "en-IN",
+    theme: Optional[str] = None,
+) -> Response:
+    """Stream the report as PDF (regenerated on demand from the stored AST).
+
+    Document chrome (cover, TOC, provenance appendix, figure/table numbering) is
+    on for the PDF deliverable. Returns ``503`` when the selected PDF engine is
+    unavailable on the host (e.g. WeasyPrint native libs missing) so the caller
+    can fall back to the HTML report.
+    """
+    path = _report_path(template_id, signature)
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="no report generated yet — call /generate first")
+
+    if not pdf_available(engine):
+        raise HTTPException(
+            status_code=503,
+            detail=f"PDF engine '{engine}' is not available on this server; use report.html instead",
+        )
+
+    report = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        pdf_bytes = render_pdf(report, engine=engine, locale=locale, theme=theme)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    if not pdf_bytes:
+        raise HTTPException(
+            status_code=503,
+            detail=f"PDF engine '{engine}' failed to produce output; use report.html instead",
+        )
+
+    report_id = (report.get("metadata") or {}).get("reportId") or "report"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{report_id}.pdf"'},
+    )
