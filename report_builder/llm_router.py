@@ -83,6 +83,114 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+# ── Key Pool System ────────────────────────────────────────────────────────────
+# Loads KEY_1..KEY_10 from env. Each slot has: provider, value (api key), name.
+# Tasks are assigned a key slot via KEY_SLOT_<TASK> env var.
+# Logs show: "[KEY_3:groq-fast] used for entity_extraction"
+
+
+class _KeySlot:
+    """One named API key slot from the pool."""
+    __slots__ = ("slot_id", "provider", "value", "name")
+
+    def __init__(self, slot_id: int, provider: str, value: str, name: str):
+        self.slot_id = slot_id
+        self.provider = provider.strip().lower()
+        self.value = value.strip()
+        self.name = name.strip() or f"key_{slot_id}"
+
+    @property
+    def label(self) -> str:
+        return f"KEY_{self.slot_id}:{self.name}"
+
+    def is_valid(self) -> bool:
+        return bool(self.provider and self.value)
+
+    def __repr__(self) -> str:
+        return f"<KeySlot {self.label} provider={self.provider}>"
+
+
+def _load_key_pool() -> dict[int, _KeySlot]:
+    """Load all KEY_1..KEY_10 slots from environment."""
+    pool: dict[int, _KeySlot] = {}
+    for i in range(1, 11):
+        provider = (os.getenv(f"KEY_{i}_PROVIDER") or "").strip().lower()
+        value = (os.getenv(f"KEY_{i}_VALUE") or "").strip()
+        name = (os.getenv(f"KEY_{i}_NAME") or "").strip()
+        if provider and value:
+            pool[i] = _KeySlot(i, provider, value, name)
+    return pool
+
+
+# Load once at import time
+_KEY_POOL: dict[int, _KeySlot] = _load_key_pool()
+
+# Log loaded keys at startup (values masked)
+for _slot in _KEY_POOL.values():
+    logger.info("[key_pool] Loaded %s (provider=%s, key=...%s)",
+               _slot.label, _slot.provider, _slot.value[-4:] if len(_slot.value) > 4 else "****")
+
+
+def _resolve_key_for_task(task: str, provider: str) -> _KeySlot | None:
+    """Find the assigned key slot for a task, or first matching provider key.
+
+    Priority:
+    1. KEY_SLOT_<TASK> env var → use that exact slot
+    2. First slot in pool matching the resolved provider
+    3. None (fall back to legacy env vars like GEMINI_API_KEY)
+    """
+    # Check explicit key slot assignment
+    task_upper = task.upper()
+    slot_num_str = (os.getenv(f"KEY_SLOT_{task_upper}") or "").strip()
+    if slot_num_str:
+        try:
+            slot_num = int(slot_num_str)
+            slot = _KEY_POOL.get(slot_num)
+            if slot and slot.is_valid():
+                return slot
+            else:
+                logger.warning("[key_pool] KEY_SLOT_%s=%d but slot is empty/invalid",
+                              task_upper, slot_num)
+        except ValueError:
+            logger.warning("[key_pool] KEY_SLOT_%s=%r is not a valid number",
+                          task_upper, slot_num_str)
+
+    # Fallback: first pool key matching the provider
+    for slot in _KEY_POOL.values():
+        if slot.provider == provider and slot.is_valid():
+            return slot
+
+    return None
+
+
+def get_api_key_for_task(task: str, provider: str) -> tuple[str | None, str]:
+    """Get the API key and label for a task+provider combination.
+
+    Returns (api_key, label) where label is like "KEY_3:groq-fast" or "legacy:GEMINI_API_KEY".
+    """
+    slot = _resolve_key_for_task(task, provider)
+    if slot:
+        logger.info("[key_pool] [%s] used for %s (provider=%s)", slot.label, task, provider)
+        return slot.value, slot.label
+
+    # Legacy fallback
+    if provider == "gemini":
+        key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
+        label = "legacy:GEMINI_API_KEY"
+    elif provider == "groq":
+        key = os.getenv("GROQ_API_KEY") or ""
+        label = "legacy:GROQ_API_KEY"
+    elif provider == "openai":
+        key = os.getenv("OPENAI_API_KEY") or ""
+        label = "legacy:OPENAI_API_KEY"
+    else:
+        key = ""
+        label = f"legacy:{provider}"
+
+    if key:
+        logger.info("[key_pool] [%s] used for %s (provider=%s, no pool slot)", label, task, provider)
+    return key or None, label
+
 # ── Task → env-var mapping ─────────────────────────────────────────────────────
 _TASK_TO_ENV: dict[str, str] = {
     "entity_extraction":   "PROVIDER_ENTITY_EXTRACTION",
@@ -238,18 +346,14 @@ def _call_qwen_vision(prompt: str, image_bytes: bytes, max_tokens: int, temperat
     except Exception as exc:
         logger.warning("[llm_router][qwen-vision] Request failed: %s", exc)
 
-    # ── Auto-fallback to Gemini when Qwen fails ──
-    # Only fallback if Gemini key is available and wasn't the original provider
-    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    if gemini_key:
-        logger.info("[llm_router][qwen-vision] Falling back to Gemini for this call")
-        gemini_max = min(max_tokens * 2, 8000)  # Gemini has higher limit
-        return _call_gemini(prompt, image_bytes, gemini_max, temperature)
+    # ── Auto-fallback is handled by the caller (llm_vision_call fallback chain) ──
+    # No inline fallback here — the vision call loop handles retries with configurable order.
     return None
 
 
-def _call_gemini(prompt: str, image_bytes: bytes | None, max_tokens: int, temperature: float) -> str | None:
-    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+def _call_gemini(prompt: str, image_bytes: bytes | None, max_tokens: int, temperature: float,
+                 api_key: str | None = None, key_label: str = "") -> str | None:
+    api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if not api_key:
         logger.info("[llm_router][gemini] No API key — skipping")
         return None
@@ -295,12 +399,13 @@ def _call_gemini(prompt: str, image_bytes: bytes | None, max_tokens: int, temper
                 resp = m.generate_content(prompt)
             return (resp.text or "").strip() or None
     except Exception as exc:
-        logger.warning("[llm_router][gemini] Call failed: %s", exc)
+        logger.warning("[llm_router][gemini]%s Call failed: %s", f" [{key_label}]" if key_label else "", exc)
     return None
 
 
-def _call_groq(prompt: str, image_bytes: bytes | None, max_tokens: int, temperature: float) -> str | None:
-    api_key = os.getenv("GROQ_API_KEY") or ""
+def _call_groq(prompt: str, image_bytes: bytes | None, max_tokens: int, temperature: float,
+               api_key: str | None = None, key_label: str = "") -> str | None:
+    api_key = api_key or os.getenv("GROQ_API_KEY") or ""
     if not api_key:
         logger.info("[llm_router][groq] No GROQ_API_KEY — skipping")
         return None
@@ -331,18 +436,19 @@ def _call_groq(prompt: str, image_bytes: bytes | None, max_tokens: int, temperat
     except ImportError:
         logger.warning("[llm_router][groq] groq package not installed — pip install groq")
     except Exception as exc:
-        logger.warning("[llm_router][groq] Call failed: %s", exc)
+        logger.warning("[llm_router][groq]%s Call failed: %s", f" [{key_label}]" if key_label else "", exc)
     return None
 
 
-def _call_openai(prompt: str, image_bytes: bytes | None, max_tokens: int, temperature: float) -> str | None:
+def _call_openai(prompt: str, image_bytes: bytes | None, max_tokens: int, temperature: float,
+                 api_key: str | None = None, key_label: str = "") -> str | None:
     """Call any OpenAI-compatible /chat/completions endpoint (OpenAI, OpenRouter, Ollama, LM Studio).
 
     Uses plain HTTP (no openai package needed). A key is only required when talking to
     api.openai.com; local servers (Ollama/LM Studio) work without one.
     """
     base = (os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1").rstrip("/")
-    api_key = os.getenv("OPENAI_API_KEY") or ""
+    api_key = api_key or os.getenv("OPENAI_API_KEY") or ""
     if not api_key and "api.openai.com" in base:
         logger.info("[llm_router][openai] No OPENAI_API_KEY for api.openai.com — skipping")
         return None
@@ -432,14 +538,17 @@ def llm_text_call(
 
     provider = _resolve_provider(task)
     max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
-    logger.info("[llm_router] task=%-22s provider=%-8s max_tok=%d", task, provider, max_tokens)
+
+    # Resolve key from pool
+    api_key, key_label = get_api_key_for_task(task, provider)
+    logger.info("[llm_router] task=%-22s provider=%-8s key=%-20s max_tok=%d", task, provider, key_label, max_tokens)
 
     if provider == "gemini":
-        return _call_gemini(prompt, None, max_tokens, temperature)
+        return _call_gemini(prompt, None, max_tokens, temperature, api_key=api_key, key_label=key_label)
     if provider == "groq":
-        return _call_groq(prompt, None, max_tokens, temperature)
+        return _call_groq(prompt, None, max_tokens, temperature, api_key=api_key, key_label=key_label)
     if provider == "openai":
-        return _call_openai(prompt, None, max_tokens, temperature)
+        return _call_openai(prompt, None, max_tokens, temperature, api_key=api_key, key_label=key_label)
     # default: qwen
     return _call_qwen_text(prompt, max_tokens, temperature, schema=schema)
 
@@ -479,30 +588,40 @@ def llm_vision_call(
     has_image = bool(image_bytes)
     provider = _resolve_provider(task)
     max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
-    logger.info("[llm_router] task=%-22s provider=%-8s has_image=%s max_tok=%d", task, provider, has_image, max_tokens)
+
+    # Resolve key from pool
+    api_key, key_label = get_api_key_for_task(task, provider)
+    logger.info("[llm_router] task=%-22s provider=%-8s key=%-20s has_image=%s max_tok=%d", task, provider, key_label, has_image, max_tokens)
 
     # Build fallback chain: primary → alternatives (resilient routing)
     # When the primary provider crashes (HTTP 500, connection reset), try next available
-    _FALLBACK_ORDER = ["gemini", "groq", "openai", "qwen"]
+    # Configurable via VLM_FALLBACK_ORDER env (comma-separated). Default: openai first (local gemma2)
+    _fallback_env = (os.getenv("VLM_FALLBACK_ORDER") or "openai,gemini,groq,qwen").strip()
+    _FALLBACK_ORDER = [p.strip().lower() for p in _fallback_env.split(",") if p.strip()]
     fallback_chain = [provider] + [p for p in _FALLBACK_ORDER if p != provider]
 
     for attempt_provider in fallback_chain:
         attempt_max_tokens = _clamp_tokens_for_provider(attempt_provider, max_tokens)
+        # Resolve key for the attempt provider (may differ from primary)
+        if attempt_provider == provider:
+            attempt_key, attempt_label = api_key, key_label
+        else:
+            attempt_key, attempt_label = get_api_key_for_task(task, attempt_provider)
         result = None
         try:
             if attempt_provider == "gemini":
-                result = _call_gemini(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature)
+                result = _call_gemini(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
             elif attempt_provider == "groq":
-                result = _call_groq(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature)
+                result = _call_groq(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
             elif attempt_provider == "openai":
-                result = _call_openai(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature)
+                result = _call_openai(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
             else:  # qwen
                 if has_image:
                     result = _call_qwen_vision(prompt, image_bytes, attempt_max_tokens, temperature, schema=schema)  # type: ignore[arg-type]
                 else:
                     result = _call_qwen_text(prompt, attempt_max_tokens, temperature, schema=schema)
         except Exception as _fallback_exc:
-            logger.warning("[llm_router] %s failed for task=%s: %s", attempt_provider, task, _fallback_exc)
+            logger.warning("[llm_router] [%s] %s failed for task=%s: %s", attempt_label, attempt_provider, task, _fallback_exc)
 
         if result:
             if attempt_provider != provider:
