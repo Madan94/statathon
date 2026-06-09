@@ -121,6 +121,42 @@
     ]
   },
 
+  "energy": {
+    "trigger_entities": ["reserves", "coal", "crude oil", "natural gas", "renewable", "energy", "potential", "solar", "wind", "hydro", "lignite", "petroleum", "power", "capacity", "generation"],
+    "archetypes": [
+      {
+        "template": "What is the statewise distribution of {measure} across States/UTs?",
+        "questionType": "comparison",
+        "layout": "state_comparison",
+        "components": ["narrative_paragraph", "data_table", "grouped_bar_chart"]
+      },
+      {
+        "template": "How has {measure} changed between the current and previous year?",
+        "questionType": "trend",
+        "layout": "trend_analysis",
+        "components": ["narrative_paragraph", "line_chart", "data_table"]
+      },
+      {
+        "template": "What is the composition of {measure} by {dimension}?",
+        "questionType": "composition",
+        "layout": "split",
+        "components": ["narrative_paragraph", "pie_chart", "data_table"]
+      },
+      {
+        "template": "Which States have the highest {measure} and what is their share in national total?",
+        "questionType": "ranking",
+        "layout": "state_comparison",
+        "components": ["narrative_paragraph", "data_table", "grouped_bar_chart"]
+      },
+      {
+        "template": "What is the sourcewise breakdown of {measure} across energy types?",
+        "questionType": "distribution",
+        "layout": "split",
+        "components": ["narrative_paragraph", "data_table", "pie_chart"]
+      }
+    ]
+  },
+
   "generic_tabular": {
     "trigger_entities": [],
     "archetypes": [

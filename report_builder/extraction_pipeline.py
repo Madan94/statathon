@@ -464,6 +464,13 @@ def _classify_entity_name(name: str) -> str | None:
     # Section headings like "2. Worker Population Ratio..." — not entities
     if _re_entity_extra.match(r'^\d{1,2}\.\s+[A-Z]', cleaned):
         return "section_heading"
+    # Chapter/section headings: "CHAPTER 1 Energy Reserves...", "Chapter 1: Energy..."
+    if _re_entity_extra.match(r'^(?:CHAPTER|Chapter|SECTION|Section|PART|Part)\s', cleaned):
+        return "chapter_heading"
+    # Long multi-word phrases (>40 chars) that look like headings/sentences, not entity names
+    # Real entities are short: "Coal Reserves", "LFPR", "State/UT"
+    if len(cleaned) > 40 and len(cleaned.split()) >= 5:
+        return "heading_phrase"
     # Any entity containing an embedded percentage is a data value fragment, not an entity name
     if _re_entity_extra.search(r'\d+\.?\d*%', cleaned):
         return "embedded_percent"
@@ -491,14 +498,41 @@ def _is_valid_entity_name(name: str) -> bool:
 
 
 def _looks_like_data_row(row: list, min_numeric_frac: float = 0.5) -> bool:
-    """True if a row is mostly numeric cells (i.e. a data row, not a header row)."""
+    """True if a row is mostly numeric cells (i.e. a data row, not a header row).
+
+    Year-like values (2020-2099) and short 2-digit strings in a row with mostly-None
+    cells are treated as sub-header qualifiers, not data.
+    Newline-joined cells (collapsed tables) are treated as data.
+    """
+    import re as _re_dh
     cells = [str(c or "").strip() for c in row]
     nonempty = [c for c in cells if c]
     if not nonempty:
         return False
+    # Collapsed table detection: if any cell contains 3+ newlines with numeric lines,
+    # this is a data row with multiple values packed into one cell (MoSPI common pattern)
+    for c in nonempty:
+        if c.count("\n") >= 3:
+            lines = [l.strip().replace(",", "") for l in c.split("\n") if l.strip()]
+            numeric_lines = sum(1 for l in lines if l.replace(".", "").replace("-", "").isdigit())
+            if numeric_lines >= len(lines) * 0.5:
+                return True  # Collapsed numeric data
+    # If most cells are empty and the non-empty ones are short years/qualifiers → header
+    none_count = sum(1 for c in cells if not c)
+    if none_count > len(cells) * 0.4:
+        # Mostly empty → likely a sub-header row with spanning qualifiers
+        all_years_or_short = all(
+            _re_dh.match(r'^(?:20\d{2}(?:-\d{2})?|FY\d{4}|\d{2}-\d{2})$', c)
+            for c in nonempty
+        )
+        if all_years_or_short:
+            return False  # This is a year sub-header, not data
     numeric = 0
     for c in nonempty:
         v = c.replace(",", "").replace("%", "").replace("\u20b9", "").replace("(", "").replace(")", "").strip()
+        # Year values in headers should not count as numeric data
+        if _re_dh.match(r'^20\d{2}(?:-\d{2})?$', v):
+            continue  # Skip — year-like, treated as header qualifier
         try:
             float(v)
             numeric += 1
@@ -537,18 +571,38 @@ def _analyze_table_header(table: list[list]) -> dict[str, Any]:
     while also emitting ``columnGroups`` for the spanning bands (loop decision Q9:
     geometry-span + repetition).
 
-    Returns: {headers, columnGroups, data_start, headerRows}
+    Returns: {headers, columnGroups, data_start, headerRows, tableTitle}
     """
     if not table:
-        return {"headers": [], "columnGroups": [], "data_start": 0, "headerRows": 0}
+        return {"headers": [], "columnGroups": [], "data_start": 0, "headerRows": 0, "tableTitle": ""}
 
     total_cols = max((len(r) for r in table), default=0)
     if total_cols == 0:
-        return {"headers": [], "columnGroups": [], "data_start": 1, "headerRows": 1}
+        return {"headers": [], "columnGroups": [], "data_start": 1, "headerRows": 1, "tableTitle": ""}
 
-    n_header = _detect_header_row_count(table)
-    filled = [_forward_fill_row(table[r], total_cols) for r in range(n_header)]
-    raw = [[str(table[r][j] or "").strip() if j < len(table[r]) else "" for j in range(total_cols)]
+    # ── Title row detection ──
+    # MoSPI tables often have row[0] = ["Table 1.1: Title...", None, None, None...]
+    # This is a title spanning all columns, NOT a header row.
+    table_title = ""
+    title_rows_skip = 0
+    import re as _re_th
+    _TABLE_TITLE_RE = _re_th.compile(
+        r"^(?:Table|Statement|Annexure|Appendix)\s+\d+[\.\d]*\s*[:\.\-—–]?\s*",
+        _re_th.I,
+    )
+    for skip_r in range(min(2, len(table))):
+        row = table[skip_r]
+        non_null_cells = [str(c).strip() for c in row if c is not None and str(c).strip()]
+        if len(non_null_cells) == 1 and _TABLE_TITLE_RE.match(non_null_cells[0]):
+            table_title = non_null_cells[0].strip()
+            title_rows_skip = skip_r + 1
+
+    # Work with table after skipping title row(s)
+    working_table = table[title_rows_skip:] if title_rows_skip else table
+
+    n_header = _detect_header_row_count(working_table)
+    filled = [_forward_fill_row(working_table[r], total_cols) for r in range(n_header)]
+    raw = [[str(working_table[r][j] or "").strip() if j < len(working_table[r]) else "" for j in range(total_cols)]
            for r in range(n_header)]
 
     # Merge each column top→bottom, de-duplicating consecutive equal parts.
@@ -588,8 +642,9 @@ def _analyze_table_header(table: list[list]) -> dict[str, Any]:
     return {
         "headers": headers,
         "columnGroups": column_groups,
-        "data_start": n_header,
+        "data_start": n_header + title_rows_skip,
         "headerRows": n_header,
+        "tableTitle": table_title,
     }
 
 
@@ -616,6 +671,10 @@ _MOSPI_MEASURE_KEYWORDS: frozenset[str] = frozenset({
     "population", "workforce", "worker", "employment", "unemployment",
     "participation", "enrolment", "literacy", "mortality", "fertility",
     "prevalence", "incidence", "coverage", "penetration",
+    # Energy domain
+    "reserves", "potential", "capacity", "generation", "distribution",
+    "installed", "estimated", "proved", "indicated", "inferred",
+    "tonnes", "mw", "gwh", "bcm", "mtoe",
 })
 
 _MOSPI_DIMENSION_KEYWORDS: frozenset[str] = frozenset({
@@ -697,6 +756,42 @@ def _is_website_artifact_table(table: list[list]) -> bool:
         all_text = " ".join(all_cells)
         if _re_entity.search(r"Press|Bureau|pib\.gov|mospi\.gov|:\d+\s*[AP]M|Release\s*Page", all_text, _re_entity.I):
             return True
+    return False
+
+
+def _is_ghost_table(table: list[list]) -> bool:
+    """Return True if this table is a page-spanning ghost artifact.
+
+    MoSPI/govt styled PDFs often produce ghost grids (125×89, 97% null) from
+    background drawing objects. Characteristics:
+      - Very wide (>30 columns) AND very sparse (<20% non-null cells)
+      - OR first 3 rows are entirely None (no header content at all)
+      - BUT small tables with genuinely sparse data are preserved
+
+    This filter NEVER rejects tables with ≤30 columns (real MoSPI tables are 6-15 cols).
+    """
+    if not table:
+        return True
+    rows = len(table)
+    cols = len(table[0]) if table else 0
+    total_cells = rows * cols
+
+    # Only applies to suspiciously wide tables
+    if cols <= 30:
+        return False
+
+    # Check fill rate: ghost tables are almost entirely None
+    non_null = sum(1 for row in table for c in row if c is not None)
+    fill_rate = non_null / max(total_cells, 1)
+    if fill_rate < 0.20:
+        return True
+
+    # Wide table with all-None first 3 rows = no header
+    header_rows = table[:min(3, rows)]
+    header_non_null = sum(1 for row in header_rows for c in row if c is not None)
+    if header_non_null == 0:
+        return True
+
     return False
 
 
@@ -1159,6 +1254,9 @@ def pass0_rasterize(pdf_path: Path) -> tuple[list[bytes], list[dict[str, Any]]]:
                 tables = page.extract_tables() or []
                 # Filter out website navigation bar artifacts immediately
                 tables = [t for t in tables if not _is_website_artifact_table(t)]
+                # Filter ghost tables: page-spanning grids from PDF drawing objects
+                # (e.g. 125×89, 97% null cells — common in MoSPI/govt styled PDFs)
+                tables = [t for t in tables if not _is_ghost_table(t)]
                 if not tables:
                     # Borderless tables (common in govt PDFs) need text-alignment strategy
                     try:
@@ -1970,7 +2068,8 @@ def pass2_5_document_knowledge_graph(
                 "row_count": len(table) - 1,
                 "headerRows": header_info["headerRows"],
                 "needsReview": not measures,  # Q10: flag, do not drop
-                "description": f"Table with {len(headers)} columns, {len(table) - 1} rows",
+                "description": header_info.get("tableTitle") or f"Table with {len(headers)} columns, {len(table) - 1} rows",
+                "tableTitle": header_info.get("tableTitle", ""),
             })
 
     # Also try borderless table detection via text heuristics on pages with no pdfplumber tables
@@ -2085,6 +2184,11 @@ def pass2_5_document_knowledge_graph(
         r"Visitor Counter|Release ID|Read this release",
         _re_ch_filter.I,
     )
+    # Footnote/disclaimer patterns: "2 Total may not tally...", "* Brief about..."
+    _FOOTNOTE_RE_CH = _re_ch_filter.compile(
+        r"^\d{1,2}\s+(?:Total|Note|Source|Figures?|Data|Numbers?|Values?|may|includes?|exclud)",
+        _re_ch_filter.I,
+    )
     chapters_before_filter = len(chapters)
     chapters = [
         ch for ch in chapters
@@ -2094,6 +2198,7 @@ def pass2_5_document_knowledge_graph(
             and ch["title"].lower().strip() not in _ENGLISH_STOPWORDS
             and ch["title"].lower().strip() not in _COMMON_NOISE_WORDS
             and not _NAV_TITLE_RE_CH.search(ch["title"])
+            and not _FOOTNOTE_RE_CH.match(ch["title"])
         )
     ]
     if chapters_before_filter != len(chapters):
