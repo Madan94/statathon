@@ -1,0 +1,508 @@
+{
+  "classified_entities": [
+    {
+      "entityId": "ent_012",
+      "name": "Energy Introduction",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_013",
+      "name": "Potential Introduction",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_014",
+      "name": "Highlights of r 1.1 Coal Rese",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_015",
+      "name": "India rves",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_016",
+      "name": "Energy Reserves",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_017",
+      "name": "Reserves",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_018",
+      "name": "Potential ial in India",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_019",
+      "name": "Geographical Distr",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_020",
+      "name": "Energy Re enewable",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_021",
+      "name": "Potential ential",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_022",
+      "name": "States/ UTs",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_023",
+      "name": "Proved 2024",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_024",
+      "name": "Proved 2025",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_025",
+      "name": "Indicated 2024",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_026",
+      "name": "Indicated 2025",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_027",
+      "name": "Inferred 2024",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_028",
+      "name": "Inferred 2025",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_029",
+      "name": "Total 2024",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": "count",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_030",
+      "name": "Total 2025",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": "count",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_031",
+      "name": "Distribution 2024",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_032",
+      "name": "Distribution 2025",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_033",
+      "name": "States/ UTs/ Region",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_034",
+      "name": "Crude Oil 2024 Distribution",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_035",
+      "name": "Crude Oil 2025 Distribution",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_036",
+      "name": "Small Hydro Power*",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_037",
+      "name": "Biomass Power",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_038",
+      "name": "Cogeneration- bagasse",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_039",
+      "name": "Solar Energy",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_040",
+      "name": "Large Hydro#",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_041",
+      "name": "Distribution",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_042",
+      "name": "Global Classification of Energy Reserves",
+      "entityType_hint": "measure",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_043",
+      "name": "Energy Reserves in India",
+      "entityType_hint": "metadata",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_044",
+      "name": "Energy Reserves and Potential",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_045",
+      "name": "Economic and Social Viability",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_046",
+      "name": "Field Project Status and Feasibility",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_047",
+      "name": "Geological Knowledge",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_048",
+      "name": "Class A",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_049",
+      "name": "Class B",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_050",
+      "name": "Class C",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_051",
+      "name": "Highlights of reserves in India",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_052",
+      "name": "Proved",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_053",
+      "name": "Inferred",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_054",
+      "name": "Indicated",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_055",
+      "name": "Total Estimated reserves",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": "count",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_056",
+      "name": "Crude Oil Reserves",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_057",
+      "name": "Natural Gas Reserves",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_058",
+      "name": "Renewable Energy Potential in India",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_059",
+      "name": "Wind Power",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_060",
+      "name": "Solar",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_061",
+      "name": "Large Hydro",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_062",
+      "name": "Small Hydro Power",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_063",
+      "name": "Biomass Power",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_064",
+      "name": "Cogeneration-bagasse",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_065",
+      "name": "All India Total",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_066",
+      "name": "Crude Oil",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": "tonnes",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_067",
+      "name": "Estimated Reserves",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_068",
+      "name": "Natural Gas",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_069",
+      "name": "States/UTs/ Region",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_070",
+      "name": "Sl.No",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_071",
+      "name": "Wind Power*",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_072",
+      "name": "Small Hydro Power#",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_073",
+      "name": "Cogeneration",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_074",
+      "name": "India's total",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    }
+  ]
+}

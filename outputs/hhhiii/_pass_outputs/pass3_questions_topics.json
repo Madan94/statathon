@@ -1,0 +1,238 @@
+{
+  "questions_count": 3,
+  "topics_count": 1,
+  "questions": [
+    {
+      "questionId": "sp01_q01",
+      "intent": "What is the distribution of fossil fuels and renewable energy resources in India's energy reserves and potential?",
+      "questionType": "composition",
+      "page": 2,
+      "sourceHeading": "Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "Energy Reserves",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Renewable Energy Resources",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Geographical Distribution",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "States/ UTs",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "share",
+        "measure": {
+          "entityRef": "Energy Reserves"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Geographical Distribution"
+          },
+          {
+            "entityRef": "States/ UTs"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "multi-panel",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 2
+          },
+          {
+            "type": "data_table",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp01_q02",
+      "intent": "How do the energy reserves of coal, lignite, crude oil, and natural gas in India compare to its renewable energy potential?",
+      "questionType": "comparison",
+      "page": 2,
+      "sourceHeading": "Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "Energy Reserves",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Potential Introduction",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Coal Reserves",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Lignite Reserves",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Crude Oil Reserves",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Natural Gas Reserves",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Renewable Energy Potential",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Energy Reserves"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Coal Reserves"
+          },
+          {
+            "entityRef": "Lignite Reserves"
+          },
+          {
+            "entityRef": "Crude Oil Reserves"
+          },
+          {
+            "entityRef": "Natural Gas Reserves"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "multi-panel",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp01_q03",
+      "intent": "What is the trend in India's energy mix regarding the use of fossil fuels versus renewable energy sources in terms of energy reserves and potential?",
+      "questionType": "trend",
+      "page": 2,
+      "sourceHeading": "Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "Energy Reserves",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Potential",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Fossil Fuels",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Renewable Energy",
+          "role": "filter"
+        },
+        {
+          "entityRef": "India",
+          "role": "breakdown"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Energy Reserves"
+        },
+        "groupBy": [
+          {
+            "entityRef": "India"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Fossil Fuels"
+          },
+          {
+            "entityRef": "Renewable Energy"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "line_chart",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Energy Reserves and Potential",
+      "description": "Questions from chapter: Energy Reserves and Potential",
+      "questionIds": [
+        "sp01_q01",
+        "sp01_q02",
+        "sp01_q03"
+      ],
+      "pageRange": [
+        2,
+        7
+      ]
+    }
+  ]
+}
