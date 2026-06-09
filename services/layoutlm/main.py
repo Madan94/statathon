@@ -46,6 +46,15 @@ app = FastAPI(title="LayoutLM Layout Detection Service", version="1.0.0")
 MODEL_ID = os.getenv("MODEL_ID", "microsoft/layoutlmv3-large")
 MAX_PAGES = int(os.getenv("MAX_PAGES", "100"))
 
+# ── Model cache — OUTSIDE the git repo to avoid stash/conflict issues ────────
+# Priority: HF_HOME env → model/cache/ in repo root → user home .cache
+_REPO_ROOT = Path(__file__).resolve().parents[2]  # services/layoutlm/../../ = repo root
+_MODEL_CACHE = Path(os.getenv("HF_HOME", "")) if os.getenv("HF_HOME") else (_REPO_ROOT / "model" / "cache")
+_MODEL_CACHE.mkdir(parents=True, exist_ok=True)
+os.environ["HF_HOME"] = str(_MODEL_CACHE)
+os.environ["TRANSFORMERS_CACHE"] = str(_MODEL_CACHE)
+os.environ["HF_HUB_CACHE"] = str(_MODEL_CACHE / "hub")
+
 # ── Lazy-loaded globals ──────────────────────────────────────────────────────
 _processor = None
 _model = None
@@ -78,8 +87,9 @@ def _load_model():
 
     from transformers import AutoProcessor, AutoModelForTokenClassification
 
-    _processor = AutoProcessor.from_pretrained(MODEL_ID, apply_ocr=True)
-    _model = AutoModelForTokenClassification.from_pretrained(MODEL_ID)
+    _cache = str(_MODEL_CACHE / "hub")
+    _processor = AutoProcessor.from_pretrained(MODEL_ID, apply_ocr=True, cache_dir=_cache)
+    _model = AutoModelForTokenClassification.from_pretrained(MODEL_ID, cache_dir=_cache)
     _model.eval()
     _device = "cpu"
     _model.to(_device)

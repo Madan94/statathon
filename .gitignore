@@ -13,6 +13,18 @@ model/cache/
 model/storage/vector_cache/
 model/weights/
 model/phase2_output.json
+
+# HuggingFace model downloads (can appear anywhere transformers runs)
+*.safetensors
+*.bin
+*.ot
+*.pt
+*.onnx
+*.h5
+hub/
+blobs/
+refs/
+snapshots/
 .venv/
 data/raw_uploads
 
