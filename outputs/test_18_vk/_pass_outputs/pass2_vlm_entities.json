@@ -1,0 +1,188 @@
+{
+  "vlm_success_count": 11,
+  "total_entities": 46,
+  "chart_pages": 3,
+  "pages": [
+    {
+      "page": 0,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": [
+        "LFPR",
+        "Unemployment rate",
+        "Gender"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 1,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": [
+        "Self-employed"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 2,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 3,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": [
+        "Unemployment Rate",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 4,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": [
+        "Unemployment Rate",
+        "Usual Status",
+        "Rural"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 5,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Self-employed",
+        "Regular wage/salary",
+        "Casual labour",
+        "Male",
+        "Female",
+        "Person"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [
+        "Percentage distribution of workers (in usual status) by status in employment",
+        "Percentage distribution of workers (in usual status) by industry of work"
+      ],
+      "table_title": "",
+      "section_heading": "6. Earnings of female workers have seen a notable shift"
+    },
+    {
+      "page": 6,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Gender",
+        "Self-employed",
+        "Regular wage",
+        "Casual labour"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [
+        "Fig. 6(a): Earning from regular wage/salary and self-employment",
+        "Fig. 6(b): Earning from casual labour work (other than public work)"
+      ],
+      "table_title": "",
+      "section_heading": "7. Average number of years in formal education"
+    },
+    {
+      "page": 7,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Labour Force Participation Rate",
+        "Worker Population Ratio",
+        "Unemployment Rate",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [
+        "Average number of years in formal education"
+      ],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 8,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Unemployment Rate",
+        "Rural",
+        "Urban",
+        "PLFS: Changes in 2025",
+        "Labour Force Participation Rate (LFPR):"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "C. Changes in Sample Design of PLFS"
+    },
+    {
+      "page": 9,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Worker Population Ratio",
+        "Unemployment Rate",
+        "Activity Status",
+        "Principal activity status",
+        "Subsidiary economic activity status",
+        "Activity Status - Current Weekly Status",
+        "Scan the QR code below to access MoSPI",
+        "Publications/ Reports"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "E."
+    },
+    {
+      "page": 10,
+      "vlm_used": true,
+      "structure_type": "appendix",
+      "entities": [
+        "Samrat (Release I"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    }
+  ]
+}

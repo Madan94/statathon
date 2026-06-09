@@ -1,0 +1,204 @@
+{
+  "classified_entities": [
+    {
+      "entityId": "ent_001",
+      "name": "Labour Force Participation Rate",
+      "entityType_hint": "measure",
+      "source": "pre_seeded",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_002",
+      "name": "Worker Population Ratio",
+      "entityType_hint": "measure",
+      "source": "pre_seeded",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_003",
+      "name": "Unemployment Rate",
+      "entityType_hint": "measure",
+      "source": "pre_seeded",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_004",
+      "name": "Gender",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_005",
+      "name": "Rural/Urban Sector",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_006",
+      "name": "Survey Year",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_007",
+      "name": "Age Group",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_008",
+      "name": "Status in Employment",
+      "entityType_hint": "measure",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_009",
+      "name": "Usual Status",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_010",
+      "name": "Periodic Labour Force Survey",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_011",
+      "name": "MoSPI",
+      "entityType_hint": "metadata",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_012",
+      "name": "LFPR",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_015",
+      "name": "Self-employed",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_016",
+      "name": "Rural",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_017",
+      "name": "Urban",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_018",
+      "name": "Usual Status",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_019",
+      "name": "Regular wage/salary",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_020",
+      "name": "Casual labour",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_024",
+      "name": "Regular wage",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": "INR",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_030",
+      "name": "Activity Status - Current Weekly Status",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_021",
+      "name": "Male",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_022",
+      "name": "Female",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_023",
+      "name": "Person",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": "count",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_027",
+      "name": "Activity Status",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_028",
+      "name": "Principal activity status",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    }
+  ]
+}
