@@ -382,8 +382,8 @@ Commit `feat(render): LaTeX/Tectonic premium PDF engine (--engine latex)`.
 
 | Sub-phase | Status | Commit | Notes |
 |-----------|--------|--------|-------|
-| R1.1 numbers+theme | pending | — | first slice |
-| R1.2 svg charts | pending | — | |
+| R1.1 numbers+theme | ✅ done | `509438f` | render/ scaffold; numbers.py + theme.py; renderer.py delegates; 12 new tests; gate 109 green; s6 snapshot intact |
+| R1.2 svg charts | 🔄 next | — | 7 types + density |
 | R1.3 tables | pending | — | |
 | R1.4 document | pending | — | |
 | R1.5 blocks+bilingual | pending | — | R1 exit |

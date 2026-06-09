@@ -19,6 +19,7 @@ from typing import Any
 
 from .render.numbers import esc as _esc
 from .render.numbers import format_value
+from .render.svg_charts import render_chart_svg
 from .render.theme import get_theme, theme_css
 
 logger = logging.getLogger(__name__)
@@ -47,53 +48,8 @@ def _fmt_value(value: Any, unit: str | None = None, fmt: str | None = None) -> s
 
 
 def _render_chart_svg(chart: dict[str, Any]) -> str:
-    series = chart.get("series") or []
-    points = series[0].get("points") if series else []
-    if not points:
-        return '<div class="empty-slot">[chart has no data]</div>'
-
-    unit = (chart.get("yAxis") or {}).get("unit")
-    width, height = 640, 280
-    pad_l, pad_b, pad_t, pad_r = 48, 40, 16, 16
-    plot_w = width - pad_l - pad_r
-    plot_h = height - pad_t - pad_b
-    values = [p.get("y") or 0 for p in points]
-    vmax = max(values) or 1.0
-    vmax *= 1.15  # headroom
-    n = len(points)
-    gap = 0.35
-    band = plot_w / n
-    bar_w = band * (1 - gap)
-
-    parts = [f'<svg viewBox="0 0 {width} {height}" role="img" '
-             f'xmlns="http://www.w3.org/2000/svg" class="chart">']
-    # y axis baseline
-    base_y = pad_t + plot_h
-    parts.append(f'<line x1="{pad_l}" y1="{base_y}" x2="{width - pad_r}" y2="{base_y}" '
-                 f'stroke="#999" stroke-width="1"/>')
-    # gridline + label at vmax/2 and vmax
-    for frac in (0.5, 1.0):
-        gv = vmax * frac
-        gy = base_y - plot_h * frac
-        parts.append(f'<line x1="{pad_l}" y1="{gy:.1f}" x2="{width - pad_r}" y2="{gy:.1f}" '
-                     f'stroke="#eee" stroke-width="1"/>')
-        parts.append(f'<text x="{pad_l - 6}" y="{gy + 4:.1f}" text-anchor="end" '
-                     f'font-size="11" fill="#777">{_fmt_value(round(gv, 1), unit)}</text>')
-
-    for i, p in enumerate(points):
-        v = p.get("y") or 0
-        color = p.get("color") or _PALETTE[i % len(_PALETTE)]
-        bh = (v / vmax) * plot_h if vmax else 0
-        bx = pad_l + band * i + (band - bar_w) / 2
-        by = base_y - bh
-        parts.append(f'<rect x="{bx:.1f}" y="{by:.1f}" width="{bar_w:.1f}" height="{bh:.1f}" '
-                     f'fill="{color}" rx="2"/>')
-        parts.append(f'<text x="{bx + bar_w / 2:.1f}" y="{by - 5:.1f}" text-anchor="middle" '
-                     f'font-size="12" fill="#333">{_fmt_value(v, unit)}</text>')
-        parts.append(f'<text x="{bx + bar_w / 2:.1f}" y="{base_y + 16:.1f}" text-anchor="middle" '
-                     f'font-size="12" fill="#333">{_esc(p.get("x"))}</text>')
-    parts.append("</svg>")
-    return "".join(parts)
+    """Back-compat shim → delegates to the SVG chart kit (default theme)."""
+    return render_chart_svg(chart, None)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -110,7 +66,7 @@ def _render_paragraph(block: dict[str, Any]) -> str:
 
 def _render_figure(figure: dict[str, Any], charts: dict[str, dict]) -> str:
     chart = charts.get(figure.get("chartRef"))
-    body = _render_chart_svg(chart) if chart else '<div class="empty-slot">[missing chart]</div>'
+    body = render_chart_svg(chart, None)
     caption = figure.get("caption")
     cap_html = f"<figcaption>{_esc(caption)}</figcaption>" if caption else ""
     return f"<figure>{body}{cap_html}</figure>"
