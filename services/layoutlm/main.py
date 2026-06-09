@@ -27,7 +27,14 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-load_dotenv()
+
+# Load .env from repo root (2 levels up from services/layoutlm/)
+_repo_root_env = Path(__file__).resolve().parents[2] / ".env"
+if _repo_root_env.exists():
+    load_dotenv(_repo_root_env)
+    logging.getLogger("layoutlm-service").info("Loaded env from: %s", _repo_root_env)
+else:
+    load_dotenv()  # fallback to CWD
 
 import pytesseract
 tesseract_path = os.getenv("TESSERACT_CMD")
@@ -60,8 +67,9 @@ _processor = None
 _model = None
 _device = "cpu"
 
-# LayoutLMv3 label mapping (from fine-tuned DocLayNet / PubLayNet)
-LABEL_MAP = {
+# LayoutLMv3 label mapping — auto-detected from model config at load time.
+# If model has id2label in config, we use that. Otherwise fall back to default.
+_DEFAULT_LABEL_MAP = {
     0: "text",
     1: "title",
     2: "list",
@@ -74,10 +82,27 @@ LABEL_MAP = {
     9: "chart",
 }
 
+# DocLayNet labels (used by pierreguillou/layoutlmv3-finetuned-funsd and similar)
+_DOCLAYNET_LABEL_MAP = {
+    0: "caption",
+    1: "footer",       # Footnote
+    2: "chart",        # Formula
+    3: "list",         # List-item
+    4: "footer",       # Page-footer
+    5: "header",       # Page-header
+    6: "figure",       # Picture
+    7: "heading",      # Section-header
+    8: "table",        # Table
+    9: "text",         # Text
+    10: "title",       # Title
+}
+
+LABEL_MAP = _DEFAULT_LABEL_MAP  # overwritten at model load time
+
 
 def _load_model():
     """Load LayoutLMv3 model + processor (lazy, first request)."""
-    global _processor, _model, _device
+    global _processor, _model, _device, LABEL_MAP
 
     if _model is not None:
         return
@@ -94,8 +119,40 @@ def _load_model():
     _device = "cpu"
     _model.to(_device)
 
+    # Auto-detect label map from model config
+    if hasattr(_model, "config") and hasattr(_model.config, "id2label"):
+        raw_labels = _model.config.id2label
+        logger.info("Model provides id2label: %s", raw_labels)
+        # Check if this is a DocLayNet model (has "Section-header", "Picture", etc.)
+        label_values = [str(v).lower() for v in raw_labels.values()]
+        if any("section-header" in v or "picture" in v for v in label_values):
+            LABEL_MAP = _DOCLAYNET_LABEL_MAP
+            logger.info("Using DocLayNet label mapping (11 classes)")
+        elif len(raw_labels) == len(_DEFAULT_LABEL_MAP):
+            LABEL_MAP = _DEFAULT_LABEL_MAP
+            logger.info("Using default label mapping (10 classes)")
+        else:
+            # Build from model's id2label, normalize to our types
+            _NORM = {
+                "caption": "caption", "footnote": "footer", "formula": "chart",
+                "list-item": "list", "page-footer": "footer", "page-header": "header",
+                "picture": "figure", "section-header": "heading", "table": "table",
+                "text": "text", "title": "title", "paragraph": "text",
+                "figure": "figure", "header": "header", "footer": "footer",
+                "heading": "heading", "list": "list", "chart": "chart",
+            }
+            LABEL_MAP = {}
+            for k, v in raw_labels.items():
+                idx = int(k) if str(k).isdigit() else k
+                normalized = _NORM.get(str(v).lower().strip(), "text")
+                LABEL_MAP[idx] = normalized
+            logger.info("Auto-built label mapping: %s", LABEL_MAP)
+    else:
+        LABEL_MAP = _DEFAULT_LABEL_MAP
+        logger.info("No id2label in config — using default mapping")
+
     elapsed = time.monotonic() - t0
-    logger.info("Model loaded in %.1fs on %s", elapsed, _device)
+    logger.info("Model loaded in %.1fs on %s (labels=%d classes)", elapsed, _device, len(LABEL_MAP))
 
 
 def _analyze_page_image(image, page_index: int) -> dict[str, Any]:
