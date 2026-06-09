@@ -30,7 +30,7 @@ _is_sqlite = DATABASE_URL.startswith("sqlite")
 #  - prepared_statement_cache_size=0 → REQUIRED for Supabase transaction mode (port 6543)
 _pg_connect_args = {
     "connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", "10")),
-    "options": "-c statement_timeout=30000",
+    "options": "-c statement_timeout=15000 -c lock_timeout=5000",
 }
 
 # Use NullPool if env says so (useful for serverless / extraction workers that
