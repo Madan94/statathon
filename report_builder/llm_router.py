@@ -113,6 +113,25 @@ def _resolve_provider(task: str) -> str:
     return (os.getenv("REASONING_PROVIDER") or "qwen").strip().lower()
 
 
+# ── Provider-aware token budget clamping ───────────────────────────────────────
+# Each provider has a max safe output token limit. If the env sets a budget above
+# what the provider can handle, we silently clamp to prevent "max token" errors.
+_PROVIDER_MAX_OUTPUT: dict[str, int] = {
+    "qwen":   1800,   # 2048 ctx total − ~250 for prompt overhead
+    "openai": 4000,   # Ollama gemma2:9b has 8192 ctx → ~4000 for output
+    "gemini": 8000,   # Gemini Flash supports 8192 output tokens
+    "groq":   4000,   # Groq models: 8192 output cap
+}
+
+
+def _clamp_tokens_for_provider(provider: str, max_tokens: int) -> int:
+    """Clamp max_tokens to the provider's safe output limit."""
+    cap = _PROVIDER_MAX_OUTPUT.get(provider, 4000)
+    if max_tokens > cap:
+        return cap
+    return max_tokens
+
+
 def llm_disabled() -> bool:
     """Air-gapped / offline switch: when set, ALL LLM calls are skipped.
 
@@ -394,7 +413,8 @@ def llm_text_call(
     prompt, max_tokens, temperature = validated
 
     provider = _resolve_provider(task)
-    logger.info("[llm_router] task=%-22s provider=%s", task, provider)
+    max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
+    logger.info("[llm_router] task=%-22s provider=%-8s max_tok=%d", task, provider, max_tokens)
 
     if provider == "gemini":
         return _call_gemini(prompt, None, max_tokens, temperature)
@@ -440,7 +460,8 @@ def llm_vision_call(
 
     has_image = bool(image_bytes)
     provider = _resolve_provider(task)
-    logger.info("[llm_router] task=%-22s provider=%-8s has_image=%s", task, provider, has_image)
+    max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
+    logger.info("[llm_router] task=%-22s provider=%-8s has_image=%s max_tok=%d", task, provider, has_image, max_tokens)
 
     if provider == "gemini":
         return _call_gemini(prompt, image_bytes if has_image else None, max_tokens, temperature)
