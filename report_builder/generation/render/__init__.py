@@ -21,6 +21,10 @@ from .numbers import format_value, parse_format, esc, EM_DASH
 from .theme import Theme, THEMES, DEFAULT_THEME_ID, get_theme, theme_css
 from .svg_charts import render_chart_svg
 from .tables import render_table
+from .document import (
+    build_cover, build_toc, running_header_footer_css, document_css,
+    number_figures_tables, build_provenance_appendix,
+)
 
 __all__ = [
     "render_html",
@@ -36,6 +40,12 @@ __all__ = [
     "theme_css",
     "render_chart_svg",
     "render_table",
+    "build_cover",
+    "build_toc",
+    "running_header_footer_css",
+    "document_css",
+    "number_figures_tables",
+    "build_provenance_appendix",
 ]
 
 

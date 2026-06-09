@@ -83,8 +83,27 @@ def _render_table(table: dict[str, Any]) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def render_html(report: dict[str, Any], *, title: str | None = None) -> str:
-    """Render the full report dict to a standalone HTML string."""
+def render_html(
+    report: dict[str, Any],
+    *,
+    title: str | None = None,
+    theme: Any = None,
+    locale: str = "en-IN",
+    include_cover: bool = False,
+    include_toc: bool = False,
+    include_appendix: bool = False,
+    number_elements: bool = False,
+) -> str:
+    """Render the full report dict to a standalone HTML string.
+
+    Document chrome (cover, TOC, provenance appendix, figure/table numbering) is
+    opt-in so the default output is unchanged. ``theme`` selects a theme id /
+    :class:`Theme`; ``locale`` controls number grouping downstream.
+    """
+    if number_elements:
+        from .render.document import number_figures_tables
+        number_figures_tables(report)
+
     blocks = {b.get("blockId"): b for b in (report.get("contentAST") or {}).get("blocks", [])}
     figures = {f.get("figureId"): f for f in (report.get("figureAST") or {}).get("figures", [])}
     charts = {c.get("chartId"): c for c in (report.get("chartAST") or {}).get("charts", [])}
@@ -96,22 +115,41 @@ def render_html(report: dict[str, Any], *, title: str | None = None) -> str:
     period = (metadata.get("period") or {}).get("current") or ""
 
     body: list[str] = []
+    if include_cover:
+        from .render.document import build_cover
+        body.append(build_cover(report, theme))
+    if include_toc:
+        from .render.document import build_toc
+        body.append(build_toc(sections))
+
     for sec in sorted(sections, key=lambda s: s.get("order", 0)):
-        body.append('<section class="report-section">')
+        sec_id = sec.get("sectionId")
+        id_attr = f' id="{_esc(sec_id)}"' if sec_id else ""
+        body.append(f'<section class="report-section"{id_attr}>')
         if sec.get("title"):
             body.append(f"<h2>{_esc(sec.get('title'))}</h2>")
         for child_id in sec.get("children") or []:
             body.append(_render_child(child_id, blocks, figures, charts, tables))
         body.append("</section>")
 
+    if include_appendix:
+        from .render.document import build_provenance_appendix
+        body.append(build_provenance_appendix(report))
+
     meta_bits = [b for b in [period and f"Reference period: {period}",
                              metadata.get("reportId") and f"Report ID: {metadata['reportId']}",
                              metadata.get("status") and f"Status: {metadata['status']}"] if b]
     meta_line = " &nbsp;·&nbsp; ".join(_esc(b) for b in meta_bits)
 
+    # Compose stylesheet: theme CSS + (opt) document chrome + @page boxes.
+    css = theme_css(theme)
+    if include_cover or include_toc or include_appendix:
+        from .render.document import document_css, running_header_footer_css
+        css = css + document_css() + running_header_footer_css(report, theme)
+
     return (
         "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"/>"
-        f"<title>{_esc(doc_title)}</title><style>{_CSS}</style></head><body>"
+        f"<title>{_esc(doc_title)}</title><style>{css}</style></head><body>"
         f'<div class="report"><header class="report-header">'
         f"<h1>{_esc(doc_title)}</h1>"
         f'<div class="report-meta">{meta_line}</div></header>'
@@ -137,12 +175,26 @@ def _render_child(child_id: str, blocks, figures, charts, tables) -> str:
     return f'<div class="empty-slot">[unresolved: {_esc(child_id)}]</div>'
 
 
-def render_pdf(report: dict[str, Any], *, title: str | None = None) -> bytes | None:
+def render_pdf(
+    report: dict[str, Any],
+    *,
+    title: str | None = None,
+    theme: Any = None,
+    locale: str = "en-IN",
+    include_cover: bool = False,
+    include_toc: bool = False,
+    include_appendix: bool = False,
+    number_elements: bool = False,
+) -> bytes | None:
     """Render to PDF via WeasyPrint if available; returns None when unavailable."""
     try:
         from weasyprint import HTML  # type: ignore
     except Exception as exc:  # pragma: no cover - optional dependency
         logger.info("[S6] PDF skipped (WeasyPrint unavailable): %s", exc)
         return None
-    html_str = render_html(report, title=title)
+    html_str = render_html(
+        report, title=title, theme=theme, locale=locale,
+        include_cover=include_cover, include_toc=include_toc,
+        include_appendix=include_appendix, number_elements=number_elements,
+    )
     return HTML(string=html_str).write_pdf()
