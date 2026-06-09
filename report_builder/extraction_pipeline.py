@@ -489,6 +489,16 @@ def _classify_entity_name(name: str) -> str | None:
     _tokens = [t for t in _phrase.split() if t]
     if len(_tokens) >= 2 and all(t in _COMMON_NOISE_WORDS for t in _tokens):
         return "all_noise_words"
+    # Detect broken word fragments: text starting with lowercase that looks like
+    # a mid-word split from a heading ("erves and Introduction", "pter 1: Reserves")
+    if cleaned[0].islower() and len(cleaned) > 4 and ' ' in cleaned:
+        # Likely a fragment split from a longer heading by ghost table columns
+        return "midword_fragment"
+    # Detect fragments where the first word is an obvious word-piece (no vowels, or ≤3 chars followed by space)
+    if len(_tokens) >= 2:
+        first_tok = _tokens[0]
+        if len(first_tok) <= 3 and first_tok.isalpha() and first_tok not in ("the", "and", "for", "all", "per", "gdp", "gnp"):
+            return "short_prefix_fragment"
     return None
 
 
@@ -766,9 +776,10 @@ def _is_ghost_table(table: list[list]) -> bool:
     background drawing objects. Characteristics:
       - Very wide (>30 columns) AND very sparse (<20% non-null cells)
       - OR first 3 rows are entirely None (no header content at all)
+      - OR headers are fragmented (many short broken word pieces)
       - BUT small tables with genuinely sparse data are preserved
 
-    This filter NEVER rejects tables with ≤30 columns (real MoSPI tables are 6-15 cols).
+    This filter NEVER rejects tables with ≤30 columns that have well-formed headers.
     """
     if not table:
         return True
@@ -776,20 +787,51 @@ def _is_ghost_table(table: list[list]) -> bool:
     cols = len(table[0]) if table else 0
     total_cells = rows * cols
 
-    # Only applies to suspiciously wide tables
-    if cols <= 30:
+    # Check fill rate for any table
+    non_null = sum(1 for row in table for c in row if c is not None and str(c).strip())
+    fill_rate = non_null / max(total_cells, 1)
+
+    # Very wide tables (>30 cols): original ghost filter
+    if cols > 30:
+        if fill_rate < 0.20:
+            return True
+        # Wide table with all-None first 3 rows = no header
+        header_rows = table[:min(3, rows)]
+        header_non_null = sum(1 for row in header_rows for c in row if c is not None)
+        if header_non_null == 0:
+            return True
         return False
 
-    # Check fill rate: ghost tables are almost entirely None
-    non_null = sum(1 for row in table for c in row if c is not None)
-    fill_rate = non_null / max(total_cells, 1)
-    if fill_rate < 0.20:
-        return True
+    # For narrower tables: detect fragmented header artifacts
+    # Chart-drawn ghost tables have cells with broken word fragments
+    if cols >= 3 and rows >= 2:
+        # Check first 2 rows for fragmented text patterns
+        header_cells = []
+        for r in range(min(2, rows)):
+            for c in table[r]:
+                if c is not None and str(c).strip():
+                    header_cells.append(str(c).strip())
 
-    # Wide table with all-None first 3 rows = no header
-    header_rows = table[:min(3, rows)]
-    header_non_null = sum(1 for row in header_rows for c in row if c is not None)
-    if header_non_null == 0:
+        if header_cells:
+            # Count cells that look like word fragments (short, no space, lowercase-starting mid-word)
+            fragments = 0
+            for cell in header_cells:
+                # Fragment indicators: starts with lowercase, or very short (1-4 chars non-numeric)
+                if len(cell) <= 4 and not cell.replace('.', '').replace(',', '').isdigit():
+                    fragments += 1
+                elif cell[0].islower() and not cell.isdigit():
+                    fragments += 1
+                elif '\n' in cell and len(cell.split('\n')) > 3:
+                    # Multi-line collapsed cells (newline-joined garbage)
+                    fragments += 1
+
+            frag_ratio = fragments / max(len(header_cells), 1)
+            # If >50% of header cells are fragments AND table is very sparse → ghost
+            if frag_ratio > 0.5 and fill_rate < 0.30:
+                return True
+
+    # Tables with extremely low fill rate (<5%) regardless of width are likely artifacts
+    if fill_rate < 0.05 and rows > 5:
         return True
 
     return False
@@ -1637,7 +1679,22 @@ def _entities_from_pdfplumber(page_text: dict[str, Any], page_index: int) -> lis
     # Priority 1: Table headers — use multi-row merge to handle MoSPI spanning headers
     for table in (page_text.get("tables") or []):
         if table and len(table) >= 1:
+            # Skip ghost tables
+            if _is_ghost_table(table):
+                continue
             headers, _ = _merge_multirow_headers(table)
+            # Detect split-heading artifact: if most headers share a common suffix word,
+            # they're fragments of a single heading split across ghost table cells
+            if headers and len(headers) >= 3:
+                suffix_counts: dict[str, int] = {}
+                for h in headers:
+                    if h and ' ' in h:
+                        last_word = h.rsplit(' ', 1)[-1].lower()
+                        suffix_counts[last_word] = suffix_counts.get(last_word, 0) + 1
+                # If >50% of headers share the same suffix → fragmented heading, skip all
+                max_shared = max(suffix_counts.values()) if suffix_counts else 0
+                if max_shared >= len(headers) * 0.5:
+                    continue
             for h in headers:
                 if h:
                     _add(h, "table_header")
@@ -4468,6 +4525,10 @@ def run_extraction_pipeline(
         "total_entities": total_entities,
         "chart_pages_detected": chart_pages_detected,
         "total_chart_types": total_charts,
+        "vlm_provider": (_os.getenv("PROVIDER_ENTITY_EXTRACTION") or _os.getenv("VLM_PROVIDER", "qwen")).strip().lower(),
+        "vlm_fallback_used": vlm_success > 0 and any(
+            p.get("vlm_used") for p in entity_pages
+        ),
     }
 
     # ── Pass 2.5: Document Knowledge Graph ──

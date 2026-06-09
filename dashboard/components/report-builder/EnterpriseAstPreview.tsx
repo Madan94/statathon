@@ -183,35 +183,43 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
                   {Boolean(t.source) && <Badge variant="muted">{String(t.source)}</Badge>}
                 </div>
                 {/* dimensions, measures, breakdowns — v3 pipeline fields */}
-                {Array.isArray(t.dimensions) && (t.dimensions as string[]).length > 0 && (
+                {Array.isArray(t.dimensions) && (t.dimensions as unknown[]).length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-1">
                     <span className="text-[10px] text-blue-500 font-medium mr-1">dims:</span>
-                    {(t.dimensions as string[]).slice(0, 8).map((col, ci) => (
-                      <span key={ci} className="text-[10px] bg-blue-50 text-blue-700 rounded px-1.5 py-0.5 border border-blue-200">{col}</span>
+                    {(t.dimensions as unknown[]).slice(0, 8).map((col, ci) => (
+                      <span key={ci} className="text-[10px] bg-blue-50 text-blue-700 rounded px-1.5 py-0.5 border border-blue-200">
+                        {typeof col === 'string' ? col : typeof col === 'object' && col !== null ? String((col as Record<string, unknown>).header || (col as Record<string, unknown>).columnId || JSON.stringify(col)) : String(col)}
+                      </span>
                     ))}
                   </div>
                 )}
-                {Array.isArray(t.measures) && (t.measures as string[]).length > 0 && (
+                {Array.isArray(t.measures) && (t.measures as unknown[]).length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-1">
                     <span className="text-[10px] text-green-500 font-medium mr-1">measures:</span>
-                    {(t.measures as string[]).slice(0, 8).map((col, ci) => (
-                      <span key={ci} className="text-[10px] bg-green-50 text-green-700 rounded px-1.5 py-0.5 border border-green-200">{col}</span>
+                    {(t.measures as unknown[]).slice(0, 8).map((col, ci) => (
+                      <span key={ci} className="text-[10px] bg-green-50 text-green-700 rounded px-1.5 py-0.5 border border-green-200">
+                        {typeof col === 'string' ? col : typeof col === 'object' && col !== null ? String((col as Record<string, unknown>).header || (col as Record<string, unknown>).measure || JSON.stringify(col)) : String(col)}
+                      </span>
                     ))}
                   </div>
                 )}
-                {Array.isArray(t.breakdowns) && (t.breakdowns as string[]).length > 0 && (
+                {Array.isArray(t.breakdowns) && (t.breakdowns as unknown[]).length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-1">
                     <span className="text-[10px] text-purple-500 font-medium mr-1">breakdowns:</span>
-                    {(t.breakdowns as string[]).slice(0, 6).map((col, ci) => (
-                      <span key={ci} className="text-[10px] bg-purple-50 text-purple-700 rounded px-1.5 py-0.5 border border-purple-200">{col}</span>
+                    {(t.breakdowns as unknown[]).slice(0, 6).map((col, ci) => (
+                      <span key={ci} className="text-[10px] bg-purple-50 text-purple-700 rounded px-1.5 py-0.5 border border-purple-200">
+                        {typeof col === 'string' ? col : typeof col === 'object' && col !== null ? String((col as Record<string, unknown>).measure || (col as Record<string, unknown>).header || JSON.stringify(col)) : String(col)}
+                      </span>
                     ))}
                   </div>
                 )}
                 {/* fallback: legacy columns array */}
-                {!Array.isArray(t.dimensions) && Array.isArray(t.columns) && (t.columns as string[]).length > 0 && (
+                {!Array.isArray(t.dimensions) && Array.isArray(t.columns) && (t.columns as unknown[]).length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {(t.columns as string[]).slice(0, 12).map((col, ci) => (
-                      <span key={ci} className="text-[10px] bg-green-50 text-green-700 rounded px-1.5 py-0.5 border border-green-200">{col}</span>
+                    {(t.columns as unknown[]).slice(0, 12).map((col, ci) => (
+                      <span key={ci} className="text-[10px] bg-green-50 text-green-700 rounded px-1.5 py-0.5 border border-green-200">
+                        {typeof col === 'string' ? col : typeof col === 'object' && col !== null ? String((col as Record<string, unknown>).header || (col as Record<string, unknown>).columnId || JSON.stringify(col)) : String(col)}
+                      </span>
                     ))}
                   </div>
                 )}
@@ -429,8 +437,10 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
                         <p className="text-xs font-medium text-text mb-1">{String(t.title || `Table ${ti + 1}`)}</p>
                         {Array.isArray(t.dimensions) && (
                           <div className="flex flex-wrap gap-1">
-                            {(t.dimensions as string[]).map((d, di) => (
-                              <span key={di} className="text-[9px] bg-blue-50 text-blue-700 rounded px-1.5 py-0.5">{d}</span>
+                            {(t.dimensions as unknown[]).map((d, di) => (
+                              <span key={di} className="text-[9px] bg-blue-50 text-blue-700 rounded px-1.5 py-0.5">
+                                {typeof d === 'string' ? d : typeof d === 'object' && d !== null ? String((d as Record<string, unknown>).header || (d as Record<string, unknown>).columnId || JSON.stringify(d)) : String(d)}
+                              </span>
                             ))}
                           </div>
                         )}

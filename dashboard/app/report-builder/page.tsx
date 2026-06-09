@@ -820,10 +820,12 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                     <span className="text-[10px] text-text-muted">{String(t.pageRef || '')}</span>
                     {Boolean(t.source) && <Badge variant="muted">{String(t.source)}</Badge>}
                   </div>
-                  {Array.isArray(t.columns) && (t.columns as string[]).length > 0 && (
+                  {Array.isArray(t.columns) && (t.columns as unknown[]).length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-2">
-                      {(t.columns as string[]).slice(0, 10).map((col, ci) => (
-                        <span key={ci} className="text-[10px] bg-green-50 text-green-700 rounded px-1.5 py-0.5">{col}</span>
+                      {(t.columns as unknown[]).slice(0, 10).map((col, ci) => (
+                        <span key={ci} className="text-[10px] bg-green-50 text-green-700 rounded px-1.5 py-0.5">
+                          {typeof col === 'string' ? col : typeof col === 'object' && col !== null ? String((col as Record<string, unknown>).header || (col as Record<string, unknown>).columnId || JSON.stringify(col)) : String(col)}
+                        </span>
                       ))}
                     </div>
                   )}

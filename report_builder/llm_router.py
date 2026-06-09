@@ -234,9 +234,17 @@ def _call_qwen_vision(prompt: str, image_bytes: bytes, max_tokens: int, temperat
                 return r2.json()["choices"][0]["message"]["content"].strip()
             logger.warning("[llm_router][qwen-vision] Retry also failed: HTTP %d", r2.status_code)
         else:
-            logger.warning("[llm_router][qwen-vision] HTTP %d: %s", r.status_code, r.text[:200])
+            logger.warning("[llm_router][qwen-vision] HTTP %d: %s", r.status_code, (r.text or "")[:300])
     except Exception as exc:
         logger.warning("[llm_router][qwen-vision] Request failed: %s", exc)
+
+    # ── Auto-fallback to Gemini when Qwen fails ──
+    # Only fallback if Gemini key is available and wasn't the original provider
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if gemini_key:
+        logger.info("[llm_router][qwen-vision] Falling back to Gemini for this call")
+        gemini_max = min(max_tokens * 2, 8000)  # Gemini has higher limit
+        return _call_gemini(prompt, image_bytes, gemini_max, temperature)
     return None
 
 
@@ -473,16 +481,44 @@ def llm_vision_call(
     max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
     logger.info("[llm_router] task=%-22s provider=%-8s has_image=%s max_tok=%d", task, provider, has_image, max_tokens)
 
-    if provider == "gemini":
-        return _call_gemini(prompt, image_bytes if has_image else None, max_tokens, temperature)
-    if provider == "groq":
-        return _call_groq(prompt, image_bytes if has_image else None, max_tokens, temperature)
-    if provider == "openai":
-        return _call_openai(prompt, image_bytes if has_image else None, max_tokens, temperature)
-    # default: qwen
-    if has_image:
-        return _call_qwen_vision(prompt, image_bytes, max_tokens, temperature, schema=schema)  # type: ignore[arg-type]
-    return _call_qwen_text(prompt, max_tokens, temperature, schema=schema)
+    # Build fallback chain: primary → alternatives (resilient routing)
+    # When the primary provider crashes (HTTP 500, connection reset), try next available
+    _FALLBACK_ORDER = ["gemini", "groq", "openai", "qwen"]
+    fallback_chain = [provider] + [p for p in _FALLBACK_ORDER if p != provider]
+
+    for attempt_provider in fallback_chain:
+        attempt_max_tokens = _clamp_tokens_for_provider(attempt_provider, max_tokens)
+        result = None
+        try:
+            if attempt_provider == "gemini":
+                result = _call_gemini(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature)
+            elif attempt_provider == "groq":
+                result = _call_groq(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature)
+            elif attempt_provider == "openai":
+                result = _call_openai(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature)
+            else:  # qwen
+                if has_image:
+                    result = _call_qwen_vision(prompt, image_bytes, attempt_max_tokens, temperature, schema=schema)  # type: ignore[arg-type]
+                else:
+                    result = _call_qwen_text(prompt, attempt_max_tokens, temperature, schema=schema)
+        except Exception as _fallback_exc:
+            logger.warning("[llm_router] %s failed for task=%s: %s", attempt_provider, task, _fallback_exc)
+
+        if result:
+            if attempt_provider != provider:
+                logger.info("[llm_router] ✓ Fallback %s→%s succeeded for task=%s", provider, attempt_provider, task)
+            return result
+
+        # Only try fallback for vision tasks (entity_extraction, question_gen) — they're critical
+        if not has_image:
+            break  # text-only tasks: don't cascade, just return None
+
+        # Check if fallback provider is available before trying
+        if attempt_provider == provider:
+            logger.warning("[llm_router] Primary provider '%s' failed for task=%s — trying fallbacks", provider, task)
+
+    logger.warning("[llm_router] All providers exhausted for task=%s (has_image=%s)", task, has_image)
+    return None
 
 
 def self_consistency_enabled() -> bool:
