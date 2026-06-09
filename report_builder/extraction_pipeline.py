@@ -3623,7 +3623,7 @@ def pass4_assemble_ast(
         for q in questions:
             for re_ent in (q.get("requiredEntities") or []):
                 ref_name = re_ent.get("entityRef", "")
-                if any(ref_name.lower() in (d.lower() for d in dimensions_list + measures_list)):
+                if ref_name.lower() in [d.lower() for d in dimensions_list + measures_list]:
                     bi_query = q.get("questionId", "")
                     break
             if bi_query:
