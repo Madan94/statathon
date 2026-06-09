@@ -3935,15 +3935,21 @@ def pass4_assemble_ast(
 
             # Build analyticsSpec (gold-standard shape)
             raw_spec = q.get("analyticsSpec") or {}
+            if not isinstance(raw_spec, dict):
+                raw_spec = {}
             measure_ent = next((r for r in req_entities if r["role"] == "measure"), None)
             groupby_ent = next((r for r in req_entities if r["role"] in ("groupBy", "grouping")), None)
             filter_ents = [r for r in req_entities if r["role"] == "filter"]
+
+            # Safely extract agg from raw_spec.measure (may be a string or dict or None)
+            _raw_measure = raw_spec.get("measure")
+            _agg = _raw_measure.get("agg") if isinstance(_raw_measure, dict) else None
 
             analytics_spec = {
                 "operation": raw_spec.get("operation") or ("rank" if q_type == "ranking" else "time_series" if q_type == "trend" else "group_aggregate"),
                 "measure": {
                     "entityRef": measure_ent["entityId"] if measure_ent else "",
-                    "agg": raw_spec.get("measure", {}).get("agg") or "weighted_ratio",
+                    "agg": _agg or "weighted_ratio",
                 },
                 "groupBy": [{"entityRef": groupby_ent["entityId"]}] if groupby_ent else [],
                 "filters": [{"entityRef": f["entityId"], "op": "eq", "valueFrom": f.get("defaultMember") or "defaultMember"} for f in filter_ents],

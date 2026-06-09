@@ -114,11 +114,11 @@ def _resolve_provider(task: str) -> str:
 
 
 # ── Provider-aware token budget clamping ───────────────────────────────────────
-# Each provider has a max safe output token limit. If the env sets a budget above
-# what the provider can handle, we silently clamp to prevent "max token" errors.
+# Qwen 3B with 2048 context: prompts are 400-1200 tokens, so safe output = 700.
+# This prevents "max context 2048" errors even with long prompts (tables, entities).
 _PROVIDER_MAX_OUTPUT: dict[str, int] = {
-    "qwen":   1800,   # 2048 ctx total − ~250 for prompt overhead
-    "openai": 4000,   # Ollama gemma2:9b has 8192 ctx → ~4000 for output
+    "qwen":   700,    # 2048 ctx − ~1300 reserved for prompt (images+text+schema)
+    "openai": 4000,   # Ollama default 8192 ctx → ~4000 for output
     "gemini": 8000,   # Gemini Flash supports 8192 output tokens
     "groq":   4000,   # Groq models: 8192 output cap
 }
