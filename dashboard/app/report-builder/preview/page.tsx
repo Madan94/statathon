@@ -8,17 +8,18 @@
  */
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Download, Languages, Loader2, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, Download, Languages, Loader2, Pencil, SlidersHorizontal } from 'lucide-react';
 import Link from 'next/link';
 
 import PageHeader from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { generatePhaseApi } from '@/lib/api';
-import type { Locale, ReportAST } from '@/lib/report/types';
+import type { EditInput, Locale, ReportAST } from '@/lib/report/types';
 import { applyProfile, type ReportOverrides } from '@/lib/report/profile';
 import { ReportPreview } from '@/components/report-builder/render/ReportPreview';
 import { CustomizePanel } from '@/components/report-builder/render/CustomizePanel';
+import { VersionHistory } from '@/components/report-builder/render/VersionHistory';
 
 function PreviewInner() {
   const sp = useSearchParams();
@@ -32,6 +33,13 @@ function PreviewInner() {
   const [overrides, setOverrides] = useState<ReportOverrides>({});
   const [customizing, setCustomizing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [versions, setVersions] = useState<{ versions: number[]; current: number | null }>({
+    versions: [],
+    current: null,
+  });
+  const [selectedVersion, setSelectedVersion] = useState<number | null>(null);
+  const [versionReport, setVersionReport] = useState<ReportAST | null>(null);
 
   useEffect(() => {
     if (!tid || !sig) {
@@ -55,17 +63,27 @@ function PreviewInner() {
       .catch(() => {
         /* no overrides saved yet — fine */
       });
+    generatePhaseApi
+      .getVersions(tid, sig)
+      .then((v) => {
+        if (!cancelled) setVersions(v);
+      })
+      .catch(() => {
+        /* none yet */
+      });
     return () => {
       cancelled = true;
     };
   }, [tid, sig]);
 
+  const activeReport = selectedVersion !== null ? versionReport : report;
   const shaped = useMemo(
-    () => (report ? applyProfile(report, overrides) : null),
-    [report, overrides],
+    () => (activeReport ? applyProfile(activeReport, overrides) : null),
+    [activeReport, overrides],
   );
   const previewLocale = (overrides.locale as Locale) ?? locale;
   const previewNumberSystem = overrides.numberSystem ?? 'indian';
+  const canEdit = editMode && selectedVersion === null;
 
   const saveOverrides = async () => {
     setSaving(true);
@@ -74,6 +92,28 @@ function PreviewInner() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEdit = async (edit: EditInput) => {
+    await generatePhaseApi.editReport(tid, sig, edit);
+    const [r, v] = await Promise.all([
+      generatePhaseApi.getReport(tid, sig),
+      generatePhaseApi.getVersions(tid, sig),
+    ]);
+    setReport(r as ReportAST);
+    setVersions(v);
+    setSelectedVersion(null);
+    setVersionReport(null);
+  };
+
+  const selectVersion = async (v: number | null) => {
+    setSelectedVersion(v);
+    if (v === null) {
+      setVersionReport(null);
+      return;
+    }
+    const r = await generatePhaseApi.getReport(tid, sig, v);
+    setVersionReport(r as ReportAST);
   };
 
   return (
@@ -100,6 +140,13 @@ function PreviewInner() {
             onClick={() => setCustomizing((c) => !c)}
           >
             <SlidersHorizontal className="h-4 w-4" /> Customize
+          </Button>
+          <Button
+            variant={editMode ? 'secondary' : 'outline'}
+            size="sm"
+            onClick={() => setEditMode((e) => !e)}
+          >
+            <Pencil className="h-4 w-4" /> Edit
           </Button>
           <Button
             variant="outline"
@@ -136,22 +183,43 @@ function PreviewInner() {
 
       {report && tab === 'react' && (
         <div className="flex gap-4">
-          <div className="min-w-0 flex-1 rounded-lg border border-border bg-surface">
-            <ReportPreview
-              report={shaped ?? report}
-              locale={previewLocale}
-              numberSystem={previewNumberSystem}
-            />
-          </div>
-          {customizing && (
-            <div className="hidden w-80 shrink-0 lg:block">
-              <CustomizePanel
-                report={report}
-                value={overrides}
-                onChange={setOverrides}
-                onSave={saveOverrides}
-                saving={saving}
+          <div className="min-w-0 flex-1">
+            {selectedVersion !== null && (
+              <Alert variant="info" className="mb-3">
+                Viewing version v{selectedVersion} (read-only). Select “current” to edit.
+              </Alert>
+            )}
+            <div className="rounded-lg border border-border bg-surface">
+              <ReportPreview
+                report={shaped ?? report}
+                locale={previewLocale}
+                numberSystem={previewNumberSystem}
+                editable={canEdit}
+                onEdit={handleEdit}
               />
+            </div>
+          </div>
+          {(customizing || editMode) && (
+            <div className="hidden w-80 shrink-0 space-y-5 lg:block">
+              {customizing && (
+                <CustomizePanel
+                  report={report}
+                  value={overrides}
+                  onChange={setOverrides}
+                  onSave={saveOverrides}
+                  saving={saving}
+                />
+              )}
+              {editMode && (
+                <div className="rounded-lg border border-border bg-surface p-4">
+                  <VersionHistory
+                    versions={versions.versions}
+                    current={versions.current}
+                    selected={selectedVersion}
+                    onSelect={selectVersion}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>

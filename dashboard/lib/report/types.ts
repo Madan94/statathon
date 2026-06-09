@@ -127,6 +127,7 @@ export interface ReportAST {
     reportId?: string;
     title?: string;
     status?: string;
+    version?: number;
     period?: { current?: string };
     [k: string]: unknown;
   };
@@ -136,4 +137,21 @@ export interface ReportAST {
   chartAST?: { charts?: Chart[] };
   tableAST?: { tables?: Table[] };
   provenanceAST?: { evidence?: EvidenceItem[] };
+}
+
+export interface EditTarget {
+  kind: string;
+  id: string;
+  col?: string;
+  rowIds?: string[];
+  series?: number;
+  point?: number;
+  note?: string;
+}
+
+export interface EditInput {
+  target: EditTarget;
+  value: string | number;
+  reason?: string;
+  by?: string;
 }

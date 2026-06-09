@@ -30,8 +30,11 @@ from report_builder.binding.question_binder import bind_questions
 from report_builder.binding.schema import BindingAST, DatasetAST, EntityBinding
 from report_builder.generation import (
     assemble_report,
+    apply_edit,
     apply_profile,
     build_plans,
+    bump_version,
+    current_version,
     deep_merge,
     effective_profile,
     fill_visuals,
@@ -42,6 +45,7 @@ from report_builder.generation import (
     render_pdf,
     run_analytics,
     validate_report,
+    EditRejected,
     ReportOverrides,
     TemplateProfile,
 )
@@ -119,6 +123,21 @@ def _profile_path(template_id: str, signature: str) -> Path:
 
 def _overrides_path(template_id: str, signature: str) -> Path:
     return _stash_path(template_id, signature, "overrides.json")
+
+
+def _version_path(template_id: str, signature: str, n: int) -> Path:
+    return _stash_path(template_id, signature, f"report.v{n}.output.ast.json")
+
+
+def _list_versions(template_id: str, signature: str) -> list[int]:
+    prefix = f"{template_id or 'template'}__{signature}.report.v"
+    out: list[int] = []
+    for path in R._DEFAULT_STORE.glob(f"{template_id or 'template'}__{signature}.report.v*.output.ast.json"):
+        name = path.name[len(prefix):]
+        num = name.split(".", 1)[0]
+        if num.isdigit():
+            out.append(int(num))
+    return sorted(out)
 
 
 def _load_profile(template_id: str, signature: str) -> dict[str, Any]:
@@ -272,8 +291,15 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
 
 
 @router.get("/{template_id}/{signature}/report")
-def get_report(template_id: str, signature: str) -> dict[str, Any]:
-    """Return the assembled ``report.output.ast.json`` for this dataset."""
+def get_report(
+    template_id: str, signature: str, version: Optional[int] = None
+) -> dict[str, Any]:
+    """Return the assembled ``report.output.ast.json`` (latest, or a saved version)."""
+    if version is not None:
+        vpath = _version_path(template_id, signature, version)
+        if not vpath.exists():
+            raise HTTPException(status_code=404, detail=f"version {version} not found")
+        return json.loads(vpath.read_text(encoding="utf-8"))
     path = _report_path(template_id, signature)
     if not path.exists():
         raise HTTPException(status_code=404, detail="no report generated yet — call /generate first")
@@ -422,3 +448,70 @@ def render_customized(
 
     html_str = render_html(shaped, **flags)
     return HTMLResponse(content=html_str)
+
+
+# ---------------------------------------------------------------------------
+# R5 — editing with lock + audit + versioned report instances
+# ---------------------------------------------------------------------------
+
+
+class EditIn(BaseModel):
+    target: dict[str, Any]                 # {kind, id, ...} — see edit._locate
+    field: Optional[str] = None
+    value: Any = None
+    by: Optional[str] = None
+    reason: Optional[str] = None
+
+
+class EditOut(BaseModel):
+    ok: bool
+    version: int
+    audit: dict[str, Any]
+
+
+@router.post("/{template_id}/{signature}/edit", response_model=EditOut)
+def edit_report(template_id: str, signature: str, body: EditIn) -> EditOut:
+    """Apply one human edit, persist a new immutable version, return the audit entry.
+
+    Prose edits are re-validated against the data (``400`` on a hallucinated
+    number); number overrides require a ``reason`` and are flagged + audited. The
+    pre-edit report is preserved as ``v1`` the first time it is edited.
+    """
+    path = _report_path(template_id, signature)
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="no report generated yet — call /generate first")
+    report = json.loads(path.read_text(encoding="utf-8"))
+
+    try:
+        edited, audit = apply_edit(report, body.model_dump())
+    except EditRejected as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    versions = _list_versions(template_id, signature)
+    if not versions:
+        # Preserve the original as v1 before recording the first edit.
+        v1 = bump_version(json.loads(json.dumps(report)), 1)
+        _version_path(template_id, signature, 1).write_text(
+            json.dumps(v1, ensure_ascii=False, indent=2), encoding="utf-8")
+        versions = [1]
+
+    n = max(versions) + 1
+    bump_version(edited, n)
+    _version_path(template_id, signature, n).write_text(
+        json.dumps(edited, ensure_ascii=False, indent=2), encoding="utf-8")
+    # Latest becomes the current report + re-rendered HTML.
+    path.write_text(json.dumps(edited, ensure_ascii=False, indent=2), encoding="utf-8")
+    _html_path(template_id, signature).write_text(render_html(edited), encoding="utf-8")
+
+    return EditOut(ok=True, version=n, audit=audit)
+
+
+@router.get("/{template_id}/{signature}/versions")
+def get_versions(template_id: str, signature: str) -> dict[str, Any]:
+    """List the saved version numbers (ascending); ``current`` is the latest."""
+    versions = _list_versions(template_id, signature)
+    path = _report_path(template_id, signature)
+    current = None
+    if path.exists():
+        current = current_version(json.loads(path.read_text(encoding="utf-8")))
+    return {"versions": versions, "current": current}

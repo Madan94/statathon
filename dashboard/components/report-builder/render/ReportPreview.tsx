@@ -11,6 +11,7 @@ import { useMemo, useState } from 'react';
 import type {
   Block,
   Chart,
+  EditInput,
   Figure,
   Locale,
   NumberSystem,
@@ -20,14 +21,23 @@ import { loc } from '@/lib/report/format';
 import { ReportChart } from './ReportChart';
 import { ReportTable } from './ReportTable';
 import { ProvenanceDrawer, type ProvenanceTarget } from './ProvenanceDrawer';
+import { EditableField } from './EditableField';
 
 interface Props {
   report: ReportAST;
   locale?: Locale;
   numberSystem?: NumberSystem;
+  editable?: boolean;
+  onEdit?: (edit: EditInput) => Promise<void>;
 }
 
-export function ReportPreview({ report, locale = 'en-IN', numberSystem = 'indian' }: Props) {
+export function ReportPreview({
+  report,
+  locale = 'en-IN',
+  numberSystem = 'indian',
+  editable,
+  onEdit,
+}: Props) {
   const [target, setTarget] = useState<ProvenanceTarget | null>(null);
 
   const blocks = useMemo(
@@ -58,18 +68,43 @@ export function ReportPreview({ report, locale = 'en-IN', numberSystem = 'indian
         <section key={section.sectionId ?? si} id={section.sectionId} className="mb-8">
           {section.title && (
             <h2 className="mb-3 border-l-4 border-accent pl-2.5 text-lg font-semibold text-text">
-              {loc(section.title, locale)}
+              {editable && onEdit && section.sectionId ? (
+                <EditableField
+                  value={loc(section.title, locale)}
+                  onCommit={(value) =>
+                    onEdit({ target: { kind: 'section_title', id: section.sectionId! }, value })
+                  }
+                />
+              ) : (
+                loc(section.title, locale)
+              )}
             </h2>
           )}
           {(section.children ?? []).map((childId) => {
             const block = blocks.get(childId);
-            if (block) return <Paragraph key={childId} block={block} locale={locale} />;
+            if (block)
+              return (
+                <Paragraph
+                  key={childId}
+                  block={block}
+                  locale={locale}
+                  editable={editable}
+                  onEdit={onEdit}
+                />
+              );
 
             const figure = figures.get(childId);
             if (figure) {
               const chart = figure.chartRef ? charts.get(figure.chartRef) : undefined;
               return (
-                <FigureView key={childId} figure={figure} chart={chart} locale={locale} />
+                <FigureView
+                  key={childId}
+                  figure={figure}
+                  chart={chart}
+                  locale={locale}
+                  editable={editable}
+                  onEdit={onEdit}
+                />
               );
             }
 
@@ -81,7 +116,9 @@ export function ReportPreview({ report, locale = 'en-IN', numberSystem = 'indian
                   table={table}
                   locale={locale}
                   numberSystem={numberSystem}
-                  onValueClick={setTarget}
+                  onValueClick={editable ? undefined : setTarget}
+                  editable={editable}
+                  onEdit={onEdit}
                 />
               );
             }
@@ -100,8 +137,29 @@ export function ReportPreview({ report, locale = 'en-IN', numberSystem = 'indian
   );
 }
 
-function Paragraph({ block, locale }: { block: Block; locale: Locale }) {
+function Paragraph({
+  block,
+  locale,
+  editable,
+  onEdit,
+}: {
+  block: Block;
+  locale: Locale;
+  editable?: boolean;
+  onEdit?: (edit: EditInput) => Promise<void>;
+}) {
   const text = loc(block.content, locale);
+  if (editable && onEdit) {
+    return (
+      <p className="my-2 text-justify leading-relaxed text-text">
+        <EditableField
+          value={text}
+          multiline
+          onCommit={(value) => onEdit({ target: { kind: 'block', id: block.blockId }, value })}
+        />
+      </p>
+    );
+  }
   if (!text) return <p className="my-2 text-sm italic text-text-muted">[empty paragraph]</p>;
   return <p className="my-2 text-justify leading-relaxed text-text">{text}</p>;
 }
@@ -110,10 +168,14 @@ function FigureView({
   figure,
   chart,
   locale,
+  editable,
+  onEdit,
 }: {
   figure: Figure;
   chart: Chart | undefined;
   locale: Locale;
+  editable?: boolean;
+  onEdit?: (edit: EditInput) => Promise<void>;
 }) {
   const caption = loc(figure.caption, locale);
   return (
@@ -123,11 +185,18 @@ function FigureView({
       ) : (
         <div className="text-sm italic text-red-600">[missing chart]</div>
       )}
-      {caption && (
-        <figcaption className="mt-1.5 text-center text-xs italic text-text-muted">
-          {caption}
-        </figcaption>
-      )}
+      <figcaption className="mt-1.5 text-center text-xs italic text-text-muted">
+        {editable && onEdit ? (
+          <EditableField
+            value={caption}
+            onCommit={(value) =>
+              onEdit({ target: { kind: 'figure_caption', id: figure.figureId }, value })
+            }
+          />
+        ) : (
+          caption
+        )}
+      </figcaption>
     </figure>
   );
 }

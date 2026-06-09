@@ -2,6 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { isAuthRoute, PUBLIC_ROUTES } from './authConfig';
 import { redirectToLogin } from './authSession';
 import { getCsrfToken } from './csrf';
+import type { EditInput } from './report/types';
 
 /** Browser uses same-origin proxy so httpOnly cookies are set on the dashboard host. */
 function resolveApiBase(): string {
@@ -1299,13 +1300,15 @@ export const generatePhaseApi = {
     );
     return data;
   },
-  /** The assembled report.output.ast.json. */
+  /** The assembled report.output.ast.json (latest, or a saved version). */
   getReport: async (
     templateId: string,
-    signature: string
+    signature: string,
+    version?: number
   ): Promise<Record<string, unknown>> => {
+    const qs = version != null ? `?version=${version}` : '';
     const { data } = await api.get(
-      `/report-builder/generate-phase/${templateId}/${signature}/report`
+      `/report-builder/generate-phase/${templateId}/${signature}/report${qs}`
     );
     return data;
   },
@@ -1381,6 +1384,28 @@ export const generatePhaseApi = {
     if (opts.engine) qs.set('engine', opts.engine);
     const suffix = qs.toString() ? `?${qs.toString()}` : '';
     return `${API_BASE}/report-builder/generate-phase/${templateId}/${signature}/render${suffix}`;
+  },
+  /** Apply one human edit; returns {ok, version, audit}. */
+  editReport: async (
+    templateId: string,
+    signature: string,
+    edit: EditInput
+  ): Promise<{ ok: boolean; version: number; audit: Record<string, unknown> }> => {
+    const { data } = await api.post(
+      `/report-builder/generate-phase/${templateId}/${signature}/edit`,
+      edit
+    );
+    return data;
+  },
+  /** List saved version numbers and the current one. */
+  getVersions: async (
+    templateId: string,
+    signature: string
+  ): Promise<{ versions: number[]; current: number | null }> => {
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/versions`
+    );
+    return data;
   },
 };
 

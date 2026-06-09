@@ -48,6 +48,12 @@ from .profile import (
     apply_profile,
     render_flags,
 )
+from .edit import (
+    apply_edit,
+    bump_version,
+    current_version,
+    EditRejected,
+)
 
 __all__ = [
     "build_plan",
@@ -67,6 +73,10 @@ __all__ = [
     "effective_profile",
     "apply_profile",
     "render_flags",
+    "apply_edit",
+    "bump_version",
+    "current_version",
+    "EditRejected",
     "Aggregation",
     "AggregationRow",
     "AnalyticsAST",

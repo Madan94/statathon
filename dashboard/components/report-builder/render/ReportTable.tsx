@@ -8,6 +8,7 @@
  */
 import type {
   Column,
+  EditInput,
   Locale,
   NumberSystem,
   Table,
@@ -15,6 +16,7 @@ import type {
 } from '@/lib/report/types';
 import { formatValue, loc } from '@/lib/report/format';
 import type { ProvenanceTarget } from './ProvenanceDrawer';
+import { EditableField } from './EditableField';
 
 const TOTAL_LABELS = new Set([
   'all-india', 'all india', 'total', 'grand total', 'overall', 'india',
@@ -80,6 +82,8 @@ interface Props {
   locale?: Locale;
   numberSystem?: NumberSystem;
   onValueClick?: (t: ProvenanceTarget) => void;
+  editable?: boolean;
+  onEdit?: (edit: EditInput) => Promise<void>;
 }
 
 export function ReportTable({
@@ -87,6 +91,8 @@ export function ReportTable({
   locale = 'en-IN',
   numberSystem = 'indian',
   onValueClick,
+  editable,
+  onEdit,
 }: Props) {
   const columns = table.columns ?? [];
   const groups = table.columnGroups ?? [];
@@ -134,6 +140,35 @@ export function ReportTable({
                         system: numberSystem,
                         empty: EM_DASH,
                       });
+                      if (editable && onEdit) {
+                        const ov = row.overridden;
+                        const isOv = Array.isArray(ov) && ov.includes(c.columnId);
+                        return (
+                          <td
+                            key={c.columnId}
+                            className={`border border-border px-3 py-1.5 ${alignClass(c)}`}
+                          >
+                            <EditableField
+                              kind="number"
+                              value={typeof raw === 'number' ? raw : Number(raw) || 0}
+                              display={display}
+                              overridden={isOv}
+                              onCommit={(val, reason) =>
+                                onEdit({
+                                  target: {
+                                    kind: 'table_cell',
+                                    id: table.tableId,
+                                    col: c.columnId,
+                                    rowIds: row.rowIds,
+                                  },
+                                  value: val,
+                                  reason,
+                                })
+                              }
+                            />
+                          </td>
+                        );
+                      }
                       const clickable = Boolean(onValueClick) && raw != null;
                       return (
                         <td
