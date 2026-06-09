@@ -24,7 +24,7 @@ from __future__ import annotations
 import math
 from typing import Any, Sequence
 
-from .numbers import esc, format_value
+from .numbers import esc, format_value, loc
 from .theme import Theme, get_theme
 
 # Canvas geometry (kept identical to the legacy single-bar chart for snapshot
@@ -464,15 +464,61 @@ def _render_pie(chart: dict[str, Any], theme: Theme, *, donut: bool = False) -> 
 _DENSE_FALLBACK = {"bar", "simple_bar"}
 
 
-def render_chart_svg(chart: dict[str, Any] | None, theme: Theme | str | None = None) -> str:
+def _localize_chart(chart: dict[str, Any], locale: str) -> dict[str, Any]:
+    """Return a shallow copy with labels resolved for ``locale``.
+
+    Only touches display labels (title, axis labels, series labels, point ``x``)
+    so the private renderers stay locale-agnostic. Plain-string labels pass
+    through unchanged (back-compat with the gold report).
+    """
+    if locale == "en-IN":
+        # Fast path: still resolve dict labels, but most gold labels are plain.
+        pass
+    c = dict(chart)
+    if "title" in c:
+        c["title"] = loc(c.get("title"), locale)
+    for axis_key in ("xAxis", "yAxis"):
+        ax = c.get(axis_key)
+        if isinstance(ax, dict) and "label" in ax:
+            ax2 = dict(ax)
+            ax2["label"] = loc(ax.get("label"), locale)
+            c[axis_key] = ax2
+    new_series = []
+    for s in c.get("series") or []:
+        s2 = dict(s)
+        if "label" in s2:
+            s2["label"] = loc(s.get("label"), locale)
+        pts = []
+        for p in s.get("points") or []:
+            if isinstance(p.get("x"), dict):
+                p2 = dict(p)
+                p2["x"] = loc(p.get("x"), locale)
+                pts.append(p2)
+            else:
+                pts.append(p)
+        s2["points"] = pts
+        new_series.append(s2)
+    if new_series:
+        c["series"] = new_series
+    return c
+
+
+def render_chart_svg(
+    chart: dict[str, Any] | None,
+    theme: Theme | str | None = None,
+    *,
+    locale: str = "en-IN",
+) -> str:
     """Render a ``chartAST`` chart to a deterministic SVG string.
 
     Unknown/empty charts degrade to an ``empty-slot`` placeholder. Dense
-    single-series bar charts (> 12 categories) flip to horizontal.
+    single-series bar charts (> 12 categories) flip to horizontal. Bilingual
+    ``{en,hi}`` labels are resolved for ``locale``.
     """
     if not chart:
         return _empty("[missing chart]")
     th = get_theme(theme)
+    chart = _localize_chart(chart, locale)
     ctype = (chart.get("chartType") or "bar").lower()
 
     if ctype in {"bar", "simple_bar"}:

@@ -104,14 +104,11 @@ def render_html(
         from .render.document import number_figures_tables
         number_figures_tables(report)
 
-    blocks = {b.get("blockId"): b for b in (report.get("contentAST") or {}).get("blocks", [])}
-    figures = {f.get("figureId"): f for f in (report.get("figureAST") or {}).get("figures", [])}
-    charts = {c.get("chartId"): c for c in (report.get("chartAST") or {}).get("charts", [])}
-    tables = {t.get("tableId"): t for t in (report.get("tableAST") or {}).get("tables", [])}
     sections = (report.get("semanticAST") or {}).get("sections", [])
     metadata = report.get("metadata") or {}
 
-    doc_title = title or _section_title(sections) or "Statistical Report"
+    from .render.numbers import loc as _loc
+    doc_title = title or _loc(_section_title(sections), locale) or "Statistical Report"
     period = (metadata.get("period") or {}).get("current") or ""
 
     body: list[str] = []
@@ -122,15 +119,12 @@ def render_html(
         from .render.document import build_toc
         body.append(build_toc(sections))
 
+    from .render.blocks import render_question_group
+    number_system = "indian"  # MoSPI default; en-IN and hi-IN both use lakh/crore
     for sec in sorted(sections, key=lambda s: s.get("order", 0)):
-        sec_id = sec.get("sectionId")
-        id_attr = f' id="{_esc(sec_id)}"' if sec_id else ""
-        body.append(f'<section class="report-section"{id_attr}>')
-        if sec.get("title"):
-            body.append(f"<h2>{_esc(sec.get('title'))}</h2>")
-        for child_id in sec.get("children") or []:
-            body.append(_render_child(child_id, blocks, figures, charts, tables))
-        body.append("</section>")
+        body.append(render_question_group(
+            sec, report, theme, locale=locale, number_system=number_system,
+        ))
 
     if include_appendix:
         from .render.document import build_provenance_appendix

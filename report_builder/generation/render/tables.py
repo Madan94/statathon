@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from .numbers import esc, format_value
+from .numbers import esc, format_value, loc
 
 # Default phrases that mark an aggregate row when no explicit flag is present.
 _DEFAULT_TOTAL_LABELS = frozenset({
@@ -57,7 +57,8 @@ def _row_is_total(row: dict[str, Any], columns: list[dict[str, Any]],
 
 
 def _group_header_row(columns: list[dict[str, Any]],
-                      groups: list[dict[str, Any]]) -> str:
+                      groups: list[dict[str, Any]],
+                      locale: str = "en-IN") -> str:
     """Top header row spanning column groups (e.g. Rural / Urban)."""
     group_of: dict[str, dict[str, Any]] = {}
     for g in groups:
@@ -70,7 +71,7 @@ def _group_header_row(columns: list[dict[str, Any]],
         g = group_of.get(col.get("columnId"))
         if g:
             span = len(g.get("spanRefs") or []) or 1
-            parts.append(f'<th colspan="{span}">{esc(g.get("label"))}</th>')
+            parts.append(f'<th colspan="{span}">{esc(loc(g.get("label"), locale))}</th>')
             i += span
         else:
             parts.append("<th></th>")
@@ -99,17 +100,17 @@ def render_table(
 
     parts = ['<table class="data-table">']
     if title:
-        parts.append(f"<caption>{esc(title)}</caption>")
+        parts.append(f"<caption>{esc(loc(title, locale))}</caption>")
 
     # <thead> is marked repeatable by theme CSS (table-header-group) for print.
     parts.append("<thead>")
     if groups:
-        parts.append(_group_header_row(columns, groups))
+        parts.append(_group_header_row(columns, groups, locale))
     parts.append("<tr>")
     for col in columns:
         cls = _align_class(col)
         scope = ' scope="col"'
-        parts.append(f'<th class="{cls}"{scope}>{esc(col.get("header"))}</th>')
+        parts.append(f'<th class="{cls}"{scope}>{esc(loc(col.get("header"), locale))}</th>')
     parts.append("</tr></thead>")
 
     parts.append("<tbody>")
@@ -127,7 +128,7 @@ def render_table(
                     system=number_system, locale=locale, empty=empty,
                 )
             else:
-                val = esc(raw) if raw is not None else empty
+                val = esc(loc(raw, locale)) if raw is not None else empty
             parts.append(f'<td class="{cls}">{val}</td>')
         parts.append("</tr>")
     parts.append("</tbody></table>")
@@ -138,14 +139,15 @@ def render_table(
         parts.append('<ul class="footnotes">')
         for fn in notes:
             nid = (fn.get("noteId") or "").lower()
+            raw_text = loc(fn.get("text"), locale)
             marker = ""
             if "source" in nid:
                 marker = '<span class="fn-marker">Source:</span> '
             elif "note" in nid:
                 marker = '<span class="fn-marker">Note:</span> '
-            text = esc(fn.get("text"))
+            text = esc(raw_text)
             # Avoid doubling 'Source:'/'Note:' if the text already starts with it.
-            low = (fn.get("text") or "").strip().lower()
+            low = raw_text.strip().lower()
             if low.startswith("source:") or low.startswith("note:"):
                 marker = ""
             parts.append(f'<li>{marker}{text}</li>')

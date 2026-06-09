@@ -17,13 +17,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from .numbers import format_value, parse_format, esc, EM_DASH
+from .numbers import format_value, parse_format, esc, loc, EM_DASH
 from .theme import Theme, THEMES, DEFAULT_THEME_ID, get_theme, theme_css
 from .svg_charts import render_chart_svg
 from .tables import render_table
 from .document import (
     build_cover, build_toc, running_header_footer_css, document_css,
     number_figures_tables, build_provenance_appendix,
+)
+from .blocks import (
+    render_question_group, render_child, render_paragraph, render_figure,
 )
 
 __all__ = [
@@ -32,6 +35,7 @@ __all__ = [
     "format_value",
     "parse_format",
     "esc",
+    "loc",
     "EM_DASH",
     "Theme",
     "THEMES",
@@ -46,6 +50,10 @@ __all__ = [
     "document_css",
     "number_figures_tables",
     "build_provenance_appendix",
+    "render_question_group",
+    "render_child",
+    "render_paragraph",
+    "render_figure",
 ]
 
 

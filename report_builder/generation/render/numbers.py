@@ -126,3 +126,30 @@ def format_value(
 def esc(text: Any) -> str:
     """HTML-escape a value (None → empty string)."""
     return html.escape(str(text if text is not None else ""))
+
+
+def loc(label: Any, locale: str = "en-IN") -> str:
+    """Resolve a possibly-bilingual label to a string for the given locale.
+
+    Accepts:
+      * a ``{"en": "...", "hi": "..."}`` dict → picks by ``locale`` language
+        (``hi-IN`` → ``hi``, anything else → ``en``), falling back to the other
+        language then to any value;
+      * a plain string / number / None → returned via ``str`` (back-compat with
+        the gold report's plain-string labels).
+    """
+    if label is None:
+        return ""
+    if isinstance(label, dict):
+        lang = "hi" if str(locale).lower().startswith("hi") else "en"
+        other = "en" if lang == "hi" else "hi"
+        val = label.get(lang) or label.get(other)
+        if val is None:
+            # any remaining value (e.g. a custom language key)
+            for v in label.values():
+                if v:
+                    val = v
+                    break
+        return str(val) if val is not None else ""
+    return str(label)
+
