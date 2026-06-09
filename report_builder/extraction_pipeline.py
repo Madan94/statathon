@@ -2305,22 +2305,35 @@ def pass2_5_document_knowledge_graph(
             if has_real:
                 chapters = [ch for ch in chapters if ch is not bare]
 
-    # Step 2: Merge numbered prefix duplicates: "1 Energy Reserves" vs "Energy Reserves"
+    # Step 2: Merge numbered prefix duplicates ONLY if they overlap in page range
+    # "1 Energy Reserves" on p2-p7 vs "Energy Reserves" on p2-p7 → merge (same content)
+    # "1 Energy Reserves" on p9-p9 vs "Energy Reserves" on p2-p7 → KEEP BOTH (different sections)
     _numbered_prefix_re = _re_ch_dedup.compile(r'^\d{1,2}[\.\s]+(.+)$')
     _dedup_chapters: list[dict] = []
-    _seen_titles: set[str] = set()
     for ch in chapters:
         title_clean = ch["title"].strip()
-        # Normalize: remove leading number
         m = _numbered_prefix_re.match(title_clean)
         base_title = m.group(1).strip().lower() if m else title_clean.lower()
-        if base_title in _seen_titles:
-            continue  # skip duplicate
-        _seen_titles.add(base_title)
-        # Also add the un-numbered version to prevent duplicates the other way
-        if not m:
-            _seen_titles.add(title_clean.lower())
-        _dedup_chapters.append(ch)
+        ch_start = ch["pageRange"][0]
+        ch_end = ch["pageRange"][1]
+
+        # Check if an existing chapter with same base title OVERLAPS this one's page range
+        is_duplicate = False
+        for existing in _dedup_chapters:
+            ex_title = existing["title"].strip()
+            ex_m = _numbered_prefix_re.match(ex_title)
+            ex_base = ex_m.group(1).strip().lower() if ex_m else ex_title.lower()
+            if base_title == ex_base:
+                # Check page range overlap
+                ex_start = existing["pageRange"][0]
+                ex_end = existing["pageRange"][1]
+                if (ch_start <= ex_end + 1 and ch_end >= ex_start - 1):
+                    # Overlapping or adjacent → merge (extend the existing range)
+                    existing["pageRange"] = [min(ch_start, ex_start), max(ch_end, ex_end)]
+                    is_duplicate = True
+                    break
+        if not is_duplicate:
+            _dedup_chapters.append(ch)
 
     if len(_dedup_chapters) < len(chapters):
         logger.info("[pass2.5]   Chapter dedup: %d → %d (merged duplicates)",
@@ -4487,19 +4500,25 @@ def pass4_assemble_ast(
     }
 
     glossary: dict[str, str] = {}
-    # Add relevant seed terms based on document entities
+    # Add relevant seed terms based on document entities — strict matching only
     _ent_names_lower = {e["canonicalName"].lower() for e in blueprint_entities}
     _ent_aliases_lower = set()
     for e in blueprint_entities:
         for a in (e.get("aliases") or []):
             _ent_aliases_lower.add(a.lower())
+    # Combine all entity text for word-boundary matching
+    _all_ent_text = _ent_names_lower | _ent_aliases_lower
 
     for term, defn in _MOSPI_GLOSSARY_SEED.items():
         term_low = term.lower()
-        # Include if the term or its expansion appears in entities
-        if (term_low in _ent_names_lower or term_low in _ent_aliases_lower or
-                any(term_low in n for n in _ent_names_lower)):
+        # Strict: term must be an exact match in entity names/aliases (not substring)
+        if term_low in _all_ent_text:
             glossary[term] = defn
+        # Or the full expansion in the definition must match an entity name
+        elif len(term_low) <= 5:
+            # For short acronyms, check if any entity alias is this exact acronym
+            if term_low in _ent_aliases_lower:
+                glossary[term] = defn
 
     # Generate definitions for extracted measure entities not in seed
     for ent in blueprint_entities:

@@ -49,7 +49,10 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
   const semanticAST = (ast.semanticAST as Record<string, unknown>) || {};
   const hierarchy = Array.isArray(semanticAST.hierarchy) ? (semanticAST.hierarchy as Array<Record<string, unknown>>) : [];
   const entityGraph = (ast.entityGraph as Record<string, unknown>) || {};
-  const entities = Array.isArray(entityGraph.entities) ? (entityGraph.entities as Array<Record<string, unknown>>) : [];
+  const entities = Array.isArray(entityGraph.entities) ? (entityGraph.entities as Array<Record<string, unknown>>) :
+    // Fallback: read from semanticAST.entities or blueprint.entities
+    Array.isArray((ast.semanticAST as Record<string, unknown>)?.entities) ? ((ast.semanticAST as Record<string, unknown>).entities as Array<Record<string, unknown>>) :
+    Array.isArray((ast.blueprint as Record<string, unknown>)?.entities) ? ((ast.blueprint as Record<string, unknown>).entities as Array<Record<string, unknown>>) : [];
   const factGraph = (ast.factGraph as Record<string, unknown>) || {};
   const facts = Array.isArray(factGraph.facts) ? (factGraph.facts as Array<Record<string, unknown>>) : [];
   const retrievalAST = (ast.retrievalAST as Record<string, unknown>) || {};
@@ -296,7 +299,7 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {Object.entries(
                     entities.reduce<Record<string, number>>((acc, e) => {
-                      const t = String(e.type || 'unknown');
+                      const t = String(e.type || e.entityType || 'unknown');
                       acc[t] = (acc[t] || 0) + 1;
                       return acc;
                     }, {})
@@ -309,8 +312,8 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
                 <div className="space-y-1 max-h-48 overflow-y-auto">
                   {entities.slice(0, 15).map((e, idx) => (
                     <div key={`e-${e.entityId || idx}`} className="flex items-center gap-2 text-[10px]">
-                      <span className={`rounded-full px-1.5 py-0.5 ${entityTypeColors[String(e.type)] || 'bg-gray-100 text-gray-600'}`}>{String(e.type)}</span>
-                      <span className="text-text font-medium">{String(e.name || '—')}</span>
+                      <span className={`rounded-full px-1.5 py-0.5 ${entityTypeColors[String(e.type || e.entityType)] || 'bg-gray-100 text-gray-600'}`}>{String(e.type || e.entityType || '—')}</span>
+                      <span className="text-text font-medium">{String(e.name || e.canonicalName || e.entityId || '—')}</span>
                       {Boolean(e.entityType) && (
                         <span className={`rounded-full px-1.5 py-0.5 text-[9px] ${
                           e.entityType === 'dimension' ? 'bg-blue-100 text-blue-700' :
@@ -348,11 +351,11 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
         );
 
       case 'Blueprint': {
-        const enterpriseAst = (ast.enterprise_ast as Record<string, unknown>) || {};
-        const blueprint = (enterpriseAst.blueprint as Record<string, unknown>) || {};
+        const enterpriseAst = (ast.enterprise_ast as Record<string, unknown>) || ast || {};
+        const blueprint = (enterpriseAst.blueprint as Record<string, unknown>) || (ast.blueprint as Record<string, unknown>) || {};
         const bpTopics = Array.isArray(blueprint.topics) ? (blueprint.topics as Array<Record<string, unknown>>) : [];
         const bpEntities = Array.isArray(blueprint.entities) ? (blueprint.entities as Array<Record<string, unknown>>) : [];
-        const bpTables = Array.isArray(blueprint.tableStructures) ? (blueprint.tableStructures as Array<Record<string, unknown>>) : [];
+        const bpTables = Array.isArray(blueprint.tableStructures || blueprint.tableTemplates) ? (((blueprint.tableStructures || blueprint.tableTemplates) as Array<Record<string, unknown>>)) : [];
         return (
           <div className="space-y-4">
             {bpTopics.length === 0 && bpEntities.length === 0 ? (
@@ -422,7 +425,7 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
                           e.entityType === 'filter' ? 'bg-orange-50 text-orange-700 border-orange-200' :
                           'bg-gray-50 text-gray-600 border-gray-200'
                         }`}>
-                          {String(e.name || e.entityId || '—')}
+                          {String(e.name || e.canonicalName || e.entityId || '—')}
                         </span>
                       ))}
                     </div>
