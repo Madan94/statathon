@@ -567,21 +567,33 @@ def compile_template_production(
         # Build TemplateAST from enterprise AST for backward compat
         v2_blocks: list[BlockSpec] = []
 
-        # Use semantic hierarchy for section-level blocks
+        # Use semantic sections (gold-standard) or fall back to hierarchy (legacy)
+        sections = enterprise_ast.get("semanticAST", {}).get("sections") or []
         hierarchy = enterprise_ast.get("semanticAST", {}).get("hierarchy") or []
-        for node in hierarchy[:30]:
-            node_id = node.get("nodeId") or node.get("id") or f"sec_{len(v2_blocks)}"
-            title = node.get("title", "Section")[:80]
-            level = node.get("level", 2)
-            kind = "heading" if level <= 1 else "narrative"
-            v2_blocks.append(BlockSpec(
-                block_id=node_id,
-                kind=kind,
-                title=title,
-                section="body",
-                required=True,
-                hints={"level": level},
-            ))
+        if sections:
+            for sec in sections[:30]:
+                v2_blocks.append(BlockSpec(
+                    block_id=sec.get("sectionId") or f"sec_{len(v2_blocks)}",
+                    kind="heading",
+                    title=sec.get("title", "Section")[:80],
+                    section="body",
+                    required=True,
+                    hints={"level": sec.get("level", 1), "topicRef": sec.get("topicRef", "")},
+                ))
+        elif hierarchy:
+            for node in hierarchy[:30]:
+                node_id = node.get("nodeId") or node.get("id") or f"sec_{len(v2_blocks)}"
+                title = node.get("title", "Section")[:80]
+                level = node.get("level", 2)
+                kind = "heading" if level <= 1 else "narrative"
+                v2_blocks.append(BlockSpec(
+                    block_id=node_id,
+                    kind=kind,
+                    title=title,
+                    section="body",
+                    required=True,
+                    hints={"level": level},
+                ))
 
         # Add table blocks from tableAST
         for tbl in (enterprise_ast.get("tableAST", {}).get("tables") or [])[:20]:
@@ -632,17 +644,20 @@ def compile_template_production(
         ast = TemplateAST(
             name=template_name or "Enterprise Document",
             source_hash=file_hash,
-            page_count=enterprise_ast.get("metadata", {}).get("pageCount", 0),
+            page_count=enterprise_ast.get("page_count") or enterprise_ast.get("metadata", {}).get("pageCount", 0),
             blocks=v2_blocks,
             extraction_method="layoutlm+qwen-vl+sequential",
         )
-        payload = ast.to_dict()
-        payload["enterprise_ast"] = enterprise_ast
-        payload["extracted_assets"] = enterprise_ast.get("extracted_assets", {})
-        payload["questions"] = enterprise_ast.get("questions", [])
-        payload["templateSlots"] = enterprise_ast.get("templateSlots", {})
-        payload["pipeline_trace"] = enterprise_ast.get("pipeline_trace", {})
-        payload["doc_id"] = enterprise_ast.get("metadata", {}).get("documentId", "MOSPI_TPL_01")
+        # Gold-standard: the enterprise_ast IS the payload (all keys at top level)
+        # The frontend reads ast.styleAST, ast.semanticAST, ast.blueprint etc. directly.
+        payload = enterprise_ast.copy()
+        # Backward compat fields
+        payload["name"] = template_name
+        payload["source_hash"] = file_hash
+        payload["page_count"] = enterprise_ast.get("page_count") or enterprise_ast.get("metadata", {}).get("pageCount", 0)
+        payload["extraction_method"] = "layoutlm+qwen-vl+sequential"
+        payload["blocks"] = [b.__dict__ if hasattr(b, '__dict__') else b for b in v2_blocks]
+        payload["doc_id"] = enterprise_ast.get("metadata", {}).get("templateId") or enterprise_ast.get("metadata", {}).get("documentId", "MOSPI_TPL_01")
         diagnostics["blueprint_payload"] = payload
         diagnostics["stages"]["v2_pipeline"] = {"status": "completed"}
         _tick(PRODUCTION_STAGE_ORDER[5], 100, {"status": "completed"})

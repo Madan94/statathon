@@ -318,6 +318,19 @@ def gemini_full_enrichment(ast_dict: dict[str, Any]) -> dict[str, Any]:
     if (os.getenv("LLM_DISABLED") or "").strip().lower() in ("1", "true", "yes", "on"):
         logger.info("[gemini-enrich] LLM_DISABLED set — skipping enrichment")
         return ast_dict
+
+    # Gate: only fire Gemini if explicitly enabled via env.
+    # Respects the user's model routing choices. Gemini enrichment runs ONLY when:
+    #   GEMINI_ENRICHMENT=true  OR  REASONING_PROVIDER=gemini  OR  VLM_PROVIDER=gemini
+    _gemini_enrichment_enabled = (os.getenv("GEMINI_ENRICHMENT") or "").strip().lower() in ("1", "true", "yes", "on")
+    _provider_is_gemini = (
+        (os.getenv("REASONING_PROVIDER") or "").strip().lower() == "gemini"
+        or (os.getenv("VLM_PROVIDER") or "").strip().lower() == "gemini"
+    )
+    if not _gemini_enrichment_enabled and not _provider_is_gemini:
+        logger.info("[gemini-enrich] Skipped — GEMINI_ENRICHMENT not enabled and providers are not gemini")
+        return ast_dict
+
     if not (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")):
         logger.info("[gemini-enrich] No Gemini API key — skipping enrichment")
         return ast_dict

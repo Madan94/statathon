@@ -3455,17 +3455,16 @@ def pass4_assemble_ast(
     source_hash: str = "",
     entity_pages: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Assemble Enterprise AST + embedded blueprint subtree.
+    """Assemble Enterprise AST + embedded blueprint subtree (gold-standard shape).
 
-    Merges all extraction passes into the final output:
-        - layoutAST, geometryAST from Pass 1
-        - contentAST (paragraphs from pdfplumber text, typed by LayoutLM regions)
-        - tableAST (table structures from Pass 2.5, NOT values)
-        - semanticAST (hierarchy from Pass 2.5 chapters)
-        - entityGraph (merged entities)
-        - blueprint subtree: TopicNode → QuestionNode → AnswerStructure → AnswerComponent
+    Produces two cross-referenced structures:
+        template.ast.json  — VALUE-FREE render skeleton (slots empty)
+        template.blueprint.json — VALUE-FREE analytic brain (entities, questions, analytics)
+
+    Both are embedded in the returned dict for unified pipeline output,
+    and also saved as separate files by the orchestrator.
     """
-    logger.info("[pass4] ▶ Assembling Enterprise AST + Blueprint")
+    logger.info("[pass4] ▶ Assembling Gold-Standard Enterprise AST + Blueprint")
 
     chapters = document_map.get("chapters") or []
     all_entities = document_map.get("all_entities") or []
@@ -3473,374 +3472,670 @@ def pass4_assemble_ast(
     questions = ast_result.get("questions") or []
     topics_raw = ast_result.get("topics") or []
     page_count = len(page_texts)
+    doc_id = f"doc_{source_hash[:8]}" if source_hash else "doc_001"
+    template_id = f"tpl_{re.sub(r'[^a-z0-9]', '_', doc_title.lower())[:30]}_v1"
 
-    # ── layoutAST ──
-    layout_ast_pages = []
-    for i, page in enumerate(layout_pages or []):
-        blocks = []
-        for j, region in enumerate(page.get("regions") or []):
-            blocks.append({
-                "blockId": f"b{i + 1}_{j + 1}",
-                "type": region.get("type", "text"),
-                "readingOrder": j + 1,
-                "bbox": region.get("bbox", [0, 0, 0, 0]),
-                "confidence": region.get("confidence", 0),
-            })
-        layout_ast_pages.append({
-            "pageId": f"page_{i + 1:03d}",
-            "width": page.get("width", 595),
-            "height": page.get("height", 842),
-            "blocks": blocks,
-        })
+    # ════════════════════════════════════════════════════════════════════════════
+    # ENTITY RESOLUTION — build stable entityId mapping for cross-referencing
+    # ════════════════════════════════════════════════════════════════════════════
+    entity_map: dict[str, dict[str, Any]] = {}  # entityId → entity dict
+    entity_name_map: dict[str, str] = {}  # lowered name → entityId
+    for ent in all_entities:
+        eid = ent.get("entityId", f"ent_{len(entity_map)+1:03d}")
+        entity_map[eid] = ent
+        entity_name_map[ent.get("name", "").lower().strip()] = eid
+        for alias in (ent.get("aliases") or []):
+            entity_name_map[alias.lower().strip()] = eid
 
-    # ── geometryAST ──
-    geometry_nodes = []
-    for i, page in enumerate(layout_pages or []):
-        for j, region in enumerate(page.get("regions") or []):
-            bbox = region.get("bbox") or [0, 0, 0, 0]
-            if not isinstance(bbox, (list, tuple)) or len(bbox) < 4:
-                bbox = [0, 0, 0, 0]
-            geometry_nodes.append({
-                "nodeId": f"b{i + 1}_{j + 1}",
-                "bbox": {
-                    "x": bbox[0],
-                    "y": bbox[1],
-                    "width": bbox[2] - bbox[0],
-                    "height": bbox[3] - bbox[1],
-                },
-                "pageRef": f"page_{i + 1:03d}",
-            })
+    def _resolve_eid(name: str) -> str:
+        """Resolve entity name to entityId via fuzzy matching."""
+        key = name.lower().strip()
+        if key in entity_name_map:
+            return entity_name_map[key]
+        # Partial match
+        for k, v in entity_name_map.items():
+            if key in k or k in key:
+                return v
+        return f"ent_unresolved_{key[:15]}"
 
-    # ── contentAST (from pdfplumber text, typed by LayoutLM regions) ──
-    paragraphs = []
-    for i, pt in enumerate(page_texts):
-        regions = (layout_pages[i].get("regions") or []) if i < len(layout_pages) else []
+    # ════════════════════════════════════════════════════════════════════════════
+    # styleAST — 4 standard MoSPI styles
+    # ════════════════════════════════════════════════════════════════════════════
+    style_ast = {
+        "styles": [
+            {"styleId": "s_h1", "role": "heading1", "font": "Noto Sans", "sizePt": 18, "bold": True, "color": "#0B5394"},
+            {"styleId": "s_h2", "role": "heading2", "font": "Noto Sans", "sizePt": 14, "bold": True, "color": "#1155CC"},
+            {"styleId": "s_body", "role": "body", "font": "Noto Sans", "sizePt": 11, "bold": False, "color": "#222222"},
+            {"styleId": "s_table", "role": "tableCell", "font": "Noto Sans", "sizePt": 9, "align": "right"},
+            {"styleId": "s_caption", "role": "caption", "font": "Noto Sans", "sizePt": 9, "italic": True, "color": "#555555"},
+        ]
+    }
 
-        # Create paragraphs from heading regions
-        for h_idx, region in enumerate(regions):
-            if region.get("type") in ("heading", "title"):
-                text = (region.get("text") or "").strip()
-                if text:
-                    paragraphs.append({
-                        "id": f"p_{i + 1:03d}_h{h_idx + 1:02d}",
-                        "type": region["type"],
-                        "content": text[:500],
-                        "pageRef": f"page_{i + 1:03d}",
-                        "source": "layoutlm",
-                    })
+    # ════════════════════════════════════════════════════════════════════════════
+    # TOPIC → QUESTION mapping (for cross-referencing)
+    # ════════════════════════════════════════════════════════════════════════════
+    topic_question_map: dict[str, list[dict]] = {}  # topicId → [question dicts]
+    for topic_raw in topics_raw:
+        tid = topic_raw.get("topicId", f"topic_{len(topic_question_map)+1:02d}")
+        tqs = []
+        for q in questions:
+            if q.get("questionId", "") in (topic_raw.get("questionIds") or []):
+                tqs.append(q)
+        topic_question_map[tid] = tqs
 
-        # Create paragraphs from text regions
-        text_regions = [r for r in regions if r.get("type") in ("text", "paragraph")]
-        if text_regions:
-            for t_idx, region in enumerate(text_regions[:10]):
-                text = (region.get("text") or "").strip()
-                if text and len(text) > 10:
-                    paragraphs.append({
-                        "id": f"p_{i + 1:03d}_t{t_idx + 1:02d}",
-                        "type": "paragraph",
-                        "content": text[:2000],
-                        "pageRef": f"page_{i + 1:03d}",
-                        "source": "layoutlm",
-                    })
-        else:
-            # Fallback: pdfplumber raw text
-            raw = (pt.get("raw_text") or "").strip()
-            if raw:
-                paragraphs.append({
-                    "id": f"p_{i + 1:03d}",
-                    "type": "paragraph",
-                    "content": raw[:2000],
-                    "pageRef": f"page_{i + 1:03d}",
-                    "source": "pdfplumber-fallback",
-                })
-
-    # ── tableAST (STRUCTURE only, from Pass 2.5 — no values) ──
-    tables = []
+    # ════════════════════════════════════════════════════════════════════════════
+    # tableAST — gold-standard structured columns with entityRef, role, format
+    # ════════════════════════════════════════════════════════════════════════════
+    tables_ast = []
+    table_templates = []
     for ts in table_structures:
-        tables.append({
-            "tableId": ts["tableId"],
-            "title": ts.get("description", f"Table on page {ts['page'] + 1}"),
-            "pageRef": f"page_{ts['page'] + 1:03d}",
-            "columns": ts["columns"],
-            "columnGroups": ts.get("columnGroups") or [],
-            "dimensions": ts.get("dimensions") or [],
-            "measures": ts.get("measures") or [],
-            "breakdowns": ts.get("breakdowns") or [],
-            "layout": ts.get("layout", "simple"),
-            "rowCount": ts.get("row_count", 0),
-            "needsReview": ts.get("needsReview", False),
-            "source": "pdfplumber",
+        t_id = ts["tableId"].replace("tbl_", "table_")
+        tt_id = t_id.replace("table_", "tt_")
+
+        # Build structured columns
+        columns = []
+        column_groups = []
+        dimensions_list = ts.get("dimensions") or []
+        measures_list = ts.get("measures") or []
+        breakdowns = ts.get("breakdowns") or []
+
+        # Build column groups from breakdowns
+        for bd in breakdowns:
+            for val in (bd.get("values") or []):
+                grp_id = f"grp_{re.sub(r'[^a-z0-9]', '_', val.lower())[:15]}"
+                column_groups.append({
+                    "groupId": grp_id,
+                    "label": val,
+                    "spanRefs": [],
+                })
+
+        col_idx = 0
+        for dim in dimensions_list:
+            col_id = f"col_{re.sub(r'[^a-z0-9]', '_', dim.lower())[:20]}"
+            ent_ref = _resolve_eid(dim)
+            columns.append({
+                "columnId": col_id,
+                "header": dim,
+                "role": "dimension",
+                "entityRef": ent_ref,
+                "dtype": "string",
+                "align": "left",
+                "format": None,
+            })
+            col_idx += 1
+
+        for meas in measures_list:
+            col_id = f"col_{re.sub(r'[^a-z0-9]', '_', meas.lower())[:20]}"
+            ent_ref = _resolve_eid(meas)
+            # Check if this measure has breakdown variants
+            meas_lower = meas.lower()
+            parent_bd = next((bd for bd in breakdowns if bd.get("measure", "").lower() in meas_lower), None)
+            group_ref = None
+            filter_context = {}
+            if parent_bd:
+                # Find matching group
+                for val in (parent_bd.get("values") or []):
+                    if val.lower() in meas_lower:
+                        grp_id = f"grp_{re.sub(r'[^a-z0-9]', '_', val.lower())[:15]}"
+                        group_ref = grp_id
+                        # Find the breakdown dimension entity
+                        bd_ent = _resolve_eid(parent_bd.get("measure", meas))
+                        filter_context = {bd_ent: val}
+                        # Add to group spanRefs
+                        for grp in column_groups:
+                            if grp["groupId"] == grp_id:
+                                grp["spanRefs"].append(col_id)
+                        break
+
+            col_entry: dict[str, Any] = {
+                "columnId": col_id,
+                "header": meas,
+                "role": "measure",
+                "entityRef": ent_ref,
+                "dtype": "number",
+                "unit": "percent" if "%" in meas or "rate" in meas_lower or "ratio" in meas_lower else None,
+                "format": "percent.1" if "%" in meas or "rate" in meas_lower or "ratio" in meas_lower else "number",
+                "align": "right",
+            }
+            if group_ref:
+                col_entry["group"] = group_ref
+            if filter_context:
+                col_entry["filterContext"] = filter_context
+            columns.append(col_entry)
+            col_idx += 1
+
+        # If no structured dims/measures, fall back to raw columns
+        if not columns:
+            for ci, col_name in enumerate(ts.get("columns") or []):
+                col_id = f"col_{ci+1}"
+                columns.append({
+                    "columnId": col_id,
+                    "header": col_name,
+                    "role": "dimension" if ci == 0 else "measure",
+                    "entityRef": _resolve_eid(col_name),
+                    "dtype": "string" if ci == 0 else "number",
+                    "align": "left" if ci == 0 else "right",
+                    "format": None,
+                })
+
+        # Find the question that references this table
+        bi_query = ""
+        for q in questions:
+            for re_ent in (q.get("requiredEntities") or []):
+                ref_name = re_ent.get("entityRef", "")
+                if any(ref_name.lower() in (d.lower() for d in dimensions_list + measures_list)):
+                    bi_query = q.get("questionId", "")
+                    break
+            if bi_query:
+                break
+
+        table_title = ts.get("description", f"Table on page {ts['page'] + 1}")
+        # Use VLM table_title if available
+        if entity_pages and ts["page"] < len(entity_pages):
+            vlm_title = (entity_pages[ts["page"]].get("table_title") or "").strip()
+            if vlm_title:
+                table_title = vlm_title
+
+        tables_ast.append({
+            "tableId": t_id,
+            "templateRef": tt_id,
+            "biQuery": bi_query,
+            "title": table_title,
+            "columnGroups": column_groups,
+            "columns": columns,
+            "rows": [],
+            "footnotes": [
+                {"noteId": f"fn_{t_id}_src", "text": "", "textTemplate": "Source: {{dataset.title}}, {{period.current}}."},
+            ],
+            "slot": {"fillFrom": bi_query, "status": "empty"},
         })
 
-    # ── figureAST + chartAST ──
-    figures = []
-    charts = []
-    _seen_figure_pages: set[int] = set()
+        # Build table template for blueprint
+        table_templates.append({
+            "tableTemplateId": tt_id,
+            "title": table_title,
+            "columnGroups": column_groups,
+            "columns": columns,
+            "dimensions": [_resolve_eid(d) for d in dimensions_list],
+            "measures": [_resolve_eid(m) for m in measures_list],
+            "breakdowns": [_resolve_eid(bd.get("measure", "")) for bd in breakdowns],
+            "footnotes": [
+                {"noteId": f"fn_{tt_id}_src", "marker": "Source", "textTemplate": "Source: {{dataset.title}}, {{period.current}}."},
+            ],
+            "sort": {"by": columns[1]["columnId"] if len(columns) > 1 else "col_1", "order": "desc"},
+            "emptyPolicy": "show_dash",
+        })
 
-    # Source 1: LayoutLM-detected chart/figure regions
-    for i, page in enumerate(layout_pages or []):
-        for j, region in enumerate(page.get("regions") or []):
-            if region.get("type") == "chart":
-                chart_id = f"chart_{i + 1}_{j + 1}"
-                charts.append({
+    # ════════════════════════════════════════════════════════════════════════════
+    # chartAST — axis wiring, paletteRef, slot, series:[]
+    # ════════════════════════════════════════════════════════════════════════════
+    charts_ast = []
+    _seen_chart_pages: set[int] = set()
+
+    # Generate charts from questions that have chart components
+    chart_seq = 0
+    for q in questions:
+        ans = q.get("answerStructure") or {}
+        for comp in (ans.get("components") or []):
+            comp_type = comp.get("type", "")
+            if "chart" in comp_type or "bar" in comp_type or "line" in comp_type or "pie" in comp_type:
+                chart_seq += 1
+                q_id = q.get("questionId", f"q_{chart_seq}")
+                chart_id = f"chart_{q_id}"
+
+                # Determine chart type from component type
+                if "bar" in comp_type:
+                    chart_type = "grouped_bar"
+                elif "line" in comp_type:
+                    chart_type = "line"
+                elif "pie" in comp_type:
+                    chart_type = "pie"
+                else:
+                    chart_type = "grouped_bar"
+
+                # Resolve axes from requiredEntities
+                req_ents = q.get("requiredEntities") or []
+                x_entity = ""
+                y_entity = ""
+                for re_ent in req_ents:
+                    role = re_ent.get("role", "")
+                    eid = re_ent.get("entityId") or _resolve_eid(re_ent.get("entityRef", ""))
+                    if role in ("groupBy", "grouping", "dimension"):
+                        x_entity = eid
+                    elif role == "measure":
+                        y_entity = eid
+
+                # Get labels from entity names
+                x_label = entity_map.get(x_entity, {}).get("name", "Category")
+                y_label = entity_map.get(y_entity, {}).get("name", "Value")
+                y_unit = entity_map.get(y_entity, {}).get("unit", "")
+
+                charts_ast.append({
                     "chartId": chart_id,
-                    "type": "chart",
-                    "chartType": "unknown",
-                    "title": (region.get("text") or "")[:200],
-                    "page": i,
-                    "pageRef": f"page_{i + 1:03d}",
-                    "description": "",
-                    "detectionSource": "layoutlm",
+                    "biQuery": q_id,
+                    "chartType": chart_type,
+                    "title": f"{y_label} by {x_label}",
+                    "xAxis": {"entityRef": x_entity, "label": x_label},
+                    "yAxis": {"entityRef": y_entity, "label": f"{y_label} ({y_unit})" if y_unit else y_label, "unit": y_unit or None},
+                    "paletteRef": "pal_mospi_default",
+                    "series": [],
+                    "slot": {"fillFrom": f"{q_id}_c{comp.get('renderOrder', chart_seq)}", "status": "empty"},
                 })
-                _seen_figure_pages.add(i)
-            elif region.get("type") == "figure":
-                figures.append({
-                    "figureId": f"fig_{i + 1}_{j + 1}",
-                    "type": "figure",
-                    "caption": (region.get("text") or "")[:200],
-                    "description": "",
-                    "page": i,
-                    "pageRef": f"page_{i + 1:03d}",
-                    "detectionSource": "layoutlm",
-                })
-                _seen_figure_pages.add(i)
 
-    # Source 2: VLM-detected charts from pass2 entity_pages
+    # Also add VLM-detected charts that aren't already covered
     if entity_pages:
-        for ep in entity_pages:
+        for ep in (entity_pages or []):
             pg_idx = ep.get("page_index", 0)
             chart_types = ep.get("chart_types") or []
-            chart_titles = ep.get("chart_titles") or []
-            description = ep.get("description", "")
-            if chart_types:
-                # Collapse speculative duplicates: small VLMs emit several chart_types
-                # for one figure (often an echoed bar+line pair) with no distinct title.
-                # Group by resolved title so each real figure becomes ONE chart that
-                # records its candidate types, instead of doubling the chart count.
-                groups: dict[str, dict[str, Any]] = {}
-                order: list[str] = []
+            if chart_types and pg_idx not in _seen_chart_pages:
                 for ci, ct in enumerate(chart_types):
                     ct_str = str(ct).strip().lower()
                     if not ct_str:
                         continue
-                    raw_title = chart_titles[ci] if ci < len(chart_titles) else ""
-                    title = raw_title or description[:120] or f"Chart on page {pg_idx + 1}"
-                    gkey = " ".join(title.lower().split())
-                    if gkey not in groups:
-                        groups[gkey] = {"title": title, "types": [], "explicit": bool(raw_title)}
-                        order.append(gkey)
-                    if ct_str not in groups[gkey]["types"]:
-                        groups[gkey]["types"].append(ct_str)
-                for gi, gkey in enumerate(order):
-                    g = groups[gkey]
-                    # Skip the first untitled group when LayoutLM already logged a figure
-                    # on this page (it would duplicate that detection).
-                    if pg_idx in _seen_figure_pages and gi == 0 and not g["explicit"]:
-                        continue
-                    chart = {
-                        "chartId": f"chart_vlm_{pg_idx + 1}_{gi + 1}",
-                        "type": "chart",
-                        "chartType": g["types"][0],
-                        "title": g["title"],
-                        "page": pg_idx,
-                        "pageRef": f"page_{pg_idx + 1:03d}",
-                        "description": description,
-                        "detectionSource": "vlm",
-                    }
-                    if len(g["types"]) > 1:
-                        chart["chartTypes"] = g["types"]
-                    charts.append(chart)
-                _seen_figure_pages.add(pg_idx)
-            elif ep.get("structure_type") == "chart_page" and pg_idx not in _seen_figure_pages:
-                # VLM said chart_page but couldn't name type — add generic entry
-                charts.append({
-                    "chartId": f"chart_vlm_{pg_idx + 1}",
-                    "type": "chart",
-                    "chartType": "chart",
-                    "title": description[:120] or f"Chart on page {pg_idx + 1}",
-                    "page": pg_idx,
-                    "pageRef": f"page_{pg_idx + 1:03d}",
-                    "description": description,
-                    "detectionSource": "vlm",
+                    chart_seq += 1
+                    charts_ast.append({
+                        "chartId": f"chart_vlm_{pg_idx+1}_{ci+1}",
+                        "biQuery": "",
+                        "chartType": ct_str,
+                        "title": (ep.get("chart_titles") or [""])[ci] if ci < len(ep.get("chart_titles") or []) else f"Chart p.{pg_idx+1}",
+                        "xAxis": {"entityRef": "", "label": ""},
+                        "yAxis": {"entityRef": "", "label": "", "unit": None},
+                        "paletteRef": "pal_mospi_default",
+                        "series": [],
+                        "slot": {"status": "empty"},
+                    })
+                _seen_chart_pages.add(pg_idx)
+
+    # ════════════════════════════════════════════════════════════════════════════
+    # figureAST — chartRef, captionTemplate, templateRef, slot
+    # ════════════════════════════════════════════════════════════════════════════
+    figures_ast = []
+    figure_templates = []
+    for fig_idx, chart in enumerate(charts_ast):
+        fig_id = chart["chartId"].replace("chart_", "fig_")
+        ft_id = chart["chartId"].replace("chart_", "ft_")
+        caption_tpl = f"{chart.get('title', 'Figure')}, {{{{period.current}}}}"
+
+        figures_ast.append({
+            "figureId": fig_id,
+            "templateRef": ft_id,
+            "caption": "",
+            "captionTemplate": caption_tpl,
+            "chartRef": chart["chartId"],
+            "styleRef": "s_caption",
+            "slot": {"status": "empty"},
+        })
+
+        figure_templates.append({
+            "figureTemplateId": ft_id,
+            "captionTemplate": caption_tpl,
+            "chartId": chart["chartId"],
+            "numbering": f"Figure {{{{topic.order}}}}.{fig_idx+1}",
+        })
+
+    # ════════════════════════════════════════════════════════════════════════════
+    # contentAST — blocks with biQuery, templateQuestion, slot wiring
+    # ════════════════════════════════════════════════════════════════════════════
+    content_blocks = []
+    for q in questions:
+        ans = q.get("answerStructure") or {}
+        q_id = q.get("questionId", "")
+        for comp in (ans.get("components") or []):
+            comp_type = comp.get("type", "")
+            if "narrative" in comp_type or "paragraph" in comp_type:
+                block_id = f"p_{q_id}"
+                comp_order = comp.get("renderOrder", 1)
+                content_blocks.append({
+                    "blockId": block_id,
+                    "kind": "paragraph",
+                    "styleRef": "s_body",
+                    "content": "",
+                    "biQuery": q_id,
+                    "templateQuestion": q.get("intent", ""),
+                    "slot": {"fillFrom": f"{q_id}_c{comp_order}", "status": "empty"},
                 })
-                _seen_figure_pages.add(pg_idx)
+                break  # One narrative block per question
 
-    # Source 3: pdfplumber embedded images (not yet covered by LayoutLM or VLM)
-    for i, pt in enumerate(page_texts):
-        for k, emb in enumerate(pt.get("embedded_figures") or []):
-            if i not in _seen_figure_pages:
-                charts.append({
-                    "chartId": f"chart_img_{i + 1}_{k + 1}",
-                    "type": "figure",
-                    "chartType": "embedded_image",
-                    "title": f"Figure on page {i + 1}",
-                    "page": i,
-                    "pageRef": f"page_{i + 1:03d}",
-                    "description": f"Embedded image ({round(emb.get('area_fraction', 0) * 100)}% of page)",
-                    "detectionSource": "pdfplumber_image",
-                    "bbox": emb.get("bbox"),
-                })
-                _seen_figure_pages.add(i)
+    # ════════════════════════════════════════════════════════════════════════════
+    # semanticAST — sections[] with topicRef, children linking to content/fig/table
+    # ════════════════════════════════════════════════════════════════════════════
+    semantic_sections = []
+    for t_idx, topic_raw in enumerate(topics_raw):
+        tid = topic_raw.get("topicId", f"topic_{t_idx+1:02d}")
+        sec_id = tid.replace("topic_", "sec_")
+        topic_title = topic_raw.get("title", f"Section {t_idx+1}")
 
-    # Merge figures + charts into the figures list for figureAST
-    all_figures = figures + [{**c, "figureId": c.pop("chartId", f"fig_{c.get('page', 0)}")} for c in charts]
+        # Collect children IDs (content blocks, figures, tables) for this topic
+        children_ids = []
+        topic_qs = topic_question_map.get(tid, [])
+        for q in topic_qs:
+            q_id = q.get("questionId", "")
+            # Narrative block
+            children_ids.append(f"p_{q_id}")
+            # Figures (charts linked to this question)
+            for chart in charts_ast:
+                if chart.get("biQuery") == q_id:
+                    fig_id = chart["chartId"].replace("chart_", "fig_")
+                    children_ids.append(fig_id)
+            # Tables linked to this question
+            for tbl in tables_ast:
+                if tbl.get("biQuery") == q_id:
+                    children_ids.append(tbl["tableId"])
 
-    # ── semanticAST (from chapter hierarchy) ──
-    # Check if Gemini enrichment has already produced a better hierarchy (via semanticAST.nodes)
-    # If it has non-stopword chapter titles, prefer it over the programmatic one.
-    _gemini_nodes = ast_result.get("semanticAST_nodes") or []
-
-    semantic_hierarchy = []
-    for ch in chapters:
-        node = {
-            "nodeId": ch["chapterId"],
+        semantic_sections.append({
+            "sectionId": sec_id,
+            "title": topic_title,
             "level": 1,
-            "title": ch["title"],
-            "pageSpan": ch["pageRange"],
-            "children": [],
-        }
-        for sec in ch.get("sections") or []:
-            node["children"].append({
-                "nodeId": sec["sectionId"],
-                "level": sec.get("level", 2),
-                "title": sec["title"],
-                "pageSpan": [sec.get("page", 0), sec.get("page", 0)],
-            })
-        semantic_hierarchy.append(node)
+            "order": t_idx + 1,
+            "styleRef": "s_h1",
+            "topicRef": tid,
+            "children": children_ids,
+        })
 
-    # Quality check: if most chapter titles are single-word stopwords, mark for Gemini override
-    bad_titles = sum(
-        1 for ch in chapters
-        if len(ch.get("title", "").split()) <= 1 and ch.get("title", "").lower() in _ENGLISH_STOPWORDS
-    )
-    _hierarchy_quality = "poor" if chapters and bad_titles > len(chapters) * 0.4 else "ok"
-    logger.info("[pass4] semanticAST hierarchy quality: %s (%d/%d bad titles)",
-                _hierarchy_quality, bad_titles, len(chapters))
+    # ════════════════════════════════════════════════════════════════════════════
+    # layoutAST + geometryAST
+    # ════════════════════════════════════════════════════════════════════════════
+    layout_pages_ast = []
+    geometry_flow = []
+    for sec in semantic_sections:
+        page_id = f"pg_{sec['order']}"
+        regions = []
+        for child_id in sec.get("children", []):
+            if child_id.startswith("p_"):
+                role = "body"
+            elif child_id.startswith("fig_"):
+                role = "figure"
+            elif child_id.startswith("table_"):
+                role = "table"
+            else:
+                role = "content"
+            rg_id = f"rg_{child_id}"
+            regions.append({"regionId": rg_id, "role": role, "bindsTo": child_id, "bbox": None})
+            geometry_flow.append(rg_id)
 
-    # ── entityGraph — use pass2_6 entityType_hint (dimension/measure/filter/metadata) ──
-    entity_graph_entries = []
+        # Add heading region
+        rg_title = f"rg_{sec['sectionId']}_title"
+        regions.insert(0, {"regionId": rg_title, "role": "heading", "bindsTo": sec["sectionId"], "bbox": None})
+        geometry_flow.insert(len(geometry_flow) - len(regions) + 1, rg_title)
+
+        layout_pages_ast.append({
+            "pageId": page_id,
+            "size": "A4",
+            "regions": regions,
+        })
+
+    # ════════════════════════════════════════════════════════════════════════════
+    # BLUEPRINT — the analytic brain
+    # ════════════════════════════════════════════════════════════════════════════
+    # Build blueprint entities with full gold-standard fields
+    blueprint_entities = []
     for ent in all_entities:
-        # Use pass2_6 classification if available; fall back to table structure check
-        entity_type = ent.get("entityType_hint") or "dimension"
-        if entity_type == "dimension":
-            # Double-check table structure (may have been updated after pass2_6)
+        eid = ent.get("entityId", "")
+        e_type = ent.get("entityType_hint") or ent.get("entityType") or "dimension"
+        # Infer from table structures
+        if e_type == "dimension":
             for ts in table_structures:
-                if ent["name"] in ts.get("measures", []):
-                    entity_type = "measure"
+                if ent.get("name", "") in (ts.get("measures") or []):
+                    e_type = "measure"
                     break
 
-        entity_graph_entries.append({
-            "entityId": ent["entityId"],
-            "name": ent["name"],
-            "entityType": entity_type,
-            "sourceType": ent.get("source", "unknown"),
-            "confidence": 0.8 if ent.get("source") == "table_header" else 0.5,
-            "pages": ent.get("pages", []),
+        # Build valueDomain
+        value_domain: dict[str, Any] | None = None
+        if ent.get("valueDomain"):
+            value_domain = ent["valueDomain"]
+        elif e_type == "measure":
+            name_lower = ent.get("name", "").lower()
+            if "rate" in name_lower or "ratio" in name_lower or "%" in name_lower:
+                value_domain = {"kind": "ratio", "min": 0, "max": 100}
+        elif e_type == "dimension":
+            aliases = ent.get("aliases") or []
+            if aliases:
+                value_domain = {"kind": "categorical", "members": aliases[:10], "allowOther": True}
+
+        blueprint_entities.append({
+            "entityId": eid,
+            "canonicalName": ent.get("canonicalName") or ent.get("name", ""),
+            "entityType": e_type,
             "aliases": ent.get("aliases") or [],
-            # P5 enrichment (pass 2.7)
-            "canonicalName": ent.get("canonicalName") or ent["name"],
-            "unit": ent.get("unit"),
-            "dtypeHint": ent.get("dtypeHint"),
-            "defaultFormat": ent.get("defaultFormat"),
-            "valueDomain": ent.get("valueDomain"),
+            "unit": ent.get("unit") or ("percent" if e_type == "measure" and ("rate" in ent.get("name", "").lower() or "ratio" in ent.get("name", "").lower()) else None),
+            "format": ent.get("defaultFormat") or ("percent.1" if e_type == "measure" and ("rate" in ent.get("name", "").lower() or "ratio" in ent.get("name", "").lower()) else None),
+            "valueDomain": value_domain,
+            "aggregation": "weighted_ratio" if e_type == "measure" and ("rate" in ent.get("name", "").lower() or "ratio" in ent.get("name", "").lower()) else None,
             "glossaryRef": ent.get("glossaryRef"),
+            "scope": "indicator" if e_type == "measure" else ("classifier" if e_type == "dimension" else "filter" if e_type == "filter" else "time"),
+            "cardinalityHint": "high" if "state" in ent.get("name", "").lower() else "low",
+            "confidence": ent.get("confidence") or (0.8 if ent.get("source") == "table_header" else 0.5),
         })
 
-    # ══════════════════════════════════════════════════════════════════
-    # BLUEPRINT SUBTREE — the key output for orchestrator.py
-    # ══════════════════════════════════════════════════════════════════
-
-    # Build TopicNode → QuestionNode hierarchy
+    # Build blueprint topics with full question structure
     blueprint_topics = []
-    for topic_raw in topics_raw:
-        topic_questions = []
-        for q in questions:
+    for t_idx, topic_raw in enumerate(topics_raw):
+        tid = topic_raw.get("topicId", f"topic_{t_idx+1:02d}")
+        sec_id = tid.replace("topic_", "sec_")
+        topic_title = topic_raw.get("title", "")
+        topic_qs = topic_question_map.get(tid, [])
+
+        bp_questions = []
+        for q_idx, q in enumerate(topic_qs):
             q_id = q.get("questionId", "")
-            if q_id in (topic_raw.get("questionIds") or []):
-                # Build AnswerComponent list
-                answer_components = []
-                ans_struct = q.get("answerStructure") or {}
-                for c_idx, comp in enumerate(ans_struct.get("components") or []):
-                    answer_components.append({
-                        "componentId": f"{q_id}_c{c_idx + 1}",
-                        "renderOrder": comp.get("renderOrder", c_idx + 1),
-                        "type": comp.get("type", "narrative_paragraph"),
-                        "constraints": comp.get("constraints") or {},
-                        "refs": {},
-                    })
+            q_type = q.get("questionType", "comparison")
 
-                # Build entity bindings — fuzzy resolution via _resolve_entity_ref
-                entity_bindings = []
-                for eb in (q.get("requiredEntities") or []):
-                    ref_name = eb.get("entityRef", "")
-                    matched_ent = _resolve_entity_ref(ref_name, all_entities)
-                    entity_bindings.append({
-                        "entityId": matched_ent["entityId"] if matched_ent else f"unresolved_{ref_name[:20]}",
-                        "role": eb.get("role", "required"),
-                        "confidence": 0.7,
-                        "bindingMethod": q.get("inferenceMethod", "vlm"),
-                    })
-
-                topic_questions.append({
-                    "questionId": q_id,
-                    "intent": q.get("intent", ""),
-                    "questionType": q.get("questionType", "comparison"),
-                    "analyticsSpec": q.get("analyticsSpec") or {},
-                    "inferenceMethod": q.get("inferenceMethod", "vlm"),
-                    "inferenceConfidence": q.get("inferenceConfidence", 0.5),
-                    "requiredEntities": entity_bindings,
-                    "answerStructure": {
-                        "layoutType": ans_struct.get("layoutType", "single"),
-                        "components": answer_components,
-                    },
-                    "pageIndex": q.get("page", -1),
-                    "sourceHeading": q.get("sourceHeading", ""),
-                    "priority": "high" if q.get("inferenceConfidence", 0) > 0.7 else "medium",
+            # Build requiredEntities with gold-standard fields
+            req_entities = []
+            for re_ent in (q.get("requiredEntities") or []):
+                eid = re_ent.get("entityId") or _resolve_eid(re_ent.get("entityRef", ""))
+                role = re_ent.get("role", "measure")
+                req_entities.append({
+                    "entityId": eid,
+                    "role": role,
+                    "required": role in ("measure", "groupBy", "grouping", "time"),
+                    **({"defaultMember": re_ent.get("defaultMember")} if re_ent.get("defaultMember") else {}),
+                    **({"periodRole": "current"} if role == "time" else {}),
                 })
 
-        if topic_questions:
-            blueprint_topics.append({
-                "topicId": topic_raw["topicId"],
-                "title": topic_raw.get("title", ""),
-                "description": topic_raw.get("description", ""),
-                "questions": topic_questions,
-                "pageRange": topic_raw.get("pageRange", []),
+            # Build analyticsSpec (gold-standard shape)
+            raw_spec = q.get("analyticsSpec") or {}
+            measure_ent = next((r for r in req_entities if r["role"] == "measure"), None)
+            groupby_ent = next((r for r in req_entities if r["role"] in ("groupBy", "grouping")), None)
+            filter_ents = [r for r in req_entities if r["role"] == "filter"]
+
+            analytics_spec = {
+                "operation": raw_spec.get("operation") or ("rank" if q_type == "ranking" else "time_series" if q_type == "trend" else "group_aggregate"),
+                "measure": {
+                    "entityRef": measure_ent["entityId"] if measure_ent else "",
+                    "agg": raw_spec.get("measure", {}).get("agg") or "weighted_ratio",
+                },
+                "groupBy": [{"entityRef": groupby_ent["entityId"]}] if groupby_ent else [],
+                "filters": [{"entityRef": f["entityId"], "op": "eq", "valueFrom": f.get("defaultMember") or "defaultMember"} for f in filter_ents],
+                "sort": raw_spec.get("sort") or {"by": "measure", "order": "desc"},
+                "topN": raw_spec.get("topN") or (10 if q_type == "ranking" else None),
+                "compare": raw_spec.get("compare") or {"kind": "across_group" if q_type == "comparison" else "none", "baseline": None},
+            }
+
+            # Build answerStructure with gold-standard components
+            ans = q.get("answerStructure") or {}
+            components = []
+            for c_idx, comp in enumerate(ans.get("components") or []):
+                comp_type = comp.get("type", "narrative_paragraph")
+                comp_id = f"{q_id}_c{c_idx+1}"
+                order = comp.get("renderOrder", c_idx + 1)
+
+                # Determine kind and outputContract
+                if "narrative" in comp_type or "paragraph" in comp_type:
+                    kind = "narrative"
+                    output_contract = {"type": "prose", "minWords": 40, "maxWords": 90}
+                    refs = {"contentRef": f"p_{q_id}", "analyticsRef": "", "evidenceRef": ""}
+                    narrative_tpl = {
+                        "tone": "formal-analytical",
+                        "mustMention": [r["entityId"] for r in req_entities[:2]],
+                        "pattern": "headline_then_gap",
+                        "maxWords": 90,
+                    }
+                    comp_entry: dict[str, Any] = {
+                        "componentId": comp_id,
+                        "kind": kind,
+                        "order": order,
+                        "outputContract": output_contract,
+                        "narrativeTemplate": narrative_tpl,
+                        "refs": refs,
+                    }
+                elif "table" in comp_type:
+                    kind = "table"
+                    # Find matching table template
+                    tt_ref = ""
+                    tbl_ref = ""
+                    for tbl in tables_ast:
+                        if tbl.get("biQuery") == q_id:
+                            tt_ref = tbl.get("templateRef", "")
+                            tbl_ref = tbl["tableId"]
+                            break
+                    output_contract = {"type": "table", "tableTemplateRef": tt_ref}
+                    refs = {"tableRef": tbl_ref, "analyticsRef": "", "evidenceRef": ""}
+                    comp_entry = {
+                        "componentId": comp_id,
+                        "kind": kind,
+                        "order": order,
+                        "outputContract": output_contract,
+                        "refs": refs,
+                    }
+                elif "chart" in comp_type or "bar" in comp_type or "line" in comp_type or "pie" in comp_type:
+                    kind = "chart"
+                    # Determine chart type
+                    if "bar" in comp_type:
+                        ct = "grouped_bar"
+                    elif "line" in comp_type:
+                        ct = "line"
+                    elif "pie" in comp_type:
+                        ct = "pie"
+                    else:
+                        ct = "grouped_bar"
+                    # Find matching chart/figure
+                    chart_ref = ""
+                    fig_ref = ""
+                    for chart in charts_ast:
+                        if chart.get("biQuery") == q_id:
+                            chart_ref = chart["chartId"]
+                            fig_ref = chart["chartId"].replace("chart_", "fig_")
+                            break
+                    output_contract = {
+                        "type": "chart",
+                        "chartType": ct,
+                        "xAxis": groupby_ent["entityId"] if groupby_ent else "",
+                        "yAxis": measure_ent["entityId"] if measure_ent else "",
+                    }
+                    refs = {"chartRef": chart_ref, "figureRef": fig_ref, "analyticsRef": "", "evidenceRef": ""}
+                    comp_entry = {
+                        "componentId": comp_id,
+                        "kind": kind,
+                        "order": order,
+                        "outputContract": output_contract,
+                        "refs": refs,
+                    }
+                else:
+                    kind = "metric_card"
+                    output_contract = {"type": "metric"}
+                    refs = {"analyticsRef": "", "evidenceRef": ""}
+                    comp_entry = {
+                        "componentId": comp_id,
+                        "kind": kind,
+                        "order": order,
+                        "outputContract": output_contract,
+                        "refs": refs,
+                    }
+                components.append(comp_entry)
+
+            # If no components from LLM, add default narrative
+            if not components:
+                components.append({
+                    "componentId": f"{q_id}_c1",
+                    "kind": "narrative",
+                    "order": 1,
+                    "outputContract": {"type": "prose", "minWords": 40, "maxWords": 90},
+                    "narrativeTemplate": {"tone": "formal-analytical", "mustMention": [], "pattern": "headline_then_gap", "maxWords": 90},
+                    "refs": {"contentRef": f"p_{q_id}", "analyticsRef": "", "evidenceRef": ""},
+                })
+
+            bp_questions.append({
+                "questionId": q_id,
+                "intent": q.get("intent", ""),
+                "questionType": q_type,
+                "priority": q_idx + 1,
+                "requiredEntities": req_entities,
+                "analyticsSpec": analytics_spec,
+                "answerStructure": {"components": components},
             })
 
-    # Build TemplateEntity list for blueprint
-    blueprint_entities = []
-    for ent in entity_graph_entries:
-        blueprint_entities.append({
-            "entityId": ent["entityId"],
-            "name": ent["name"],
-            "canonicalName": ent.get("canonicalName") or ent["name"],
-            "entityType": ent["entityType"],
-            "sourceType": ent["sourceType"],
-            "confidence": ent["confidence"],
-            "aliases": ent.get("aliases") or [],
-            "unit": ent.get("unit"),
-            "dtypeHint": ent.get("dtypeHint"),
-            "defaultFormat": ent.get("defaultFormat"),
-            "valueDomain": ent.get("valueDomain"),
-            "glossaryRef": ent.get("glossaryRef"),
-            "pageIndex": ent["pages"][0] if ent.get("pages") else -1,
-            "sourceContext": "",
-            "scope": "global",
-            "crossRefs": [],
-        })
+        if bp_questions:
+            blueprint_topics.append({
+                "topicId": tid,
+                "title": topic_title,
+                "order": t_idx + 1,
+                "semanticRef": sec_id,
+                "questions": bp_questions,
+            })
 
-    blueprint = {
-        "topics": blueprint_topics,
-        "entities": blueprint_entities,
-        "entitiesRejected": document_map.get("entities_rejected") or [],
-        "glossary": document_map.get("glossary") or [],
-        "palette": document_map.get("palette") or {},
-        "tableStructures": [ts for ts in table_structures],
-        "documentMap": {
-            "title": doc_title,
-            "chapters": chapters,
-            "sectionPatterns": document_map.get("section_patterns") or [],
+    # Glossary — build from measure entities
+    glossary: dict[str, str] = {}
+    for ent in blueprint_entities:
+        if ent.get("entityType") == "measure" and ent.get("canonicalName"):
+            name = ent["canonicalName"]
+            aliases = ent.get("aliases") or []
+            abbrev = aliases[0] if aliases else ""
+            glossary_key = abbrev or name
+            glossary[glossary_key] = f"{name} — extracted indicator from the source document."
+
+    # Palette
+    palette = {
+        "paletteId": "pal_mospi_default",
+        "sequential": ["#0B5394", "#3D85C6", "#6FA8DC", "#9FC5E8", "#CFE2F3"],
+        "categorical": {
+            "Rural": "#1F7A1F",
+            "Urban": "#0B5394",
+            "Male": "#0B5394",
+            "Female": "#CC4125",
+            "Total": "#666666",
         },
+        "semantic": {"positive": "#1F7A1F", "negative": "#CC0000", "neutral": "#666666"},
+    }
+
+    # Render profile
+    render_profile = {
+        "numberFormat": {"locale": "en-IN", "grouping": "lakh-crore", "decimalSeparator": "."},
+        "percentFormat": {"decimals": 1, "suffix": "%"},
+        "currencyFormat": {"symbol": "₹", "grouping": "lakh-crore", "decimals": 0},
+        "fontFamily": "Noto Sans",
+        "pageSize": "A4",
+    }
+
+    # Document map
+    document_map_out = {
+        "order": [t["topicId"] for t in blueprint_topics],
+        "frontMatter": ["title_page", "toc"],
+        "backMatter": ["glossary", "notes"],
+    }
+
+    # ════════════════════════════════════════════════════════════════════════════
+    # ASSEMBLE FINAL OUTPUT
+    # ════════════════════════════════════════════════════════════════════════════
+    blueprint = {
+        "$schema": "bharatstat/template-blueprint/v1",
+        "templateMeta": {
+            "templateId": template_id,
+            "name": doc_title,
+            "locale": "en-IN",
+            "version": "3.0",
+            "valueFree": True,
+            "proseFree": True,
+            "sourceDocument": doc_title,
+        },
+        "glossary": glossary,
+        "palette": palette,
+        "renderProfile": render_profile,
+        "entities": blueprint_entities,
+        "topics": blueprint_topics,
+        "tableTemplates": table_templates,
+        "figureTemplates": figure_templates,
+        "documentMap": document_map_out,
     }
 
     # ── extracted_assets (text per page for frontend) ──
@@ -3851,41 +4146,44 @@ def pass4_assemble_ast(
             "text": (pt.get("raw_text") or "")[:5000],
         })
 
-    # ── Assemble final AST ──
+    # Assemble template.ast.json shape
     ast = {
+        "$schema": "bharatstat/template-ast/v1",
         "metadata": {
-            "documentId": f"doc_{source_hash[:8]}" if source_hash else "doc_001",
-            "title": doc_title,
-            "pageCount": page_count,
-            "checksum": source_hash,
-            "extractionMethod": "layoutlm+qwen-vl+knowledge-graph+two-loop",
+            "templateId": template_id,
+            "blueprintRef": template_id,
+            "name": doc_title,
+            "locale": "en-IN",
             "version": "3.0",
+            "valueFree": True,
+            "generatedFrom": doc_title,
         },
-        "layoutAST": {"pages": layout_ast_pages},
-        "styleAST": {"styles": []},
-        "geometryAST": {"nodes": geometry_nodes},
-        "assetAST": {"assets": []},
-        "annotationAST": {"headers": [], "footers": [], "footnotes": []},
-        "semanticAST": {"hierarchy": semantic_hierarchy, "_quality": _hierarchy_quality},
-        "contentAST": {"paragraphs": paragraphs, "lists": [], "quotes": []},
-        "tableAST": {"tables": tables},
-        "figureAST": {"figures": all_figures},
-        "chartAST": {"charts": charts},
-        "entityGraph": {"entities": entity_graph_entries},
-        "knowledgeGraph": {"concepts": [], "relationships": document_map.get("entity_relationships") or []},
-        "factGraph": {"facts": []},
-        "templateSlots": {"slots": []},
-        "questions": [q.get("intent", "") for q in questions],
+        "styleAST": style_ast,
+        "semanticAST": {"sections": semantic_sections},
+        "contentAST": {"blocks": content_blocks},
+        "tableAST": {"tables": tables_ast},
+        "chartAST": {"charts": charts_ast},
+        "figureAST": {"figures": figures_ast},
+        "layoutAST": {"pages": layout_pages_ast},
+        "geometryAST": {
+            "_doc": "Relative flow only. Absolute bounding boxes are computed by the layout engine at render time.",
+            "flow": geometry_flow,
+        },
+        # Additional fields for backward compat / frontend
+        "page_count": page_count,
+        "extraction_method": "layoutlm+qwen-vl+knowledge-graph+two-loop",
         "blueprint": blueprint,
-        "extracted_assets": {"text_pages": text_pages, "tables": tables, "images": []},
+        "extracted_assets": {"text_pages": text_pages},
+        "pipeline_trace": {},  # filled by orchestrator
+        "questions": [q.get("intent", "") for q in questions],
+        "entityGraph": {"entities": blueprint_entities},
     }
 
     logger.info(
-        "[pass4] ✓ AST assembled: %d layout pages, %d paragraphs, %d tables, "
-        "%d figures, %d charts, %d entities, %d topics, %d questions",
-        len(layout_ast_pages), len(paragraphs), len(tables),
-        len(figures), len(charts),
-        len(entity_graph_entries),
+        "[pass4] ✓ Gold-standard AST: %d sections, %d blocks, %d tables, "
+        "%d charts, %d figures, %d entities, %d topics (%d questions)",
+        len(semantic_sections), len(content_blocks), len(tables_ast),
+        len(charts_ast), len(figures_ast), len(blueprint_entities),
         len(blueprint_topics),
         sum(len(t["questions"]) for t in blueprint_topics),
     )
