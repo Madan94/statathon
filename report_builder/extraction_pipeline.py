@@ -4297,6 +4297,43 @@ def run_extraction_pipeline(
         "total_regions": total_regions,
     }
 
+    # ── LayoutLM OCR Fallback ──
+    # If pdfplumber returned empty text (scanned/image-only PDF or pdfminer version issue),
+    # reconstruct page_texts from LayoutLM OCR output. LayoutLMv3 with apply_ocr=True runs
+    # pytesseract internally and returns region text. This ensures the ToC cascade and
+    # entity extraction always have raw_text to work with, regardless of PDF type.
+    _total_pdfplumber_chars = sum(len(pt.get("raw_text") or "") for pt in page_texts)
+    if _total_pdfplumber_chars == 0 and layoutlm_used and layout_pages:
+        logger.warning("[pipeline] ⚠ pdfplumber returned 0 text — using LayoutLM OCR as text source")
+        page_texts = _reconstruct_page_texts_from_layoutlm(layout_pages, page_texts)
+        _total_reconstructed = sum(len(pt.get("raw_text") or "") for pt in page_texts)
+        logger.info("[pipeline] Reconstructed %d chars of text from LayoutLM OCR across %d pages",
+                    _total_reconstructed, len(page_texts))
+        pipeline_trace["passes"]["pass1_layout"]["ocr_fallback"] = True
+        pipeline_trace["passes"]["pass1_layout"]["ocr_fallback_chars"] = _total_reconstructed
+        # Re-detect document type with the reconstructed text
+        doc_type = _detect_document_type(page_texts, doc_title)
+        pipeline_trace["doc_type"] = doc_type
+
+    # ── Save LayoutLM diagnostic JSON ──
+    _diag_dir = Path(__file__).resolve().parent.parent / "outputs" / "_diagnostics"
+    _diag_dir.mkdir(parents=True, exist_ok=True)
+    _diag_file = _diag_dir / f"layoutlm_{(source_hash or pdf_path.stem)[:16]}.json"
+    try:
+        _diag_payload = {
+            "pdf": pdf_path.name,
+            "source_hash": source_hash[:12] if source_hash else "",
+            "layoutlm_used": layoutlm_used,
+            "total_regions": total_regions,
+            "pdfplumber_chars": _total_pdfplumber_chars,
+            "pages": layout_pages,
+        }
+        with open(_diag_file, "w", encoding="utf-8") as _fh:
+            json.dump(_diag_payload, _fh, ensure_ascii=False, indent=2, default=str)
+        logger.info("[pipeline] LayoutLM diagnostic saved: %s", _diag_file.name)
+    except Exception as _diag_exc:
+        logger.debug("[pipeline] Diagnostic save failed: %s", _diag_exc)
+
     # Build initial ToC from LayoutLM, then improve with hybrid cascade
     toc_layoutlm = build_toc_from_regions(layout_pages, page_texts)
     toc = _extract_toc_hybrid(page_texts, layout_pages, toc_layoutlm)
@@ -4495,6 +4532,82 @@ def run_extraction_pipeline(
 
     ast["_template_emit"] = _emit_report
     return ast
+
+
+def _reconstruct_page_texts_from_layoutlm(
+    layout_pages: list[dict[str, Any]],
+    original_page_texts: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Reconstruct page_texts from LayoutLM OCR when pdfplumber returns empty.
+
+    This handles scanned/image-only PDFs and pdfminer version mismatches where
+    pdfplumber silently returns 0 chars. LayoutLMv3 with apply_ocr=True runs
+    pytesseract internally and provides region text.
+
+    Preserves the same dict shape as pass0 pdfplumber output:
+        {raw_text, words, tables, headings, width, height, word_count}
+    """
+    reconstructed: list[dict[str, Any]] = []
+
+    for i, layout_page in enumerate(layout_pages):
+        regions = layout_page.get("regions") or []
+        page_w = float(layout_page.get("width") or 595)
+        page_h = float(layout_page.get("height") or 842)
+
+        # Sort regions top-to-bottom for reading order
+        sorted_regions = sorted(regions, key=lambda r: (r.get("bbox") or [0, 0, 0, 0])[1])
+
+        # Collect text from all regions
+        all_text_parts: list[str] = []
+        headings: list[str] = []
+        words_synthetic: list[dict[str, Any]] = []
+
+        for reg in sorted_regions:
+            text = (reg.get("text") or "").strip()
+            if not text:
+                continue
+            all_text_parts.append(text)
+            rtype = reg.get("type", "text")
+            bbox = reg.get("bbox") or [0, 0, 1000, 50]
+
+            # Headings and titles → feed into ToC cascade
+            if rtype in ("heading", "title"):
+                headings.append(text)
+
+            # Build synthetic word entries with estimated font size from region type
+            # Headings get larger size → triggers L2 font-size cascade
+            estimated_size = 14.0 if rtype in ("heading", "title") else 9.0 if rtype == "text" else 10.0
+            for word_text in text.split():
+                if word_text.strip():
+                    words_synthetic.append({
+                        "text": word_text,
+                        "x0": float(bbox[0]),
+                        "top": float(bbox[1]),
+                        "x1": float(bbox[2]),
+                        "bottom": float(bbox[3]),
+                        "fontname": "OCR",
+                        "size": estimated_size,
+                    })
+
+        raw_text = "\n".join(all_text_parts)
+
+        # Preserve any tables that the original pdfplumber might have found
+        # (usually empty for scanned PDFs, but keep for safety)
+        orig = original_page_texts[i] if i < len(original_page_texts) else {}
+
+        reconstructed.append({
+            "raw_text": raw_text,
+            "words": words_synthetic,
+            "tables": orig.get("tables") or [],
+            "headings": headings,
+            "embedded_figures": orig.get("embedded_figures") or [],
+            "width": page_w,
+            "height": page_h,
+            "word_count": len(raw_text.split()),
+            "_source": "layoutlm_ocr",
+        })
+
+    return reconstructed
 
 
 def _fallback_layout_from_text(page_texts: list[dict[str, Any]]) -> list[dict[str, Any]]:
