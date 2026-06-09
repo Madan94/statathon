@@ -767,6 +767,9 @@ export const analysisApi = {
       remaining: number;
       progress_pct: number;
       complete: boolean;
+      columns_total?: number;
+      columns_reviewed?: number;
+      auto_reviewed?: number;
     };
   },
   getImputationReviewProgress: async (id: number) => {
@@ -777,6 +780,92 @@ export const analysisApi = {
       remaining_columns: number;
       progress_pct: number;
       complete: boolean;
+      columns_total?: number;
+      columns_reviewed?: number;
+      auto_reviewed?: number;
+    };
+  },
+  getPhaseStatus: async (id: number) => {
+    const { data } = await api.get(`/analysis/${id}/phase-status`);
+    return data as {
+      analysis_id: number;
+      rule_validation_completed: boolean;
+      anomaly_completed: boolean;
+      missing_value_completed: boolean;
+      validation: {
+        total: number;
+        reviewed: number;
+        complete: boolean;
+        acknowledged: boolean;
+      };
+      anomaly: {
+        columns_total: number;
+        columns_reviewed: number;
+        auto_reviewed: number;
+        complete: boolean;
+      };
+      imputation: {
+        columns_total: number;
+        columns_reviewed: number;
+        auto_reviewed: number;
+        complete: boolean;
+      };
+      column_reviews?: {
+        anomaly?: Array<{ column: string; status: string; item_count: number; reviewed_count: number }>;
+        imputation?: Array<{ column: string; status: string; item_count: number; reviewed_count: number }>;
+      };
+    };
+  },
+  getValidationReviewProgress: async (id: number) => {
+    const { data } = await api.get(`/analysis/${id}/validation/review-progress`);
+    return data as {
+      total: number;
+      reviewed: number;
+      remaining: number;
+      progress_pct: number;
+      complete: boolean;
+      acknowledged: boolean;
+    };
+  },
+  proceedValidation: async (
+    id: number,
+    decisions: ValidationDecisionItem[],
+    meta: { critical_count?: number; candidate_count?: number },
+  ) => {
+    const { data } = await api.post(`/analysis/${id}/validation/proceed`, {
+      decisions,
+      ...meta,
+    });
+    return data as {
+      success?: boolean;
+      saved: number;
+      rule_validation_completed: boolean;
+    };
+  },
+  getImputationMissingRows: async (
+    id: number,
+    column: string,
+    options?: { method?: string; offset?: number; limit?: number },
+  ) => {
+    const { data } = await api.get(`/analysis/${id}/imputation/missing-rows`, {
+      params: { column, ...options },
+    });
+    return data as {
+      total_missing: number;
+      offset: number;
+      limit: number;
+      column: string;
+      method: string;
+      rows: Array<{
+        row_index: number;
+        missing_column: string;
+        original_value: null;
+        recommended_value: unknown;
+        confidence: number;
+        method: string;
+        reason: string;
+        context: Record<string, unknown>;
+      }>;
     };
   },
   acknowledgeValidation: async (

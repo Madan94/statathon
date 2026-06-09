@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { AnalysisResult, ColumnProfile } from '@/lib/api';
 import { analysisApi } from '@/lib/api';
@@ -25,6 +25,8 @@ interface Props {
   analysisId: number;
   onBack: () => void;
 }
+
+type PhaseStatus = Awaited<ReturnType<typeof analysisApi.getPhaseStatus>>;
 
 function orderedColumns(results: AnalysisResult): string[] {
   const columnProfiles = results.column_profiles as Record<string, ColumnProfile> | undefined;
@@ -56,33 +58,57 @@ function columnNeedsReview(col: string, results: AnalysisResult): boolean {
 export default function ColumnAnalysisLayout({ results: initialResults, analysisId, onBack }: Props) {
   const router = useRouter();
   const [results, setResults] = useState(initialResults);
+  const [phaseStatus, setPhaseStatus] = useState<PhaseStatus | null>(null);
   const columns = useMemo(() => orderedColumns(results), [results]);
   const [selectedColumn, setSelectedColumn] = useState<string | null>(columns[0] ?? null);
   const [reviewedColumns, setReviewedColumns] = useState<Set<string>>(new Set());
   const [columnDecisionsComplete, setColumnDecisionsComplete] = useState<Set<string>>(new Set());
-  const [anomalyProgress, setAnomalyProgress] = useState({ reviewed: 0, total: 0, complete: false });
-  const [imputationProgress, setImputationProgress] = useState({ complete: false });
+  const autoCompleteRef = useRef<Set<string>>(new Set());
 
   const columnProfiles = results.column_profiles as Record<string, ColumnProfile> | undefined;
   const schema = results.schema ?? {};
 
   const reviewColumns = columns.filter((c) => columnNeedsReview(c, results));
   const reviewedIssueCount = reviewColumns.filter((c) => reviewedColumns.has(c)).length;
-  const allColumnsReviewed = reviewColumns.length === 0 || reviewedIssueCount === reviewColumns.length;
 
   const currentIndex = selectedColumn ? columns.indexOf(selectedColumn) : -1;
   const nextColumn = currentIndex >= 0 && currentIndex < columns.length - 1
     ? columns[currentIndex + 1]
     : null;
 
-  const validationAcknowledged = Boolean(
-    (results.phase3 as { validation_acknowledged?: boolean } | undefined)?.validation_acknowledged,
-  );
+  const validationComplete = Boolean(phaseStatus?.rule_validation_completed);
 
   const selectedBlock = selectedColumn ? resolveAnomalyBlock(selectedColumn, results) : null;
   const isNumeric = selectedColumn ? isNumericColumn(selectedColumn, results) : false;
   const detectionRun = Boolean(selectedBlock?.detection_run);
   const showMissing = !isNumeric || (detectionRun && columnDecisionsComplete.has(selectedColumn ?? ''));
+
+  const refreshPhaseStatus = useCallback(async () => {
+    const status = await analysisApi.getPhaseStatus(analysisId);
+    setPhaseStatus(status);
+
+    const anomalyReviews = status.column_reviews?.anomaly ?? [];
+    const imputationReviews = status.column_reviews?.imputation ?? [];
+    const autoDone = new Set<string>();
+    const decisionsDone = new Set<string>();
+    const reviewed = new Set<string>();
+
+    for (const row of anomalyReviews) {
+      if (row.status === 'auto_reviewed' || row.status === 'reviewed') {
+        autoDone.add(row.column);
+        decisionsDone.add(row.column);
+        reviewed.add(row.column);
+      }
+    }
+    for (const row of imputationReviews) {
+      if (row.status === 'auto_reviewed' || row.status === 'reviewed') {
+        reviewed.add(row.column);
+      }
+    }
+    setColumnDecisionsComplete((prev) => new Set([...prev, ...decisionsDone]));
+    setReviewedColumns((prev) => new Set([...prev, ...reviewed]));
+    autoCompleteRef.current = autoDone;
+  }, [analysisId]);
 
   const refreshResults = useCallback(async () => {
     const updated = await analysisApi.getResults(analysisId, { includePhase3: true });
@@ -90,23 +116,27 @@ export default function ColumnAnalysisLayout({ results: initialResults, analysis
   }, [analysisId]);
 
   useEffect(() => {
-    analysisApi.getAnomalyReviewProgress(analysisId).then((p) => {
-      setAnomalyProgress({
-        reviewed: p.reviewed,
-        total: p.total_anomalies,
-        complete: p.complete,
-      });
-    }).catch(() => {});
-    analysisApi.getImputationReviewProgress(analysisId).then((p) => {
-      setImputationProgress({ complete: p.complete });
-    }).catch(() => {});
-  }, [analysisId, results]);
+    void refreshPhaseStatus().catch(() => {});
+  }, [refreshPhaseStatus]);
 
-  const canProceedToReport =
-    validationAcknowledged &&
-    allColumnsReviewed &&
-    (anomalyProgress.total === 0 || anomalyProgress.complete) &&
-    imputationProgress.complete;
+  const canProceedToReport = Boolean(
+    phaseStatus?.rule_validation_completed &&
+    phaseStatus?.anomaly_completed &&
+    phaseStatus?.missing_value_completed,
+  );
+
+  const pendingAnomaly = useMemo(
+    () => (phaseStatus?.column_reviews?.anomaly ?? [])
+      .filter((r) => r.status === 'pending')
+      .map((r) => r.column),
+    [phaseStatus],
+  );
+  const pendingImputation = useMemo(
+    () => (phaseStatus?.column_reviews?.imputation ?? [])
+      .filter((r) => r.status === 'pending')
+      .map((r) => r.column),
+    [phaseStatus],
+  );
 
   const markColumnReviewed = () => {
     if (!selectedColumn) return;
@@ -126,6 +156,9 @@ export default function ColumnAnalysisLayout({ results: initialResults, analysis
 
   const canMarkDone = !isNumeric
     || (detectionRun && columnDecisionsComplete.has(selectedColumn ?? ''));
+
+  const anomalyAuto = phaseStatus?.anomaly?.auto_reviewed ?? 0;
+  const imputationAuto = phaseStatus?.imputation?.auto_reviewed ?? 0;
 
   return (
     <div className="flex flex-col pb-24" style={{ minHeight: 'calc(100vh - 160px)' }}>
@@ -185,25 +218,51 @@ export default function ColumnAnalysisLayout({ results: initialResults, analysis
                 </div>
               </div>
 
-              {!validationAcknowledged && (
+              {!validationComplete && (
                 <Alert variant="warning" title="Complete rule validation first">
                   Return to Step 6 (Rule Validation) and proceed through the validation gate before reviewing anomalies.
                 </Alert>
               )}
 
-              {anomalyProgress.total > 0 && (
-                <div className="rounded-lg border border-border p-3 text-sm">
+              {phaseStatus && (
+                <div className="rounded-lg border border-border p-3 text-sm space-y-1">
                   <p className="text-text-muted">
-                    Anomalies reviewed: <strong>{anomalyProgress.reviewed} / {anomalyProgress.total}</strong>
-                    {' · '}
-                    Remaining: <strong>{Math.max(0, anomalyProgress.total - anomalyProgress.reviewed)}</strong>
-                    {' · '}
-                    Progress: <strong>{anomalyProgress.total ? Math.round((anomalyProgress.reviewed / anomalyProgress.total) * 100) : 100}%</strong>
+                    Anomaly columns reviewed:{' '}
+                    <strong>{phaseStatus.anomaly.columns_reviewed} / {phaseStatus.anomaly.columns_total}</strong>
+                    {anomalyAuto > 0 && (
+                      <> · including <strong>{anomalyAuto}</strong> auto-reviewed</>
+                    )}
+                  </p>
+                  <p className="text-text-muted">
+                    Missing-value columns reviewed:{' '}
+                    <strong>{phaseStatus.imputation.columns_reviewed} / {phaseStatus.imputation.columns_total}</strong>
+                    {imputationAuto > 0 && (
+                      <> · including <strong>{imputationAuto}</strong> auto-reviewed</>
+                    )}
                   </p>
                 </div>
               )}
 
-              {isNumeric && validationAcknowledged ? (
+              {phaseStatus && !canProceedToReport && (pendingAnomaly.length > 0 || pendingImputation.length > 0) && (
+                <Alert variant="warning" title="Review still pending">
+                  {pendingAnomaly.length > 0 && (
+                    <p className="text-sm">
+                      Anomaly: save decisions for{' '}
+                      <strong>{pendingAnomaly.slice(0, 8).join(', ')}</strong>
+                      {pendingAnomaly.length > 8 ? ` (+${pendingAnomaly.length - 8} more)` : ''}
+                    </p>
+                  )}
+                  {pendingImputation.length > 0 && (
+                    <p className="text-sm mt-1">
+                      Missing values: save decisions for{' '}
+                      <strong>{pendingImputation.slice(0, 8).join(', ')}</strong>
+                      {pendingImputation.length > 8 ? ` (+${pendingImputation.length - 8} more)` : ''}
+                    </p>
+                  )}
+                </Alert>
+              )}
+
+              {isNumeric && validationComplete ? (
                 <>
                   <MethodSelectionPanel
                     column={selectedColumn}
@@ -212,6 +271,7 @@ export default function ColumnAnalysisLayout({ results: initialResults, analysis
                     onComplete={(updated) => {
                       setResults(updated);
                       void refreshResults();
+                      void refreshPhaseStatus();
                     }}
                   />
                   {detectionRun && (
@@ -221,21 +281,8 @@ export default function ColumnAnalysisLayout({ results: initialResults, analysis
                       results={results}
                       onDecisionsComplete={() => {
                         setColumnDecisionsComplete((prev) => new Set(prev).add(selectedColumn));
-                        void analysisApi.getAnomalyReviewProgress(analysisId).then((p) => {
-                          setAnomalyProgress({
-                            reviewed: p.reviewed,
-                            total: p.total_anomalies,
-                            complete: p.complete,
-                          });
-                        });
-                      }}
-                      onProgress={(reviewed, total) => {
-                        setAnomalyProgress((prev) => ({
-                          ...prev,
-                          reviewed,
-                          total,
-                          complete: total === 0 || reviewed >= total,
-                        }));
+                        setReviewedColumns((prev) => new Set(prev).add(selectedColumn));
+                        void refreshPhaseStatus();
                       }}
                     />
                   )}
@@ -254,9 +301,10 @@ export default function ColumnAnalysisLayout({ results: initialResults, analysis
                   analysisId={analysisId}
                   results={results}
                   onSaved={() => {
-                    void analysisApi.getImputationReviewProgress(analysisId).then((p) => {
-                      setImputationProgress({ complete: p.complete });
-                    });
+                    if (selectedColumn) {
+                      setReviewedColumns((prev) => new Set(prev).add(selectedColumn));
+                    }
+                    void refreshPhaseStatus();
                   }}
                 />
               )}
@@ -288,7 +336,9 @@ export default function ColumnAnalysisLayout({ results: initialResults, analysis
             <CheckCircle2 className={cn('h-4 w-4', canProceedToReport ? 'text-success' : 'text-text-muted')} />
             <span>
               Columns {reviewedIssueCount}/{reviewColumns.length}
-              {anomalyProgress.total > 0 && ` · Anomalies ${anomalyProgress.reviewed}/${anomalyProgress.total}`}
+              {phaseStatus && (
+                <> · Anomaly {phaseStatus.anomaly.columns_reviewed}/{phaseStatus.anomaly.columns_total}</>
+              )}
             </span>
           </div>
 

@@ -116,6 +116,19 @@ export default function AnalysisPage() {
       .finally(() => setPhase3Loading(false));
   }, [step, analysisId]);
 
+  const handleProceedToAnomaly = async () => {
+    setPhase3Loading(true);
+    try {
+      const refreshed = await analysisApi.getResults(analysisId, { includePhase3: true });
+      setResults(refreshed);
+      setStep(7);
+    } catch {
+      toast.error('Failed to refresh analysis state before anomaly review');
+    } finally {
+      setPhase3Loading(false);
+    }
+  };
+
   const handleSaveNormalization = async (decisions: Record<string, ColumnDecision>) => {
     setSavingNormalization(true);
     try {
@@ -171,7 +184,7 @@ export default function AnalysisPage() {
           analysisId={analysisId}
           loadState={phase3Loading ? 'loading' : phase3Error ? 'error' : 'loaded'}
           loadError={phase3Error}
-          onProceed={() => setStep(7)}
+          onProceed={handleProceedToAnomaly}
           onBack={() => setStep(5)}
         />
       </div>

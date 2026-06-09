@@ -204,6 +204,9 @@ class Analysis(Base):
     lineage_snapshots = relationship(
         "DatasetLineageSnapshot", back_populates="analysis", cascade="all, delete-orphan"
     )
+    phase_status = relationship(
+        "AnalysisPhaseStatus", back_populates="analysis", uselist=False, cascade="all, delete-orphan"
+    )
 
     imputation_intel = relationship(
         "Phase3ImputationIntel", back_populates="analysis", uselist=False, cascade="all, delete-orphan"
@@ -480,6 +483,44 @@ class DatasetLineageSnapshot(Base):
     meta = Column("metadata", JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     analysis = relationship("Analysis", back_populates="lineage_snapshots")
+
+
+class AnalysisPhaseStatus(Base):
+    """Authoritative wizard phase completion flags (backend source of truth)."""
+
+    __tablename__ = "analysis_phase_status"
+    __table_args__ = (UniqueConstraint("analysis_id", name="uq_analysis_phase_status_analysis"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    summary_completed = Column(Boolean, nullable=False, default=False)
+    normalization_completed = Column(Boolean, nullable=False, default=False)
+    semantic_completed = Column(Boolean, nullable=False, default=False)
+    clustering_completed = Column(Boolean, nullable=False, default=False)
+    kg_completed = Column(Boolean, nullable=False, default=False)
+    rule_validation_completed = Column(Boolean, nullable=False, default=False)
+    anomaly_completed = Column(Boolean, nullable=False, default=False)
+    missing_value_completed = Column(Boolean, nullable=False, default=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    analysis = relationship("Analysis", back_populates="phase_status")
+
+
+class ColumnPhaseReview(Base):
+    """Per-column review status within anomaly / imputation phases."""
+
+    __tablename__ = "column_phase_reviews"
+    __table_args__ = (
+        UniqueConstraint("analysis_id", "phase", "column_name", name="uq_column_phase_review"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    phase = Column(String(32), nullable=False, index=True)
+    column_name = Column(String(512), nullable=False, index=True)
+    status = Column(String(32), nullable=False, default="pending")
+    item_count = Column(Integer, nullable=False, default=0)
+    reviewed_count = Column(Integer, nullable=False, default=0)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class Phase3ImputationIntel(Base):

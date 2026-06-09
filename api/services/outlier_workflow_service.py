@@ -7,20 +7,21 @@ from typing import Any, Literal
 import pandas as pd
 from sqlalchemy.orm import Session
 
-from core.ingestion import dataframe_for_uploaded_dataset
 from core.json_safe import make_json_safe
-from core.rule_validator import normalize_schema
-from database.models import Dataset, OutlierDecision, Phase3AnomalyIntel
-from object_storage.object_store import try_build_default_store
-from outliers.anomaly_handler import detect_outliers_for_column, merge_column_detection
-from services.analysis_query import (
-    build_phase3_from_relational,
-    get_analysis_meta,
-    merge_checkpoint_phase3_overlay,
+from database.models import OutlierDecision, Phase3AnomalyIntel
+from services.analysis_dataframe_service import (
+    column_identity_aliases,
+    load_analysis_dataframe,
+    resolve_column_alias,
 )
+from services.analysis_query import get_analysis_meta, load_analysis_checkpoint
+from outliers.anomaly_handler import detect_outliers_for_column, merge_column_detection
+from services.analysis_query import build_phase3_from_relational, merge_checkpoint_phase3_overlay
 from services.analysis_payload_cache import invalidate_analysis_cache
 from services.normalization_service import NormalizationService
 from services.phase_audit_service import PhaseAuditService
+from services.phase_snapshot_service import PhaseSnapshotService
+from services.phase_status_service import PhaseStatusService
 
 MethodChoice = Literal["Z_SCORE", "IQR"]
 DecisionChoice = Literal["KEEP", "NORMALIZE", "DELETE_VALUE", "DELETE_ROW", "EDIT_VALUE"]
@@ -38,29 +39,31 @@ class OutlierWorkflowService:
             raise ValueError("Analysis not complete")
         return an
 
-    def _load_df(self, analysis_id: int) -> tuple[pd.DataFrame, dict[str, str]]:
-        an = self._load_analysis(analysis_id)
-        ds = self.db.query(Dataset).filter(Dataset.id == an.dataset_id).first()
-        if not ds:
-            raise ValueError("Dataset not found")
-        store = try_build_default_store() if ds.object_key else None
-        df = dataframe_for_uploaded_dataset(
-            dataset_storage_path=ds.storage_path,
-            dataset_object_key=ds.object_key,
-            filename=ds.filename,
-            object_store=store,
-        )
-        from services.analysis_results_service import resolve_semantic_analysis_payload
+    def _alias_groups(self, analysis_id: int) -> dict[str, set[str]]:
+        an = get_analysis_meta(self.db, analysis_id)
+        checkpoint = load_analysis_checkpoint(self.db, analysis_id) or {}
+        config = an.config if an and isinstance(an.config, dict) else {}
+        groups = column_identity_aliases(checkpoint, config)
 
-        payload = resolve_semantic_analysis_payload(self.db, analysis_id) or {}
-        schema = (
-            (payload.get("profiling_summary") or {}).get("schema")
-            or payload.get("schema")
-            or {}
-        )
-        if not schema:
-            schema = {str(c): "numeric" if pd.api.types.is_numeric_dtype(df[c]) else "categorical" for c in df.columns}
-        return normalize_schema(df, schema), schema
+        ui_to_physical, physical_to_ui = self._column_maps(analysis_id)
+        for ui, physical in ui_to_physical.items():
+            groups.setdefault(ui, set()).update({ui, physical})
+            groups.setdefault(physical, set()).update({ui, physical})
+        for physical, ui in physical_to_ui.items():
+            groups.setdefault(physical, set()).update({ui, physical})
+            groups.setdefault(ui, set()).update({ui, physical})
+
+        merged: dict[str, set[str]] = {}
+        for names in groups.values():
+            bucket: set[str] = set()
+            for name in names:
+                bucket |= groups.get(name, {name})
+            for name in bucket:
+                merged[name] = bucket
+        return merged
+
+    def _load_df(self, analysis_id: int) -> tuple[pd.DataFrame, dict[str, str]]:
+        return load_analysis_dataframe(self.db, analysis_id)
 
     def _column_maps(self, analysis_id: int) -> tuple[dict[str, str], dict[str, str]]:
         """Return (ui_to_physical, physical_to_ui) name maps."""
@@ -75,26 +78,83 @@ class OutlierWorkflowService:
             physical_to_ui[orig] = norm
         return ui_to_physical, physical_to_ui
 
-    def _resolve_ui_column(self, analysis_id: int, column: str) -> str:
+    def _physical_column(self, analysis_id: int, column: str) -> str:
         ui_to_physical, _ = self._column_maps(analysis_id)
         return ui_to_physical.get(column, column)
 
+    def _ui_column(self, analysis_id: int, column: str) -> str:
+        _, physical_to_ui = self._column_maps(analysis_id)
+        physical = self._physical_column(analysis_id, column)
+        return physical_to_ui.get(physical, column)
+
+    def _column_aliases(self, analysis_id: int, column: str) -> set[str]:
+        groups = self._alias_groups(analysis_id)
+        aliases = set(groups.get(column, {column}))
+        aliases.add(column)
+        aliases.add(self._physical_column(analysis_id, column))
+        aliases.add(self._ui_column(analysis_id, column))
+        return {a for a in aliases if a}
+
+    def _resolve_df_column(
+        self,
+        df: pd.DataFrame,
+        analysis_id: int,
+        column: str,
+        block: dict[str, Any] | None = None,
+    ) -> str | None:
+        groups = self._alias_groups(analysis_id)
+        candidates: set[str] = set(groups.get(column, {column}))
+        if block:
+            for key in ("column", "original_column"):
+                val = block.get(key)
+                if val:
+                    candidates |= groups.get(str(val), {str(val)})
+        hit = resolve_column_alias(column, groups, set(df.columns))
+        if hit:
+            return hit
+        for name in candidates:
+            if name in df.columns:
+                return name
+        return None
+
+    def _resolve_method(
+        self,
+        selections: dict[str, Any],
+        analysis_id: int,
+        column: str,
+        block: dict[str, Any] | None = None,
+    ) -> str | None:
+        aliases = self._column_aliases(analysis_id, column)
+        if block:
+            for key in ("column", "original_column"):
+                val = block.get(key)
+                if val:
+                    aliases |= self._column_aliases(analysis_id, str(val))
+            selected = str(block.get("method_selected") or "").upper()
+            if selected in ("Z_SCORE", "IQR"):
+                return selected
+        for name in aliases:
+            method = str(selections.get(name) or "").upper()
+            if method in ("Z_SCORE", "IQR"):
+                return method
+        return None
+
     def _find_anomaly_block(self, results: list[dict[str, Any]], column: str, analysis_id: int) -> dict[str, Any] | None:
-        physical = self._resolve_ui_column(analysis_id, column)
+        aliases = self._column_aliases(analysis_id, column)
         for block in results:
             if not isinstance(block, dict):
                 continue
             bcol = str(block.get("column") or "")
             borig = str(block.get("original_column") or "")
-            if bcol == column or bcol == physical or borig == column or borig == physical:
+            if bcol in aliases or borig in aliases:
                 return block
         return None
 
     def _match_block_column(self, block: dict[str, Any], column: str, analysis_id: int) -> bool:
-        physical = self._resolve_ui_column(analysis_id, column)
+        aliases = self._column_aliases(analysis_id, column)
         bcol = str(block.get("column") or "")
         borig = str(block.get("original_column") or "")
-        return bcol in {column, physical} or borig in {column, physical}
+        return bcol in aliases or borig in aliases
 
     def _get_phase3(self, analysis_id: int) -> dict[str, Any]:
         return build_phase3_from_relational(self.db, analysis_id)
@@ -141,11 +201,16 @@ class OutlierWorkflowService:
         if not block:
             raise ValueError(f"Column {column} not found in anomaly analysis")
 
-        _, physical_to_ui = self._column_maps(analysis_id)
-        ui_column = physical_to_ui.get(self._resolve_ui_column(analysis_id, column), column)
+        ui_column = self._ui_column(analysis_id, column)
+        aliases = self._column_aliases(analysis_id, column)
+        if block.get("column"):
+            aliases.add(str(block["column"]))
+        if block.get("original_column"):
+            aliases.add(str(block["original_column"]))
 
         selections = dict(phase3.get("method_selections") or {})
-        selections[ui_column] = method
+        for name in aliases:
+            selections[name] = method
         phase3["method_selections"] = selections
 
         for r in results:
@@ -178,30 +243,37 @@ class OutlierWorkflowService:
         an = self._load_analysis(analysis_id)
         phase3 = self._get_phase3(analysis_id)
         selections = phase3.get("method_selections") or {}
-        _, physical_to_ui = self._column_maps(analysis_id)
-        physical_col = self._resolve_ui_column(analysis_id, column)
-        ui_column = physical_to_ui.get(physical_col, column)
-        method = selections.get(column) or selections.get(ui_column)
-        if method not in ("Z_SCORE", "IQR"):
-            raise ValueError(f"Select Z_SCORE or IQR for column {column} first")
-
-        df, schema = self._load_df(analysis_id)
-        if physical_col not in df.columns:
-            raise ValueError(f"Column {column} not in dataset")
+        ui_column = self._ui_column(analysis_id, column)
 
         results = phase3.get("anomaly_results") or []
         block = self._find_anomaly_block(results, column, analysis_id)
+        method = self._resolve_method(selections, analysis_id, column, block)
+        if not method:
+            raise ValueError(f"Select Z_SCORE or IQR for column {column} first")
+
+        df, schema = self._load_df(analysis_id)
+        df_col = self._resolve_df_column(df, analysis_id, column, block)
+        if not df_col:
+            raise ValueError(f"Column {column} not in dataset")
+
         detection = detect_outliers_for_column(
-            df, schema, physical_col, method, column_block=block
+            df, schema, df_col, method, column_block=block
         )
         for cand in detection.get("candidates") or []:
             cand["column"] = ui_column
+        match_aliases = self._column_aliases(analysis_id, column)
+        if block:
+            for key in ("column", "original_column"):
+                val = block.get(key)
+                if val:
+                    match_aliases |= self._column_aliases(analysis_id, str(val))
         updated_results, updated_candidates = merge_column_detection(
             results,
             phase3.get("anomaly_candidates") or [],
             ui_column,
             method,
             detection,
+            column_aliases=match_aliases,
         )
         for r in updated_results:
             if self._match_block_column(r, column, analysis_id):
@@ -217,6 +289,7 @@ class OutlierWorkflowService:
             entity_id=column,
             payload={"method": method, "count": len(detection.get("candidates") or [])},
         )
+        PhaseStatusService(self.db).recompute_anomaly_columns(analysis_id)
         invalidate_analysis_cache(analysis_id)
         self.db.commit()
         return {
@@ -304,11 +377,16 @@ class OutlierWorkflowService:
             handoff.extend(converted_missing)
             phase3["converted_to_missing"] = handoff
         self._save_phase3(analysis_id, an.dataset_id, phase3)
+        PhaseStatusService(self.db).recompute_anomaly_columns(analysis_id)
+        if PhaseStatusService(self.db).get_or_create(analysis_id).anomaly_completed:
+            PhaseSnapshotService(self.db).snapshot_anomaly(analysis_id)
         invalidate_analysis_cache(analysis_id)
         self.db.commit()
         return {"success": True, "analysis_id": analysis_id, "column": column, "saved": len(rows)}
 
     def review_progress(self, analysis_id: int) -> dict[str, Any]:
+        self._load_analysis(analysis_id)
+        col_progress = PhaseStatusService(self.db).recompute_anomaly_columns(analysis_id)
         phase3 = self._get_phase3(analysis_id)
         candidates = [
             c for c in (phase3.get("anomaly_candidates") or []) if isinstance(c, dict)
@@ -330,13 +408,18 @@ class OutlierWorkflowService:
             by_severity[sev] = by_severity.get(sev, 0) + 1
         remaining = max(0, total - reviewed)
         pct = round((reviewed / total) * 100, 1) if total else 100.0
+        self.db.commit()
         return {
             "analysis_id": analysis_id,
             "total_anomalies": total,
             "reviewed": reviewed,
             "remaining": remaining,
             "progress_pct": pct,
-            "complete": total == 0 or reviewed >= total,
+            "complete": col_progress["complete"],
+            "columns_total": col_progress["columns_total"],
+            "columns_reviewed": col_progress["columns_reviewed"],
+            "auto_reviewed": col_progress["auto_reviewed"],
+            "pending_columns": col_progress["pending_columns"],
             "by_severity": by_severity,
         }
 

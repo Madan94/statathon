@@ -42,12 +42,14 @@ def _migration_registry() -> list[tuple[str, callable]]:
     from database.migrate_dataset_columns import migrate_dataset_columns_schema
     from database.migrate_checkpoint_jsonb import migrate_checkpoint_jsonb
     from database.migrate_review_decisions import migrate_review_decisions_schema
+    from database.migrate_phase_status import migrate_phase_status_schema
 
     return [
         ("auth_schema", migrate_auth_schema),
         ("report_builder_schema", migrate_report_builder_schema),
         ("dataset_columns_schema", migrate_dataset_columns_schema),
         ("review_decisions_schema", migrate_review_decisions_schema),
+        ("phase_status_schema", migrate_phase_status_schema),
         ("checkpoint_jsonb", migrate_checkpoint_jsonb),
     ]
 
@@ -104,6 +106,10 @@ def main() -> int:
                 result = fn(batch_size=args.batch_size)
             elif name == "review_decisions_schema":
                 result = fn()
+            elif name == "phase_status_schema":
+                from database.database import engine
+
+                result = fn(engine)
             else:
                 fn()
                 result = {"migration": name, "state": "applied"}

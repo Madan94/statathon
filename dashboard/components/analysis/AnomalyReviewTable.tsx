@@ -55,7 +55,7 @@ function sevKey(s: string | undefined): string {
 }
 
 function rowKey(c: AnomalyCandidate): string {
-  return `${c.column}-${c.row}`;
+  return String(c.row);
 }
 
 function uiFromApi(d: string): UiDecision {
@@ -89,11 +89,22 @@ const AnomalyReviewTable = forwardRef<AnomalyReviewTableHandle, Props>(function 
       if (!Array.isArray(rows)) return;
       const loaded: Record<string, UiDecision> = {};
       for (const r of rows as Array<{ row_index: number; decision: string }>) {
-        loaded[`${column}-${r.row_index}`] = uiFromApi(r.decision);
+        loaded[String(r.row_index)] = uiFromApi(r.decision);
       }
       if (Object.keys(loaded).length) setDecisions(loaded);
     }).catch(() => {});
   }, [analysisId, column]);
+
+  useEffect(() => {
+    setDecisions((prev) => {
+      const next = { ...prev };
+      for (const c of candidates) {
+        const k = rowKey(c);
+        if (!next[k]) next[k] = 'KEEP';
+      }
+      return next;
+    });
+  }, [candidates]);
 
   const severityCounts = useMemo(() => {
     const counts: Record<string, number> = { EXTREME: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
@@ -134,14 +145,13 @@ const AnomalyReviewTable = forwardRef<AnomalyReviewTableHandle, Props>(function 
   const buildPayload = (keys?: string[]) =>
     candidates
       .filter((c) => !keys || keys.includes(rowKey(c)))
-      .filter((c) => decisions[rowKey(c)])
       .map((c) => ({
         row_index: c.row,
         method: c.method,
         methodology: methodLabel,
         severity: c.severity,
         confidence: c.confidence,
-        decision: decisions[rowKey(c)],
+        decision: decisions[rowKey(c)] ?? 'KEEP',
         old_value: c.value as string | number | null,
         new_value: null,
       }));

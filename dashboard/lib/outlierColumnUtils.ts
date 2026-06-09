@@ -1,4 +1,4 @@
-import type { AnalysisResult, AnomalyColumnBlock } from '@/lib/api';
+import type { AnalysisResult, AnomalyColumnBlock, ImputationCandidate } from '@/lib/api';
 
 const NUMERIC_DTYPE_HINTS = ['numeric', 'float', 'int', 'integer', 'number', 'decimal', 'double', 'long'];
 
@@ -46,6 +46,42 @@ export function resolveAnomalyBlock(column: string, results: AnalysisResult): An
   return blocks.find(
     (b) => (b as AnomalyColumnBlock & { original_column?: string }).original_column === column
       || (b as AnomalyColumnBlock & { original_column?: string }).original_column === original,
+  );
+}
+
+function matchColumnName(target: string, candidate: string, results: AnalysisResult): boolean {
+  if (target === candidate) return true;
+  const original = resolveOriginalColumnName(target, results);
+  return candidate === original;
+}
+
+export function resolveImputationCandidate(
+  column: string,
+  results: AnalysisResult,
+): ImputationCandidate | undefined {
+  const phase3 = results.phase3 as { imputation_candidates?: ImputationCandidate[] } | undefined;
+  const candidates = phase3?.imputation_candidates ?? [];
+  return candidates.find((c) => matchColumnName(column, c.column, results));
+}
+
+export function resolveImputationBlock(
+  column: string,
+  results: AnalysisResult,
+): Record<string, unknown> | undefined {
+  const phase3 = results.phase3 as { imputation_results?: Array<Record<string, unknown>> } | undefined;
+  const blocks = phase3?.imputation_results ?? [];
+  return blocks.find((b) => matchColumnName(column, String(b.column ?? ''), results));
+}
+
+export function resolveMissingCount(column: string, results: AnalysisResult): number {
+  const candidate = resolveImputationCandidate(column, results);
+  if (candidate?.missing_count != null) return Number(candidate.missing_count);
+  const health = results.health as { missing_per_column?: Record<string, number> } | undefined;
+  const original = resolveOriginalColumnName(column, results);
+  return Number(
+    health?.missing_per_column?.[column]
+    ?? health?.missing_per_column?.[original]
+    ?? 0,
   );
 }
 

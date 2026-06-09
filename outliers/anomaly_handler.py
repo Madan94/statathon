@@ -133,11 +133,16 @@ def merge_column_detection(
     column: str,
     method: MethodChoice,
     detection: dict[str, Any],
+    *,
+    column_aliases: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Update stored results after user-triggered detection."""
+    aliases = column_aliases or {column}
     updated_results = []
     for block in anomaly_results:
-        if block.get("column") == column:
+        bcol = str(block.get("column") or "")
+        borig = str(block.get("original_column") or "")
+        if bcol in aliases or borig in aliases:
             block = dict(block)
             block["method_selected"] = method
             block["detection_run"] = True
@@ -149,7 +154,7 @@ def merge_column_detection(
                 block["z_score_hits"] = []
         updated_results.append(block)
 
-    filtered = [c for c in anomaly_candidates if c.get("column") != column]
+    filtered = [c for c in anomaly_candidates if str(c.get("column") or "") not in aliases]
     filtered.extend(detection.get("candidates") or [])
     return updated_results, filtered
 

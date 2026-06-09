@@ -1,14 +1,20 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import type { AnalysisResult, ImputationCandidate } from '@/lib/api';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { AnalysisResult } from '@/lib/api';
 import { analysisApi } from '@/lib/api';
+import {
+  resolveImputationBlock,
+  resolveImputationCandidate,
+  resolveMissingCount,
+} from '@/lib/outlierColumnUtils';
 import Card from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/Alert';
 import ImputationDetailDrawer from '@/components/analysis/ImputationDetailDrawer';
 import { cn } from '@/lib/cn';
-import { CheckCircle2, Save, Info } from 'lucide-react';
+import { CheckCircle2, Loader2, Save, Info } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
 interface Props {
@@ -20,6 +26,8 @@ interface Props {
 }
 
 const METHODS = ['mean', 'median', 'mode', 'knn'] as const;
+const PAGE_SIZE = 25;
+const FETCH_LIMIT = 100;
 
 const METHOD_DESCRIPTIONS: Record<string, string> = {
   mean: 'Replace missing values with the column mean.',
@@ -28,25 +36,38 @@ const METHOD_DESCRIPTIONS: Record<string, string> = {
   knn: 'k-NN imputation using similar rows.',
 };
 
-type ConfidenceFilter = 'all' | 'high' | 'medium' | 'low';
+type RowDecision = 'ACCEPT' | 'KEEP_MISSING' | 'REJECT' | 'OVERRIDE';
 
-function bandOf(score: number): ConfidenceFilter {
-  if (score >= 0.8) return 'high';
-  if (score >= 0.5) return 'medium';
-  return 'low';
+const DECISION_OPTIONS: { value: RowDecision; label: string }[] = [
+  { value: 'ACCEPT', label: 'Accept imputation' },
+  { value: 'KEEP_MISSING', label: 'Keep missing' },
+  { value: 'REJECT', label: 'Reject row' },
+  { value: 'OVERRIDE', label: 'Override value' },
+];
+
+type MissingRow = {
+  row_index: number;
+  missing_column: string;
+  original_value: null;
+  recommended_value: unknown;
+  confidence: number;
+  method: string;
+  reason: string;
+  context: Record<string, unknown>;
+};
+
+function formatValue(val: unknown): string {
+  if (val === null || val === undefined) return 'NULL';
+  if (typeof val === 'number') return Number.isInteger(val) ? String(val) : val.toFixed(2);
+  return String(val);
 }
 
 export default function ImputationReviewTable({ column, analysisId, results, className, onSaved }: Props) {
-  const phase3 = results.phase3 as {
-    imputation_candidates?: ImputationCandidate[];
-    imputation_results?: Array<Record<string, unknown>>;
-  } | undefined;
+  const candidate = resolveImputationCandidate(column, results);
+  const block = resolveImputationBlock(column, results);
 
-  const candidate = phase3?.imputation_candidates?.find((c) => c.column === column);
-  const block = phase3?.imputation_results?.find((r) => r.column === column);
-
-  const health = results.health as { rows?: number; missing_per_column?: Record<string, number> } | undefined;
-  const missingCount = Number(candidate?.missing_count ?? health?.missing_per_column?.[column] ?? 0);
+  const health = results.health as { rows?: number } | undefined;
+  const missingCount = resolveMissingCount(column, results);
   const totalRows = health?.rows ?? 0;
   const missingPct = totalRows > 0 ? (missingCount / totalRows) * 100 : 0;
 
@@ -68,78 +89,136 @@ export default function ImputationReviewTable({ column, analysisId, results, cla
   const recommended = String(candidate?.recommended_method ?? block?.recommended ?? 'median').toLowerCase();
   const confidence = Number(candidate?.confidence ?? block?.confidence ?? 0);
 
-  const rankedReasons = useMemo(() => {
-    const ranked = (block?.ranked_methods as Array<{ method: string; score: number; reason?: string }>) ?? [];
-    return ranked.map((r) => ({
-      method: String(r.method).toLowerCase(),
-      score: Number(r.score ?? methodScores[String(r.method).toLowerCase()] ?? 0),
-      reason: r.reason,
-    }));
-  }, [block, methodScores]);
-
   const scoresList = useMemo(() => {
-    if (rankedReasons.length) return rankedReasons;
+    const ranked = (block?.ranked_methods as Array<{ method: string; score: number; reason?: string }>) ?? [];
+    if (ranked.length) {
+      return ranked.map((r) => ({
+        method: String(r.method).toLowerCase(),
+        score: Number(r.score ?? methodScores[String(r.method).toLowerCase()] ?? 0),
+        reason: r.reason,
+      }));
+    }
     return METHODS.map((m) => ({
       method: m,
       score: Number(methodScores[m] ?? 0),
       reason: METHOD_DESCRIPTIONS[m],
     })).sort((a, b) => b.score - a.score);
-  }, [rankedReasons, methodScores]);
+  }, [block, methodScores]);
 
   const [selectedMethod, setSelectedMethod] = useState<string>(recommended);
-  const [confidenceFilter, setConfidenceFilter] = useState<ConfidenceFilter>('all');
+  const [missingRows, setMissingRows] = useState<MissingRow[]>([]);
+  const [rowDecisions, setRowDecisions] = useState<Record<number, RowDecision>>({});
+  const [overrideValues, setOverrideValues] = useState<Record<number, string>>({});
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const [bulkDecision, setBulkDecision] = useState<RowDecision>('ACCEPT');
+  const [page, setPage] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [loadingRows, setLoadingRows] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const filteredMethods = scoresList.filter((s) => {
-    if (confidenceFilter === 'all') return true;
-    return bandOf(s.score) === confidenceFilter;
-  });
+  const loadAllMissingRows = useCallback(async (method: string) => {
+    setLoadingRows(true);
+    setLoadError(null);
+    try {
+      let offset = 0;
+      let total = missingCount;
+      const all: MissingRow[] = [];
+      do {
+        const payload = await analysisApi.getImputationMissingRows(analysisId, column, {
+          method,
+          offset,
+          limit: FETCH_LIMIT,
+        });
+        total = payload.total_missing ?? missingCount;
+        all.push(...(payload.rows ?? []));
+        offset += FETCH_LIMIT;
+      } while (offset < total);
+      setMissingRows(all);
+      setRowDecisions((prev) => {
+        const next = { ...prev };
+        for (const row of all) {
+          if (!next[row.row_index]) next[row.row_index] = 'ACCEPT';
+        }
+        return next;
+      });
+      if (total > 0 && all.length === 0) {
+        setLoadError('Could not load row context for missing values. Check dataset storage or save column-level decision.');
+      }
+    } catch (err) {
+      setMissingRows([]);
+      setLoadError(err instanceof Error ? err.message : 'Failed to load missing rows');
+    } finally {
+      setLoadingRows(false);
+    }
+  }, [analysisId, column, missingCount]);
 
-  const bandCounts = useMemo(() => {
-    const c = { high: 0, medium: 0, low: 0 };
-    for (const s of scoresList) c[bandOf(s.score)] += 1;
-    return c;
-  }, [scoresList]);
+  useEffect(() => {
+    if (missingCount === 0) return;
+    setPage(0);
+    setSaved(false);
+    void loadAllMissingRows(selectedMethod);
+  }, [missingCount, selectedMethod, loadAllMissingRows]);
 
-  if (!candidate && missingCount === 0) {
-    return (
-      <Card className={cn('border-success/30 bg-success/5', className)}>
-        <div className="flex items-center gap-3">
-          <CheckCircle2 className="h-6 w-6 text-success shrink-0" />
-          <p className="font-semibold text-text">No missing values</p>
-        </div>
-      </Card>
-    );
-  }
+  const pageRows = useMemo(() => {
+    const start = page * PAGE_SIZE;
+    return missingRows.slice(start, start + PAGE_SIZE);
+  }, [missingRows, page]);
 
-  const previewRows = Array.from({ length: Math.min(5, missingCount || 3) }, (_, i) => i + 100);
+  const totalPages = Math.max(1, Math.ceil(missingRows.length / PAGE_SIZE));
+  const reviewedCount = missingRows.filter((r) => rowDecisions[r.row_index]).length;
 
-  const handleSave = async (method: string, bulk = false) => {
+  const applyBulk = (rowIndexes: number[], decision: RowDecision) => {
+    if (!rowIndexes.length) return;
+    setRowDecisions((prev) => {
+      const next = { ...prev };
+      rowIndexes.forEach((idx) => { next[idx] = decision; });
+      return next;
+    });
+    toast.success(`Applied to ${rowIndexes.length} row(s)`);
+  };
+
+  const buildSavePayload = () => {
+    if (missingRows.length === 0) {
+      return [{
+        column,
+        method: selectedMethod,
+        decision: 'ACCEPT',
+        confidence,
+      }];
+    }
+    return missingRows.map((row) => {
+      const decision = rowDecisions[row.row_index] ?? 'ACCEPT';
+      const base = {
+        row_index: row.row_index,
+        column,
+        method: selectedMethod,
+        decision,
+        original_value: null,
+        confidence: row.confidence,
+      };
+      if (decision === 'OVERRIDE') {
+        return {
+          ...base,
+          imputed_value: overrideValues[row.row_index] ?? row.recommended_value,
+        };
+      }
+      if (decision === 'ACCEPT') {
+        return { ...base, imputed_value: row.recommended_value };
+      }
+      return base;
+    });
+  };
+
+  const handleSave = async () => {
     setSaving(true);
     try {
-      const decisions = bulk
-        ? previewRows.map((row) => ({
-            row_index: row,
-            column,
-            method,
-            decision: 'ACCEPT',
-            original_value: null,
-            imputed_value: null,
-            confidence,
-          }))
-        : [{
-            column,
-            method,
-            decision: 'ACCEPT',
-            confidence,
-          }];
-      const res = await analysisApi.saveImputationDecisions(analysisId, column, method, decisions);
+      const decisions = buildSavePayload();
+      const res = await analysisApi.saveImputationDecisions(analysisId, column, selectedMethod, decisions);
       if (res.success === false) throw new Error('Save failed');
       setSaved(true);
-      toast.success(`Imputation method saved for ${column}`);
+      toast.success(`Saved ${decisions.length} missing-value decision(s) for ${column}`);
       onSaved?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save');
@@ -147,6 +226,20 @@ export default function ImputationReviewTable({ column, analysisId, results, cla
       setSaving(false);
     }
   };
+
+  if (!candidate && missingCount === 0) {
+    return (
+      <Card className={cn('border-success/30 bg-success/5', className)}>
+        <div className="flex items-center gap-3">
+          <CheckCircle2 className="h-6 w-6 text-success shrink-0" />
+          <div>
+            <p className="font-semibold text-text">✓ No missing values</p>
+            <p className="text-sm text-text-muted mt-0.5">Column automatically approved.</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card title="Missing value intelligence" className={className}>
@@ -156,19 +249,8 @@ export default function ImputationReviewTable({ column, analysisId, results, cla
         <div className="rounded border p-3"><p className="text-xs text-text-muted">Confidence</p><p className="text-xl font-bold">{(confidence * 100).toFixed(0)}%</p></div>
       </div>
 
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        {(['all', 'high', 'medium', 'low'] as const).map((f) => (
-          <button key={f} type="button" onClick={() => setConfidenceFilter(f)}
-            className={cn('px-2 py-1 rounded text-xs border capitalize',
-              confidenceFilter === f ? 'bg-accent text-white border-accent' : 'border-border text-text-muted')}>
-            {f === 'all' ? 'All methods' : `${f} (${bandCounts[f]})`}
-          </button>
-        ))}
-        <Button variant="ghost" size="sm" onClick={() => setDrawerOpen(true)}>Explain methods</Button>
-      </div>
-
       <div className="space-y-2 mb-4">
-        {filteredMethods.map((s) => {
+        {scoresList.map((s) => {
           const isRec = s.method === recommended;
           const isSel = selectedMethod === s.method;
           return (
@@ -187,41 +269,140 @@ export default function ImputationReviewTable({ column, analysisId, results, cla
             </button>
           );
         })}
+        <Button variant="ghost" size="sm" onClick={() => setDrawerOpen(true)}>Explain methods</Button>
       </div>
+
+      {loadError && (
+        <Alert variant="warning" title="Row context unavailable" className="mb-4">
+          {loadError} You can still save a column-level decision using the button below.
+        </Alert>
+      )}
 
       <div className="mb-4">
-        <p className="text-sm font-semibold mb-2">Imputation preview (sample rows)</p>
-        <div className="overflow-x-auto text-xs">
-          <table className="w-full">
-            <thead><tr className="border-b text-text-muted"><th className="py-1 pr-2">☐</th><th className="py-1 pr-2">Row</th><th className="py-1 pr-2">Current</th><th className="py-1 pr-2">Selected</th></tr></thead>
-            <tbody>
-              {previewRows.map((row) => (
-                <tr key={row} className="border-b border-border/50">
-                  <td className="py-1 pr-2">
-                    <input type="checkbox" checked={selectedRows.has(row)} onChange={() => {
-                      setSelectedRows((prev) => {
-                        const n = new Set(prev);
-                        if (n.has(row)) n.delete(row); else n.add(row);
-                        return n;
-                      });
-                    }} />
-                  </td>
-                  <td className="py-1 pr-2 font-mono">{row}</td>
-                  <td className="py-1 pr-2">NULL</td>
-                  <td className="py-1 pr-2 capitalize">{selectedMethod} (preview)</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex justify-between text-xs mb-1">
+          <span className="text-text-muted">
+            Missing rows reviewed: {reviewedCount} / {missingRows.length || missingCount}
+          </span>
+          {missingRows.length > PAGE_SIZE && (
+            <span className="font-mono">Page {page + 1} / {totalPages}</span>
+          )}
         </div>
-      </div>
+        {loadingRows ? (
+          <p className="text-sm text-text-muted flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading row context…
+          </p>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-2 mb-3 p-3 rounded-lg bg-border/20 border border-border/60">
+              <span className="text-xs text-text-muted">{selectedRows.size} selected</span>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedRows(new Set(pageRows.map((r) => r.row_index)))}>
+                Select page
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedRows(new Set(missingRows.map((r) => r.row_index)))}>
+                Select all
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => applyBulk(missingRows.map((r) => r.row_index), 'ACCEPT')}>
+                Accept all recommended
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => applyBulk(missingRows.map((r) => r.row_index), 'KEEP_MISSING')}>
+                Keep all missing
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => applyBulk(missingRows.map((r) => r.row_index), 'REJECT')}>
+                Reject all rows
+              </Button>
+              <div className="flex items-center gap-2 ml-auto">
+                <select
+                  value={bulkDecision}
+                  onChange={(e) => setBulkDecision(e.target.value as RowDecision)}
+                  className="text-xs rounded border px-2 py-1 bg-surface-card"
+                >
+                  {DECISION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => applyBulk([...selectedRows], bulkDecision)}
+                  disabled={!selectedRows.size}
+                >
+                  Apply to selected
+                </Button>
+              </div>
+            </div>
 
-      <div className="flex flex-wrap gap-2 mb-4 p-3 rounded-lg bg-border/20">
-        <Button variant="ghost" size="sm" onClick={() => setSelectedRows(new Set(previewRows))}>Select all</Button>
-        <Button variant="ghost" size="sm" onClick={() => setSelectedMethod(recommended)}>Apply recommended</Button>
-        {METHODS.map((m) => (
-          <Button key={m} variant="ghost" size="sm" onClick={() => setSelectedMethod(m)} className="capitalize">{m}</Button>
-        ))}
+            <div className="overflow-x-auto max-h-[32rem] space-y-3">
+              {pageRows.map((row) => {
+                const decision = rowDecisions[row.row_index] ?? 'ACCEPT';
+                return (
+                  <div key={row.row_index} className="rounded-lg border border-border/60 p-3 text-xs">
+                    <div className="flex items-start gap-2 mb-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.has(row.row_index)}
+                        onChange={() => {
+                          setSelectedRows((prev) => {
+                            const n = new Set(prev);
+                            if (n.has(row.row_index)) n.delete(row.row_index);
+                            else n.add(row.row_index);
+                            return n;
+                          });
+                        }}
+                      />
+                      <div className="flex-1">
+                        <p className="font-mono font-semibold text-sm">Row {row.row_index}</p>
+                        <p className="text-text-muted mt-0.5">
+                          {column} = <strong>NULL</strong>
+                          {' → '}
+                          Recommended: <strong>{formatValue(row.recommended_value)}</strong>
+                          {' · '}
+                          Confidence: {(row.confidence * 100).toFixed(0)}%
+                        </p>
+                      </div>
+                      <select
+                        value={decision}
+                        onChange={(e) => setRowDecisions((p) => ({
+                          ...p,
+                          [row.row_index]: e.target.value as RowDecision,
+                        }))}
+                        className="text-xs rounded border px-2 py-1 bg-surface-card min-w-[140px]"
+                      >
+                        {DECISION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </div>
+                    {decision === 'OVERRIDE' && (
+                      <input
+                        type="text"
+                        value={overrideValues[row.row_index] ?? formatValue(row.recommended_value)}
+                        onChange={(e) => setOverrideValues((p) => ({ ...p, [row.row_index]: e.target.value }))}
+                        className="w-full max-w-xs text-xs rounded border px-2 py-1 mb-2 bg-surface-card"
+                        placeholder="Override value"
+                      />
+                    )}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-text-muted mb-2">
+                      {Object.entries(row.context ?? {}).map(([col, val]) => (
+                        <span key={col}>{col} = {formatValue(val)}</span>
+                      ))}
+                    </div>
+                    <p className="text-text-muted">
+                      Method: <span className="capitalize">{row.method}</span>
+                      {' · '}
+                      Reason: {row.reason}
+                    </p>
+                  </div>
+                );
+              })}
+              {!pageRows.length && !loadingRows && (
+                <p className="text-sm text-text-muted">No row details loaded. Save a column-level decision to mark this column reviewed.</p>
+              )}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex gap-2 mt-3">
+                <Button variant="ghost" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Previous</Button>
+                <Button variant="ghost" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>Next</Button>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {missingPct > 30 && (
@@ -231,9 +412,9 @@ export default function ImputationReviewTable({ column, analysisId, results, cla
         </div>
       )}
 
-      <Button disabled={!selectedMethod || saving} onClick={() => handleSave(selectedMethod, selectedRows.size > 0)} className="gap-2">
-        <Save className="h-4 w-4" />
-        {saved ? 'Saved' : saving ? 'Saving…' : `Save: ${selectedMethod}`}
+      <Button disabled={!selectedMethod || saving} onClick={handleSave} className="gap-2">
+        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+        {saved ? 'Saved' : saving ? 'Saving…' : `Save ${missingRows.length || 1} decision(s): ${selectedMethod}`}
       </Button>
 
       <ImputationDetailDrawer

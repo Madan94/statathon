@@ -38,6 +38,7 @@ const LOADING_PHASES = [
 
 export interface ValidationTableHandle {
   saveDecisions: () => Promise<{ saved: number }>;
+  getDecisionPayload: () => ValidationDecisionItem[];
   hasPendingChanges: () => boolean;
 }
 
@@ -51,11 +52,21 @@ interface ValidationTableProps {
 }
 
 function rowKey(c: ValidationCandidate, i: number): string {
-  const ruleId =
-    c.rule_id ??
-    (typeof c.rule === 'string' ? c.rule : typeof c.rule === 'object' ? c.rule?.rule_id : undefined) ??
-    'rule';
+  const ruleId = candidateRuleId(c);
   return `${c.column ?? 'col'}-${c.row ?? i}-${ruleId}`;
+}
+
+function candidateRuleId(c: ValidationCandidate): string {
+  return String(
+    c.rule_id ??
+      (typeof c.rule === 'string'
+        ? c.rule
+        : typeof c.rule === 'object'
+          ? c.rule?.rule_id
+          : undefined) ??
+      c.kind ??
+      'rule',
+  );
 }
 
 function ValidationLoadingPanel({ phaseIndex }: { phaseIndex: number }) {
@@ -157,14 +168,24 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
     );
 
     const buildPayload = (keys?: string[]): ValidationDecisionItem[] => {
+      const source = keys ? filtered : candidates;
       const target = keys ?? filteredKeys;
-      return filtered
-        .map((c, i) => ({ c, key: rowKey(c, i) }))
+      return source
+        .map((c) => {
+          const idx = candidates.findIndex(
+            (x) =>
+              x.column === c.column &&
+              x.row === c.row &&
+              candidateRuleId(x) === candidateRuleId(c),
+          );
+          const key = rowKey(c, idx >= 0 ? idx : 0);
+          return { c, key, idx: idx >= 0 ? idx : 0 };
+        })
         .filter(({ key }) => !keys || target.includes(key))
         .map(({ c, key }) => {
           const decision = decisions[key] ?? 'KEEP';
           return {
-            rule_id: c.rule_id ?? (typeof c.rule === 'string' ? c.rule : undefined),
+            rule_id: candidateRuleId(c),
             column: c.column ?? '',
             row_index: c.row ?? null,
             rule_type: c.kind ?? 'single_column',
@@ -201,6 +222,7 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
 
     useImperativeHandle(ref, () => ({
       saveDecisions: handleSave,
+      getDecisionPayload: () => buildPayload(),
       hasPendingChanges: () =>
         Object.values(decisions).some((d) => d !== 'KEEP') ||
         Object.keys(modifyValues).length > 0,
@@ -359,8 +381,14 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
                 </tr>
               </thead>
               <tbody>
-                {filtered.slice(0, 250).map((c, i) => {
-                  const key = rowKey(c, i);
+                {filtered.slice(0, 250).map((c) => {
+                  const idx = candidates.findIndex(
+                    (x) =>
+                      x.column === c.column &&
+                      x.row === c.row &&
+                      candidateRuleId(x) === candidateRuleId(c),
+                  );
+                  const key = rowKey(c, idx >= 0 ? idx : 0);
                   const decision = decisions[key] ?? 'KEEP';
                   const isSelected = selected.has(key);
                   return (

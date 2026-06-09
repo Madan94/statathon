@@ -55,6 +55,12 @@ class ValidationDecisionsRequest(BaseModel):
     decisions: list[ValidationDecisionItem] = Field(default_factory=list)
 
 
+class ValidationProceedRequest(BaseModel):
+    decisions: list[ValidationDecisionItem] = Field(default_factory=list)
+    critical_count: int = 0
+    candidate_count: int = 0
+
+
 class ImputationMethodRequest(BaseModel):
     column: str
     method: str

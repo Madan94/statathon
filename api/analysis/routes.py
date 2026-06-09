@@ -25,6 +25,7 @@ from analysis.schemas import (
     OutlierRowDecisionsRequest,
     ValidationAcknowledgeRequest,
     ValidationDecisionsRequest,
+    ValidationProceedRequest,
 )
 from auth.permissions import require_analysis_owner, require_analysis_owner_meta, require_dataset_owner
 from deps import get_current_user_id
@@ -46,6 +47,7 @@ from services.outlier_workflow_service import OutlierWorkflowService
 from services.validation_workflow_service import ValidationWorkflowService
 from services.imputation_workflow_service import ImputationWorkflowService
 from services.phase_audit_service import PhaseAuditService
+from services.phase_status_service import PhaseStatusService
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
@@ -201,6 +203,45 @@ def submit_analysis_decisions(
     return result
 
 
+@router.get("/{analysis_id}/phase-status")
+def get_phase_status(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    return PhaseStatusService(db).get_status_payload(analysis_id)
+
+
+@router.get("/{analysis_id}/validation/review-progress")
+def get_validation_review_progress(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    return ValidationWorkflowService(db).review_progress(analysis_id)
+
+
+@router.post("/{analysis_id}/validation/proceed")
+def proceed_validation_to_anomaly(
+    analysis_id: int,
+    body: ValidationProceedRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return ValidationWorkflowService(db).proceed_to_anomaly(
+            analysis_id,
+            [d.model_dump() for d in body.decisions],
+            user_id=user_id,
+            meta=body.model_dump(exclude={"decisions"}),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
 @router.post("/{analysis_id}/validation/acknowledge")
 def acknowledge_validation_gate(
     analysis_id: int,
@@ -267,6 +308,29 @@ def get_anomaly_review_progress(
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
     return OutlierWorkflowService(db).review_progress(analysis_id)
+
+
+@router.get("/{analysis_id}/imputation/missing-rows")
+def list_imputation_missing_rows(
+    analysis_id: int,
+    column: str,
+    method: str | None = None,
+    offset: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return ImputationWorkflowService(db).list_missing_rows(
+            analysis_id,
+            column,
+            method=method,
+            offset=offset,
+            limit=limit,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.get("/{analysis_id}/imputation/review-progress")

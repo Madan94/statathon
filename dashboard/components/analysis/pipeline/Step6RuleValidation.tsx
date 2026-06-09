@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AnalysisResult, ValidationCandidate } from '@/lib/api';
 import { analysisApi } from '@/lib/api';
 import ValidationTable, {
@@ -49,9 +49,25 @@ export default function Step6RuleValidation({
   );
   const [proceedPhase, setProceedPhase] = useState<ProceedPhase>('idle');
   const [savedDecisionCount, setSavedDecisionCount] = useState(0);
+  const [validationProgress, setValidationProgress] = useState({
+    reviewed: 0,
+    total: 0,
+    complete: false,
+  });
 
   const phase3 = results.phase3 ?? {};
   const candidates = (phase3.validation_candidates as ValidationCandidate[] | undefined) ?? [];
+
+  useEffect(() => {
+    analysisApi.getValidationReviewProgress(analysisId).then((p) => {
+      setValidationProgress({
+        reviewed: p.reviewed,
+        total: p.total,
+        complete: p.complete,
+      });
+    }).catch(() => {});
+  }, [analysisId, candidates.length]);
+
   const validationResults = (phase3.validation_results as {
     summary?: { gate?: Record<string, unknown> };
     single_column?: unknown[];
@@ -84,25 +100,30 @@ export default function Step6RuleValidation({
   const handleProceed = async () => {
     setProceedPhase('saving');
     try {
-      const { saved } = await tableRef.current!.saveDecisions();
-      setSavedDecisionCount(saved);
-      setProceedPhase('saved');
-
-      await new Promise((r) => setTimeout(r, 400));
+      const payload = tableRef.current?.getDecisionPayload() ?? [];
       setProceedPhase('moving');
 
-      const ack = await analysisApi.acknowledgeValidation(analysisId, {
+      const res = await analysisApi.proceedValidation(analysisId, payload, {
         critical_count: criticalCount,
-        candidate_count: candidates.length,
+        candidate_count: validationProgress.total || candidates.length,
       });
-      if (ack.success === false) {
+      if (res.success === false) {
         throw new Error('Failed to confirm validation review');
       }
+      setSavedDecisionCount(Number(res.saved ?? payload.length));
+      setValidationProgress({
+        reviewed: Number(res.saved ?? payload.length),
+        total: validationProgress.total || candidates.length,
+        complete: true,
+      });
       setAcknowledged(true);
       onProceed();
-    } catch (err) {
+    } catch (err: unknown) {
       setProceedPhase('error');
-      toast.error(err instanceof Error ? err.message : 'Failed to save rule decisions');
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+        ?? (err instanceof Error ? err.message : 'Failed to save rule decisions');
+      toast.error(String(msg));
     }
   };
 
@@ -179,7 +200,29 @@ export default function Step6RuleValidation({
         loadState={loadState}
         loadError={loadError}
         domainByColumn={domainByColumn}
+        onSaved={() => {
+          void analysisApi.getValidationReviewProgress(analysisId).then((p) => {
+            setValidationProgress({
+              reviewed: p.reviewed,
+              total: p.total,
+              complete: p.complete,
+            });
+          });
+        }}
       />
+
+      {!isLoading && (
+        <Card className="p-4">
+          <p className="text-sm text-text-muted">
+            Reviewed: <strong>{validationProgress.reviewed} / {validationProgress.total || candidates.length}</strong>
+            {' · '}
+            Status:{' '}
+            <strong className={validationProgress.complete ? 'text-success' : 'text-warning'}>
+              {validationProgress.complete ? 'Completed' : 'In progress'}
+            </strong>
+          </p>
+        </Card>
+      )}
 
       {(proceedPhase === 'saving' || proceedPhase === 'saved' || proceedPhase === 'moving') && (
         <Card className="p-4 border-accent/30 bg-accent/5">
