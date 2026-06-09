@@ -4620,6 +4620,153 @@ def run_extraction_pipeline(
     _out_dir = Path(__file__).resolve().parent.parent / "outputs" / _safe_name
     _out_dir.mkdir(parents=True, exist_ok=True)
 
+    # ── Per-pass diagnostic dump (all intermediate outputs) ──
+    _pass_dump_dir = _out_dir / "_pass_outputs"
+    _pass_dump_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        # Pass 0: page text extraction summary
+        _p0 = {
+            "page_count": len(page_texts),
+            "total_chars": sum(len(pt.get("raw_text", "")) for pt in page_texts),
+            "pages": [
+                {
+                    "page": i,
+                    "chars": len(pt.get("raw_text", "")),
+                    "words": pt.get("word_count", 0),
+                    "tables": len(pt.get("tables", [])),
+                    "headings": pt.get("headings", []),
+                    "embedded_figures": len(pt.get("embedded_figures", [])),
+                }
+                for i, pt in enumerate(page_texts)
+            ],
+        }
+        with open(_pass_dump_dir / "pass0_text_extraction.json", "w", encoding="utf-8") as f:
+            json.dump(_p0, f, ensure_ascii=False, indent=2, default=str)
+
+        # Pass 1: LayoutLM regions
+        _p1 = {
+            "layoutlm_used": layoutlm_used,
+            "total_regions": total_regions,
+            "toc_entries": [{"title": e.title, "page": e.page_index, "level": e.level} for e in toc],
+            "pages": [
+                {
+                    "page": i,
+                    "regions": [
+                        {"type": r.get("type"), "confidence": round(r.get("confidence", 0), 3), "text": (r.get("text") or "")[:100]}
+                        for r in (lp.get("regions") or [])
+                    ],
+                }
+                for i, lp in enumerate(layout_pages)
+            ],
+        }
+        with open(_pass_dump_dir / "pass1_layout_regions.json", "w", encoding="utf-8") as f:
+            json.dump(_p1, f, ensure_ascii=False, indent=2, default=str)
+
+        # Pass 2: VLM entity extraction
+        _p2 = {
+            "vlm_success_count": vlm_success,
+            "total_entities": total_entities,
+            "chart_pages": chart_pages_detected,
+            "pages": [
+                {
+                    "page": ep.get("page_index"),
+                    "vlm_used": ep.get("vlm_used", False),
+                    "structure_type": ep.get("structure_type"),
+                    "entities": [e.get("name") if isinstance(e, dict) else e for e in (ep.get("entities") or [])][:20],
+                    "chart_types": ep.get("chart_types", []),
+                    "chart_titles": ep.get("chart_titles", []),
+                    "table_title": ep.get("table_title", ""),
+                    "section_heading": ep.get("section_heading", ""),
+                }
+                for ep in entity_pages
+            ],
+        }
+        with open(_pass_dump_dir / "pass2_vlm_entities.json", "w", encoding="utf-8") as f:
+            json.dump(_p2, f, ensure_ascii=False, indent=2, default=str)
+
+        # Pass 2.5: Document Knowledge Graph
+        _p25 = {
+            "entities_count": len(document_map.get("all_entities", [])),
+            "table_structures_count": len(document_map.get("table_structures", [])),
+            "chapters_count": len(document_map.get("chapters", [])),
+            "entities": [
+                {
+                    "entityId": e.get("entityId"),
+                    "name": e.get("name"),
+                    "source": e.get("source"),
+                    "entityType_hint": e.get("entityType_hint"),
+                    "pages": e.get("pages", []),
+                }
+                for e in (document_map.get("all_entities") or [])
+            ],
+            "table_structures": [
+                {
+                    "tableId": ts.get("tableId"),
+                    "page": ts.get("page"),
+                    "tableTitle": ts.get("tableTitle", ""),
+                    "columns": ts.get("columns", [])[:15],
+                    "dimensions": ts.get("dimensions", []),
+                    "measures": ts.get("measures", []),
+                    "breakdowns": ts.get("breakdowns", []),
+                    "layout": ts.get("layout"),
+                    "columnGroups": ts.get("columnGroups", []),
+                }
+                for ts in (document_map.get("table_structures") or [])
+            ],
+            "chapters": document_map.get("chapters", []),
+        }
+        with open(_pass_dump_dir / "pass2_5_knowledge_graph.json", "w", encoding="utf-8") as f:
+            json.dump(_p25, f, ensure_ascii=False, indent=2, default=str)
+
+        # Pass 2.6: Entity classification
+        _p26 = {
+            "classified_entities": [
+                {
+                    "entityId": e.get("entityId"),
+                    "name": e.get("name"),
+                    "entityType_hint": e.get("entityType_hint"),
+                    "source": e.get("source"),
+                    "unit": e.get("unit"),
+                    "confidence": e.get("confidence"),
+                }
+                for e in (document_map.get("all_entities") or [])
+            ],
+        }
+        with open(_pass_dump_dir / "pass2_6_entity_classification.json", "w", encoding="utf-8") as f:
+            json.dump(_p26, f, ensure_ascii=False, indent=2, default=str)
+
+        # Pass 3: Questions + topics
+        _p3 = {
+            "questions_count": len(ast_result.get("questions", [])),
+            "topics_count": len(ast_result.get("topics", [])),
+            "questions": [
+                {
+                    "questionId": q.get("questionId"),
+                    "intent": q.get("intent"),
+                    "questionType": q.get("questionType"),
+                    "page": q.get("page"),
+                    "sourceHeading": q.get("sourceHeading"),
+                    "requiredEntities": q.get("requiredEntities", []),
+                    "analyticsSpec": q.get("analyticsSpec"),
+                    "answerStructure": q.get("answerStructure"),
+                    "inferenceMethod": q.get("inferenceMethod"),
+                    "inferenceConfidence": q.get("inferenceConfidence"),
+                }
+                for q in (ast_result.get("questions") or [])
+            ],
+            "topics": ast_result.get("topics", []),
+        }
+        with open(_pass_dump_dir / "pass3_questions_topics.json", "w", encoding="utf-8") as f:
+            json.dump(_p3, f, ensure_ascii=False, indent=2, default=str)
+
+        # Pipeline trace summary
+        with open(_pass_dump_dir / "pipeline_trace.json", "w", encoding="utf-8") as f:
+            json.dump(pipeline_trace, f, ensure_ascii=False, indent=2, default=str)
+
+        logger.info("  ✓ Per-pass diagnostics saved → %s/", _pass_dump_dir.name)
+    except Exception as _dump_exc:
+        logger.warning("[pipeline] Per-pass dump failed (non-fatal): %s", _dump_exc)
+
     # New canonical output (migration plan P1): value-free ① template.ast.json + ② template.blueprint.json
     from report_builder.template_emit import emit_templates, legacy_emit_enabled
     _emit_report = emit_templates(ast, _out_dir)
