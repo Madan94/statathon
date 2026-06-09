@@ -32,7 +32,12 @@ from dotenv import load_dotenv
 
 # Load repo-root .env when started from services/layoutlm/
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
-load_dotenv(_PROJECT_ROOT / ".env")
+_repo_env = _PROJECT_ROOT / ".env"
+if _repo_env.exists():
+    load_dotenv(_repo_env)
+    logging.getLogger("layoutlm-service").info("Loaded env from: %s", _repo_env)
+else:
+    load_dotenv()  # fallback to CWD
 load_dotenv()  # optional local override (e.g. services/layoutlm/.env)
 
 import pytesseract
@@ -49,7 +54,7 @@ logger = logging.getLogger("layoutlm-service")
 
 app = FastAPI(title="LayoutLM Layout Detection Service", version="1.0.0")
 
-_DEFAULT_MODEL = "microsoft/layoutlmv3-large"
+_DEFAULT_MODEL = "Kwan0/layoutlmv3-base-finetune-DocLayNet-100k"
 
 
 def _resolve_model_id() -> str:
@@ -62,15 +67,32 @@ def _resolve_model_id() -> str:
 
 
 MODEL_ID = _resolve_model_id()
+logger.info(
+    "Resolved model: %s (LAYOUTLM_MODEL_ID=%s, LAYOUTLM_MODEL=%s, MODEL_ID=%s)",
+    MODEL_ID,
+    os.getenv("LAYOUTLM_MODEL_ID", ""),
+    os.getenv("LAYOUTLM_MODEL", ""),
+    os.getenv("MODEL_ID", ""),
+)
 MAX_PAGES = int(os.getenv("MAX_PAGES", "100"))
+
+# ── Model cache — OUTSIDE the git repo to avoid stash/conflict issues ────────
+# Priority: HF_HOME env → model/cache/ in repo root → user home .cache
+_REPO_ROOT = Path(__file__).resolve().parents[2]  # services/layoutlm/../../ = repo root
+_MODEL_CACHE = Path(os.getenv("HF_HOME", "")) if os.getenv("HF_HOME") else (_REPO_ROOT / "model" / "cache")
+_MODEL_CACHE.mkdir(parents=True, exist_ok=True)
+os.environ["HF_HOME"] = str(_MODEL_CACHE)
+os.environ["TRANSFORMERS_CACHE"] = str(_MODEL_CACHE)
+os.environ["HF_HUB_CACHE"] = str(_MODEL_CACHE / "hub")
 
 # ── Lazy-loaded globals ──────────────────────────────────────────────────────
 _processor = None
 _model = None
 _device = "cpu"
 
-# LayoutLMv3 label mapping (from fine-tuned DocLayNet / PubLayNet)
-LABEL_MAP = {
+# LayoutLMv3 label mapping — auto-detected from model config at load time.
+# If model has id2label in config, we use that. Otherwise fall back to default.
+_DEFAULT_LABEL_MAP = {
     0: "text",
     1: "title",
     2: "list",
@@ -83,10 +105,29 @@ LABEL_MAP = {
     9: "chart",
 }
 
+# DocLayNet labels (used by Kwan0/layoutlmv3-base-finetune-DocLayNet-100k and similar)
+# DocLayNet 11 classes: Caption, Footnote, Formula, List-item, Page-footer,
+# Page-header, Picture, Section-header, Table, Text, Title
+_DOCLAYNET_LABEL_MAP = {
+    0: "caption",
+    1: "footer",       # Footnote
+    2: "chart",        # Formula
+    3: "list",         # List-item
+    4: "footer",       # Page-footer
+    5: "header",       # Page-header
+    6: "figure",       # Picture
+    7: "heading",      # Section-header
+    8: "table",        # Table
+    9: "text",         # Text
+    10: "title",       # Title
+}
+
+LABEL_MAP = _DEFAULT_LABEL_MAP  # overwritten at model load time
+
 
 def _load_model():
     """Load LayoutLMv3 model + processor (lazy, first request)."""
-    global _processor, _model, _device
+    global _processor, _model, _device, LABEL_MAP
 
     if _model is not None:
         return
@@ -96,14 +137,47 @@ def _load_model():
 
     from transformers import AutoProcessor, AutoModelForTokenClassification
 
-    _processor = AutoProcessor.from_pretrained(MODEL_ID, apply_ocr=True)
-    _model = AutoModelForTokenClassification.from_pretrained(MODEL_ID)
+    _cache = str(_MODEL_CACHE / "hub")
+    _processor = AutoProcessor.from_pretrained(MODEL_ID, apply_ocr=True, cache_dir=_cache)
+    _model = AutoModelForTokenClassification.from_pretrained(MODEL_ID, cache_dir=_cache)
     _model.eval()
     _device = "cpu"
     _model.to(_device)
 
+    # Auto-detect label map from model config
+    if hasattr(_model, "config") and hasattr(_model.config, "id2label"):
+        raw_labels = _model.config.id2label
+        logger.info("Model provides id2label: %s", raw_labels)
+        # Check if this is a DocLayNet model (has "Section-header", "Picture", etc.)
+        label_values = [str(v).lower() for v in raw_labels.values()]
+        if any("section-header" in v or "picture" in v for v in label_values):
+            LABEL_MAP = _DOCLAYNET_LABEL_MAP
+            logger.info("Using DocLayNet label mapping (11 classes)")
+        elif len(raw_labels) == len(_DEFAULT_LABEL_MAP):
+            LABEL_MAP = _DEFAULT_LABEL_MAP
+            logger.info("Using default label mapping (10 classes)")
+        else:
+            # Build from model's id2label, normalize to our types
+            _NORM = {
+                "caption": "caption", "footnote": "footer", "formula": "chart",
+                "list-item": "list", "page-footer": "footer", "page-header": "header",
+                "picture": "figure", "section-header": "heading", "table": "table",
+                "text": "text", "title": "title", "paragraph": "text",
+                "figure": "figure", "header": "header", "footer": "footer",
+                "heading": "heading", "list": "list", "chart": "chart",
+            }
+            LABEL_MAP = {}
+            for k, v in raw_labels.items():
+                idx = int(k) if str(k).isdigit() else k
+                normalized = _NORM.get(str(v).lower().strip(), "text")
+                LABEL_MAP[idx] = normalized
+            logger.info("Auto-built label mapping: %s", LABEL_MAP)
+    else:
+        LABEL_MAP = _DEFAULT_LABEL_MAP
+        logger.info("No id2label in config — using default mapping")
+
     elapsed = time.monotonic() - t0
-    logger.info("Model loaded in %.1fs on %s", elapsed, _device)
+    logger.info("Model loaded in %.1fs on %s (labels=%d classes)", elapsed, _device, len(LABEL_MAP))
 
 
 def _analyze_page_image(image, page_index: int) -> dict[str, Any]:
@@ -132,7 +206,12 @@ def _analyze_page_image(image, page_index: int) -> dict[str, Any]:
     width, height = image.size
 
     # Process with LayoutLMv3's built-in OCR
-    encoding = _processor(image, return_tensors="pt", truncation=True, max_length=512)
+    # ocr_lang: eng+hin for bilingual MoSPI docs (Hindi headers, English data)
+    _ocr_lang = os.getenv("LAYOUTLM_OCR_LANG", "eng+hin")
+    encoding = _processor(
+        image, return_tensors="pt", truncation=True, max_length=512,
+        ocr_lang=_ocr_lang,
+    )
     encoding = {k: v.to(_device) for k, v in encoding.items()}
 
     with torch.no_grad():
@@ -206,11 +285,17 @@ def _analyze_page_image(image, page_index: int) -> dict[str, Any]:
     # Deduplicate overlapping regions of same type
     merged_regions = _merge_overlapping_regions(regions)
 
+    # Confidence threshold: filter low-confidence regions (MoSPI has edge cases)
+    _min_conf = float(os.getenv("LAYOUTLM_MIN_CONFIDENCE", "0.55"))
+    filtered_regions = [r for r in merged_regions if r.get("confidence", 0) >= _min_conf]
+    logger.debug("Page %d: %d regions → %d after confidence filter (min=%.2f)",
+                 page_index, len(merged_regions), len(filtered_regions), _min_conf)
+
     return {
         "page_index": page_index,
         "width": width,
         "height": height,
-        "regions": merged_regions,
+        "regions": filtered_regions,
     }
 
 
@@ -307,9 +392,11 @@ async def analyze_pdf(file: UploadFile = File(...)):
 
         poppler_path = os.getenv("POPPLER_PATH") or None
         t0 = time.monotonic()
+        # 300 DPI for dense MoSPI tables (superscripts, footnotes, packed numbers)
+        _dpi = int(os.getenv("LAYOUTLM_DPI", "300"))
         images = pdf2image.convert_from_path(
             str(tmp_path),
-            dpi=200,
+            dpi=_dpi,
             fmt="png",
             first_page=1,
             last_page=MAX_PAGES,

@@ -129,6 +129,9 @@ export default function TemplateExtractionModal({
                 </div>
               </div>
               <TemplateExtractionMetroPath job={job} />
+              <p className="text-xs text-text-muted">
+                Next: bind a dataset to this template, then generate your report.
+              </p>
             </div>
           )}
 

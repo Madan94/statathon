@@ -113,6 +113,25 @@ def _resolve_provider(task: str) -> str:
     return (os.getenv("REASONING_PROVIDER") or "qwen").strip().lower()
 
 
+# ── Provider-aware token budget clamping ───────────────────────────────────────
+# Qwen 3B with 2048 context: prompts are 400-1200 tokens, so safe output = 700.
+# This prevents "max context 2048" errors even with long prompts (tables, entities).
+_PROVIDER_MAX_OUTPUT: dict[str, int] = {
+    "qwen":   500,    # 2048 ctx − ~1500 reserved for prompt+image. ONLY use for entity_extraction (256 tok)
+    "openai": 4000,   # Ollama default 8192 ctx → ~4000 for output
+    "gemini": 8000,   # Gemini Flash supports 8192 output tokens
+    "groq":   4000,   # Groq models: 8192 output cap
+}
+
+
+def _clamp_tokens_for_provider(provider: str, max_tokens: int) -> int:
+    """Clamp max_tokens to the provider's safe output limit."""
+    cap = _PROVIDER_MAX_OUTPUT.get(provider, 4000)
+    if max_tokens > cap:
+        return cap
+    return max_tokens
+
+
 def llm_disabled() -> bool:
     """Air-gapped / offline switch: when set, ALL LLM calls are skipped.
 
@@ -205,7 +224,17 @@ def _call_qwen_vision(prompt: str, image_bytes: bytes, max_tokens: int, temperat
         r = requests.post(endpoint, json=payload, timeout=timeout)
         if r.status_code == 200:
             return r.json()["choices"][0]["message"]["content"].strip()
-        logger.warning("[llm_router][qwen-vision] HTTP %d: %s", r.status_code, r.text[:200])
+        # Auto-retry with reduced tokens on context overflow (400 "maximum context length")
+        if r.status_code == 400 and "maximum context length" in (r.text or ""):
+            reduced = max(64, max_tokens // 2)
+            logger.warning("[llm_router][qwen-vision] Context overflow (max_tok=%d) — retrying with %d", max_tokens, reduced)
+            payload["max_tokens"] = reduced
+            r2 = requests.post(endpoint, json=payload, timeout=timeout)
+            if r2.status_code == 200:
+                return r2.json()["choices"][0]["message"]["content"].strip()
+            logger.warning("[llm_router][qwen-vision] Retry also failed: HTTP %d", r2.status_code)
+        else:
+            logger.warning("[llm_router][qwen-vision] HTTP %d: %s", r.status_code, r.text[:200])
     except Exception as exc:
         logger.warning("[llm_router][qwen-vision] Request failed: %s", exc)
     return None
@@ -394,7 +423,8 @@ def llm_text_call(
     prompt, max_tokens, temperature = validated
 
     provider = _resolve_provider(task)
-    logger.info("[llm_router] task=%-22s provider=%s", task, provider)
+    max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
+    logger.info("[llm_router] task=%-22s provider=%-8s max_tok=%d", task, provider, max_tokens)
 
     if provider == "gemini":
         return _call_gemini(prompt, None, max_tokens, temperature)
@@ -440,7 +470,8 @@ def llm_vision_call(
 
     has_image = bool(image_bytes)
     provider = _resolve_provider(task)
-    logger.info("[llm_router] task=%-22s provider=%-8s has_image=%s", task, provider, has_image)
+    max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
+    logger.info("[llm_router] task=%-22s provider=%-8s has_image=%s max_tok=%d", task, provider, has_image, max_tokens)
 
     if provider == "gemini":
         return _call_gemini(prompt, image_bytes if has_image else None, max_tokens, temperature)

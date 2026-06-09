@@ -26,18 +26,37 @@ _is_sqlite = DATABASE_URL.startswith("sqlite")
 #  - pool_size/max_overflow → keep small for hobby tier, allow burst
 #  - pool_timeout → wait at most 30s to get a connection from the pool
 #  - connect_args.connect_timeout → fail-fast on DNS/network hangs (default psycopg2 blocks ~75s)
-_pg_connect_args = {"connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", "10"))}
+#  - options=-c statement_timeout=30000 → kill queries stuck > 30s
+#  - prepared_statement_cache_size=0 → REQUIRED for Supabase transaction mode (port 6543)
+_pg_connect_args = {
+    "connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", "10")),
+    "options": "-c statement_timeout=30000",
+}
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} if _is_sqlite else _pg_connect_args,
-    pool_pre_ping=not _is_sqlite,
-    pool_recycle=int(os.getenv("DB_POOL_RECYCLE", "280")) if not _is_sqlite else -1,
-    pool_size=int(os.getenv("DB_POOL_SIZE", "5")) if not _is_sqlite else 5,
-    max_overflow=int(os.getenv("DB_POOL_MAX_OVERFLOW", "10")) if not _is_sqlite else 10,
-    pool_timeout=int(os.getenv("DB_POOL_TIMEOUT", "30")),
-    echo_pool=os.getenv("DB_ECHO_POOL", "false").lower() in ("1", "true", "yes"),
-)
+# Use NullPool if env says so (useful for serverless / extraction workers that
+# open one connection, do one query, close — avoids pool accumulation)
+_use_null_pool = os.getenv("DB_NULL_POOL", "").strip().lower() in ("1", "true", "yes")
+
+if _use_null_pool and not _is_sqlite:
+    from sqlalchemy.pool import NullPool
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args=_pg_connect_args,
+        poolclass=NullPool,
+        pool_pre_ping=True,
+    )
+else:
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False} if _is_sqlite else _pg_connect_args,
+        pool_pre_ping=not _is_sqlite,
+        pool_recycle=int(os.getenv("DB_POOL_RECYCLE", "60")) if not _is_sqlite else -1,
+        pool_size=int(os.getenv("DB_POOL_SIZE", "2")) if not _is_sqlite else 5,
+        max_overflow=int(os.getenv("DB_POOL_MAX_OVERFLOW", "3")) if not _is_sqlite else 10,
+        pool_timeout=int(os.getenv("DB_POOL_TIMEOUT", "30")),
+        echo_pool=os.getenv("DB_ECHO_POOL", "false").lower() in ("1", "true", "yes"),
+    )
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 from sqlalchemy.orm import declarative_base  # noqa: E402
 Base = declarative_base()

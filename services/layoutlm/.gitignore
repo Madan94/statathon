@@ -1,0 +1,42 @@
+# LayoutLM service — ignore ALL model artifacts
+# HuggingFace downloads model files here if cache_dir isn't respected
+
+# Model weights
+*.safetensors
+*.bin
+*.pt
+*.ot
+*.onnx
+*.h5
+*.msgpack
+
+# HF hub cache directories
+hub/
+blobs/
+refs/
+snapshots/
+models--*/
+
+# Tokenizer/config files (downloaded, not ours)
+vocab.json
+merges.txt
+tokenizer.json
+tokenizer_config.json
+preprocessor_config.json
+config.json
+generation_config.json
+special_tokens_map.json
+
+# Lock files (HF download-in-progress markers)
+*.lock
+
+# Jinja templates (downloaded by tokenizers)
+*.jinja
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/

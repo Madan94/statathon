@@ -1,0 +1,94 @@
+﻿{
+  "entitiesRejected": [
+    {
+      "name": "4. Increase in proportion of workers with regular wage/ salary employment",
+      "reason": "section_heading",
+      "source": "heading",
+      "page": 4
+    },
+    {
+      "name": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+      "reason": "section_heading",
+      "source": "heading",
+      "page": 5
+    },
+    {
+      "name": "6. Earnings of female workers have seen notable shift",
+      "reason": "section_heading",
+      "source": "heading",
+      "page": 5
+    },
+    {
+      "name": "7. Average number of years in formal education",
+      "reason": "section_heading",
+      "source": "heading",
+      "page": 6
+    },
+    {
+      "name": "1. Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "reason": "too_long",
+      "source": "heading",
+      "page": 1
+    },
+    {
+      "name": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "reason": "too_long",
+      "source": "heading",
+      "page": 2
+    },
+    {
+      "name": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "reason": "too_long",
+      "source": "heading",
+      "page": 3
+    },
+    {
+      "name": "Endnote: brief about the objective, sample size, changes in sample design, conceptual",
+      "reason": "too_long",
+      "source": "heading",
+      "page": 7
+    },
+    {
+      "name": "framework and comparability of results of the Periodic Labour Force Survey (PLFS):",
+      "reason": "too_long",
+      "source": "heading",
+      "page": 7
+    },
+    {
+      "name": "Sample Size for First Visit during January 2025 December 2025 in rural and urban areas for",
+      "reason": "too_long",
+      "source": "heading",
+      "page": 8
+    },
+    {
+      "name": "Activity Status Usual Status:",
+      "reason": "trailing_punct_fragment",
+      "source": "heading",
+      "page": 9
+    },
+    {
+      "name": "Principal activity status (ps):",
+      "reason": "trailing_punct_fragment",
+      "source": "heading",
+      "page": 9
+    },
+    {
+      "name": "the Annual Report:",
+      "reason": "trailing_punct_fragment",
+      "source": "heading",
+      "page": 8
+    },
+    {
+      "name": "Unemployment Rate (UR):",
+      "reason": "trailing_punct_fragment",
+      "source": "heading",
+      "page": 9
+    },
+    {
+      "name": "Worker Population Ratio (WPR):",
+      "reason": "trailing_punct_fragment",
+      "source": "heading",
+      "page": 9
+    }
+  ]
+}

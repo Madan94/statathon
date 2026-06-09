@@ -54,7 +54,7 @@ def test_entities_from_pdfplumber():
     sources = {e["name"]: e["source"] for e in ents}
     assert sources["State/UT"] == "table_header"
     assert sources["Labour Force Participation Rate"] == "heading"
-    assert sources["Survey"] == "bold_word"
+    # bold_word source was removed (too noisy) — "Survey" no longer extracted individually
 
 
 def test_extract_table_from_text():
