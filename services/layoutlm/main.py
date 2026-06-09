@@ -138,7 +138,15 @@ def _load_model():
     from transformers import AutoProcessor, AutoModelForTokenClassification
 
     _cache = str(_MODEL_CACHE / "hub")
+    _ocr_lang = os.getenv("LAYOUTLM_OCR_LANG", "eng+hin")
     _processor = AutoProcessor.from_pretrained(MODEL_ID, apply_ocr=True, cache_dir=_cache)
+    # Set OCR language on the image processor (Tesseract lang code: eng+hin for bilingual)
+    if hasattr(_processor, "image_processor"):
+        _processor.image_processor.ocr_lang = _ocr_lang
+    elif hasattr(_processor, "feature_extractor"):
+        _processor.feature_extractor.ocr_lang = _ocr_lang
+    logger.info("OCR language set to: %s", _ocr_lang)
+
     _model = AutoModelForTokenClassification.from_pretrained(MODEL_ID, cache_dir=_cache)
     _model.eval()
     _device = "cpu"
@@ -206,11 +214,9 @@ def _analyze_page_image(image, page_index: int) -> dict[str, Any]:
     width, height = image.size
 
     # Process with LayoutLMv3's built-in OCR
-    # ocr_lang: eng+hin for bilingual MoSPI docs (Hindi headers, English data)
-    _ocr_lang = os.getenv("LAYOUTLM_OCR_LANG", "eng+hin")
+    # ocr_lang is set on the image_processor at model load time (see _load_model)
     encoding = _processor(
         image, return_tensors="pt", truncation=True, max_length=512,
-        ocr_lang=_ocr_lang,
     )
     encoding = {k: v.to(_device) for k, v in encoding.items()}
 
