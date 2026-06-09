@@ -3535,9 +3535,9 @@ def pass4_assemble_ast(
         # Build structured columns
         columns = []
         column_groups = []
-        dimensions_list = ts.get("dimensions") or []
-        measures_list = ts.get("measures") or []
-        breakdowns = ts.get("breakdowns") or []
+        dimensions_list = ts.get("dimensions") if isinstance(ts.get("dimensions"), list) else []
+        measures_list = ts.get("measures") if isinstance(ts.get("measures"), list) else []
+        breakdowns = ts.get("breakdowns") if isinstance(ts.get("breakdowns"), list) else []
 
         # Build column groups from breakdowns
         for bd in breakdowns:

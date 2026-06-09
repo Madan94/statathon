@@ -117,7 +117,7 @@ def _resolve_provider(task: str) -> str:
 # Qwen 3B with 2048 context: prompts are 400-1200 tokens, so safe output = 700.
 # This prevents "max context 2048" errors even with long prompts (tables, entities).
 _PROVIDER_MAX_OUTPUT: dict[str, int] = {
-    "qwen":   700,    # 2048 ctx − ~1300 reserved for prompt (images+text+schema)
+    "qwen":   500,    # 2048 ctx − ~1500 reserved for prompt+image. ONLY use for entity_extraction (256 tok)
     "openai": 4000,   # Ollama default 8192 ctx → ~4000 for output
     "gemini": 8000,   # Gemini Flash supports 8192 output tokens
     "groq":   4000,   # Groq models: 8192 output cap
