@@ -33,14 +33,20 @@ logger = logging.getLogger(__name__)
 
 
 class CheckpointStore:
-    """Per-pipeline checkpoint manager with Redis + file fallback."""
+    """Per-pipeline checkpoint manager with Redis + file fallback.
+    
+    Modes:
+        fresh  — New upload. Never loads from cache. Saves progress for resume.
+        resume — Pipeline broke midway. Loads cached passes, skips re-running them.
+    """
 
-    def __init__(self, source_hash: str):
+    def __init__(self, source_hash: str, mode: str = "fresh"):
         self.file_hash = source_hash[:12] if source_hash else "unknown"
         self.config_hash = self._compute_config_hash()[:8]
         self.prefix = os.getenv("REDIS_CHECKPOINT_PREFIX", "ckpt")
         self.enabled = os.getenv("CHECKPOINT_ENABLED", "true").lower() in ("1", "true", "yes")
         self.backend = os.getenv("CHECKPOINT_BACKEND", "auto")  # auto | redis | file
+        self.mode = mode  # "fresh" = new upload, "resume" = continue from break
 
         self._redis = None
         self._file_dir = Path(os.getenv("CHECKPOINT_DIR", "./checkpoints")) / f"{self.file_hash}_{self.config_hash}"
@@ -50,15 +56,21 @@ class CheckpointStore:
             if self.backend in ("auto", "redis"):
                 self._redis = self._connect_redis()
 
-        logger.info("[checkpoint] store=%s file_hash=%s config_hash=%s redis=%s",
+        # Fresh mode: clear ALL old cache for this file to ensure clean run
+        if self.mode == "fresh" and self.enabled:
+            self.invalidate()
+            logger.info("[checkpoint] store=fresh (new upload) — cleared old cache for %s", self.file_hash)
+        
+        logger.info("[checkpoint] store=%s mode=%s file_hash=%s config_hash=%s redis=%s",
                     "enabled" if self.enabled else "disabled",
+                    self.mode,
                     self.file_hash, self.config_hash,
                     "connected" if self._redis else "file-only")
 
     def _compute_config_hash(self) -> str:
         """Hash of model/provider config. Changes → cache miss (auto-invalidation)."""
         parts = [
-            "v4",  # bump this to invalidate ALL caches after pipeline logic changes
+            "v5",  # bump this to invalidate ALL caches after pipeline logic changes
             os.getenv("SGLANG_MODEL", ""),
             os.getenv("LAYOUTLM_MODEL_ID", ""),
             os.getenv("VLM_PROVIDER", ""),
@@ -120,8 +132,11 @@ class CheckpointStore:
             logger.debug("[checkpoint] File save failed for %s: %s", pass_name, e)
 
     def load(self, pass_name: str) -> Any | None:
-        """Load pass result from cache. Returns None on miss."""
+        """Load pass result from cache. Returns None on miss or in fresh mode."""
         if not self.enabled:
+            return None
+        # Fresh mode: never load from cache — always re-run
+        if self.mode == "fresh":
             return None
 
         # Redis

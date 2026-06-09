@@ -228,7 +228,7 @@ _PROVIDER_MAX_OUTPUT: dict[str, int] = {
     "qwen":   500,    # 2048 ctx − ~1500 reserved for prompt+image. ONLY use for entity_extraction (256 tok)
     "openai": 4000,   # Ollama default 8192 ctx → ~4000 for output
     "gemini": 8000,   # Gemini Flash supports 8192 output tokens
-    "groq":   4000,   # Groq models: 8192 output cap
+    "groq":   8000,   # Groq llama-3.3-70b: 32K output, scout-17b: 16K output - safe at 8K
 }
 
 

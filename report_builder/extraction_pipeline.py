@@ -3816,12 +3816,24 @@ def pass4_assemble_ast(
             if bi_query:
                 break
 
-        table_title = ts.get("description", f"Table on page {ts['page'] + 1}")
-        # Use VLM table_title if available
+        table_title = (ts.get("tableTitle") or ts.get("description") or "").strip()
+        # Use VLM table_title if available and current is generic
         if entity_pages and ts["page"] < len(entity_pages):
             vlm_title = (entity_pages[ts["page"]].get("table_title") or "").strip()
             if vlm_title:
                 table_title = vlm_title
+        # If still empty, build from column analysis
+        if not table_title or table_title.startswith("Table with"):
+            dims = ts.get("dimensions") or []
+            meas = ts.get("measures") or []
+            if meas and dims:
+                table_title = f"{meas[0]} by {dims[0]}" + (f" ({len(ts.get('columns',[]))} cols, p.{ts['page']+1})" if len(dims) > 1 else "")
+            elif ts.get("columns"):
+                cols = ts["columns"]
+                col_sample = ", ".join(str(c) for c in cols[:3])
+                table_title = f"Table p.{ts['page']+1}: {col_sample}{'...' if len(cols)>3 else ''} ({len(cols)} cols, {ts.get('row_count',0)} rows)"
+            else:
+                table_title = f"Table on page {ts['page'] + 1}"
 
         tables_ast.append({
             "tableId": t_id,
@@ -4511,7 +4523,9 @@ def run_extraction_pipeline(
     # ── Checkpoint system (Redis primary, file fallback) ──
     from report_builder.checkpoint_store import CheckpointStore
     _ckpt_hash = source_hash if source_hash else pdf_path.stem[:20]
-    ckpt = CheckpointStore(_ckpt_hash)
+    # Determine mode: "resume" only when explicitly resuming from a midway break
+    _ckpt_mode = "resume" if resume_from else "fresh"
+    ckpt = CheckpointStore(_ckpt_hash, mode=_ckpt_mode)
 
     # If resuming from a specific pass, invalidate that pass + all after it
     _PASS_ORDER = ["pass0", "pass1", "pass2_entities", "pass2_5", "pass2_6", "pass3_questions", "pass4", "pass5"]
