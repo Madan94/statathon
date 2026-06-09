@@ -383,7 +383,9 @@ Commit `feat(render): LaTeX/Tectonic premium PDF engine (--engine latex)`.
 | Sub-phase | Status | Commit | Notes |
 |-----------|--------|--------|-------|
 | R1.1 numbers+theme | ✅ done | `509438f` | render/ scaffold; numbers.py + theme.py; renderer.py delegates; 12 new tests; gate 109 green; s6 snapshot intact |
-| R1.2 svg charts | 🔄 next | — | 7 types + density |
+| R1.2 svg charts | ✅ done | `a34f7c2` | svg_charts.py: 7 types + horizontal density fallback; renderer delegates; 10 tests; gate 119 green; gold grouped_bar intact |
+| R1.3 tables | ✅ done | (this commit) | tables.py: column groups, measure fmt, subtotal bold (opt-in), em-dash blanks, footnote markers, header-repeat CSS; renderer delegates; 8 tests; gate 127 green; gold table intact |
+| R1.4 document | 🔄 next | — | cover, TOC, header/footer, page numbers, fig/table numbering |
 | R1.3 tables | pending | — | |
 | R1.4 document | pending | — | |
 | R1.5 blocks+bilingual | pending | — | R1 exit |

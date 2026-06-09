@@ -20,6 +20,7 @@ from typing import Any
 from .numbers import format_value, parse_format, esc, EM_DASH
 from .theme import Theme, THEMES, DEFAULT_THEME_ID, get_theme, theme_css
 from .svg_charts import render_chart_svg
+from .tables import render_table
 
 __all__ = [
     "render_html",
@@ -34,6 +35,7 @@ __all__ = [
     "get_theme",
     "theme_css",
     "render_chart_svg",
+    "render_table",
 ]
 
 

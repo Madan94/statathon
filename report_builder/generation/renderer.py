@@ -20,6 +20,7 @@ from typing import Any
 from .render.numbers import esc as _esc
 from .render.numbers import format_value
 from .render.svg_charts import render_chart_svg
+from .render.tables import render_table
 from .render.theme import get_theme, theme_css
 
 logger = logging.getLogger(__name__)
@@ -73,61 +74,8 @@ def _render_figure(figure: dict[str, Any], charts: dict[str, dict]) -> str:
 
 
 def _render_table(table: dict[str, Any]) -> str:
-    columns = table.get("columns") or []
-    groups = table.get("columnGroups") or []
-    rows = table.get("rows") or []
-    title = table.get("title")
-
-    parts = ["<table>"]
-    if title:
-        parts.append(f"<caption>{_esc(title)}</caption>")
-    parts.append("<thead>")
-
-    # Optional grouped header row (e.g. Rural / Urban spanning groups).
-    if groups:
-        group_of = {}
-        for g in groups:
-            for ref in g.get("spanRefs") or []:
-                group_of[ref] = g
-        parts.append('<tr class="colgroup-head">')
-        i = 0
-        while i < len(columns):
-            col = columns[i]
-            g = group_of.get(col.get("columnId"))
-            if g:
-                span = len(g.get("spanRefs") or [])
-                parts.append(f'<th colspan="{span}">{_esc(g.get("label"))}</th>')
-                i += span
-            else:
-                parts.append("<th></th>")
-                i += 1
-        parts.append("</tr>")
-
-    parts.append("<tr>")
-    for col in columns:
-        cls = "measure" if col.get("role") == "measure" else ""
-        parts.append(f'<th class="{cls}">{_esc(col.get("header"))}</th>')
-    parts.append("</tr></thead><tbody>")
-
-    for row in rows:
-        parts.append("<tr>")
-        for col in columns:
-            cid = col.get("columnId")
-            is_measure = col.get("role") == "measure"
-            cls = "measure" if is_measure else ""
-            val = (_fmt_value(row.get(cid), col.get("unit"), col.get("format"))
-                   if is_measure else _esc(row.get(cid)))
-            parts.append(f'<td class="{cls}">{val}</td>')
-        parts.append("</tr>")
-    parts.append("</tbody></table>")
-
-    # Footnotes (rendered text already filled by the filler).
-    notes = [fn.get("text") for fn in (table.get("footnotes") or []) if fn.get("text")]
-    if notes:
-        parts.append('<ul class="footnotes">')
-        parts.extend(f"<li>{_esc(n)}</li>" for n in notes)
-        parts.append("</ul>")
-    return "".join(parts)
+    """Back-compat shim → delegates to the MoSPI table renderer (Indian system)."""
+    return render_table(table, None, locale="en-IN", number_system="indian")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -87,11 +87,15 @@ figure {{ margin: 0 0 18px; }}
 figure figcaption {{ color: var(--muted); font-size: 13px; margin-top: 6px; font-style: italic; }}
 table {{ border-collapse: collapse; width: 100%; margin: 0 0 8px; font-size: 14px; }}
 table caption {{ caption-side: top; text-align: left; font-weight: 600; margin-bottom: 6px; }}
+thead {{ display: table-header-group; }}  /* repeat header on each printed page */
 th, td {{ border: 1px solid var(--line); padding: 6px 10px; }}
 th {{ background: var(--th-bg); text-align: left; }}
 td.measure, th.measure {{ text-align: right; font-variant-numeric: tabular-nums; }}
+td.center, th.center {{ text-align: center; }}
+tbody tr:nth-child(even) td {{ background: rgba(0,0,0,0.025); }}  /* zebra */
 tr.subtotal td {{ font-weight: 700; background: var(--group-bg); }}
 .colgroup-head th {{ text-align: center; background: var(--group-bg); }}
 .footnotes {{ color: var(--muted); font-size: 12px; margin: 4px 0 0; padding-left: 16px; }}
+.footnotes .fn-marker {{ font-weight: 600; color: var(--ink); }}
 .empty-slot {{ color: #b00; font-style: italic; }}
 """
