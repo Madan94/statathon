@@ -43,7 +43,7 @@ logger = logging.getLogger("layoutlm-service")
 
 app = FastAPI(title="LayoutLM Layout Detection Service", version="1.0.0")
 
-MODEL_ID = os.getenv("MODEL_ID", "microsoft/layoutlmv3-large")
+MODEL_ID = os.getenv("MODEL_ID") or os.getenv("LAYOUTLM_MODEL_ID") or "microsoft/layoutlmv3-large"
 MAX_PAGES = int(os.getenv("MAX_PAGES", "100"))
 
 # ── Model cache — OUTSIDE the git repo to avoid stash/conflict issues ────────

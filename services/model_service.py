@@ -1,7 +1,7 @@
 import os
 from functools import lru_cache
 
-SENTENCE_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+SENTENCE_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")
 
 @lru_cache(maxsize=1)
 def get_embedder():
