@@ -313,6 +313,8 @@ _COMMON_NOISE_WORDS: frozenset[str] = frozenset({
     "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
     "samrat", "cycle", "areas", "workers", "while", "engaged", "sustained",
     "market", "presented", "long", "mainly", "mainly",
+    "snapshot", "publications", "reports", "overview", "summary", "highlights",
+    "annexure", "appendix", "contents", "introduction", "conclusion",
 })
 
 # D1 fix (loop decision Q6): blocklist of PIB / web-export chrome that leaks as "entities".
@@ -467,10 +469,14 @@ def _classify_entity_name(name: str) -> str | None:
     # Chapter/section headings: "CHAPTER 1 Energy Reserves...", "Chapter 1: Energy..."
     if _re_entity_extra.match(r'^(?:CHAPTER|Chapter|SECTION|Section|PART|Part)\s', cleaned):
         return "chapter_heading"
-    # Long multi-word phrases (>40 chars) that look like headings/sentences, not entity names
-    # Real entities are short: "Coal Reserves", "LFPR", "State/UT"
-    if len(cleaned) > 40 and len(cleaned.split()) >= 5:
+    # Long multi-word phrases (>38 chars AND >=6 real words) that look like headings/sentences
+    # Real entities can be long: "Activity Status - Current Weekly Status" (38 chars, 5 real words)
+    _real_words = [w for w in cleaned.split() if any(c.isalpha() for c in w)]
+    if len(cleaned) > 38 and len(_real_words) >= 6:
         return "heading_phrase"
+    # Instructional / QR / website action phrases
+    if any(k in low for k in ("scan the", "click here", "visit our", "access the", "qr code", "download the")):
+        return "instructional_phrase"
     # Any entity containing an embedded percentage is a data value fragment, not an entity name
     if _re_entity_extra.search(r'\d+\.?\d*%', cleaned):
         return "embedded_percent"
@@ -485,6 +491,17 @@ def _classify_entity_name(name: str) -> str | None:
         return "paren_abbrev"
     if low in _COMMON_NOISE_WORDS:
         return "noise_word"
+    # Reject entity names ending with incomplete parenthesis: "Samrat (Release I"
+    if "(" in cleaned and ")" not in cleaned:
+        return "incomplete_paren"
+    # Reject entity names that are just a definition/expansion: "Labour Force (LFPR):"
+    if cleaned.endswith(":") or cleaned.endswith(":-"):
+        return "definition_label"
+    # Section-title pattern: "ACRONYM: descriptive text" — e.g., "PLFS: Changes in 2025"
+    if ": " in cleaned and len(cleaned.split()) >= 3:
+        before_colon = cleaned.split(":")[0].strip()
+        if before_colon.isupper() or len(before_colon) <= 6:
+            return "section_title_pattern"
     # D1: multi-word candidate whose every token is a noise word ("Press Re", "Page Back")
     _tokens = [t for t in _phrase.split() if t]
     if len(_tokens) >= 2 and all(t in _COMMON_NOISE_WORDS for t in _tokens):
