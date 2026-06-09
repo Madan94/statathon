@@ -22,7 +22,7 @@ import copy
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from .narrator import validate_numbers
+from .narrator import validate_numbers, _NUMBER_RE
 
 
 class EditRejected(ValueError):
@@ -39,40 +39,63 @@ class EditRejected(ValueError):
 
 
 def _allowed_values(report: dict[str, Any], qid: Optional[str]) -> set[float]:
-    """Every number the prose for ``qid`` may state (values + pairwise gaps)."""
-    vals: set[float] = set()
+    """Every number the prose for ``qid`` may state.
 
-    def add(v: Any) -> None:
+    Mirrors the narrator's :meth:`QuestionFacts.allowed_values` so prose the
+    generator itself wrote (and validated) always re-validates on edit. That
+    means the measure values and the pairwise gaps a desk officer derives from
+    them, PLUS the supporting integers the narrative legitimately cites — group
+    sample sizes (``n``), ranks, and filter bounds (e.g. ``age>=15`` lets an
+    officer keep "persons aged 15 years and above"). Without these the firewall
+    would reject the system's own sentences on the first re-edit.
+    """
+    vals: set[float] = set()
+    measures: list[float] = []
+
+    def add(v: Any, *, measure: bool = False) -> None:
         try:
-            vals.add(round(float(v), 1))
+            f = round(float(v), 1)
         except (TypeError, ValueError):
-            pass
+            return
+        vals.add(f)
+        if measure:
+            measures.append(f)
 
     an = report.get("analyticsAST") or {}
     for agg in an.get("aggregations") or []:
         if qid and agg.get("questionId") != qid:
             continue
         for row in agg.get("rows") or []:
-            add(row.get("value"))
+            add(row.get("value"), measure=True)
+            add(row.get("n"))
     for rk in an.get("rankings") or []:
         if qid and rk.get("questionId") != qid:
             continue
         for item in rk.get("items") or []:
-            add(item.get("value"))
+            add(item.get("value"), measure=True)
+            add(item.get("rank"))
     for metric in an.get("metrics") or []:
         if qid and metric.get("questionId") != qid:
             continue
-        add(metric.get("value"))
+        add(metric.get("value"), measure=True)
     for tr in an.get("trends") or []:
         if qid and tr.get("questionId") != qid:
             continue
         for pt in tr.get("points") or []:
-            add(pt.get("value"))
+            add(pt.get("value"), measure=True)
+    # Filter bounds (e.g. "age>=15" -> the officer may write "aged 15 years").
+    for plan in an.get("plans") or []:
+        if qid and plan.get("questionId") != qid:
+            continue
+        for expr in plan.get("filters") or []:
+            for tok in _NUMBER_RE.findall(str(expr)):
+                add(tok)
 
-    # Allow stated differences (e.g. "a gap of 9.2 percentage points").
-    base = list(vals)
-    for a in base:
-        for b in base:
+    # Allow stated differences between MEASURE values only (e.g. "a gap of 9.2
+    # percentage points") — never cross-differences with the supporting
+    # integers, so a hallucinated figure still can't slip through as a "gap".
+    for a in measures:
+        for b in measures:
             if a != b:
                 add(round(a - b, 1))
     return vals
