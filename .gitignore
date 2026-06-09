@@ -14,17 +14,46 @@ model/storage/vector_cache/
 model/weights/
 model/phase2_output.json
 
-# HuggingFace model downloads (can appear anywhere transformers runs)
+# HuggingFace / transformers model downloads (can appear anywhere in the tree)
+# Large model weight files — never commit
 *.safetensors
 *.bin
 *.ot
 *.pt
 *.onnx
 *.h5
-hub/
-blobs/
-refs/
-snapshots/
+*.msgpack
+
+# HuggingFace hub cache structure (blobs, refs, snapshots dirs)
+**/hub/
+**/blobs/
+**/refs/
+**/snapshots/
+
+# HF lock files (download-in-progress markers)
+*.lock
+**/*.lock
+
+# HF config/tokenizer JSON that appears inside cache snapshots
+# (We keep OUR JSON configs tracked, but HF downloads into hub/models--*/snapshots/*)
+**/models--*/
+
+# Jinja templates downloaded by transformers tokenizers
+*.jinja
+**/*.jinja
+
+# Logs from model loading
+*.log
+**/*.log
+
+# Downloaded tokenizer/vocab files (large, not ours)
+**/vocab.json
+**/merges.txt
+**/tokenizer.json
+**/tokenizer_config.json
+**/preprocessor_config.json
+**/generation_config.json
+**/special_tokens_map.json
 .venv/
 data/raw_uploads
 
