@@ -187,7 +187,12 @@ def _analyze_page_image(image, page_index: int) -> dict[str, Any]:
     width, height = image.size
 
     # Process with LayoutLMv3's built-in OCR
-    encoding = _processor(image, return_tensors="pt", truncation=True, max_length=512)
+    # ocr_lang: eng+hin for bilingual MoSPI docs (Hindi headers, English data)
+    _ocr_lang = os.getenv("LAYOUTLM_OCR_LANG", "eng+hin")
+    encoding = _processor(
+        image, return_tensors="pt", truncation=True, max_length=512,
+        ocr_lang=_ocr_lang,
+    )
     encoding = {k: v.to(_device) for k, v in encoding.items()}
 
     with torch.no_grad():
@@ -261,11 +266,17 @@ def _analyze_page_image(image, page_index: int) -> dict[str, Any]:
     # Deduplicate overlapping regions of same type
     merged_regions = _merge_overlapping_regions(regions)
 
+    # Confidence threshold: filter low-confidence regions (MoSPI has edge cases)
+    _min_conf = float(os.getenv("LAYOUTLM_MIN_CONFIDENCE", "0.55"))
+    filtered_regions = [r for r in merged_regions if r.get("confidence", 0) >= _min_conf]
+    logger.debug("Page %d: %d regions → %d after confidence filter (min=%.2f)",
+                 page_index, len(merged_regions), len(filtered_regions), _min_conf)
+
     return {
         "page_index": page_index,
         "width": width,
         "height": height,
-        "regions": merged_regions,
+        "regions": filtered_regions,
     }
 
 
@@ -362,9 +373,11 @@ async def analyze_pdf(file: UploadFile = File(...)):
 
         poppler_path = os.getenv("POPPLER_PATH") or None
         t0 = time.monotonic()
+        # 300 DPI for dense MoSPI tables (superscripts, footnotes, packed numbers)
+        _dpi = int(os.getenv("LAYOUTLM_DPI", "300"))
         images = pdf2image.convert_from_path(
             str(tmp_path),
-            dpi=200,
+            dpi=_dpi,
             fmt="png",
             first_page=1,
             last_page=MAX_PAGES,
