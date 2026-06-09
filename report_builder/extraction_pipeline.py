@@ -4205,6 +4205,7 @@ def run_extraction_pipeline(
     doc_title: str = "Document",
     source_hash: str = "",
     progress_callback: Any = None,
+    resume_from: str = "",
 ) -> dict[str, Any]:
     """Run the complete 7-pass extraction pipeline.
 
@@ -4215,6 +4216,12 @@ def run_extraction_pipeline(
     Pass 3: Two-loop AST building (questions + entity bindings)
     Pass 4: Enterprise AST + blueprint assembly
     Pass 5: Optional Gemini enhancement
+
+    Args:
+        resume_from: Pass name to resume from (e.g. "pass3", "pass4").
+                     Clears that pass's checkpoint so it re-runs.
+                     All passes before it use cache.
+                     Empty string = normal run (use all available cache).
 
     Returns:
         Enterprise Document AST dict with embedded blueprint subtree.
@@ -4228,36 +4235,20 @@ def run_extraction_pipeline(
     pipeline_trace: dict[str, Any] = {"passes": {}, "total_elapsed": 0}
     pipeline_start = _time.monotonic()
 
-    # ── Checkpoint system: save/load each pass result to avoid re-computation ──
-    _ckpt_enabled = os.getenv("CHECKPOINT_ENABLED", "true").lower() in ("1", "true", "yes")
-    _ckpt_dir = Path(os.getenv("CHECKPOINT_DIR", "./checkpoints"))
-    _ckpt_hash = source_hash[:12] if source_hash else pdf_path.stem[:20]
-    _ckpt_path = _ckpt_dir / _ckpt_hash
-    if _ckpt_enabled:
-        _ckpt_path.mkdir(parents=True, exist_ok=True)
+    # ── Checkpoint system (Redis primary, file fallback) ──
+    from report_builder.checkpoint_store import CheckpointStore
+    _ckpt_hash = source_hash if source_hash else pdf_path.stem[:20]
+    ckpt = CheckpointStore(_ckpt_hash)
 
-    def _save_checkpoint(pass_name: str, data: Any):
-        if not _ckpt_enabled:
-            return
-        try:
-            with open(_ckpt_path / f"{pass_name}.json", "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, default=str)
-        except Exception as e:
-            logger.debug("[checkpoint] Failed to save %s: %s", pass_name, e)
-
-    def _load_checkpoint(pass_name: str) -> Any:
-        if not _ckpt_enabled:
-            return None
-        ckpt_file = _ckpt_path / f"{pass_name}.json"
-        if ckpt_file.exists():
-            try:
-                with open(ckpt_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                logger.info("[checkpoint] ✓ Restored %s from cache", pass_name)
-                return data
-            except Exception:
-                pass
-        return None
+    # If resuming from a specific pass, invalidate that pass + all after it
+    _PASS_ORDER = ["pass0", "pass1", "pass2_entities", "pass2_5", "pass2_6", "pass3_questions", "pass4", "pass5"]
+    if resume_from:
+        _resume_idx = next((i for i, p in enumerate(_PASS_ORDER) if resume_from in p), -1)
+        if _resume_idx >= 0:
+            for p in _PASS_ORDER[_resume_idx:]:
+                ckpt.invalidate(p)
+            logger.info("[pipeline] Resuming from %s — cleared cache for passes %s",
+                        resume_from, _PASS_ORDER[_resume_idx:])
 
     logger.info("═══════════════════════════════════════════════════════════")
     logger.info("  Multi-Pass Extraction Pipeline v3.0")
@@ -4315,12 +4306,12 @@ def run_extraction_pipeline(
     # ── Pass 2: Entity + Structure Extraction ──
     _tick("pass2_entity_extraction", 30)
     t0 = _time.monotonic()
-    _cached_pass2 = _load_checkpoint("pass2_entities")
+    _cached_pass2 = ckpt.load("pass2_entities")
     if _cached_pass2:
         entity_pages = _cached_pass2
     else:
         entity_pages = pass2_entity_structure_extraction(page_images, layout_pages, page_texts, doc_title, doc_type=doc_type)
-        _save_checkpoint("pass2_entities", entity_pages)
+        ckpt.save("pass2_entities", entity_pages)
     pass2_elapsed = _time.monotonic() - t0
 
     vlm_success = sum(1 for p in entity_pages if p.get("vlm_used"))
@@ -4387,12 +4378,12 @@ def run_extraction_pipeline(
     # ── Pass 3: Two-Loop AST Building ──
     _tick("pass3_ast_building", 60)
     t0 = _time.monotonic()
-    _cached_pass3 = _load_checkpoint("pass3_questions")
+    _cached_pass3 = ckpt.load("pass3_questions")
     if _cached_pass3:
         ast_result = _cached_pass3
     else:
         ast_result = pass3_two_loop_ast_building(document_map, page_texts, doc_title, page_images=page_images)
-        _save_checkpoint("pass3_questions", ast_result)
+        ckpt.save("pass3_questions", ast_result)
     pass3_elapsed = _time.monotonic() - t0
 
     # ── Gemini Safety: Question gap fill (Mode 2) ──

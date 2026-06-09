@@ -27,7 +27,7 @@ from typing import Optional
 from uuid import uuid4
 
 from fastapi import (
-    APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile,
+    APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile,
     WebSocket, WebSocketDisconnect,
 )
 from fastapi.responses import FileResponse
@@ -184,7 +184,7 @@ def list_ready_analyses(
 # ---------------- Templates ----------------
 
 
-def _run_template_extraction_job(extract_job_id: int) -> None:
+def _run_template_extraction_job(extract_job_id: int, resume_from: str = "") -> None:
     t_job_start = time.monotonic()
     db = SessionLocal()
     try:
@@ -251,7 +251,7 @@ def _run_template_extraction_job(extract_job_id: int) -> None:
             )
             _update_extract_job(db, row, stage=stage, progress_pct=pct, diagnostics=dict(payload))
 
-        ast, diagnostics = bp.compile_template_production(src_path, row.template_name, progress=_progress)
+        ast, diagnostics = bp.compile_template_production(src_path, row.template_name, progress=_progress, resume_from=resume_from)
         ast_payload = diagnostics.get("blueprint_payload") if isinstance(diagnostics, dict) else None
         if not isinstance(ast_payload, dict):
             ast_payload = ast.to_dict()
@@ -371,6 +371,81 @@ def get_template_extract_job(
     if not row:
         raise HTTPException(404, "Extraction job not found")
     return _extract_job_to_out(row)
+
+
+@router.post("/templates/extract-jobs/{job_id}/resume")
+async def resume_extraction_job(
+    job_id: int,
+    background: BackgroundTasks,
+    resume_from: str = Query("", description="Pass to re-run from: pass2, pass3, pass4, pass5. Empty=full retry."),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Resume/retry a failed extraction job from a specific pass.
+    
+    Cached results from earlier passes are reused. Only the specified pass
+    and everything after it are re-computed.
+    
+    Valid resume_from values:
+        pass0 - Full re-run (no cache)
+        pass1 - Re-run layout detection onwards
+        pass2 - Re-run entity extraction onwards  
+        pass3 - Re-run question generation onwards
+        pass4 - Re-run AST assembly only (fastest — no LLM calls)
+        pass5 - Re-run Gemini enrichment only
+    """
+    row = db.query(ReportTemplateExtractionJob).filter(
+        ReportTemplateExtractionJob.id == job_id,
+        ReportTemplateExtractionJob.user_id == user_id,
+    ).first()
+    if not row:
+        raise HTTPException(404, "Extraction job not found")
+    if row.status == "running":
+        raise HTTPException(409, "Job is already running")
+
+    # Reset job status
+    row.status = "pending"
+    row.stage = f"resuming_from_{resume_from or 'start'}"
+    row.progress_pct = 0
+    row.error_message = None
+    db.commit()
+
+    background.add_task(_run_template_extraction_job, row.id, resume_from=resume_from)
+    return {"status": "resumed", "job_id": job_id, "resume_from": resume_from or "start"}
+
+
+@router.get("/templates/extract-jobs/{job_id}/checkpoints")
+def get_job_checkpoints(
+    job_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Get which passes are cached for this job's PDF (helps UI show resume options)."""
+    row = db.query(ReportTemplateExtractionJob).filter(
+        ReportTemplateExtractionJob.id == job_id,
+        ReportTemplateExtractionJob.user_id == user_id,
+    ).first()
+    if not row:
+        raise HTTPException(404, "Extraction job not found")
+
+    src_path = Path(row.source_storage_path or "")
+    source_hash = ""
+    if src_path.is_file():
+        source_hash = hashlib.sha256(src_path.read_bytes()).hexdigest()
+
+    from report_builder.checkpoint_store import CheckpointStore
+    ckpt = CheckpointStore(source_hash)
+
+    passes = [
+        {"id": "pass0", "name": "PDF Rasterization", "cached": False},  # always runs
+        {"id": "pass1", "name": "Layout Detection (LayoutLM)", "cached": False},  # always runs
+        {"id": "pass2_entities", "name": "Entity Extraction (Qwen VLM)", "cached": ckpt.exists("pass2_entities")},
+        {"id": "pass2_5", "name": "Knowledge Graph (programmatic)", "cached": False},  # fast, always runs
+        {"id": "pass3_questions", "name": "Question Generation (Gemini)", "cached": ckpt.exists("pass3_questions")},
+        {"id": "pass4", "name": "AST Assembly (deterministic)", "cached": False},  # fast, always runs
+        {"id": "pass5", "name": "Gemini Enrichment (optional)", "cached": False},
+    ]
+    return {"job_id": job_id, "source_hash": source_hash[:12], "passes": passes}
 
 
 @router.post("/templates/upload", response_model=TemplateCreateOut)

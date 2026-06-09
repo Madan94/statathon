@@ -535,6 +535,7 @@ def compile_template_production(
     template_name: str,
     *,
     progress: Callable[[str, int, dict[str, Any]], None] | None = None,
+    resume_from: str = "",
 ) -> tuple[TemplateAST, dict[str, Any]]:
     """Run full 6-stage extraction with strict architecture payload."""
     path = Path(pdf_path)
@@ -563,6 +564,7 @@ def compile_template_production(
             doc_title=template_name or "Document",
             source_hash=file_hash or "",
             progress_callback=lambda stage, pct, data: _tick(stage, pct, {"v2": True}),
+            resume_from=resume_from,
         )
         # Build TemplateAST from enterprise AST for backward compat
         v2_blocks: list[BlockSpec] = []
