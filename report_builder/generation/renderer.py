@@ -14,39 +14,21 @@ WeasyPrint is importable, otherwise HTML is the deliverable.
 """
 from __future__ import annotations
 
-import html
 import logging
 from typing import Any
+
+from .render.numbers import esc as _esc
+from .render.numbers import format_value
+from .render.theme import get_theme, theme_css
 
 logger = logging.getLogger(__name__)
 
 # Fallback categorical palette (mirrors the filler) when a point has no colour.
-_PALETTE = ["#1F7A1F", "#0B5394", "#B45F06", "#741B47", "#594F8D", "#0C6E6E"]
+# Sourced from the default theme so palette + CSS stay in sync.
+_PALETTE = get_theme(None).palette
 
-_CSS = """
-:root { --ink:#1a1a1a; --muted:#5a5a5a; --line:#d9d9d9; --accent:#0B5394; }
-* { box-sizing: border-box; }
-body { font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-       color: var(--ink); margin: 0; padding: 32px; line-height: 1.5; }
-.report { max-width: 820px; margin: 0 auto; }
-.report-header { border-bottom: 2px solid var(--accent); padding-bottom: 12px; margin-bottom: 24px; }
-.report-header h1 { margin: 0 0 4px; font-size: 22px; }
-.report-meta { color: var(--muted); font-size: 13px; }
-section.report-section { margin-bottom: 28px; }
-section.report-section > h2 { font-size: 18px; border-left: 4px solid var(--accent);
-       padding-left: 10px; margin: 0 0 12px; }
-p.block { margin: 0 0 12px; text-align: justify; }
-figure { margin: 0 0 18px; }
-figure figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; font-style: italic; }
-table { border-collapse: collapse; width: 100%; margin: 0 0 8px; font-size: 14px; }
-table caption { caption-side: top; text-align: left; font-weight: 600; margin-bottom: 6px; }
-th, td { border: 1px solid var(--line); padding: 6px 10px; }
-th { background: #f3f6fa; text-align: left; }
-td.measure, th.measure { text-align: right; font-variant-numeric: tabular-nums; }
-.colgroup-head th { text-align: center; background: #e8eef6; }
-.footnotes { color: var(--muted); font-size: 12px; margin: 4px 0 0; padding-left: 16px; }
-.empty-slot { color: #b00; font-style: italic; }
-"""
+# Default document CSS (navy theme). theme_css() is the single source of truth.
+_CSS = theme_css(None)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -55,24 +37,8 @@ td.measure, th.measure { text-align: right; font-variant-numeric: tabular-nums; 
 
 
 def _fmt_value(value: Any, unit: str | None = None, fmt: str | None = None) -> str:
-    if value is None:
-        return "—"
-    if isinstance(value, (int, float)) and not isinstance(value, bool):
-        digits = 1
-        if fmt and "." in fmt:
-            try:
-                digits = int(fmt.rsplit(".", 1)[1])
-            except ValueError:
-                digits = 1
-        s = f"{value:,.{digits}f}" if isinstance(value, float) else f"{value:,}"
-        if unit == "percent":
-            return f"{s}%"
-        return s
-    return html.escape(str(value))
-
-
-def _esc(text: Any) -> str:
-    return html.escape(str(text if text is not None else ""))
+    """Thin wrapper over the render layer's formatter (Indian grouping default)."""
+    return format_value(value, unit=unit, fmt=fmt, system="indian")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
