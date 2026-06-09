@@ -165,6 +165,16 @@ function PreviewInner() {
               <Download className="h-4 w-4" /> PDF
             </Button>
           </a>
+          <a
+            href={generatePhaseApi.reportPdfUrl(tid, sig, { locale, engine: 'latex' })}
+            target="_blank"
+            rel="noreferrer"
+            title="Premium typeset PDF (requires the LaTeX/Tectonic engine on the server)"
+          >
+            <Button variant="ghost" size="sm" className="text-text-muted">
+              PDF (LaTeX)
+            </Button>
+          </a>
           <Link href="/report-builder/binding">
             <Button variant="ghost" size="sm" className="text-text-muted">
               <ArrowLeft className="h-4 w-4" /> Back

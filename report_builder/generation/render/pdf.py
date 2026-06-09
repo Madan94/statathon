@@ -72,6 +72,7 @@ def render_pdf(
             return None
         return render_pdf_latex(
             report, title=title, theme=theme, locale=locale,
+            number_system=number_system,
             include_cover=include_cover, include_toc=include_toc,
             include_appendix=include_appendix, number_elements=number_elements,
         )
