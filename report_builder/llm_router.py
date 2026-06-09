@@ -224,7 +224,17 @@ def _call_qwen_vision(prompt: str, image_bytes: bytes, max_tokens: int, temperat
         r = requests.post(endpoint, json=payload, timeout=timeout)
         if r.status_code == 200:
             return r.json()["choices"][0]["message"]["content"].strip()
-        logger.warning("[llm_router][qwen-vision] HTTP %d: %s", r.status_code, r.text[:200])
+        # Auto-retry with reduced tokens on context overflow (400 "maximum context length")
+        if r.status_code == 400 and "maximum context length" in (r.text or ""):
+            reduced = max(64, max_tokens // 2)
+            logger.warning("[llm_router][qwen-vision] Context overflow (max_tok=%d) — retrying with %d", max_tokens, reduced)
+            payload["max_tokens"] = reduced
+            r2 = requests.post(endpoint, json=payload, timeout=timeout)
+            if r2.status_code == 200:
+                return r2.json()["choices"][0]["message"]["content"].strip()
+            logger.warning("[llm_router][qwen-vision] Retry also failed: HTTP %d", r2.status_code)
+        else:
+            logger.warning("[llm_router][qwen-vision] HTTP %d: %s", r.status_code, r.text[:200])
     except Exception as exc:
         logger.warning("[llm_router][qwen-vision] Request failed: %s", exc)
     return None
