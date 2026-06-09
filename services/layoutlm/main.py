@@ -52,7 +52,7 @@ app = FastAPI(title="LayoutLM Layout Detection Service", version="1.0.0")
 
 # LAYOUTLM_MODEL_ID (specific) wins over MODEL_ID (generic) wins over default
 # This ensures setting $env:LAYOUTLM_MODEL_ID always takes effect
-MODEL_ID = os.getenv("LAYOUTLM_MODEL_ID") or os.getenv("MODEL_ID") or "pierreguillou/layoutlmv3-finetuned-funsd"
+MODEL_ID = os.getenv("LAYOUTLM_MODEL_ID") or os.getenv("MODEL_ID") or "Kwan0/layoutlmv3-base-finetune-DocLayNet-100k"
 logger.info("Resolved model: %s (LAYOUTLM_MODEL_ID=%s, MODEL_ID=%s)",
             MODEL_ID, os.getenv("LAYOUTLM_MODEL_ID", ""), os.getenv("MODEL_ID", ""))
 MAX_PAGES = int(os.getenv("MAX_PAGES", "100"))
@@ -86,7 +86,9 @@ _DEFAULT_LABEL_MAP = {
     9: "chart",
 }
 
-# DocLayNet labels (used by pierreguillou/layoutlmv3-finetuned-funsd and similar)
+# DocLayNet labels (used by Kwan0/layoutlmv3-base-finetune-DocLayNet-100k and similar)
+# DocLayNet 11 classes: Caption, Footnote, Formula, List-item, Page-footer,
+# Page-header, Picture, Section-header, Table, Text, Title
 _DOCLAYNET_LABEL_MAP = {
     0: "caption",
     1: "footer",       # Footnote
