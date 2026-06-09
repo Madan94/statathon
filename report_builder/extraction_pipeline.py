@@ -3788,6 +3788,31 @@ def pass4_assemble_ast(
         measures_list = ts.get("measures") if isinstance(ts.get("measures"), list) else []
         breakdowns = ts.get("breakdowns") if isinstance(ts.get("breakdowns"), list) else []
 
+        # ── Gold-standard enhancement: cross-reference table columns with classified entities ──
+        # If measures_list is empty but columns match known measure entities, reclassify
+        if not measures_list and dimensions_list:
+            _entity_measures = {e.get("name", "").lower() for e in all_entities if e.get("entityType_hint") == "measure"}
+            _entity_dimensions = {e.get("name", "").lower() for e in all_entities if e.get("entityType_hint") == "dimension"}
+            _new_dims = []
+            _new_meas = []
+            for col in dimensions_list:
+                col_low = col.lower().strip()
+                if col_low in _entity_measures or any(m in col_low for m in _entity_measures if len(m) > 3):
+                    _new_meas.append(col)
+                elif col_low in _entity_dimensions or any(d in col_low for d in _entity_dimensions if len(d) > 3):
+                    _new_dims.append(col)
+                else:
+                    # Heuristic: if column name contains numeric keywords, it's likely a measure
+                    _num_kw = ("total", "amount", "value", "rate", "ratio", "percentage", "number", "count",
+                               "production", "capacity", "reserves", "potential", "estimate", "generation")
+                    if any(k in col_low for k in _num_kw):
+                        _new_meas.append(col)
+                    else:
+                        _new_dims.append(col)
+            if _new_meas:
+                dimensions_list = _new_dims
+                measures_list = _new_meas
+
         # Build column groups from breakdowns
         for bd in breakdowns:
             for val in (bd.get("values") or []):
@@ -3917,8 +3942,8 @@ def pass4_assemble_ast(
             "title": table_title,
             "columnGroups": column_groups,
             "columns": columns,
-            "dimensions": [_resolve_eid(d) for d in dimensions_list],
-            "measures": [_resolve_eid(m) for m in measures_list],
+            "dimensions": [c["columnId"] for c in columns if c.get("role") == "dimension"],
+            "measures": [c["columnId"] for c in columns if c.get("role") == "measure"],
             "breakdowns": [_resolve_eid(bd.get("measure", "")) for bd in breakdowns],
             "footnotes": [
                 {"noteId": f"fn_{tt_id}_src", "marker": "Source", "textTemplate": "Source: {{dataset.title}}, {{period.current}}."},
@@ -4404,23 +4429,99 @@ def pass4_assemble_ast(
             })
 
         if bp_questions:
+            # ── Topic title improvement: derive meaningful title ──
+            # If title is bare chapter marker ("CHAPTER 1"), use the dominant measure entity
+            _improved_title = topic_title
+            import re as _re_topic_title
+            if _re_topic_title.match(r'^(?:CHAPTER|Chapter|PART|Part|Section)\s+\d+\s*$', topic_title.strip()):
+                # Find the primary measure entity for this topic's questions
+                _topic_measures = []
+                for q in bp_questions:
+                    for re_ent in q.get("requiredEntities", []):
+                        if re_ent.get("role") == "measure" and re_ent.get("entityId"):
+                            _m_name = entity_map.get(re_ent["entityId"], {}).get("name", "")
+                            if _m_name:
+                                _topic_measures.append(_m_name)
+                if _topic_measures:
+                    # Use most common measure as topic title
+                    from collections import Counter as _Counter_tt
+                    _improved_title = _Counter_tt(_topic_measures).most_common(1)[0][0]
+                else:
+                    # Fall back to first sub-heading in that chapter's page range
+                    pass
+
             blueprint_topics.append({
                 "topicId": tid,
-                "title": topic_title,
+                "title": _improved_title,
                 "order": t_idx + 1,
                 "semanticRef": sec_id,
                 "questions": bp_questions,
             })
 
-    # Glossary — build from measure entities
+    # Glossary — domain-enriched with MoSPI/NSSO/PLFS statistical terminology
+    # Seed with known official statistical definitions; augment with extracted entities
+    _MOSPI_GLOSSARY_SEED: dict[str, str] = {
+        "LFPR": "Labour Force Participation Rate - percentage of the population in the labour force (working or seeking work).",
+        "WPR": "Worker Population Ratio - percentage of employed persons in the population of age 15 years and above.",
+        "UR": "Unemployment Rate - percentage of the labour force that is unemployed.",
+        "PLFS": "Periodic Labour Force Survey - annual household survey conducted by NSO for employment/unemployment indicators.",
+        "NSO": "National Statistical Office - apex statistical body under MoSPI, Government of India.",
+        "MoSPI": "Ministry of Statistics and Programme Implementation - responsible for official statistics in India.",
+        "NSSO": "National Sample Survey Office - field survey arm of NSO, conducts large-scale sample surveys.",
+        "CWS": "Current Weekly Status - activity status of a person during the reference week preceding the date of survey.",
+        "usual_status": "Usual Status (ps+ss) - activity status over the 365 days preceding the survey (principal + subsidiary economic activity).",
+        "UNFC": "United Nations Framework Classification for Fossil Energy and Mineral Reserves and Resources (2009) - international standard for resource classification.",
+        "SEEA": "System of Environmental-Economic Accounting - UN statistical framework integrating economic and environmental data.",
+        "GDP": "Gross Domestic Product - total value of goods and services produced within a country in a year.",
+        "GVA": "Gross Value Added - measure of contribution to GDP by individual sectors.",
+        "CPI": "Consumer Price Index - measure of average change in prices paid by consumers for a basket of goods and services.",
+        "WPI": "Wholesale Price Index - measure of average change in prices at the wholesale level.",
+        "NAS": "National Accounts Statistics - official annual compendium of macroeconomic indicators.",
+        "ASI": "Annual Survey of Industries - census of registered manufacturing sector.",
+        "EAC": "Economic Advisory Council - advisory body to the Prime Minister on economic matters.",
+        "MW": "Megawatt - unit of power (1 MW = 1,000 kW), used for energy generation capacity.",
+        "MT": "Million Tonnes - unit of weight used for commodity production/reserves statistics.",
+        "BCM": "Billion Cubic Metres - unit used for natural gas reserves.",
+        "MMT": "Million Metric Tonnes - variant of MT used in energy/mining statistics.",
+        "MTOE": "Million Tonnes of Oil Equivalent - standardized energy measurement unit.",
+    }
+
     glossary: dict[str, str] = {}
+    # Add relevant seed terms based on document entities
+    _ent_names_lower = {e["canonicalName"].lower() for e in blueprint_entities}
+    _ent_aliases_lower = set()
+    for e in blueprint_entities:
+        for a in (e.get("aliases") or []):
+            _ent_aliases_lower.add(a.lower())
+
+    for term, defn in _MOSPI_GLOSSARY_SEED.items():
+        term_low = term.lower()
+        # Include if the term or its expansion appears in entities
+        if (term_low in _ent_names_lower or term_low in _ent_aliases_lower or
+                any(term_low in n for n in _ent_names_lower)):
+            glossary[term] = defn
+
+    # Generate definitions for extracted measure entities not in seed
     for ent in blueprint_entities:
         if ent.get("entityType") == "measure" and ent.get("canonicalName"):
             name = ent["canonicalName"]
             aliases = ent.get("aliases") or []
-            abbrev = aliases[0] if aliases else ""
+            abbrev = aliases[0] if aliases and len(aliases[0]) <= 8 else ""
             glossary_key = abbrev or name
-            glossary[glossary_key] = f"{name} — extracted indicator from the source document."
+
+            if glossary_key not in glossary:
+                unit_str = f" ({ent['unit']})" if ent.get("unit") else ""
+                scope_str = "indicator" if ent.get("scope") == "indicator" else "measure"
+                glossary[glossary_key] = f"{name}{unit_str} - statistical {scope_str} extracted from the source document."
+
+    # Add dimension entities with categorical domains
+    for ent in blueprint_entities:
+        if ent.get("entityType") == "dimension" and ent.get("valueDomain"):
+            vd = ent["valueDomain"]
+            if isinstance(vd, dict) and vd.get("members") and isinstance(vd["members"], list):
+                name = ent["canonicalName"]
+                members = ", ".join(str(m) for m in vd["members"][:5])
+                glossary[name] = f"{name} - classification dimension with categories: {members}."
 
     # Palette
     palette = {

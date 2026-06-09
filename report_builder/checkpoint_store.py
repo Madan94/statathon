@@ -68,16 +68,29 @@ class CheckpointStore:
                     "connected" if self._redis else "file-only")
 
     def _compute_config_hash(self) -> str:
-        """Hash of model/provider config. Changes → cache miss (auto-invalidation)."""
+        """Hash of model/provider config + pipeline code. Changes → cache miss.
+        
+        Dynamic: hashes the actual extraction_pipeline.py source code so ANY
+        code change auto-invalidates without manual version bumps.
+        """
         parts = [
-            "v6",  # bump this to invalidate ALL caches after pipeline logic changes
             os.getenv("SGLANG_MODEL", ""),
             os.getenv("LAYOUTLM_MODEL_ID", ""),
             os.getenv("VLM_PROVIDER", ""),
             os.getenv("REASONING_PROVIDER", ""),
             os.getenv("GEMINI_MODEL", ""),
             os.getenv("PROVIDER_ENTITY_EXTRACTION", ""),
+            os.getenv("ENTITY_EXTRACTION_MAX_TOKENS", ""),
+            os.getenv("QUESTION_GENERATION_MAX_TOKENS", ""),
         ]
+        # Include pipeline source hash so code changes auto-invalidate
+        try:
+            _pipeline_path = Path(__file__).parent / "extraction_pipeline.py"
+            if _pipeline_path.exists():
+                _src_hash = hashlib.md5(_pipeline_path.read_bytes()).hexdigest()[:8]
+                parts.append(_src_hash)
+        except Exception:
+            parts.append("unknown")
         return hashlib.md5("|".join(parts).encode()).hexdigest()
 
     def _connect_redis(self):
