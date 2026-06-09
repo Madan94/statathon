@@ -4525,7 +4525,7 @@ def run_extraction_pipeline(
         "total_entities": total_entities,
         "chart_pages_detected": chart_pages_detected,
         "total_chart_types": total_charts,
-        "vlm_provider": (_os.getenv("PROVIDER_ENTITY_EXTRACTION") or _os.getenv("VLM_PROVIDER", "qwen")).strip().lower(),
+        "vlm_provider": (os.getenv("PROVIDER_ENTITY_EXTRACTION") or os.getenv("VLM_PROVIDER", "qwen")).strip().lower(),
         "vlm_fallback_used": vlm_success > 0 and any(
             p.get("vlm_used") for p in entity_pages
         ),
