@@ -3956,9 +3956,13 @@ def pass4_assemble_ast(
         figures_ast.append({
             "figureId": fig_id,
             "templateRef": ft_id,
-            "caption": "",
+            "type": "chart",
+            "title": chart.get("title", ""),
+            "caption": caption_tpl,
             "captionTemplate": caption_tpl,
             "chartRef": chart["chartId"],
+            "chartType": chart.get("chartType", "bar"),
+            "page": chart.get("page"),
             "styleRef": "s_caption",
             "slot": {"status": "empty"},
         })
@@ -4440,7 +4444,18 @@ def pass4_assemble_ast(
         "extracted_assets": {"text_pages": text_pages},
         "pipeline_trace": {},  # filled by orchestrator
         "questions": [q.get("intent", "") for q in questions],
-        "entityGraph": {"entities": blueprint_entities},
+        # entityGraph: UI expects {entityId, name, type, context} per entity
+        "entityGraph": {"entities": [
+            {
+                "entityId": e["entityId"],
+                "name": e["canonicalName"],
+                "type": e["entityType"],
+                "entityType": e["entityType"],
+                "confidence": e.get("confidence", 0.5),
+                "context": ", ".join(e.get("aliases") or [])[:80] or e["entityType"],
+            }
+            for e in blueprint_entities
+        ]},
     }
 
     logger.info(
@@ -4636,6 +4651,8 @@ def run_extraction_pipeline(
     pipeline_trace["passes"]["pass2_5_kg"] = {
         "elapsed_s": round(pass25_elapsed, 1),
         "entities": len(document_map.get("all_entities") or []),
+        "total_entities": len(document_map.get("all_entities") or []),
+        "hierarchy_nodes": len(document_map.get("all_entities") or []),
         "table_structures": len(document_map.get("table_structures") or []),
         "chapters": len(document_map.get("chapters") or []),
         "section_patterns": len(document_map.get("section_patterns") or []),
@@ -4715,11 +4732,11 @@ def run_extraction_pipeline(
     pass4_elapsed = _time.monotonic() - t0
     pipeline_trace["passes"]["pass4_assembly"] = {
         "elapsed_s": round(pass4_elapsed, 1),
-        "paragraphs": len(ast.get("contentAST", {}).get("paragraphs") or []),
+        "paragraphs": len(ast.get("contentAST", {}).get("blocks") or []),
         "tables": len(ast.get("tableAST", {}).get("tables") or []),
         "figures": len(ast.get("figureAST", {}).get("figures") or []),
-        "charts_detected": len([f for f in (ast.get("figureAST", {}).get("figures") or []) if f.get("type") == "chart" or f.get("chartType")]),
-        "chart_pages": len(set(f.get("page", -1) for f in (ast.get("figureAST", {}).get("figures") or []) if f.get("type") == "chart" or f.get("chartType"))),
+        "charts_detected": len(ast.get("chartAST", {}).get("charts") or []),
+        "chart_pages": len(set(f.get("page", -1) for f in (ast.get("chartAST", {}).get("charts") or []) if f.get("chartId"))),
         "blueprint_topics": len(ast.get("blueprint", {}).get("topics") or []),
         "blueprint_entities": len(ast.get("blueprint", {}).get("entities") or []),
     }
@@ -4749,6 +4766,18 @@ def run_extraction_pipeline(
     # Finalize trace
     pipeline_trace["total_elapsed"] = round(_time.monotonic() - pipeline_start, 1)
     ast["pipeline_trace"] = pipeline_trace
+
+    # ── Final Unicode sanitization on all string values in the AST ──
+    def _sanitize_strings(obj: Any) -> Any:
+        if isinstance(obj, str):
+            return obj.replace('\u2013', '-').replace('\u2014', '-').replace('\u2018', "'").replace('\u2019', "'").replace('\u201c', '"').replace('\u201d', '"').replace('\u00a0', ' ')
+        elif isinstance(obj, dict):
+            return {k: _sanitize_strings(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [_sanitize_strings(v) for v in obj]
+        return obj
+
+    ast = _sanitize_strings(ast)
 
     _tick("completed", 100)
     logger.info("═══════════════════════════════════════════════════════════")

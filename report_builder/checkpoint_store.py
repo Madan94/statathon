@@ -58,11 +58,13 @@ class CheckpointStore:
     def _compute_config_hash(self) -> str:
         """Hash of model/provider config. Changes → cache miss (auto-invalidation)."""
         parts = [
+            "v4",  # bump this to invalidate ALL caches after pipeline logic changes
             os.getenv("SGLANG_MODEL", ""),
             os.getenv("LAYOUTLM_MODEL_ID", ""),
             os.getenv("VLM_PROVIDER", ""),
             os.getenv("REASONING_PROVIDER", ""),
             os.getenv("GEMINI_MODEL", ""),
+            os.getenv("PROVIDER_ENTITY_EXTRACTION", ""),
         ]
         return hashlib.md5("|".join(parts).encode()).hexdigest()
 
