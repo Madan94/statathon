@@ -166,6 +166,9 @@ def _resolve_key_for_task(task: str, provider: str) -> _KeySlot | None:
 def get_api_key_for_task(task: str, provider: str) -> tuple[str | None, str]:
     """Get the API key and label for a task+provider combination.
 
+    For tasks that make many calls (entity_extraction), rotates across all
+    available keys for that provider to avoid rate limits.
+
     Returns (api_key, label) where label is like "KEY_3:groq-fast" or "legacy:GEMINI_API_KEY".
     """
     slot = _resolve_key_for_task(task, provider)
@@ -190,6 +193,32 @@ def get_api_key_for_task(task: str, provider: str) -> tuple[str | None, str]:
     if key:
         logger.info("[key_pool] [%s] used for %s (provider=%s, no pool slot)", label, task, provider)
     return key or None, label
+
+
+# ── Round-robin key rotation for high-volume tasks ─────────────────────────────
+_ROTATION_COUNTERS: dict[str, int] = {}
+
+
+def get_rotated_key_for_task(task: str, provider: str) -> tuple[str | None, str]:
+    """Like get_api_key_for_task but rotates across ALL pool keys for the provider.
+
+    Use this for tasks that fire many times per pipeline run (entity_extraction,
+    question_generation) to spread load across keys and avoid rate limits.
+    """
+    # Get all valid pool slots for this provider
+    provider_slots = [s for s in _KEY_POOL.values() if s.provider == provider and s.is_valid()]
+    if not provider_slots:
+        return get_api_key_for_task(task, provider)
+
+    # Round-robin
+    counter_key = f"{task}:{provider}"
+    idx = _ROTATION_COUNTERS.get(counter_key, 0)
+    slot = provider_slots[idx % len(provider_slots)]
+    _ROTATION_COUNTERS[counter_key] = idx + 1
+
+    logger.info("[key_pool] [%s] used for %s (provider=%s, rotation %d/%d)",
+               slot.label, task, provider, (idx % len(provider_slots)) + 1, len(provider_slots))
+    return slot.value, slot.label
 
 # ── Task → env-var mapping ─────────────────────────────────────────────────────
 _TASK_TO_ENV: dict[str, str] = {
@@ -539,8 +568,12 @@ def llm_text_call(
     provider = _resolve_provider(task)
     max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
 
-    # Resolve key from pool
-    api_key, key_label = get_api_key_for_task(task, provider)
+    # Resolve key from pool (rotation for high-volume tasks)
+    _HIGH_VOLUME_TASKS = frozenset({"entity_extraction", "question_generation", "entity_binding", "fact_extraction"})
+    if task in _HIGH_VOLUME_TASKS:
+        api_key, key_label = get_rotated_key_for_task(task, provider)
+    else:
+        api_key, key_label = get_api_key_for_task(task, provider)
     logger.info("[llm_router] task=%-22s provider=%-8s key=%-20s max_tok=%d", task, provider, key_label, max_tokens)
 
     if provider == "gemini":
@@ -589,8 +622,12 @@ def llm_vision_call(
     provider = _resolve_provider(task)
     max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
 
-    # Resolve key from pool
-    api_key, key_label = get_api_key_for_task(task, provider)
+    # Resolve key from pool (rotation for high-volume vision tasks)
+    _HIGH_VOLUME_TASKS = frozenset({"entity_extraction", "question_generation", "entity_binding", "fact_extraction"})
+    if task in _HIGH_VOLUME_TASKS:
+        api_key, key_label = get_rotated_key_for_task(task, provider)
+    else:
+        api_key, key_label = get_api_key_for_task(task, provider)
     logger.info("[llm_router] task=%-22s provider=%-8s key=%-20s has_image=%s max_tok=%d", task, provider, key_label, has_image, max_tokens)
 
     # Build fallback chain: primary → alternatives (resilient routing)

@@ -2287,6 +2287,46 @@ def pass2_5_document_knowledge_graph(
         logger.info("[pass2.5]   Chapter filter: %d → %d (removed %d junk chapters)",
                     chapters_before_filter, len(chapters), chapters_before_filter - len(chapters))
 
+    # ── Chapter deduplication ──
+    # Merge chapters that are the same content with different formats:
+    # "CHAPTER 1" + "Energy Reserves and Potential" on same page → merge title
+    # "Energy Reserves and Potential" + "1 Energy Reserves and Potential" → keep numbered one
+    import re as _re_ch_dedup
+    _BARE_CHAPTER_RE = _re_ch_dedup.compile(r'^(?:CHAPTER|Chapter|PART|Part|Section)\s+\d+\s*$', _re_ch_dedup.I)
+
+    # Step 1: Remove bare "CHAPTER N" entries if there's a real title on the same or adjacent page
+    _bare_chapters = [ch for ch in chapters if _BARE_CHAPTER_RE.match(ch["title"].strip())]
+    if _bare_chapters:
+        _real_chapters = [ch for ch in chapters if not _BARE_CHAPTER_RE.match(ch["title"].strip())]
+        for bare in _bare_chapters:
+            bare_page = bare["pageRange"][0]
+            # Check if any real chapter starts on same or next page
+            has_real = any(abs(rc["pageRange"][0] - bare_page) <= 1 for rc in _real_chapters)
+            if has_real:
+                chapters = [ch for ch in chapters if ch is not bare]
+
+    # Step 2: Merge numbered prefix duplicates: "1 Energy Reserves" vs "Energy Reserves"
+    _numbered_prefix_re = _re_ch_dedup.compile(r'^\d{1,2}[\.\s]+(.+)$')
+    _dedup_chapters: list[dict] = []
+    _seen_titles: set[str] = set()
+    for ch in chapters:
+        title_clean = ch["title"].strip()
+        # Normalize: remove leading number
+        m = _numbered_prefix_re.match(title_clean)
+        base_title = m.group(1).strip().lower() if m else title_clean.lower()
+        if base_title in _seen_titles:
+            continue  # skip duplicate
+        _seen_titles.add(base_title)
+        # Also add the un-numbered version to prevent duplicates the other way
+        if not m:
+            _seen_titles.add(title_clean.lower())
+        _dedup_chapters.append(ch)
+
+    if len(_dedup_chapters) < len(chapters):
+        logger.info("[pass2.5]   Chapter dedup: %d → %d (merged duplicates)",
+                    len(chapters), len(_dedup_chapters))
+    chapters = _dedup_chapters
+
     # Re-assign chapterIds after filtering (keep ordering, fix numbering)
     for _i, _ch in enumerate(chapters):
         _ch["chapterId"] = f"ch_{_i + 1:02d}"
@@ -3676,14 +3716,36 @@ def pass4_assemble_ast(
 
     def _resolve_eid(name: str) -> str:
         """Resolve entity name to entityId via fuzzy matching."""
-        key = name.lower().strip()
+        if not name:
+            return ""
+        key = name.lower().strip().rstrip(":")
         if key in entity_name_map:
             return entity_name_map[key]
-        # Partial match
+        # Try with common suffixes/prefixes stripped
+        key_no_paren = key.split("(")[0].strip()
+        if key_no_paren and key_no_paren in entity_name_map:
+            return entity_name_map[key_no_paren]
+        # Acronym extraction: "SEEA-Energy" → try "seea", "seea energy"
+        key_normalized = key.replace("-", " ").replace("_", " ")
+        if key_normalized in entity_name_map:
+            return entity_name_map[key_normalized]
+        # Substring match (both directions)
         for k, v in entity_name_map.items():
             if key in k or k in key:
                 return v
-        return f"ent_unresolved_{key[:15]}"
+            # Acronym in canonical name's alias list
+            if key_normalized in k or k in key_normalized:
+                return v
+        # Abbreviated match: "types of fossil" → match entity containing "fossil"
+        key_words = set(key_normalized.split())
+        key_words -= {"of", "the", "in", "for", "and", "by", "to", "a", "an", "types", "class"}
+        if key_words:
+            for k, v in entity_name_map.items():
+                k_words = set(k.split())
+                if key_words & k_words:  # any overlap
+                    return v
+        # Last resort: return empty string instead of ent_unresolved (cleaner in UI)
+        return ""
 
     # ════════════════════════════════════════════════════════════════════════════
     # styleAST — 4 standard MoSPI styles
