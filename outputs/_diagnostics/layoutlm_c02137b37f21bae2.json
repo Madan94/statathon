@@ -1,0 +1,1740 @@
+{
+  "pdf": "1780971657_e079c908b3b3410f84c4651b9ca20d4f_Stat reports.pdf",
+  "source_hash": "c02137b37f21",
+  "layoutlm_used": true,
+  "total_regions": 151,
+  "pdfplumber_chars": 14393,
+  "pages": [
+    {
+      "page_index": 0,
+      "width": 2550,
+      "height": 3300,
+      "regions": [
+        {
+          "bbox": [
+            166,
+            316,
+            870,
+            552
+          ],
+          "type": "title",
+          "text": "",
+          "confidence": 0.7737210718068209
+        }
+      ]
+    },
+    {
+      "page_index": 1,
+      "width": 2550,
+      "height": 3300,
+      "regions": [
+        {
+          "bbox": [
+            972,
+            751,
+            976,
+            1000
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9975397661328316
+        }
+      ]
+    },
+    {
+      "page_index": 2,
+      "width": 2550,
+      "height": 3300,
+      "regions": [
+        {
+          "bbox": [
+            125,
+            89,
+            647,
+            172
+          ],
+          "type": "heading",
+          "text": "CHAPTER 1 Energy Reserves and Potential Introduction",
+          "confidence": 0.9951109488805135
+        },
+        {
+          "bbox": [
+            124,
+            202,
+            872,
+            257
+          ],
+          "type": "text",
+          "text": "Energy reserves are part of the energy resources that, based on technical, economic and other relevant (e.g. environmental) considerations, can be recovered and for which extraction is justified. The exact definition of reserves depends on the kind resources in focus.",
+          "confidence": 0.9999084115028382
+        },
+        {
+          "bbox": [
+            125,
+            263,
+            467,
+            277
+          ],
+          "type": "heading",
+          "text": "Global Classification of Energy Reserves",
+          "confidence": 0.9898874859015147
+        },
+        {
+          "bbox": [
+            125,
+            304,
+            872,
+            355
+          ],
+          "type": "text",
+          "text": "The classification of energy reserves is guided by the United Nations Framework Classification for Fossil Energy and Mineral Reserves and Resources (UNFC 2009) . This framework evaluates resources based on:",
+          "confidence": 0.9999191250119891
+        },
+        {
+          "bbox": [
+            153,
+            365,
+            472,
+            420
+          ],
+          "type": "list",
+          "text": " Economic and Social Viability  Field Project Status and Feasibility  Geological Knowledge",
+          "confidence": 0.9996291363940519
+        },
+        {
+          "bbox": [
+            125,
+            447,
+            872,
+            502
+          ],
+          "type": "text",
+          "text": "The System of Environmental Economic Accounting (SEEA)-Energy groups the detailed categories of UNFC into three aggregated classes characterizing the commercial recoverability of the resources as follows:",
+          "confidence": 0.9999035324369158
+        },
+        {
+          "bbox": [
+            153,
+            508,
+            638,
+            563
+          ],
+          "type": "list",
+          "text": " Class A : Commercially recoverable resources.  Class B : Potentially commercially recoverable resources.  Class C : Non-commercial and other known deposits.",
+          "confidence": 0.9997602438225466
+        },
+        {
+          "bbox": [
+            125,
+            589,
+            352,
+            604
+          ],
+          "type": "heading",
+          "text": "Energy Reserves in India",
+          "confidence": 0.9965240001678467
+        },
+        {
+          "bbox": [
+            125,
+            632,
+            872,
+            788
+          ],
+          "type": "text",
+          "text": "India has a diverse range of energy resources, with significant reserves of both fossil fuels and renewable energy potential. The country’s energy mix is undergoing a transformation to reduce dependence on fossil fuels and promote the use of renewable energy sources, driven by environmental, economic, and macroeconomic consideration. This chapter highlights the energy reserves and potential in India, focusing on both fossil fuels and renewable energy resources. It explores coal, lignite, crude oil, natural gas, and renewable energy potential, providing an overview of the country’s energy landscape.",
+          "confidence": 0.9999288515611129
+        },
+        {
+          "bbox": [
+            798,
+            928,
+            867,
+            940
+          ],
+          "type": "footer",
+          "text": "6 | Page",
+          "confidence": 0.998666783173879
+        }
+      ]
+    },
+    {
+      "page_index": 3,
+      "width": 2550,
+      "height": 3300,
+      "regions": [
+        {
+          "bbox": [
+            78,
+            24,
+            772,
+            967
+          ],
+          "type": "header",
+          "text": "Chapter 1: Energy Reserves and Potential Highlights of reserves in India 1.1 Coal Reserves India is home to one of the largest proven coal reserves in the world. As of total estimated coal reserves were 400.7 billion tonnes , showing an addition of tonnes compared to the previous year. This marks a growth of 2.90% in total during the year 2024-25(P) over the previous year (2023-24) (Table 1.1). The distribution of coal reserves in India is concentrated in a few states like Odisha , Jharkhand and Chhattisgarh. These three states account for approximately 70% of the total coal reserves in the country. Out of the total reserves in the country, proven reserves i.e. economically viable and geologically confirmed account for approximately 55% of the total estimated coal reserves as depicted in the figure 1.1 . 1.2 Lignite Reserves The total estimated reserves of lignite as on 01-04-2025 stood at 47.371 showing an increase of tonnes over the previous marks an increase of 0.15% reserves during the year compared to 2023-24 (Table highest reserves of lignite the state of Tamil Nadu (79%) Out of the total lignite country, proven reserves account for approximately total lignite reserves in India the figure 1.2 . * Brief about the Proved, Inferred and Indicated has been given under Annexure-I. Proved 55% Indicated 37% Inferred 8% Fig 1.1 Estimated Reserves of Coal India as on 01.04.2025 Total Estimated reserves = 400.715 Billion Proved, 17% Indicated, 53% Inferred, 30% Fig 1.2 Estimated Reserves of Lignite in India as on 01.04.2025 Total Estimated reserves =47.371 Billion Tonnes",
+          "confidence": 0.9918650706237722
+        },
+        {
+          "bbox": [
+            78,
+            967,
+            247,
+            970
+          ],
+          "type": "footer",
+          "text": "",
+          "confidence": 0.9398343563079834
+        },
+        {
+          "bbox": [
+            125,
+            73,
+            672,
+            161
+          ],
+          "type": "heading",
+          "text": "Chapter 1: Energy Reserves and Potential Highlights of reserves in India 1.1 Coal Reserves",
+          "confidence": 0.9789832673574749
+        },
+        {
+          "bbox": [
+            125,
+            187,
+            871,
+            527
+          ],
+          "type": "text",
+          "text": "India is home to one of the largest proven coal reserves in the world. As of 01-04-2025 , the total estimated coal reserves were 400.7 billion tonnes , showing an addition of 11.29 billion tonnes compared to the previous year. This marks a growth of 2.90% in total coal reserves during the year 2024-25(P) over the previous year (2023-24) (Table 1.1). The distribution of coal reserves in India is concentrated in a few states like Odisha , Jharkhand and Chhattisgarh. These three states account for approximately 70% of the total coal reserves in the country. Out of the total reserves in the country, proven reserves i.e. economically viable and geologically confirmed account for approximately 55% of the total estimated coal reserves as depicted in the figure 1.1 . Proved 55% Indicated 37% Inferred 8% Fig 1.1 Estimated Reserves of Coal in India as on 01.04.2025 Total Estimated reserves = 400.715 Billion Tonnes",
+          "confidence": 0.9999342666353498
+        },
+        {
+          "bbox": [
+            125,
+            556,
+            305,
+            571
+          ],
+          "type": "heading",
+          "text": "1.2 Lignite Reserves",
+          "confidence": 0.9980490058660507
+        },
+        {
+          "bbox": [
+            130,
+            596,
+            871,
+            854
+          ],
+          "type": "text",
+          "text": "The total estimated reserves of lignite as on 01-04-2025 stood at 47.371 billion tonnes , showing an increase of 0.07 billion tonnes over the previous year. This marks an increase of 0.15% in lignite reserves during the year 2024-25(P) compared to 2023-24 (Table 1.2) . The highest reserves of lignite are located in the state of Tamil Nadu (79%) . Out of the total lignite reserves in the country, proven reserves of lignite account for approximately 17% of the total lignite reserves in India as shown in the figure 1.2 . Proved, 17% Indicated, 53% Inferred, 30% Fig 1.2 Estimated Reserves of Lignite in India as on 01.04.2025 Total Estimated reserves =47.371 Billion Tonnes",
+          "confidence": 0.9999068618723841
+        },
+        {
+          "bbox": [
+            153,
+            860,
+            888,
+            973
+          ],
+          "type": "footer",
+          "text": "7 | Page * Brief about the Proved, Inferred and Indicated has been given under Annexure-I.",
+          "confidence": 0.7939605029190288
+        },
+        {
+          "bbox": [
+            916,
+            40,
+            920,
+            970
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9730252027511597
+        }
+      ]
+    },
+    {
+      "page_index": 4,
+      "width": 2550,
+      "height": 3300,
+      "regions": [
+        {
+          "bbox": [
+            125,
+            62,
+            670,
+            108
+          ],
+          "type": "heading",
+          "text": "Chapter 1: Energy Reserves and Potential 1.3 Crude Oil Reserves",
+          "confidence": 0.9670012444257736
+        },
+        {
+          "bbox": [
+            125,
+            122,
+            871,
+            238
+          ],
+          "type": "text",
+          "text": "As of 01-04-2025 , the estimated reserves of crude oil in India stood at 672.07 million tonnes , compared to 671.40 million tonnes in the previous year, reflecting a 0.10% increase over the last year (Table 1.3). Geographically, the maximum crude oil reserves in India are concentrated in the Western Offshore region, which accounts for 31% of the total crude oil reserves. This is followed by the Assam region, which holds around 22% of the country's crude oil reserves as shown in figure 1.3 .",
+          "confidence": 0.9997465970187351
+        },
+        {
+          "bbox": [
+            243,
+            252,
+            742,
+            266
+          ],
+          "type": "caption",
+          "text": "Fig 1.3: Estimated Reserves of Crude Oil in India as on 01.04.2025",
+          "confidence": 0.9377619651230898
+        },
+        {
+          "bbox": [
+            214,
+            270,
+            839,
+            448
+          ],
+          "type": "figure",
+          "text": "Andhra Pradesh 1% Assam 22% Gujarat 18% Rajasthan 20% Tamil Nadu 1% Eastern Offshore 6% Western Offshore 31% Others 1% Total EstimatedReserves-672.07 Million Tonnes",
+          "confidence": 0.9957757109687442
+        },
+        {
+          "bbox": [
+            125,
+            463,
+            813,
+            474
+          ],
+          "type": "text",
+          "text": "# Others include Arunachal Pradesh (0.43%), Nagaland (0.35%), Tripura (0.01%), West Bengal (0.01%)",
+          "confidence": 0.9724887694631305
+        },
+        {
+          "bbox": [
+            125,
+            506,
+            350,
+            518
+          ],
+          "type": "heading",
+          "text": "1.4 Natural Gas Reserves",
+          "confidence": 0.9982333523886544
+        },
+        {
+          "bbox": [
+            125,
+            532,
+            871,
+            648
+          ],
+          "type": "text",
+          "text": "The estimated reserves of natural gas as of 01-04-2025 were 1,073.01 Billion Cubic Meters (BCM) compared to 1,094.19 Billion Cubic Meters (BCM) in the previous year, reflecting a decrease of 1.94% over the last year (Table 1.4). The largest reserves of natural gas in India are located in the Western Offshore region, which holds approximately 32% of the total natural gas reserves. This is followed by the Eastern Offshore , which accounts for 25% of the reserves as shown in figure 1.4 .",
+          "confidence": 0.9992430104363349
+        },
+        {
+          "bbox": [
+            235,
+            662,
+            754,
+            676
+          ],
+          "type": "caption",
+          "text": "Fig 1.4 : Estimated Reserves of Natural Gas in India as on 01.04.2025",
+          "confidence": 0.9740945100784302
+        },
+        {
+          "bbox": [
+            163,
+            685,
+            807,
+            875
+          ],
+          "type": "figure",
+          "text": "Andhra Pradesh 6% Assam 15% Gujarat 5% Rajasthan 3% Tamil Nadu 4% Tripura 3% West Bengal (CBM) 4% Madhya Pradesh (CBM) 2% Eastern Offshore 25% Western Offshore 32% Others 1% Total EstimatedReserves- 1073.01 BCM",
+          "confidence": 0.9966367539369835
+        },
+        {
+          "bbox": [
+            125,
+            887,
+            739,
+            899
+          ],
+          "type": "text",
+          "text": "#Others include Arunachal Pradesh (0.67%), Jharkhand (CBM) (0.44%), Nagaland (0.009%)",
+          "confidence": 0.9521166612120235
+        },
+        {
+          "bbox": [
+            796,
+            928,
+            865,
+            940
+          ],
+          "type": "footer",
+          "text": "8 | Page",
+          "confidence": 0.9986331661542257
+        }
+      ]
+    },
+    {
+      "page_index": 5,
+      "width": 2550,
+      "height": 3300,
+      "regions": [
+        {
+          "bbox": [
+            88,
+            25,
+            575,
+            34
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9975447978292192
+        },
+        {
+          "bbox": [
+            125,
+            62,
+            670,
+            112
+          ],
+          "type": "heading",
+          "text": "Chapter 1: Energy Reserves and Potential 1.5 Renewable Energy Potential in India",
+          "confidence": 0.9976000961135415
+        },
+        {
+          "bbox": [
+            125,
+            136,
+            871,
+            864
+          ],
+          "type": "text",
+          "text": "India is increasingly focusing on renewable energy sources as part of its sustainable development and mitigating impact on climate. As of March 31, 2025 , the total estimated potential for renewable power generation in India stood at 47,04,043 MW . This potential comes from a variety of renewable sources, including wind , solar , biomass , small hydro , and cogeneration from bagasse (Table 1.4) . Figure 1.5 shows the potential is spread across several key renewable energy sources, as detailed below:  Solar Power : India has immense potential for solar power generation, estimated at 33,43,378 MW , which accounts for 71% of the total renewable energy potential. Solar power stands as the most significant source of renewable energy in India.  Wind Power : With an estimated potential of 1,163,856 MW (close to 25% of total renewable energy potential), it has the potential to contribute significantly in shaping the renewable energy-generation scenario of India.  Large Hydropower (Large Hydro) : The potential for large hydropower generation is estimated at 133,410 MW , contributing 2.84% to the country's renewable energy potential.  Small Hydro Power (SHP) : India also has a notable potential of 21,134 MW (0.45%) from small hydro power projects.  Biomass Power : Biomass, which includes agricultural waste, forest residues and other organic matter, has a potential of 28,447 MW , accounting for 0.60% of the total renewable power potential.  Cogeneration from Bagasse : India has a specific potential of 13,818 MW (0.29%) from bagasse-based cogeneration in sugar mills. This is a highly efficient form of energy generation, especially in regions with a robust sugar industry. Solar , 71.1% Wind Power(@150m), 24.7% Small Hydro Power, 0.4% Biomass Power, 0.6% Cogeneration- bagasse, 0.3% Large Hydro, 2.8% Other, 1.3% Fig 1.5: Source wise Estimated Potential of Renewable Power in India as on 31.03.2025",
+          "confidence": 0.9993991230503988
+        },
+        {
+          "bbox": [
+            796,
+            928,
+            865,
+            940
+          ],
+          "type": "footer",
+          "text": "9 | Page",
+          "confidence": 0.9983153343200684
+        }
+      ]
+    },
+    {
+      "page_index": 6,
+      "width": 2550,
+      "height": 3300,
+      "regions": [
+        {
+          "bbox": [
+            125,
+            62,
+            670,
+            112
+          ],
+          "type": "heading",
+          "text": "Chapter 1: Energy Reserves and Potential Geographical Distribution of Renewable Energy Potential",
+          "confidence": 0.9977432116866112
+        },
+        {
+          "bbox": [
+            125,
+            137,
+            871,
+            191
+          ],
+          "type": "text",
+          "text": "The geographical distribution of renewable energy potential in India ( Figure 1.6 ) shows significant regional variations. The states with the highest renewable energy potential, as of March 31, 2025 , are:",
+          "confidence": 0.999862192492736
+        },
+        {
+          "bbox": [
+            181,
+            198,
+            639,
+            294
+          ],
+          "type": "list",
+          "text": " Rajasthan : 24% of total potential (11,14,794 MW)  Maharashtra : 14% of total potential (6,71,024 MW)  Gujarat : 9% of total potential (4,27,954 MW)  Andhra Pradesh: 9% of total potential (4,27,933 MW)  Karnataka : 8.6 % of total potential (4,04,227 MW)",
+          "confidence": 0.9993102760477499
+        },
+        {
+          "bbox": [
+            125,
+            320,
+            870,
+            355
+          ],
+          "type": "text",
+          "text": "Together, these five states account for around 65 % of India's total renewable energy potential, highlighting their critical role in India's renewable energy future.",
+          "confidence": 0.9998571091684801
+        },
+        {
+          "bbox": [
+            239,
+            410,
+            759,
+            442
+          ],
+          "type": "caption",
+          "text": "Fig 1.6: Statewise Estimated Potential of Renewable Power (in percentage) in India as on 31.03.2025",
+          "confidence": 0.9987736410564847
+        },
+        {
+          "bbox": [
+            182,
+            452,
+            831,
+            744
+          ],
+          "type": "figure",
+          "text": "Rajasthan 24% Gujarat 9% Maharashtra 14% Karnataka 9% Andhra Pradesh 9% J& K UT (including Ladakh) 1% Tamil Nadu 6% Madhya Pradesh 8% Telangana 4% Himachal Pradesh 1% Odisha 3% Uttar Pradesh 2% Chhattisgarh 3% Uttarakhand 0% Jharkhand 1% Bihar 1% Assam 0% Arunachal Pradesh 1% Rest of India … T Total Estimated Potential of Renewable Power = 4,704,043 MW",
+          "confidence": 0.998273866251111
+        },
+        {
+          "bbox": [
+            788,
+            928,
+            865,
+            940
+          ],
+          "type": "footer",
+          "text": "10 | Page",
+          "confidence": 0.9976770281791687
+        }
+      ]
+    },
+    {
+      "page_index": 7,
+      "width": 2550,
+      "height": 3300,
+      "regions": [
+        {
+          "bbox": [
+            75,
+            30,
+            89,
+            998
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.7753834816125723
+        },
+        {
+          "bbox": [
+            326,
+            62,
+            670,
+            76
+          ],
+          "type": "heading",
+          "text": "Chapter 1: Energy Reserves and Potential",
+          "confidence": 0.852694496512413
+        },
+        {
+          "bbox": [
+            972,
+            66,
+            976,
+            73
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9888050556182861
+        },
+        {
+          "bbox": [
+            245,
+            99,
+            754,
+            109
+          ],
+          "type": "caption",
+          "text": "Table 1.1: Statewise Estimated Reserves of Coal (As on 1st April 2025)",
+          "confidence": 0.9941309690475464
+        },
+        {
+          "bbox": [
+            972,
+            96,
+            976,
+            104
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9909279942512512
+        },
+        {
+          "bbox": [
+            392,
+            127,
+            872,
+            146
+          ],
+          "type": "table",
+          "text": "Indicated Inferred Total Distribution (%)",
+          "confidence": 0.9984616994857788
+        },
+        {
+          "bbox": [
+            972,
+            130,
+            976,
+            135
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9914762377738953
+        },
+        {
+          "bbox": [
+            132,
+            138,
+            191,
+            145
+          ],
+          "type": "table",
+          "text": "States/ UTs",
+          "confidence": 0.9988922327756882
+        },
+        {
+          "bbox": [
+            974,
+            143,
+            976,
+            145
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.662072479724884
+        },
+        {
+          "bbox": [
+            236,
+            146,
+            804,
+            152
+          ],
+          "type": "table",
+          "text": "2024 2025 2024 2025 2024 2025 2024 2025 2024",
+          "confidence": 0.9993419647216797
+        },
+        {
+          "bbox": [
+            972,
+            146,
+            976,
+            150
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9855234622955322
+        },
+        {
+          "bbox": [
+            109,
+            119,
+            887,
+            353
+          ],
+          "type": "table",
+          "text": "2024 2025 2024 2025 2024 2025 2024 2025 2024 2025 Andhra Pradesh 1,025 1,025 2,369 2,369 778 778 4,172 4,172 1.07 1.04 Arunachal Pradesh 31 62 40 23 19 6 90 91 0.02 0.02 Assam 465 465 57 57 3 3 525 525 0.13 0.13 Bihar 2,346 2,346 3,015 6,970 37 37 5,398 9,353 1.39 2.33 Chhattisgarh 40,078 45,463 41,093 38,340 1,495 1,460 82,666 85,263 21.23 21.28 Jharkhand 59,877 60,290 27,135 27,122 4,799 5,842 91,812 93,254 23.58 23.27 Madhya Pradesh 15,425 16,414 12,379 11,796 5,011 5,354 32,815 33,564 8.43 8.38 Maharashtra 8,163 8,339 3,372 3,265 1,817 1,984 13,352 13,587 3.43 3.39 Meghalaya 96 97 17 17 471 470 583 583 0.15 0.15 Nagaland 9 9 22 22 448 480 478 510 0.12 0.13 Odisha 53,799 55,010 39,053 38,781 6,351 7,186 99,204 100,976 25.47 25.20 Sikkim 0 0 58 58 43 43 101 101 0.03 0.03 Telangana 11,257 11,257 8,497 8,627 3,452 3,405 23,206 23,289 5.96 5.81 Uttar Pradesh 884 884 178 178 0 0 1,062 1,062 0.27 0.26 West Bengal 18,752 18,752 11,433 11,425 3,773 4,209 33,958 34,386 8.72 8.58 (in Million Tonnes) States/ UTs Proved Indicated Inferred Total Distribution (%)",
+          "confidence": 0.9993863732499235
+        },
+        {
+          "bbox": [
+            972,
+            225,
+            976,
+            228
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9938473105430603
+        },
+        {
+          "bbox": [
+            640,
+            239,
+            857,
+            245
+          ],
+          "type": "table",
+          "text": "32,815 33,564 8.43",
+          "confidence": 0.9994266364309523
+        },
+        {
+          "bbox": [
+            972,
+            236,
+            976,
+            243
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9944080114364624
+        },
+        {
+          "bbox": [
+            641,
+            252,
+            857,
+            259
+          ],
+          "type": "table",
+          "text": "13,352 13,587 3.43",
+          "confidence": 0.9994121938943863
+        },
+        {
+          "bbox": [
+            972,
+            251,
+            976,
+            259
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9947450160980225
+        },
+        {
+          "bbox": [
+            647,
+            265,
+            857,
+            271
+          ],
+          "type": "table",
+          "text": "583 583 0.15",
+          "confidence": 0.9993096192677816
+        },
+        {
+          "bbox": [
+            974,
+            266,
+            976,
+            272
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9946993589401245
+        },
+        {
+          "bbox": [
+            640,
+            279,
+            857,
+            326
+          ],
+          "type": "table",
+          "text": "478 510 0.12 99,204 100,976 25.47 101 101 0.03 23,206 23,289 5.96",
+          "confidence": 0.999307320876555
+        },
+        {
+          "bbox": [
+            972,
+            318,
+            976,
+            320
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9940511584281921
+        },
+        {
+          "bbox": [
+            640,
+            332,
+            857,
+            352
+          ],
+          "type": "table",
+          "text": "1,062 1,062 0.27 33,958 34,386 8.72",
+          "confidence": 0.9992569402644509
+        },
+        {
+          "bbox": [
+            972,
+            344,
+            976,
+            351
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9947158694267273
+        },
+        {
+          "bbox": [
+            109,
+            359,
+            412,
+            408
+          ],
+          "type": "table",
+          "text": "All India Total 212,207 220,412 148,716 Distribution (%) 54.49 55.00 38.19 Source: Ministry of Coal Total may not tally due to rounding off",
+          "confidence": 0.9443672214235578
+        },
+        {
+          "bbox": [
+            236,
+            533,
+            759,
+            544
+          ],
+          "type": "caption",
+          "text": "Table 1.2: Statewise Estimated Reserves of Lignite(As on 1st April 2025)",
+          "confidence": 0.9968052912842144
+        },
+        {
+          "bbox": [
+            972,
+            529,
+            976,
+            537
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9938498139381409
+        },
+        {
+          "bbox": [
+            132,
+            359,
+            751,
+            584
+          ],
+          "type": "table",
+          "text": "India Total 212,207 220,412 148,716 149,048 28,498 31,255 389,421 400,715 Distribution (%) 54.49 55.00 38.19 37.20 7.32 7.80 100 100 Ministry of Coal may not tally due to rounding off Table 1.2: Statewise Estimated Reserves of Lignite(As on 1st April 2025) States/ UTs Proved Indicated Inferred Total",
+          "confidence": 0.9744746764500936
+        },
+        {
+          "bbox": [
+            972,
+            359,
+            976,
+            367
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9954209923744202
+        },
+        {
+          "bbox": [
+            509,
+            373,
+            733,
+            378
+          ],
+          "type": "table",
+          "text": "7.32 7.80 100 100",
+          "confidence": 0.9960557594895363
+        },
+        {
+          "bbox": [
+            972,
+            375,
+            976,
+            382
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9954753518104553
+        },
+        {
+          "bbox": [
+            777,
+            555,
+            869,
+            578
+          ],
+          "type": "table",
+          "text": "(in Million Tonnes) Distribution (%)",
+          "confidence": 0.9790820360183716
+        },
+        {
+          "bbox": [
+            974,
+            560,
+            974,
+            563
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9950677156448364
+        },
+        {
+          "bbox": [
+            235,
+            677,
+            738,
+            732
+          ],
+          "type": "table",
+          "text": "1,204 1,204 3,109 3,183 2,274 2,274 6,586 6,661 5,476 5,476 21,412 21,412 10,635 10,635 37,524 37,524 0 0 1 1 3 3 4 4 7,964 7,964 25,231 25,306 14,100 14,100 47,296 47,371",
+          "confidence": 0.9969168454408646
+        },
+        {
+          "bbox": [
+            972,
+            717,
+            976,
+            733
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.995902955532074
+        },
+        {
+          "bbox": [
+            110,
+            735,
+            601,
+            746
+          ],
+          "type": "table",
+          "text": "Distribution (%) 16.84 16.81 53.35 53.42 29.81 29.76",
+          "confidence": 0.9965570852870033
+        },
+        {
+          "bbox": [
+            972,
+            733,
+            976,
+            746
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9957568049430847
+        },
+        {
+          "bbox": [
+            113,
+            752,
+            294,
+            760
+          ],
+          "type": "table",
+          "text": "Total may not tally due to rounding off",
+          "confidence": 0.7487826198339462
+        },
+        {
+          "bbox": [
+            109,
+            769,
+            225,
+            777
+          ],
+          "type": "table",
+          "text": "Source: Ministry of Coal",
+          "confidence": 0.6299315541982651
+        },
+        {
+          "bbox": [
+            788,
+            927,
+            976,
+            940
+          ],
+          "type": "footer",
+          "text": "11 | Page",
+          "confidence": 0.9201552122831345
+        }
+      ]
+    },
+    {
+      "page_index": 8,
+      "width": 2550,
+      "height": 3300,
+      "regions": [
+        {
+          "bbox": [
+            75,
+            668,
+            86,
+            998
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9391683574233737
+        },
+        {
+          "bbox": [
+            326,
+            62,
+            670,
+            76
+          ],
+          "type": "heading",
+          "text": "Chapter 1: Energy Reserves and Potential",
+          "confidence": 0.9938747808337212
+        },
+        {
+          "bbox": [
+            178,
+            105,
+            688,
+            117
+          ],
+          "type": "caption",
+          "text": "Table 1.3: Statewise Estimated Reserves of Crude Oil and Natural Gas (As",
+          "confidence": 0.9391118570377952
+        },
+        {
+          "bbox": [
+            128,
+            105,
+            863,
+            410
+          ],
+          "type": "table",
+          "text": "Andhra Pradesh 7.69 1.15 8.41 1.25 59.27 5.42 60.60 5.65 Arunachal Pradesh 2.88 0.43 2.97 0.44 7.33 0.67 7.10 0.66 Assam 145.41 21.66 144.73 21.53 164.51 15.03 163.33 15.22 Gujarat 118.86 17.70 121.20 18.03 55.46 5.07 54.74 5.10 Nagaland 2.38 0.35 2.38 0.35 0.09 0.01 0.09 0.01 Rajasthan 131.50 19.59 136.46 20.30 63.55 5.81 27.12 2.53 Tamil Nadu 8.54 1.27 9.11 1.36 36.57 3.34 38.39 3.58 Tripura 0.07 0.01 0.07 0.01 28.18 2.58 27.73 2.58 West Bengal 0.15 0.02 0.20 0.03 0.00 0.00 0.79 0.07 West Bengal (CBM) 0.00 0.00 0.00 0.00 44.37 4.06 44.93 4.19 Jharkhand (CBM) 0.00 0.00 0.00 0.00 4.86 0.44 5.67 0.53 Madhya Pradesh (CBM) 0.00 0.00 0.00 0.00 24.38 2.23 23.15 2.16 Eastern Offshore 40.67 6.06 37.25 5.54 263.34 24.07 270.67 25.23 Western Offshore 213.26 31.76 209.30 31.14 342.29 31.28 348.70 32.50 Total 671.40 100.00 672.07 100.00 1094.19 100.00 1073.01 100.00 Table 1.3: Statewise Estimated Reserves of Crude Oil and Natural Gas (As on 1st April 2025) Natural Gas (Billion Cubic Metres) Crude Oil (Million Tonnes) States/ UTs/ Region Distribution (%) Estimated Reserves Distribution (%) Estimated Reserves 2025 2025 2024 Distribution (%) Distribution (%) Estimated Reserves Estimated Reserves 2024",
+          "confidence": 0.9940370278699058
+        },
+        {
+          "bbox": [
+            128,
+            413,
+            406,
+            424
+          ],
+          "type": "text",
+          "text": "CBM : Cold Bed Methane (Jharkhand, West Bengal and M.P.)",
+          "confidence": 0.6088781827374509
+        },
+        {
+          "bbox": [
+            128,
+            432,
+            332,
+            472
+          ],
+          "type": "text",
+          "text": "1. Western offshore includes Gujarat offshore 2. Total may not tally due to rounding off Source: M/o Petroleum & Natural Gas",
+          "confidence": 0.8796331813702216
+        },
+        {
+          "bbox": [
+            788,
+            928,
+            865,
+            940
+          ],
+          "type": "footer",
+          "text": "12 | Page",
+          "confidence": 0.996742844581604
+        },
+        {
+          "bbox": [
+            968,
+            30,
+            979,
+            998
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9886211231350899
+        }
+      ]
+    },
+    {
+      "page_index": 9,
+      "width": 2550,
+      "height": 3300,
+      "regions": [
+        {
+          "bbox": [
+            81,
+            30,
+            976,
+            76
+          ],
+          "type": "header",
+          "text": "Chapter 1: Energy Reserves and Potential",
+          "confidence": 0.9964442319340177
+        },
+        {
+          "bbox": [
+            326,
+            62,
+            670,
+            76
+          ],
+          "type": "heading",
+          "text": "Chapter 1: Energy Reserves and Potential",
+          "confidence": 0.9313566833734512
+        },
+        {
+          "bbox": [
+            81,
+            66,
+            976,
+            114
+          ],
+          "type": "header",
+          "text": "Chapter 1: Energy Reserves and Potential Table 1.4: Sourcewise and Statewise Estimated Potential of Renewable Power in India (as on 31.03.2025)",
+          "confidence": 0.82355268796285
+        },
+        {
+          "bbox": [
+            165,
+            102,
+            809,
+            113
+          ],
+          "type": "caption",
+          "text": "Table 1.4: Sourcewise and Statewise Estimated Potential of Renewable Power in India (as on 31.03.2025)",
+          "confidence": 0.8845397531986237
+        },
+        {
+          "bbox": [
+            81,
+            99,
+            976,
+            120
+          ],
+          "type": "header",
+          "text": "Table 1.4: Sourcewise and Statewise Estimated Potential of Renewable Power in India (as on 31.03.2025)",
+          "confidence": 0.9190528790156046
+        },
+        {
+          "bbox": [
+            81,
+            145,
+            866,
+            169
+          ],
+          "type": "table",
+          "text": "Sl. No. States/ UTs Wind Power @ 150m Small Hydro Power* Biomass Power Cogeneration- bagasse Solar Energy Large Hydro# Total Distribution (%)",
+          "confidence": 0.9994066747335287
+        },
+        {
+          "bbox": [
+            972,
+            158,
+            976,
+            166
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9905943870544434
+        },
+        {
+          "bbox": [
+            81,
+            169,
+            836,
+            189
+          ],
+          "type": "table",
+          "text": "1 Andhra Pradesh 123336 409 1999 280 299312 2596 427933 9.10",
+          "confidence": 0.9996999659036335
+        },
+        {
+          "bbox": [
+            972,
+            174,
+            976,
+            181
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9895929098129272
+        },
+        {
+          "bbox": [
+            81,
+            192,
+            836,
+            204
+          ],
+          "type": "table",
+          "text": "2 Arunachal Pradesh 246 2065 18 0 468 50394 53191 1.13",
+          "confidence": 0.9997520832454457
+        },
+        {
+          "bbox": [
+            971,
+            191,
+            976,
+            202
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9896048307418823
+        },
+        {
+          "bbox": [
+            81,
+            205,
+            836,
+            220
+          ],
+          "type": "table",
+          "text": "3 Assam 459 202 322 0 19173 643 20799 0.44",
+          "confidence": 0.999750473282554
+        },
+        {
+          "bbox": [
+            972,
+            205,
+            976,
+            212
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9895933866500854
+        },
+        {
+          "bbox": [
+            81,
+            220,
+            836,
+            261
+          ],
+          "type": "table",
+          "text": "4 Bihar 4023 527 964 347 32991 130 38983 0.83 5 Chhattisgarh 2749 1098 354 0 126484 1311 131996 2.81 6 Goa 14 5 33 0 6752 0 6804 0.14",
+          "confidence": 0.9997482948443469
+        },
+        {
+          "bbox": [
+            972,
+            251,
+            976,
+            259
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.990131139755249
+        },
+        {
+          "bbox": [
+            81,
+            262,
+            836,
+            277
+          ],
+          "type": "table",
+          "text": "7 Gujarat 180790 202 2638 555 243220 550 427954 9.10",
+          "confidence": 0.9997439522009629
+        },
+        {
+          "bbox": [
+            972,
+            266,
+            976,
+            274
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9905709028244019
+        },
+        {
+          "bbox": [
+            81,
+            277,
+            836,
+            290
+          ],
+          "type": "table",
+          "text": "8 Haryana 593 107 1353 362 6468 0 8884 0.19",
+          "confidence": 0.9997553337704052
+        },
+        {
+          "bbox": [
+            972,
+            282,
+            976,
+            290
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9909641742706299
+        },
+        {
+          "bbox": [
+            81,
+            290,
+            836,
+            308
+          ],
+          "type": "table",
+          "text": "9 Himachal Pradesh 239 3460 70 0 21502 18305 43576 0.93",
+          "confidence": 0.9997612535953522
+        },
+        {
+          "bbox": [
+            972,
+            297,
+            976,
+            305
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9912657141685486
+        },
+        {
+          "bbox": [
+            81,
+            315,
+            836,
+            346
+          ],
+          "type": "table",
+          "text": "Ladakh) 1 1707 83 0 17146 12972 31908 0.68 11 Jharkhand 16 228 146 0 51831 300 52522 1.12",
+          "confidence": 0.999775442481041
+        },
+        {
+          "bbox": [
+            972,
+            331,
+            976,
+            346
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.991723358631134
+        },
+        {
+          "bbox": [
+            81,
+            346,
+            836,
+            362
+          ],
+          "type": "table",
+          "text": "12 Karnataka 169251 3726 1794 1762 223279 4414 404227 8.59",
+          "confidence": 0.9997738220474937
+        },
+        {
+          "bbox": [
+            972,
+            346,
+            976,
+            362
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9924057126045227
+        },
+        {
+          "bbox": [
+            81,
+            362,
+            836,
+            374
+          ],
+          "type": "table",
+          "text": "13 Kerala 2621 647 778 0 12405 2473 18924 0.40",
+          "confidence": 0.9997664039785211
+        },
+        {
+          "bbox": [
+            972,
+            362,
+            976,
+            367
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9920812845230103
+        },
+        {
+          "bbox": [
+            81,
+            375,
+            836,
+            390
+          ],
+          "type": "table",
+          "text": "14 Madhya Pradesh 55423 820 2516 0 318972 2819 380551 8.09",
+          "confidence": 0.9997633380048415
+        },
+        {
+          "bbox": [
+            972,
+            375,
+            976,
+            382
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9919127225875854
+        },
+        {
+          "bbox": [
+            81,
+            390,
+            839,
+            405
+          ],
+          "type": "table",
+          "text": "15 Maharashtra 173868 786 2630 3917 486679 3144 671024 14.26",
+          "confidence": 0.9997693230124081
+        },
+        {
+          "bbox": [
+            972,
+            390,
+            976,
+            398
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9918803572654724
+        },
+        {
+          "bbox": [
+            81,
+            408,
+            836,
+            421
+          ],
+          "type": "table",
+          "text": "16 Manipur 0 100 62 0 2294 615 3071 0.07",
+          "confidence": 0.99978386759758
+        },
+        {
+          "bbox": [
+            972,
+            408,
+            976,
+            413
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.992630124092102
+        },
+        {
+          "bbox": [
+            81,
+            424,
+            836,
+            436
+          ],
+          "type": "table",
+          "text": "17 Meghalaya 55 230 69 0 14674 2026 17054 0.36",
+          "confidence": 0.9997770190238953
+        },
+        {
+          "bbox": [
+            972,
+            424,
+            976,
+            429
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.99208003282547
+        },
+        {
+          "bbox": [
+            81,
+            437,
+            836,
+            462
+          ],
+          "type": "table",
+          "text": "18 Mizoram 0 169 3 0 612 1927 2711 0.06 19 Nagaland 0 182 54 0 191 325 752 0.02",
+          "confidence": 0.9997768715808266
+        },
+        {
+          "bbox": [
+            972,
+            452,
+            976,
+            460
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9905005693435669
+        },
+        {
+          "bbox": [
+            81,
+            463,
+            836,
+            478
+          ],
+          "type": "table",
+          "text": "20 Odisha 12129 286 299 0 139474 2825 155013 3.30",
+          "confidence": 0.9997661438855258
+        },
+        {
+          "bbox": [
+            972,
+            467,
+            976,
+            475
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9910447597503662
+        },
+        {
+          "bbox": [
+            81,
+            478,
+            836,
+            493
+          ],
+          "type": "table",
+          "text": "21 Punjab 428 578 3022 414 9210 1301 14954 0.32",
+          "confidence": 0.9997767806053162
+        },
+        {
+          "bbox": [
+            972,
+            483,
+            976,
+            490
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9926521182060242
+        },
+        {
+          "bbox": [
+            81,
+            493,
+            839,
+            506
+          ],
+          "type": "table",
+          "text": "22 Rajasthan 284250 52 1300 0 828781 411 1114794 23.70",
+          "confidence": 0.9997624009847641
+        },
+        {
+          "bbox": [
+            972,
+            498,
+            976,
+            506
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9928839206695557
+        },
+        {
+          "bbox": [
+            81,
+            506,
+            836,
+            524
+          ],
+          "type": "table",
+          "text": "23 Sikkim 0 267 5 0 254 6051 6577 0.14",
+          "confidence": 0.9997728533214993
+        },
+        {
+          "bbox": [
+            972,
+            514,
+            976,
+            521
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9922446608543396
+        },
+        {
+          "bbox": [
+            81,
+            524,
+            836,
+            537
+          ],
+          "type": "table",
+          "text": "24 Tamil Nadu 95107 604 1560 639 204765 1785 304461 6.47",
+          "confidence": 0.9997637271881104
+        },
+        {
+          "bbox": [
+            972,
+            529,
+            976,
+            537
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9922904372215271
+        },
+        {
+          "bbox": [
+            81,
+            537,
+            836,
+            552
+          ],
+          "type": "table",
+          "text": "25 Telangana 54717 102 1678 117 140451 1302 198368 4.22",
+          "confidence": 0.9997619489828745
+        },
+        {
+          "bbox": [
+            972,
+            545,
+            976,
+            552
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9912550449371338
+        },
+        {
+          "bbox": [
+            81,
+            553,
+            836,
+            568
+          ],
+          "type": "table",
+          "text": "26 Tripura 0 47 34 9106 0 9187 0.20",
+          "confidence": 0.9997592568397522
+        },
+        {
+          "bbox": [
+            972,
+            560,
+            976,
+            568
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9908559322357178
+        },
+        {
+          "bbox": [
+            81,
+            568,
+            836,
+            593
+          ],
+          "type": "table",
+          "text": "27 Uttar Pradesh 510 461 2800 4926 97843 502 107041 2.28 28 Uttarakhand 49 1664 93 215 4436 13481 19939 0.42",
+          "confidence": 0.9997139771779379
+        },
+        {
+          "bbox": [
+            972,
+            578,
+            976,
+            593
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9905081987380981
+        },
+        {
+          "bbox": [
+            81,
+            594,
+            836,
+            609
+          ],
+          "type": "table",
+          "text": "29 West Bengal 1281 392 1742 0 22742 809 26966 0.57",
+          "confidence": 0.9996623860465156
+        },
+        {
+          "bbox": [
+            972,
+            594,
+            976,
+            609
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9901090860366821
+        },
+        {
+          "bbox": [
+            81,
+            609,
+            836,
+            624
+          ],
+          "type": "table",
+          "text": "30 Andaman & Nicobar 1245 7 18 0 594 0 1865 0.04",
+          "confidence": 0.9996702926499503
+        },
+        {
+          "bbox": [
+            972,
+            609,
+            976,
+            624
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9893360137939453
+        },
+        {
+          "bbox": [
+            81,
+            625,
+            836,
+            640
+          ],
+          "type": "table",
+          "text": "31 Chandigarh 0 0 0 0 22 0 23 0.00",
+          "confidence": 0.9996467956474849
+        },
+        {
+          "bbox": [
+            972,
+            625,
+            976,
+            640
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.989367663860321
+        },
+        {
+          "bbox": [
+            81,
+            640,
+            976,
+            683
+          ],
+          "type": "table",
+          "text": "32 Dadar & Nagar Haveli, Daman & Diu 17 0 2 0 498 0 517 0.01 33 Delhi 0 0 0 0 550 0 550 0.01",
+          "confidence": 0.9996017524690339
+        },
+        {
+          "bbox": [
+            972,
+            671,
+            976,
+            676
+          ],
+          "type": "header",
+          "text": "",
+          "confidence": 0.9881770014762878
+        },
+        {
+          "bbox": [
+            81,
+            684,
+            836,
+            694
+          ],
+          "type": "table",
+          "text": "34 Lakshadweep 31 0 1 0 0 32 0.00",
+          "confidence": 0.9995544791221619
+        }
+      ]
+    }
+  ]
+}
