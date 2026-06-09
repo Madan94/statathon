@@ -47,6 +47,7 @@ def render_pdf(
     title: str | None = None,
     theme: Any = None,
     locale: str = "en-IN",
+    number_system: str = "indian",
     engine: str = DEFAULT_ENGINE,
     include_cover: bool = True,
     include_toc: bool = True,
@@ -74,7 +75,6 @@ def render_pdf(
             include_cover=include_cover, include_toc=include_toc,
             include_appendix=include_appendix, number_elements=number_elements,
         )
-
     # WeasyPrint path.
     try:
         from weasyprint import HTML  # type: ignore
@@ -85,6 +85,7 @@ def render_pdf(
     from ..renderer import render_html
     html_str = render_html(
         report, title=title, theme=theme, locale=locale,
+        number_system=number_system,
         include_cover=include_cover, include_toc=include_toc,
         include_appendix=include_appendix, number_elements=number_elements,
     )

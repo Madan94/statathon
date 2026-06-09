@@ -20,7 +20,7 @@ import logging
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Body, HTTPException, Query
 from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel
 
@@ -30,14 +30,20 @@ from report_builder.binding.question_binder import bind_questions
 from report_builder.binding.schema import BindingAST, DatasetAST, EntityBinding
 from report_builder.generation import (
     assemble_report,
+    apply_profile,
     build_plans,
+    deep_merge,
+    effective_profile,
     fill_visuals,
     narrate,
     pdf_available,
+    render_flags,
     render_html,
     render_pdf,
     run_analytics,
     validate_report,
+    ReportOverrides,
+    TemplateProfile,
 )
 
 logger = logging.getLogger(__name__)
@@ -105,6 +111,28 @@ def _report_path(template_id: str, signature: str) -> Path:
 
 def _html_path(template_id: str, signature: str) -> Path:
     return _stash_path(template_id, signature, "report.html")
+
+
+def _profile_path(template_id: str, signature: str) -> Path:
+    return _stash_path(template_id, signature, "profile.json")
+
+
+def _overrides_path(template_id: str, signature: str) -> Path:
+    return _stash_path(template_id, signature, "overrides.json")
+
+
+def _load_profile(template_id: str, signature: str) -> dict[str, Any]:
+    path = _profile_path(template_id, signature)
+    if path.exists():
+        return TemplateProfile.from_dict(json.loads(path.read_text(encoding="utf-8"))).to_dict()
+    return TemplateProfile.default().to_dict()
+
+
+def _load_overrides(template_id: str, signature: str) -> dict[str, Any]:
+    path = _overrides_path(template_id, signature)
+    if path.exists():
+        return ReportOverrides.from_dict(json.loads(path.read_text(encoding="utf-8"))).to_dict()
+    return {}
 
 
 def _load_template_ast() -> dict[str, Any]:
@@ -303,3 +331,94 @@ def get_report_pdf(
         media_type="application/pdf",
         headers={"Content-Disposition": f'inline; filename="{report_id}.pdf"'},
     )
+
+
+# ---------------------------------------------------------------------------
+# R4 — customization (template profile + report overrides + re-render)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/{template_id}/{signature}/profile")
+def get_profile(template_id: str, signature: str) -> dict[str, Any]:
+    """Return the author's template profile (defaults if none saved yet)."""
+    return _load_profile(template_id, signature)
+
+
+@router.put("/{template_id}/{signature}/profile")
+def put_profile(
+    template_id: str, signature: str, payload: dict[str, Any] = Body(default_factory=dict)
+) -> dict[str, Any]:
+    """Persist the author's template profile (full document of defaults)."""
+    profile = TemplateProfile.from_dict(payload).to_dict()
+    _profile_path(template_id, signature).write_text(
+        json.dumps(profile, ensure_ascii=False, indent=2), encoding="utf-8")
+    return profile
+
+
+@router.patch("/{template_id}/{signature}/overrides")
+def patch_overrides(
+    template_id: str, signature: str, payload: dict[str, Any] = Body(default_factory=dict)
+) -> dict[str, Any]:
+    """Merge sparse viewer overrides into the stored overrides for this report."""
+    current = _load_overrides(template_id, signature)
+    incoming = ReportOverrides.from_dict(payload).to_dict()
+    sparse = ReportOverrides.from_dict(deep_merge(current, incoming)).to_dict()
+    _overrides_path(template_id, signature).write_text(
+        json.dumps(sparse, ensure_ascii=False, indent=2), encoding="utf-8")
+    return sparse
+
+
+@router.get("/{template_id}/{signature}/overrides")
+def get_overrides(template_id: str, signature: str) -> dict[str, Any]:
+    """Return the sparse viewer overrides saved for this report."""
+    return _load_overrides(template_id, signature)
+
+
+@router.post("/{template_id}/{signature}/render")
+def render_customized(
+    template_id: str,
+    signature: str,
+    fmt: str = Query("html", alias="format"),
+    engine: str = "weasyprint",
+) -> Response:
+    """Re-render the stored report through the effective profile (author+overrides).
+
+    ``format=html`` (default) returns the customized standalone HTML; ``format=pdf``
+    streams the customized PDF (``503`` when the engine is unavailable).
+    """
+    path = _report_path(template_id, signature)
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="no report generated yet — call /generate first")
+
+    report = json.loads(path.read_text(encoding="utf-8"))
+    eff = effective_profile(
+        _load_profile(template_id, signature),
+        _load_overrides(template_id, signature),
+    )
+    shaped = apply_profile(report, eff)
+    flags = render_flags(eff)
+
+    if fmt == "pdf":
+        if not pdf_available(engine):
+            raise HTTPException(
+                status_code=503,
+                detail=f"PDF engine '{engine}' is not available on this server; use format=html instead",
+            )
+        try:
+            pdf_bytes = render_pdf(shaped, engine=engine, **flags)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        if not pdf_bytes:
+            raise HTTPException(
+                status_code=503,
+                detail=f"PDF engine '{engine}' failed to produce output; use format=html instead",
+            )
+        report_id = (shaped.get("metadata") or {}).get("reportId") or "report"
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'inline; filename="{report_id}.pdf"'},
+        )
+
+    html_str = render_html(shaped, **flags)
+    return HTMLResponse(content=html_str)

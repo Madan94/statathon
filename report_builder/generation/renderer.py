@@ -89,6 +89,7 @@ def render_html(
     title: str | None = None,
     theme: Any = None,
     locale: str = "en-IN",
+    number_system: str = "indian",
     include_cover: bool = False,
     include_toc: bool = False,
     include_appendix: bool = False,
@@ -98,7 +99,8 @@ def render_html(
 
     Document chrome (cover, TOC, provenance appendix, figure/table numbering) is
     opt-in so the default output is unchanged. ``theme`` selects a theme id /
-    :class:`Theme`; ``locale`` controls number grouping downstream.
+    :class:`Theme`; ``locale`` controls bilingual label selection and
+    ``number_system`` (``indian``|``international``) the digit grouping.
     """
     if number_elements:
         from .render.document import number_figures_tables
@@ -120,7 +122,6 @@ def render_html(
         body.append(build_toc(sections))
 
     from .render.blocks import render_question_group
-    number_system = "indian"  # MoSPI default; en-IN and hi-IN both use lakh/crore
     for sec in sorted(sections, key=lambda s: s.get("order", 0)):
         body.append(render_question_group(
             sec, report, theme, locale=locale, number_system=number_system,
@@ -175,6 +176,7 @@ def render_pdf(
     title: str | None = None,
     theme: Any = None,
     locale: str = "en-IN",
+    number_system: str = "indian",
     engine: str = "weasyprint",
     include_cover: bool = True,
     include_toc: bool = True,
@@ -189,7 +191,8 @@ def render_pdf(
     """
     from .render.pdf import render_pdf as _render_pdf
     return _render_pdf(
-        report, title=title, theme=theme, locale=locale, engine=engine,
+        report, title=title, theme=theme, locale=locale,
+        number_system=number_system, engine=engine,
         include_cover=include_cover, include_toc=include_toc,
         include_appendix=include_appendix, number_elements=number_elements,
     )

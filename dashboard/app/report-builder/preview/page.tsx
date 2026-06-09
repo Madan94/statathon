@@ -6,9 +6,9 @@
  * (ECharts + tables + provenance). A tab switches to the canonical server HTML,
  * and the PDF can be downloaded on demand.
  */
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Download, Languages, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, Languages, Loader2, SlidersHorizontal } from 'lucide-react';
 import Link from 'next/link';
 
 import PageHeader from '@/components/layout/PageHeader';
@@ -16,7 +16,9 @@ import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { generatePhaseApi } from '@/lib/api';
 import type { Locale, ReportAST } from '@/lib/report/types';
+import { applyProfile, type ReportOverrides } from '@/lib/report/profile';
 import { ReportPreview } from '@/components/report-builder/render/ReportPreview';
+import { CustomizePanel } from '@/components/report-builder/render/CustomizePanel';
 
 function PreviewInner() {
   const sp = useSearchParams();
@@ -27,6 +29,9 @@ function PreviewInner() {
   const [error, setError] = useState<string | null>(null);
   const [locale, setLocale] = useState<Locale>('en-IN');
   const [tab, setTab] = useState<'react' | 'html'>('react');
+  const [overrides, setOverrides] = useState<ReportOverrides>({});
+  const [customizing, setCustomizing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!tid || !sig) {
@@ -42,10 +47,34 @@ function PreviewInner() {
       .catch(() => {
         if (!cancelled) setError('No report found — generate it first.');
       });
+    generatePhaseApi
+      .getOverrides(tid, sig)
+      .then((o) => {
+        if (!cancelled) setOverrides(o as ReportOverrides);
+      })
+      .catch(() => {
+        /* no overrides saved yet — fine */
+      });
     return () => {
       cancelled = true;
     };
   }, [tid, sig]);
+
+  const shaped = useMemo(
+    () => (report ? applyProfile(report, overrides) : null),
+    [report, overrides],
+  );
+  const previewLocale = (overrides.locale as Locale) ?? locale;
+  const previewNumberSystem = overrides.numberSystem ?? 'indian';
+
+  const saveOverrides = async () => {
+    setSaving(true);
+    try {
+      await generatePhaseApi.patchOverrides(tid, sig, overrides as Record<string, unknown>);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -65,6 +94,13 @@ function PreviewInner() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant={customizing ? 'secondary' : 'outline'}
+            size="sm"
+            onClick={() => setCustomizing((c) => !c)}
+          >
+            <SlidersHorizontal className="h-4 w-4" /> Customize
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -99,8 +135,25 @@ function PreviewInner() {
       )}
 
       {report && tab === 'react' && (
-        <div className="rounded-lg border border-border bg-surface">
-          <ReportPreview report={report} locale={locale} />
+        <div className="flex gap-4">
+          <div className="min-w-0 flex-1 rounded-lg border border-border bg-surface">
+            <ReportPreview
+              report={shaped ?? report}
+              locale={previewLocale}
+              numberSystem={previewNumberSystem}
+            />
+          </div>
+          {customizing && (
+            <div className="hidden w-80 shrink-0 lg:block">
+              <CustomizePanel
+                report={report}
+                value={overrides}
+                onChange={setOverrides}
+                onSave={saveOverrides}
+                saving={saving}
+              />
+            </div>
+          )}
         </div>
       )}
 

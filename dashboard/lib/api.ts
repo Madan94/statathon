@@ -1326,6 +1326,62 @@ export const generatePhaseApi = {
     const suffix = qs.toString() ? `?${qs.toString()}` : '';
     return `${API_BASE}/report-builder/generate-phase/${templateId}/${signature}/report.pdf${suffix}`;
   },
+  /** Author defaults for this template (returns filled defaults if none saved). */
+  getProfile: async (
+    templateId: string,
+    signature: string
+  ): Promise<Record<string, unknown>> => {
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/profile`
+    );
+    return data;
+  },
+  /** Persist the author's full template profile. */
+  putProfile: async (
+    templateId: string,
+    signature: string,
+    profile: Record<string, unknown>
+  ): Promise<Record<string, unknown>> => {
+    const { data } = await api.put(
+      `/report-builder/generate-phase/${templateId}/${signature}/profile`,
+      profile
+    );
+    return data;
+  },
+  /** Sparse viewer overrides saved for this report. */
+  getOverrides: async (
+    templateId: string,
+    signature: string
+  ): Promise<Record<string, unknown>> => {
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/overrides`
+    );
+    return data;
+  },
+  /** Merge sparse viewer overrides into the stored set (deep-merge server-side). */
+  patchOverrides: async (
+    templateId: string,
+    signature: string,
+    overrides: Record<string, unknown>
+  ): Promise<Record<string, unknown>> => {
+    const { data } = await api.patch(
+      `/report-builder/generate-phase/${templateId}/${signature}/overrides`,
+      overrides
+    );
+    return data;
+  },
+  /** Absolute URL of the customized server render (effective profile applied). */
+  customRenderUrl: (
+    templateId: string,
+    signature: string,
+    opts: { format?: 'html' | 'pdf'; engine?: string } = {}
+  ): string => {
+    const qs = new URLSearchParams();
+    if (opts.format) qs.set('format', opts.format);
+    if (opts.engine) qs.set('engine', opts.engine);
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return `${API_BASE}/report-builder/generate-phase/${templateId}/${signature}/render${suffix}`;
+  },
 };
 
 export default api;

@@ -40,6 +40,14 @@ from .narrator import narrate, validate_numbers
 from .assembler import assemble_report, validate_report
 from .renderer import render_html, render_pdf
 from .render.pdf import pdf_available
+from .profile import (
+    TemplateProfile,
+    ReportOverrides,
+    deep_merge,
+    effective_profile,
+    apply_profile,
+    render_flags,
+)
 
 __all__ = [
     "build_plan",
@@ -53,6 +61,12 @@ __all__ = [
     "render_html",
     "render_pdf",
     "pdf_available",
+    "TemplateProfile",
+    "ReportOverrides",
+    "deep_merge",
+    "effective_profile",
+    "apply_profile",
+    "render_flags",
     "Aggregation",
     "AggregationRow",
     "AnalyticsAST",

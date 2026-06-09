@@ -46,6 +46,8 @@ export interface Chart {
   yAxis?: ChartAxis;
   paletteRef?: string;
   series: ChartSeries[];
+  biQuery?: string;
+  provenance?: Provenance;
 }
 
 export interface Figure {
@@ -91,6 +93,8 @@ export interface Table {
   rows: TableRow[];
   footnotes?: Footnote[];
   tableNumber?: string;
+  biQuery?: string;
+  provenance?: Provenance;
 }
 
 export interface Block {
@@ -98,6 +102,7 @@ export interface Block {
   kind?: string;
   content?: LocalizedLabel;
   provenance?: Provenance;
+  biQuery?: string;
 }
 
 export interface Section {
