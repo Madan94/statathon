@@ -1,0 +1,109 @@
+{
+  "_meta": "Simulated ideal pass1 output — what LayoutLM SHOULD return for test2.pdf",
+  "layoutlm_used": true,
+  "total_regions": 42,
+  "toc_entries": [
+    {"title": "CHAPTER 1", "page": 2, "level": 1},
+    {"title": "Energy Reserves and Potential", "page": 2, "level": 1},
+    {"title": "1.1 Coal Reserves", "page": 3, "level": 2},
+    {"title": "1.2 Lignite Reserves", "page": 3, "level": 2},
+    {"title": "1.3 Crude Oil Reserves", "page": 4, "level": 2},
+    {"title": "1.4 Natural Gas Reserves", "page": 4, "level": 2},
+    {"title": "1.5 Renewable Energy Potential in India", "page": 5, "level": 2},
+    {"title": "Geographical Distribution of Renewable Energy Potential", "page": 6, "level": 2}
+  ],
+  "pages": [
+    {
+      "page": 0,
+      "regions": [
+        {"type": "figure", "confidence": 0.92, "text": "", "note": "Cover page image"}
+      ]
+    },
+    {
+      "page": 1,
+      "regions": [
+        {"type": "title", "confidence": 0.88, "text": "Table of Contents"},
+        {"type": "text", "confidence": 0.75, "text": "", "note": "Vector-drawn ToC — no OCR text extractable"}
+      ]
+    },
+    {
+      "page": 2,
+      "regions": [
+        {"type": "heading", "confidence": 0.95, "text": "CHAPTER 1"},
+        {"type": "heading", "confidence": 0.93, "text": "Energy Reserves and Potential"},
+        {"type": "heading", "confidence": 0.90, "text": "Introduction"},
+        {"type": "text", "confidence": 0.88, "text": "Energy reserves are part of the energy resources..."}
+      ]
+    },
+    {
+      "page": 3,
+      "regions": [
+        {"type": "heading", "confidence": 0.94, "text": "Chapter 1: Energy Reserves and Potential"},
+        {"type": "heading", "confidence": 0.91, "text": "1.1 Coal Reserves"},
+        {"type": "text", "confidence": 0.87, "text": "India is home to one of the largest proven coal reserves..."},
+        {"type": "figure", "confidence": 0.89, "text": "", "note": "Pie chart — Coal reserves (Proved 55%, Indicated 37%, Inferred 8%)"},
+        {"type": "caption", "confidence": 0.86, "text": "Fig 1.1 Estimated Reserves of Coal in India as on 01.04.2025"},
+        {"type": "heading", "confidence": 0.91, "text": "1.2 Lignite Reserves"},
+        {"type": "text", "confidence": 0.87, "text": "The total estimated reserves of lignite..."},
+        {"type": "figure", "confidence": 0.88, "text": "", "note": "Pie chart — Lignite reserves (Indicated 53%, Proved 17%, Inferred 30%)"},
+        {"type": "caption", "confidence": 0.85, "text": "Fig 1.2 Estimated Reserves of Lignite in India as on 01.04.2025"}
+      ]
+    },
+    {
+      "page": 4,
+      "regions": [
+        {"type": "heading", "confidence": 0.94, "text": "Chapter 1: Energy Reserves and Potential"},
+        {"type": "heading", "confidence": 0.91, "text": "1.3 Crude Oil Reserves"},
+        {"type": "text", "confidence": 0.87, "text": "As of 01-04-2025, the estimated reserves of crude oil..."},
+        {"type": "figure", "confidence": 0.88, "text": "", "note": "Pie chart — Crude oil reserves by region"},
+        {"type": "caption", "confidence": 0.85, "text": "Fig 1.3: Estimated Reserves of Crude Oil in India as on 01.04.2025"},
+        {"type": "heading", "confidence": 0.91, "text": "1.4 Natural Gas Reserves"},
+        {"type": "text", "confidence": 0.87, "text": "The estimated reserves of natural gas..."},
+        {"type": "figure", "confidence": 0.88, "text": "", "note": "Pie chart — Natural gas reserves by region"},
+        {"type": "caption", "confidence": 0.85, "text": "Fig 1.4: Estimated Reserves of Natural Gas in India as on 01.04.2025"}
+      ]
+    },
+    {
+      "page": 5,
+      "regions": [
+        {"type": "heading", "confidence": 0.94, "text": "Chapter 1: Energy Reserves and Potential"},
+        {"type": "heading", "confidence": 0.91, "text": "1.5 Renewable Energy Potential in India"},
+        {"type": "text", "confidence": 0.87, "text": "India is increasingly focusing on renewable energy sources..."},
+        {"type": "figure", "confidence": 0.89, "text": "", "note": "Pie chart — Source-wise renewable energy potential"},
+        {"type": "caption", "confidence": 0.86, "text": "Fig 1.5: Source wise Estimated Potential of Renewable Power in India"}
+      ]
+    },
+    {
+      "page": 6,
+      "regions": [
+        {"type": "heading", "confidence": 0.94, "text": "Chapter 1: Energy Reserves and Potential"},
+        {"type": "heading", "confidence": 0.91, "text": "Geographical Distribution of Renewable Energy Potential"},
+        {"type": "text", "confidence": 0.87, "text": "The geographical distribution of renewable energy potential..."},
+        {"type": "figure", "confidence": 0.89, "text": "", "note": "Bar chart — Statewise renewable energy potential"},
+        {"type": "caption", "confidence": 0.86, "text": "Fig 1.6: Statewise Estimated Potential of Renewable Power"}
+      ]
+    },
+    {
+      "page": 7,
+      "regions": [
+        {"type": "heading", "confidence": 0.94, "text": "Chapter 1: Energy Reserves and Potential"},
+        {"type": "table", "confidence": 0.92, "text": "", "note": "Table 1.1 — Coal reserves by state"},
+        {"type": "table", "confidence": 0.91, "text": "", "note": "Table 1.2 — Lignite reserves by state"}
+      ]
+    },
+    {
+      "page": 8,
+      "regions": [
+        {"type": "heading", "confidence": 0.94, "text": "Chapter 1: Energy Reserves and Potential"},
+        {"type": "table", "confidence": 0.92, "text": "", "note": "Table 1.3 — Crude oil + natural gas reserves by state"}
+      ]
+    },
+    {
+      "page": 9,
+      "regions": [
+        {"type": "heading", "confidence": 0.94, "text": "Chapter 1: Energy Reserves and Potential"},
+        {"type": "table", "confidence": 0.92, "text": "", "note": "Table 1.4 — Renewable power potential by state and source"}
+      ]
+    }
+  ]
+}

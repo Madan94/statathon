@@ -1,0 +1,357 @@
+{
+  "$schema": "bharatstat/template-blueprint/v1",
+  "_doc": "VALUE-FREE + PROSE-FREE analytic brain for Energy Statistics India 2025 Ch1. Pairs 1:1 with template.ast.json.",
+  "templateMeta": {
+    "templateId": "tpl_energy_reserves_v1",
+    "name": "Energy Statistics India 2025 — Chapter 1",
+    "domain": "energy",
+    "locale": "en-IN",
+    "version": "1.0.0",
+    "sourceDocument": "Energy Statistics India 2025",
+    "valueFree": true,
+    "proseFree": true
+  },
+  "glossary": {
+    "Proved": "Reserves that are economically viable and geologically confirmed.",
+    "Indicated": "Reserves inferred from geological evidence with reasonable confidence.",
+    "Inferred": "Reserves estimated from limited geological evidence.",
+    "SEEA": "System of Environmental Economic Accounting — Energy classification framework."
+  },
+  "palette": {
+    "paletteId": "pal_mospi_default",
+    "sequential": ["#0B5394", "#3D85C6", "#6FA8DC", "#9FC5E8", "#CFE2F3"],
+    "categorical": {
+      "Proved": "#0B5394",
+      "Indicated": "#6FA8DC",
+      "Inferred": "#CFE2F3",
+      "Solar Energy": "#F4B400",
+      "Wind Power": "#0F9D58",
+      "Large Hydro": "#4285F4",
+      "Small Hydro": "#34A853",
+      "Biomass": "#7CB342"
+    },
+    "semantic": {"positive": "#1F7A1F", "negative": "#CC0000", "neutral": "#666666"}
+  },
+  "renderProfile": {
+    "numberFormat": {"locale": "en-IN", "grouping": "lakh-crore", "decimalSeparator": "."},
+    "percentFormat": {"decimals": 1, "suffix": "%"},
+    "currencyFormat": {"symbol": "₹", "grouping": "lakh-crore", "decimals": 0},
+    "fontFamily": "Noto Sans",
+    "pageSize": "A4"
+  },
+  "entities": [
+    {
+      "entityId": "ent_001",
+      "canonicalName": "States/ UTs",
+      "entityType": "dimension",
+      "aliases": ["State", "State/UT", "States/ UTs/ Region"],
+      "valueDomain": {"kind": "categorical", "members": "open", "expectedCardinality": 36},
+      "cardinalityHint": "high",
+      "scope": "classifier",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_002",
+      "canonicalName": "Proved Reserves",
+      "entityType": "measure",
+      "aliases": ["Proved"],
+      "unit": "million_tonnes",
+      "format": "number",
+      "valueDomain": {"kind": "ratio", "min": 0, "max": null},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_003",
+      "canonicalName": "Indicated Reserves",
+      "entityType": "measure",
+      "aliases": ["Indicated"],
+      "unit": "million_tonnes",
+      "format": "number",
+      "valueDomain": {"kind": "ratio", "min": 0, "max": null},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_004",
+      "canonicalName": "Inferred Reserves",
+      "entityType": "measure",
+      "aliases": ["Inferred"],
+      "unit": "million_tonnes",
+      "format": "number",
+      "valueDomain": {"kind": "ratio", "min": 0, "max": null},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_005",
+      "canonicalName": "Total Reserves",
+      "entityType": "measure",
+      "aliases": ["Total"],
+      "unit": "million_tonnes",
+      "format": "number",
+      "valueDomain": {"kind": "ratio", "min": 0, "max": null},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_006",
+      "canonicalName": "Distribution",
+      "entityType": "measure",
+      "aliases": ["Distribution (%)", "Share"],
+      "unit": "percent",
+      "format": "percent.1",
+      "valueDomain": {"kind": "ratio", "min": 0, "max": 100},
+      "aggregation": "weighted_ratio",
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_007",
+      "canonicalName": "Crude Oil Reserves",
+      "entityType": "measure",
+      "aliases": ["Crude Oil", "Oil Reserves"],
+      "unit": "million_tonnes",
+      "format": "number",
+      "valueDomain": {"kind": "ratio", "min": 0, "max": null},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_008",
+      "canonicalName": "Natural Gas Reserves",
+      "entityType": "measure",
+      "aliases": ["Natural Gas", "Gas Reserves"],
+      "unit": "bcm",
+      "format": "number",
+      "valueDomain": {"kind": "ratio", "min": 0, "max": null},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_009",
+      "canonicalName": "Wind Power Potential",
+      "entityType": "measure",
+      "aliases": ["Wind Power", "Wind Power @ 150m"],
+      "unit": "MW",
+      "format": "number",
+      "valueDomain": {"kind": "ratio", "min": 0, "max": null},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_010",
+      "canonicalName": "Solar Energy Potential",
+      "entityType": "measure",
+      "aliases": ["Solar Energy", "Solar"],
+      "unit": "MW",
+      "format": "number",
+      "valueDomain": {"kind": "ratio", "min": 0, "max": null},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_011",
+      "canonicalName": "Survey Period",
+      "entityType": "time",
+      "aliases": ["Year", "2024", "2025", "As on 01-04-2025"],
+      "valueDomain": {"kind": "temporal", "granularity": "annual", "format": "YYYY"},
+      "scope": "time",
+      "confidence": null
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Energy Reserves and Potential",
+      "order": 1,
+      "semanticRef": "sec_01",
+      "questions": [
+        {
+          "questionId": "sp01_q01",
+          "intent": "What is the statewise distribution of coal reserves (Proved, Indicated, Inferred) across States/UTs for 2025?",
+          "questionType": "comparison",
+          "priority": 1,
+          "requiredEntities": [
+            {"entityId": "ent_005", "role": "measure", "required": true},
+            {"entityId": "ent_001", "role": "grouping", "required": true},
+            {"entityId": "ent_011", "role": "time", "required": true, "periodRole": "current"}
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {"entityRef": "ent_005", "agg": "sum"},
+            "groupBy": [{"entityRef": "ent_001"}],
+            "filters": [],
+            "sort": {"by": "measure", "order": "desc"},
+            "topN": null,
+            "compare": {"kind": "across_group", "baseline": null}
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp01_q01_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {"type": "prose", "minWords": 40, "maxWords": 90},
+                "narrativeTemplate": {"tone": "formal-analytical", "mustMention": ["ent_005", "ent_001"], "pattern": "headline_then_gap", "maxWords": 90},
+                "refs": {"contentRef": "p_sp01_q01", "analyticsRef": "", "evidenceRef": ""}
+              },
+              {
+                "componentId": "sp01_q01_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {"type": "table", "tableTemplateRef": "tt_8_2"},
+                "refs": {"tableRef": "table_8_2", "analyticsRef": "", "evidenceRef": ""}
+              },
+              {
+                "componentId": "sp01_q01_c3",
+                "kind": "chart",
+                "order": 3,
+                "outputContract": {"type": "chart", "chartType": "grouped_bar", "xAxis": "ent_001", "yAxis": "ent_005"},
+                "refs": {"chartRef": "chart_sp01_q01", "figureRef": "fig_sp01_q01", "analyticsRef": "", "evidenceRef": ""}
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp01_q03",
+          "intent": "What is the composition of total coal reserves by category (Proved, Indicated, Inferred)?",
+          "questionType": "composition",
+          "priority": 2,
+          "requiredEntities": [
+            {"entityId": "ent_002", "role": "measure", "required": true},
+            {"entityId": "ent_003", "role": "measure", "required": true},
+            {"entityId": "ent_004", "role": "measure", "required": true}
+          ],
+          "analyticsSpec": {
+            "operation": "share",
+            "measure": {"entityRef": "ent_005", "agg": "sum"},
+            "groupBy": [],
+            "filters": [],
+            "sort": {"by": "measure", "order": "desc"},
+            "topN": null,
+            "compare": {"kind": "none"}
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp01_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {"type": "prose", "minWords": 30, "maxWords": 70},
+                "narrativeTemplate": {"tone": "formal-analytical", "mustMention": ["ent_002", "ent_003", "ent_004"], "pattern": "headline_then_gap", "maxWords": 70},
+                "refs": {"contentRef": "p_sp01_q03", "analyticsRef": "", "evidenceRef": ""}
+              },
+              {
+                "componentId": "sp01_q03_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {"type": "chart", "chartType": "pie", "xAxis": "reserve_category", "yAxis": "ent_005"},
+                "refs": {"chartRef": "chart_sp01_q03", "figureRef": "fig_sp01_q03", "analyticsRef": "", "evidenceRef": ""}
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp01_q06",
+          "intent": "What is the source-wise composition of renewable energy potential in India?",
+          "questionType": "composition",
+          "priority": 3,
+          "requiredEntities": [
+            {"entityId": "ent_009", "role": "measure", "required": true},
+            {"entityId": "ent_010", "role": "measure", "required": true}
+          ],
+          "analyticsSpec": {
+            "operation": "share",
+            "measure": {"entityRef": "ent_009", "agg": "sum"},
+            "groupBy": [],
+            "filters": [],
+            "sort": {"by": "measure", "order": "desc"},
+            "topN": null,
+            "compare": {"kind": "none"}
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp01_q06_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {"type": "prose", "minWords": 40, "maxWords": 90},
+                "refs": {"contentRef": "p_sp01_q06", "analyticsRef": "", "evidenceRef": ""}
+              },
+              {
+                "componentId": "sp01_q06_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {"type": "chart", "chartType": "pie", "xAxis": "energy_source", "yAxis": "ent_009"},
+                "refs": {"chartRef": "chart_sp01_q06", "figureRef": "fig_sp01_q06", "analyticsRef": "", "evidenceRef": ""}
+              },
+              {
+                "componentId": "sp01_q06_c3",
+                "kind": "table",
+                "order": 3,
+                "outputContract": {"type": "table", "tableTemplateRef": "tt_10_2"},
+                "refs": {"tableRef": "table_10_2", "analyticsRef": "", "evidenceRef": ""}
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "tableTemplates": [
+    {
+      "tableTemplateId": "tt_8_2",
+      "title": "Statewise Estimated Reserves of Coal",
+      "columnGroups": [
+        {"groupId": "grp_proved", "label": "Proved", "spanRefs": ["col_proved_2024", "col_proved_2025"]},
+        {"groupId": "grp_indicated", "label": "Indicated", "spanRefs": ["col_indicated_2024", "col_indicated_2025"]},
+        {"groupId": "grp_inferred", "label": "Inferred", "spanRefs": ["col_inferred_2024", "col_inferred_2025"]}
+      ],
+      "columns": [
+        {"columnId": "col_state", "header": "States/ UTs", "role": "dimension", "entityRef": "ent_001", "dtype": "string", "align": "left"},
+        {"columnId": "col_proved_2024", "header": "Proved 2024", "role": "measure", "entityRef": "ent_002", "group": "grp_proved", "dtype": "number", "unit": "million_tonnes", "format": "number", "align": "right"},
+        {"columnId": "col_proved_2025", "header": "Proved 2025", "role": "measure", "entityRef": "ent_002", "group": "grp_proved", "dtype": "number", "unit": "million_tonnes", "format": "number", "align": "right"}
+      ],
+      "dimensions": ["ent_001"],
+      "measures": ["ent_002", "ent_003", "ent_004", "ent_005", "ent_006"],
+      "breakdowns": ["ent_011"],
+      "sort": {"by": "col_proved_2025", "order": "desc"},
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_10_2",
+      "title": "Sourcewise and Statewise Estimated Potential of Renewable Power",
+      "columns": [
+        {"columnId": "col_state", "header": "States/ UTs", "role": "dimension", "entityRef": "ent_001", "dtype": "string", "align": "left"},
+        {"columnId": "col_wind", "header": "Wind Power", "role": "measure", "entityRef": "ent_009", "dtype": "number", "unit": "MW", "align": "right"},
+        {"columnId": "col_solar", "header": "Solar Energy", "role": "measure", "entityRef": "ent_010", "dtype": "number", "unit": "MW", "align": "right"},
+        {"columnId": "col_total", "header": "Total", "role": "measure", "entityRef": "ent_005", "dtype": "number", "unit": "MW", "align": "right"},
+        {"columnId": "col_dist", "header": "Distribution (%)", "role": "measure", "entityRef": "ent_006", "dtype": "number", "unit": "percent", "format": "percent.1", "align": "right"}
+      ],
+      "dimensions": ["ent_001"],
+      "measures": ["ent_009", "ent_010", "ent_005", "ent_006"],
+      "breakdowns": [],
+      "sort": {"by": "col_total", "order": "desc"},
+      "emptyPolicy": "show_dash"
+    }
+  ],
+  "figureTemplates": [
+    {"figureTemplateId": "ft_sp01_q01", "captionTemplate": "Coal Reserves by State/UT, {{period.current}}", "chartId": "chart_sp01_q01"},
+    {"figureTemplateId": "ft_sp01_q03", "captionTemplate": "Composition of Coal Reserves by Category", "chartId": "chart_sp01_q03"},
+    {"figureTemplateId": "ft_sp01_q06", "captionTemplate": "Source-wise Renewable Energy Potential in India", "chartId": "chart_sp01_q06"}
+  ],
+  "documentMap": {
+    "order": ["topic_01"],
+    "frontMatter": ["title_page", "toc"],
+    "backMatter": ["glossary", "notes"]
+  }
+}
