@@ -11,9 +11,11 @@ Endpoints:
     POST /analyze  → multipart PDF → JSON with regions per page
 
 Environment:
-    MODEL_ID        = microsoft/layoutlmv3-large (default)
-    LAYOUTLM_PORT   = 8001 (default)
-    MAX_PAGES       = 100 (safety limit)
+    LAYOUTLM_MODEL_ID = Kwan0/layoutlmv3-base-finetune-DocLayNet-100k (preferred)
+    LAYOUTLM_MODEL    = alias for LAYOUTLM_MODEL_ID
+    MODEL_ID          = legacy alias (docker-compose)
+    LAYOUTLM_PORT     = 8001 (default)
+    MAX_PAGES         = 100 (safety limit)
 """
 from __future__ import annotations
 
@@ -27,7 +29,11 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-load_dotenv()
+
+# Load repo-root .env when started from services/layoutlm/
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(_PROJECT_ROOT / ".env")
+load_dotenv()  # optional local override (e.g. services/layoutlm/.env)
 
 import pytesseract
 tesseract_path = os.getenv("TESSERACT_CMD")
@@ -43,7 +49,19 @@ logger = logging.getLogger("layoutlm-service")
 
 app = FastAPI(title="LayoutLM Layout Detection Service", version="1.0.0")
 
-MODEL_ID = os.getenv("MODEL_ID", "microsoft/layoutlmv3-large")
+_DEFAULT_MODEL = "microsoft/layoutlmv3-large"
+
+
+def _resolve_model_id() -> str:
+    """Read model id from env; LAYOUTLM_MODEL_ID is the canonical name in .env."""
+    for key in ("LAYOUTLM_MODEL_ID", "LAYOUTLM_MODEL", "MODEL_ID"):
+        value = os.getenv(key)
+        if value and value.strip():
+            return value.strip()
+    return _DEFAULT_MODEL
+
+
+MODEL_ID = _resolve_model_id()
 MAX_PAGES = int(os.getenv("MAX_PAGES", "100"))
 
 # ── Lazy-loaded globals ──────────────────────────────────────────────────────

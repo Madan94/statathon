@@ -85,11 +85,16 @@ function Start-Infra {
 
 function Start-LayoutLM {
     Write-Host "▶ Starting LayoutLM (CPU, port 8001)..." -ForegroundColor Green
-    Write-Host "  Model: microsoft/layoutlmv3-large (~1.4GB RAM)"
-    Write-Host "  First run downloads ~1.2GB to $MODEL_CACHE"
+    $modelId = $env:LAYOUTLM_MODEL_ID
+    if (-not $modelId) { $modelId = $env:LAYOUTLM_MODEL }
+    if (-not $modelId) { $modelId = $env:MODEL_ID }
+    if (-not $modelId) { $modelId = "microsoft/layoutlmv3-large" }
+    Write-Host "  Model: $modelId"
+    Write-Host "  First run downloads model weights to $MODEL_CACHE"
     Write-Host ""
     
-    $env:MODEL_ID = "microsoft/layoutlmv3-large"
+    $env:MODEL_ID = $modelId
+    if (-not $env:LAYOUTLM_MODEL_ID) { $env:LAYOUTLM_MODEL_ID = $modelId }
     $env:LAYOUTLM_PORT = "8001"
     $env:MAX_PAGES = "100"
     

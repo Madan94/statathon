@@ -48,7 +48,7 @@ services:
     volumes:
       - ./model/cache:/cache
     environment:
-      - MODEL_ID=microsoft/layoutlmv3-large
+      - MODEL_ID=${LAYOUTLM_MODEL_ID:-microsoft/layoutlmv3-large}
       - LAYOUTLM_PORT=8001
       - HF_HOME=/cache
     restart: unless-stopped
