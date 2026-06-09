@@ -11,9 +11,11 @@ Endpoints:
     POST /analyze  → multipart PDF → JSON with regions per page
 
 Environment:
-    MODEL_ID        = microsoft/layoutlmv3-large (default)
-    LAYOUTLM_PORT   = 8001 (default)
-    MAX_PAGES       = 100 (safety limit)
+    LAYOUTLM_MODEL_ID = Kwan0/layoutlmv3-base-finetune-DocLayNet-100k (preferred)
+    LAYOUTLM_MODEL    = alias for LAYOUTLM_MODEL_ID
+    MODEL_ID          = legacy alias (docker-compose)
+    LAYOUTLM_PORT     = 8001 (default)
+    MAX_PAGES         = 100 (safety limit)
 """
 from __future__ import annotations
 
@@ -28,13 +30,15 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-# Load .env from repo root (2 levels up from services/layoutlm/)
-_repo_root_env = Path(__file__).resolve().parents[2] / ".env"
-if _repo_root_env.exists():
-    load_dotenv(_repo_root_env)
-    logging.getLogger("layoutlm-service").info("Loaded env from: %s", _repo_root_env)
+# Load repo-root .env when started from services/layoutlm/
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+_repo_env = _PROJECT_ROOT / ".env"
+if _repo_env.exists():
+    load_dotenv(_repo_env)
+    logging.getLogger("layoutlm-service").info("Loaded env from: %s", _repo_env)
 else:
     load_dotenv()  # fallback to CWD
+load_dotenv()  # optional local override (e.g. services/layoutlm/.env)
 
 import pytesseract
 tesseract_path = os.getenv("TESSERACT_CMD")
@@ -50,11 +54,26 @@ logger = logging.getLogger("layoutlm-service")
 
 app = FastAPI(title="LayoutLM Layout Detection Service", version="1.0.0")
 
-# LAYOUTLM_MODEL_ID (specific) wins over MODEL_ID (generic) wins over default
-# This ensures setting $env:LAYOUTLM_MODEL_ID always takes effect
-MODEL_ID = os.getenv("LAYOUTLM_MODEL_ID") or os.getenv("MODEL_ID") or "Kwan0/layoutlmv3-base-finetune-DocLayNet-100k"
-logger.info("Resolved model: %s (LAYOUTLM_MODEL_ID=%s, MODEL_ID=%s)",
-            MODEL_ID, os.getenv("LAYOUTLM_MODEL_ID", ""), os.getenv("MODEL_ID", ""))
+_DEFAULT_MODEL = "Kwan0/layoutlmv3-base-finetune-DocLayNet-100k"
+
+
+def _resolve_model_id() -> str:
+    """Read model id from env; LAYOUTLM_MODEL_ID is the canonical name in .env."""
+    for key in ("LAYOUTLM_MODEL_ID", "LAYOUTLM_MODEL", "MODEL_ID"):
+        value = os.getenv(key)
+        if value and value.strip():
+            return value.strip()
+    return _DEFAULT_MODEL
+
+
+MODEL_ID = _resolve_model_id()
+logger.info(
+    "Resolved model: %s (LAYOUTLM_MODEL_ID=%s, LAYOUTLM_MODEL=%s, MODEL_ID=%s)",
+    MODEL_ID,
+    os.getenv("LAYOUTLM_MODEL_ID", ""),
+    os.getenv("LAYOUTLM_MODEL", ""),
+    os.getenv("MODEL_ID", ""),
+)
 MAX_PAGES = int(os.getenv("MAX_PAGES", "100"))
 
 # ── Model cache — OUTSIDE the git repo to avoid stash/conflict issues ────────

@@ -126,7 +126,7 @@ services:
     restart: unless-stopped
 
   # ─────────────────────────────────────────────────────────────────────────
-  # Redis — port 6379
+  # Redis — port 6379 (checkpoint cache + session store)
   # ─────────────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine

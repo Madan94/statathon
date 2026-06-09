@@ -18,7 +18,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile.layoutlm
     environment:
-      - MODEL_ID=${LAYOUTLM_MODEL:-microsoft/layoutlmv3-large}
+      - MODEL_ID=${LAYOUTLM_MODEL_ID:-${LAYOUTLM_MODEL:-microsoft/layoutlmv3-large}}
       - LAYOUTLM_PORT=8001
       - MAX_PAGES=100
     volumes:
