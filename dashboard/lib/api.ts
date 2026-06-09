@@ -1271,4 +1271,47 @@ export const bindingPhaseApi = {
   },
 };
 
+// ── Generation phase (S4→S6) ────────────────────────────────────────────────
+
+export interface GenerateResult {
+  template_id: string;
+  signature: string;
+  report_id: string;
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+  stats: Record<string, unknown>;
+  coverage: Record<string, number>;
+  narrative_trace: Array<Record<string, unknown>>;
+  fill_trace: Array<Record<string, unknown>>;
+}
+
+export const generatePhaseApi = {
+  /** Run S4→S6 on a finalized binding: analytics → fill → narrate → assemble → render. */
+  generate: async (
+    templateId: string,
+    signature: string,
+    body: { period?: string; report_id?: string; use_llm?: boolean } = {}
+  ): Promise<GenerateResult> => {
+    const { data } = await api.post(
+      `/report-builder/generate-phase/${templateId}/${signature}/generate`,
+      body
+    );
+    return data;
+  },
+  /** The assembled report.output.ast.json. */
+  getReport: async (
+    templateId: string,
+    signature: string
+  ): Promise<Record<string, unknown>> => {
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/report`
+    );
+    return data;
+  },
+  /** Absolute URL of the rendered standalone HTML report (for an iframe / new tab). */
+  reportHtmlUrl: (templateId: string, signature: string): string =>
+    `${API_BASE}/report-builder/generate-phase/${templateId}/${signature}/report.html`,
+};
+
 export default api;
