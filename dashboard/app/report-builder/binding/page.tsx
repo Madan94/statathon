@@ -443,6 +443,20 @@ export default function BindingWorkflowPage() {
                 <ArrowLeft className="h-4 w-4" /> Back to coverage
               </Button>
               <div className="flex gap-2">
+                <Link
+                  href={`/report-builder/preview?tid=${encodeURIComponent(session.template_id)}&sig=${encodeURIComponent(session.signature)}`}
+                >
+                  <Button variant="secondary">
+                    <Sparkles className="h-4 w-4" /> Live preview
+                  </Button>
+                </Link>
+                <a
+                  href={generatePhaseApi.reportPdfUrl(session.template_id, session.signature)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Button variant="outline">Download PDF</Button>
+                </a>
                 <a
                   href={generatePhaseApi.reportHtmlUrl(session.template_id, session.signature)}
                   target="_blank"
