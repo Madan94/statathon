@@ -41,6 +41,15 @@ from .coordinator import (
     run_execution,
     run_execution_detailed,
 )
+from .run_modes import (
+    DataDriftError,
+    GENERATION_MODES,
+    attach_data_hash,
+    bundle_data_hash,
+    compute_data_content_hash,
+    resolve_mode,
+    verify_data_hash,
+)
 from .filler import fill_visuals
 from .narrator import narrate, validate_numbers
 from .assembler import assemble_report, validate_report
@@ -69,6 +78,13 @@ __all__ = [
     "run_execution_detailed",
     "CoordinatorResult",
     "PlanOutcome",
+    "DataDriftError",
+    "GENERATION_MODES",
+    "attach_data_hash",
+    "bundle_data_hash",
+    "compute_data_content_hash",
+    "resolve_mode",
+    "verify_data_hash",
     "fill_visuals",
     "narrate",
     "validate_numbers",

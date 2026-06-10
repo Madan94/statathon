@@ -44,6 +44,7 @@ def build_execution_bundle(
     blueprint: dict[str, Any],
     dataframe_path: str = "",
     df: Any | None = None,
+    data_content_hash: str = "",
 ) -> ExecutionBundle:
     """Build a validated ExecutionBundle from confirmed bindings.
 
@@ -58,6 +59,9 @@ def build_execution_bundle(
         blueprint: Full blueprint dict (entities, topics, questions).
         dataframe_path: Path to the stashed CSV for S4 to load.
         df: Optional loaded DataFrame (for question_binder value resolution).
+        data_content_hash: Optional value-level hash of the dataframe actually used,
+            pinned into ``dataframeRef.contentHash`` so a frozen bundle is reproducible
+            and data drift is detectable (see ``generation.run_modes``).
 
     Returns:
         A complete, validated ExecutionBundle ready for S4 handoff.
@@ -169,6 +173,11 @@ def build_execution_bundle(
 
     # ── Assemble the bundle ──
     now = datetime.now(timezone.utc).isoformat()
+    # Pin the data content hash into dataframeRef when provided (additive: the key is
+    # omitted for unpinned bundles, keeping legacy artifacts byte-identical).
+    dataframe_ref: dict[str, Any] = {"type": "csv", "path": dataframe_path}
+    if data_content_hash:
+        dataframe_ref["contentHash"] = data_content_hash
     bundle = ExecutionBundle(
         templateId=template_id,
         datasetId=record.datasetId,
@@ -180,7 +189,7 @@ def build_execution_bundle(
         plans=plans,
         blockedQuestions=blocked,
         readinessReport=readiness,
-        dataframeRef={"type": "csv", "path": dataframe_path},
+        dataframeRef=dataframe_ref,
         lineageIndex=lineage_index,
         frozenAt=now,
     )

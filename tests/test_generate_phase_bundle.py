@@ -25,6 +25,8 @@ from report_builder.binding.schema import (
 from report_builder.binding.execution_contracts import (
     ExecutionBundle, FormulaSpec, QuestionExecutionPlan,
 )
+from report_builder.binding.freeze_store import load_frozen_bundle
+from report_builder.generation.run_modes import bundle_data_hash, compute_data_content_hash
 from api.report_builder_api import generate_phase_api as G
 from api.report_builder_api.generate_phase_api import GenerateIn, generate_report, get_report
 
@@ -218,3 +220,88 @@ def test_multi_measure_fanout_reaches_run_analytics(stashed, monkeypatch):
 
     assert captured["ids"] == ["plan_q_sal_01__sal", "plan_q_sal_01__bonus"]
     assert captured["measures"] == ["sal", "bonus"]
+
+
+# ── 7-13: generation modes + data content hash (Phase 4 reproducibility) ──────
+
+def _csv_path(store):
+    return store / f"{TEMPLATE_ID}__{SIGNATURE}.data.csv"
+
+
+def test_fresh_mode_returns_content_hash(stashed):
+    """Fresh mode (default) computes and returns a value-level data content hash."""
+    out = generate_report(TEMPLATE_ID, SIGNATURE, GenerateIn(period="2024", use_llm=False))
+    assert out.mode == "fresh"
+    assert out.data_content_hash.startswith("sha256:")
+    # the hash matches the actual stash CSV the run executed
+    expected = compute_data_content_hash(pd.read_csv(_csv_path(stashed)))
+    assert out.data_content_hash == expected
+
+
+def test_fresh_mode_freezes_bundle_with_content_hash(stashed):
+    """Fresh mode pins the content hash into the frozen bundle's dataframeRef."""
+    out = generate_report(TEMPLATE_ID, SIGNATURE, GenerateIn(period="2024", use_llm=False))
+    frozen = load_frozen_bundle(TEMPLATE_ID, SIGNATURE)
+    assert frozen is not None
+    assert bundle_data_hash(frozen) == out.data_content_hash
+
+
+def test_frozen_mode_loads_and_reproduces(stashed):
+    """Frozen mode loads the exact frozen bundle and reproduces analytics on same data."""
+    fresh = generate_report(TEMPLATE_ID, SIGNATURE, GenerateIn(period="2024", use_llm=False))
+    fresh_report = get_report(TEMPLATE_ID, SIGNATURE)
+
+    frozen = generate_report(TEMPLATE_ID, SIGNATURE, GenerateIn(period="2024", use_llm=False, mode="frozen"))
+    frozen_report = get_report(TEMPLATE_ID, SIGNATURE)
+
+    assert frozen.mode == "frozen"
+    assert frozen.data_content_hash == fresh.data_content_hash
+    assert frozen.bundle_version is not None
+    # same analytics → same filled table rows
+    assert frozen_report["tableAST"]["tables"][0]["rows"] == fresh_report["tableAST"]["tables"][0]["rows"]
+
+
+def test_frozen_mode_without_prior_freeze_404(stashed):
+    """Frozen mode with nothing frozen yet is a 404, never a silent rebuild."""
+    with pytest.raises(HTTPException) as exc:
+        generate_report(TEMPLATE_ID, SIGNATURE, GenerateIn(period="2024", use_llm=False, mode="frozen"))
+    assert exc.value.status_code == 404
+
+
+def test_frozen_mode_data_drift_409(stashed):
+    """Frozen mode refuses to run when the live CSV has drifted from the pinned hash."""
+    generate_report(TEMPLATE_ID, SIGNATURE, GenerateIn(period="2024", use_llm=False))  # fresh freeze
+    # mutate the dataset values (same shape/signature, different content)
+    drifted = _frame().copy()
+    drifted.loc[0, "sal"] = 999999
+    drifted.to_csv(_csv_path(stashed), index=False)
+
+    with pytest.raises(HTTPException) as exc:
+        generate_report(TEMPLATE_ID, SIGNATURE, GenerateIn(period="2024", use_llm=False, mode="frozen"))
+    assert exc.value.status_code == 409
+    assert "DATA_DRIFT" in exc.value.detail
+
+
+def test_test_mode_runs_from_fixture_without_real_storage(stashed):
+    """Test mode executes a fixture .bundle.json and never freezes to storage."""
+    # lay down a fixture bundle next to the stash (deterministic regression input)
+    fixture = ExecutionBundle(templateId=TEMPLATE_ID, datasetId="ds_test",
+                              status="READY", plans=[_exec_plan(["sal"])])
+    (stashed / f"{TEMPLATE_ID}__{SIGNATURE}.bundle.json").write_text(
+        json.dumps(fixture.to_dict()), encoding="utf-8")
+
+    out = generate_report(TEMPLATE_ID, SIGNATURE, GenerateIn(period="2024", use_llm=False, mode="test"))
+    assert out.mode == "test"
+    assert out.valid is True, out.errors
+    report = get_report(TEMPLATE_ID, SIGNATURE)
+    assert report["tableAST"]["tables"][0]["rows"], "test mode must fill from the fixture bundle"
+    # real storage untouched: test mode never freezes a bundle
+    assert not (stashed / "frozen").exists()
+
+
+def test_test_mode_missing_fixture_404(stashed):
+    """Test mode with no fixture bundle is a 404, never a silent fallback to fresh."""
+    with pytest.raises(HTTPException) as exc:
+        generate_report(TEMPLATE_ID, SIGNATURE, GenerateIn(period="2024", use_llm=False, mode="test"))
+    assert exc.value.status_code == 404
+

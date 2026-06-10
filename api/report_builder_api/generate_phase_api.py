@@ -52,7 +52,15 @@ from report_builder.generation import (
     TemplateProfile,
 )
 from report_builder.binding.execution_bundle_factory import build_execution_bundle
+from report_builder.binding.freeze_store import get_freeze_info, load_frozen_bundle
 from report_builder.generation.bundle_adapter import adapt_bundle
+from report_builder.generation.run_modes import (
+    DataDriftError,
+    bundle_data_hash,
+    compute_data_content_hash,
+    resolve_mode,
+    verify_data_hash,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +80,8 @@ class GenerateIn(BaseModel):
     report_id: Optional[str] = None
     use_llm: Optional[bool] = None          # None ⇒ auto (on iff LLM enabled)
     plan_source: Optional[str] = None       # "bundle" (gold, default) | "legacy" (override; else env GENERATION_PLAN_SOURCE)
+    mode: Optional[str] = None              # "fresh" (default) | "frozen" | "test" (else env GENERATION_MODE)
+    bundle_version: Optional[int] = None    # frozen mode: which frozen version to load (None ⇒ latest)
 
 
 class GenerateOut(BaseModel):
@@ -86,6 +96,9 @@ class GenerateOut(BaseModel):
     narrative_trace: list[dict[str, Any]]
     fill_trace: list[dict[str, Any]]
     plan_source: str = "execution_bundle"   # which planner produced analyticsAST.plans
+    mode: str = "fresh"                      # fresh | frozen | test
+    data_content_hash: str = ""             # value-level hash of the executed dataset
+    bundle_version: Optional[int] = None    # frozen bundle version used (when known)
 
 
 # ---------------------------------------------------------------------------
@@ -232,13 +245,16 @@ def _plan_source(body: GenerateIn) -> str:
 
 
 def _build_bundle(template_id: str, signature: str, dataset: DatasetAST,
-                  blueprint: dict[str, Any], df: "Any"):
+                  blueprint: dict[str, Any], df: "Any", data_content_hash: str = ""):
     """Build the canonical ExecutionBundle for this dataset (the S4 input contract).
 
     Always builds from the *current* stash + review record via the single canonical
     factory, which also freezes the result for reproducibility/audit. We intentionally
     do NOT prefer a previously-frozen bundle here: a stale frozen artifact from an
     earlier blueprint/binding must never silently drive generation.
+
+    ``data_content_hash`` (when provided) is pinned into the frozen bundle's
+    ``dataframeRef`` so a later ``frozen`` run can detect data drift.
     """
     record = R.load_record(template_id, signature)
     if record is None:
@@ -252,7 +268,28 @@ def _build_bundle(template_id: str, signature: str, dataset: DatasetAST,
         blueprint=blueprint,
         dataframe_path=df_path,
         df=df,
+        data_content_hash=data_content_hash,
     )
+
+
+def _load_fixture_bundle(template_id: str, signature: str):
+    """Load a fixture ExecutionBundle for ``test`` mode (deterministic regression).
+
+    Reads ``<stash>/<template>__<signature>.bundle.json`` — a pre-built bundle laid
+    down alongside the fixture dataset. ``test`` mode runs straight from this fixture
+    without rebuilding (no factory/binder) or freezing (no real-storage writes), so a
+    regression always executes the exact same plans over the exact same data.
+    """
+    from report_builder.binding.execution_contracts import ExecutionBundle
+
+    path = _stash_path(template_id, signature, "bundle.json")
+    if not path.exists():
+        return None
+    try:
+        return ExecutionBundle.from_dict(json.loads(path.read_text(encoding="utf-8")))
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.error("[generate-phase] failed to load fixture bundle %s: %s", path, exc)
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -284,18 +321,52 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
     # GOLD PATH (default): plans come from the team's validated ExecutionBundle, not a
     # re-derived planner. Readiness is honored here: NOT_READY blocks generation, and
     # the adapter never emits BLOCKED plans. LEGACY planner stays behind a flag.
+    #
+    # Reproducibility (generation modes): the dataset is pinned by a value-level
+    # contentHash. `fresh` builds + freezes the bundle with that hash; `frozen` loads a
+    # frozen bundle and refuses to run if the live data has drifted from the pinned hash.
+    mode = resolve_mode(body.mode)
+    data_content_hash = compute_data_content_hash(df)
     plan_source = _plan_source(body)
+    bundle_version: Optional[int] = None
     if plan_source == "legacy":
         plans = build_plans(blueprint, binding, dataset)
         analytics_obj, evidence_obj, row_index = run_analytics(
             plans, df, question_meta=_question_meta(blueprint))
     else:
-        bundle = _build_bundle(template_id, signature, dataset, blueprint, df)
-        if bundle.status == "NOT_READY":
-            raise HTTPException(
-                status_code=409,
-                detail="execution bundle is NOT_READY — binding has blocking errors; resolve before generating",
-            )
+        if mode == "frozen":
+            bundle = load_frozen_bundle(template_id, signature, body.bundle_version)
+            if bundle is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="no frozen bundle for this dataset — run a fresh generation first",
+                )
+            # Reproducibility gate: the live data must match the pinned snapshot.
+            try:
+                verify_data_hash(bundle, df)
+            except DataDriftError as drift:
+                raise HTTPException(status_code=409, detail=str(drift)) from drift
+            info = get_freeze_info(template_id, signature) or {}
+            bundle_version = body.bundle_version or info.get("version")
+            data_content_hash = bundle_data_hash(bundle) or data_content_hash
+        elif mode == "test":
+            bundle = _load_fixture_bundle(template_id, signature)
+            if bundle is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="no fixture bundle for this dataset — test mode needs a .bundle.json fixture",
+                )
+            data_content_hash = bundle_data_hash(bundle) or data_content_hash
+        else:  # fresh
+            bundle = _build_bundle(template_id, signature, dataset, blueprint, df,
+                                   data_content_hash=data_content_hash)
+            if bundle.status == "NOT_READY":
+                raise HTTPException(
+                    status_code=409,
+                    detail="execution bundle is NOT_READY — binding has blocking errors; resolve before generating",
+                )
+            info = get_freeze_info(template_id, signature) or {}
+            bundle_version = info.get("version")
         # Adapt the full bundle (carries formulaSpec / normalizationPlan / lineage /
         # multi-measure fan-out) and route each plan through the S4 coordinator, which
         # applies normalization, computes formulas, and runs simple aggregations.
@@ -336,8 +407,9 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     _html_path(template_id, signature).write_text(html_str, encoding="utf-8")
 
-    logger.info("[generate-phase] %s__%s — report=%s valid=%s errors=%d plans=%s",
-                template_id, signature, report_id, result["ok"], len(result["errors"]), plan_source)
+    logger.info("[generate-phase] %s__%s — report=%s valid=%s errors=%d plans=%s mode=%s hash=%s",
+                template_id, signature, report_id, result["ok"], len(result["errors"]),
+                plan_source, mode, data_content_hash)
 
     return GenerateOut(
         template_id=template_id,
@@ -351,6 +423,9 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
         narrative_trace=narrated["narrativeTrace"],
         fill_trace=visuals["fillTrace"],
         plan_source="execution_bundle" if plan_source == "bundle" else "legacy_planner",
+        mode=mode,
+        data_content_hash=data_content_hash,
+        bundle_version=bundle_version,
     )
 
 
