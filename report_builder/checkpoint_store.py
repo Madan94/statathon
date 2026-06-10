@@ -72,16 +72,57 @@ class CheckpointStore:
         
         Dynamic: hashes the actual extraction_pipeline.py source code so ANY
         code change auto-invalidates without manual version bumps.
+        
+        Covers all runtime decisions that affect extraction output:
+        - Model names (different model → different output)
+        - Provider routing (different provider → different output)
+        - Token budgets (affects truncation → different output)
+        - Fallback chains (different fallback → different output)
+        - Quality params (guided_json, self_consistency affect quality)
+        - Image params (DPI, max_dim affect what VLM sees)
+        - Pipeline version (explicit version bump)
         """
         parts = [
+            # Model names
             os.getenv("SGLANG_MODEL", ""),
+            os.getenv("GEMINI_MODEL", ""),
+            os.getenv("GROQ_MODEL", ""),
+            os.getenv("OPENAI_MODEL", ""),
+            os.getenv("OPENAI_BASE_URL", ""),
             os.getenv("LAYOUTLM_MODEL_ID", ""),
+            # Provider routing
             os.getenv("VLM_PROVIDER", ""),
             os.getenv("REASONING_PROVIDER", ""),
-            os.getenv("GEMINI_MODEL", ""),
+            os.getenv("MODEL_PROFILE", ""),
             os.getenv("PROVIDER_ENTITY_EXTRACTION", ""),
+            os.getenv("PROVIDER_QUESTION_GENERATION", ""),
+            os.getenv("PROVIDER_ENTITY_BINDING", ""),
+            os.getenv("PROVIDER_GAP_FILL", ""),
+            os.getenv("PROVIDER_FACT_EXTRACTION", ""),
+            os.getenv("PROVIDER_SEMANTIC_FALLBACK", ""),
+            # Enrichment
+            os.getenv("ENRICHMENT_ENABLED", ""),
+            os.getenv("ENRICHMENT_PROVIDER", ""),
+            # Token budgets
             os.getenv("ENTITY_EXTRACTION_MAX_TOKENS", ""),
             os.getenv("QUESTION_GENERATION_MAX_TOKENS", ""),
+            os.getenv("ENTITY_BINDING_MAX_TOKENS", ""),
+            os.getenv("GAP_FILL_MAX_TOKENS", ""),
+            os.getenv("QWEN_ENTITY_MAX_OUTPUT", ""),
+            os.getenv("QWEN_QUESTION_MAX_OUTPUT", ""),
+            os.getenv("QWEN_PROMPT_MAX_CHARS", ""),
+            # Fallback chains
+            os.getenv("VLM_FALLBACK_ORDER", ""),
+            os.getenv("FALLBACK_ENTITY_EXTRACTION", ""),
+            os.getenv("FALLBACK_QUESTION_GENERATION", ""),
+            # Quality params
+            os.getenv("GUIDED_JSON", ""),
+            os.getenv("SELF_CONSISTENCY", ""),
+            os.getenv("PDF_DPI", ""),
+            os.getenv("VLM_MAX_IMAGE_DIM", ""),
+            # Pipeline version
+            os.getenv("CHECKPOINT_PIPELINE_VERSION", ""),
+            os.getenv("EXTRACTION_PIPELINE", ""),
         ]
         # Include pipeline source hash so code changes auto-invalidate
         try:
@@ -92,6 +133,20 @@ class CheckpointStore:
         except Exception:
             parts.append("unknown")
         return hashlib.md5("|".join(parts).encode()).hexdigest()
+
+    def summary(self) -> dict:
+        """Return checkpoint state for diagnostics/API response."""
+        return {
+            "enabled": self.enabled,
+            "mode": self.mode,
+            "backend": "redis" if self._redis else "file",
+            "redisConnected": self._redis is not None,
+            "fileHash": self.file_hash,
+            "configHash": self.config_hash,
+            "namespace": os.getenv("CHECKPOINT_NAMESPACE", "default"),
+            "pipelineVersion": os.getenv("CHECKPOINT_PIPELINE_VERSION", ""),
+            "strictVersion": os.getenv("CHECKPOINT_STRICT_VERSION", "false").lower() in ("1", "true"),
+        }
 
     def _connect_redis(self):
         """Try connecting to Redis. Returns client or None."""
