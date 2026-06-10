@@ -4,7 +4,30 @@
 > **Current score:** 6.2–6.8/10  
 > **Target score:** 9+/10  
 > **Branch:** `report-builder-ui`  
-> **Contract version:** `template.extraction.v2`
+> **Contract version:** `template.extraction.v2`  
+> **Companion:** [RUNTIME_GOVERNANCE_PLAN.md](RUNTIME_GOVERNANCE_PLAN.md) — R0-R8 model/cache/key governance track
+
+---
+
+## Prerequisite: Runtime Governance (Week 0)
+
+Before implementing any extraction phase, the **model runtime control plane** must be stabilized. See [RUNTIME_GOVERNANCE_PLAN.md](RUNTIME_GOVERNANCE_PLAN.md) for the full R0-R8 track.
+
+**Why:** Even a perfect extraction compiler fails unpredictably if models switch silently, keys rotate blindly, cache serves stale outputs, and fallbacks are invisible.
+
+**Key deliverables (Week 0):**
+- R0: RuntimeConfig contract (single source of truth)
+- R1: Provider-agnostic enrichment (no more hardcoded Gemini)
+- R3: Token budget manager (Qwen-VL 3B safe limits)
+- R4: Task-specific fallback policy (text + vision)
+- R5: Cache policy cleanup (complete config hash)
+- R8: Legacy path cleanup
+
+**Recommended model profiles:**
+- `local_first` — Qwen-VL + Gemma2:9b/Ollama (zero cloud, free)
+- `qwen_groq_hybrid` — Qwen-VL + Groq free tier (fast text reasoning)
+- `qwen_gemini_enriched` — Qwen-VL + Gemini (high quality, uses quota)
+- `cloud_fallback_full` — full fallback chains (most reliable)
 
 ---
 
@@ -2050,8 +2073,19 @@ class TestExtractionToBinderE2E:
 ## Implementation Order
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│  WEEK 1: Foundation + Hard Gates                                         │
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│  WEEK 0: Runtime Governance (see RUNTIME_GOVERNANCE_PLAN.md)                     │
+│                                                                                 │
+│  R0  RuntimeConfig contract                                                     │
+│  R1  Provider-agnostic enrichment                                               │
+│  R3  Token budget manager                                                       │
+│  R4  Task-specific fallback policy                                              │
+│  R5  Cache policy cleanup                                                       │
+│  R8  Legacy hardcoded path cleanup                                              │
+│                                                                                 │
+│  After Week 0: every model call is centrally governed, visible, and safe        │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  WEEK 1: Foundation + Hard Gates                                                 │
 │                                                                         │
 │  E0  Extraction Contract (compile target for all modules)               │
 │  E12 Value-Free Validator (hard invariant from day 1)                   │
