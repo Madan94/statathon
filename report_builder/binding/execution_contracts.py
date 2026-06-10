@@ -353,19 +353,25 @@ class ReadinessCheck:
     """One readiness check result."""
 
     level: str = "technical"            # one of READINESS_LEVELS
+    severity: str = "error"             # error | warn | info
     passed: bool = True
     code: str = ""
     message: str = ""
     planId: str = ""
+    recommendedAction: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out: dict[str, Any] = {
             "level": self.level,
+            "severity": self.severity,
             "passed": self.passed,
             "code": self.code,
             "message": self.message,
             "planId": self.planId,
         }
+        if self.recommendedAction:
+            out["recommendedAction"] = self.recommendedAction
+        return out
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "ReadinessCheck":

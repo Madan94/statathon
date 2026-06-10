@@ -306,12 +306,37 @@ def compile_execution_plans(
             continue
 
         bp_q = bp_questions.get(qb.questionId, {})
-        analytics_spec = bp_q.get("analyticsSpec") or {}
-        answer_structure = bp_q.get("answerStructure") or {}
-        output_components = answer_structure.get("components", [])
+        source_analytics_spec = bp_q.get("analyticsSpec") or {}
+        answer_structure = bp_q.get("answerStructure") or bp_q.get("outputContract") or {}
+        output_components = answer_structure.get("components", []) if isinstance(answer_structure, dict) else []
         required_entities = bp_q.get("requiredEntities") or []
         question_text = bp_q.get("questionText") or bp_q.get("intent", "")
         question_type = bp_q.get("questionType", "comparison")
+
+        # ── Resolve analyticsSpec to execution-ready columns ──
+        _resolved_measure = qb.resolvedRoles.measures[0] if qb.resolvedRoles.measures else ""
+        _resolved_dims = qb.resolvedRoles.dimensions
+        _raw_agg = source_analytics_spec.get("measure", {}).get("agg", "sum") if isinstance(source_analytics_spec.get("measure"), dict) else "sum"
+        _unit = ""
+        for _col in dataset.columns:
+            if _col.name == _resolved_measure and _col.unit:
+                _unit = _col.unit
+                break
+        # For rates/percentages, override agg to reported_value (cannot sum rates)
+        _resolved_agg = _raw_agg
+        if _unit in ("percent", "per_1000", "index", "ratio") and _raw_agg == "sum":
+            _resolved_agg = "reported_value"
+
+        analytics_spec: dict[str, Any] = {
+            "operation": source_analytics_spec.get("operation", "group_aggregate"),
+            "measure": {"column": _resolved_measure, "agg": _resolved_agg, "unit": _unit} if _resolved_measure else {},
+            "groupBy": [{"column": d} for d in _resolved_dims],
+            "filters": [{"column": f.column, "op": f.op, "value": f.value} for f in qb.resolvedRoles.filters],
+            "sort": source_analytics_spec.get("sort") or {"by": "measure", "order": "desc"},
+            "topN": source_analytics_spec.get("topN"),
+        }
+        if qb.resolvedRoles.time.column:
+            analytics_spec["time"] = {"column": qb.resolvedRoles.time.column, "periods": qb.resolvedRoles.time.periods}
 
         # ── Determine formula type ──
         operation = analytics_spec.get("operation", "group_aggregate")

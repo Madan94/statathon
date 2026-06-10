@@ -86,6 +86,10 @@ def build_execution_bundle(
     # ── Step 5: Validate readiness (S3.5 gate) ──
     readiness = validate_execution_ready(plans, dataset)
 
+    # Add S3 blocked questions to readiness report's blocked count
+    s3_blocked_count = sum(1 for qb in binding.questionBindings if qb.status == "blocked")
+    readiness.blockedCount += s3_blocked_count
+
     # Add gate errors to readiness
     if has_gate_errors:
         readiness.errors.append("Binding coverage gate has blocking errors — resolve before execution")
@@ -154,8 +158,13 @@ def build_execution_bundle(
     else:
         bundle_status = "READY"
 
-    # ── Step 10: Generate binding AST ID ──
-    binding_ast_id = f"bind_{template_id}_{signature[:8]}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+    # ── Step 10: Generate STABLE binding AST ID (deterministic, not per-call) ──
+    # Same template + same signature + same version = same bindingAstId
+    # This ensures repeated GET calls return the same frozen artifact
+    import hashlib as _hl
+    _version_seed = f"{template_id}|{signature}|{len(entity_bindings)}|{len(plans)}"
+    _stable_hash = _hl.md5(_version_seed.encode()).hexdigest()[:12]
+    binding_ast_id = f"bind_{template_id}_{_stable_hash}"
 
     # ── Assemble the bundle ──
     now = datetime.now(timezone.utc).isoformat()

@@ -130,13 +130,39 @@ def validate_execution_ready(
                 if plan.status == "EXECUTABLE":
                     plan.status = "DEGRADED"
 
-        # Check: SHARE/RATE/RATIO requires denominator
+        # Check: SHARE/RATE/RATIO requires denominator column
         if plan.formulaSpec.type in ("SHARE", "RATE", "RATIO"):
-            if not plan.formulaSpec.denominatorColumn and not plan.formulaSpec.numeratorColumn:
+            if not plan.formulaSpec.denominatorColumn:
                 plan_checks.append(ReadinessCheck(
                     level="statistical", passed=False,
-                    code="FORMULA_MISSING_OPERANDS",
-                    message=f"{plan.formulaSpec.type} formula requires numerator/denominator columns",
+                    code="FORMULA_MISSING_DENOMINATOR",
+                    message=f"{plan.formulaSpec.type} formula requires a denominator column",
+                    planId=plan.planId,
+                ))
+                # This is a blocking statistical error — cannot compute share/rate without denominator
+                if plan.status == "EXECUTABLE":
+                    plan.status = "DEGRADED"
+                plan.diagnostics.append(f"DEGRADED: {plan.formulaSpec.type} missing denominator")
+
+        # Check: CAGR requires time periods + start/end
+        if plan.formulaSpec.type == "CAGR":
+            if not plan.formulaSpec.timeWindow:
+                plan_checks.append(ReadinessCheck(
+                    level="statistical", passed=False,
+                    code="CAGR_MISSING_TIME_WINDOW",
+                    message="CAGR formula requires timeWindow with start/end periods",
+                    planId=plan.planId,
+                ))
+                if plan.status == "EXECUTABLE":
+                    plan.status = "DEGRADED"
+
+        # Check: INDEX requires baseValue
+        if plan.formulaSpec.type == "INDEX":
+            if plan.formulaSpec.baseValue is None:
+                plan_checks.append(ReadinessCheck(
+                    level="statistical", passed=False,
+                    code="INDEX_MISSING_BASE",
+                    message="INDEX formula requires baseValue",
                     planId=plan.planId,
                 ))
                 if plan.status == "EXECUTABLE":
