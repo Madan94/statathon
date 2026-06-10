@@ -79,3 +79,7 @@ checkpoints/
 
 # Local-only requirements workarounds
 requirements-windows-noxlrd.txt
+
+# Generation-phase dev artifacts (regenerated per run)
+outputs/generation/
+outputs/generation_smoke/

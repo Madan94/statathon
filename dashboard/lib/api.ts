@@ -2,6 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { isAuthRoute, PUBLIC_ROUTES } from './authConfig';
 import { redirectToLogin } from './authSession';
 import { getCsrfToken } from './csrf';
+import type { EditInput } from './report/types';
 
 /** Browser uses same-origin proxy so httpOnly cookies are set on the dashboard host. */
 function resolveApiBase(): string {
@@ -1266,6 +1267,143 @@ export const bindingPhaseApi = {
   ): Promise<BindingFinalizeResult> => {
     const { data } = await api.post(
       `/report-builder/binding-phase/${templateId}/${signature}/finalize`
+    );
+    return data;
+  },
+};
+
+// ── Generation phase (S4→S6) ────────────────────────────────────────────────
+
+export interface GenerateResult {
+  template_id: string;
+  signature: string;
+  report_id: string;
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+  stats: Record<string, unknown>;
+  coverage: Record<string, number>;
+  narrative_trace: Array<Record<string, unknown>>;
+  fill_trace: Array<Record<string, unknown>>;
+}
+
+export const generatePhaseApi = {
+  /** Run S4→S6 on a finalized binding: analytics → fill → narrate → assemble → render. */
+  generate: async (
+    templateId: string,
+    signature: string,
+    body: { period?: string; report_id?: string; use_llm?: boolean } = {}
+  ): Promise<GenerateResult> => {
+    const { data } = await api.post(
+      `/report-builder/generate-phase/${templateId}/${signature}/generate`,
+      body
+    );
+    return data;
+  },
+  /** The assembled report.output.ast.json (latest, or a saved version). */
+  getReport: async (
+    templateId: string,
+    signature: string,
+    version?: number
+  ): Promise<Record<string, unknown>> => {
+    const qs = version != null ? `?version=${version}` : '';
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/report${qs}`
+    );
+    return data;
+  },
+  /** Absolute URL of the rendered standalone HTML report (for an iframe / new tab). */
+  reportHtmlUrl: (templateId: string, signature: string): string =>
+    `${API_BASE}/report-builder/generate-phase/${templateId}/${signature}/report.html`,
+  /** Absolute URL of the on-demand PDF (cover + TOC + appendix). Returns 503 if
+   *  the server's PDF engine is unavailable — fall back to the HTML report. */
+  reportPdfUrl: (
+    templateId: string,
+    signature: string,
+    opts: { engine?: string; locale?: string; theme?: string } = {}
+  ): string => {
+    const qs = new URLSearchParams();
+    if (opts.engine) qs.set('engine', opts.engine);
+    if (opts.locale) qs.set('locale', opts.locale);
+    if (opts.theme) qs.set('theme', opts.theme);
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return `${API_BASE}/report-builder/generate-phase/${templateId}/${signature}/report.pdf${suffix}`;
+  },
+  /** Author defaults for this template (returns filled defaults if none saved). */
+  getProfile: async (
+    templateId: string,
+    signature: string
+  ): Promise<Record<string, unknown>> => {
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/profile`
+    );
+    return data;
+  },
+  /** Persist the author's full template profile. */
+  putProfile: async (
+    templateId: string,
+    signature: string,
+    profile: Record<string, unknown>
+  ): Promise<Record<string, unknown>> => {
+    const { data } = await api.put(
+      `/report-builder/generate-phase/${templateId}/${signature}/profile`,
+      profile
+    );
+    return data;
+  },
+  /** Sparse viewer overrides saved for this report. */
+  getOverrides: async (
+    templateId: string,
+    signature: string
+  ): Promise<Record<string, unknown>> => {
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/overrides`
+    );
+    return data;
+  },
+  /** Merge sparse viewer overrides into the stored set (deep-merge server-side). */
+  patchOverrides: async (
+    templateId: string,
+    signature: string,
+    overrides: Record<string, unknown>
+  ): Promise<Record<string, unknown>> => {
+    const { data } = await api.patch(
+      `/report-builder/generate-phase/${templateId}/${signature}/overrides`,
+      overrides
+    );
+    return data;
+  },
+  /** Absolute URL of the customized server render (effective profile applied). */
+  customRenderUrl: (
+    templateId: string,
+    signature: string,
+    opts: { format?: 'html' | 'pdf'; engine?: string } = {}
+  ): string => {
+    const qs = new URLSearchParams();
+    if (opts.format) qs.set('format', opts.format);
+    if (opts.engine) qs.set('engine', opts.engine);
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return `${API_BASE}/report-builder/generate-phase/${templateId}/${signature}/render${suffix}`;
+  },
+  /** Apply one human edit; returns {ok, version, audit}. */
+  editReport: async (
+    templateId: string,
+    signature: string,
+    edit: EditInput
+  ): Promise<{ ok: boolean; version: number; audit: Record<string, unknown> }> => {
+    const { data } = await api.post(
+      `/report-builder/generate-phase/${templateId}/${signature}/edit`,
+      edit
+    );
+    return data;
+  },
+  /** List saved version numbers and the current one. */
+  getVersions: async (
+    templateId: string,
+    signature: string
+  ): Promise<{ versions: number[]; current: number | null }> => {
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/versions`
     );
     return data;
   },

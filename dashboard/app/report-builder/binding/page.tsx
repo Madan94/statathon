@@ -14,9 +14,11 @@ import { EntityBindingCard } from '@/components/report-builder/binding/EntityBin
 import { CoveragePanel } from '@/components/report-builder/binding/CoveragePanel';
 import {
   bindingPhaseApi,
+  generatePhaseApi,
   type BindingAction,
   type BindingFinalizeResult,
   type BindingStartResult,
+  type GenerateResult,
 } from '@/lib/api';
 
 type Decision = { action: BindingAction; columns?: string[] };
@@ -25,6 +27,7 @@ const STEPS = [
   { id: 'upload', label: 'Upload dataset', hint: 'CSV + template' },
   { id: 'confirm', label: 'Confirm bindings', hint: 'Review every match' },
   { id: 'coverage', label: 'Coverage gate', hint: 'Ready to generate' },
+  { id: 'generate', label: 'Generate report', hint: 'Values + prose' },
 ];
 
 function errMessage(err: unknown, fallback: string): string {
@@ -52,6 +55,11 @@ export default function BindingWorkflowPage() {
   // step 2
   const [finalizing, setFinalizing] = useState(false);
   const [result, setResult] = useState<BindingFinalizeResult | null>(null);
+
+  // step 3 — generation
+  const [period, setPeriod] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [generated, setGenerated] = useState<GenerateResult | null>(null);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -145,10 +153,29 @@ export default function BindingWorkflowPage() {
     }
   };
 
+  const onGenerate = async () => {
+    if (!session) return;
+    setGenerating(true);
+    setError(null);
+    try {
+      const res = await generatePhaseApi.generate(session.template_id, session.signature, {
+        period: period.trim() || undefined,
+      });
+      setGenerated(res);
+      setStep(3);
+    } catch (err) {
+      setError(errMessage(err, 'Could not generate the report'));
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const resetAll = () => {
     setSession(null);
     setDecisions({});
     setResult(null);
+    setGenerated(null);
+    setPeriod('');
     setDatasetFile(null);
     setBlueprintFile(null);
     setStep(0);
@@ -324,15 +351,124 @@ export default function BindingWorkflowPage() {
               <Button variant="outline" size="sm" onClick={() => setStep(1)}>
                 <ArrowLeft className="h-4 w-4" /> Back to bindings
               </Button>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button variant="ghost" size="sm" onClick={resetAll} className="text-text-muted">
                   Bind another dataset
                 </Button>
-                <Link href="/report-builder">
-                  <Button disabled={result.has_errors}>
-                    Continue to generate <ArrowRight className="h-4 w-4" />
+                <input
+                  type="text"
+                  value={period}
+                  onChange={(e) => setPeriod(e.target.value)}
+                  placeholder="Period (e.g. 2023-24)"
+                  className="w-40 rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
+                />
+                <Button onClick={onGenerate} disabled={result.has_errors || generating}>
+                  {generating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Generating…
+                    </>
+                  ) : (
+                    <>
+                      Generate report <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─────────────────────── Step 3 — generated ────────────────────── */}
+        {step === 3 && generated && session && (
+          <div className="mx-auto max-w-3xl space-y-6">
+            <Card
+              title="Report generated"
+              description={`${generated.report_id} — ${
+                generated.valid ? 'fully traced & validated' : 'generated with warnings'
+              }`}
+            >
+              <div className="space-y-4">
+                <Alert variant={generated.valid ? 'info' : 'warning'}>
+                  {generated.valid
+                    ? 'Every filled value traces back to an analytics row. The report is ready.'
+                    : `Generated, but ${generated.errors.length} validation issue(s) need a look.`}
+                </Alert>
+
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div className="rounded-lg border border-border bg-surface p-3">
+                    <p className="text-2xl font-semibold text-text">
+                      {generated.coverage.questionsAnswered ?? 0}
+                      <span className="text-base text-text-muted">
+                        /{generated.coverage.questionsTotal ?? 0}
+                      </span>
+                    </p>
+                    <p className="text-xs text-text-muted">Questions answered</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-surface p-3">
+                    <p className="text-2xl font-semibold text-text">
+                      {generated.narrative_trace.length}
+                    </p>
+                    <p className="text-xs text-text-muted">Narrated blocks</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-surface p-3">
+                    <p className="text-2xl font-semibold text-text">
+                      {generated.fill_trace.length}
+                    </p>
+                    <p className="text-xs text-text-muted">Visuals filled</p>
+                  </div>
+                </div>
+
+                {generated.errors.length > 0 && (
+                  <Alert variant="error">
+                    <ul className="list-disc pl-4 text-sm">
+                      {generated.errors.slice(0, 5).map((e, i) => (
+                        <li key={i}>{e}</li>
+                      ))}
+                    </ul>
+                  </Alert>
+                )}
+
+                <div className="overflow-hidden rounded-lg border border-border">
+                  <iframe
+                    title="Rendered report"
+                    src={generatePhaseApi.reportHtmlUrl(session.template_id, session.signature)}
+                    className="h-[60vh] w-full bg-white"
+                  />
+                </div>
+              </div>
+            </Card>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+              <Button variant="outline" size="sm" onClick={() => setStep(2)}>
+                <ArrowLeft className="h-4 w-4" /> Back to coverage
+              </Button>
+              <div className="flex gap-2">
+                <Link
+                  href={`/report-builder/preview?tid=${encodeURIComponent(session.template_id)}&sig=${encodeURIComponent(session.signature)}`}
+                >
+                  <Button variant="secondary">
+                    <Sparkles className="h-4 w-4" /> Live preview
                   </Button>
                 </Link>
+                <a
+                  href={generatePhaseApi.reportPdfUrl(session.template_id, session.signature)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Button variant="outline">Download PDF</Button>
+                </a>
+                <a
+                  href={generatePhaseApi.reportHtmlUrl(session.template_id, session.signature)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Button variant="outline">
+                    Open full report <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </a>
+                <Button variant="ghost" size="sm" onClick={resetAll} className="text-text-muted">
+                  Bind another dataset
+                </Button>
               </div>
             </div>
           </div>
