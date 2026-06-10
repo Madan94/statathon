@@ -375,6 +375,19 @@ _MODEL_PROFILES: dict[str, dict[str, Any]] = {
         "enrichmentEnabled": False,
         "description": "Qwen-VL + Gemma2:9b/Ollama. Zero cloud. Free.",
     },
+    "openrouter_cheap_dev": {
+        "vlmProvider": "qwen",
+        "reasoningProvider": "openai",
+        "enrichmentEnabled": False,
+        "description": "Qwen-VL local + OpenRouter DeepSeek text. Cheap and strong.",
+    },
+    "openrouter_balanced": {
+        "vlmProvider": "qwen",
+        "reasoningProvider": "openai",
+        "enrichmentEnabled": True,
+        "enrichmentProvider": "openai",
+        "description": "Qwen-VL + OpenRouter DeepSeek + enrichment enabled.",
+    },
     "qwen_groq_hybrid": {
         "vlmProvider": "qwen",
         "reasoningProvider": "groq",
