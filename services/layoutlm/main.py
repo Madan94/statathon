@@ -30,14 +30,36 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-# Load repo-root .env when started from services/layoutlm/
-_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+def _resolve_repo_root() -> Path:
+    """Repo root when run from services/layoutlm/; /app when run in Docker."""
+    here = Path(__file__).resolve()
+    if len(here.parents) > 2:
+        return here.parents[2]
+    return here.parent
+
+
+def _resolve_project_root() -> Path:
+    """Prefer repo root if .env exists there; otherwise use app directory."""
+    here = Path(__file__).resolve()
+    candidates: list[Path] = []
+    if len(here.parents) > 2:
+        candidates.append(here.parents[2])
+    candidates.append(here.parent)
+    for candidate in candidates:
+        if (candidate / ".env").exists():
+            return candidate
+    return here.parent
+
+
+# Load repo-root .env when started from services/layoutlm/ (or rely on env in Docker)
+_PROJECT_ROOT = _resolve_project_root()
 _repo_env = _PROJECT_ROOT / ".env"
 if _repo_env.exists():
     load_dotenv(_repo_env)
     logging.getLogger("layoutlm-service").info("Loaded env from: %s", _repo_env)
 else:
-    load_dotenv()  # fallback to CWD
+    load_dotenv()  # fallback to CWD / container env
 load_dotenv()  # optional local override (e.g. services/layoutlm/.env)
 
 import pytesseract
@@ -78,7 +100,7 @@ MAX_PAGES = int(os.getenv("MAX_PAGES", "100"))
 
 # ── Model cache — OUTSIDE the git repo to avoid stash/conflict issues ────────
 # Priority: HF_HOME env → model/cache/ in repo root → user home .cache
-_REPO_ROOT = Path(__file__).resolve().parents[2]  # services/layoutlm/../../ = repo root
+_REPO_ROOT = _resolve_repo_root()
 _MODEL_CACHE = Path(os.getenv("HF_HOME", "")) if os.getenv("HF_HOME") else (_REPO_ROOT / "model" / "cache")
 _MODEL_CACHE.mkdir(parents=True, exist_ok=True)
 os.environ["HF_HOME"] = str(_MODEL_CACHE)

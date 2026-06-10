@@ -14,7 +14,7 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     HF_HOME=/cache \
-    MODEL_ID=microsoft/layoutlmv3-large \
+    MODEL_ID=Kwan0/layoutlmv3-base-finetune-DocLayNet-100k \
     LAYOUTLM_PORT=8001
 
 WORKDIR /app
