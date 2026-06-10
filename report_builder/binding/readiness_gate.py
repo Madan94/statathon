@@ -130,6 +130,18 @@ def validate_execution_ready(
                 if plan.status == "EXECUTABLE":
                     plan.status = "DEGRADED"
 
+        # Check: SHARE/RATE/RATIO requires denominator
+        if plan.formulaSpec.type in ("SHARE", "RATE", "RATIO"):
+            if not plan.formulaSpec.denominatorColumn and not plan.formulaSpec.numeratorColumn:
+                plan_checks.append(ReadinessCheck(
+                    level="statistical", passed=False,
+                    code="FORMULA_MISSING_OPERANDS",
+                    message=f"{plan.formulaSpec.type} formula requires numerator/denominator columns",
+                    planId=plan.planId,
+                ))
+                if plan.status == "EXECUTABLE":
+                    plan.status = "DEGRADED"
+
         # Check: dimension column has enough cardinality for groupBy
         for col in plan.resolvedRoles.dimensions:
             col_profile = dataset.column(col)
@@ -140,6 +152,47 @@ def validate_execution_ready(
                     message=f"Dimension '{col}' has cardinality {col_profile.cardinality} — groupBy won't produce useful results",
                     planId=plan.planId,
                 ))
+
+        # Check: output contract requires chart but no dimension exists
+        output_components = (plan.outputContract.get("components") or [])
+        has_chart_component = any(c.get("kind") == "chart" for c in output_components)
+        if has_chart_component and not plan.resolvedRoles.dimensions:
+            plan_checks.append(ReadinessCheck(
+                level="statistical", passed=False,
+                code="CHART_MISSING_DIMENSION",
+                message="Output contract requires chart but no dimension column is resolved for groupBy/xAxis",
+                planId=plan.planId,
+            ))
+            if plan.status == "EXECUTABLE":
+                plan.status = "DEGRADED"
+
+        # Check: normalization plan is executable
+        norm_type = plan.normalizationPlan.type
+        if norm_type == "WIDE_TO_LONG" and not plan.normalizationPlan.idVars:
+            plan_checks.append(ReadinessCheck(
+                level="technical", passed=False,
+                code="NORMALIZATION_INCOMPLETE",
+                message="WIDE_TO_LONG normalization requires idVars to be specified",
+                planId=plan.planId,
+            ))
+            if plan.status == "EXECUTABLE":
+                plan.status = "DEGRADED"
+        if norm_type == "DERIVE_COLUMN" and not plan.normalizationPlan.expression:
+            plan_checks.append(ReadinessCheck(
+                level="technical", passed=False,
+                code="DERIVE_MISSING_EXPRESSION",
+                message="DERIVE_COLUMN normalization requires an expression",
+                planId=plan.planId,
+            ))
+            plan.status = "BLOCKED"
+        if norm_type in ("JOIN", "UNION") and not plan.normalizationPlan.joinKey:
+            plan_checks.append(ReadinessCheck(
+                level="technical", passed=False,
+                code="JOIN_MISSING_KEY",
+                message=f"{norm_type} normalization requires joinKey columns",
+                planId=plan.planId,
+            ))
+            plan.status = "BLOCKED"
 
         # ═══════════════════════════════════════════════════════════════════════
         # Level 3: EVIDENCE READINESS
