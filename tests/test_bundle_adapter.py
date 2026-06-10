@@ -233,3 +233,6 @@ class TestStatusAndPreservation:
         a = adapt_plan(qp)[0]
         assert a.planRec.operation == "trend"
         assert a.formulaSpec.type == "GROWTH"
+        # the resolved time column must travel through for formula_exec (GROWTH/CAGR)
+        assert a.timeColumn == "year"
+        assert a.to_dict()["timeColumn"] == "year"

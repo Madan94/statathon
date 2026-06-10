@@ -90,6 +90,7 @@ class AdaptedPlan:
     measureSlug: str = ""
     measureLabel: str = ""                    # human label for the slot (best-effort)
     componentRef: str | None = None           # outputContract component this measure maps to
+    timeColumn: str = ""                       # resolved time/period column (GROWTH/CAGR/trend)
     # Carried gold metadata (untouched — for Phases 3-5)
     formulaSpec: FormulaSpec = field(default_factory=FormulaSpec)
     normalizationPlan: NormalizationPlan = field(default_factory=NormalizationPlan)
@@ -109,6 +110,7 @@ class AdaptedPlan:
             "measureSlug": self.measureSlug,
             "measureLabel": self.measureLabel,
             "componentRef": self.componentRef,
+            "timeColumn": self.timeColumn,
             "formulaSpec": self.formulaSpec.to_dict(),
             "normalizationPlan": self.normalizationPlan.to_dict(),
             "outputContract": dict(self.outputContract),
@@ -288,6 +290,7 @@ def adapt_plan(plan: QuestionExecutionPlan) -> list[AdaptedPlan]:
             measureSlug=slug,
             measureLabel=comp_label or measure_col,
             componentRef=comp_ref,
+            timeColumn=plan.resolvedRoles.time.column or "",
             formulaSpec=plan.formulaSpec,
             normalizationPlan=plan.normalizationPlan,
             outputContract=dict(plan.outputContract),
