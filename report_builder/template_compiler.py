@@ -197,12 +197,44 @@ def compile_template_artifacts(
     logger.info("[template-compiler] I3 done: charts=%d", len(chart_result.figures) if chart_result else 0)
 
     # ═══════════════════════════════════════════════════════════════════════════
-    # I4: Question Compiler
+    # I4: Question Reconciliation + Compilation (QX1)
     # ═══════════════════════════════════════════════════════════════════════════
-    logger.info("[template-compiler] I4: Question compilation")
+    logger.info("[template-compiler] I4: Question reconciliation + compilation")
 
     from report_builder.question_compiler import compile_questions
 
+    # QX1: Build entity ref map (old → new) for question repair
+    valid_entity_ids = {e.get("entityId") or "" for e in bp["entities"] if e.get("entityId")}
+    ref_map = _build_entity_ref_map(raw_entities, bp["entities"])
+
+    # QX1: Filter/repair existing old questions
+    old_questions: list[dict[str, Any]] = []
+    for topic in (bp.get("topics") or []):
+        old_questions.extend(topic.get("questions") or [])
+
+    kept_questions, dropped_questions, repair_log = _filter_or_repair_existing_questions(
+        old_questions, ref_map, valid_entity_ids,
+    )
+    intermediate["question_reconciliation"] = {
+        "old_count": len(old_questions),
+        "kept": len(kept_questions),
+        "dropped": len(dropped_questions),
+        "repaired": sum(1 for r in repair_log if r.get("repaired")),
+    }
+
+    logger.info(
+        "[template-compiler] QX1: %d old questions → %d kept, %d dropped, %d repaired",
+        len(old_questions), len(kept_questions), len(dropped_questions),
+        sum(1 for r in repair_log if r.get("repaired")),
+    )
+
+    # QX1: Replace old questions with kept/repaired only
+    for topic in (bp.get("topics") or []):
+        topic["questions"] = []
+    if kept_questions and bp.get("topics"):
+        bp["topics"][0]["questions"] = kept_questions
+
+    # E7: Generate deterministic new questions
     question_result = compile_questions(
         tables=table_result.tables if table_result else None,
         entities=enrichment_result.entities,
@@ -211,35 +243,34 @@ def compile_template_artifacts(
     )
     intermediate["questions"] = question_result.to_dict()
 
-    # Merge questions into blueprint topics
-    if question_result.questions:
-        compiled_q_dicts = [q.to_dict() for q in question_result.questions]
+    # Merge: deterministic new questions + kept old questions (dedup)
+    compiled_q_dicts = [q.to_dict() for q in question_result.questions]
+    existing_q_ids = {q.get("questionId") or "" for q in kept_questions}
+    new_questions = [q for q in compiled_q_dicts if q.get("questionId") not in existing_q_ids]
 
-        # If topics exist, add to first topic; otherwise create one
-        if bp.get("topics"):
-            # Add compiled questions to first topic (or distribute later)
-            existing_q_ids = set()
-            for topic in bp["topics"]:
-                for q in (topic.get("questions") or []):
-                    existing_q_ids.add(q.get("questionId") or "")
+    # Assign all questions to topics
+    all_final_questions = kept_questions + new_questions
+    if bp.get("topics"):
+        bp["topics"][0]["questions"] = all_final_questions
+    else:
+        bp["topics"] = [{"topicId": "topic_compiled", "title": "Compiled Questions", "questions": all_final_questions}]
 
-            new_questions = [q for q in compiled_q_dicts if q.get("questionId") not in existing_q_ids]
-            if new_questions:
-                bp["topics"][0].setdefault("questions", []).extend(new_questions)
-        else:
-            bp["topics"] = [{"topicId": "topic_compiled", "title": "Compiled Questions", "questions": compiled_q_dicts}]
-
-    logger.info("[template-compiler] I4 done: questions=%d", len(question_result.questions))
+    logger.info("[template-compiler] I4 done: %d final questions (%d kept + %d new)",
+                len(all_final_questions), len(kept_questions), len(new_questions))
 
     # ═══════════════════════════════════════════════════════════════════════════
     # I5: Slot Wiring + Validation + Diagnostics
     # ═══════════════════════════════════════════════════════════════════════════
     logger.info("[template-compiler] I5: Wiring + validation + diagnostics")
 
-    from report_builder.slot_wiring import wire_template
+    from report_builder.slot_wiring import wire_template, iter_questions as _iter_qs
     from report_builder.value_free_validator import validate_value_free
     from report_builder.extraction_contracts import validate_extraction_contract, ExtractionMode
     from report_builder.extraction_diagnostics import build_extraction_diagnostics
+
+    # QX1 cleanup: Remove skeleton slots that reference dropped/non-existent questions
+    final_question_ids = {q.get("questionId") or "" for q in _iter_qs(bp)}
+    skeleton = _clean_orphan_slots(skeleton, final_question_ids)
 
     # Wire slots
     wiring_result = wire_template(skeleton, bp, auto_repair=True)
@@ -288,6 +319,37 @@ def compile_template_artifacts(
 # ─────────────────────────────────────────────────────────────────────────────
 
 
+def _clean_orphan_slots(skeleton: dict[str, Any], valid_question_ids: set[str]) -> dict[str, Any]:
+    """Remove skeleton slots whose biQuery references non-existent questions.
+
+    This fixes orphaned slots left over when old broken questions are dropped.
+    """
+    # Clean contentAST blocks
+    content = skeleton.get("contentAST") or {}
+    blocks = content.get("blocks") or content.get("paragraphs") or []
+    content_key = "blocks" if "blocks" in content else "paragraphs"
+    cleaned_blocks = [b for b in blocks if not b.get("biQuery") or b.get("biQuery") in valid_question_ids]
+    if content_key in content:
+        content[content_key] = cleaned_blocks
+
+    # Clean tableAST tables
+    table_ast = skeleton.get("tableAST") or {}
+    tables = table_ast.get("tables") or []
+    table_ast["tables"] = [t for t in tables if not t.get("biQuery") or t.get("biQuery") in valid_question_ids]
+
+    # Clean chartAST charts
+    chart_ast = skeleton.get("chartAST") or {}
+    charts = chart_ast.get("charts") or []
+    chart_ast["charts"] = [c for c in charts if not c.get("biQuery") or c.get("biQuery") in valid_question_ids]
+
+    # Clean figureAST figures (keep figures without biQuery)
+    figure_ast = skeleton.get("figureAST") or {}
+    figures = figure_ast.get("figures") or []
+    figure_ast["figures"] = [f for f in figures if not f.get("biQuery") or f.get("biQuery") in valid_question_ids]
+
+    return skeleton
+
+
 def _entity_to_dict(entity: Any) -> dict[str, Any]:
     """Convert a SemanticEntity/NormalizedEntity to blueprint entity dict."""
     if hasattr(entity, "to_dict"):
@@ -303,3 +365,179 @@ def _entity_to_dict(entity: Any) -> dict[str, Any]:
         if val is not None and val != "" and val != [] and val != {}:
             d[attr] = val
     return d
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# QX1: Question Reconciliation Helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def _build_entity_ref_map(old_entities: list[dict[str, Any]], new_entities: list[dict[str, Any]]) -> dict[str, str]:
+    """Map old entity IDs to new semantic IDs using name/alias matching.
+
+    Returns: {old_id: new_id} for entities that can be mapped.
+    """
+    import re
+
+    ref_map: dict[str, str] = {}
+
+    # Build new entity lookup by name/alias
+    new_by_name: dict[str, str] = {}
+    new_by_alias: dict[str, str] = {}
+    for ne in new_entities:
+        nid = ne.get("entityId") or ""
+        nname = (ne.get("canonicalName") or "").lower().strip()
+        if nname and nid:
+            new_by_name[nname] = nid
+        for alias in (ne.get("aliases") or []):
+            if alias:
+                new_by_alias[alias.lower().strip()] = nid
+
+    # Try to map each old entity
+    for old_ent in old_entities:
+        old_id = old_ent.get("entityId") or ""
+        if not old_id:
+            continue
+        old_name = (old_ent.get("canonicalName") or "").lower().strip()
+
+        # Already semantic (not ent_0XX)? Skip mapping
+        if not re.match(r'^ent_\d{2,}$', old_id):
+            if old_id in {ne.get("entityId") for ne in new_entities}:
+                ref_map[old_id] = old_id
+            continue
+
+        # Try exact name match
+        if old_name in new_by_name:
+            ref_map[old_id] = new_by_name[old_name]
+            continue
+
+        # Try normalized name (remove year, normalize spaces)
+        norm_name = re.sub(r'\s*(19|20)\d{2}(-\d{2,4})?\s*', '', old_name).strip()
+        norm_name = re.sub(r'\s+', ' ', norm_name).strip()
+        if norm_name in new_by_name:
+            ref_map[old_id] = new_by_name[norm_name]
+            continue
+
+        # Try alias match
+        if old_name in new_by_alias:
+            ref_map[old_id] = new_by_alias[old_name]
+            continue
+
+        # Try first word match for short entities
+        first_word = old_name.split()[0] if old_name.split() else ""
+        if first_word and len(first_word) >= 4:
+            for nname, nid in new_by_name.items():
+                if nname.startswith(first_word) or first_word in nname:
+                    ref_map[old_id] = nid
+                    break
+
+    return ref_map
+
+
+def _repair_question_entity_refs(
+    question: dict[str, Any],
+    ref_map: dict[str, str],
+    valid_entity_ids: set[str],
+) -> tuple[dict[str, Any], bool, list[str]]:
+    """Rewrite entity references in a question using ref_map.
+
+    Returns (repaired_question, was_repaired, still_broken_refs).
+    """
+    import copy
+    q = copy.deepcopy(question)
+    repaired = False
+    broken: list[str] = []
+
+    # Repair requiredEntities
+    for req in (q.get("requiredEntities") or []):
+        eid = req.get("entityId") or req.get("entityRef") or ""
+        if eid and eid not in valid_entity_ids:
+            if eid in ref_map:
+                req["entityId"] = ref_map[eid]
+                if "entityRef" in req:
+                    req["entityRef"] = ref_map[eid]
+                repaired = True
+            else:
+                broken.append(eid)
+
+    # Repair analyticsSpec refs
+    spec = q.get("analyticsSpec") or {}
+    _repair_spec_refs(spec, ref_map, valid_entity_ids, broken)
+    if spec:
+        q["analyticsSpec"] = spec
+
+    return q, repaired, broken
+
+
+def _repair_spec_refs(spec: dict[str, Any], ref_map: dict[str, str], valid: set[str], broken: list[str]):
+    """In-place repair of entity refs in analyticsSpec."""
+    # measure.entityRef
+    measure = spec.get("measure")
+    if isinstance(measure, dict) and measure.get("entityRef"):
+        ref = measure["entityRef"]
+        if ref not in valid:
+            if ref in ref_map:
+                measure["entityRef"] = ref_map[ref]
+            else:
+                broken.append(ref)
+
+    # measures[].entityRef
+    for m in (spec.get("measures") or []):
+        if isinstance(m, dict) and m.get("entityRef"):
+            ref = m["entityRef"]
+            if ref not in valid:
+                if ref in ref_map:
+                    m["entityRef"] = ref_map[ref]
+                else:
+                    broken.append(ref)
+
+    # groupBy[].entityRef
+    for g in (spec.get("groupBy") or []):
+        if isinstance(g, dict) and g.get("entityRef"):
+            ref = g["entityRef"]
+            if ref not in valid:
+                if ref in ref_map:
+                    g["entityRef"] = ref_map[ref]
+                else:
+                    broken.append(ref)
+
+    # filters[].entityRef
+    for f in (spec.get("filters") or []):
+        if isinstance(f, dict) and f.get("entityRef"):
+            ref = f["entityRef"]
+            if ref not in valid:
+                if ref in ref_map:
+                    f["entityRef"] = ref_map[ref]
+                else:
+                    broken.append(ref)
+
+
+def _filter_or_repair_existing_questions(
+    questions: list[dict[str, Any]],
+    ref_map: dict[str, str],
+    valid_entity_ids: set[str],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    """Filter or repair existing questions. Drop those with unresolvable refs.
+
+    Returns (kept, dropped, repair_log).
+    """
+    kept: list[dict[str, Any]] = []
+    dropped: list[dict[str, Any]] = []
+    repair_log: list[dict[str, Any]] = []
+
+    for q in questions:
+        qid = q.get("questionId") or ""
+
+        # Try repair
+        repaired_q, was_repaired, still_broken = _repair_question_entity_refs(q, ref_map, valid_entity_ids)
+
+        if still_broken:
+            # Cannot fix — drop
+            dropped.append({"questionId": qid, "reason": f"broken_refs: {still_broken[:3]}", "broken_count": len(still_broken)})
+            repair_log.append({"questionId": qid, "repaired": False, "broken": still_broken[:3]})
+        else:
+            # All refs resolved (either already valid or remapped)
+            kept.append(repaired_q)
+            repair_log.append({"questionId": qid, "repaired": was_repaired})
+
+    return kept, dropped, repair_log
