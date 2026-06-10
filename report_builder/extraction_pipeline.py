@@ -5153,6 +5153,73 @@ def run_extraction_pipeline(
     from report_builder.template_emit import emit_templates, legacy_emit_enabled
     _emit_report = emit_templates(ast, _out_dir)
 
+    # ── I6: Template Compiler V2 (optional, behind feature flag) ──────────────
+    # When EXTRACTION_COMPILER_V2=true, re-processes the emitted artifacts through
+    # the E1-E12 compiler modules for improved entity quality, deterministic
+    # questions, slot wiring, and diagnostics scoring.
+    _compiler_v2 = (os.getenv("EXTRACTION_COMPILER_V2") or "").strip().lower() in ("1", "true", "yes", "on")
+    _compiler_strict = (os.getenv("EXTRACTION_COMPILER_STRICT") or "").strip().lower() in ("1", "true", "yes", "on")
+
+    if _compiler_v2:
+        try:
+            from report_builder.template_compiler import compile_template_artifacts
+
+            # Load the just-emitted value-free artifacts as compiler input
+            _skeleton_path = _out_dir / "template.ast.json"
+            _bp_path = _out_dir / "template.blueprint.json"
+            with open(_skeleton_path, "r", encoding="utf-8") as _fh:
+                _raw_skeleton = json.load(_fh)
+            with open(_bp_path, "r", encoding="utf-8") as _fh:
+                _raw_blueprint = json.load(_fh)
+
+            # Gather table candidates if available from pass 0/2.5
+            _table_candidates = None
+            _page_text_list = None
+            # table_structures from pass 2.5 knowledge graph if available
+            if "document_map" in dir() and document_map:
+                _table_candidates = document_map.get("table_structures")
+            # page texts from pass 0 if available
+            if "page_texts" in dir() and page_texts:
+                _page_text_list = [p.get("raw_text", "") for p in page_texts if isinstance(p, dict)]
+
+            _compiled = compile_template_artifacts(
+                raw_ast=_raw_skeleton,
+                blueprint=_raw_blueprint,
+                table_candidates=_table_candidates,
+                page_texts=_page_text_list,
+            )
+
+            # Overwrite emitted files with compiled versions
+            with open(_skeleton_path, "w", encoding="utf-8") as _fh:
+                json.dump(_compiled["template_ast"], _fh, ensure_ascii=False, indent=2, default=str)
+            with open(_bp_path, "w", encoding="utf-8") as _fh:
+                json.dump(_compiled["template_blueprint"], _fh, ensure_ascii=False, indent=2, default=str)
+
+            # Write diagnostics
+            _diag = _compiled["diagnostics"]
+            _diag_path = _out_dir / "template.diagnostics.json"
+            with open(_diag_path, "w", encoding="utf-8") as _fh:
+                json.dump(_diag.to_dict(), _fh, ensure_ascii=False, indent=2, default=str)
+
+            logger.info(
+                "[pipeline] ✓ Compiler V2: score=%.3f status=%s entities=%d questions=%d",
+                _diag.binderReadinessScore, _diag.status,
+                _diag.counts.entities, _diag.counts.questions,
+            )
+            _emit_report["compiler_v2"] = {
+                "enabled": True,
+                "score": _diag.binderReadinessScore,
+                "status": _diag.status,
+                "tableCandidatesCount": len(_table_candidates) if _table_candidates else 0,
+            }
+        except Exception as _compiler_exc:
+            if _compiler_strict:
+                raise
+            logger.warning("[pipeline] Compiler V2 failed (non-fatal, using legacy artifacts): %s", _compiler_exc)
+            _emit_report["compiler_v2"] = {"enabled": True, "error": str(_compiler_exc)}
+    else:
+        _emit_report["compiler_v2"] = {"enabled": False}
+
     # Legacy blended AST — emitted only when EXTRACTION_EMIT_LEGACY is set (loop decision Q3).
     if legacy_emit_enabled():
         _ast_path = _out_dir / "enterprise_ast.json"
