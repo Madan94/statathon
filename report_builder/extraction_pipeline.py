@@ -5175,9 +5175,16 @@ def run_extraction_pipeline(
             # Gather table candidates if available from pass 0/2.5
             _table_candidates = None
             _page_text_list = None
-            # table_structures from pass 2.5 knowledge graph if available
-            if "document_map" in dir() and document_map:
-                _table_candidates = document_map.get("table_structures")
+            # Build rich table candidates from pass 2.5 + pass 0 raw data
+            if "document_map" in dir() and document_map and document_map.get("table_structures"):
+                from report_builder.table_candidate_adapter import table_candidates_from_pipeline
+                _table_candidates = table_candidates_from_pipeline(
+                    table_structures=document_map.get("table_structures"),
+                    page_texts=page_texts if "page_texts" in dir() else None,
+                )
+                logger.info("[pipeline] Compiler V2: %d table candidates (%d with header_rows)",
+                            len(_table_candidates),
+                            sum(1 for t in _table_candidates if t.get("header_rows")))
             # page texts from pass 0 if available
             if "page_texts" in dir() and page_texts:
                 _page_text_list = [p.get("raw_text", "") for p in page_texts if isinstance(p, dict)]
