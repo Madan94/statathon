@@ -257,3 +257,188 @@ def bind_questions(
         sum(1 for r in results if r.status == "blocked"),
     )
     return results
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# S3 Plan Compiler — produces QuestionExecutionPlan[] from QuestionBinding[]
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def compile_execution_plans(
+    blueprint: dict[str, Any],
+    question_bindings: list[QuestionBinding],
+    dataset: DatasetAST,
+) -> "list[Any]":
+    """Compile QuestionBinding[] into QuestionExecutionPlan[] (S3 → S3.5 handoff).
+
+    For each non-blocked question:
+    - Resolves analyticsSpec fields to actual column names
+    - Determines normalizationPlan (wide-to-long if measure is a column group)
+    - Derives formulaSpec from operation type + question text
+    - Attaches outputContract from blueprint answerStructure
+    - Builds lineage (question → entities → columns → source)
+
+    Returns QuestionExecutionPlan instances ready for the readiness gate.
+    """
+    from report_builder.binding.execution_contracts import (
+        FormulaSpec,
+        LineageRef,
+        NormalizationPlan,
+        QuestionExecutionPlan,
+    )
+
+    # Index questions by ID for lookup
+    bp_questions: dict[str, dict[str, Any]] = {}
+    for topic in (blueprint.get("topics") or []):
+        for q in (topic.get("questions") or []):
+            qid = q.get("questionId", "")
+            if qid:
+                bp_questions[qid] = q
+    for q in (blueprint.get("questions") or []):
+        qid = q.get("questionId", "")
+        if qid:
+            bp_questions[qid] = q
+
+    plans: list[QuestionExecutionPlan] = []
+
+    for qb in question_bindings:
+        if qb.status == "blocked":
+            continue
+
+        bp_q = bp_questions.get(qb.questionId, {})
+        analytics_spec = bp_q.get("analyticsSpec") or {}
+        answer_structure = bp_q.get("answerStructure") or {}
+        output_components = answer_structure.get("components", [])
+        required_entities = bp_q.get("requiredEntities") or []
+        question_text = bp_q.get("questionText") or bp_q.get("intent", "")
+        question_type = bp_q.get("questionType", "comparison")
+
+        # ── Determine formula type ──
+        operation = analytics_spec.get("operation", "group_aggregate")
+        formula_type = _infer_formula_type(operation, question_text, question_type)
+
+        # ── Build formulaSpec ──
+        formula = FormulaSpec(type=formula_type)
+        if formula_type == "GROWTH" and len(qb.resolvedRoles.measures) >= 2:
+            # Assume first is prior, second is current (or vice versa)
+            measures = qb.resolvedRoles.measures
+            formula.numeratorColumn = measures[-1]  # current
+            formula.denominatorColumn = measures[0]  # prior
+            formula.multiplier = 100.0
+            formula.unitConversion = "percent"
+            formula.timeWindow = qb.resolvedRoles.time.periods
+        elif formula_type == "SHARE":
+            # Share = numerator / total
+            if qb.resolvedRoles.measures:
+                formula.numeratorColumn = qb.resolvedRoles.measures[0]
+            formula.multiplier = 100.0
+            formula.unitConversion = "percent"
+        elif formula_type == "RATE":
+            if qb.resolvedRoles.measures:
+                formula.numeratorColumn = qb.resolvedRoles.measures[0]
+            formula.multiplier = 1000.0  # per 1000 default for MoSPI
+
+        # ── Determine normalization ──
+        norm_plan = _infer_normalization(qb, dataset)
+
+        # ── Build outputContract ──
+        output_contract = {}
+        if output_components:
+            output_contract = {"components": output_components}
+
+        # ── Build lineage ──
+        lineage = LineageRef(
+            sourceQuestionId=qb.questionId,
+            sourceEntityIds=[r.get("entityId", r.get("entityRef", "")) for r in required_entities],
+            sourceColumnIds=qb.resolvedRoles.measures + qb.resolvedRoles.dimensions,
+        )
+
+        plan = QuestionExecutionPlan(
+            planId=f"plan_{qb.questionId}",
+            questionId=qb.questionId,
+            questionText=question_text,
+            status="EXECUTABLE" if qb.status == "executable" else "DEGRADED",
+            analyticsSpec=analytics_spec,
+            resolvedRoles=qb.resolvedRoles,
+            normalizationPlan=norm_plan,
+            formulaSpec=formula,
+            outputContract=output_contract,
+            lineage=lineage,
+        )
+        plans.append(plan)
+
+    logger.info(
+        "[plan_compiler] Compiled %d plans: %d EXECUTABLE, %d DEGRADED",
+        len(plans),
+        sum(1 for p in plans if p.status == "EXECUTABLE"),
+        sum(1 for p in plans if p.status == "DEGRADED"),
+    )
+    return plans
+
+
+def _infer_formula_type(operation: str, question_text: str, question_type: str) -> str:
+    """Infer FormulaSpec.type from operation, question text, and type."""
+    text_low = question_text.lower()
+
+    # Explicit operation mappings
+    if operation in ("growth", "yoy_change"):
+        return "GROWTH"
+    if operation == "cagr":
+        return "CAGR"
+    if operation == "share":
+        return "SHARE"
+    if operation == "index":
+        return "INDEX"
+    if operation == "ratio":
+        return "RATIO"
+
+    # Keyword detection from question text
+    if any(k in text_low for k in ("growth", "year-over-year", "yoy", "change over")):
+        return "GROWTH"
+    if any(k in text_low for k in ("share", "distribution", "proportion", "percentage distribution")):
+        return "SHARE"
+    if any(k in text_low for k in ("per 1000", "per lakh", "rate per")):
+        return "RATE"
+    if any(k in text_low for k in ("cagr", "compound annual")):
+        return "CAGR"
+    if any(k in text_low for k in ("index", "base year")):
+        return "INDEX"
+    if any(k in text_low for k in ("ratio of", "relative to")):
+        return "RATIO"
+
+    # Question type fallback
+    if question_type == "trend" and "compare" not in text_low:
+        return "GROWTH"
+
+    return "DIRECT"
+
+
+def _infer_normalization(qb: QuestionBinding, dataset: DatasetAST) -> "Any":
+    """Infer NormalizationPlan from resolved roles and dataset shape."""
+    from report_builder.binding.execution_contracts import NormalizationPlan
+
+    # Check if any measure column belongs to a column group (wide table)
+    for measure_col in qb.resolvedRoles.measures:
+        for group in dataset.columnGroups:
+            if measure_col in group.members:
+                # This measure is part of a wide group — needs melt for time-series queries
+                if group.kind == "periodGroup":
+                    id_vars = [c.name for c in dataset.columns if c.role == "dimension"]
+                    return NormalizationPlan(
+                        type="WIDE_TO_LONG",
+                        idVars=id_vars,
+                        valueVar="value",
+                        memberVar="period",
+                        memberLabels=group.members,
+                    )
+                elif group.kind == "measureGroup":
+                    id_vars = [c.name for c in dataset.columns if c.role == "dimension"]
+                    return NormalizationPlan(
+                        type="WIDE_TO_LONG",
+                        idVars=id_vars,
+                        valueVar="value",
+                        memberVar=group.stem or "category",
+                        memberLabels=group.members,
+                    )
+
+    return NormalizationPlan(type="NONE")
