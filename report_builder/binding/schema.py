@@ -248,6 +248,9 @@ class EntityBinding:
     alternatives: list[BindingCandidate] = field(default_factory=list)
     typeMismatch: bool = False       # soft-penalty flag for the confirm UI
     notes: list[str] = field(default_factory=list)
+    # Phase 7: Evidence and risk classification
+    evidence: list[dict[str, Any]] = field(default_factory=list)  # [{signal, score, detail}]
+    risks: list[dict[str, Any]] = field(default_factory=list)     # [{code, severity, message}]
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
@@ -266,6 +269,10 @@ class EntityBinding:
             out["typeMismatch"] = True
         if self.notes:
             out["notes"] = list(self.notes)
+        if self.evidence:
+            out["evidence"] = list(self.evidence)
+        if self.risks:
+            out["risks"] = list(self.risks)
         return out
 
     @classmethod
@@ -283,6 +290,8 @@ class EntityBinding:
             alternatives=[BindingCandidate.from_dict(a) for a in (d.get("alternatives") or [])],
             typeMismatch=bool(d.get("typeMismatch") or False),
             notes=list(d.get("notes") or []),
+            evidence=list(d.get("evidence") or []),
+            risks=list(d.get("risks") or []),
         )
 
     @property
