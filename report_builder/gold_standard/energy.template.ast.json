@@ -1,0 +1,64 @@
+{
+  "$schema": "bharatstat/template-ast/v1",
+  "_doc": "VALUE-FREE render skeleton. Energy Statistics India Chapter 1. NO data: content='', rows=[], series=[].",
+  "metadata": {
+    "templateId": "tpl_energy_statistics_ch1_v1",
+    "blueprintRef": "tpl_energy_statistics_ch1_v1",
+    "name": "Energy Statistics India — Chapter 1",
+    "locale": "en-IN",
+    "version": "1.0.0",
+    "valueFree": true
+  },
+  "styleAST": {
+    "styles": [
+      {"styleId": "s_h1", "role": "heading1", "font": "Noto Sans", "sizePt": 18, "bold": true, "color": "#0B5394"},
+      {"styleId": "s_body", "role": "body", "font": "Noto Sans", "sizePt": 11},
+      {"styleId": "s_table", "role": "tableCell", "font": "Noto Sans", "sizePt": 9, "align": "right"},
+      {"styleId": "s_caption", "role": "caption", "font": "Noto Sans", "sizePt": 9, "italic": true}
+    ]
+  },
+  "semanticAST": {
+    "sections": [
+      {"sectionId": "sec_coal", "title": "Coal Reserves", "level": 1},
+      {"sectionId": "sec_oil_gas", "title": "Crude Oil and Natural Gas", "level": 1},
+      {"sectionId": "sec_renewable", "title": "Renewable Energy Potential", "level": 1}
+    ]
+  },
+  "contentAST": {
+    "blocks": [
+      {"blockId": "p_q_coal_reserves_state_comparison_c1", "kind": "paragraph", "content": "", "biQuery": "q_coal_reserves_state_comparison", "slot": {"fillFrom": "q_coal_reserves_state_comparison_c1", "status": "empty"}},
+      {"blockId": "p_q_coal_reserves_ranking_c1", "kind": "paragraph", "content": "", "biQuery": "q_coal_reserves_ranking", "slot": {"fillFrom": "q_coal_reserves_ranking_c1", "status": "empty"}},
+      {"blockId": "p_q_coal_composition_category_c1", "kind": "paragraph", "content": "", "biQuery": "q_coal_composition_category", "slot": {"fillFrom": "q_coal_composition_category_c1", "status": "empty"}},
+      {"blockId": "p_q_coal_growth_yoy_c1", "kind": "paragraph", "content": "", "biQuery": "q_coal_growth_yoy", "slot": {"fillFrom": "q_coal_growth_yoy_c1", "status": "empty"}},
+      {"blockId": "p_q_oil_gas_comparison_c1", "kind": "paragraph", "content": "", "biQuery": "q_oil_gas_comparison", "slot": {"fillFrom": "q_oil_gas_comparison_c1", "status": "empty"}},
+      {"blockId": "p_q_renewable_state_source_c1", "kind": "paragraph", "content": "", "biQuery": "q_renewable_state_source", "slot": {"fillFrom": "q_renewable_state_source_c1", "status": "empty"}}
+    ]
+  },
+  "tableAST": {
+    "tables": [
+      {"tableId": "table_q_coal_reserves_state_comparison_c2", "biQuery": "q_coal_reserves_state_comparison", "templateRef": "tt_coal_reserves_state", "rows": [], "slot": {"fillFrom": "q_coal_reserves_state_comparison_c2", "status": "empty"}},
+      {"tableId": "table_q_coal_reserves_ranking_c2", "biQuery": "q_coal_reserves_ranking", "templateRef": "tt_coal_reserves_state", "rows": [], "slot": {"fillFrom": "q_coal_reserves_ranking_c2", "status": "empty"}},
+      {"tableId": "table_q_coal_growth_yoy_c2", "biQuery": "q_coal_growth_yoy", "rows": [], "slot": {"fillFrom": "q_coal_growth_yoy_c2", "status": "empty"}},
+      {"tableId": "table_q_oil_gas_comparison_c2", "biQuery": "q_oil_gas_comparison", "templateRef": "tt_oil_gas_reserves_state", "rows": [], "slot": {"fillFrom": "q_oil_gas_comparison_c2", "status": "empty"}},
+      {"tableId": "table_q_renewable_state_source_c2", "biQuery": "q_renewable_state_source", "templateRef": "tt_renewable_potential_state_source", "rows": [], "slot": {"fillFrom": "q_renewable_state_source_c2", "status": "empty"}}
+    ]
+  },
+  "chartAST": {
+    "charts": [
+      {"chartId": "chart_q_coal_reserves_state_comparison_c3", "biQuery": "q_coal_reserves_state_comparison", "chartType": "bar", "series": [], "slot": {"fillFrom": "q_coal_reserves_state_comparison_c3", "status": "empty"}},
+      {"chartId": "chart_q_coal_reserves_ranking_c3", "biQuery": "q_coal_reserves_ranking", "chartType": "bar", "series": [], "slot": {"fillFrom": "q_coal_reserves_ranking_c3", "status": "empty"}},
+      {"chartId": "chart_q_coal_composition_category_c2", "biQuery": "q_coal_composition_category", "chartType": "stacked_bar", "series": [], "slot": {"fillFrom": "q_coal_composition_category_c2", "status": "empty"}},
+      {"chartId": "chart_q_coal_growth_yoy_c3", "biQuery": "q_coal_growth_yoy", "chartType": "grouped_bar", "series": [], "slot": {"fillFrom": "q_coal_growth_yoy_c3", "status": "empty"}},
+      {"chartId": "chart_q_oil_gas_comparison_c3", "biQuery": "q_oil_gas_comparison", "chartType": "grouped_bar", "series": [], "slot": {"fillFrom": "q_oil_gas_comparison_c3", "status": "empty"}},
+      {"chartId": "chart_q_renewable_state_source_c3", "biQuery": "q_renewable_state_source", "chartType": "stacked_bar", "series": [], "slot": {"fillFrom": "q_renewable_state_source_c3", "status": "empty"}}
+    ]
+  },
+  "figureAST": {
+    "figures": [
+      {"figureId": "fig_coal_pie", "caption": "", "biQuery": "q_coal_composition_category", "slot": {"status": "empty"}},
+      {"figureId": "fig_renewable_source", "caption": "", "slot": {"status": "empty"}}
+    ]
+  },
+  "layoutAST": {"pages": []},
+  "geometryAST": {"nodes": []}
+}

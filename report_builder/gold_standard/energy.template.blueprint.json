@@ -1,0 +1,557 @@
+{
+  "$schema": "bharatstat/template-blueprint/v1",
+  "contractVersion": "template.extraction.v2",
+  "_doc": "VALUE-FREE + PROSE-FREE analytic brain. Energy Statistics India Chapter 1 — Reserves and Potential. Contains NO numbers, NO sentences, NO dataset.",
+  "templateMeta": {
+    "templateId": "tpl_energy_statistics_ch1_v1",
+    "name": "Energy Statistics India — Chapter 1 Energy Reserves and Potential",
+    "domain": "energy",
+    "locale": "en-IN",
+    "version": "1.0.0",
+    "sourceDocument": "Energy Statistics India 2025",
+    "valueFree": true,
+    "proseFree": true
+  },
+  "statisticalContext": {
+    "sourceDocument": "Energy Statistics India 2025",
+    "ministry": "Ministry of Statistics and Programme Implementation",
+    "domain": "energy",
+    "chapter": "Chapter 1: Energy Reserves and Potential",
+    "geographyLevel": "state_ut",
+    "timeCoverage": ["2024", "2025"],
+    "referenceDates": ["As on 1st April 2025"],
+    "sourceNotes": ["Source: Geological Survey of India", "Source: CMPDI", "Source: MNRE"],
+    "footnotes": ["P: Provisional", "*: Assessed potential", "#: Includes pumped storage"]
+  },
+  "glossary": {
+    "CMPDI": "Central Mine Planning and Design Institute",
+    "GSI": "Geological Survey of India",
+    "MNRE": "Ministry of New and Renewable Energy",
+    "BCM": "Billion Cubic Metres",
+    "MT": "Million Tonnes",
+    "MW": "Megawatt"
+  },
+  "palette": {
+    "paletteId": "pal_mospi_energy",
+    "sequential": ["#0B5394", "#3D85C6", "#6FA8DC", "#9FC5E8", "#CFE2F3"],
+    "categorical": {
+      "Proved": "#0B5394",
+      "Indicated": "#3D85C6",
+      "Inferred": "#6FA8DC",
+      "Total": "#333333"
+    },
+    "semantic": {"positive": "#1F7A1F", "negative": "#CC0000", "neutral": "#666666"}
+  },
+  "renderProfile": {
+    "numberFormat": {"locale": "en-IN", "grouping": "lakh-crore", "decimalSeparator": "."},
+    "percentFormat": {"decimals": 1, "suffix": "%"},
+    "fontFamily": "Noto Sans",
+    "pageSize": "A4"
+  },
+  "entities": [
+    {
+      "entityId": "ent_state_ut",
+      "canonicalName": "State/UT",
+      "entityType": "dimension",
+      "aliases": ["State", "States", "States/UTs", "States/ UTs", "Region", "State_UT"],
+      "valueDomain": {"kind": "categorical", "members": "open", "expectedCardinality": 36},
+      "scope": "geography",
+      "cardinalityHint": "high",
+      "confidence": 0.98
+    },
+    {
+      "entityId": "ent_region",
+      "canonicalName": "Region",
+      "entityType": "dimension",
+      "aliases": ["Region", "Zone"],
+      "valueDomain": {"kind": "categorical", "members": ["North", "South", "East", "West", "Central", "North-East"]},
+      "scope": "geography",
+      "cardinalityHint": "low",
+      "confidence": 0.90
+    },
+    {
+      "entityId": "ent_period",
+      "canonicalName": "Period",
+      "entityType": "time",
+      "aliases": ["Year", "Period", "As on", "Reference Year"],
+      "valueDomain": {"kind": "ordinal", "members": ["2024", "2025"], "format": "YYYY"},
+      "scope": "temporal",
+      "confidence": 0.95
+    },
+    {
+      "entityId": "ent_reserve_category",
+      "canonicalName": "Reserve Category",
+      "entityType": "dimension",
+      "aliases": ["Category", "Reserve Type", "Classification"],
+      "valueDomain": {"kind": "categorical", "members": ["Proved", "Indicated", "Inferred"], "allowOther": false},
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.92
+    },
+    {
+      "entityId": "ent_energy_source",
+      "canonicalName": "Energy Source",
+      "entityType": "dimension",
+      "aliases": ["Source", "Renewable Source", "Power Source"],
+      "valueDomain": {"kind": "categorical", "members": ["Wind", "Solar", "Small Hydro", "Biomass", "Cogeneration-Bagasse", "Large Hydro"]},
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.88
+    },
+    {
+      "entityId": "ent_proved_reserves",
+      "canonicalName": "Proved Reserves",
+      "entityType": "measure",
+      "aliases": ["Proved", "Proved Reserve", "Estimated Proved"],
+      "unit": "million_tonnes",
+      "format": "number.2",
+      "valueDomain": {"kind": "ratio", "min": 0},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": 0.95
+    },
+    {
+      "entityId": "ent_indicated_reserves",
+      "canonicalName": "Indicated Reserves",
+      "entityType": "measure",
+      "aliases": ["Indicated", "Indicated Reserve"],
+      "unit": "million_tonnes",
+      "format": "number.2",
+      "valueDomain": {"kind": "ratio", "min": 0},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": 0.95
+    },
+    {
+      "entityId": "ent_inferred_reserves",
+      "canonicalName": "Inferred Reserves",
+      "entityType": "measure",
+      "aliases": ["Inferred", "Inferred Reserve"],
+      "unit": "million_tonnes",
+      "format": "number.2",
+      "valueDomain": {"kind": "ratio", "min": 0},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": 0.95
+    },
+    {
+      "entityId": "ent_total_reserves",
+      "canonicalName": "Total Reserves",
+      "entityType": "measure",
+      "aliases": ["Total", "Grand Total"],
+      "unit": "million_tonnes",
+      "format": "number.2",
+      "valueDomain": {"kind": "ratio", "min": 0},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "isTotal": true,
+      "confidence": 0.95
+    },
+    {
+      "entityId": "ent_distribution_percent",
+      "canonicalName": "Distribution Percent",
+      "entityType": "measure",
+      "aliases": ["Distribution", "Distribution (%)", "Share", "Percentage Distribution"],
+      "unit": "percent",
+      "format": "percent.1",
+      "valueDomain": {"kind": "ratio", "min": 0, "max": 100},
+      "aggregation": "reported_value",
+      "scope": "indicator",
+      "isDerived": true,
+      "confidence": 0.92
+    },
+    {
+      "entityId": "ent_crude_oil_reserves",
+      "canonicalName": "Crude Oil Reserves",
+      "entityType": "measure",
+      "aliases": ["Crude Oil", "Crude Oil Estimated", "Oil Reserves"],
+      "unit": "million_tonnes",
+      "format": "number.2",
+      "valueDomain": {"kind": "ratio", "min": 0},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": 0.92
+    },
+    {
+      "entityId": "ent_natural_gas_reserves",
+      "canonicalName": "Natural Gas Reserves",
+      "entityType": "measure",
+      "aliases": ["Natural Gas", "Gas Reserves", "Natural Gas Estimated"],
+      "unit": "billion_cubic_metres",
+      "format": "number.2",
+      "valueDomain": {"kind": "ratio", "min": 0},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": 0.92
+    },
+    {
+      "entityId": "ent_wind_power",
+      "canonicalName": "Wind Power",
+      "entityType": "measure",
+      "aliases": ["Wind", "Wind Power Potential", "Wind Energy"],
+      "unit": "MW",
+      "format": "number.0",
+      "valueDomain": {"kind": "ratio", "min": 0},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": 0.92
+    },
+    {
+      "entityId": "ent_small_hydro_power",
+      "canonicalName": "Small Hydro Power",
+      "entityType": "measure",
+      "aliases": ["Small Hydro", "SHP"],
+      "unit": "MW",
+      "format": "number.0",
+      "valueDomain": {"kind": "ratio", "min": 0},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": 0.90
+    },
+    {
+      "entityId": "ent_biomass_power",
+      "canonicalName": "Biomass Power",
+      "entityType": "measure",
+      "aliases": ["Biomass", "Bio Power"],
+      "unit": "MW",
+      "format": "number.0",
+      "valueDomain": {"kind": "ratio", "min": 0},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": 0.90
+    },
+    {
+      "entityId": "ent_cogeneration_bagasse",
+      "canonicalName": "Cogeneration-Bagasse",
+      "entityType": "measure",
+      "aliases": ["Cogeneration", "Bagasse", "Cogen-Bagasse"],
+      "unit": "MW",
+      "format": "number.0",
+      "valueDomain": {"kind": "ratio", "min": 0},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": 0.88
+    },
+    {
+      "entityId": "ent_solar_energy",
+      "canonicalName": "Solar Energy",
+      "entityType": "measure",
+      "aliases": ["Solar", "Solar Power", "Solar Potential"],
+      "unit": "MW",
+      "format": "number.0",
+      "valueDomain": {"kind": "ratio", "min": 0},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": 0.92
+    },
+    {
+      "entityId": "ent_large_hydro",
+      "canonicalName": "Large Hydro",
+      "entityType": "measure",
+      "aliases": ["Large Hydro Power", "Large Hydroelectric"],
+      "unit": "MW",
+      "format": "number.0",
+      "valueDomain": {"kind": "ratio", "min": 0},
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": 0.88
+    }
+  ],
+  "measureFamilies": [
+    {
+      "familyId": "mf_reserves_by_category",
+      "baseConcept": "Coal Reserves",
+      "categoryDimension": "ent_reserve_category",
+      "members": [
+        {"label": "Proved", "entityRef": "ent_proved_reserves", "isTotal": false, "isDerived": false},
+        {"label": "Indicated", "entityRef": "ent_indicated_reserves", "isTotal": false, "isDerived": false},
+        {"label": "Inferred", "entityRef": "ent_inferred_reserves", "isTotal": false, "isDerived": false},
+        {"label": "Total", "entityRef": "ent_total_reserves", "isTotal": true, "isDerived": false},
+        {"label": "Distribution", "entityRef": "ent_distribution_percent", "isTotal": false, "isDerived": true, "unit": "percent"}
+      ],
+      "modelingAdvice": "both",
+      "normalizationHint": "WIDE_TO_LONG"
+    },
+    {
+      "familyId": "mf_renewable_potential_by_source",
+      "baseConcept": "Renewable Energy Potential",
+      "categoryDimension": "ent_energy_source",
+      "members": [
+        {"label": "Wind Power", "entityRef": "ent_wind_power", "isTotal": false, "isDerived": false},
+        {"label": "Small Hydro", "entityRef": "ent_small_hydro_power", "isTotal": false, "isDerived": false},
+        {"label": "Biomass Power", "entityRef": "ent_biomass_power", "isTotal": false, "isDerived": false},
+        {"label": "Cogeneration-Bagasse", "entityRef": "ent_cogeneration_bagasse", "isTotal": false, "isDerived": false},
+        {"label": "Solar Energy", "entityRef": "ent_solar_energy", "isTotal": false, "isDerived": false},
+        {"label": "Large Hydro", "entityRef": "ent_large_hydro", "isTotal": false, "isDerived": false}
+      ],
+      "modelingAdvice": "category_dimension",
+      "normalizationHint": "NONE"
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_coal_reserves",
+      "title": "Coal Reserves",
+      "questions": [
+        {
+          "questionId": "q_coal_reserves_state_comparison",
+          "intent": "Compare proved coal reserves across States/UTs for the current period",
+          "questionType": "comparison",
+          "requiredEntities": [
+            {"entityId": "ent_proved_reserves", "role": "measure", "required": true},
+            {"entityId": "ent_state_ut", "role": "grouping", "required": true},
+            {"entityId": "ent_period", "role": "time", "required": false, "defaultMember": "2025"}
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {"entityRef": "ent_proved_reserves", "agg": "sum"},
+            "groupBy": [{"entityRef": "ent_state_ut"}],
+            "sort": {"by": "measure", "order": "desc"}
+          },
+          "answerStructure": {
+            "components": [
+              {"componentId": "q_coal_reserves_state_comparison_c1", "kind": "narrative", "order": 1, "outputContract": {"type": "prose", "maxWords": 90}},
+              {"componentId": "q_coal_reserves_state_comparison_c2", "kind": "table", "order": 2, "outputContract": {"type": "table", "tableTemplateRef": "tt_coal_reserves_state"}},
+              {"componentId": "q_coal_reserves_state_comparison_c3", "kind": "chart", "order": 3, "outputContract": {"type": "chart", "chartType": "bar", "xAxis": "ent_state_ut", "yAxis": "ent_proved_reserves"}}
+            ]
+          },
+          "formulaIntent": {"type": "DIRECT"},
+          "generationMethod": "table_pattern",
+          "priority": 1
+        },
+        {
+          "questionId": "q_coal_reserves_ranking",
+          "intent": "Top States/UTs by total coal reserves in 2025",
+          "questionType": "ranking",
+          "requiredEntities": [
+            {"entityId": "ent_total_reserves", "role": "measure", "required": true},
+            {"entityId": "ent_state_ut", "role": "grouping", "required": true},
+            {"entityId": "ent_period", "role": "time", "required": false, "defaultMember": "2025"}
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {"entityRef": "ent_total_reserves", "agg": "sum"},
+            "groupBy": [{"entityRef": "ent_state_ut"}],
+            "sort": {"by": "measure", "order": "desc"},
+            "topN": 10
+          },
+          "answerStructure": {
+            "components": [
+              {"componentId": "q_coal_reserves_ranking_c1", "kind": "narrative", "order": 1, "outputContract": {"type": "prose", "maxWords": 90}},
+              {"componentId": "q_coal_reserves_ranking_c2", "kind": "table", "order": 2, "outputContract": {"type": "table", "tableTemplateRef": "tt_coal_reserves_state"}},
+              {"componentId": "q_coal_reserves_ranking_c3", "kind": "chart", "order": 3, "outputContract": {"type": "chart", "chartType": "bar", "xAxis": "ent_state_ut", "yAxis": "ent_total_reserves"}}
+            ]
+          },
+          "formulaIntent": {"type": "DIRECT"},
+          "generationMethod": "table_pattern",
+          "priority": 2
+        },
+        {
+          "questionId": "q_coal_composition_category",
+          "intent": "Composition of coal reserves by reserve category (Proved, Indicated, Inferred)",
+          "questionType": "composition",
+          "requiredEntities": [
+            {"entityId": "ent_proved_reserves", "role": "measure", "required": true},
+            {"entityId": "ent_indicated_reserves", "role": "measure", "required": true},
+            {"entityId": "ent_inferred_reserves", "role": "measure", "required": true},
+            {"entityId": "ent_state_ut", "role": "grouping", "required": true}
+          ],
+          "analyticsSpec": {
+            "operation": "multi_measure_composition",
+            "measures": [{"entityRef": "ent_proved_reserves"}, {"entityRef": "ent_indicated_reserves"}, {"entityRef": "ent_inferred_reserves"}],
+            "groupBy": [{"entityRef": "ent_state_ut"}]
+          },
+          "answerStructure": {
+            "components": [
+              {"componentId": "q_coal_composition_category_c1", "kind": "narrative", "order": 1, "outputContract": {"type": "prose", "maxWords": 90}},
+              {"componentId": "q_coal_composition_category_c2", "kind": "chart", "order": 2, "outputContract": {"type": "chart", "chartType": "stacked_bar"}}
+            ]
+          },
+          "formulaIntent": {"type": "DIRECT", "composition": true},
+          "generationMethod": "table_pattern",
+          "priority": 2
+        },
+        {
+          "questionId": "q_coal_growth_yoy",
+          "intent": "Year-over-year change in proved coal reserves from 2024 to 2025",
+          "questionType": "trend",
+          "requiredEntities": [
+            {"entityId": "ent_proved_reserves", "role": "measure", "required": true},
+            {"entityId": "ent_state_ut", "role": "grouping", "required": true},
+            {"entityId": "ent_period", "role": "time", "required": true}
+          ],
+          "analyticsSpec": {
+            "operation": "growth",
+            "measure": {"entityRef": "ent_proved_reserves"},
+            "groupBy": [{"entityRef": "ent_state_ut"}]
+          },
+          "answerStructure": {
+            "components": [
+              {"componentId": "q_coal_growth_yoy_c1", "kind": "narrative", "order": 1, "outputContract": {"type": "prose", "maxWords": 90}},
+              {"componentId": "q_coal_growth_yoy_c2", "kind": "table", "order": 2, "outputContract": {"type": "table"}},
+              {"componentId": "q_coal_growth_yoy_c3", "kind": "chart", "order": 3, "outputContract": {"type": "chart", "chartType": "grouped_bar"}}
+            ]
+          },
+          "formulaIntent": {"type": "GROWTH", "periods": {"current": "2025", "prior": "2024"}, "requiresPriorPeriod": true},
+          "generationMethod": "table_pattern",
+          "priority": 3
+        }
+      ]
+    },
+    {
+      "topicId": "topic_oil_gas_reserves",
+      "title": "Crude Oil and Natural Gas Reserves",
+      "questions": [
+        {
+          "questionId": "q_oil_gas_comparison",
+          "intent": "Compare crude oil and natural gas reserves across States/UTs",
+          "questionType": "comparison",
+          "requiredEntities": [
+            {"entityId": "ent_crude_oil_reserves", "role": "measure", "required": true},
+            {"entityId": "ent_natural_gas_reserves", "role": "measure", "required": true},
+            {"entityId": "ent_state_ut", "role": "grouping", "required": true}
+          ],
+          "analyticsSpec": {
+            "operation": "multi_measure_group_aggregate",
+            "measures": [{"entityRef": "ent_crude_oil_reserves"}, {"entityRef": "ent_natural_gas_reserves"}],
+            "groupBy": [{"entityRef": "ent_state_ut"}]
+          },
+          "answerStructure": {
+            "components": [
+              {"componentId": "q_oil_gas_comparison_c1", "kind": "narrative", "order": 1, "outputContract": {"type": "prose", "maxWords": 90}},
+              {"componentId": "q_oil_gas_comparison_c2", "kind": "table", "order": 2, "outputContract": {"type": "table", "tableTemplateRef": "tt_oil_gas_reserves_state"}},
+              {"componentId": "q_oil_gas_comparison_c3", "kind": "chart", "order": 3, "outputContract": {"type": "chart", "chartType": "grouped_bar"}}
+            ]
+          },
+          "formulaIntent": {"type": "DIRECT"},
+          "generationMethod": "table_pattern",
+          "priority": 1
+        }
+      ]
+    },
+    {
+      "topicId": "topic_renewable_potential",
+      "title": "Renewable Energy Potential",
+      "questions": [
+        {
+          "questionId": "q_renewable_state_source",
+          "intent": "Compare renewable energy potential by State/UT and energy source",
+          "questionType": "comparison",
+          "requiredEntities": [
+            {"entityId": "ent_wind_power", "role": "measure", "required": true},
+            {"entityId": "ent_solar_energy", "role": "measure", "required": true},
+            {"entityId": "ent_state_ut", "role": "grouping", "required": true}
+          ],
+          "analyticsSpec": {
+            "operation": "multi_measure_group_aggregate",
+            "measures": [{"entityRef": "ent_wind_power"}, {"entityRef": "ent_solar_energy"}],
+            "groupBy": [{"entityRef": "ent_state_ut"}],
+            "sort": {"by": "measure", "order": "desc"}
+          },
+          "answerStructure": {
+            "components": [
+              {"componentId": "q_renewable_state_source_c1", "kind": "narrative", "order": 1, "outputContract": {"type": "prose", "maxWords": 90}},
+              {"componentId": "q_renewable_state_source_c2", "kind": "table", "order": 2, "outputContract": {"type": "table", "tableTemplateRef": "tt_renewable_potential_state_source"}},
+              {"componentId": "q_renewable_state_source_c3", "kind": "chart", "order": 3, "outputContract": {"type": "chart", "chartType": "stacked_bar"}}
+            ]
+          },
+          "formulaIntent": {"type": "DIRECT"},
+          "generationMethod": "table_pattern",
+          "priority": 1
+        }
+      ]
+    }
+  ],
+  "tableTemplates": [
+    {
+      "tableId": "tt_coal_reserves_state",
+      "tableTitle": "Statewise Estimated Reserves of Coal",
+      "tableNumber": "Table 1.1",
+      "source": {"page": 7, "referenceDate": "As on 1st April 2025", "unitNote": "million_tonnes", "sourceNote": "Source: GSI/CMPDI"},
+      "dimensions": ["ent_state_ut"],
+      "measures": ["ent_proved_reserves", "ent_indicated_reserves", "ent_inferred_reserves", "ent_total_reserves", "ent_distribution_percent"],
+      "timeDimension": "ent_period",
+      "columnGroups": [
+        {"groupId": "cg_proved", "label": "Proved", "entityRef": "ent_proved_reserves", "periods": ["2024", "2025"], "unit": "million_tonnes", "span": 2},
+        {"groupId": "cg_indicated", "label": "Indicated", "entityRef": "ent_indicated_reserves", "periods": ["2024", "2025"], "unit": "million_tonnes", "span": 2},
+        {"groupId": "cg_inferred", "label": "Inferred", "entityRef": "ent_inferred_reserves", "periods": ["2024", "2025"], "unit": "million_tonnes", "span": 2},
+        {"groupId": "cg_total", "label": "Total", "entityRef": "ent_total_reserves", "periods": ["2024", "2025"], "unit": "million_tonnes", "span": 2},
+        {"groupId": "cg_distribution", "label": "Distribution (%)", "entityRef": "ent_distribution_percent", "periods": ["2024", "2025"], "unit": "percent", "span": 2}
+      ],
+      "columns": [
+        {"columnId": "col_state", "header": "States/UTs", "entityRef": "ent_state_ut", "role": "dimension", "headerPath": ["States/UTs"]},
+        {"columnId": "col_proved_2024", "header": "2024", "entityRef": "ent_proved_reserves", "period": "2024", "headerPath": ["Proved", "2024"], "unit": "million_tonnes", "role": "measure"},
+        {"columnId": "col_proved_2025", "header": "2025", "entityRef": "ent_proved_reserves", "period": "2025", "headerPath": ["Proved", "2025"], "unit": "million_tonnes", "role": "measure"},
+        {"columnId": "col_indicated_2024", "header": "2024", "entityRef": "ent_indicated_reserves", "period": "2024", "headerPath": ["Indicated", "2024"], "unit": "million_tonnes", "role": "measure"},
+        {"columnId": "col_indicated_2025", "header": "2025", "entityRef": "ent_indicated_reserves", "period": "2025", "headerPath": ["Indicated", "2025"], "unit": "million_tonnes", "role": "measure"},
+        {"columnId": "col_dist_2024", "header": "2024", "entityRef": "ent_distribution_percent", "period": "2024", "headerPath": ["Distribution (%)", "2024"], "unit": "percent", "role": "measure"},
+        {"columnId": "col_dist_2025", "header": "2025", "entityRef": "ent_distribution_percent", "period": "2025", "headerPath": ["Distribution (%)", "2025"], "unit": "percent", "role": "measure"}
+      ],
+      "normalizationAdvice": "WIDE_TO_LONG",
+      "totalRowLabels": ["All India", "Total", "Grand Total"],
+      "footnotes": [{"marker": "P", "text": "Provisional", "semanticMeaning": "provisional"}]
+    },
+    {
+      "tableId": "tt_oil_gas_reserves_state",
+      "tableTitle": "Statewise Estimated Reserves of Crude Oil and Natural Gas",
+      "tableNumber": "Table 1.3",
+      "source": {"page": 12, "referenceDate": "As on 1st April 2025"},
+      "dimensions": ["ent_state_ut"],
+      "measures": ["ent_crude_oil_reserves", "ent_natural_gas_reserves", "ent_distribution_percent"],
+      "timeDimension": "ent_period",
+      "columnGroups": [
+        {"groupId": "cg_crude_oil", "label": "Crude Oil", "entityRef": "ent_crude_oil_reserves", "periods": ["2024", "2025"], "unit": "million_tonnes", "span": 3},
+        {"groupId": "cg_natural_gas", "label": "Natural Gas", "entityRef": "ent_natural_gas_reserves", "periods": ["2024", "2025"], "unit": "billion_cubic_metres", "span": 3}
+      ],
+      "columns": [
+        {"columnId": "col_og_state", "header": "States/UTs", "entityRef": "ent_state_ut", "role": "dimension", "headerPath": ["States/UTs"]},
+        {"columnId": "col_oil_2024", "header": "2024", "entityRef": "ent_crude_oil_reserves", "period": "2024", "headerPath": ["Crude Oil", "2024"], "unit": "million_tonnes", "role": "measure"},
+        {"columnId": "col_oil_2025", "header": "2025", "entityRef": "ent_crude_oil_reserves", "period": "2025", "headerPath": ["Crude Oil", "2025"], "unit": "million_tonnes", "role": "measure"},
+        {"columnId": "col_gas_2024", "header": "2024", "entityRef": "ent_natural_gas_reserves", "period": "2024", "headerPath": ["Natural Gas", "2024"], "unit": "billion_cubic_metres", "role": "measure"},
+        {"columnId": "col_gas_2025", "header": "2025", "entityRef": "ent_natural_gas_reserves", "period": "2025", "headerPath": ["Natural Gas", "2025"], "unit": "billion_cubic_metres", "role": "measure"}
+      ],
+      "normalizationAdvice": "WIDE_TO_LONG"
+    },
+    {
+      "tableId": "tt_renewable_potential_state_source",
+      "tableTitle": "Estimated Renewable Energy Potential",
+      "tableNumber": "Table 1.4",
+      "source": {"page": 15, "unitNote": "MW", "sourceNote": "Source: MNRE"},
+      "dimensions": ["ent_state_ut"],
+      "measures": ["ent_wind_power", "ent_small_hydro_power", "ent_biomass_power", "ent_cogeneration_bagasse", "ent_solar_energy", "ent_large_hydro", "ent_total_reserves", "ent_distribution_percent"],
+      "columnGroups": [],
+      "columns": [
+        {"columnId": "col_ren_sl", "header": "Sl. No.", "role": "serial_number"},
+        {"columnId": "col_ren_state", "header": "States/UTs", "entityRef": "ent_state_ut", "role": "dimension", "headerPath": ["States/UTs"]},
+        {"columnId": "col_wind", "header": "Wind Power", "entityRef": "ent_wind_power", "headerPath": ["Wind Power"], "unit": "MW", "role": "measure", "footnoteMarkers": ["@"]},
+        {"columnId": "col_shp", "header": "Small Hydro Power", "entityRef": "ent_small_hydro_power", "headerPath": ["Small Hydro Power"], "unit": "MW", "role": "measure", "footnoteMarkers": ["*"]},
+        {"columnId": "col_biomass", "header": "Biomass Power", "entityRef": "ent_biomass_power", "headerPath": ["Biomass Power"], "unit": "MW", "role": "measure"},
+        {"columnId": "col_cogen", "header": "Cogeneration-Bagasse", "entityRef": "ent_cogeneration_bagasse", "headerPath": ["Cogeneration-Bagasse"], "unit": "MW", "role": "measure"},
+        {"columnId": "col_solar", "header": "Solar Energy", "entityRef": "ent_solar_energy", "headerPath": ["Solar Energy"], "unit": "MW", "role": "measure"},
+        {"columnId": "col_large_hydro", "header": "Large Hydro", "entityRef": "ent_large_hydro", "headerPath": ["Large Hydro"], "unit": "MW", "role": "measure", "footnoteMarkers": ["#"]},
+        {"columnId": "col_ren_total", "header": "Total", "entityRef": "ent_total_reserves", "headerPath": ["Total"], "unit": "MW", "role": "total"},
+        {"columnId": "col_ren_dist", "header": "Distribution (%)", "entityRef": "ent_distribution_percent", "headerPath": ["Distribution (%)"], "unit": "percent", "role": "measure"}
+      ],
+      "normalizationAdvice": "NONE",
+      "footnotes": [
+        {"marker": "@", "text": "Assessed at 150m hub height", "semanticMeaning": "note"},
+        {"marker": "*", "text": "Assessed potential", "semanticMeaning": "note"},
+        {"marker": "#", "text": "Includes pumped storage", "semanticMeaning": "note"}
+      ]
+    }
+  ],
+  "figureTemplates": [
+    {"figureTemplateId": "ft_coal_distribution_pie", "chartType": "pie", "chartSubject": "Coal reserves by reserve category", "categoryEntityRef": "ent_reserve_category", "measureRefs": ["ent_proved_reserves", "ent_indicated_reserves", "ent_inferred_reserves"], "captionTemplate": "Estimated reserves of coal by category, {{period.current}}", "page": 4},
+    {"figureTemplateId": "ft_crude_oil_distribution_pie", "chartType": "pie", "chartSubject": "Crude oil reserves distribution", "dimensionRef": "ent_state_ut", "measureRefs": ["ent_crude_oil_reserves"], "captionTemplate": "Distribution of crude oil reserves, {{period.current}}", "page": 10},
+    {"figureTemplateId": "ft_natural_gas_distribution_pie", "chartType": "pie", "chartSubject": "Natural gas reserves distribution", "dimensionRef": "ent_state_ut", "measureRefs": ["ent_natural_gas_reserves"], "captionTemplate": "Distribution of natural gas reserves, {{period.current}}", "page": 11},
+    {"figureTemplateId": "ft_renewable_source_distribution", "chartType": "pie", "chartSubject": "Renewable energy potential by source", "categoryEntityRef": "ent_energy_source", "measureRefs": ["ent_wind_power", "ent_solar_energy", "ent_small_hydro_power", "ent_biomass_power", "ent_large_hydro"], "captionTemplate": "Renewable energy potential by source type"},
+    {"figureTemplateId": "ft_renewable_geo_distribution", "chartType": "bar", "chartSubject": "Renewable energy potential by State/UT", "dimensionRef": "ent_state_ut", "measureRefs": ["ent_wind_power", "ent_solar_energy"], "captionTemplate": "Geographical distribution of renewable energy potential"}
+  ],
+  "documentMap": {
+    "sections": [
+      {"topicRef": "topic_coal_reserves", "sourcePages": [4, 5, 6, 7, 8, 9]},
+      {"topicRef": "topic_oil_gas_reserves", "sourcePages": [10, 11, 12, 13]},
+      {"topicRef": "topic_renewable_potential", "sourcePages": [14, 15, 16, 17]}
+    ]
+  }
+}
