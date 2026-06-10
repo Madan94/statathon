@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any, Optional
 
@@ -49,6 +50,8 @@ from report_builder.generation import (
     ReportOverrides,
     TemplateProfile,
 )
+from report_builder.binding.execution_bundle_factory import build_execution_bundle
+from report_builder.generation.bundle_adapter import adapt_bundle, bundle_to_planrecs
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +70,7 @@ class GenerateIn(BaseModel):
     period: Optional[str] = None            # reference period label, e.g. "2023-24"
     report_id: Optional[str] = None
     use_llm: Optional[bool] = None          # None ⇒ auto (on iff LLM enabled)
+    plan_source: Optional[str] = None       # "bundle" (gold, default) | "legacy" (override; else env GENERATION_PLAN_SOURCE)
 
 
 class GenerateOut(BaseModel):
@@ -80,6 +84,7 @@ class GenerateOut(BaseModel):
     coverage: dict[str, Any]
     narrative_trace: list[dict[str, Any]]
     fill_trace: list[dict[str, Any]]
+    plan_source: str = "execution_bundle"   # which planner produced analyticsAST.plans
 
 
 # ---------------------------------------------------------------------------
@@ -215,6 +220,40 @@ def _rebuild_binding(template_id: str, signature: str, dataset: DatasetAST,
     return binding
 
 
+def _plan_source(body: GenerateIn) -> str:
+    """Resolve the plan source: request override > env > default 'bundle'.
+
+    'bundle' (gold) sources analyticsAST.plans from the team's ExecutionBundle.
+    'legacy' uses the older blueprint+BindingAST planner (fallback only).
+    """
+    choice = (body.plan_source or os.getenv("GENERATION_PLAN_SOURCE") or "bundle").strip().lower()
+    return "legacy" if choice == "legacy" else "bundle"
+
+
+def _build_bundle(template_id: str, signature: str, dataset: DatasetAST,
+                  blueprint: dict[str, Any], df: "Any"):
+    """Build the canonical ExecutionBundle for this dataset (the S4 input contract).
+
+    Always builds from the *current* stash + review record via the single canonical
+    factory, which also freezes the result for reproducibility/audit. We intentionally
+    do NOT prefer a previously-frozen bundle here: a stale frozen artifact from an
+    earlier blueprint/binding must never silently drive generation.
+    """
+    record = R.load_record(template_id, signature)
+    if record is None:
+        raise HTTPException(status_code=404, detail="no binding record — finalize binding first")
+    df_path = str(_stash_path(template_id, signature, "data.csv"))
+    return build_execution_bundle(
+        template_id=template_id,
+        signature=signature,
+        record=record,
+        dataset=dataset,
+        blueprint=blueprint,
+        dataframe_path=df_path,
+        df=df,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -240,8 +279,27 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
         "period": {"current": body.period or ""},
     }
 
-    # S4 — analytics
-    plans = build_plans(blueprint, binding, dataset)
+    # S4 — analytics.
+    # GOLD PATH (default): plans come from the team's validated ExecutionBundle, not a
+    # re-derived planner. Readiness is honored here: NOT_READY blocks generation, and
+    # the adapter never emits BLOCKED plans. LEGACY planner stays behind a flag.
+    plan_source = _plan_source(body)
+    if plan_source == "legacy":
+        plans = build_plans(blueprint, binding, dataset)
+    else:
+        bundle = _build_bundle(template_id, signature, dataset, blueprint, df)
+        if bundle.status == "NOT_READY":
+            raise HTTPException(
+                status_code=409,
+                detail="execution bundle is NOT_READY — binding has blocking errors; resolve before generating",
+            )
+        plans = bundle_to_planrecs(bundle)
+        if not plans:
+            raise HTTPException(
+                status_code=409,
+                detail="execution bundle has no runnable plans (all BLOCKED) — nothing to generate",
+            )
+
     analytics_obj, evidence_obj, row_index = run_analytics(
         plans, df, question_meta=_question_meta(blueprint))
     analytics, evidence = analytics_obj.to_dict(), evidence_obj.to_dict()
@@ -273,8 +331,8 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     _html_path(template_id, signature).write_text(html_str, encoding="utf-8")
 
-    logger.info("[generate-phase] %s__%s — report=%s valid=%s errors=%d",
-                template_id, signature, report_id, result["ok"], len(result["errors"]))
+    logger.info("[generate-phase] %s__%s — report=%s valid=%s errors=%d plans=%s",
+                template_id, signature, report_id, result["ok"], len(result["errors"]), plan_source)
 
     return GenerateOut(
         template_id=template_id,
@@ -287,6 +345,7 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
         coverage=report["metadata"]["coverage"],
         narrative_trace=narrated["narrativeTrace"],
         fill_trace=visuals["fillTrace"],
+        plan_source="execution_bundle" if plan_source == "bundle" else "legacy_planner",
     )
 
 
