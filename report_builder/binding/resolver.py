@@ -283,6 +283,40 @@ def resolve_entity(
         if conf > 0.0
     ]
 
+    # ── Build evidence (signal-level explainability) ──
+    evidence: list[dict[str, Any]] = []
+    if method == "exact":
+        evidence.append({"signal": "exact_name", "score": confidence, "detail": f"Exact match: '{best_col}'"})
+    elif method == "alias":
+        evidence.append({"signal": "alias", "score": confidence, "detail": f"Alias matched to '{best_col}'"})
+    elif method == "synonym":
+        evidence.append({"signal": "synonym", "score": confidence, "detail": f"Synonym/token match to '{best_col}'"})
+    elif method == "embedding":
+        evidence.append({"signal": "embedding", "score": confidence, "detail": f"Embedding similarity to '{best_col}'"})
+    # Role compatibility signal
+    if best_col:
+        prof = dataset.column(best_col)
+        if prof:
+            role_compat = view["type"] == prof.role or (view["type"] == "measure" and prof.role == "measure")
+            evidence.append({"signal": "role_compatibility", "score": 1.0 if role_compat else 0.3, "detail": f"entity={view['type']} col_role={prof.role}"})
+            if prof.unit:
+                evidence.append({"signal": "unit", "score": 0.8, "detail": f"Column has unit: {prof.unit}"})
+    if cardinality in ("memberSet", "timeSeries"):
+        evidence.append({"signal": "group_match", "score": 0.9, "detail": f"Cardinality: {cardinality} ({len(columns)} columns)"})
+
+    # ── Build risks ──
+    risks: list[dict[str, Any]] = []
+    if type_mismatch:
+        risks.append({"code": "TYPE_MISMATCH", "severity": "warn", "message": f"Entity type '{view['type']}' != column role"})
+    if confidence < 0.6 and status == "proposed":
+        risks.append({"code": "LOW_CONFIDENCE", "severity": "warn", "message": f"Confidence {confidence:.2f} is below 0.60"})
+    if method == "synonym" and confidence < 0.7:
+        risks.append({"code": "WEAK_ALIAS_ONLY", "severity": "warn", "message": "Matched by synonym/token only, no exact or alias match"})
+    if len(ranked) >= 2 and ranked[0][1] > 0 and ranked[1][1] > 0:
+        gap = ranked[0][1] - ranked[1][1]
+        if gap < 0.1:
+            risks.append({"code": "AMBIGUOUS_ALTERNATIVES", "severity": "warn", "message": f"Top two candidates differ by only {gap:.3f}"})
+
     return EntityBinding(
         entityId=view["id"],
         entityName=view["name"],
@@ -296,6 +330,8 @@ def resolve_entity(
         alternatives=alternatives,
         typeMismatch=type_mismatch,
         notes=notes,
+        evidence=evidence,
+        risks=risks,
     )
 
 

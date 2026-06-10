@@ -76,6 +76,8 @@ class StartOut(BaseModel):
     proposals: list[dict[str, Any]]
     confirmations: dict[str, dict[str, Any]]
     pending: list[str]
+    blueprint_qa: dict[str, Any] | None = None
+    statistical_qa: dict[str, Any] | None = None
 
 
 class FinalizeOut(BaseModel):
@@ -223,6 +225,17 @@ async def start_binding(
     from report_builder.binding.resolver import resolve_entities
 
     bp = await _resolve_blueprint(template_id, blueprint)
+
+    # ── BlueprintQA gate: validate before binding starts ──
+    from report_builder.binding.blueprint_qa import validate_blueprint_qa, validate_statistical_concepts
+    blueprint_qa = validate_blueprint_qa(bp)
+    if blueprint_qa.status == "INVALID":
+        raise HTTPException(
+            status_code=422,
+            detail=f"Blueprint is INVALID for binding: {[e['message'] for e in blueprint_qa.errors]}",
+        )
+    statistical_qa = validate_statistical_concepts(bp)
+
     raw = await dataset.read()
     try:
         df = pd.read_csv(io.BytesIO(raw))
@@ -258,6 +271,8 @@ async def start_binding(
         proposals=record.proposals,
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         pending=_pending_ids(record),
+        blueprint_qa=blueprint_qa.to_dict(),
+        statistical_qa=statistical_qa.to_dict(),
     )
 
 
