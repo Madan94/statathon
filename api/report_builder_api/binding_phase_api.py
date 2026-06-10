@@ -156,18 +156,46 @@ def _read_stash(template_id: str, signature: str) -> tuple[DatasetAST, dict[str,
 
 
 async def _resolve_blueprint(template_id: str, blueprint_file: Optional[UploadFile]) -> dict[str, Any]:
-    """Blueprint source: an uploaded blueprint.json, else the bundled gold PLFS blueprint."""
+    """Blueprint source priority: uploaded file → DB template → bundled gold.
+
+    For DB-stored templates (numeric IDs), loads blueprint from the template's
+    ast_json.blueprint field — no manual upload needed after extraction.
+    """
+    # 1. Explicit upload takes priority
     if blueprint_file is not None:
         raw = await blueprint_file.read()
         try:
             return json.loads(raw.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             raise HTTPException(status_code=400, detail=f"invalid blueprint JSON: {exc}") from exc
+
+    # 2. Try loading from DB if template_id is numeric (extracted template)
+    if template_id.isdigit():
+        try:
+            from database.database import SessionLocal
+            from database.models import ReportTemplate
+            db = SessionLocal()
+            try:
+                tpl = db.query(ReportTemplate).filter(ReportTemplate.id == int(template_id)).first()
+                if tpl and tpl.ast_json:
+                    ast_json = tpl.ast_json if isinstance(tpl.ast_json, dict) else {}
+                    # Blueprint lives at ast_json.blueprint
+                    bp = ast_json.get("blueprint")
+                    if bp and isinstance(bp, dict) and bp.get("entities"):
+                        logger.info("[binding-phase] Blueprint auto-loaded from DB template %s", template_id)
+                        return bp
+            finally:
+                db.close()
+        except Exception as exc:
+            logger.warning("[binding-phase] DB blueprint load failed for %s: %s", template_id, exc)
+
+    # 3. Bundled gold templates
     if template_id in _GOLD_TEMPLATE_IDS:
         return json.loads(_GOLD_BLUEPRINT.read_text(encoding="utf-8"))
+
     raise HTTPException(
         status_code=400,
-        detail=f"no blueprint for template '{template_id}' — upload a blueprint.json or use a built-in id",
+        detail=f"no blueprint for template '{template_id}' — upload a blueprint.json, use a numeric template ID, or use a built-in id",
     )
 
 
