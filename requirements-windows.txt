@@ -110,3 +110,10 @@ vine==5.1.0
 watchfiles==1.1.1
 wcwidth==0.7.0
 websockets==16.0
+
+# ── Missing but required by codebase ──────────────────────────────────────────
+groq>=1.0.0,<2                   # Groq SDK (used as fallback in llm_router)
+prophet>=1.1.5                   # Time series forecasting (agents/analytics_agent)
+statsmodels>=0.14.0              # ARIMA models (agents/analytics_agent)
+pytesseract>=0.3.10              # OCR fallback (services/layoutlm)
+botocore>=1.35.0,<2              # AWS S3 (api/dataset_api) — pulled by boto3 but pinned
