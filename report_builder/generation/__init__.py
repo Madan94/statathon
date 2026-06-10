@@ -53,6 +53,12 @@ from .run_modes import (
 from .filler import fill_visuals
 from .narrator import narrate, validate_numbers
 from .assembler import assemble_report, validate_report
+from .verifier import (
+    VerificationCheck,
+    VerificationReport,
+    VerifierPolicy,
+    verify_report,
+)
 from .renderer import render_html, render_pdf
 from .render.pdf import pdf_available
 from .profile import (
@@ -90,6 +96,10 @@ __all__ = [
     "validate_numbers",
     "assemble_report",
     "validate_report",
+    "verify_report",
+    "VerificationCheck",
+    "VerificationReport",
+    "VerifierPolicy",
     "render_html",
     "render_pdf",
     "pdf_available",

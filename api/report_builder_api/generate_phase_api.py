@@ -47,6 +47,7 @@ from report_builder.generation import (
     run_analytics,
     run_execution,
     validate_report,
+    verify_report,
     EditRejected,
     ReportOverrides,
     TemplateProfile,
@@ -99,6 +100,8 @@ class GenerateOut(BaseModel):
     mode: str = "fresh"                      # fresh | frozen | test
     data_content_hash: str = ""             # value-level hash of the executed dataset
     bundle_version: Optional[int] = None    # frozen bundle version used (when known)
+    verdict: str = "PASS"                    # verifier gate: PASS | WARN | FAIL (advisory here)
+    quality_score: float = 0.0              # report quality score 0..100
 
 
 # ---------------------------------------------------------------------------
@@ -329,6 +332,8 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
     data_content_hash = compute_data_content_hash(df)
     plan_source = _plan_source(body)
     bundle_version: Optional[int] = None
+    bundle = None
+    adapted = None
     if plan_source == "legacy":
         plans = build_plans(blueprint, binding, dataset)
         analytics_obj, evidence_obj, row_index = run_analytics(
@@ -401,6 +406,16 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
     result = validate_report(report, row_index=row_index)
     report["auditAST"]["warnings"] = result["warnings"]
 
+    # S5d — verify (advisory judge): score trust without mutating the report. The verdict
+    # is recorded into auditAST + returned; it does NOT block draft generation here
+    # (FAIL will gate official *publish* in a later phase).
+    verification = verify_report(
+        report, analytics, evidence,
+        bundle=bundle, adapted=adapted, dataframe=df,
+        row_index=row_index, content_hash=data_content_hash,
+    )
+    report["auditAST"]["verification"] = verification.to_dict()
+
     # S6 — render + persist
     html_str = render_html(report)
     _report_path(template_id, signature).write_text(
@@ -426,6 +441,8 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
         mode=mode,
         data_content_hash=data_content_hash,
         bundle_version=bundle_version,
+        verdict=verification.verdict,
+        quality_score=verification.quality.get("finalScore", 0.0),
     )
 
 
