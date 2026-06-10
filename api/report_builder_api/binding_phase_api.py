@@ -394,7 +394,8 @@ def get_execution_bundle(template_id: str, signature: str) -> ExecutionReadyOut:
         NormalizationPlan,
         LineageRef,
     )
-    from report_builder.binding.schema import ResolvedRoles
+    from report_builder.binding.question_binder import compile_execution_plans
+    from report_builder.binding.readiness_gate import validate_execution_ready
 
     record = _load_or_404(template_id, signature)
     dataset, blueprint, df = _read_stash(template_id, signature)
@@ -413,66 +414,19 @@ def get_execution_bundle(template_id: str, signature: str) -> ExecutionReadyOut:
 
     has_errors = any(i.get("severity") == "error" for i in binding.coverage.get("issues", []))
 
-    # Build execution plans from question bindings
-    plans: list[QuestionExecutionPlan] = []
-    blocked: list[dict] = []
+    # ── S3: Compile execution plans using Phase 4 plan compiler ──
+    plans = compile_execution_plans(blueprint, binding.questionBindings, dataset)
+    blocked = [
+        {"questionId": qb.questionId, "reason": "; ".join(qb.notes), "unresolvedEntities": qb.unresolvedEntities}
+        for qb in binding.questionBindings if qb.status == "blocked"
+    ]
 
-    for qb in binding.questionBindings:
-        if qb.status == "blocked":
-            blocked.append({"questionId": qb.questionId, "reason": "; ".join(qb.notes), "unresolvedEntities": qb.unresolvedEntities})
-            continue
+    # ── S3.5: Readiness gate (Phase 5) ──
+    readiness = validate_execution_ready(plans, dataset, binding)
 
-        # Find the matching blueprint question for analyticsSpec + outputContract
-        bp_question = None
-        for topic in (blueprint.get("topics") or []):
-            for q in (topic.get("questions") or []):
-                if q.get("questionId") == qb.questionId:
-                    bp_question = q
-                    break
-            if bp_question:
-                break
-
-        # Build the plan
-        analytics_spec = (bp_question or {}).get("analyticsSpec", {})
-        answer_structure = (bp_question or {}).get("answerStructure", {})
-        output_contract = answer_structure.get("components", []) if isinstance(answer_structure, dict) else []
-        required_entities = (bp_question or {}).get("requiredEntities", [])
-
-        # Determine formula type from analyticsSpec
-        operation = analytics_spec.get("operation", "group_aggregate")
-        formula_type = "DIRECT"
-        if operation in ("growth", "derive") or "growth" in (bp_question or {}).get("questionText", "").lower():
-            formula_type = "GROWTH"
-        elif "share" in (bp_question or {}).get("questionText", "").lower() or "distribution" in (bp_question or {}).get("questionText", "").lower():
-            formula_type = "SHARE"
-        elif "rate" in (bp_question or {}).get("questionText", "").lower():
-            formula_type = "RATE"
-
-        plan = QuestionExecutionPlan(
-            planId=f"plan_{qb.questionId}",
-            questionId=qb.questionId,
-            questionText=(bp_question or {}).get("questionText") or (bp_question or {}).get("intent", ""),
-            status="EXECUTABLE" if qb.status == "executable" else "DEGRADED",
-            analyticsSpec=analytics_spec,
-            resolvedRoles=qb.resolvedRoles,
-            normalizationPlan=NormalizationPlan(type="NONE"),
-            formulaSpec=FormulaSpec(type=formula_type),
-            outputContract={"components": output_contract} if output_contract else {},
-            lineage=LineageRef(
-                sourceQuestionId=qb.questionId,
-                sourceEntityIds=[r.get("entityId", "") for r in required_entities],
-                sourceColumnIds=qb.resolvedRoles.measures + qb.resolvedRoles.dimensions,
-            ),
-        )
-        plans.append(plan)
-
-    # Build readiness report
-    readiness = ExecutionReadinessReport(
-        executableCount=sum(1 for p in plans if p.status == "EXECUTABLE"),
-        degradedCount=sum(1 for p in plans if p.status == "DEGRADED"),
-        blockedCount=len(blocked),
-        errors=["Binding gate has errors — resolve before execution"] if has_errors else [],
-    )
+    # Override status if binding gate itself has errors
+    if has_errors:
+        readiness.errors.append("Binding gate has errors — resolve before execution")
 
     # Build statistical context from dataset + blueprint
     unit_registry = {}
@@ -486,7 +440,7 @@ def get_execution_bundle(template_id: str, signature: str) -> ExecutionReadyOut:
         sourceNotes=[blueprint.get("templateMeta", {}).get("sourceDocument", "")],
     )
 
-    bundle_status = "NOT_READY" if has_errors else readiness.status
+    bundle_status = "NOT_READY" if has_errors or readiness.errors else readiness.status
     binding_ast_id = f"bind_{template_id}_{signature[:8]}"
 
     # Stash path for dataframe
