@@ -377,10 +377,12 @@ class ReadinessCheck:
     def from_dict(cls, d: dict[str, Any]) -> "ReadinessCheck":
         return cls(
             level=str(d.get("level") or "technical"),
+            severity=str(d.get("severity") or "error"),
             passed=bool(d.get("passed", True)),
             code=str(d.get("code") or ""),
             message=str(d.get("message") or ""),
             planId=str(d.get("planId") or ""),
+            recommendedAction=str(d.get("recommendedAction") or ""),
         )
 
 

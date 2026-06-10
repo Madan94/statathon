@@ -99,8 +99,17 @@ def validate_blueprint_qa(blueprint: dict[str, Any]) -> BlueprintQAResult:
         # Check requiredEntities reference valid IDs
         for re_ent in (q.get("requiredEntities") or []):
             ref_id = re_ent.get("entityId") or re_ent.get("entityRef", "")
-            if ref_id and ref_id not in entity_ids and not ref_id.startswith("ent_"):
-                result.missingEntities.append(f"{qid}→{ref_id}")
+            if not ref_id:
+                continue
+            # entityId-style refs (ent_001, ent_wpr) must exist in entity_ids
+            if ref_id.startswith("ent_"):
+                if ref_id not in entity_ids:
+                    result.missingEntities.append(f"{qid}→{ref_id}")
+            else:
+                # Name-style refs: check against canonical names
+                entity_names = {(e.get("canonicalName") or e.get("name") or "").lower() for e in entities}
+                if ref_id.lower() not in entity_names and ref_id not in entity_ids:
+                    result.missingEntities.append(f"{qid}→{ref_id}")
 
         # Check analyticsSpec
         q_type = q.get("questionType", "")
@@ -159,9 +168,11 @@ def validate_statistical_concepts(blueprint: dict[str, Any]) -> BlueprintQAResul
                 })
 
     # Check: growth/trend questions need time dimension
-    all_questions = []
+    all_questions: list[dict] = []
     for topic in topics:
         all_questions.extend(topic.get("questions") or [])
+    # Also include top-level questions (some blueprints use flat structure)
+    all_questions.extend(blueprint.get("questions") or [])
 
     growth_questions = [q for q in all_questions if q.get("questionType") in ("trend", "growth")]
     if growth_questions and not time_entities:

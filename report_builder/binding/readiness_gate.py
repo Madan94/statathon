@@ -249,12 +249,19 @@ def validate_execution_ready(
     report.degradedCount = sum(1 for p in plans if p.status == "DEGRADED")
     report.blockedCount = sum(1 for p in plans if p.status == "BLOCKED")
 
-    # Collect errors/warnings
-    report.errors = [c.message for c in report.checks if not c.passed and c.level == "technical"]
-    report.warnings = [c.message for c in report.checks if not c.passed and c.level in ("statistical", "evidence")]
+    # Collect errors/warnings based on SEVERITY (not level)
+    # Technical failures that block are errors; statistical failures that degrade are errors too
+    report.errors = [c.message for c in report.checks if not c.passed and c.severity == "error"]
+    report.warnings = [c.message for c in report.checks if not c.passed and c.severity in ("warn", "info")]
+
+    # If no explicit severity was set, fall back to level-based classification
+    if not report.errors and not report.warnings:
+        report.errors = [c.message for c in report.checks if not c.passed and c.level == "technical"]
+        report.warnings = [c.message for c in report.checks if not c.passed and c.level in ("statistical", "evidence")]
 
     logger.info(
-        "[readiness_gate] %d plans validated: %d executable, %d degraded, %d blocked, %d warnings",
-        len(plans), report.executableCount, report.degradedCount, report.blockedCount, len(report.warnings),
+        "[readiness_gate] %d plans validated: %d executable, %d degraded, %d blocked, %d errors, %d warnings",
+        len(plans), report.executableCount, report.degradedCount, report.blockedCount,
+        len(report.errors), len(report.warnings),
     )
     return report
