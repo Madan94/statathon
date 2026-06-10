@@ -85,7 +85,11 @@ def freeze_bundle(bundle: ExecutionBundle) -> dict[str, Any]:
         {"version": N, "bindingAstId": "...", "frozenAt": "...", "path": "...", "isNew": bool}
     """
     template_id = bundle.templateId
-    signature = bundle.datasetAst.signature if hasattr(bundle.datasetAst, "signature") else bundle.datasetId or "unknown"
+    # Freeze key MUST be the dataset signature so consumers can reload via
+    # load_frozen_bundle(template_id, BindingAST.datasetSignature). The signature
+    # lives on BindingAST.datasetSignature (DatasetAST has no `signature` field).
+    # Fall back to datasetId for legacy bundles that carry no signature, then "unknown".
+    signature = bundle.bindingAst.datasetSignature or bundle.datasetId or "unknown"
     bundle_dir = _bundle_dir(template_id, signature)
     content_hash = _compute_content_hash(bundle)
 
