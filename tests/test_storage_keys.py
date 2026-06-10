@@ -12,7 +12,7 @@ def _ensure_paths():
 
 def test_generate_object_key_shape():
     _ensure_paths()
-    from api.datasets.storage_keys import generate_object_key
+    from api.dataset_api.storage_keys import generate_object_key
 
     k = generate_object_key("survey.csv")
     assert k.endswith("survey.csv") or "-" in k
