@@ -379,93 +379,33 @@ class ExecutionReadyOut(BaseModel):
 def get_execution_bundle(template_id: str, signature: str) -> ExecutionReadyOut:
     """S4 Handoff: Return the validated ExecutionBundle for downstream execution.
 
-    This is the S4 team's only input. Contains everything needed to execute
-    analytics without interpretation: confirmed bindings, execution plans,
-    normalization recipes, formula specs, output contracts, and lineage.
+    This is the S4 team's ONLY input contract. Uses the canonical ExecutionBundle
+    factory — no plan-building logic in this endpoint.
 
-    Returns NOT_READY if the binding gate has errors.
+    Returns NOT_READY if the binding gate or readiness gate has errors.
     """
-    from report_builder.binding.execution_contracts import (
-        ExecutionBundle,
-        ExecutionReadinessReport,
-        QuestionExecutionPlan,
-        StatisticalContext,
-        FormulaSpec,
-        NormalizationPlan,
-        LineageRef,
-    )
-    from report_builder.binding.question_binder import compile_execution_plans
-    from report_builder.binding.readiness_gate import validate_execution_ready
+    from report_builder.binding.execution_bundle_factory import build_execution_bundle
 
     record = _load_or_404(template_id, signature)
     dataset, blueprint, df = _read_stash(template_id, signature)
 
-    # Re-run finalization to get current state
-    entity_bindings = [EntityBinding.from_dict(p) for p in record.proposals]
-    binding = BindingAST(
-        templateId=record.templateId,
-        datasetId=record.datasetId,
-        datasetSignature=signature,
-        entityBindings=entity_bindings,
-    )
-    R.apply_confirmations(binding, record)
-    binding.questionBindings = bind_questions(blueprint, binding.entityBindings, dataset, df=df)
-    build_coverage(binding)
+    # Resolve dataframe path from stash
+    df_path = str(_stash_path(template_id, signature, "data.csv"))
 
-    has_errors = any(i.get("severity") == "error" for i in binding.coverage.get("issues", []))
-
-    # ── S3: Compile execution plans using Phase 4 plan compiler ──
-    plans = compile_execution_plans(blueprint, binding.questionBindings, dataset)
-    blocked = [
-        {"questionId": qb.questionId, "reason": "; ".join(qb.notes), "unresolvedEntities": qb.unresolvedEntities}
-        for qb in binding.questionBindings if qb.status == "blocked"
-    ]
-
-    # ── S3.5: Readiness gate (Phase 5) ──
-    readiness = validate_execution_ready(plans, dataset, binding)
-
-    # Override status if binding gate itself has errors
-    if has_errors:
-        readiness.errors.append("Binding gate has errors — resolve before execution")
-
-    # Build statistical context from dataset + blueprint
-    unit_registry = {}
-    for col in dataset.columns:
-        if col.unit:
-            unit_registry[col.name] = col.unit
-
-    stat_ctx = StatisticalContext(
-        geographyLevel="state_ut" if any("state" in c.name.lower() for c in dataset.columns) else "",
-        unitRegistry=unit_registry,
-        sourceNotes=[blueprint.get("templateMeta", {}).get("sourceDocument", "")],
-    )
-
-    bundle_status = "NOT_READY" if has_errors or readiness.errors else readiness.status
-    binding_ast_id = f"bind_{template_id}_{signature[:8]}"
-
-    # Stash path for dataframe
-    stash_dir = _stash_dir(template_id, signature)
-    df_path = str(stash_dir / "data.csv") if stash_dir.exists() else ""
-
-    from datetime import datetime as _dt
-    bundle = ExecutionBundle(
-        templateId=template_id,
-        datasetId=record.datasetId,
-        bindingAstId=binding_ast_id,
-        status=bundle_status,
-        datasetAst=dataset,
-        bindingAst=binding,
-        statisticalContext=stat_ctx,
-        plans=plans,
-        blockedQuestions=blocked,
-        readinessReport=readiness,
-        dataframeRef={"type": "csv", "path": df_path},
-        frozenAt=_dt.utcnow().isoformat() + "Z",
+    # Build bundle via canonical factory (single source of truth)
+    bundle = build_execution_bundle(
+        template_id=template_id,
+        signature=signature,
+        record=record,
+        dataset=dataset,
+        blueprint=blueprint,
+        dataframe_path=df_path,
+        df=df,
     )
 
     logger.info(
         "[binding-phase] execution-ready %s__%s — status=%s plans=%d blocked=%d",
-        template_id, signature, bundle_status, len(plans), len(blocked),
+        template_id, signature, bundle.status, len(bundle.plans), len(bundle.blockedQuestions),
     )
 
     return ExecutionReadyOut(
@@ -481,6 +421,6 @@ def get_execution_bundle(template_id: str, signature: str) -> ExecutionReadyOut:
         blocked_questions=bundle.blockedQuestions,
         readiness_report=bundle.readinessReport.to_dict(),
         dataframe_ref=bundle.dataframeRef,
-        lineage_index={p.questionId: p.lineage.to_dict() for p in bundle.plans},
+        lineage_index=bundle.lineageIndex,
         frozen_at=bundle.frozenAt,
     )

@@ -319,23 +319,57 @@ def compile_execution_plans(
 
         # ── Build formulaSpec ──
         formula = FormulaSpec(type=formula_type)
-        if formula_type == "GROWTH" and len(qb.resolvedRoles.measures) >= 2:
-            # Assume first is prior, second is current (or vice versa)
+        diagnostics: list[str] = []
+
+        if formula_type == "GROWTH":
             measures = qb.resolvedRoles.measures
-            formula.numeratorColumn = measures[-1]  # current
-            formula.denominatorColumn = measures[0]  # prior
+            time_periods = qb.resolvedRoles.time.periods
+            if time_periods.get("current") and time_periods.get("prior"):
+                # Time periods are explicitly resolved — safe
+                formula.timeWindow = time_periods
+                # Try to match columns to periods via name
+                current_col = next((m for m in measures if time_periods["current"] in m), measures[-1] if measures else "")
+                prior_col = next((m for m in measures if time_periods["prior"] in m), measures[0] if measures else "")
+                formula.numeratorColumn = current_col
+                formula.denominatorColumn = prior_col
+            elif len(measures) >= 2:
+                # UNSAFE: guessing period order from column names
+                # Try to parse year from column names
+                import re as _re_period
+                _year_re = _re_period.compile(r'(\d{4})')
+                years = []
+                for m in measures:
+                    match = _year_re.search(m)
+                    if match:
+                        years.append((int(match.group(1)), m))
+                if len(years) >= 2:
+                    years.sort()
+                    formula.denominatorColumn = years[0][1]  # prior (earlier year)
+                    formula.numeratorColumn = years[-1][1]   # current (later year)
+                    formula.timeWindow = {"prior": str(years[0][0]), "current": str(years[-1][0])}
+                else:
+                    # Cannot determine period order — DEGRADE the plan
+                    diagnostics.append("GROWTH_PERIODS_UNCERTAIN: cannot determine current/prior from column names")
+                    formula.numeratorColumn = measures[-1]
+                    formula.denominatorColumn = measures[0]
+            else:
+                diagnostics.append("GROWTH_MISSING_PERIODS: need at least 2 measure columns for growth calculation")
             formula.multiplier = 100.0
             formula.unitConversion = "percent"
-            formula.timeWindow = qb.resolvedRoles.time.periods
+
         elif formula_type == "SHARE":
-            # Share = numerator / total
             if qb.resolvedRoles.measures:
                 formula.numeratorColumn = qb.resolvedRoles.measures[0]
+            else:
+                diagnostics.append("SHARE_MISSING_NUMERATOR: no measure column for share calculation")
             formula.multiplier = 100.0
             formula.unitConversion = "percent"
+
         elif formula_type == "RATE":
             if qb.resolvedRoles.measures:
                 formula.numeratorColumn = qb.resolvedRoles.measures[0]
+            else:
+                diagnostics.append("RATE_MISSING_NUMERATOR: no measure column for rate calculation")
             formula.multiplier = 1000.0  # per 1000 default for MoSPI
 
         # ── Determine normalization ──
@@ -345,25 +379,40 @@ def compile_execution_plans(
         output_contract = {}
         if output_components:
             output_contract = {"components": output_components}
+        else:
+            diagnostics.append("OUTPUT_CONTRACT_MISSING: no answerStructure.components in blueprint question")
 
         # ── Build lineage ──
+        all_columns = qb.resolvedRoles.measures + qb.resolvedRoles.dimensions
+        if qb.resolvedRoles.time.column:
+            all_columns.append(qb.resolvedRoles.time.column)
+        for f in qb.resolvedRoles.filters:
+            if f.column and f.column not in all_columns:
+                all_columns.append(f.column)
+
         lineage = LineageRef(
             sourceQuestionId=qb.questionId,
             sourceEntityIds=[r.get("entityId", r.get("entityRef", "")) for r in required_entities],
-            sourceColumnIds=qb.resolvedRoles.measures + qb.resolvedRoles.dimensions,
+            sourceColumnIds=all_columns,
         )
+
+        # ── Determine final plan status ──
+        plan_status = "EXECUTABLE" if qb.status == "executable" else "DEGRADED"
+        if any("MISSING" in d or "UNCERTAIN" in d for d in diagnostics):
+            plan_status = "DEGRADED"
 
         plan = QuestionExecutionPlan(
             planId=f"plan_{qb.questionId}",
             questionId=qb.questionId,
             questionText=question_text,
-            status="EXECUTABLE" if qb.status == "executable" else "DEGRADED",
+            status=plan_status,
             analyticsSpec=analytics_spec,
             resolvedRoles=qb.resolvedRoles,
             normalizationPlan=norm_plan,
             formulaSpec=formula,
             outputContract=output_contract,
             lineage=lineage,
+            diagnostics=diagnostics,
         )
         plans.append(plan)
 
@@ -377,11 +426,16 @@ def compile_execution_plans(
 
 
 def _infer_formula_type(operation: str, question_text: str, question_type: str) -> str:
-    """Infer FormulaSpec.type from operation, question text, and type."""
+    """Infer FormulaSpec.type CONSERVATIVELY from operation, question text, and type.
+
+    MoSPI-safe: defaults to DIRECT unless there is STRONG evidence for a derived formula.
+    "distribution of reserves by state" = DIRECT grouped values, NOT percentage share.
+    Only use SHARE when text explicitly says "share", "proportion", "percentage of total".
+    """
     text_low = question_text.lower()
 
-    # Explicit operation mappings
-    if operation in ("growth", "yoy_change"):
+    # Explicit operation mappings (from blueprint analyticsSpec — these are trusted)
+    if operation in ("growth", "yoy_change", "year_over_year"):
         return "GROWTH"
     if operation == "cagr":
         return "CAGR"
@@ -391,25 +445,35 @@ def _infer_formula_type(operation: str, question_text: str, question_type: str) 
         return "INDEX"
     if operation == "ratio":
         return "RATIO"
-
-    # Keyword detection from question text
-    if any(k in text_low for k in ("growth", "year-over-year", "yoy", "change over")):
-        return "GROWTH"
-    if any(k in text_low for k in ("share", "distribution", "proportion", "percentage distribution")):
-        return "SHARE"
-    if any(k in text_low for k in ("per 1000", "per lakh", "rate per")):
+    if operation == "rate":
         return "RATE"
-    if any(k in text_low for k in ("cagr", "compound annual")):
+
+    # Conservative keyword detection — ONLY strong signals
+    # GROWTH: must explicitly mention growth/change/yoy
+    if any(k in text_low for k in ("growth rate", "year-over-year", "yoy change", "annual change", "change over previous")):
+        return "GROWTH"
+
+    # SHARE: must explicitly ask for share/proportion/% of total — NOT "distribution"
+    # "distribution" alone means "how is it distributed" = grouped values = DIRECT
+    if any(k in text_low for k in ("share of", "proportion of", "percentage of total", "% of total", "as a share")):
+        return "SHARE"
+
+    # RATE: must explicitly mention per-1000/per-lakh rate calculation
+    if any(k in text_low for k in ("per 1000", "per lakh", "per 100000", "rate per")):
+        return "RATE"
+
+    # CAGR/INDEX are rare — only explicit mentions
+    if "cagr" in text_low or "compound annual growth" in text_low:
         return "CAGR"
-    if any(k in text_low for k in ("index", "base year")):
+    if any(k in text_low for k in ("index value", "base year index", "index number")):
         return "INDEX"
-    if any(k in text_low for k in ("ratio of", "relative to")):
+
+    # RATIO: explicit "ratio of X to Y"
+    if "ratio of" in text_low or "relative to" in text_low:
         return "RATIO"
 
-    # Question type fallback
-    if question_type == "trend" and "compare" not in text_low:
-        return "GROWTH"
-
+    # DEFAULT: everything else is DIRECT (safe for MoSPI)
+    # "distribution", "top states", "comparison", "ranking" are all DIRECT grouped queries
     return "DIRECT"
 
 
