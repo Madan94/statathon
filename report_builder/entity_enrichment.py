@@ -366,3 +366,55 @@ def _get(obj: Any, attr: str) -> Any:
     if isinstance(obj, dict):
         return obj.get(attr)
     return None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Pipeline-level wrapper (used by extraction_pipeline.py pass 2.7)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def enrich_document_map(document_map: dict) -> dict:
+    """Enrich all entities in a document_map dict (pass 2.7 entry point).
+
+    Reads:
+        document_map["all_entities"]
+        document_map["table_structures"]
+        document_map["statistical_context"]
+        document_map["measure_families"]
+        document_map["domain"]
+
+    Writes back:
+        document_map["all_entities"] (enriched in-place with aliases + valueDomain)
+        document_map["glossary"] (extracted from enrichment)
+        document_map["enrichment_summary"] (stats)
+
+    Returns the mutated document_map.
+    """
+    entities = document_map.get("all_entities") or []
+    if not entities:
+        return document_map
+
+    table_structures = document_map.get("table_structures") or []
+    statistical_context = document_map.get("statistical_context")
+    measure_families = document_map.get("measure_families") or []
+    domain = document_map.get("domain") or ""
+
+    result = enrich_entities(
+        entities=entities,
+        table_structures=table_structures,
+        statistical_context=statistical_context,
+        measure_families=measure_families,
+        glossary=None,
+        domain=domain,
+    )
+
+    # Write back enriched entities
+    document_map["all_entities"] = result.entities or entities
+    document_map["enrichment_summary"] = {
+        "with_aliases": result.aliasStats.get("withAliases", 0),
+        "with_value_domain": result.domainStats.get("withDomain", 0),
+        "with_aggregation": result.diagnostics.get("aggregationInferred", 0),
+        "total": len(entities),
+    }
+
+    return document_map
