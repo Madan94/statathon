@@ -35,6 +35,12 @@ from .schema import (
 )
 from .planner_adapter import build_plan, build_plans
 from .executor import run_analytics
+from .coordinator import (
+    CoordinatorResult,
+    PlanOutcome,
+    run_execution,
+    run_execution_detailed,
+)
 from .filler import fill_visuals
 from .narrator import narrate, validate_numbers
 from .assembler import assemble_report, validate_report
@@ -59,6 +65,10 @@ __all__ = [
     "build_plan",
     "build_plans",
     "run_analytics",
+    "run_execution",
+    "run_execution_detailed",
+    "CoordinatorResult",
+    "PlanOutcome",
     "fill_visuals",
     "narrate",
     "validate_numbers",

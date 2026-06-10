@@ -190,10 +190,10 @@ def test_all_blocked_bundle_blocks_generation(stashed, monkeypatch):
     assert "BLOCKED" in exc.value.detail
 
 
-# ── 6: multi-measure fan-out reaches S4 (run_analytics) ───────────────────────
+# ── 6: multi-measure fan-out reaches S4 (coordinator) ─────────────────────────
 
 def test_multi_measure_fanout_reaches_run_analytics(stashed, monkeypatch):
-    """A 2-measure bundle plan must reach run_analytics as 2 fanned, stably-named plans."""
+    """A 2-measure bundle plan must reach the coordinator as 2 fanned, stably-named plans."""
     monkeypatch.setattr(
         G, "_build_bundle",
         lambda *a, **k: ExecutionBundle(templateId=TEMPLATE_ID, datasetId="ds_test",
@@ -204,12 +204,14 @@ def test_multi_measure_fanout_reaches_run_analytics(stashed, monkeypatch):
     class _Stop(Exception):
         pass
 
-    def _spy(plans, df, **kw):
-        captured["ids"] = [p.planId for p in plans]
-        captured["measures"] = [p.measure.columnExpr for p in plans]
+    def _spy(adapted, df, **kw):
+        # The coordinator consumes the full AdaptedPlans (carrying formulaSpec /
+        # normalizationPlan / lineage), not the lossy AnalyticsPlanRec list.
+        captured["ids"] = [ap.planRec.planId for ap in adapted]
+        captured["measures"] = [ap.planRec.measure.columnExpr for ap in adapted]
         raise _Stop  # isolate: prove S4 input only, no downstream coupling
 
-    monkeypatch.setattr(G, "run_analytics", _spy)
+    monkeypatch.setattr(G, "run_execution", _spy)
 
     with pytest.raises(_Stop):
         generate_report(TEMPLATE_ID, SIGNATURE, GenerateIn(period="2024", use_llm=False))

@@ -45,13 +45,14 @@ from report_builder.generation import (
     render_html,
     render_pdf,
     run_analytics,
+    run_execution,
     validate_report,
     EditRejected,
     ReportOverrides,
     TemplateProfile,
 )
 from report_builder.binding.execution_bundle_factory import build_execution_bundle
-from report_builder.generation.bundle_adapter import adapt_bundle, bundle_to_planrecs
+from report_builder.generation.bundle_adapter import adapt_bundle
 
 logger = logging.getLogger(__name__)
 
@@ -286,6 +287,8 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
     plan_source = _plan_source(body)
     if plan_source == "legacy":
         plans = build_plans(blueprint, binding, dataset)
+        analytics_obj, evidence_obj, row_index = run_analytics(
+            plans, df, question_meta=_question_meta(blueprint))
     else:
         bundle = _build_bundle(template_id, signature, dataset, blueprint, df)
         if bundle.status == "NOT_READY":
@@ -293,15 +296,17 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
                 status_code=409,
                 detail="execution bundle is NOT_READY — binding has blocking errors; resolve before generating",
             )
-        plans = bundle_to_planrecs(bundle)
-        if not plans:
+        # Adapt the full bundle (carries formulaSpec / normalizationPlan / lineage /
+        # multi-measure fan-out) and route each plan through the S4 coordinator, which
+        # applies normalization, computes formulas, and runs simple aggregations.
+        adapted = adapt_bundle(bundle)
+        if not adapted:
             raise HTTPException(
                 status_code=409,
                 detail="execution bundle has no runnable plans (all BLOCKED) — nothing to generate",
             )
-
-    analytics_obj, evidence_obj, row_index = run_analytics(
-        plans, df, question_meta=_question_meta(blueprint))
+        analytics_obj, evidence_obj, row_index = run_execution(
+            adapted, df, question_meta=_question_meta(blueprint))
     analytics, evidence = analytics_obj.to_dict(), evidence_obj.to_dict()
 
     # S5a — fill visuals; S5b — narrate
