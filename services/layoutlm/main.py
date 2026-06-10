@@ -522,6 +522,60 @@ def _enrich_regions_with_text(regions: list[dict], page_text: dict, image_size: 
         region["text"] = " ".join(region_words)
 
 
+# ── LLM API Proxy Routes ──────────────────────────────────────────────────────
+# Forwards LLM requests to Groq/OpenRouter for laptops blocked by Zscaler.
+# Endpoints:
+#   POST /groq/v1/{path}       → https://api.groq.com/openai/v1/{path}
+#   POST /openrouter/v1/{path} → https://openrouter.ai/api/v1/{path}
+
+import httpx
+from fastapi import Request, Response
+
+_LLM_PROXY_CLIENT: httpx.AsyncClient | None = None
+
+def _get_proxy_client() -> httpx.AsyncClient:
+    global _LLM_PROXY_CLIENT
+    if _LLM_PROXY_CLIENT is None:
+        _LLM_PROXY_CLIENT = httpx.AsyncClient(timeout=180.0, follow_redirects=True)
+    return _LLM_PROXY_CLIENT
+
+
+async def _proxy_forward(request: Request, upstream_url: str) -> Response:
+    """Forward request to upstream LLM API."""
+    headers = {}
+    for key, value in request.headers.items():
+        if key.lower() in ("authorization", "content-type", "accept", "user-agent",
+                           "x-title", "http-referer"):
+            headers[key] = value
+    body = await request.body()
+    client = _get_proxy_client()
+    try:
+        resp = await client.request(
+            method=request.method,
+            url=upstream_url,
+            headers=headers,
+            content=body,
+        )
+        response_headers = dict(resp.headers)
+        for h in ("transfer-encoding", "connection", "keep-alive"):
+            response_headers.pop(h, None)
+        return Response(content=resp.content, status_code=resp.status_code, headers=response_headers)
+    except httpx.TimeoutException:
+        return JSONResponse({"error": "upstream_timeout"}, status_code=504)
+    except Exception as exc:
+        return JSONResponse({"error": str(exc)}, status_code=502)
+
+
+@app.api_route("/groq/v1/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_groq(request: Request, path: str):
+    return await _proxy_forward(request, f"https://api.groq.com/openai/v1/{path}")
+
+
+@app.api_route("/openrouter/v1/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_openrouter(request: Request, path: str):
+    return await _proxy_forward(request, f"https://openrouter.ai/api/v1/{path}")
+
+
 if __name__ == "__main__":
     import uvicorn
 
