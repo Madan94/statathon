@@ -557,6 +557,13 @@ def llm_text_call(
 
     Provider resolution (first match wins):
         PROVIDER_<TASK_ENV>  →  VLM_PROVIDER / REASONING_PROVIDER  →  'qwen'
+
+    Token budget enforcement (R3):
+        Prompts exceeding task budget are truncated before request.
+        max_tokens clamped to provider+task safe limits.
+
+    Fallback cascade (R4):
+        When ENABLE_TEXT_FALLBACK=true, tries fallback providers on failure.
     """
     if llm_disabled():
         return None
@@ -566,7 +573,16 @@ def llm_text_call(
     prompt, max_tokens, temperature = validated
 
     provider = _resolve_provider(task)
-    max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
+
+    # ── R3: Token budget enforcement ──
+    try:
+        from report_builder.model_runtime.token_budget import resolve_budget, truncate_prompt
+        budget = resolve_budget(task, provider, requested_max_tokens=max_tokens)
+        max_tokens = budget.maxOutputTokens
+        prompt = truncate_prompt(prompt, budget)
+    except Exception as _budget_exc:
+        logger.debug("[llm_router] Budget resolution failed (using legacy clamp): %s", _budget_exc)
+        max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
 
     # Resolve key from pool (rotation for high-volume tasks)
     _HIGH_VOLUME_TASKS = frozenset({"entity_extraction", "question_generation", "entity_binding", "fact_extraction"})
@@ -574,16 +590,61 @@ def llm_text_call(
         api_key, key_label = get_rotated_key_for_task(task, provider)
     else:
         api_key, key_label = get_api_key_for_task(task, provider)
-    logger.info("[llm_router] task=%-22s provider=%-8s key=%-20s max_tok=%d", task, provider, key_label, max_tokens)
+    logger.info("[llm_router] task=%-22s provider=%-8s key=%-20s max_tok=%d prompt_len=%d", task, provider, key_label, max_tokens, len(prompt))
 
-    if provider == "gemini":
-        return _call_gemini(prompt, None, max_tokens, temperature, api_key=api_key, key_label=key_label)
-    if provider == "groq":
-        return _call_groq(prompt, None, max_tokens, temperature, api_key=api_key, key_label=key_label)
-    if provider == "openai":
-        return _call_openai(prompt, None, max_tokens, temperature, api_key=api_key, key_label=key_label)
-    # default: qwen
-    return _call_qwen_text(prompt, max_tokens, temperature, schema=schema)
+    # ── R4: Text fallback cascade ──
+    try:
+        from report_builder.model_runtime.fallback_policy import (
+            resolve_fallback_chain, can_fallback_for_task, get_max_attempts,
+        )
+        text_fallback_enabled = can_fallback_for_task(task)
+        fallback_chain = resolve_fallback_chain(task) if text_fallback_enabled else []
+        max_attempts = get_max_attempts()
+    except Exception:
+        text_fallback_enabled = False
+        fallback_chain = []
+        max_attempts = 1
+
+    # Build attempt list: primary first, then fallback chain (deduplicated)
+    attempt_providers = [provider]
+    if text_fallback_enabled and fallback_chain:
+        for p in fallback_chain:
+            if p not in attempt_providers:
+                attempt_providers.append(p)
+    attempt_providers = attempt_providers[:max_attempts]
+
+    for attempt_provider in attempt_providers:
+        attempt_max_tokens = _clamp_tokens_for_provider(attempt_provider, max_tokens)
+        if attempt_provider == provider:
+            attempt_key, attempt_label = api_key, key_label
+        else:
+            attempt_key, attempt_label = get_api_key_for_task(task, attempt_provider)
+            if not attempt_key:
+                continue  # Skip providers without keys
+            logger.info("[llm_router] Fallback %s→%s for task=%s", provider, attempt_provider, task)
+
+        try:
+            if attempt_provider == "gemini":
+                result = _call_gemini(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
+            elif attempt_provider == "groq":
+                result = _call_groq(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
+            elif attempt_provider == "openai":
+                result = _call_openai(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
+            else:  # qwen
+                result = _call_qwen_text(prompt, attempt_max_tokens, temperature, schema=schema)
+
+            if result:
+                if attempt_provider != provider:
+                    logger.info("[llm_router] ✓ Text fallback %s→%s succeeded for task=%s", provider, attempt_provider, task)
+                return result
+        except Exception as _exc:
+            logger.warning("[llm_router] [%s] %s text call failed for task=%s: %s", attempt_label, attempt_provider, task, _exc)
+
+        # If text fallback not enabled, break after first attempt
+        if not text_fallback_enabled:
+            break
+
+    return None
 
 
 def llm_vision_call(
@@ -610,6 +671,13 @@ def llm_vision_call(
 
     Provider resolution (first match wins):
         PROVIDER_<TASK_ENV>  →  VLM_PROVIDER  →  'qwen'
+
+    Token budget enforcement (R3):
+        Prompts exceeding task budget are truncated before request.
+        max_tokens clamped to provider+task safe limits.
+
+    Fallback cascade (R4):
+        Uses fallback_policy.resolve_fallback_chain() instead of hardcoded VLM_FALLBACK_ORDER.
     """
     if llm_disabled():
         return None
@@ -620,7 +688,16 @@ def llm_vision_call(
 
     has_image = bool(image_bytes)
     provider = _resolve_provider(task)
-    max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
+
+    # ── R3: Token budget enforcement ──
+    try:
+        from report_builder.model_runtime.token_budget import resolve_budget, truncate_prompt
+        budget = resolve_budget(task, provider, requested_max_tokens=max_tokens)
+        max_tokens = budget.maxOutputTokens
+        prompt = truncate_prompt(prompt, budget)
+    except Exception as _budget_exc:
+        logger.debug("[llm_router] Budget resolution failed (using legacy clamp): %s", _budget_exc)
+        max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
 
     # Resolve key from pool (rotation for high-volume vision tasks)
     _HIGH_VOLUME_TASKS = frozenset({"entity_extraction", "question_generation", "entity_binding", "fact_extraction"})
@@ -628,22 +705,40 @@ def llm_vision_call(
         api_key, key_label = get_rotated_key_for_task(task, provider)
     else:
         api_key, key_label = get_api_key_for_task(task, provider)
-    logger.info("[llm_router] task=%-22s provider=%-8s key=%-20s has_image=%s max_tok=%d", task, provider, key_label, has_image, max_tokens)
+    logger.info("[llm_router] task=%-22s provider=%-8s key=%-20s has_image=%s max_tok=%d prompt_len=%d", task, provider, key_label, has_image, max_tokens, len(prompt))
 
-    # Build fallback chain: primary → alternatives (resilient routing)
-    # When the primary provider crashes (HTTP 500, connection reset), try next available
-    # Configurable via VLM_FALLBACK_ORDER env (comma-separated). Default: openai first (local gemma2)
-    _fallback_env = (os.getenv("VLM_FALLBACK_ORDER") or "openai,gemini,groq,qwen").strip()
-    _FALLBACK_ORDER = [p.strip().lower() for p in _fallback_env.split(",") if p.strip()]
-    fallback_chain = [provider] + [p for p in _FALLBACK_ORDER if p != provider]
+    # ── R4: Fallback chain via fallback_policy ──
+    try:
+        from report_builder.model_runtime.fallback_policy import (
+            resolve_fallback_chain, can_fallback_for_task, get_max_attempts,
+        )
+        vision_fallback_enabled = can_fallback_for_task(task)
+        fallback_chain = resolve_fallback_chain(task) if vision_fallback_enabled else []
+        max_attempts = get_max_attempts()
+    except Exception:
+        # Legacy fallback: use VLM_FALLBACK_ORDER env directly
+        _fallback_env = (os.getenv("VLM_FALLBACK_ORDER") or "openai,gemini,groq,qwen").strip()
+        fallback_chain = [p.strip().lower() for p in _fallback_env.split(",") if p.strip()]
+        vision_fallback_enabled = True
+        max_attempts = len(fallback_chain) + 1
 
-    for attempt_provider in fallback_chain:
+    # Build attempt list: primary first, then fallback (deduplicated, capped)
+    attempt_providers = [provider]
+    if vision_fallback_enabled:
+        for p in fallback_chain:
+            if p not in attempt_providers:
+                attempt_providers.append(p)
+    attempt_providers = attempt_providers[:max_attempts]
+
+    for attempt_provider in attempt_providers:
         attempt_max_tokens = _clamp_tokens_for_provider(attempt_provider, max_tokens)
-        # Resolve key for the attempt provider (may differ from primary)
+        # Resolve key for the attempt provider
         if attempt_provider == provider:
             attempt_key, attempt_label = api_key, key_label
         else:
             attempt_key, attempt_label = get_api_key_for_task(task, attempt_provider)
+            if not attempt_key and attempt_provider not in ("qwen",):
+                continue  # Skip cloud providers without keys
         result = None
         try:
             if attempt_provider == "gemini":
@@ -665,11 +760,10 @@ def llm_vision_call(
                 logger.info("[llm_router] ✓ Fallback %s→%s succeeded for task=%s", provider, attempt_provider, task)
             return result
 
-        # Only try fallback for vision tasks (entity_extraction, question_gen) — they're critical
-        if not has_image:
-            break  # text-only tasks: don't cascade, just return None
+        # For text-only calls without fallback enabled, don't cascade
+        if not has_image and not vision_fallback_enabled:
+            break
 
-        # Check if fallback provider is available before trying
         if attempt_provider == provider:
             logger.warning("[llm_router] Primary provider '%s' failed for task=%s — trying fallbacks", provider, task)
 
