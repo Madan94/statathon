@@ -287,8 +287,10 @@ class QuestionExecutionPlan:
     questionText: str = ""
     status: str = "EXECUTABLE"          # EXECUTABLE | DEGRADED | BLOCKED
 
-    # What to compute
+    # What to compute (RESOLVED — actual column names, ready for S4)
     analyticsSpec: dict[str, Any] = field(default_factory=dict)
+    # Original blueprint spec (for audit/traceability — NOT for S4 execution)
+    sourceAnalyticsSpec: dict[str, Any] = field(default_factory=dict)
     resolvedRoles: ResolvedRoles = field(default_factory=ResolvedRoles)
     normalizationPlan: NormalizationPlan = field(default_factory=NormalizationPlan)
     formulaSpec: FormulaSpec = field(default_factory=FormulaSpec)
@@ -316,6 +318,7 @@ class QuestionExecutionPlan:
             "questionText": self.questionText,
             "status": self.status,
             "analyticsSpec": dict(self.analyticsSpec),
+            "sourceAnalyticsSpec": dict(self.sourceAnalyticsSpec),
             "resolvedRoles": self.resolvedRoles.to_dict(),
             "normalizationPlan": self.normalizationPlan.to_dict(),
             "formulaSpec": self.formulaSpec.to_dict(),
@@ -333,6 +336,7 @@ class QuestionExecutionPlan:
             questionText=str(d.get("questionText") or ""),
             status=str(d.get("status") or "EXECUTABLE"),
             analyticsSpec=dict(d.get("analyticsSpec") or {}),
+            sourceAnalyticsSpec=dict(d.get("sourceAnalyticsSpec") or {}),
             resolvedRoles=ResolvedRoles.from_dict(d.get("resolvedRoles") or {}),
             normalizationPlan=NormalizationPlan.from_dict(d.get("normalizationPlan") or {}),
             formulaSpec=FormulaSpec.from_dict(d.get("formulaSpec") or {}),

@@ -26,6 +26,7 @@ from report_builder.binding.execution_contracts import (
     ExecutionReadinessReport,
     StatisticalContext,
 )
+from report_builder.binding.freeze_store import freeze_bundle
 from report_builder.binding.question_binder import bind_questions, compile_execution_plans
 from report_builder.binding.readiness_gate import validate_execution_ready
 from report_builder.binding.report import build_coverage
@@ -192,5 +193,17 @@ def build_execution_bundle(
         readiness.degradedCount,
         len(blocked),
     )
+
+    # ── Step 11: Freeze to persistent storage ──
+    # Idempotent: same content → same version returned (no duplicate writes)
+    try:
+        freeze_info = freeze_bundle(bundle)
+        bundle.frozenAt = freeze_info["frozenAt"]
+        logger.info(
+            "[bundle-factory] Freeze: v%d isNew=%s path=%s",
+            freeze_info["version"], freeze_info["isNew"], freeze_info["path"],
+        )
+    except Exception as e:
+        logger.warning("[bundle-factory] Freeze failed (non-fatal): %s", e)
 
     return bundle

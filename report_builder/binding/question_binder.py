@@ -432,6 +432,7 @@ def compile_execution_plans(
             questionText=question_text,
             status=plan_status,
             analyticsSpec=analytics_spec,
+            sourceAnalyticsSpec=dict(source_analytics_spec),
             resolvedRoles=qb.resolvedRoles,
             normalizationPlan=norm_plan,
             formulaSpec=formula,
