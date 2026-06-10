@@ -236,20 +236,20 @@ def _heuristic_headings(words: list[dict]) -> list[str]:
 
 
 def _gemini_classify_sections(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]:
-    """Ask Gemini to map detected headings/layout into our block kinds.
+    """Ask an LLM to map detected headings/layout into our block kinds.
 
-    Returns block specs ordered per page; falls back gracefully if Gemini fails.
-    Uses google.genai >= 1.0 SDK with automatic fallback to legacy google.generativeai.
+    Routes through llm_router (provider-agnostic). Falls back to heuristic
+    if LLM is disabled or the call fails.
     """
     if not page_summaries:
         return []
 
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        logger.info("[blueprint] ⚠ GEMINI_API_KEY not set — using heuristic classification")
+    from report_builder.llm_router import llm_text_call, llm_disabled
+
+    if llm_disabled():
+        logger.info("[blueprint] LLM_DISABLED — using heuristic classification")
         return _heuristic_classify_sections(page_summaries)
 
-    model_name = os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash")
     prompt = (
         "You are a report-template compiler. Given a list of pages with detected "
         "headings and layout signals, output a JSON list of block specs. Each item "
@@ -260,26 +260,23 @@ def _gemini_classify_sections(page_summaries: list[dict[str, Any]]) -> list[Bloc
         f"PAGES:\n{json.dumps(page_summaries, indent=2)[:8000]}"
     )
     logger.info(
-        "[blueprint] ▶ Gemini POST    model=%s   pages=%d   prompt=%d chars",
-        model_name, len(page_summaries), len(prompt),
+        "[blueprint] ▶ LLM classify   pages=%d   prompt=%d chars",
+        len(page_summaries), len(prompt),
     )
     t0 = time.monotonic()
     try:
-        text: str = ""
-        try:
-            # Prefer new google-genai SDK (pip install google-genai)
-            import google.genai as _genai  # type: ignore
-            client = _genai.Client(api_key=api_key)
-            resp = client.models.generate_content(model=model_name, contents=prompt)
-            text = (resp.text or "").strip()
-        except ImportError:
-            # Fall back to legacy google-generativeai SDK
-            import google.generativeai as g  # type: ignore
-            g.configure(api_key=api_key)
-            resp = g.GenerativeModel(model_name).generate_content(prompt)
-            text = (resp.text or "").strip()
-
+        text = llm_text_call(
+            prompt=prompt,
+            task="entity_classification",
+            max_tokens=1200,
+            temperature=0.1,
+        )
         elapsed = time.monotonic() - t0
+
+        if not text:
+            logger.info("[blueprint] LLM returned empty — using heuristic")
+            return _heuristic_classify_sections(page_summaries)
+
         # Strip markdown fences if present
         text = re.sub(r"^```(?:json)?|```$", "", text, flags=re.MULTILINE).strip()
         data = json.loads(text)
@@ -297,14 +294,14 @@ def _gemini_classify_sections(page_summaries: list[dict[str, Any]]) -> list[Bloc
             except Exception:
                 continue
         logger.info(
-            "[blueprint] ✓ Gemini OK      blocks=%d   elapsed=%.1fs",
+            "[blueprint] ✓ LLM OK        blocks=%d   elapsed=%.1fs",
             len(blocks), elapsed,
         )
         return blocks or _heuristic_classify_sections(page_summaries)
     except Exception as exc:
         elapsed = time.monotonic() - t0
         logger.warning(
-            "[blueprint] ✗ Gemini FAIL    elapsed=%.1fs   %s   → using heuristic",
+            "[blueprint] ✗ LLM FAIL      elapsed=%.1fs   %s   → using heuristic",
             elapsed, exc,
         )
         return _heuristic_classify_sections(page_summaries)
