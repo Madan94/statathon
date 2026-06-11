@@ -67,6 +67,11 @@ def iter_measured_values(report: dict[str, Any]) -> list[MeasuredValue]:
     for b in (report.get("contentAST") or {}).get("blocks", []):
         if (b.get("slot") or {}).get("status") != "filled":
             continue
+        # Derived summary blocks (e.g. Key Findings synthesized from auditAST.insights)
+        # are not measured values — they restate already-traced numbers, so excluding
+        # them keeps provenance coverage about *source* values, not their summaries.
+        if b.get("kind") == "key_findings" or (b.get("provenance") or {}).get("derivedFrom"):
+            continue
         prov = b.get("provenance") or {}
         refs = [r for r in [prov.get("evidenceRef"), prov.get("analyticsRef")] if r]
         row_ids = list(prov.get("rowIds") or [])

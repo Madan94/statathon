@@ -46,6 +46,7 @@ from report_builder.generation import (
     render_pdf,
     run_analytics,
     run_execution,
+    attach_insights,
     enrich_report_provenance,
     validate_report,
     verify_report,
@@ -425,6 +426,15 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
         row_index=row_index, content_hash=data_content_hash,
     )
     report["auditAST"]["verification"] = verification.to_dict()
+
+    # S5f — BI insights: evidence-backed findings derived from the trusted analytics
+    # only (never the raw data). Records machine-readable objects under
+    # auditAST.insights + a human "Key Findings" block. Deterministic / offline.
+    attach_insights(
+        report,
+        quality=verification.quality,
+        verifier_checks=[c.to_dict() for c in verification.checks],
+    )
 
     # S6 — render + persist
     html_str = render_html(report)

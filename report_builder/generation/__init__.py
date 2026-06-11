@@ -67,6 +67,12 @@ from .lineage import (
     iter_measured_values,
     provenance_coverage,
 )
+from .insights import (
+    Insight,
+    attach_insights,
+    derive_insights,
+    key_findings,
+)
 from .renderer import render_html, render_pdf
 from .render.pdf import pdf_available
 from .profile import (
@@ -114,6 +120,10 @@ __all__ = [
     "provenance_coverage",
     "LineageEntry",
     "MeasuredValue",
+    "derive_insights",
+    "attach_insights",
+    "key_findings",
+    "Insight",
     "render_html",
     "render_pdf",
     "pdf_available",
