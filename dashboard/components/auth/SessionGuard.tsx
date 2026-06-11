@@ -19,11 +19,13 @@ export default function SessionGuard({ children }: SessionGuardProps) {
 
   useEffect(() => {
     if ((PUBLIC_ROUTES as readonly string[]).includes(pathname)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- auth gate: sync ready state to the public-route check
       setReady(true);
       return;
     }
 
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- show the loading gate while authApi.me() resolves
     setReady(false);
 
     authApi

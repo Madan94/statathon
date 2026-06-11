@@ -42,6 +42,7 @@ export default function ReportProgressStream({
     const url = `${apiBase}/api/report-builder/jobs/${jobId}/progress/stream`;
     const es = new EventSource(url);
     esRef.current = es;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- subscribing to an external system (SSE); status reflects the live connection
     setStatus('streaming');
 
     es.addEventListener('progress', (e) => {

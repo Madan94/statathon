@@ -55,6 +55,7 @@ function ContextPanel({ jobId }: { jobId: number }) {
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data-loading gate for the per-job context fetch
     setLoading(true);
     fetch(`/api/backend/report-builder/jobs/${jobId}/context`, { credentials: 'include' })
       .then((r) => r.json())

@@ -58,6 +58,7 @@ export default function EntityBindingPanel({
   }, [jobId, apiBase, onAllResolved]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch; state is only set after the awaited response
     fetchBindings();
   }, [fetchBindings]);
 

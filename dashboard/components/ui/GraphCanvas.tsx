@@ -268,6 +268,7 @@ export default function GraphCanvas({ nodes: rawNodes, edges, height = 520 }: Pr
         onMouseUp={onSvgMouseUp}
         onMouseLeave={onSvgMouseUp}
         onWheel={onWheel}
+        // eslint-disable-next-line react-hooks/refs -- cosmetic drag cursor; re-renders are driven by the drag state updates
         style={{ cursor: dragging.current ? 'grabbing' : 'grab' }}
       >
         <defs>
