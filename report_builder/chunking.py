@@ -339,3 +339,339 @@ def extract_caption_entities_from_layout(
         if captions:
             result[page_idx] = captions
     return result
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase 2: Document Section Graph
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@dataclass
+class SectionBlock:
+    """A structural section of the document derived from LayoutLM + ToC."""
+    sectionId: str
+    title: str
+    pageStart: int
+    pageEnd: int
+    level: int
+    headingRegion: dict[str, Any] | None = None
+    textRegions: list[dict[str, Any]] = field(default_factory=list)
+    listRegions: list[dict[str, Any]] = field(default_factory=list)
+    figureRegions: list[dict[str, Any]] = field(default_factory=list)
+    captionRegions: list[dict[str, Any]] = field(default_factory=list)
+    isBackMatter: bool = False
+    expectedEntities: list[str] = field(default_factory=list)
+
+    def figure_count(self) -> int:
+        return len(self.figureRegions)
+
+    def has_figures(self) -> bool:
+        return len(self.figureRegions) > 0
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "sectionId": self.sectionId,
+            "title": self.title,
+            "pageStart": self.pageStart,
+            "pageEnd": self.pageEnd,
+            "level": self.level,
+            "isBackMatter": self.isBackMatter,
+            "figureCount": self.figure_count(),
+            "expectedEntities": self.expectedEntities,
+        }
+
+
+@dataclass
+class DocumentSectionGraph:
+    """Complete section-level representation of a document."""
+    docType: str
+    title: str
+    sections: list[SectionBlock] = field(default_factory=list)
+    backMatter: list[SectionBlock] = field(default_factory=list)
+    orphanRegions: list[dict[str, Any]] = field(default_factory=list)
+
+    def section_for_page(self, page: int) -> SectionBlock | None:
+        """Find the section that owns a given page."""
+        for sec in self.sections:
+            if sec.pageStart <= page <= sec.pageEnd:
+                return sec
+        for sec in self.backMatter:
+            if sec.pageStart <= page <= sec.pageEnd:
+                return sec
+        return None
+
+    def figures_for_section(self, section_id: str) -> list[dict[str, Any]]:
+        """Get all figure regions belonging to a section."""
+        for sec in self.sections + self.backMatter:
+            if sec.sectionId == section_id:
+                return sec.figureRegions
+        return []
+
+    def analytic_sections(self) -> list[SectionBlock]:
+        """Non-backMatter sections (the analytic content)."""
+        return [s for s in self.sections if not s.isBackMatter]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "docType": self.docType,
+            "title": self.title,
+            "sections": len(self.sections),
+            "backMatter": len(self.backMatter),
+            "figuresAssociated": sum(s.figure_count() for s in self.sections + self.backMatter),
+            "orphanRegions": len(self.orphanRegions),
+            "sectionList": [s.to_dict() for s in self.sections + self.backMatter],
+        }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+import re as _re_sg
+
+
+def normalize_section_title(title: str) -> str:
+    """Normalize a section title: remove leading numbers, excess whitespace."""
+    t = title.strip()
+    # Remove leading "1. " or "1 " or "A. " style prefixes
+    t = _re_sg.sub(r"^\d{1,2}[\.\s]+", "", t)
+    t = _re_sg.sub(r"^[A-Z][\.\s]+", "", t)
+    # Collapse whitespace
+    t = _re_sg.sub(r"\s+", " ", t).strip()
+    return t
+
+
+def is_back_matter_title(title: str) -> bool:
+    """Detect methodology / endnote / appendix sections."""
+    t = title.lower().strip()
+    # Remove leading letter prefix: "A. Introduction" → "introduction"
+    t = _re_sg.sub(r"^[a-z][\.\s]+", "", t)
+    back_signals = [
+        "introduction", "sample size", "sample design", "methodology",
+        "conceptual framework", "compatibility", "definitions",
+        "endnote", "appendix", "annexure", "detailed tables",
+        "abbreviation", "notes", "reference", "source",
+    ]
+    return any(s in t for s in back_signals)
+
+
+def expected_entities_for_section(title: str, doc_type: str = "", domain_pack: Any = None) -> list[str]:
+    """Assign expected entity IDs to a section based on title keywords.
+
+    For PLFS/PIB, maps section topics to domain entity names.
+    """
+    t = title.lower()
+
+    # PLFS/PIB section-to-entity mapping
+    _PLFS_SECTION_ENTITIES: dict[str, list[str]] = {
+        "lfpr": ["Labour Force Participation Rate", "Gender", "Sector"],
+        "labour force participation": ["Labour Force Participation Rate", "Gender", "Sector"],
+        "worker population": ["Worker Population Ratio", "Gender", "Sector"],
+        "wpr": ["Worker Population Ratio", "Gender", "Sector"],
+        "unemployment": ["Unemployment Rate", "Gender", "Sector"],
+        "ur ": ["Unemployment Rate", "Gender", "Sector"],
+        "regular wage": ["Worker Share", "Employment Status", "Gender"],
+        "proportion of workers": ["Worker Share", "Employment Status"],
+        "employment status": ["Worker Share", "Employment Status", "Sector"],
+        "manufacturing": ["Worker Share", "Industry", "Gender"],
+        "service sector": ["Worker Share", "Industry"],
+        "industry": ["Worker Share", "Industry", "Sector"],
+        "earning": ["Average Monthly Earnings", "Gender", "Employment Status"],
+        "female worker": ["Average Monthly Earnings", "Gender"],
+        "wage": ["Average Monthly Earnings", "Employment Status"],
+        "education": ["Formal Education Years", "Gender", "Sector"],
+        "formal education": ["Formal Education Years", "Gender", "Sector"],
+        "sample size": ["Survey Period"],
+        "methodology": ["Periodic Labour Force Survey"],
+        "snapshot": ["Labour Force Participation Rate", "Worker Population Ratio", "Unemployment Rate"],
+        "key findings": ["Labour Force Participation Rate", "Worker Population Ratio", "Unemployment Rate"],
+    }
+
+    entities: list[str] = []
+    for keyword, ent_names in _PLFS_SECTION_ENTITIES.items():
+        if keyword in t:
+            for name in ent_names:
+                if name not in entities:
+                    entities.append(name)
+
+    return entities
+
+
+def _deduplicate_toc_entries(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Deduplicate ToC entries that differ only in numbering format.
+
+    E.g. "2 Worker Population..." and "2. Worker Population..." on the same page
+    should collapse to one entry.
+    """
+    seen: dict[str, dict[str, Any]] = {}  # normalized_title → entry
+    for entry in entries:
+        title = entry.get("title", "")
+        # Normalize: remove leading number/letter prefixes and period
+        norm = normalize_section_title(title).lower()[:50]
+        page = entry.get("page", 0)
+        key = f"{page}:{norm}"
+        if key not in seen:
+            seen[key] = entry
+        else:
+            # Keep the one with higher level (more important)
+            existing_level = seen[key].get("level", 9)
+            new_level = entry.get("level", 9)
+            if new_level < existing_level:
+                seen[key] = entry
+    return list(seen.values())
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Main Builder
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def build_section_graph(
+    toc_entries: list[ToCEntry] | list[dict[str, Any]],
+    layout_pages: list[dict[str, Any]],
+    page_texts: list[dict[str, Any]] | None = None,
+    doc_type: str = "statistical_annual_report",
+    domain_pack: Any = None,
+    doc_title: str = "Document",
+) -> DocumentSectionGraph:
+    """Build a DocumentSectionGraph from ToC entries + LayoutLM regions.
+
+    Algorithm:
+    1. Normalize and deduplicate ToC entries
+    2. Determine page ranges per section
+    3. Mark backMatter sections
+    4. Attach LayoutLM regions to sections
+    5. Assign expected entities from domain pack
+    6. Associate figures to nearest heading section
+
+    Args:
+        toc_entries: From build_toc_from_regions() or pass1 output
+        layout_pages: LayoutLM output per page (with regions)
+        page_texts: Optional pdfplumber text per page
+        doc_type: Document type for domain-specific logic
+        domain_pack: Optional domain pack module for entity mapping
+        doc_title: Document title
+
+    Returns:
+        DocumentSectionGraph with sections, backMatter, orphan regions
+    """
+    total_pages = max(len(layout_pages), len(page_texts or []))
+
+    # 1. Normalize ToC entries to dicts
+    raw_entries: list[dict[str, Any]] = []
+    for entry in toc_entries:
+        if isinstance(entry, ToCEntry):
+            raw_entries.append({"title": entry.title, "page": entry.page_index, "level": entry.level})
+        elif isinstance(entry, dict):
+            raw_entries.append({
+                "title": entry.get("title", ""),
+                "page": entry.get("page", entry.get("page_index", 0)),
+                "level": entry.get("level", 2),
+            })
+
+    # Sort by page then level
+    raw_entries.sort(key=lambda e: (e["page"], e["level"]))
+
+    # 2. Deduplicate (e.g. "2 WPR..." and "2. WPR..." on same page)
+    deduped = _deduplicate_toc_entries(raw_entries)
+    deduped.sort(key=lambda e: (e["page"], e["level"]))
+
+    # 3. Build sections with page ranges
+    sections: list[SectionBlock] = []
+    for i, entry in enumerate(deduped):
+        title = entry["title"]
+        page_start = entry["page"]
+        level = entry["level"]
+
+        # Page end: next entry's page - 1, or last page
+        if i + 1 < len(deduped):
+            # Find next same-or-higher level entry (not sub-sections)
+            page_end = page_start  # default: single page
+            for j in range(i + 1, len(deduped)):
+                next_entry = deduped[j]
+                if next_entry["level"] <= level:
+                    page_end = max(page_start, next_entry["page"] - 1)
+                    break
+            else:
+                page_end = total_pages - 1
+        else:
+            page_end = total_pages - 1
+
+        # Ensure page_end >= page_start
+        page_end = max(page_end, page_start)
+
+        # 4. Mark backMatter
+        is_back = is_back_matter_title(title)
+
+        # 5. Assign expected entities
+        expected = expected_entities_for_section(title, doc_type, domain_pack)
+
+        sec = SectionBlock(
+            sectionId=f"sg_{i:02d}",
+            title=title,
+            pageStart=page_start,
+            pageEnd=page_end,
+            level=level,
+            isBackMatter=is_back,
+            expectedEntities=expected,
+        )
+        sections.append(sec)
+
+    # 6. Attach LayoutLM regions to sections
+    orphans: list[dict[str, Any]] = []
+    for page_idx, page in enumerate(layout_pages):
+        for region in (page.get("regions") or []):
+            rtype = region.get("type", "")
+            rtext = (region.get("text") or "").strip()
+
+            # Skip headers/footers
+            if rtype in ("header", "footer"):
+                continue
+
+            # Find owning section
+            owning_section: SectionBlock | None = None
+            for sec in sections:
+                if sec.pageStart <= page_idx <= sec.pageEnd:
+                    owning_section = sec
+                    break
+
+            if not owning_section:
+                orphans.append({"page": page_idx, "type": rtype, "text": rtext[:80]})
+                continue
+
+            region_data = {"page": page_idx, "type": rtype, "text": rtext, "confidence": region.get("confidence", 0)}
+
+            if rtype in ("title", "heading"):
+                if not owning_section.headingRegion:
+                    owning_section.headingRegion = region_data
+            elif rtype in ("text", "paragraph"):
+                owning_section.textRegions.append(region_data)
+            elif rtype in ("list", "list-item"):
+                owning_section.listRegions.append(region_data)
+            elif rtype in ("figure", "picture"):
+                owning_section.figureRegions.append(region_data)
+            elif rtype == "caption":
+                owning_section.captionRegions.append(region_data)
+            else:
+                owning_section.textRegions.append(region_data)
+
+    # 7. Split into analytic vs backMatter
+    analytic = [s for s in sections if not s.isBackMatter]
+    back_matter = [s for s in sections if s.isBackMatter]
+
+    graph = DocumentSectionGraph(
+        docType=doc_type,
+        title=doc_title,
+        sections=analytic,
+        backMatter=back_matter,
+        orphanRegions=orphans,
+    )
+
+    logger.info(
+        "[section-graph] Built: %d analytic sections, %d backMatter, %d figures associated, %d orphans",
+        len(analytic), len(back_matter),
+        sum(s.figure_count() for s in sections),
+        len(orphans),
+    )
+
+    return graph

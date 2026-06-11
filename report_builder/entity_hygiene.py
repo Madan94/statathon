@@ -463,6 +463,33 @@ def classify_entity_candidate(
         document_domain=context.document_domain,
     )
 
+    # ── Stage 0: Domain-pack / pre-seeded entity protection ──
+    # These entities are domain-authoritative and skip all rejection gates.
+    # They preserve their stated entityType, unit, aliases, and valueDomain.
+    if source_type in ("domain_pack", "pre_seeded"):
+        stated_type = candidate.get("entityType") or ""
+        _ETYPE_BUCKET = {
+            "measure": EntityBucket.ANALYTIC_MEASURE,
+            "dimension": EntityBucket.ANALYTIC_DIMENSION,
+            "time": EntityBucket.TIME_PERIOD,
+            "metadata": EntityBucket.ANALYTIC_DIMENSION,  # route to entities, not glossary
+        }
+        bucket = _ETYPE_BUCKET.get(stated_type, EntityBucket.ANALYTIC_MEASURE)
+        signals = [ClassificationSignal("domain_pack_protected", 0.95, source_type, f"entityType={stated_type}")]
+        return SemanticEntity(
+            rawText=text,
+            canonicalName=text,
+            bucket=bucket,
+            entityType=stated_type or "measure",
+            classificationSignals=signals,
+            classificationConfidence=0.95,
+            sourcePriority=0,
+            sourceRefs=[SourceRef(sourceType=source_type, page=ctx.page, confidence=0.95)],
+            aliases=candidate.get("aliases") or [],
+            unit=candidate.get("unit"),
+            valueDomain=candidate.get("valueDomain") or {},
+        )
+
     # ── Stage 1: Reject noise ──
     if _is_too_short(text):
         return QuarantinedItem(text=text, reason="TOO_SHORT", sourceType=source_type, recoverable=False)

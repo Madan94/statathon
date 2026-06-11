@@ -70,6 +70,50 @@ def compile_template_artifacts(
 
     raw_entities = bp.get("entities") or []
 
+    # Pre-hygiene: Detect doc type early and inject domain pack entities for PIB
+    _bp_meta_early = bp.get("templateMeta") or {}
+    _early_doc_type = ""
+    if _bp_meta_early.get("reportType") == "pib_press_release" or _bp_meta_early.get("domain") == "labour_force":
+        _early_doc_type = "pib_press_release"
+    else:
+        _title_early = (_bp_meta_early.get("name") or "").lower()
+        _ent_names_early = {(e.get("canonicalName") or "").lower() for e in raw_entities}
+        _pib_check = {"labour force participation rate", "unemployment rate"}
+        if ("plfs" in _title_early or "labour force" in _title_early
+                or _pib_check.issubset(_ent_names_early)):
+            _early_doc_type = "pib_press_release"
+
+    if _early_doc_type == "pib_press_release":
+        # Fix metadata so PIB weights activate in diagnostics
+        if _bp_meta_early.get("domain") in ("general", "", None):
+            _bp_meta_early["domain"] = "labour_force"
+        if not _bp_meta_early.get("reportType"):
+            _bp_meta_early["reportType"] = "pib_press_release"
+        if _bp_meta_early.get("name") in ("Document", "", None):
+            _bp_meta_early["name"] = "PLFS Annual Report Press Release"
+
+        # Inject missing domain pack entities so they survive through hygiene
+        try:
+            from report_builder.domain_packs.plfs_press_release import PLFS_ENTITIES
+            existing_names = {(e.get("canonicalName") or "").lower() for e in raw_entities}
+            for dp_ent in PLFS_ENTITIES:
+                name = dp_ent.get("name") or ""
+                if name.lower() not in existing_names:
+                    raw_entities.append({
+                        "canonicalName": name,
+                        "entityType": dp_ent.get("entityType", "measure"),
+                        "aliases": dp_ent.get("aliases", []),
+                        "unit": dp_ent.get("unit"),
+                        "valueDomain": dp_ent.get("valueDomain"),
+                        "source": "domain_pack",
+                        "sourcePriority": 0,
+                        "confidence": 0.95,
+                    })
+            logger.info("[template-compiler] I1: Injected %d domain pack entities for PIB",
+                        len(raw_entities) - len(bp.get("entities") or []))
+        except ImportError:
+            pass
+
     # E1: Hygiene
     hygiene_result = run_entity_hygiene(raw_entities)
     intermediate["hygiene"] = hygiene_result.to_dict()
@@ -190,6 +234,42 @@ def compile_template_artifacts(
 
     intermediate["charts"] = chart_result.to_dict() if chart_result else {"figureCount": 0}
 
+    # Phase 3: SectionGraph-based figure compilation for PIB
+    # If doc_type is PIB and we have a section graph (from document_map or built here),
+    # supplement with section-aware infographic panels.
+    if _early_doc_type == "pib_press_release":
+        try:
+            from report_builder.chart_semantic_compiler import compile_section_graph_figures
+            from report_builder.chunking import build_section_graph
+
+            # Build section graph from existing blueprint topics/figureTemplates
+            _sg_toc = []
+            for topic in (bp.get("topics") or []):
+                _sg_toc.append({"title": topic.get("title", ""), "page": 0, "level": 1})
+
+            # If document_map has actual SectionGraph data, use it
+            _sg = None
+            if document_map and document_map.get("chapters"):
+                _sg_entries = [
+                    {"title": ch.get("title", ""), "page": ch.get("pageRange", [0])[0], "level": 1}
+                    for ch in document_map["chapters"]
+                ]
+                _sg = build_section_graph(_sg_entries, [], doc_type=_early_doc_type, doc_title=_bp_meta.get("name", ""))
+
+            if _sg:
+                sg_result = compile_section_graph_figures(_sg, entities=enrichment_result.entities, doc_type=_doc_type)
+                if sg_result.figures:
+                    # Merge: SectionGraph figures supplement existing (don't replace)
+                    existing_ids = {f.figureTemplateId for f in (chart_result.figures if chart_result else [])}
+                    new_sg_figs = [f for f in sg_result.figures if f.figureTemplateId not in existing_ids]
+                    if chart_result:
+                        chart_result.figures.extend(new_sg_figs)
+                    else:
+                        chart_result = sg_result
+                    logger.info("[template-compiler] I3: +%d SectionGraph infographic panels", len(new_sg_figs))
+        except Exception as _sg_exc:
+            logger.debug("[template-compiler] SectionGraph figure compilation skipped: %s", _sg_exc)
+
     # Update figureTemplates if chart compiler produced better models
     if chart_result and chart_result.figures:
         bp["figureTemplates"] = [f.to_dict() for f in chart_result.figures]
@@ -242,6 +322,23 @@ def compile_template_artifacts(
         _doc_type = "pib_press_release"
     elif document_map and document_map.get("doc_type"):
         _doc_type = document_map["doc_type"]
+    else:
+        # Fallback heuristic: detect PIB from entities or title
+        _title = (_bp_meta.get("name") or "").lower()
+        _entity_names = {(e.get("canonicalName") or "").lower() for e in bp.get("entities", [])}
+        _pib_indicators = {"labour force participation rate", "unemployment rate"}
+        if ("plfs" in _title or "labour force" in _title or "press" in _title
+                or _pib_indicators.issubset(_entity_names)):
+            _doc_type = "pib_press_release"
+
+    # If PIB detected, ensure metadata is set (may already be set from pre-hygiene)
+    if _doc_type == "pib_press_release":
+        if not _bp_meta.get("reportType"):
+            _bp_meta["reportType"] = "pib_press_release"
+        if _bp_meta.get("domain") in ("general", "", None):
+            _bp_meta["domain"] = "labour_force"
+        if _bp_meta.get("name") in ("Document", "", None):
+            _bp_meta["name"] = "PLFS Annual Report Press Release"
 
     # Collect section headings for PIB question matcher
     _section_headings: list[str] = []
@@ -451,12 +548,57 @@ def _build_entity_ref_map(old_entities: list[dict[str, Any]], new_entities: list
     return ref_map
 
 
+def _infer_entity_from_intent(
+    intent: str, role: str, valid_entity_ids: set[str], ref_map: dict[str, str]
+) -> str:
+    """Attempt to infer the correct entityId from question intent text.
+
+    Uses keyword matching against known entity IDs. Only for repairing
+    questions with empty entityId where the intent clearly names the measure.
+    """
+    # Keywords that map to entity IDs (lowercase intent → entity ID pattern)
+    _INTENT_KEYWORDS: list[tuple[str, str]] = [
+        ("formal education", "formal_education"),
+        ("education years", "formal_education"),
+        ("years in formal", "formal_education"),
+        ("monthly earnings", "monthly_earnings"),
+        ("earnings", "earnings"),
+        ("weekly hours", "weekly_hours"),
+        ("lfpr", "lfpr"),
+        ("labour force participation", "lfpr"),
+        ("worker population ratio", "wpr"),
+        ("wpr", "wpr"),
+        ("unemployment rate", "ur"),
+        ("unemployment", "ur"),
+        ("worker share", "worker_share"),
+        ("proportion", "worker_share"),
+        ("industry", "industry"),
+        ("manufacturing", "industry"),
+        ("employment status", "employment_status"),
+    ]
+
+    for keyword, id_fragment in _INTENT_KEYWORDS:
+        if keyword in intent:
+            # Find matching entity ID
+            for eid in valid_entity_ids:
+                if id_fragment in eid.lower():
+                    return eid
+            # Try ref_map
+            for old_ref, new_eid in ref_map.items():
+                if id_fragment in old_ref.lower() or id_fragment in new_eid.lower():
+                    return new_eid
+
+    return ""
+
+
 def _repair_question_entity_refs(
     question: dict[str, Any],
     ref_map: dict[str, str],
     valid_entity_ids: set[str],
 ) -> tuple[dict[str, Any], bool, list[str]]:
     """Rewrite entity references in a question using ref_map.
+
+    Also normalizes deprecated roles (breakdown/groupBy → grouping).
 
     Returns (repaired_question, was_repaired, still_broken_refs).
     """
@@ -465,10 +607,32 @@ def _repair_question_entity_refs(
     repaired = False
     broken: list[str] = []
 
+    # Role normalization map
+    _ROLE_NORM: dict[str, str] = {
+        "breakdown": "grouping",
+        "groupBy": "grouping",
+        "group_by": "grouping",
+        "dimension": "grouping",
+        "metric": "measure",
+        "indicator": "measure",
+    }
+
     # Repair requiredEntities
     for req in (q.get("requiredEntities") or []):
         eid = req.get("entityId") or req.get("entityRef") or ""
-        if eid and eid not in valid_entity_ids:
+        if not eid:
+            # Empty entityId — attempt inference from question intent + role
+            role = req.get("role", "")
+            intent = (q.get("intent") or "").lower()
+            inferred = _infer_entity_from_intent(intent, role, valid_entity_ids, ref_map)
+            if inferred:
+                req["entityId"] = inferred
+                if "entityRef" in req:
+                    req["entityRef"] = inferred
+                repaired = True
+            else:
+                broken.append(f"<empty:{role}>")
+        elif eid not in valid_entity_ids:
             if eid in ref_map:
                 req["entityId"] = ref_map[eid]
                 if "entityRef" in req:
@@ -476,6 +640,11 @@ def _repair_question_entity_refs(
                 repaired = True
             else:
                 broken.append(eid)
+        # Normalize role
+        role = req.get("role", "")
+        if role in _ROLE_NORM:
+            req["role"] = _ROLE_NORM[role]
+            repaired = True
 
     # Repair analyticsSpec refs
     spec = q.get("analyticsSpec") or {}
