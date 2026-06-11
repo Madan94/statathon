@@ -33,6 +33,7 @@ import pandas as pd
 from report_builder.generation._agg import _apply_filters
 from report_builder.generation.assembler import validate_report
 from report_builder.generation.config import GenerationConfig, load_profile
+from report_builder.generation.lineage import iter_measured_values
 from report_builder.generation.narrator import validate_numbers
 
 if TYPE_CHECKING:
@@ -177,27 +178,9 @@ def _check_structure(report: dict[str, Any], row_index: dict[str, list[int]] | N
 
 
 def _filled_artifacts(report: dict[str, Any]) -> list[tuple[str, str, list[str]]]:
-    """Every filled value slot → (kind, id, rowIds). Used for provenance coverage."""
-    out: list[tuple[str, str, list[str]]] = []
-    for b in (report.get("contentAST") or {}).get("blocks", []):
-        if (b.get("slot") or {}).get("status") == "filled":
-            prov = b.get("provenance") or {}
-            refs = [r for r in [prov.get("evidenceRef"), prov.get("analyticsRef")] if r]
-            out.append(("block", b.get("blockId", "?"), refs or (prov.get("rowIds") or [])))
-    for c in (report.get("chartAST") or {}).get("charts", []):
-        if (c.get("slot") or {}).get("status") != "filled":
-            continue
-        for s in c.get("series", []):
-            for p in s.get("points", []):
-                out.append(("chartPoint", c.get("chartId", "?"), p.get("rowIds") or []))
-    for t in (report.get("tableAST") or {}).get("tables", []):
-        if (t.get("slot") or {}).get("status") != "filled":
-            continue
-        for row in t.get("rows", []):
-            out.append(("tableRow", t.get("tableId", "?"), row.get("rowIds") or []))
-    for m in (report.get("analyticsAST") or {}).get("metrics", []):
-        out.append(("metric", m.get("metricId", "?"), m.get("rowIds") or []))
-    return out
+    """Every filled value slot → (kind, id, refs). Uses the shared measured-value
+    enumeration (the same one the audit coverage uses) so the two never disagree."""
+    return [(m.kind, m.elementId, m.refs) for m in iter_measured_values(report)]
 
 
 def _check_provenance(report: dict[str, Any], checks: list[VerificationCheck]) -> float:

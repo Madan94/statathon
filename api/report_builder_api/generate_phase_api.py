@@ -46,6 +46,7 @@ from report_builder.generation import (
     render_pdf,
     run_analytics,
     run_execution,
+    enrich_report_provenance,
     validate_report,
     verify_report,
     EditRejected,
@@ -405,6 +406,15 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
     )
     result = validate_report(report, row_index=row_index)
     report["auditAST"]["warnings"] = result["warnings"]
+
+    # S5e — provenance + statistical-context enrichment. Closes the audit chain:
+    # per-plan lineage into each artifact's provenance, coverage + dataset identity
+    # under auditAST.provenance, and the bundle's StatisticalContext surfaced under
+    # auditAST.statisticalContext. Additive — the gold report shape is unchanged.
+    enrich_report_provenance(
+        report, adapted=adapted, evidence=evidence, bundle=bundle,
+        content_hash=data_content_hash,
+    )
 
     # S5d — verify (advisory judge): score trust without mutating the report. The verdict
     # is recorded into auditAST + returned; it does NOT block draft generation here

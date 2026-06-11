@@ -59,6 +59,14 @@ from .verifier import (
     VerifierPolicy,
     verify_report,
 )
+from .lineage import (
+    LineageEntry,
+    MeasuredValue,
+    build_lineage_index,
+    enrich_report_provenance,
+    iter_measured_values,
+    provenance_coverage,
+)
 from .renderer import render_html, render_pdf
 from .render.pdf import pdf_available
 from .profile import (
@@ -100,6 +108,12 @@ __all__ = [
     "VerificationCheck",
     "VerificationReport",
     "VerifierPolicy",
+    "enrich_report_provenance",
+    "build_lineage_index",
+    "iter_measured_values",
+    "provenance_coverage",
+    "LineageEntry",
+    "MeasuredValue",
     "render_html",
     "render_pdf",
     "pdf_available",

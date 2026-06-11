@@ -192,19 +192,34 @@ def number_figures_tables(report: dict[str, Any]) -> dict[str, Any]:
 def build_provenance_appendix(report: dict[str, Any]) -> str:
     """Evidence table: questionId / componentId / rowIds / analyticsRef.
 
-    Pulls from ``provenanceAST.evidence`` when present, else scans block
-    provenance. Returns '' when there is nothing to show.
+    Prefers the enriched ``auditAST.provenance.entries`` (every measured output, with
+    plan + source-column trace); falls back to ``provenanceAST.evidence``, then to
+    block-level provenance. Returns '' when there is nothing to show.
     """
     rows: list[tuple[str, str, str, str]] = []
-    prov = report.get("provenanceAST") or {}
-    evidence = prov.get("evidence") or []
-    for ev in evidence:
+
+    # Source 1 (richest): the per-plan lineage entries enriched in S5e.
+    audit_prov = (report.get("auditAST") or {}).get("provenance") or {}
+    for e in audit_prov.get("entries") or []:
         rows.append((
-            str(ev.get("questionId") or ""),
-            str(ev.get("componentId") or ev.get("evidenceId") or ""),
-            str(ev.get("analyticsRef") or ev.get("computation") or ""),
-            ", ".join(ev.get("rowIds") or []),
+            str(e.get("questionId") or ""),
+            str(e.get("planId") or e.get("componentRef") or ""),
+            str(e.get("analyticsRef") or e.get("formulaType") or ""),
+            ", ".join(e.get("rowIds") or []),
         ))
+
+    # Source 2: an explicit provenanceAST (legacy / external).
+    if not rows:
+        prov = report.get("provenanceAST") or {}
+        for ev in prov.get("evidence") or []:
+            rows.append((
+                str(ev.get("questionId") or ""),
+                str(ev.get("componentId") or ev.get("evidenceId") or ""),
+                str(ev.get("analyticsRef") or ev.get("computation") or ""),
+                ", ".join(ev.get("rowIds") or []),
+            ))
+
+    # Source 3: scan content-block provenance.
     if not rows:
         for b in (report.get("contentAST") or {}).get("blocks", []):
             p = b.get("provenance") or {}
