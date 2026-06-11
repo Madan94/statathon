@@ -183,6 +183,7 @@ export function ReportTable({
                                     label: loc(c.header, locale),
                                     value: display,
                                     rowIds: row.rowIds,
+                                    provenance: table.provenance,
                                   })
                               : undefined
                           }
