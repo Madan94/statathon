@@ -68,6 +68,15 @@ storage/reports/
 storage/templates/
 storage/derived/
 storage/uploads/
+# Frozen ExecutionBundles + generated report artifacts (freeze store / generate phase write here)
+storage/bindings/
+
+# Local development database (SQLite) — not a version-controlled artifact
+statathon.db
+api/statathon.db
+*.db-journal
+*.db-wal
+*.db-shm
 
 # Extraction pipeline generated outputs (template.ast.json, rendered PDFs, filled ASTs)
 
