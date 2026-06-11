@@ -9,8 +9,6 @@ import PageHeader from '@/components/layout/PageHeader';
 import Card from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
-import { Badge } from '@/components/ui/Badge';
-import { cn } from '@/lib/cn';
 import { toast } from '@/lib/toast';
 import {
   CheckCircle2, Download, Loader2, Search, FileText, ArrowLeft,
@@ -151,8 +149,6 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
   const [approving, setApproving] = useState(false);
   const [search, setSearch] = useState('');
   const [columnFilter, setColumnFilter] = useState('');
-  const [selectedColumn, setSelectedColumn] = useState<string | null>(null);
-  const [columnDetail, setColumnDetail] = useState<Awaited<ReturnType<typeof analysisApi.getDatasetReviewColumn>> | null>(null);
   const [rowIndex, setRowIndex] = useState('');
   const [rowDetail, setRowDetail] = useState<Awaited<ReturnType<typeof analysisApi.getDatasetReviewRow>> | null>(null);
 
@@ -223,16 +219,6 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
     }
   };
 
-  const inspectColumn = async (col: string) => {
-    setSelectedColumn(col);
-    try {
-      const detail = await analysisApi.getDatasetReviewColumn(analysisId, col);
-      setColumnDetail(detail);
-    } catch {
-      setColumnDetail(null);
-    }
-  };
-
   const inspectRow = async () => {
     const idx = parseInt(rowIndex, 10);
     if (Number.isNaN(idx)) return;
@@ -267,65 +253,6 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
     );
   }
 
-  const diff = review.diff_summary;
-  const s = review.summary;
-
-  const summaryFallback = (items: string[], count?: number, noun = 'change') => {
-    if (items.length) return items;
-    if (count && count > 0) return [`${count.toLocaleString()} ${noun}(s) applied`];
-    return [];
-  };
-
-  const transformationBlocks = [
-    { title: 'Columns renamed', items: diff.columns_renamed.map((r) => `${r.from} → ${r.to}`) },
-    { title: 'Columns deleted', items: diff.columns_removed },
-    { title: 'Columns excluded', items: diff.columns_excluded },
-    {
-      title: 'Rows deleted',
-      items: summaryFallback(
-        diff.rows_removed.slice(0, 10).map((r) => {
-          if ((r as { kind?: string }).kind === 'inferred_count') {
-            const n = (r as { count?: number }).count;
-            return `${n ?? '?'} row(s) removed (detected from processed dataset)`;
-          }
-          const phase = String((r as { phase?: string }).phase ?? 'review').replace(/_/g, ' ');
-          const rowLabel = r.row_index == null ? 'Unknown row' : `Row ${r.row_index}`;
-          return `${rowLabel} (${phase}: ${r.decision})`;
-        }),
-        s.rows_removed,
-        'row removed',
-      ),
-    },
-    {
-      title: 'Values set missing',
-      items: (diff.values_set_missing ?? diff.anomalies_handled.filter((r) => r.decision === 'DELETE_VALUE'))
-        .slice(0, 10)
-        .map((r) => `${r.column ?? '—'} @ row ${r.row_index}`),
-    },
-    {
-      title: 'Values imputed',
-      items: summaryFallback(
-        diff.missing_values_imputed.slice(0, 10).map((r) => `${r.column} @ row ${r.row_index}`),
-        s.values_imputed,
-        'value imputed',
-      ),
-    },
-    {
-      title: 'Anomalies removed',
-      items: diff.anomalies_handled
-        .filter((r) => r.decision === 'DELETE_ROW')
-        .slice(0, 10)
-        .map((r) => `Row ${r.row_index}`),
-    },
-    {
-      title: 'Rules applied',
-      items: summaryFallback(
-        diff.rules_applied.slice(0, 10).map((r) => `${r.column ?? '—'} @ row ${r.row_index}`),
-        s.rule_violations_fixed,
-        'rule action',
-      ),
-    },
-  ];
   const allColumns = review.processed_dataset.columns.length
     ? review.processed_dataset.columns
     : review.original_dataset.columns;
@@ -411,51 +338,6 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
       </section>
 
       <section className="mb-8">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted mb-3">Transformation summary</h3>
-        <div className="grid md:grid-cols-2 gap-4">
-          {transformationBlocks.map((block) => (
-            <Card key={block.title} title={block.title}>
-              {block.items.length ? (
-                <ul className="text-xs space-y-1 text-text-muted max-h-40 overflow-auto">
-                  {block.items.map((item, i) => <li key={i}>{item}</li>)}
-                </ul>
-              ) : (
-                <p className="text-xs text-text-muted">None recorded</p>
-              )}
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="mb-8 grid lg:grid-cols-2 gap-4">
-        <Card title="Column-level changes">
-          <div className="flex flex-wrap gap-1.5 mb-3 max-h-32 overflow-auto">
-            {allColumns.map((col) => (
-              <button
-                key={col}
-                type="button"
-                onClick={() => void inspectColumn(col)}
-                className={cn(
-                  'px-2 py-1 rounded border text-xs',
-                  selectedColumn === col ? 'border-accent bg-accent/10' : 'border-border',
-                )}
-              >
-                {col}
-              </button>
-            ))}
-          </div>
-          {columnDetail ? (
-            <div className="text-sm space-y-1">
-              <p><strong>{columnDetail.column}</strong></p>
-              <p className="text-text-muted">Changed rows: {columnDetail.rows_changed}</p>
-              <p className="text-text-muted">Reason: {columnDetail.reason}</p>
-              <Badge variant="warning">{columnDetail.phase}</Badge>
-            </div>
-          ) : (
-            <p className="text-xs text-text-muted">Select a column to inspect changes.</p>
-          )}
-        </Card>
-
         <Card title="Row-level inspection">
           <div className="flex gap-2 mb-3">
             <input
