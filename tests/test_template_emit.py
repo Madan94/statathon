@@ -92,6 +92,28 @@ def test_blueprint_is_value_free_and_has_envelope():
     assert len(blueprint["entities"]) == 1
 
 
+def test_emit_templates_writes_package_sidecars(tmp_path):
+    import json
+
+    from report_builder.template_emit import emit_templates
+
+    report = emit_templates(_AST, tmp_path)
+    graph_path = tmp_path / "semantic_slot_graph.json"
+    package_path = tmp_path / "template.package.json"
+
+    assert graph_path.exists()
+    assert package_path.exists()
+    assert report["semantic_slot_graph_path"] == str(graph_path)
+    assert report["package_path"] == str(package_path)
+
+    graph = json.loads(graph_path.read_text(encoding="utf-8"))
+    package = json.loads(package_path.read_text(encoding="utf-8"))
+    assert graph["$schema"] == "bharatstat/semantic-slot-graph/v1"
+    assert package["$schema"] == "bharatstat/template-package/v1"
+    assert package["artifacts"]["templateAst"]["path"] == "template.ast.json"
+    assert package["artifacts"]["templateBlueprint"]["path"] == "template.blueprint.json"
+
+
 def test_assert_value_free_flags_violations():
     bad = {
         "contentAST": {"paragraphs": [{"id": "p1", "content": "leaked prose"}]},

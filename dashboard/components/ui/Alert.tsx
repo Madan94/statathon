@@ -1,12 +1,13 @@
-import { AlertTriangle, Info } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Info } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
-type AlertVariant = 'error' | 'warning' | 'info';
+type AlertVariant = 'error' | 'warning' | 'info' | 'success';
 
 const styles: Record<AlertVariant, string> = {
   error: 'border-danger/30 bg-danger/5 text-danger',
   warning: 'border-warning/30 bg-warning/5 text-warning',
   info: 'border-primary/30 bg-primary/5 text-primary',
+  success: 'border-success/30 bg-success/5 text-success',
 };
 
 interface AlertProps {
@@ -18,7 +19,7 @@ interface AlertProps {
 }
 
 export function Alert({ variant = 'info', title, children, className, onRetry }: AlertProps) {
-  const Icon = variant === 'error' ? AlertTriangle : Info;
+  const Icon = variant === 'error' ? AlertTriangle : variant === 'success' ? CheckCircle2 : Info;
   return (
     <div
       role="alert"

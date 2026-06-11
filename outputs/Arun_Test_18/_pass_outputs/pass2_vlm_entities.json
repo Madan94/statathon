@@ -1,0 +1,152 @@
+{
+  "vlm_success_count": 9,
+  "total_entities": 36,
+  "chart_pages": 0,
+  "pages": [
+    {
+      "page": 0,
+      "vlm_used": true,
+      "structure_type": "title_page",
+      "entities": [
+        "Chapter One",
+        "Energy Reserves and Potential"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 1,
+      "vlm_used": false,
+      "structure_type": "data_table",
+      "entities": [],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 2,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Energy Reserves",
+        "Global Classification of Energy Reserves",
+        "System of Environmental Economic Accounting (SEEA)-Energy",
+        "Energy Reserves and Potential",
+        "Energy Reserves in India"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 3,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "Coal Reserves",
+        "Lignite Reserves"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 4,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "Western Offshore",
+        "Eastern Offshore",
+        "Assam",
+        "Gujarat",
+        "Rajasthan",
+        "Tamil Nadu",
+        "Andhra Pradesh"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 5,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Chapter",
+        "Renewable Energy Potential in India",
+        "Source wise Estimated Potential of Renewable Power in India as on"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 6,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "State/UT",
+        "Rural",
+        "Urban",
+        "Labour Force Participation Rate",
+        "Unemployment Rate",
+        "MPCE",
+        "Geographical Distribution of Renewable Energy Potential"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "Chapter I: Energy Reserves and Potential"
+    },
+    {
+      "page": 7,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "State/UT",
+        "States/UTs",
+        "Reserves",
+        "Potential"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "Chapter I: Energy Reserves and Potential"
+    },
+    {
+      "page": 8,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "States/UTs",
+        "Region",
+        "Crude Oil (Million Tonne)",
+        "Natural Gas (Billion Cubic Metres)"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "Chapter I: Energy Reserves and Potential"
+    },
+    {
+      "page": 9,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "State/UTs",
+        "Renewable Power"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "Chapter 1: Energy Reserves and Potential"
+    }
+  ]
+}

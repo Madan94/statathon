@@ -1113,6 +1113,12 @@ export interface DatasetAst {
 
 export interface BoundColumn {
   column: string;
+  memberLabel?: string | null;
+  period?: string | null;
+}
+
+export interface BindingCandidate {
+  column: string;
   confidence: number;
   method: string;
 }
@@ -1142,9 +1148,40 @@ export interface EntityBinding {
   confidence: number;
   method: BindingMethod;
   status: BindingStatus;
-  alternatives: BoundColumn[];
+  alternatives: BindingCandidate[];
   typeMismatch?: boolean;
   notes?: string[];
+  evidence?: Array<Record<string, unknown>>;
+  risks?: Array<Record<string, unknown>>;
+}
+
+export interface ColumnOwner {
+  entityId: string;
+  entityName: string;
+  entityType: EntityBinding['entityType'];
+  cardinality: Cardinality;
+  status: BindingStatus;
+  sharePolicy: 'exclusive' | 'shared';
+  shareReason?: string;
+}
+
+export interface ColumnOwnershipEntry {
+  column: string;
+  owners: ColumnOwner[];
+  locked: boolean;
+}
+
+export interface ColumnOwnershipConflict {
+  column: string;
+  severity?: CoverageSeverity;
+  code: string;
+  message: string;
+  owners: ColumnOwner[];
+}
+
+export interface ColumnOwnershipMap {
+  columns: Record<string, ColumnOwnershipEntry>;
+  conflicts: ColumnOwnershipConflict[];
 }
 
 export interface ResolvedFilter {
@@ -1201,6 +1238,7 @@ export interface BindingStartResult {
   proposals: EntityBinding[];
   confirmations: Record<string, unknown>;
   pending: string[];
+  column_ownership: ColumnOwnershipMap;
 }
 
 export interface BindingProposalsResult {
@@ -1210,6 +1248,17 @@ export interface BindingProposalsResult {
   proposals: EntityBinding[];
   confirmations: Record<string, unknown>;
   pending: string[];
+  column_ownership: ColumnOwnershipMap;
+}
+
+export interface BindingRecordResult {
+  template_id: string;
+  signature: string;
+  dataset_id: string;
+  proposals: EntityBinding[];
+  confirmations: Record<string, unknown>;
+  column_ownership: ColumnOwnershipMap;
+  updated_at: number;
 }
 
 export interface BindingFinalizeResult {
@@ -1218,10 +1267,148 @@ export interface BindingFinalizeResult {
   coverage: CoverageReport;
   question_bindings: QuestionBinding[];
   binding_ast: Record<string, unknown>;
+  reviewed_plan?: {
+    planId: string;
+    status: 'READY' | 'DEGRADED' | 'BLOCKED' | 'DRAFT';
+    bindingAstId: string;
+    path: string;
+    topicCount: number;
+    questionCount: number;
+    componentCount: number;
+    semanticSlotCount: number;
+    virtualSlotCount: number;
+    virtualSlots: Array<Record<string, unknown>>;
+    planTree: ReviewedPlanNode[];
+  } | null;
   has_errors: boolean;
 }
 
-export type BindingAction = 'confirm' | 'override' | 'reject';
+export type ReviewedPlanSummary = NonNullable<BindingFinalizeResult['reviewed_plan']>;
+
+export interface ReviewedPlanNodePatchPayload {
+  title?: string;
+  enabled?: boolean;
+  required_entities?: Array<Record<string, unknown>>;
+}
+
+export interface ReviewedPlanQuestionPayload {
+  parent_node_id: string;
+  title: string;
+  required_entities?: Array<Record<string, unknown>>;
+  analytics_spec?: Record<string, unknown>;
+}
+
+export interface ComponentDefinition {
+  componentType: string;
+  label: string;
+  group: string;
+  allowedNodeTypes: string[];
+  requiredFields: string[];
+  requiresAnalyticsSpec: boolean;
+  defaultSlotBehavior: string;
+}
+
+export interface ReviewedPlanComponentPayload {
+  component_type: string;
+  payload?: Record<string, unknown>;
+}
+
+export interface ReviewedPlanComponentPatchPayload {
+  required_entities?: Array<Record<string, unknown>>;
+  analytics_spec?: Record<string, unknown>;
+  formula_spec?: Record<string, unknown>;
+}
+
+export interface ReviewedPlanPromotionResult {
+  derivedTemplateId: string;
+  templateId?: number | null;
+  path: string;
+  learnedEntityCount: number;
+  learnedEntitiesPath: string;
+  dbWarning?: string;
+}
+
+export interface LearnedEntityRecord {
+  entityId: string;
+  entityName: string;
+  entityType: EntityBinding['entityType'];
+  cardinality?: Cardinality;
+  columns?: BoundColumn[];
+  source?: string;
+  planId?: string;
+  templateId?: string;
+  derivedTemplateId?: string;
+}
+
+export interface ReviewedPlanComponent {
+  componentId: string;
+  componentType: string;
+  questionId: string;
+  source: string;
+  requiredEntities: Array<Record<string, unknown>>;
+  analyticsSpec: Record<string, unknown>;
+  formulaSpec: Record<string, unknown>;
+  answerStructure: Record<string, unknown>;
+  slotIds: string[];
+  readiness: string;
+}
+
+export interface ReviewedPlanNode {
+  nodeId: string;
+  nodeType: 'topic' | 'subtopic' | 'subsubtopic' | 'question';
+  title: string;
+  parentId?: string;
+  order: number;
+  source: string;
+  enabled: boolean;
+  questionId?: string;
+  requiredEntities: Array<Record<string, unknown>>;
+  components: ReviewedPlanComponent[];
+  readiness: string;
+  children: ReviewedPlanNode[];
+}
+
+export type ExecutionReadyStatus = 'READY' | 'DEGRADED' | 'NOT_READY';
+
+export interface BindingExecutionReadyResult {
+  contract_version: string;
+  template_id: string;
+  dataset_id: string;
+  binding_ast_id: string;
+  status: ExecutionReadyStatus;
+  dataset_ast: DatasetAst;
+  binding_ast: Record<string, unknown>;
+  statistical_context: Record<string, unknown>;
+  plans: Array<Record<string, unknown>>;
+  blocked_questions: Array<Record<string, unknown>>;
+  readiness_report: Record<string, unknown>;
+  dataframe_ref: Record<string, unknown>;
+  lineage_index: Record<string, unknown>;
+  frozen_at: string;
+}
+
+export type BindingAction = 'confirm' | 'override' | 'reject' | 'share' | 'reopen';
+
+export interface BindingConfirmPayload {
+  entity_id: string;
+  action: BindingAction;
+  columns?: string[];
+  note?: string;
+  force_transfer?: boolean;
+  transfer_from_entity_ids?: string[];
+  share_policy?: 'exclusive' | 'shared';
+  share_reason?: string;
+}
+
+export interface ManualEntityPayload {
+  entity_name: string;
+  entity_type: EntityBinding['entityType'];
+  columns: string[];
+  cardinality?: Cardinality;
+  note?: string;
+  share_policy?: 'exclusive' | 'shared';
+  share_reason?: string;
+}
 
 export const bindingPhaseApi = {
   /** S0 profile + S1 propose. Optional blueprint file; defaults to the bundled gold PLFS template. */
@@ -1252,10 +1439,22 @@ export const bindingPhaseApi = {
   confirm: async (
     templateId: string,
     signature: string,
-    body: { entity_id: string; action: BindingAction; columns?: string[]; note?: string }
-  ): Promise<unknown> => {
+    body: BindingConfirmPayload
+  ): Promise<BindingRecordResult> => {
     const { data } = await api.post(
       `/report-builder/binding-phase/${templateId}/${signature}/confirm`,
+      body
+    );
+    return data;
+  },
+  /** Add an officer-created entity from selected dataset column(s). */
+  addEntity: async (
+    templateId: string,
+    signature: string,
+    body: ManualEntityPayload
+  ): Promise<BindingRecordResult> => {
+    const { data } = await api.post(
+      `/report-builder/binding-phase/${templateId}/${signature}/entities`,
       body
     );
     return data;
@@ -1268,6 +1467,94 @@ export const bindingPhaseApi = {
     const { data } = await api.post(
       `/report-builder/binding-phase/${templateId}/${signature}/finalize`
     );
+    return data;
+  },
+  /** Build and validate the canonical S4 ExecutionBundle handoff. */
+  executionReady: async (
+    templateId: string,
+    signature: string
+  ): Promise<BindingExecutionReadyResult> => {
+    const { data } = await api.get(
+      `/report-builder/binding-phase/${templateId}/${signature}/execution-ready`
+    );
+    return data;
+  },
+  getReviewedPlan: async (
+    templateId: string,
+    signature: string
+  ): Promise<ReviewedPlanSummary> => {
+    const { data } = await api.get(
+      `/report-builder/binding-phase/${templateId}/${signature}/reviewed-plan`
+    );
+    return data;
+  },
+  patchReviewedPlanNode: async (
+    templateId: string,
+    signature: string,
+    nodeId: string,
+    body: ReviewedPlanNodePatchPayload
+  ): Promise<ReviewedPlanSummary> => {
+    const { data } = await api.patch(
+      `/report-builder/binding-phase/${templateId}/${signature}/reviewed-plan/nodes/${nodeId}`,
+      body
+    );
+    return data;
+  },
+  addReviewedPlanQuestion: async (
+    templateId: string,
+    signature: string,
+    body: ReviewedPlanQuestionPayload
+  ): Promise<ReviewedPlanSummary> => {
+    const { data } = await api.post(
+      `/report-builder/binding-phase/${templateId}/${signature}/reviewed-plan/questions`,
+      body
+    );
+    return data;
+  },
+  listComponentRegistry: async (): Promise<ComponentDefinition[]> => {
+    const { data } = await api.get('/report-builder/binding-phase/component-registry');
+    return data;
+  },
+  addReviewedPlanComponent: async (
+    templateId: string,
+    signature: string,
+    nodeId: string,
+    body: ReviewedPlanComponentPayload
+  ): Promise<ReviewedPlanSummary> => {
+    const { data } = await api.post(
+      `/report-builder/binding-phase/${templateId}/${signature}/reviewed-plan/nodes/${nodeId}/components`,
+      body
+    );
+    return data;
+  },
+  patchReviewedPlanComponent: async (
+    templateId: string,
+    signature: string,
+    nodeId: string,
+    componentId: string,
+    body: ReviewedPlanComponentPatchPayload
+  ): Promise<ReviewedPlanSummary> => {
+    const { data } = await api.patch(
+      `/report-builder/binding-phase/${templateId}/${signature}/reviewed-plan/nodes/${nodeId}/components/${componentId}`,
+      body
+    );
+    return data;
+  },
+  promoteReviewedPlan: async (
+    templateId: string,
+    signature: string,
+    body: { name?: string } = {}
+  ): Promise<ReviewedPlanPromotionResult> => {
+    const { data } = await api.post(
+      `/report-builder/binding-phase/${templateId}/${signature}/reviewed-plan/promote`,
+      body
+    );
+    return data;
+  },
+  listLearnedEntities: async (templateId?: string): Promise<LearnedEntityRecord[]> => {
+    const { data } = await api.get('/report-builder/binding-phase/learned-entities', {
+      params: templateId ? { template_id: templateId } : undefined,
+    });
     return data;
   },
 };

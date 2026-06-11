@@ -1462,6 +1462,7 @@ def pass2_entity_structure_extraction(
     page_texts: list[dict[str, Any]],
     doc_title: str = "Document",
     doc_type: str = "statistical_annual_report",
+    section_graph: Any = None,
 ) -> list[dict[str, Any]]:
     """Extract ENTITIES + STRUCTURE TYPE + DESCRIPTION per page using Qwen-VL.
 
@@ -1535,9 +1536,23 @@ def pass2_entity_structure_extraction(
 
                 # Build doc-type-aware entity extraction prompt
                 if doc_type == "pib_press_release":
+                    # Section context from SectionGraph (Phase 2)
+                    _sec_ctx = ""
+                    if section_graph:
+                        _sec = section_graph.section_for_page(i)
+                        if _sec:
+                            _sec_ctx = f"Section: \"{_sec.title}\"\n"
+                            if _sec.expectedEntities:
+                                _sec_ctx += f"Expected entities for this section: {', '.join(_sec.expectedEntities[:5])}\n"
+                            if _sec.has_figures():
+                                _sec_ctx += f"This section has {_sec.figure_count()} visual panel(s).\n"
+                            if _sec.isBackMatter:
+                                _sec_ctx += "This is methodology/notes section (backMatter).\n"
+
                     prompt = (
                         f"Page {i + 1}/{total_pages} of \"{doc_title}\" (PIB Press Release).\n"
-                        f"Layout: {region_types}{image_hint}\n\n"
+                        f"Layout: {region_types}{image_hint}\n"
+                        f"{_sec_ctx}\n"
                         "This is a government press release. Extract ONLY:\n"
                         "entities: Statistical indicator names and dimension names ONLY. "
                         "Examples: 'LFPR', 'WPR', 'Unemployment Rate', 'Gender', 'Rural', 'Urban', "
@@ -1547,7 +1562,8 @@ def pass2_entity_structure_extraction(
                         "section_heading: The numbered section title if visible (e.g. '1. Stable LFPR...'). "
                         "Empty string otherwise.\n"
                         "chart_types: list each DISTINCT chart actually visible, once each "
-                        "(bar_chart, line_chart, pie_chart, …). [] if none. Do NOT guess and "
+                        "(bar_chart, line_chart, pie_chart, infographic_panel, metric_card_panel). "
+                        "[] if none. Do NOT guess and "
                         "do NOT copy the example below.\n"
                         "structure_type: narrative (most pages), chart_page (if chart dominates), "
                         "title_page (cover), appendix (endnote).\n"
@@ -4849,6 +4865,21 @@ def run_extraction_pipeline(
     pipeline_trace["passes"]["pass1_layout"]["toc_entries"] = len(toc)
     pipeline_trace["passes"]["pass1_layout"]["toc_l1_chapters"] = sum(1 for e in toc if e.level == 1)
 
+    # ── Pass 1.5: Build SectionGraph from ToC + LayoutLM regions ──
+    from report_builder.chunking import build_section_graph
+    _section_graph = None
+    try:
+        _section_graph = build_section_graph(
+            toc_entries=toc,
+            layout_pages=layout_pages,
+            page_texts=page_texts,
+            doc_type=doc_type,
+            doc_title=doc_title,
+        )
+        pipeline_trace["passes"]["pass1_5_section_graph"] = _section_graph.to_dict()
+    except Exception as _sg_exc:
+        logger.warning("[pipeline] SectionGraph build failed (non-fatal): %s", _sg_exc)
+
     # ── Pass 2: Entity + Structure Extraction ──
     _tick("pass2_entity_extraction", 30)
     t0 = _time.monotonic()
@@ -4856,7 +4887,7 @@ def run_extraction_pipeline(
     if _cached_pass2:
         entity_pages = _cached_pass2
     else:
-        entity_pages = pass2_entity_structure_extraction(page_images, layout_pages, page_texts, doc_title, doc_type=doc_type)
+        entity_pages = pass2_entity_structure_extraction(page_images, layout_pages, page_texts, doc_title, doc_type=doc_type, section_graph=_section_graph)
         ckpt.save("pass2_entities", entity_pages)
     pass2_elapsed = _time.monotonic() - t0
 
@@ -5248,6 +5279,13 @@ def run_extraction_pipeline(
             with open(_diag_path, "w", encoding="utf-8") as _fh:
                 json.dump(_diag.to_dict(), _fh, ensure_ascii=False, indent=2, default=str)
 
+            _graph_path = _out_dir / "semantic_slot_graph.json"
+            with open(_graph_path, "w", encoding="utf-8") as _fh:
+                json.dump(_compiled["semantic_slot_graph"], _fh, ensure_ascii=False, indent=2, default=str)
+            _package_path = _out_dir / "template.package.json"
+            with open(_package_path, "w", encoding="utf-8") as _fh:
+                json.dump(_compiled["template_package_manifest"], _fh, ensure_ascii=False, indent=2, default=str)
+
             logger.info(
                 "[pipeline] ✓ Compiler V2: score=%.3f status=%s entities=%d questions=%d",
                 _diag.binderReadinessScore, _diag.status,
@@ -5258,6 +5296,8 @@ def run_extraction_pipeline(
                 "score": _diag.binderReadinessScore,
                 "status": _diag.status,
                 "tableCandidatesCount": len(_table_candidates) if _table_candidates else 0,
+                "semanticSlotGraphPath": str(_graph_path),
+                "templatePackagePath": str(_package_path),
             }
         except Exception as _compiler_exc:
             if _compiler_strict:

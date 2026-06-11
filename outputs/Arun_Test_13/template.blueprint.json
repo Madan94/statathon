@@ -1,0 +1,3765 @@
+{
+  "$schema": "bharatstat/template-blueprint/v1",
+  "_doc": "VALUE-FREE + PROSE-FREE analytic brain. Defines WHAT to compute and HOW to render. Contains NO numbers, NO sentences, NO dataset. Pairs 1:1 with template.ast.json by shared IDs.",
+  "templateMeta": {
+    "templateId": "tpl_arun_test_13_v1",
+    "name": "Document",
+    "domain": "general",
+    "locale": "en-IN",
+    "version": "3.0",
+    "valueFree": true,
+    "proseFree": true,
+    "sourceDocument": "Document"
+  },
+  "entities": [
+    {
+      "entityId": "ent_019",
+      "canonicalName": "ca e Departm dal agency",
+      "entityType": "dimension",
+      "aliases": [
+        "ca e Departm dal agency",
+        "MoSPI"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_031",
+      "canonicalName": "Industrial Division (E ur weeks,",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": "percent",
+      "format": "0.0%",
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": "ur",
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_032",
+      "canonicalName": "Production of MoSP ensuring time",
+      "entityType": "dimension",
+      "aliases": [
+        "Production of MoSP ensuring time"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_043",
+      "canonicalName": "Fig. 2: Sectoral Composition and Growth Rates of Annual GVA",
+      "entityType": "measure",
+      "aliases": [],
+      "unit": "INR_crore",
+      "format": "₹#,##,##0",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": "gva",
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_044",
+      "canonicalName": "Fig. 3: Composition and Growth Rates of Annual GVA in Broad Sectors",
+      "entityType": "measure",
+      "aliases": [],
+      "unit": "INR_crore",
+      "format": "₹#,##,##0",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": "gva",
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_048",
+      "canonicalName": "Khurshid Lal Bhawan, Janpath",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_051",
+      "canonicalName": "ANNEXURES",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_071",
+      "canonicalName": "Implementation is placed at Annexure",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_076",
+      "canonicalName": "Manufacturing",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_090",
+      "canonicalName": "maintains frame of urban area units for drawing samples in urban areas.",
+      "entityType": "measure",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_091",
+      "canonicalName": "surveys have been created and made available to users through its website.",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_095",
+      "canonicalName": "Expenditure Components",
+      "entityType": "measure",
+      "aliases": [],
+      "unit": "INR",
+      "format": "₹#,##,##0",
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_103",
+      "canonicalName": "Private Final Consumption Expenditure",
+      "entityType": "measure",
+      "aliases": [
+        "PFCE",
+        "Private Final Consumption Expenditure"
+      ],
+      "unit": "INR",
+      "format": "₹#,##,##0",
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_114",
+      "canonicalName": "(at Current Prices)",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_122",
+      "canonicalName": "Sectoral Composition and Growth Rates of Annual GVA",
+      "entityType": "measure",
+      "aliases": [],
+      "unit": "INR_crore",
+      "format": "₹#,##,##0",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": "gva",
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_123",
+      "canonicalName": "Sector-wise Growth Rates of Real GVA in FY 2024-25 and 2025-26",
+      "entityType": "measure",
+      "aliases": [
+        "Sector-wise Growth Rates of Real GVA in FY 2024-25 and 2025-26"
+      ],
+      "unit": "INR_crore",
+      "format": "₹#,##,##0",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": "gva",
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_125",
+      "canonicalName": "Broad Sector-wise Y-o-Y Growth Rates of Real GVA",
+      "entityType": "measure",
+      "aliases": [
+        "Broad Sector-wise Y-o-Y Growth Rates of Real GVA"
+      ],
+      "unit": "INR_crore",
+      "format": "₹#,##,##0",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": "gva",
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_039",
+      "canonicalName": "Sl. No. 1 2 3 4",
+      "entityType": "dimension",
+      "aliases": [
+        "Sl. No. 1 2 3 4"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_012",
+      "canonicalName": "Sl.No. 1",
+      "entityType": "measure",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_013",
+      "canonicalName": "CHAPTERS Introduction",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_014",
+      "canonicalName": "Page No. 1-9",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_015",
+      "canonicalName": "Statistics an n 15th Octo me Impleme",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_016",
+      "canonicalName": "d Pro ber 1 ntatio",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_017",
+      "canonicalName": "gramme I 999 after t n. The M",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_018",
+      "canonicalName": "mplementation he merger of th inistry is the no",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_020",
+      "canonicalName": "me into e ent of Sta for plann",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_021",
+      "canonicalName": "xistence as an tistics and the ing integrated",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_022",
+      "canonicalName": "statistics and Ministry’s offi",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_023",
+      "canonicalName": "classific cials in i",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_024",
+      "canonicalName": "ations, statistica nternational mee",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_025",
+      "canonicalName": "l compilations an tings on these sub",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_026",
+      "canonicalName": "d internat jects has be",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_027",
+      "canonicalName": "ional p en high",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_028",
+      "canonicalName": "ractices. The contri ly appreciated.",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_029",
+      "canonicalName": "bution of the ly appreciated.",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_030",
+      "canonicalName": "The Index of mic Statistics x weeks to fo",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_033",
+      "canonicalName": "IP I. lie",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_034",
+      "canonicalName": "year 2011 timeline o y of indus",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_035",
+      "canonicalName": "-12 is f IIP h trial ou",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_036",
+      "canonicalName": "compiled as been im tput data.",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_037",
+      "canonicalName": "and pu prove It is p",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_038",
+      "canonicalName": "blished by the d by reducing it ublished on the",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_040",
+      "canonicalName": "Annual Report 2025-26",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_041",
+      "canonicalName": "TABLE OF CONTENTS",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_042",
+      "canonicalName": "Chapter 1 Introduction",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_045",
+      "canonicalName": "Annual Report",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_094",
+      "canonicalName": "Domestic Product",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_096",
+      "canonicalName": "Share in GDP",
+      "entityType": "dimension",
+      "aliases": [
+        "Share in GDP"
+      ],
+      "unit": "INR_crore",
+      "format": "₹#,##,##0",
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": "gdp",
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_097",
+      "canonicalName": "National Product",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_098",
+      "canonicalName": "Per Capita Income, National Product and Final Consumption",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_101",
+      "canonicalName": "Percentage Change",
+      "entityType": "measure",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_049",
+      "canonicalName": "New Delhi-110001",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_050",
+      "canonicalName": "CHAPTERS",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_052",
+      "canonicalName": "Introduction 1-9",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_054",
+      "canonicalName": "Data Informatics Innovation 79-91",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_055",
+      "canonicalName": "Administrative Statistics 92-93",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_057",
+      "canonicalName": "Research and Analysis 96-97",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_058",
+      "canonicalName": "Support for Statistical Strengthening 98-101",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_059",
+      "canonicalName": "Members of Parliament Local Area Development Scheme",
+      "entityType": "measure",
+      "aliases": [
+        "Members of Parliament Local Area Development Scheme"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_061",
+      "canonicalName": "IIB Organisation Chart of National Statistical Commission 146",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_063",
+      "canonicalName": "III Statement of Budget Estimate Annual Plan 2025-26 150",
+      "entityType": "dimension",
+      "aliases": [
+        "SBE",
+        "III Statement of Budget Estimate Annual Plan 2025-26 150"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "high",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_064",
+      "canonicalName": "Eastern Region",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_065",
+      "canonicalName": "the Calendar Year 2024",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_066",
+      "canonicalName": "Services as on 1st January 2025",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_067",
+      "canonicalName": "Chapter 1",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_068",
+      "canonicalName": "Introduction",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_070",
+      "canonicalName": "applying standard statistical techniques and extensive scrutiny and supervision.",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_073",
+      "canonicalName": "ministries. At present, ICP 2024 round is in progress.",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Annual Report 2025-26",
+      "order": 1,
+      "semanticRef": "sec_01",
+      "questions": [
+        {
+          "questionId": "q_001",
+          "intent": "How does Sl.No. 1 vary across States and Union Territories by sub-category?",
+          "questionType": "comparison",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_013",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_012",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_012",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_013"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_001_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_013",
+                    "ent_012"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_001",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_001_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": "tt_2_1"
+                },
+                "refs": {
+                  "tableRef": "table_2_1",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              {
+                "componentId": "q_001_c3",
+                "kind": "chart",
+                "order": 3,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_013",
+                  "yAxis": "ent_012"
+                },
+                "refs": {
+                  "chartRef": "chart_q_001",
+                  "figureRef": "fig_q_001",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_002",
+          "intent": "What is the trend in Sl.No. 1 (Persons) across survey rounds?",
+          "questionType": "trend",
+          "priority": 2,
+          "requiredEntities": [
+            {
+              "entityId": "ent_013",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_012",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "ent_012",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_013"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_002_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_013",
+                    "ent_012"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_002",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_002_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "ent_013",
+                  "yAxis": "ent_012"
+                },
+                "refs": {
+                  "chartRef": "chart_q_002",
+                  "figureRef": "fig_q_002",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              {
+                "componentId": "q_002_c3",
+                "kind": "table",
+                "order": 3,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_003",
+          "intent": "Compare Sl.No. 1 for Rural and Urban population across States",
+          "questionType": "comparison",
+          "priority": 3,
+          "requiredEntities": [
+            {
+              "entityId": "ent_013",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_012",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_012",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_013"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_003_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_013",
+                    "ent_012"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_003",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_003_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_013",
+                  "yAxis": "ent_012"
+                },
+                "refs": {
+                  "chartRef": "chart_q_003",
+                  "figureRef": "fig_q_003",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_004",
+          "intent": "How does d Pro ber 1 ntatio vary across States and Union Territories by sub-category?",
+          "questionType": "comparison",
+          "priority": 4,
+          "requiredEntities": [
+            {
+              "entityId": "ent_015",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_015"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_004_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_015"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_004",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_004_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": "tt_3_1"
+                },
+                "refs": {
+                  "tableRef": "table_3_1",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              {
+                "componentId": "q_004_c3",
+                "kind": "chart",
+                "order": 3,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_015",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_q_004",
+                  "figureRef": "fig_q_004",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_005",
+          "intent": "What is the trend in d Pro ber 1 ntatio (Persons) across survey rounds?",
+          "questionType": "trend",
+          "priority": 5,
+          "requiredEntities": [
+            {
+              "entityId": "ent_015",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_015"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_005_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_015"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_005",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_005_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "ent_015",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_q_005",
+                  "figureRef": "fig_q_005",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              {
+                "componentId": "q_005_c3",
+                "kind": "table",
+                "order": 3,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_006",
+          "intent": "Compare d Pro ber 1 ntatio for Rural and Urban population across States",
+          "questionType": "comparison",
+          "priority": 6,
+          "requiredEntities": [
+            {
+              "entityId": "ent_015",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_015"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_006_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_015"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_006",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_006_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_015",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_q_006",
+                  "figureRef": "fig_q_006",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_007",
+          "intent": "How does classific cials in i vary by statistics and Ministry’s offi across the dataset?",
+          "questionType": "comparison",
+          "priority": 7,
+          "requiredEntities": [
+            {
+              "entityId": "ent_022",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_022"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_007_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_022"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_007",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_007_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": "tt_4_1"
+                },
+                "refs": {
+                  "tableRef": "table_4_1",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              {
+                "componentId": "q_007_c3",
+                "kind": "chart",
+                "order": 3,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_022",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_q_007",
+                  "figureRef": "fig_q_007",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_008",
+          "intent": "What is the distribution of classific cials in i across statistics and Ministry’s offi?",
+          "questionType": "distribution",
+          "priority": 8,
+          "requiredEntities": [
+            {
+              "entityId": "ent_022",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "distribution",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_022"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_008_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_022"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_008",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_008_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              {
+                "componentId": "q_008_c3",
+                "kind": "chart",
+                "order": 3,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "pie",
+                  "xAxis": "ent_022",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_q_008",
+                  "figureRef": "fig_q_008",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_009",
+          "intent": "Which statistics and Ministry’s offi has the highest classific cials in i?",
+          "questionType": "ranking",
+          "priority": 9,
+          "requiredEntities": [
+            {
+              "entityId": "ent_022",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "rank",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_022"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": 10,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_009_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_022"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_009",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_009_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_010",
+          "intent": "How does Industrial Division (E ur weeks, vary across States and Union Territories by sub-category?",
+          "questionType": "comparison",
+          "priority": 10,
+          "requiredEntities": [
+            {
+              "entityId": "ent_030",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_030"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_010_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_030"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_010",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_010_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": "tt_5_1"
+                },
+                "refs": {
+                  "tableRef": "table_5_1",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              {
+                "componentId": "q_010_c3",
+                "kind": "chart",
+                "order": 3,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_030",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_q_010",
+                  "figureRef": "fig_q_010",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_011",
+          "intent": "What is the trend in Industrial Division (E ur weeks, (Persons) across survey rounds?",
+          "questionType": "trend",
+          "priority": 11,
+          "requiredEntities": [
+            {
+              "entityId": "ent_030",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_030"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_011_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_030"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_011",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_011_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "ent_030",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_q_011",
+                  "figureRef": "fig_q_011",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              {
+                "componentId": "q_011_c3",
+                "kind": "table",
+                "order": 3,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_012",
+          "intent": "Compare Industrial Division (E ur weeks, for Rural and Urban population across States",
+          "questionType": "comparison",
+          "priority": 12,
+          "requiredEntities": [
+            {
+              "entityId": "ent_030",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_030"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_012_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_030"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_012",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_012_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_030",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_q_012",
+                  "figureRef": "fig_q_012",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_013",
+          "intent": "What is the MPCE distribution across Sl. No. 1\n2\n3\n4 in Rural and Urban areas?",
+          "questionType": "distribution",
+          "priority": 13,
+          "requiredEntities": [
+            {
+              "entityId": "ent_039",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "distribution",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_039"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_013_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_039"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_013",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_013_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": "tt_6_1"
+                },
+                "refs": {
+                  "tableRef": "table_6_1",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              {
+                "componentId": "q_013_c3",
+                "kind": "chart",
+                "order": 3,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_039",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_q_013",
+                  "figureRef": "fig_q_013",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_014",
+          "intent": "How does metric vary across household size and Sl. No. 1\n2\n3\n4?",
+          "questionType": "comparison",
+          "priority": 14,
+          "requiredEntities": [
+            {
+              "entityId": "ent_039",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_039"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_014_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_039"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_014",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_014_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              {
+                "componentId": "q_014_c3",
+                "kind": "chart",
+                "order": 3,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "ent_039",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_q_014",
+                  "figureRef": "fig_q_014",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_015",
+          "intent": "What is the share of Sl. No. 1\n2\n3\n4 in total household expenditure?",
+          "questionType": "composition",
+          "priority": 15,
+          "requiredEntities": [
+            {
+              "entityId": "ent_039",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "share",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_039"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_015_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_039"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_015",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_015_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "pie",
+                  "xAxis": "ent_039",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_q_015",
+                  "figureRef": "fig_q_015",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              {
+                "componentId": "q_015_c3",
+                "kind": "table",
+                "order": 3,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_016",
+          "intent": "What is the MPCE distribution across Sl. No. 1\n2\n3\n4 in Rural and Urban areas?",
+          "questionType": "distribution",
+          "priority": 16,
+          "requiredEntities": [
+            {
+              "entityId": "ent_039",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "distribution",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_039"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_016_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_039"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_016",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_016_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              {
+                "componentId": "q_016_c3",
+                "kind": "chart",
+                "order": 3,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_039",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_q_016",
+                  "figureRef": "fig_q_016",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_017",
+          "intent": "How does metric vary across household size and Sl. No. 1\n2\n3\n4?",
+          "questionType": "comparison",
+          "priority": 17,
+          "requiredEntities": [
+            {
+              "entityId": "ent_039",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_039"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_017_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_039"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_017",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_017_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              {
+                "componentId": "q_017_c3",
+                "kind": "chart",
+                "order": 3,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "ent_039",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_q_017",
+                  "figureRef": "fig_q_017",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "q_018",
+          "intent": "What is the share of Sl. No. 1\n2\n3\n4 in total household expenditure?",
+          "questionType": "composition",
+          "priority": 18,
+          "requiredEntities": [
+            {
+              "entityId": "ent_039",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "share",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_039"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_018_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_039"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_018",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_018_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "pie",
+                  "xAxis": "ent_039",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_q_018",
+                  "figureRef": "fig_q_018",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              {
+                "componentId": "q_018_c3",
+                "kind": "table",
+                "order": 3,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "tableTemplates": [
+    {
+      "tableTemplateId": "tt_2_1",
+      "title": "Table with 3 columns, 29 rows",
+      "columnGroups": [],
+      "columns": [
+        {
+          "columnId": "col_chapters_introductio",
+          "header": "CHAPTERS Introduction",
+          "role": "dimension",
+          "entityRef": "ent_013",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_page_no__1_9",
+          "header": "Page No. 1-9",
+          "role": "dimension",
+          "entityRef": "ent_014",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_sl_no__1",
+          "header": "Sl.No. 1",
+          "role": "measure",
+          "entityRef": "ent_012",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        }
+      ],
+      "dimensions": [
+        "ent_013",
+        "ent_014"
+      ],
+      "measures": [
+        "ent_012"
+      ],
+      "breakdowns": [],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_2_1_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_page_no__1_9",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_3_1",
+      "title": "Table with 8 columns, 40 rows",
+      "columnGroups": [],
+      "columns": [
+        {
+          "columnId": "col_1_1_the_ministry_of_",
+          "header": "1.1 The Ministry of independent Ministry o Department of Program",
+          "role": "dimension",
+          "entityRef": "ent_unresolved_1.1 the ministr",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_statistics_an_n_15th",
+          "header": "Statistics an n 15th Octo me Impleme",
+          "role": "dimension",
+          "entityRef": "ent_015",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_d_pro_ber_1_ntatio",
+          "header": "d Pro ber 1 ntatio",
+          "role": "dimension",
+          "entityRef": "ent_016",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_gramme_i_999_after_t",
+          "header": "gramme I 999 after t n. The M",
+          "role": "dimension",
+          "entityRef": "ent_017",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_mplementation_he_mer",
+          "header": "mplementation he merger of th inistry is the no",
+          "role": "dimension",
+          "entityRef": "ent_018",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col__mospi__ca_e_departm",
+          "header": "(MoSPI) ca e Departm dal agency",
+          "role": "dimension",
+          "entityRef": "ent_019",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_me_into_e_ent_of_sta",
+          "header": "me into e ent of Sta for plann",
+          "role": "dimension",
+          "entityRef": "ent_020",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_xistence_as_an_tisti",
+          "header": "xistence as an tistics and the ing integrated",
+          "role": "dimension",
+          "entityRef": "ent_021",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        }
+      ],
+      "dimensions": [
+        "ent_unresolved_1.1 the ministr",
+        "ent_015",
+        "ent_016",
+        "ent_017",
+        "ent_018",
+        "ent_019",
+        "ent_020",
+        "ent_021"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_3_1_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_statistics_an_n_15th",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_4_1",
+      "title": "Table with 8 columns, 44 rows",
+      "columnGroups": [],
+      "columns": [
+        {
+          "columnId": "col_statistics_and_minis",
+          "header": "statistics and Ministry’s offi",
+          "role": "dimension",
+          "entityRef": "ent_022",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_classific_cials_in_i",
+          "header": "classific cials in i",
+          "role": "dimension",
+          "entityRef": "ent_023",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_ations__statistica_n",
+          "header": "ations, statistica nternational mee",
+          "role": "dimension",
+          "entityRef": "ent_024",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_l_compilations_an_ti",
+          "header": "l compilations an tings on these sub",
+          "role": "dimension",
+          "entityRef": "ent_025",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_d_internat_jects_has",
+          "header": "d internat jects has be",
+          "role": "dimension",
+          "entityRef": "ent_026",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_ional_p_en_high",
+          "header": "ional p en high",
+          "role": "dimension",
+          "entityRef": "ent_027",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_ractices__the_contri",
+          "header": "ractices. The contri ly appreciated.",
+          "role": "dimension",
+          "entityRef": "ent_028",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_bution_of_the_ly_app",
+          "header": "bution of the ly appreciated.",
+          "role": "dimension",
+          "entityRef": "ent_029",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        }
+      ],
+      "dimensions": [
+        "ent_022",
+        "ent_023",
+        "ent_024",
+        "ent_025",
+        "ent_026",
+        "ent_027",
+        "ent_028",
+        "ent_029"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_4_1_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_classific_cials_in_i",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_5_1",
+      "title": "Table with 11 columns, 46 rows",
+      "columnGroups": [],
+      "columns": [
+        {
+          "columnId": "col_1_10_econo_from_si",
+          "header": "1.10 Econo from si",
+          "role": "dimension",
+          "entityRef": "ent_unresolved_1.10 econo from",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_the_index_of_mic_sta",
+          "header": "The Index of mic Statistics x weeks to fo",
+          "role": "dimension",
+          "entityRef": "ent_030",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_industrial_division_",
+          "header": "Industrial Division (E ur weeks,",
+          "role": "dimension",
+          "entityRef": "ent_031",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_production__i_sd__of",
+          "header": "Production (I SD) of MoSP ensuring time",
+          "role": "dimension",
+          "entityRef": "ent_032",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_ip_i__lie",
+          "header": "IP I. lie",
+          "role": "dimension",
+          "entityRef": "ent_033",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col___with_base_the_rele",
+          "header": ") with base The release r availabilit",
+          "role": "dimension",
+          "entityRef": "ent_unresolved_) with base the",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_year_2011_timeline_o",
+          "header": "year 2011 timeline o y of indus",
+          "role": "dimension",
+          "entityRef": "ent_034",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col__12_is_f_iip_h_trial",
+          "header": "-12 is f IIP h trial ou",
+          "role": "dimension",
+          "entityRef": "ent_035",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_compiled_as_been_im_",
+          "header": "compiled as been im tput data.",
+          "role": "dimension",
+          "entityRef": "ent_036",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_and_pu_prove_it_is_p",
+          "header": "and pu prove It is p",
+          "role": "dimension",
+          "entityRef": "ent_037",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_blished_by_the_d_by_",
+          "header": "blished by the d by reducing it ublished on the",
+          "role": "dimension",
+          "entityRef": "ent_038",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        }
+      ],
+      "dimensions": [
+        "ent_unresolved_1.10 econo from",
+        "ent_030",
+        "ent_031",
+        "ent_032",
+        "ent_033",
+        "ent_unresolved_) with base the",
+        "ent_034",
+        "ent_035",
+        "ent_036",
+        "ent_037",
+        "ent_038"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_5_1_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_the_index_of_mic_sta",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_6_1",
+      "title": "Table with 6 columns, 10 rows",
+      "columnGroups": [],
+      "columns": [
+        {
+          "columnId": "col_sl__no__1_2_3_4",
+          "header": "Sl. No. 1\n2\n3\n4",
+          "role": "dimension",
+          "entityRef": "ent_039",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_item_domestic_produc",
+          "header": "Item Domestic Product GVA at Basic Prices\nNet Taxes on Products\nGross Domestic Product (GDP) @\nNet Domestic Product (NDP)",
+          "role": "dimension",
+          "entityRef": "ent_094",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2023_24__fre__domest",
+          "header": "2023-24\n(FRE) Domestic Product 1,61,51,477 1,71,87,446 1,84,49,828\n14,99,114 16,09,509 17,40,091\n1,76,50,591 1,87,96,955 2,01,89,919\n1,54,21,624 1,64,25,021 1,76,43,771",
+          "role": "dimension",
+          "entityRef": "ent_094",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2024_25__pe__domesti",
+          "header": "2024-25\n(PE) Domestic Product 1,61,51,477 1,71,87,446 1,84,49,828\n14,99,114 16,09,509 17,40,091\n1,76,50,591 1,87,96,955 2,01,89,919\n1,54,21,624 1,64,25,021 1,76,43,771",
+          "role": "dimension",
+          "entityRef": "ent_094",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2025_26__fae__domest",
+          "header": "2025-26\n(FAE) Domestic Product 1,61,51,477 1,71,87,446 1,84,49,828\n14,99,114 16,09,509 17,40,091\n1,76,50,591 1,87,96,955 2,01,89,919\n1,54,21,624 1,64,25,021 1,76,43,771",
+          "role": "dimension",
+          "entityRef": "ent_094",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_percentage_change_ov",
+          "header": "Percentage Change\nOver Previous\nYear\n2024-25 2025-26 Domestic Product 6.4 7.3\n7.4 8.1\n6.5 7.4\n6.5 7.4",
+          "role": "dimension",
+          "entityRef": "ent_094",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        }
+      ],
+      "dimensions": [
+        "ent_039",
+        "ent_094",
+        "ent_094",
+        "ent_094",
+        "ent_094",
+        "ent_094"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_6_1_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_item_domestic_produc",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_7_1",
+      "title": "Table with 6 columns, 10 rows",
+      "columnGroups": [],
+      "columns": [
+        {
+          "columnId": "col_sl__no__1_2_3_4",
+          "header": "Sl. No. 1\n2\n3\n4",
+          "role": "dimension",
+          "entityRef": "ent_039",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_item_domestic_produc",
+          "header": "Item Domestic Product GVA at Basic Prices\nNet Taxes on Products\nGross Domestic Product (GDP) @\nNet Domestic Product (NDP)",
+          "role": "dimension",
+          "entityRef": "ent_094",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2023_24__fre__domest",
+          "header": "2023-24\n(FRE) Domestic Product 2,74,12,888 3,00,22,033 3,23,47,873\n27,10,068 30,46,113 33,66,013\n3,01,22,956 3,30,68,145 3,57,13,886\n2,67,62,544 2,93,87,892 3,17,48,519",
+          "role": "dimension",
+          "entityRef": "ent_094",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2024_25__pe__domesti",
+          "header": "2024-25\n(PE) Domestic Product 2,74,12,888 3,00,22,033 3,23,47,873\n27,10,068 30,46,113 33,66,013\n3,01,22,956 3,30,68,145 3,57,13,886\n2,67,62,544 2,93,87,892 3,17,48,519",
+          "role": "dimension",
+          "entityRef": "ent_094",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2025_26__fae__domest",
+          "header": "2025-26\n(FAE) Domestic Product 2,74,12,888 3,00,22,033 3,23,47,873\n27,10,068 30,46,113 33,66,013\n3,01,22,956 3,30,68,145 3,57,13,886\n2,67,62,544 2,93,87,892 3,17,48,519",
+          "role": "dimension",
+          "entityRef": "ent_094",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_percentage_change_ov",
+          "header": "Percentage Change\nOver Previous\n2024-25 2025-26 Domestic Product 9.5 7.7\n12.4 10.5\n9.8 8.0\n9.8 8.0",
+          "role": "dimension",
+          "entityRef": "ent_094",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        }
+      ],
+      "dimensions": [
+        "ent_039",
+        "ent_094",
+        "ent_094",
+        "ent_094",
+        "ent_094",
+        "ent_094"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_7_1_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_item_domestic_produc",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_8_1",
+      "title": "Table with 6 columns, 3 rows",
+      "columnGroups": [],
+      "columns": [
+        {
+          "columnId": "col_industry_1__primary_",
+          "header": "Industry 1. Primary Sector\n1.1 Agriculture, Livestock, Forestry & Fishing\n1.2. Mining & Quarrying\n2. Secondary Sector\n2.1. Manufacturing\n2.2. Electricity, Gas, Water Supply & Other\nUtility Services\n2.3. Construction\n3. Tertiary Sector\n3.1 Trade, Hotels, Transport, Communication\n& Services related to Broadcasting\n3.2 Financial, Real Estate & Professional\nServices\n3.3 Public Administration, Defence & Other\nServices*",
+          "role": "dimension",
+          "entityRef": "ent_076",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2023_24__fre__26_97_",
+          "header": "2023-24\n(FRE) 26,97,294\n23,67,287\n3,30,007\n46,46,499\n28,25,935\n3,82,776\n14,37,788\n88,07,683\n29,94,536\n38,14,586\n19,98,561",
+          "role": "measure",
+          "entityRef": "ent_unresolved_2023-24\n(fre) 2",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        },
+        {
+          "columnId": "col_2024_25__pe__28_15_6",
+          "header": "2024-25\n(PE) 28,15,689\n24,76,805\n3,38,884\n49,31,228\n29,53,647\n4,05,296\n15,72,285\n94,40,529\n31,76,830\n40,88,072\n21,75,628",
+          "role": "measure",
+          "entityRef": "ent_unresolved_2024-25\n(pe) 28",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        },
+        {
+          "columnId": "col_2025_26__fae__28_90_",
+          "header": "2025-26\n(FAE) 28,90,621\n25,54,071\n3,36,550\n52,57,858\n31,61,364\n4,13,702\n16,82,792\n1,03,01,349\n34,15,552\n44,94,341\n23,91,455",
+          "role": "measure",
+          "entityRef": "ent_unresolved_2025-26\n(fae) 2",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        },
+        {
+          "columnId": "col_percentage_change_ov",
+          "header": "Percentage Change Over\nPrevious Year 2024-25 4.4\n4.6\n2.7\n6.1\n4.5\n5.9\n9.4\n7.2\n6.1\n7.2\n8.9",
+          "role": "measure",
+          "entityRef": "ent_101",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        },
+        {
+          "columnId": "col_percentage_change_ov",
+          "header": "Percentage Change Over\nPrevious Year 2025-26 2.7\n3.1\n-0.7\n6.6\n7.0\n2.1\n7.0\n9.1\n7.5\n9.9\n9.9",
+          "role": "measure",
+          "entityRef": "ent_101",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        }
+      ],
+      "dimensions": [
+        "ent_076"
+      ],
+      "measures": [
+        "ent_unresolved_2023-24\n(fre) 2",
+        "ent_unresolved_2024-25\n(pe) 28",
+        "ent_unresolved_2025-26\n(fae) 2",
+        "ent_101",
+        "ent_101"
+      ],
+      "breakdowns": [],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_8_1_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_2023_24__fre__26_97_",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_8_2",
+      "title": "Table with 6 columns, 3 rows",
+      "columnGroups": [],
+      "columns": [
+        {
+          "columnId": "col_industry_1__primary_",
+          "header": "Industry 1. Primary Sector\n1.1 Agriculture, Livestock, Forestry & Fishing\n1.2. Mining & Quarrying\n2. Secondary Sector\n2.1. Manufacturing\n2.2. Electricity, Gas, Water Supply & Other\nUtility Services\n2.3. Construction\n3. Tertiary Sector\n3.1 Trade, Hotels, Transport, Communication\n& Services related to Broadcasting\n3.2 Financial, Real Estate & Professional\nServices\n3.3 Public Administration, Defence & Other\nServices*",
+          "role": "dimension",
+          "entityRef": "ent_076",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2023_24__fre__54_10_",
+          "header": "2023-24\n(FRE) 54,10,210\n48,77,867\n5,32,343\n70,89,650\n39,21,596\n7,66,435\n24,01,618\n1,49,13,028\n48,28,505\n62,44,153\n38,40,370",
+          "role": "measure",
+          "entityRef": "ent_unresolved_2023-24\n(fre) 5",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        },
+        {
+          "columnId": "col_2024_25__pe__59_26_0",
+          "header": "2024-25\n(PE) 59,26,078\n53,85,291\n5,40,788\n76,03,402\n41,69,419\n8,06,974\n26,27,009\n1,64,92,552\n52,57,396\n68,81,866\n43,53,290",
+          "role": "measure",
+          "entityRef": "ent_unresolved_2024-25\n(pe) 59",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        },
+        {
+          "columnId": "col_2025_26__fae__59_36_",
+          "header": "2025-26\n(FAE) 59,36,462\n54,27,908\n5,08,554\n81,71,692\n45,54,580\n8,17,265\n27,99,847\n1,82,39,719\n56,40,741\n76,57,155\n49,41,823",
+          "role": "measure",
+          "entityRef": "ent_unresolved_2025-26\n(fae) 5",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        },
+        {
+          "columnId": "col_percentage_change_ov",
+          "header": "Percentage Change Over\nPrevious Year 2024-25 9.5\n10.4\n1.6\n7.2\n6.3\n5.3\n9.4\n10.6\n8.9\n10.2\n13.4",
+          "role": "measure",
+          "entityRef": "ent_101",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        },
+        {
+          "columnId": "col_percentage_change_ov",
+          "header": "Percentage Change Over\nPrevious Year 2025-26 0.2\n0.8\n-6.0\n7.5\n9.2\n1.3\n6.6\n10.6\n7.3\n11.3\n13.5",
+          "role": "measure",
+          "entityRef": "ent_101",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        }
+      ],
+      "dimensions": [
+        "ent_076"
+      ],
+      "measures": [
+        "ent_unresolved_2023-24\n(fre) 5",
+        "ent_unresolved_2024-25\n(pe) 59",
+        "ent_unresolved_2025-26\n(fae) 5",
+        "ent_101",
+        "ent_101"
+      ],
+      "breakdowns": [],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_8_2_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_2023_24__fre__54_10_",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    }
+  ],
+  "documentMap": {
+    "order": [
+      "topic_01"
+    ],
+    "frontMatter": [
+      "title_page",
+      "toc"
+    ],
+    "backMatter": [
+      "glossary",
+      "notes"
+    ]
+  },
+  "glossary": {
+    "Fig. 2: Sectoral Composition and Growth Rates of Annual GVA": "Fig. 2: Sectoral Composition and Growth Rates of Annual GVA — extracted indicator from the source document.",
+    "Fig. 3: Composition and Growth Rates of Annual GVA in Broad Sectors": "Fig. 3: Composition and Growth Rates of Annual GVA in Broad Sectors — extracted indicator from the source document.",
+    "maintains frame of urban area units for drawing samples in urban areas.": "maintains frame of urban area units for drawing samples in urban areas. — extracted indicator from the source document.",
+    "Expenditure Components": "Expenditure Components — extracted indicator from the source document.",
+    "PFCE": "Private Final Consumption Expenditure — extracted indicator from the source document.",
+    "Sectoral Composition and Growth Rates of Annual GVA": "Sectoral Composition and Growth Rates of Annual GVA — extracted indicator from the source document.",
+    "Sector-wise Growth Rates of Real GVA in FY 2024-25 and 2025-26": "Sector-wise Growth Rates of Real GVA in FY 2024-25 and 2025-26 — extracted indicator from the source document.",
+    "Broad Sector-wise Y-o-Y Growth Rates of Real GVA": "Broad Sector-wise Y-o-Y Growth Rates of Real GVA — extracted indicator from the source document.",
+    "Sl.No. 1": "Sl.No. 1 — extracted indicator from the source document.",
+    "Percentage Change": "Percentage Change — extracted indicator from the source document.",
+    "Members of Parliament Local Area Development Scheme": "Members of Parliament Local Area Development Scheme — extracted indicator from the source document."
+  },
+  "palette": {
+    "paletteId": "pal_mospi_default",
+    "sequential": [
+      "#0B5394",
+      "#3D85C6",
+      "#6FA8DC",
+      "#9FC5E8",
+      "#CFE2F3"
+    ],
+    "categorical": {
+      "Rural": "#1F7A1F",
+      "Urban": "#0B5394",
+      "Male": "#0B5394",
+      "Female": "#CC4125",
+      "Total": "#666666"
+    },
+    "semantic": {
+      "positive": "#1F7A1F",
+      "negative": "#CC0000",
+      "neutral": "#666666"
+    }
+  },
+  "renderProfile": {
+    "numberFormat": {
+      "locale": "en-IN",
+      "grouping": "lakh-crore",
+      "decimalSeparator": "."
+    },
+    "percentFormat": {
+      "decimals": 1,
+      "suffix": "%"
+    },
+    "currencyFormat": {
+      "symbol": "₹",
+      "grouping": "lakh-crore",
+      "decimals": 0
+    },
+    "fontFamily": "Noto Sans",
+    "pageSize": "A4"
+  },
+  "figureTemplates": [
+    {
+      "figureTemplateId": "ft_q_001",
+      "captionTemplate": "Sl.No. 1 by CHAPTERS Introduction, {{period.current}}",
+      "chartId": "chart_q_001",
+      "numbering": "Figure {{topic.order}}.1"
+    },
+    {
+      "figureTemplateId": "ft_q_002",
+      "captionTemplate": "Sl.No. 1 by CHAPTERS Introduction, {{period.current}}",
+      "chartId": "chart_q_002",
+      "numbering": "Figure {{topic.order}}.2"
+    },
+    {
+      "figureTemplateId": "ft_q_003",
+      "captionTemplate": "Sl.No. 1 by CHAPTERS Introduction, {{period.current}}",
+      "chartId": "chart_q_003",
+      "numbering": "Figure {{topic.order}}.3"
+    },
+    {
+      "figureTemplateId": "ft_q_004",
+      "captionTemplate": "Value by Statistics an n 15th Octo me Impleme, {{period.current}}",
+      "chartId": "chart_q_004",
+      "numbering": "Figure {{topic.order}}.4"
+    },
+    {
+      "figureTemplateId": "ft_q_005",
+      "captionTemplate": "Value by Statistics an n 15th Octo me Impleme, {{period.current}}",
+      "chartId": "chart_q_005",
+      "numbering": "Figure {{topic.order}}.5"
+    },
+    {
+      "figureTemplateId": "ft_q_006",
+      "captionTemplate": "Value by Statistics an n 15th Octo me Impleme, {{period.current}}",
+      "chartId": "chart_q_006",
+      "numbering": "Figure {{topic.order}}.6"
+    },
+    {
+      "figureTemplateId": "ft_q_007",
+      "captionTemplate": "Value by statistics and Ministry’s offi, {{period.current}}",
+      "chartId": "chart_q_007",
+      "numbering": "Figure {{topic.order}}.7"
+    },
+    {
+      "figureTemplateId": "ft_q_008",
+      "captionTemplate": "Value by statistics and Ministry’s offi, {{period.current}}",
+      "chartId": "chart_q_008",
+      "numbering": "Figure {{topic.order}}.8"
+    },
+    {
+      "figureTemplateId": "ft_q_010",
+      "captionTemplate": "Value by The Index of mic Statistics x weeks to fo, {{period.current}}",
+      "chartId": "chart_q_010",
+      "numbering": "Figure {{topic.order}}.9"
+    },
+    {
+      "figureTemplateId": "ft_q_011",
+      "captionTemplate": "Value by The Index of mic Statistics x weeks to fo, {{period.current}}",
+      "chartId": "chart_q_011",
+      "numbering": "Figure {{topic.order}}.10"
+    },
+    {
+      "figureTemplateId": "ft_q_012",
+      "captionTemplate": "Value by The Index of mic Statistics x weeks to fo, {{period.current}}",
+      "chartId": "chart_q_012",
+      "numbering": "Figure {{topic.order}}.11"
+    },
+    {
+      "figureTemplateId": "ft_q_013",
+      "captionTemplate": "Value by Sl. No. 1\n2\n3\n4, {{period.current}}",
+      "chartId": "chart_q_013",
+      "numbering": "Figure {{topic.order}}.12"
+    },
+    {
+      "figureTemplateId": "ft_q_014",
+      "captionTemplate": "Value by Sl. No. 1\n2\n3\n4, {{period.current}}",
+      "chartId": "chart_q_014",
+      "numbering": "Figure {{topic.order}}.13"
+    },
+    {
+      "figureTemplateId": "ft_q_015",
+      "captionTemplate": "Value by Sl. No. 1\n2\n3\n4, {{period.current}}",
+      "chartId": "chart_q_015",
+      "numbering": "Figure {{topic.order}}.14"
+    },
+    {
+      "figureTemplateId": "ft_q_016",
+      "captionTemplate": "Value by Sl. No. 1\n2\n3\n4, {{period.current}}",
+      "chartId": "chart_q_016",
+      "numbering": "Figure {{topic.order}}.15"
+    },
+    {
+      "figureTemplateId": "ft_q_017",
+      "captionTemplate": "Value by Sl. No. 1\n2\n3\n4, {{period.current}}",
+      "chartId": "chart_q_017",
+      "numbering": "Figure {{topic.order}}.16"
+    },
+    {
+      "figureTemplateId": "ft_q_018",
+      "captionTemplate": "Value by Sl. No. 1\n2\n3\n4, {{period.current}}",
+      "chartId": "chart_q_018",
+      "numbering": "Figure {{topic.order}}.17"
+    }
+  ]
+}

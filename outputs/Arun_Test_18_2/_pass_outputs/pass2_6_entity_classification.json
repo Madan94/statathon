@@ -1,0 +1,300 @@
+{
+  "classified_entities": [
+    {
+      "entityId": "ent_012",
+      "name": "Sl.No. 1",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_013",
+      "name": "CHAPTERS Introduction",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_014",
+      "name": "Page No. 1-9",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_015",
+      "name": "Statistics an n 15th Octo me Impleme",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_016",
+      "name": "(MoSPI) ca e Departm dal agency",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_017",
+      "name": "-12 is f IIP h trial ou",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_018",
+      "name": "Item Domestic Product",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_019",
+      "name": "Percentage Change\nOver Previous\n2024-25 2025-26",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_020",
+      "name": "Industry",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_021",
+      "name": "Percentage Change Over\nPrevious Year 2024-25",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_022",
+      "name": "Percentage Change Over\nPrevious Year 2025-26",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_023",
+      "name": "Government of India",
+      "entityType_hint": "metadata",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_024",
+      "name": "Ministry of Statistics Programme Implementation",
+      "entityType_hint": "metadata",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_025",
+      "name": "Khurshid Lal Bhawan, Janpath",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_026",
+      "name": "Annual Report",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_027",
+      "name": "Introduction 1-9",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_028",
+      "name": "National Sample Survey (NSS) 41-62",
+      "entityType_hint": "metadata",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_029",
+      "name": "Data Informatics Innovation 79-91",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_030",
+      "name": "Administrative Statistics 92-93",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_031",
+      "name": "India in United Nations 94-95",
+      "entityType_hint": "metadata",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_032",
+      "name": "Research and Analysis 96-97",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_033",
+      "name": "Support for Statistical Strengthening 98-101",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_034",
+      "name": "Annual Report 2025-26",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_035",
+      "name": "September 2024 for the same.",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_036",
+      "name": "Domestic Product",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_037",
+      "name": "Expenditure Components",
+      "entityType_hint": "measure",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_038",
+      "name": "Share in GDP(%)",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_039",
+      "name": "National Product",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_040",
+      "name": "Item Sl. No. Over Previous",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_041",
+      "name": "Percentage Change Over",
+      "entityType_hint": "measure",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_042",
+      "name": "Eastern Region",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_043",
+      "name": "Services as on 1st January 2025",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_044",
+      "name": "TABLE OF CONTENTS",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_045",
+      "name": "Ministry is at Annexure IIA and IIB.",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_046",
+      "name": "Implementation is placed at Annexure",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_047",
+      "name": "Percentage Change",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_048",
+      "name": "Previous Year Industry",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    }
+  ]
+}

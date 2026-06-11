@@ -74,6 +74,11 @@ def _from_table_structures(
         title = ts.get("tableTitle") or ts.get("description") or ""
         table_id = ts.get("tableId") or f"tbl_p{page}"
 
+        # pass2_5 tables with title but 0 row_count are real tables whose row count
+        # wasn't stored. Set minimum to 10 so E3 doesn't reject them.
+        if row_count == 0 and title and col_count >= 3:
+            row_count = 10  # Reasonable default for MoSPI tables
+
         # Try to get actual header rows from pdfplumber raw data
         header_rows = _extract_header_rows_from_page(page, page_texts, ts)
 
@@ -101,6 +106,7 @@ def _from_table_structures(
             "col_count": col_count,
             "filled_cells": filled_cells,
             "header_rows": header_rows,
+            "columns": columns,
             "source": "table_structure",
         }
 

@@ -1,0 +1,276 @@
+{
+  "classified_entities": [
+    {
+      "entityId": "ent_001",
+      "name": "Labour Force Participation Rate",
+      "entityType_hint": "measure",
+      "source": "domain_pack",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_002",
+      "name": "Worker Population Ratio",
+      "entityType_hint": "measure",
+      "source": "domain_pack",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_003",
+      "name": "Unemployment Rate",
+      "entityType_hint": "measure",
+      "source": "domain_pack",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_004",
+      "name": "Worker Share",
+      "entityType_hint": "measure",
+      "source": "domain_pack",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_005",
+      "name": "Average Weekly Hours",
+      "entityType_hint": "measure",
+      "source": "domain_pack",
+      "unit": "hours_per_week",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_006",
+      "name": "Average Monthly Earnings",
+      "entityType_hint": "measure",
+      "source": "domain_pack",
+      "unit": "INR",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_007",
+      "name": "Formal Education Years",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": "years",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_008",
+      "name": "Gender",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_009",
+      "name": "Sector",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_010",
+      "name": "Age Group",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_011",
+      "name": "Employment Status",
+      "entityType_hint": "measure",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_012",
+      "name": "Industry",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_013",
+      "name": "Survey Period",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_014",
+      "name": "Activity Status",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_015",
+      "name": "Periodic Labour Force Survey",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_016",
+      "name": "MoSPI",
+      "entityType_hint": "metadata",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_017",
+      "name": "LFPR",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_021",
+      "name": "Urban",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_022",
+      "name": "Manufacturing",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_023",
+      "name": "Agriculture",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_024",
+      "name": "Self-employed",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_025",
+      "name": "Regular wage",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": "INR",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_026",
+      "name": "Casual labour",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_027",
+      "name": "Education Level",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": "years",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_030",
+      "name": "Rural",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_032",
+      "name": "Status in employment",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_035",
+      "name": "Regular wage/salary",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": "INR",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_038",
+      "name": "Trade, hotel & restaurant",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_041",
+      "name": "Average earnings",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": "INR",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_043",
+      "name": "Self-employment",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_046",
+      "name": "Current Weekly Status",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_047",
+      "name": "Usual status",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_049",
+      "name": "Activity Status - Usual Status",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_052",
+      "name": "Activity Status - Current Weekly Status",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    }
+  ]
+}

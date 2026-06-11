@@ -1,0 +1,246 @@
+{
+  "vlm_success_count": 11,
+  "total_entities": 130,
+  "chart_pages": 1,
+  "pages": [
+    {
+      "page": 0,
+      "vlm_used": true,
+      "structure_type": "title_page",
+      "entities": [
+        "Annual Report",
+        "Government of India",
+        "Ministry of Statistics Programme Implementation",
+        "Khurshid Lal Bhawan, Janpath",
+        "New Delhi-110001"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 1,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "CHAPTERS",
+        "ANNEXURES",
+        "Sl.No. 1",
+        "CHAPTERS Introduction",
+        "Page No. 1-9",
+        "Introduction 1-9",
+        "National Sample Survey (NSS) 41-62",
+        "Data Informatics Innovation 79-91",
+        "Administrative Statistics 92-93",
+        "India in United Nations 94-95",
+        "Research and Analysis 96-97",
+        "Support for Statistical Strengthening 98-101",
+        "Members of Parliament Local Area Development Scheme( MPLADS)",
+        "IIA Organisation Chart of Ministry of Statistics Programme Implementation 145",
+        "IIB Organisation Chart of National Statistical Commission 146",
+        "IIC Abbreviations used 147-149",
+        "III Statement of Budget Estimate (SBE) Annual Plan 2025-26 150",
+        "Eastern Region",
+        "the Calendar Year 2024",
+        "Services as on 1st January 2025"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 2,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Chapter 1",
+        "Introduction",
+        "Statistics an n 15th Octo me Impleme",
+        "d Pro ber 1 ntatio",
+        "gramme I 999 after t n. The M",
+        "mplementation he merger of th inistry is the no",
+        "(MoSPI) ca e Departm dal agency",
+        "me into e ent of Sta for plann",
+        "xistence as an tistics and the ing integrated",
+        "Annual Report 2025-26",
+        "Ministry is at Annexure IIA and IIB.",
+        "applying standard statistical techniques and extensive scrutiny and supervision.",
+        "Implementation is placed at Annexure"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 3,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Annual Report",
+        "statistics and Ministry’s offi",
+        "classific cials in i",
+        "ations, statistica nternational mee",
+        "l compilations an tings on these sub",
+        "d internat jects has be",
+        "ional p en high",
+        "ractices. The contri ly appreciated.",
+        "bution of the ly appreciated.",
+        "results, India ranks as the third-largest economy globally.",
+        "ministries. At present, ICP 2024 round is in progress.",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 4,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Annual Report",
+        "Index of Industrial Production (IIP)",
+        "Mining",
+        "Manufacturing",
+        "Electricity",
+        "SDGs",
+        "National Indicator Framework (NIF)",
+        "Sustainable Development Goals (SDGs)",
+        "UNSEEA Framework",
+        "DataSnapshot",
+        "EnviStats India",
+        "Selected Indicators",
+        "Women and Men in India",
+        "National Sample Survey (NSS)",
+        "MoSPI website",
+        "The Index of mic Statistics x weeks to fo",
+        "Industrial Division (E ur weeks,",
+        "Production (I SD) of MoSP ensuring time",
+        "IP I. lie",
+        "year 2011 timeline o y of indus"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 5,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "Sl. No. 1\n2\n3\n4",
+        "release by MoSPI will be done on 27th February, 2026.",
+        "Domestic Product",
+        "Expenditure Components",
+        "Share in GDP(%)",
+        "National Product",
+        "Per Capita Income, National Product and Final Consumption",
+        "(PE) (FAE) (FRE) Year",
+        "(at 2011- 12 Prices)",
+        "Percentage Change",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 6,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "Statement",
+        "Domestic Product",
+        "Private Final Consumption Expenditure (PFCE)",
+        "Government Final Consumption Expenditure (GFCE)",
+        "Gross Fixed Capital Formation (GFCF)",
+        "Changes in Stocks (CIS)",
+        "Valuables",
+        "Exports",
+        "Imports",
+        "Discrepancies",
+        "Share of GDP%",
+        "National Product",
+        "Per Capita Income, National Product and Final Consumption",
+        "Sl. No. 1\n2\n3\n4",
+        "Expenditure Components",
+        "Share in GDP(%)",
+        "Item Sl. No. Over Previous",
+        "(PE) (FAE) (FRE)",
+        "(at Current Prices)",
+        "Percentage Change"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 7,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "GVA at Basic Prices 1,61,51,477 1,71,87,446 1,84,49,828 6.4 7.3",
+        "Percentage Change Over",
+        "(FRE) (PE) (FAE)",
+        "GVA at Basic Prices 2,74,12,888 3,00,22,033 3,23,47,873 9.5 7.7",
+        "Previous Year Industry",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 8,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "Annual GDP and GVA Estimates along with Y-o-Y Growth Rates at Constant Prices",
+        "Fig. 1: Annual GDP and GVA Estimates along with Y-o-Y Growth Rates at Constant",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 9,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "Sectoral Composition and Growth Rates of Annual GVA",
+        "Sector-wise Growth Rates (%) of Real GVA in FY 2024-25 and 2025-26",
+        "Fig. 2: Sectoral Composition and Growth Rates of Annual GVA",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 10,
+      "vlm_used": true,
+      "structure_type": "chart_page",
+      "entities": [
+        "Composition (%) of Nominal GVA",
+        "Broad Sector-wise Y-o-Y Growth Rates (%) of Real GVA",
+        "Fig. 3: Composition and Growth Rates of Annual GVA in Broad Sectors",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    }
+  ]
+}

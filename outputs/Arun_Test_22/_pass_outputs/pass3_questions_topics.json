@@ -1,0 +1,358 @@
+{
+  "questions_count": 6,
+  "topics_count": 2,
+  "questions": [
+    {
+      "questionId": "sp01_q01",
+      "intent": "Which state has the highest proven coal reserves in India?",
+      "questionType": "ranking",
+      "page": 2,
+      "sourceHeading": "Highlights of r 1.1 Coal Rese",
+      "requiredEntities": [
+        {
+          "entityRef": "States/ UTs",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Proved 2024",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "entityRef": "Proved 2024"
+        },
+        "groupBy": [
+          {
+            "entityRef": "States/ UTs"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 10,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp01_q02",
+      "intent": "How many years of coal reserves does India have at its disposal?",
+      "questionType": "trend",
+      "page": 2,
+      "sourceHeading": "Highlights of r 1.1 Coal Rese",
+      "requiredEntities": [
+        {
+          "entityRef": "Coal Reserves",
+          "role": "measure"
+        },
+        {
+          "entityRef": "India",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Coal Reserves"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "India"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp01_q03",
+      "intent": "What percentage of India's total energy reserves are currently classified as non-commercial deposits?",
+      "questionType": "composition",
+      "page": 2,
+      "sourceHeading": "Highlights of r 1.3 Crude Oil",
+      "requiredEntities": [
+        {
+          "entityRef": "Energy Reserves",
+          "role": "measure"
+        },
+        {
+          "entityRef": "India rves",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Non-commercial deposits",
+          "role": "breakdown"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "share",
+        "measure": {
+          "entityRef": "Energy Reserves"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Non-commercial deposits"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "India rves"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp02_q01",
+      "intent": "Which state has the highest potential for wind power at 150 meters?",
+      "questionType": "ranking",
+      "page": 9,
+      "sourceHeading": "Chapter 1: Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "States/ UTs",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Potential Introduction",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Inferred 2025",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "entityRef": "Inferred 2025"
+        },
+        "groupBy": [
+          {
+            "entityRef": "States/ UTs"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Potential Introduction"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 10,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp02_q02",
+      "intent": "How much more potential does Arunachal Pradesh have compared to Himachal Pradesh in small hydro power?",
+      "questionType": "comparison",
+      "page": 9,
+      "sourceHeading": "Chapter 1: Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "Arunachal Pradesh",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Himachal Pradesh",
+          "role": "filter"
+        },
+        {
+          "entityRef": "small hydro power",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Potential Introduction",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Potential Introduction"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Arunachal Pradesh"
+          },
+          {
+            "entityRef": "Himachal Pradesh"
+          },
+          {
+            "entityRef": "small hydro power"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp02_q03",
+      "intent": "What is the total estimated potential of renewable power in India as of March 31, 2025?",
+      "questionType": "distribution",
+      "page": 9,
+      "sourceHeading": "Chapter 1: Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "Potential Introduction",
+          "role": "filter"
+        },
+        {
+          "entityRef": "India",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Total 2025",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "distribution",
+        "measure": {
+          "entityRef": "Total 2025"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Potential Introduction"
+          },
+          {
+            "entityRef": "India"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.5
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Energy Reserves and Potential",
+      "description": "Questions from chapter: Energy Reserves and Potential",
+      "questionIds": [
+        "sp01_q01",
+        "sp01_q02",
+        "sp01_q03"
+      ],
+      "pageRange": [
+        2,
+        7
+      ]
+    },
+    {
+      "topicId": "topic_02",
+      "title": "1 Energy Reserves and Potential",
+      "description": "Questions from chapter: 1 Energy Reserves and Potential",
+      "questionIds": [
+        "sp02_q01",
+        "sp02_q02",
+        "sp02_q03"
+      ],
+      "pageRange": [
+        9,
+        9
+      ]
+    }
+  ]
+}

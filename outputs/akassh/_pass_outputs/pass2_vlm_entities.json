@@ -1,0 +1,173 @@
+{
+  "vlm_success_count": 11,
+  "total_entities": 45,
+  "chart_pages": 0,
+  "pages": [
+    {
+      "page": 0,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban",
+        "Report, 2025 [January, 2025 December, 2025]"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 1,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 2,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 3,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 4,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 5,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 6,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 7,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 8,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 9,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 10,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    }
+  ]
+}

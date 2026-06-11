@@ -1,0 +1,644 @@
+{
+  "classified_entities": [
+    {
+      "entityId": "ent_018",
+      "name": "(MoSPI) ca e Departm dal agency",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_028",
+      "name": "Industrial Division (E ur weeks,",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_029",
+      "name": "Production (I SD) of MoSP ensuring time",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_041",
+      "name": "Khurshid Lal Bhawan, Janpath",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_044",
+      "name": "ANNEXURES",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_046",
+      "name": "National Sample Survey (NSS) 41-62",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_056",
+      "name": "Ministry is at Annexure IIA and IIB.",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_057",
+      "name": "Implementation is placed at Annexure",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_060",
+      "name": "Manufacturing",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_070",
+      "name": "National Sample Survey (NSS)",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_071",
+      "name": "MoSPI website",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_075",
+      "name": "Expenditure Components",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": "INR",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_091",
+      "name": "(at Current Prices)",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_012",
+      "name": "Sl.No. 1",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_013",
+      "name": "CHAPTERS Introduction",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_014",
+      "name": "Page No. 1-9",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_015",
+      "name": "Statistics an n 15th Octo me Impleme",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_016",
+      "name": "d Pro ber 1 ntatio",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_017",
+      "name": "gramme I 999 after t n. The M",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_019",
+      "name": "me into e ent of Sta for plann",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_020",
+      "name": "statistics and Ministry’s offi",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_021",
+      "name": "classific cials in i",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_022",
+      "name": "ations, statistica nternational mee",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_023",
+      "name": "l compilations an tings on these sub",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_024",
+      "name": "d internat jects has be",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_025",
+      "name": "ional p en high",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_026",
+      "name": "ractices. The contri ly appreciated.",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_027",
+      "name": "bution of the ly appreciated.",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_030",
+      "name": "IP I. lie",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_031",
+      "name": "year 2011 timeline o y of indus",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_032",
+      "name": "-12 is f IIP h trial ou",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_033",
+      "name": "compiled as been im tput data.",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_034",
+      "name": "and pu prove It is p",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_035",
+      "name": "Item Domestic Product",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_036",
+      "name": "Industry",
+      "entityType_hint": "dimension",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_037",
+      "name": "Annual Report 2025-26",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_038",
+      "name": "TABLE OF CONTENTS",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_039",
+      "name": "Annual Report",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_073",
+      "name": "Sl. No. 1\n2\n3\n4",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_074",
+      "name": "Domestic Product",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_076",
+      "name": "Share in GDP(%)",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": "INR_crore",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_077",
+      "name": "National Product",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_080",
+      "name": "Percentage Change",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_040",
+      "name": "Government of India",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_042",
+      "name": "New Delhi-110001",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_043",
+      "name": "CHAPTERS",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_045",
+      "name": "Introduction 1-9",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_047",
+      "name": "Data Informatics Innovation 79-91",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_048",
+      "name": "Administrative Statistics 92-93",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_049",
+      "name": "India in United Nations 94-95",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_050",
+      "name": "Research and Analysis 96-97",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_051",
+      "name": "IIC Abbreviations used 147-149",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_052",
+      "name": "Eastern Region",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_053",
+      "name": "the Calendar Year 2024",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_054",
+      "name": "Services as on 1st January 2025",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_055",
+      "name": "Introduction",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_058",
+      "name": "Index of Industrial Production (IIP)",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": "index",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_059",
+      "name": "Mining",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_061",
+      "name": "Electricity",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_062",
+      "name": "SDGs",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_063",
+      "name": "National Indicator Framework (NIF)",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_064",
+      "name": "Sustainable Development Goals (SDGs)",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_065",
+      "name": "UNSEEA Framework",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_066",
+      "name": "DataSnapshot",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_067",
+      "name": "EnviStats India",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_068",
+      "name": "Selected Indicators",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_069",
+      "name": "Women and Men in India",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_072",
+      "name": "September 2024 for the same.",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_078",
+      "name": "(PE) (FAE) (FRE) Year",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_079",
+      "name": "(at 2011- 12 Prices)",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_081",
+      "name": "Statement",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_082",
+      "name": "Gross Fixed Capital Formation (GFCF)",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_083",
+      "name": "Changes in Stocks (CIS)",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_084",
+      "name": "Valuables",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_085",
+      "name": "Exports",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_086",
+      "name": "Imports",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_087",
+      "name": "Discrepancies",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_088",
+      "name": "Share of GDP%",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": "INR_crore",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_089",
+      "name": "Item Sl. No. Over Previous",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_090",
+      "name": "(PE) (FAE) (FRE)",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    }
+  ]
+}

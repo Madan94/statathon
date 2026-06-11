@@ -1,0 +1,285 @@
+{
+  "templateId": "tpl_plfs_annual_v1",
+  "datasetSignature": "dfe64eb7a6238f51",
+  "datasetId": "plfs sample",
+  "proposals": [
+    {
+      "entityId": "ent_wpr",
+      "entityName": "Worker Population Ratio",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "WPR (ent_wpr)"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.88,
+      "method": "alias",
+      "status": "proposed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.88,
+          "detail": "Alias matched to 'WPR (ent_wpr)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=measure col_role=measure"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_lfpr",
+      "entityName": "Labour Force Participation Rate",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "LFPR (ent_lfpr)"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.88,
+      "method": "alias",
+      "status": "proposed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.88,
+          "detail": "Alias matched to 'LFPR (ent_lfpr)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=measure col_role=measure"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_ur",
+      "entityName": "Unemployment Rate",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.09,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.09,
+          "detail": "Synonym/token match to 'UR (ent_ur)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=measure col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_sector",
+      "entityName": "Sector",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Sector (ent_sector)"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.88,
+      "method": "alias",
+      "status": "proposed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.88,
+          "detail": "Alias matched to 'Sector (ent_sector)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_gender",
+      "entityName": "Gender",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Gender (ent_gender)"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.88,
+      "method": "alias",
+      "status": "proposed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.88,
+          "detail": "Alias matched to 'Gender (ent_gender)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_state",
+      "entityName": "State/UT",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "State/UT (ent_state)"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.88,
+      "method": "alias",
+      "status": "proposed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.88,
+          "detail": "Alias matched to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_age_group",
+      "entityName": "Age Group",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Age Group (ent_age_group)"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.88,
+      "method": "alias",
+      "status": "proposed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.88,
+          "detail": "Alias matched to 'Age Group (ent_age_group)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        },
+        {
+          "signal": "unit",
+          "score": 0.8,
+          "detail": "Column has unit: years"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_period",
+      "entityName": "Survey Period",
+      "entityType": "time",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Survey Period (ent_period)"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.616,
+      "method": "alias",
+      "status": "proposed",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: time entity landed on dimension column 'Survey Period (ent_period)'"
+      ],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.616,
+          "detail": "Alias matched to 'Survey Period (ent_period)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=time col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'time' != column role"
+        }
+      ]
+    }
+  ],
+  "confirmations": {
+    "ent_ur": {
+      "entityId": "ent_ur",
+      "status": "rejected"
+    },
+    "ent_wpr": {
+      "entityId": "ent_wpr",
+      "status": "confirmed"
+    },
+    "ent_lfpr": {
+      "entityId": "ent_lfpr",
+      "status": "confirmed"
+    },
+    "ent_sector": {
+      "entityId": "ent_sector",
+      "status": "confirmed"
+    },
+    "ent_gender": {
+      "entityId": "ent_gender",
+      "status": "confirmed"
+    },
+    "ent_state": {
+      "entityId": "ent_state",
+      "status": "confirmed"
+    },
+    "ent_age_group": {
+      "entityId": "ent_age_group",
+      "status": "confirmed"
+    },
+    "ent_period": {
+      "entityId": "ent_period",
+      "status": "confirmed"
+    }
+  },
+  "updatedAt": 1781167399.8119934
+}

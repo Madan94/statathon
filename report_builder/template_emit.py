@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import copy
 from pathlib import Path
 from typing import Any
 
@@ -762,10 +763,30 @@ def emit_templates(ast: dict[str, Any], out_dir: Path) -> dict[str, Any]:
 
     skeleton_path = out_dir / "template.ast.json"
     blueprint_path = out_dir / "template.blueprint.json"
+    graph_path = out_dir / "semantic_slot_graph.json"
+    package_path = out_dir / "template.package.json"
     with open(skeleton_path, "w", encoding="utf-8") as fh:
         json.dump(skeleton, fh, ensure_ascii=False, indent=2, default=str)
     with open(blueprint_path, "w", encoding="utf-8") as fh:
         json.dump(blueprint, fh, ensure_ascii=False, indent=2, default=str)
+
+    from report_builder.slot_wiring import build_semantic_slot_graph, wire_template
+    from report_builder.template_package import build_template_package_manifest
+
+    wiring_result = wire_template(copy.deepcopy(skeleton), blueprint, auto_repair=False)
+    semantic_slot_graph = build_semantic_slot_graph(
+        wiring_result.skeleton, blueprint, wiring_result
+    ).to_dict()
+    with open(graph_path, "w", encoding="utf-8") as fh:
+        json.dump(semantic_slot_graph, fh, ensure_ascii=False, indent=2, default=str)
+
+    manifest = build_template_package_manifest(
+        template_ast=skeleton,
+        template_blueprint=blueprint,
+        semantic_slot_graph=semantic_slot_graph,
+    )
+    with open(package_path, "w", encoding="utf-8") as fh:
+        json.dump(manifest.to_dict(), fh, ensure_ascii=False, indent=2, default=str)
 
     # Diagnostic rejected entities are NOT part of the gold template; persist them to a
     # sidecar so the hygiene information remains inspectable without bloating ②.
@@ -788,6 +809,8 @@ def emit_templates(ast: dict[str, Any], out_dir: Path) -> dict[str, Any]:
     return {
         "skeleton_path": str(skeleton_path),
         "blueprint_path": str(blueprint_path),
+        "semantic_slot_graph_path": str(graph_path),
+        "package_path": str(package_path),
         "violations": violations,
     }
 

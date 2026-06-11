@@ -1,0 +1,1226 @@
+{
+  "entities_count": 55,
+  "table_structures_count": 9,
+  "chapters_count": 2,
+  "entities": [
+    {
+      "entityId": "ent_012",
+      "name": "Energy Introduction",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        2
+      ]
+    },
+    {
+      "entityId": "ent_013",
+      "name": "Potential Introduction",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        2
+      ]
+    },
+    {
+      "entityId": "ent_014",
+      "name": "Highlights of r 1.1 Coal Rese",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        3
+      ]
+    },
+    {
+      "entityId": "ent_015",
+      "name": "India rves",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        3
+      ]
+    },
+    {
+      "entityId": "ent_016",
+      "name": "Energy Reserves",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        4,
+        2
+      ]
+    },
+    {
+      "entityId": "ent_017",
+      "name": "Reserves",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_018",
+      "name": "Potential ial in India",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        5
+      ]
+    },
+    {
+      "entityId": "ent_019",
+      "name": "Geographical Distr",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_020",
+      "name": "Energy Re enewable",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_021",
+      "name": "Potential ential",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_022",
+      "name": "States/ UTs",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        7,
+        9
+      ]
+    },
+    {
+      "entityId": "ent_023",
+      "name": "Proved 2024",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_024",
+      "name": "Proved 2025",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_025",
+      "name": "Indicated 2024",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_026",
+      "name": "Indicated 2025",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_027",
+      "name": "Inferred 2024",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_028",
+      "name": "Inferred 2025",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_029",
+      "name": "Total 2024",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_030",
+      "name": "Total 2025",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_031",
+      "name": "Distribution 2024",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_032",
+      "name": "Distribution 2025",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_033",
+      "name": "States/ UTs/ Region",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        8
+      ]
+    },
+    {
+      "entityId": "ent_034",
+      "name": "Crude Oil 2024 Distribution",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        8
+      ]
+    },
+    {
+      "entityId": "ent_035",
+      "name": "Crude Oil 2025 Distribution",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        8
+      ]
+    },
+    {
+      "entityId": "ent_036",
+      "name": "Small Hydro Power*",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        9
+      ]
+    },
+    {
+      "entityId": "ent_037",
+      "name": "Biomass Power",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        9
+      ]
+    },
+    {
+      "entityId": "ent_038",
+      "name": "Cogeneration- bagasse",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        9
+      ]
+    },
+    {
+      "entityId": "ent_039",
+      "name": "Solar Energy",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        9
+      ]
+    },
+    {
+      "entityId": "ent_040",
+      "name": "Large Hydro#",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        9
+      ]
+    },
+    {
+      "entityId": "ent_041",
+      "name": "Distribution",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        9
+      ]
+    },
+    {
+      "entityId": "ent_042",
+      "name": "Global Classification of Energy Reserves",
+      "source": "heading",
+      "entityType_hint": "measure",
+      "pages": [
+        2
+      ]
+    },
+    {
+      "entityId": "ent_043",
+      "name": "Energy Reserves in India",
+      "source": "heading",
+      "entityType_hint": "metadata",
+      "pages": [
+        2
+      ]
+    },
+    {
+      "entityId": "ent_044",
+      "name": "Energy Reserves and Potential",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        0,
+        2
+      ]
+    },
+    {
+      "entityId": "ent_045",
+      "name": "Coal Reserves",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        3
+      ]
+    },
+    {
+      "entityId": "ent_046",
+      "name": "Lignite Reserves",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        3
+      ]
+    },
+    {
+      "entityId": "ent_047",
+      "name": "Western Offshore",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_048",
+      "name": "Eastern Offshore",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_049",
+      "name": "Assam",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_050",
+      "name": "Gujarat",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_051",
+      "name": "Rajasthan",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_052",
+      "name": "Tamil Nadu",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_053",
+      "name": "Andhra Pradesh",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_054",
+      "name": "State/UT",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        6,
+        7,
+        9
+      ]
+    },
+    {
+      "entityId": "ent_055",
+      "name": "Rural",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_056",
+      "name": "Urban",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_057",
+      "name": "Labour Force Participation Rate",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_058",
+      "name": "Unemployment Rate",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_059",
+      "name": "MPCE",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_060",
+      "name": "States/UTs",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        7,
+        8
+      ]
+    },
+    {
+      "entityId": "ent_061",
+      "name": "Region",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        8
+      ]
+    },
+    {
+      "entityId": "ent_062",
+      "name": "Crude Oil",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        8
+      ]
+    },
+    {
+      "entityId": "ent_063",
+      "name": "Natural Gas",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        8
+      ]
+    },
+    {
+      "entityId": "ent_064",
+      "name": "Renewable Power",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        9
+      ]
+    },
+    {
+      "entityId": "ent_065",
+      "name": "Cogeneration",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        9
+      ]
+    },
+    {
+      "entityId": "ent_066",
+      "name": "Large Hydrot",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        9
+      ]
+    }
+  ],
+  "table_structures": [
+    {
+      "tableId": "tbl_3_1",
+      "page": 2,
+      "tableTitle": "",
+      "columns": [
+        "Introduction",
+        "Energy Introduction",
+        "Res Introduction",
+        "erves and Introduction",
+        "Potential Introduction",
+        "Potential Introduction",
+        "Potential Introduction"
+      ],
+      "dimensions": [
+        "Introduction",
+        "Energy Introduction",
+        "Res Introduction",
+        "erves and Introduction",
+        "Potential Introduction",
+        "Potential Introduction",
+        "Potential Introduction"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": [
+        {
+          "groupId": "grp_1",
+          "label": "Potential",
+          "columnIndices": [
+            4,
+            5,
+            6
+          ],
+          "span": 3
+        }
+      ]
+    },
+    {
+      "tableId": "tbl_4_1",
+      "page": 3,
+      "tableTitle": "",
+      "columns": [
+        "Highlights of r 1.1 Coal Rese",
+        "eserves in rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves"
+      ],
+      "dimensions": [
+        "Highlights of r 1.1 Coal Rese",
+        "eserves in rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves"
+      ],
+      "measures": [],
+      "breakdowns": [
+        {
+          "measure": "India",
+          "breakdown_by": "qualifier",
+          "values": [
+            "rves",
+            "rves",
+            "rves",
+            "rves",
+            "rves",
+            "rves",
+            "rves"
+          ]
+        }
+      ],
+      "layout": "cross_tabulation",
+      "columnGroups": [
+        {
+          "groupId": "grp_1",
+          "label": "India",
+          "columnIndices": [
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "span": 7
+        }
+      ]
+    },
+    {
+      "tableId": "tbl_5_1",
+      "page": 4,
+      "tableTitle": "",
+      "columns": [
+        "1.3 Crude Oil",
+        "Cha Reserves",
+        "pter 1: Reserves",
+        "Energy Reserves",
+        "Reserves",
+        "and Potentia Reserves",
+        "l Reserves",
+        "l Reserves"
+      ],
+      "dimensions": [
+        "1.3 Crude Oil",
+        "Cha Reserves",
+        "pter 1: Reserves",
+        "Energy Reserves",
+        "Reserves",
+        "and Potentia Reserves",
+        "l Reserves",
+        "l Reserves"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": [
+        {
+          "groupId": "grp_1",
+          "label": "l",
+          "columnIndices": [
+            6,
+            7
+          ],
+          "span": 2
+        }
+      ]
+    },
+    {
+      "tableId": "tbl_6_1",
+      "page": 5,
+      "tableTitle": "",
+      "columns": [
+        "1.5",
+        "Re",
+        "newable Energ",
+        "Chapter y Potent",
+        "1: Energy R ial in India",
+        "eserves and ial in India",
+        "Potential ial in India",
+        "Potential ial in India",
+        "Potential ial in India"
+      ],
+      "dimensions": [
+        "1.5",
+        "Re",
+        "newable Energ",
+        "Chapter y Potent",
+        "1: Energy R ial in India",
+        "eserves and ial in India",
+        "Potential ial in India",
+        "Potential ial in India",
+        "Potential ial in India"
+      ],
+      "measures": [],
+      "breakdowns": [
+        {
+          "measure": "Potential ial in",
+          "breakdown_by": "qualifier",
+          "values": [
+            "India",
+            "India",
+            "India"
+          ]
+        }
+      ],
+      "layout": "cross_tabulation",
+      "columnGroups": [
+        {
+          "groupId": "grp_1",
+          "label": "Potential",
+          "columnIndices": [
+            6,
+            7,
+            8
+          ],
+          "span": 3
+        }
+      ]
+    },
+    {
+      "tableId": "tbl_7_1",
+      "page": 6,
+      "tableTitle": "",
+      "columns": [
+        "Geographical Distr",
+        "Chapter 1: ibution of R",
+        "Energy Re enewable",
+        "serves and Energy Pot",
+        "Potential ential",
+        "Potential ential",
+        "Potential ential"
+      ],
+      "dimensions": [
+        "Geographical Distr",
+        "Chapter 1: ibution of R",
+        "Energy Re enewable",
+        "serves and Energy Pot",
+        "Potential ential",
+        "Potential ential",
+        "Potential ential"
+      ],
+      "measures": [],
+      "breakdowns": [
+        {
+          "measure": "Potential",
+          "breakdown_by": "qualifier",
+          "values": [
+            "ential",
+            "ential",
+            "ential"
+          ]
+        }
+      ],
+      "layout": "cross_tabulation",
+      "columnGroups": [
+        {
+          "groupId": "grp_1",
+          "label": "Potential",
+          "columnIndices": [
+            4,
+            5,
+            6
+          ],
+          "span": 3
+        }
+      ]
+    },
+    {
+      "tableId": "tbl_8_1",
+      "page": 7,
+      "tableTitle": "Table 1.1: Statewise Estimated Reserves of Coal (As on 1st April 2025)\n(in Million Tonnes)",
+      "columns": [
+        "States/ UTs",
+        "Proved 2024",
+        "Proved 2025",
+        "Indicated 2024",
+        "Indicated 2025",
+        "Inferred 2024",
+        "Inferred 2025",
+        "Total 2024",
+        "Total 2025",
+        "Distribution (%) 2024",
+        "Distribution (%) 2025"
+      ],
+      "dimensions": [
+        "States/ UTs",
+        "Proved 2024",
+        "Proved 2025",
+        "Indicated 2024",
+        "Total 2025"
+      ],
+      "measures": [
+        "Indicated 2025",
+        "Inferred 2024",
+        "Inferred 2025",
+        "Total 2024",
+        "Distribution (%) 2024",
+        "Distribution (%) 2025"
+      ],
+      "breakdowns": [
+        {
+          "measure": "Proved",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Indicated",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Inferred",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Total",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Distribution (%)",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        }
+      ],
+      "layout": "cross_tabulation",
+      "columnGroups": [
+        {
+          "groupId": "grp_1",
+          "label": "Proved",
+          "columnIndices": [
+            1,
+            2
+          ],
+          "span": 2
+        },
+        {
+          "groupId": "grp_2",
+          "label": "Indicated",
+          "columnIndices": [
+            3,
+            4
+          ],
+          "span": 2
+        },
+        {
+          "groupId": "grp_3",
+          "label": "Inferred",
+          "columnIndices": [
+            5,
+            6
+          ],
+          "span": 2
+        },
+        {
+          "groupId": "grp_4",
+          "label": "Total",
+          "columnIndices": [
+            7,
+            8
+          ],
+          "span": 2
+        },
+        {
+          "groupId": "grp_5",
+          "label": "Distribution (%)",
+          "columnIndices": [
+            9,
+            10
+          ],
+          "span": 2
+        }
+      ]
+    },
+    {
+      "tableId": "tbl_8_2",
+      "page": 7,
+      "tableTitle": "Table 1.2: Statewise Estimated Reserves of Lignite(As on 1st April 2025)\n(in Million Tonnes)",
+      "columns": [
+        "States/ UTs",
+        "Proved 2024",
+        "Proved 2025",
+        "Indicated 2024",
+        "Indicated 2025",
+        "Inferred 2024",
+        "Inferred 2025",
+        "Total 2024",
+        "Total 2025",
+        "Distribution (%) 2024",
+        "Distribution (%) 2025"
+      ],
+      "dimensions": [
+        "States/ UTs"
+      ],
+      "measures": [
+        "Proved 2024",
+        "Proved 2025",
+        "Indicated 2024",
+        "Indicated 2025",
+        "Inferred 2024",
+        "Inferred 2025",
+        "Total 2024",
+        "Total 2025",
+        "Distribution (%) 2024",
+        "Distribution (%) 2025"
+      ],
+      "breakdowns": [
+        {
+          "measure": "Proved",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Indicated",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Inferred",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Total",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Distribution (%)",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        }
+      ],
+      "layout": "cross_tabulation",
+      "columnGroups": [
+        {
+          "groupId": "grp_1",
+          "label": "Proved",
+          "columnIndices": [
+            1,
+            2
+          ],
+          "span": 2
+        },
+        {
+          "groupId": "grp_2",
+          "label": "Indicated",
+          "columnIndices": [
+            3,
+            4
+          ],
+          "span": 2
+        },
+        {
+          "groupId": "grp_3",
+          "label": "Inferred",
+          "columnIndices": [
+            5,
+            6
+          ],
+          "span": 2
+        },
+        {
+          "groupId": "grp_4",
+          "label": "Total",
+          "columnIndices": [
+            7,
+            8
+          ],
+          "span": 2
+        },
+        {
+          "groupId": "grp_5",
+          "label": "Distribution (%)",
+          "columnIndices": [
+            9,
+            10
+          ],
+          "span": 2
+        }
+      ]
+    },
+    {
+      "tableId": "tbl_9_1",
+      "page": 8,
+      "tableTitle": "Table 1.3: Statewise Estimated Reserves of Crude Oil and Natural Gas (As on 1st April 2025)",
+      "columns": [
+        "States/ UTs/ Region",
+        "Crude Oil (Million Tonnes) 2024 Estimated\nReserves",
+        "Crude Oil (Million Tonnes) 2024 Distribution\n(%)",
+        "Crude Oil (Million Tonnes) 2025 Estimated\nReserves",
+        "Crude Oil (Million Tonnes) 2025 Distribution\n(%)",
+        "Natural Gas (Billion Cubic Metres) 2024 Estimated\nReserves",
+        "Natural Gas (Billion Cubic Metres) 2024 Distribution\n(%)",
+        "Natural Gas (Billion Cubic Metres) 2025 Estimated\nReserves",
+        "Natural Gas (Billion Cubic Metres) 2025 Distribution\n(%)"
+      ],
+      "dimensions": [
+        "States/ UTs/ Region"
+      ],
+      "measures": [
+        "Crude Oil (Million Tonnes) 2024 Estimated\nReserves",
+        "Crude Oil (Million Tonnes) 2024 Distribution\n(%)",
+        "Crude Oil (Million Tonnes) 2025 Estimated\nReserves",
+        "Crude Oil (Million Tonnes) 2025 Distribution\n(%)",
+        "Natural Gas (Billion Cubic Metres) 2024 Estimated\nReserves",
+        "Natural Gas (Billion Cubic Metres) 2024 Distribution\n(%)",
+        "Natural Gas (Billion Cubic Metres) 2025 Estimated\nReserves",
+        "Natural Gas (Billion Cubic Metres) 2025 Distribution\n(%)"
+      ],
+      "breakdowns": [],
+      "layout": "simple",
+      "columnGroups": [
+        {
+          "groupId": "grp_1",
+          "label": "Crude Oil (Million Tonnes)",
+          "columnIndices": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "span": 4
+        },
+        {
+          "groupId": "grp_2",
+          "label": "Natural Gas (Billion Cubic Metres)",
+          "columnIndices": [
+            5,
+            6,
+            7,
+            8
+          ],
+          "span": 4
+        }
+      ]
+    },
+    {
+      "tableId": "tbl_10_1",
+      "page": 9,
+      "tableTitle": "Table 1.4: Sourcewise and Statewise Estimated Potential of Renewable Power in India (as on 31.03.2025)\n(in MW)",
+      "columns": [
+        "Sl. No.",
+        "States/ UTs",
+        "Wind Power\n@ 150m",
+        "Small Hydro\nPower*",
+        "Biomass\nPower",
+        "Cogeneration-\nbagasse",
+        "Solar Energy",
+        "Large Hydro#",
+        "Total",
+        "Distribution (%)"
+      ],
+      "dimensions": [
+        "Sl. No.",
+        "States/ UTs"
+      ],
+      "measures": [
+        "Wind Power\n@ 150m",
+        "Small Hydro\nPower*",
+        "Biomass\nPower",
+        "Cogeneration-\nbagasse",
+        "Solar Energy",
+        "Large Hydro#",
+        "Total",
+        "Distribution (%)"
+      ],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": []
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "ch_01",
+      "title": "Energy Reserves and Potential",
+      "pageRange": [
+        2,
+        7
+      ],
+      "level": 1,
+      "sections": [
+        {
+          "sectionId": "sec_02_01",
+          "title": "CHAPTER 1 Energy Reserves and Potential Introduction",
+          "page": 2,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_02",
+          "title": "Global Classification of Energy Reserves",
+          "page": 2,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_03",
+          "title": "Energy Reserves in India",
+          "page": 2,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_04",
+          "title": "Energy reserves part of the energy resources that, based on technical, economic and other",
+          "page": 2,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_05",
+          "title": "Chapter 1: Energy Reserves and Potential Highlights of reserves in India 1.1 Coal Reserves",
+          "page": 3,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_06",
+          "title": "1.2 Lignite Reserves",
+          "page": 3,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_07",
+          "title": "Highlights of reserves in India",
+          "page": 3,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_08",
+          "title": "1.1 Coal Reserves",
+          "page": 3,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_09",
+          "title": "Chapter 1: Energy Reserves and Potential 1.3 Crude Oil Reserves",
+          "page": 4,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_10",
+          "title": "1.4 Natural Gas Reserves",
+          "page": 4,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_11",
+          "title": "1.3 Crude Oil Reserves",
+          "page": 4,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_12",
+          "title": "As of 01-04-2025 , the estimated reserves of crude oil in India stood at 672.07 million tonnes ,",
+          "page": 4,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_13",
+          "title": "Chapter 1: Energy Reserves and Potential 1.5 Renewable Energy Potential in India",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_14",
+          "title": "1.5 Renewable Energy Potential in India",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_15",
+          "title": "India is increasingly focusing on renewable energy sources as part of its sustainable",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_16",
+          "title": "Chapter 1: Energy Reserves and Potential Geographical Distribution of Renewable Energy Potential",
+          "page": 6,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_17",
+          "title": "Geographical Distribution of Renewable Energy Potential",
+          "page": 6,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_18",
+          "title": "The geographical distribution of renewable energy potential in India ( Figure 1.6 ) shows",
+          "page": 6,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_19",
+          "title": "Chapter 1: Energy Reserves and Potential",
+          "page": 7,
+          "level": 2
+        }
+      ]
+    },
+    {
+      "chapterId": "ch_02",
+      "title": "1 Energy Reserves and Potential",
+      "pageRange": [
+        9,
+        9
+      ],
+      "level": 1,
+      "sections": [
+        {
+          "sectionId": "sec_04_01",
+          "title": "Chapter 1: Energy Reserves and Potential",
+          "page": 9,
+          "level": 2
+        }
+      ]
+    }
+  ]
+}

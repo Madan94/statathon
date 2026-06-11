@@ -1,0 +1,1656 @@
+{
+  "$schema": "bharatstat/template-ast/v1",
+  "_doc": "VALUE-FREE render skeleton. Keeps every structural label (headings, column headers, roles, units, formats, palette refs, slot wiring) but NO data: content=\"\", rows=[], series=[], caption=\"\". Pairs 1:1 with template.blueprint.json by shared IDs. The binder clones this, fills the slots from a dataset, and emits report.output.ast.json.",
+  "metadata": {
+    "templateId": "tpl_document",
+    "blueprintRef": "tpl_document",
+    "name": "Document",
+    "locale": "en-IN",
+    "version": "3.0",
+    "valueFree": true,
+    "generatedFrom": "Document"
+  },
+  "styleAST": {
+    "styles": [
+      {
+        "styleId": "s_h1",
+        "role": "heading1",
+        "font": "Noto Sans",
+        "sizePt": 18,
+        "bold": true,
+        "color": "#0B5394"
+      },
+      {
+        "styleId": "s_h2",
+        "role": "heading2",
+        "font": "Noto Sans",
+        "sizePt": 14,
+        "bold": true,
+        "color": "#1155CC"
+      },
+      {
+        "styleId": "s_body",
+        "role": "body",
+        "font": "Noto Sans",
+        "sizePt": 11,
+        "bold": false,
+        "color": "#222222"
+      },
+      {
+        "styleId": "s_table",
+        "role": "tableCell",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "align": "right"
+      },
+      {
+        "styleId": "s_caption",
+        "role": "caption",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "italic": true,
+        "color": "#555555"
+      }
+    ]
+  },
+  "semanticAST": {
+    "sections": [
+      {
+        "sectionId": "sec_01",
+        "title": "Annual Report 2025-26",
+        "level": 1,
+        "order": 1,
+        "styleRef": "s_h1",
+        "topicRef": "topic_01",
+        "children": [
+          "p_q_001",
+          "fig_q_001",
+          "table_2_1",
+          "p_q_002",
+          "fig_q_002",
+          "p_q_003",
+          "fig_q_003",
+          "p_q_004",
+          "fig_q_004",
+          "table_3_1",
+          "p_q_005",
+          "fig_q_005",
+          "p_q_006",
+          "fig_q_006",
+          "p_q_007",
+          "fig_q_007",
+          "table_4_1",
+          "p_q_008",
+          "fig_q_008",
+          "p_q_009",
+          "p_q_010",
+          "fig_q_010",
+          "table_5_1",
+          "p_q_011",
+          "fig_q_011",
+          "p_q_012",
+          "fig_q_012",
+          "p_q_013",
+          "fig_q_013",
+          "p_q_014",
+          "fig_q_014",
+          "p_q_015",
+          "fig_q_015",
+          "p_q_016",
+          "fig_q_016",
+          "p_q_017",
+          "fig_q_017",
+          "p_q_018",
+          "fig_q_018"
+        ]
+      }
+    ]
+  },
+  "contentAST": {
+    "blocks": [
+      {
+        "blockId": "p_q_001",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_001",
+        "templateQuestion": "How does Sl.No. 1 vary across States and Union Territories by sub-category?",
+        "slot": {
+          "fillFrom": "q_001_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_002",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_002",
+        "templateQuestion": "What is the trend in Sl.No. 1 (Persons) across survey rounds?",
+        "slot": {
+          "fillFrom": "q_002_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_003",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_003",
+        "templateQuestion": "Compare Sl.No. 1 for Rural and Urban population across States",
+        "slot": {
+          "fillFrom": "q_003_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_004",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_004",
+        "templateQuestion": "How does d Pro ber 1 ntatio vary across States and Union Territories by sub-category?",
+        "slot": {
+          "fillFrom": "q_004_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_005",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_005",
+        "templateQuestion": "What is the trend in d Pro ber 1 ntatio (Persons) across survey rounds?",
+        "slot": {
+          "fillFrom": "q_005_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_006",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_006",
+        "templateQuestion": "Compare d Pro ber 1 ntatio for Rural and Urban population across States",
+        "slot": {
+          "fillFrom": "q_006_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_007",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_007",
+        "templateQuestion": "How does classific cials in i vary by statistics and Ministry’s offi across the dataset?",
+        "slot": {
+          "fillFrom": "q_007_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_008",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_008",
+        "templateQuestion": "What is the distribution of classific cials in i across statistics and Ministry’s offi?",
+        "slot": {
+          "fillFrom": "q_008_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_009",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_009",
+        "templateQuestion": "Which statistics and Ministry’s offi has the highest classific cials in i?",
+        "slot": {
+          "fillFrom": "q_009_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_010",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_010",
+        "templateQuestion": "How does Industrial Division (E ur weeks, vary across States and Union Territories by sub-category?",
+        "slot": {
+          "fillFrom": "q_010_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_011",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_011",
+        "templateQuestion": "What is the trend in Industrial Division (E ur weeks, (Persons) across survey rounds?",
+        "slot": {
+          "fillFrom": "q_011_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_012",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_012",
+        "templateQuestion": "Compare Industrial Division (E ur weeks, for Rural and Urban population across States",
+        "slot": {
+          "fillFrom": "q_012_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_013",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_013",
+        "templateQuestion": "What is the MPCE distribution across Sl. No. 1\n2\n3\n4 in Rural and Urban areas?",
+        "slot": {
+          "fillFrom": "q_013_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_014",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_014",
+        "templateQuestion": "How does metric vary across household size and Sl. No. 1\n2\n3\n4?",
+        "slot": {
+          "fillFrom": "q_014_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_015",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_015",
+        "templateQuestion": "What is the share of Sl. No. 1\n2\n3\n4 in total household expenditure?",
+        "slot": {
+          "fillFrom": "q_015_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_016",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_016",
+        "templateQuestion": "What is the MPCE distribution across Sl. No. 1\n2\n3\n4 in Rural and Urban areas?",
+        "slot": {
+          "fillFrom": "q_016_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_017",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_017",
+        "templateQuestion": "How does metric vary across household size and Sl. No. 1\n2\n3\n4?",
+        "slot": {
+          "fillFrom": "q_017_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_018",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_018",
+        "templateQuestion": "What is the share of Sl. No. 1\n2\n3\n4 in total household expenditure?",
+        "slot": {
+          "fillFrom": "q_018_c1",
+          "status": "empty"
+        }
+      }
+    ],
+    "lists": [],
+    "quotes": []
+  },
+  "tableAST": {
+    "tables": [
+      {
+        "tableId": "table_2_1",
+        "templateRef": "tt_2_1",
+        "biQuery": "q_001",
+        "title": "Table with 3 columns, 29 rows",
+        "columnGroups": [],
+        "columns": [
+          {
+            "columnId": "col_chapters_introductio",
+            "header": "CHAPTERS Introduction",
+            "role": "dimension",
+            "entityRef": "ent_013",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_page_no__1_9",
+            "header": "Page No. 1-9",
+            "role": "dimension",
+            "entityRef": "ent_014",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_sl_no__1",
+            "header": "Sl.No. 1",
+            "role": "measure",
+            "entityRef": "ent_012",
+            "dtype": "number",
+            "unit": null,
+            "format": "number",
+            "align": "right"
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_table_2_1_src",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "q_001",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_3_1",
+        "templateRef": "tt_3_1",
+        "biQuery": "q_004",
+        "title": "Table with 8 columns, 40 rows",
+        "columnGroups": [],
+        "columns": [
+          {
+            "columnId": "col_1_1_the_ministry_of_",
+            "header": "1.1 The Ministry of independent Ministry o Department of Program",
+            "role": "dimension",
+            "entityRef": "ent_090",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_statistics_an_n_15th",
+            "header": "Statistics an n 15th Octo me Impleme",
+            "role": "dimension",
+            "entityRef": "ent_015",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_d_pro_ber_1_ntatio",
+            "header": "d Pro ber 1 ntatio",
+            "role": "dimension",
+            "entityRef": "ent_016",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_gramme_i_999_after_t",
+            "header": "gramme I 999 after t n. The M",
+            "role": "dimension",
+            "entityRef": "ent_017",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_mplementation_he_mer",
+            "header": "mplementation he merger of th inistry is the no",
+            "role": "dimension",
+            "entityRef": "ent_unresolved_mplementation h",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col__mospi__ca_e_departm",
+            "header": "(MoSPI) ca e Departm dal agency",
+            "role": "dimension",
+            "entityRef": "ent_018",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_me_into_e_ent_of_sta",
+            "header": "me into e ent of Sta for plann",
+            "role": "dimension",
+            "entityRef": "ent_019",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_xistence_as_an_tisti",
+            "header": "xistence as an tistics and the ing integrated",
+            "role": "dimension",
+            "entityRef": "ent_unresolved_xistence as an ",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_table_3_1_src",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "q_004",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_4_1",
+        "templateRef": "tt_4_1",
+        "biQuery": "q_007",
+        "title": "Table with 8 columns, 44 rows",
+        "columnGroups": [],
+        "columns": [
+          {
+            "columnId": "col_statistics_and_minis",
+            "header": "statistics and Ministry’s offi",
+            "role": "dimension",
+            "entityRef": "ent_020",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_classific_cials_in_i",
+            "header": "classific cials in i",
+            "role": "dimension",
+            "entityRef": "ent_021",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_ations__statistica_n",
+            "header": "ations, statistica nternational mee",
+            "role": "dimension",
+            "entityRef": "ent_022",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_l_compilations_an_ti",
+            "header": "l compilations an tings on these sub",
+            "role": "dimension",
+            "entityRef": "ent_023",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_d_internat_jects_has",
+            "header": "d internat jects has be",
+            "role": "dimension",
+            "entityRef": "ent_024",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_ional_p_en_high",
+            "header": "ional p en high",
+            "role": "dimension",
+            "entityRef": "ent_025",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_ractices__the_contri",
+            "header": "ractices. The contri ly appreciated.",
+            "role": "dimension",
+            "entityRef": "ent_026",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_bution_of_the_ly_app",
+            "header": "bution of the ly appreciated.",
+            "role": "dimension",
+            "entityRef": "ent_027",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_table_4_1_src",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "q_007",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_5_1",
+        "templateRef": "tt_5_1",
+        "biQuery": "q_010",
+        "title": "Table with 11 columns, 46 rows",
+        "columnGroups": [],
+        "columns": [
+          {
+            "columnId": "col_1_10_econo_from_si",
+            "header": "1.10 Econo from si",
+            "role": "dimension",
+            "entityRef": "ent_unresolved_1.10 econo from",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_the_index_of_mic_sta",
+            "header": "The Index of mic Statistics x weeks to fo",
+            "role": "dimension",
+            "entityRef": "ent_unresolved_the index of mi",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_industrial_division_",
+            "header": "Industrial Division (E ur weeks,",
+            "role": "dimension",
+            "entityRef": "ent_028",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_production__i_sd__of",
+            "header": "Production (I SD) of MoSP ensuring time",
+            "role": "dimension",
+            "entityRef": "ent_029",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_ip_i__lie",
+            "header": "IP I. lie",
+            "role": "dimension",
+            "entityRef": "ent_030",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col___with_base_the_rele",
+            "header": ") with base The release r availabilit",
+            "role": "dimension",
+            "entityRef": "ent_unresolved_) with base the",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_year_2011_timeline_o",
+            "header": "year 2011 timeline o y of indus",
+            "role": "dimension",
+            "entityRef": "ent_031",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col__12_is_f_iip_h_trial",
+            "header": "-12 is f IIP h trial ou",
+            "role": "dimension",
+            "entityRef": "ent_032",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_compiled_as_been_im_",
+            "header": "compiled as been im tput data.",
+            "role": "dimension",
+            "entityRef": "ent_033",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_and_pu_prove_it_is_p",
+            "header": "and pu prove It is p",
+            "role": "dimension",
+            "entityRef": "ent_034",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_blished_by_the_d_by_",
+            "header": "blished by the d by reducing it ublished on the",
+            "role": "dimension",
+            "entityRef": "ent_unresolved_blished by the ",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_table_5_1_src",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "q_010",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_6_1",
+        "templateRef": "tt_6_1",
+        "biQuery": "",
+        "title": "Table with 6 columns, 10 rows",
+        "columnGroups": [],
+        "columns": [
+          {
+            "columnId": "col_sl__no_",
+            "header": "Sl. No.",
+            "role": "dimension",
+            "entityRef": "ent_073",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_item_domestic_produc",
+            "header": "Item Domestic Product",
+            "role": "dimension",
+            "entityRef": "ent_035",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_2023_24__fre__domest",
+            "header": "2023-24\n(FRE) Domestic Product",
+            "role": "dimension",
+            "entityRef": "ent_074",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_2024_25__pe__domesti",
+            "header": "2024-25\n(PE) Domestic Product",
+            "role": "dimension",
+            "entityRef": "ent_074",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_2025_26__fae__domest",
+            "header": "2025-26\n(FAE) Domestic Product",
+            "role": "dimension",
+            "entityRef": "ent_074",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_percentage_change_ov",
+            "header": "Percentage Change\nOver Previous\nYear\n2024-25 2025-26 Domestic Product",
+            "role": "dimension",
+            "entityRef": "ent_074",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_table_6_1_src",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_7_1",
+        "templateRef": "tt_7_1",
+        "biQuery": "",
+        "title": "Table with 6 columns, 10 rows",
+        "columnGroups": [],
+        "columns": [
+          {
+            "columnId": "col_sl__no_",
+            "header": "Sl. No.",
+            "role": "dimension",
+            "entityRef": "ent_073",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_item",
+            "header": "Item",
+            "role": "dimension",
+            "entityRef": "ent_035",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_2023_24__fre_",
+            "header": "2023-24\n(FRE)",
+            "role": "dimension",
+            "entityRef": "ent_090",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_2024_25__pe_",
+            "header": "2024-25\n(PE)",
+            "role": "dimension",
+            "entityRef": "ent_090",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_2025_26__fae_",
+            "header": "2025-26\n(FAE)",
+            "role": "dimension",
+            "entityRef": "ent_090",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_percentage_change_ov",
+            "header": "Percentage Change\nOver Previous\n2024-25 2025-26",
+            "role": "dimension",
+            "entityRef": "ent_080",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_table_7_1_src",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_8_1",
+        "templateRef": "tt_8_1",
+        "biQuery": "",
+        "title": "Table with 6 columns, 3 rows",
+        "columnGroups": [
+          {
+            "groupId": "grp_2024_25",
+            "label": "2024-25",
+            "spanRefs": []
+          },
+          {
+            "groupId": "grp_2025_26",
+            "label": "2025-26",
+            "spanRefs": []
+          }
+        ],
+        "columns": [
+          {
+            "columnId": "col_industry",
+            "header": "Industry",
+            "role": "dimension",
+            "entityRef": "ent_036",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_2023_24__fre_",
+            "header": "2023-24\n(FRE)",
+            "role": "dimension",
+            "entityRef": "ent_090",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_2024_25__pe_",
+            "header": "2024-25\n(PE)",
+            "role": "dimension",
+            "entityRef": "ent_090",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_2025_26__fae_",
+            "header": "2025-26\n(FAE)",
+            "role": "dimension",
+            "entityRef": "ent_090",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_percentage_change_ov",
+            "header": "Percentage Change Over\nPrevious Year 2024-25",
+            "role": "dimension",
+            "entityRef": "ent_080",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_percentage_change_ov",
+            "header": "Percentage Change Over\nPrevious Year 2025-26",
+            "role": "dimension",
+            "entityRef": "ent_080",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_table_8_1_src",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_8_2",
+        "templateRef": "tt_8_2",
+        "biQuery": "",
+        "title": "Table with 6 columns, 3 rows",
+        "columnGroups": [
+          {
+            "groupId": "grp_2024_25",
+            "label": "2024-25",
+            "spanRefs": []
+          },
+          {
+            "groupId": "grp_2025_26",
+            "label": "2025-26",
+            "spanRefs": []
+          }
+        ],
+        "columns": [
+          {
+            "columnId": "col_industry",
+            "header": "Industry",
+            "role": "dimension",
+            "entityRef": "ent_036",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_2023_24__fre_",
+            "header": "2023-24\n(FRE)",
+            "role": "dimension",
+            "entityRef": "ent_090",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_2024_25__pe_",
+            "header": "2024-25\n(PE)",
+            "role": "dimension",
+            "entityRef": "ent_090",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_2025_26__fae_",
+            "header": "2025-26\n(FAE)",
+            "role": "dimension",
+            "entityRef": "ent_090",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_percentage_change_ov",
+            "header": "Percentage Change Over\nPrevious Year 2024-25",
+            "role": "dimension",
+            "entityRef": "ent_080",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_percentage_change_ov",
+            "header": "Percentage Change Over\nPrevious Year 2025-26",
+            "role": "dimension",
+            "entityRef": "ent_080",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_table_8_2_src",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "",
+          "status": "empty"
+        }
+      }
+    ]
+  },
+  "chartAST": {
+    "charts": [
+      {
+        "chartId": "chart_q_001",
+        "biQuery": "q_001",
+        "chartType": "grouped_bar",
+        "title": "Sl.No. 1 by CHAPTERS Introduction",
+        "xAxis": {
+          "entityRef": "ent_013",
+          "label": "CHAPTERS Introduction"
+        },
+        "yAxis": {
+          "entityRef": "ent_012",
+          "label": "Sl.No. 1",
+          "unit": null
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "q_001_c3",
+          "status": "empty"
+        },
+        "chartTypes": [
+          "grouped_bar",
+          "line"
+        ]
+      },
+      {
+        "chartId": "chart_q_004",
+        "biQuery": "q_004",
+        "chartType": "grouped_bar",
+        "title": "Value by Statistics an n 15th Octo me Impleme",
+        "xAxis": {
+          "entityRef": "ent_015",
+          "label": "Statistics an n 15th Octo me Impleme"
+        },
+        "yAxis": {
+          "entityRef": "",
+          "label": "Value",
+          "unit": null
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "q_004_c3",
+          "status": "empty"
+        },
+        "chartTypes": [
+          "grouped_bar",
+          "line"
+        ]
+      },
+      {
+        "chartId": "chart_q_007",
+        "biQuery": "q_007",
+        "chartType": "grouped_bar",
+        "title": "Value by statistics and Ministry’s offi",
+        "xAxis": {
+          "entityRef": "ent_020",
+          "label": "statistics and Ministry’s offi"
+        },
+        "yAxis": {
+          "entityRef": "",
+          "label": "Value",
+          "unit": null
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "q_007_c3",
+          "status": "empty"
+        },
+        "chartTypes": [
+          "grouped_bar",
+          "pie"
+        ]
+      },
+      {
+        "chartId": "chart_q_010",
+        "biQuery": "q_010",
+        "chartType": "grouped_bar",
+        "title": "Value by Category",
+        "xAxis": {
+          "entityRef": "ent_unresolved_the index of mi",
+          "label": "Category"
+        },
+        "yAxis": {
+          "entityRef": "",
+          "label": "Value",
+          "unit": null
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "q_010_c3",
+          "status": "empty"
+        },
+        "chartTypes": [
+          "grouped_bar",
+          "line"
+        ]
+      },
+      {
+        "chartId": "chart_q_013",
+        "biQuery": "q_013",
+        "chartType": "grouped_bar",
+        "title": "Value by Sl. No. 1\n2\n3\n4",
+        "xAxis": {
+          "entityRef": "ent_073",
+          "label": "Sl. No. 1\n2\n3\n4"
+        },
+        "yAxis": {
+          "entityRef": "",
+          "label": "Value",
+          "unit": null
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "q_013_c3",
+          "status": "empty"
+        },
+        "chartTypes": [
+          "grouped_bar",
+          "line",
+          "pie"
+        ]
+      }
+    ]
+  },
+  "figureAST": {
+    "figures": [
+      {
+        "figureId": "fig_q_001",
+        "templateRef": "ft_q_001",
+        "caption": "",
+        "captionTemplate": "Sl.No. 1 by CHAPTERS Introduction, {{period.current}}",
+        "chartRef": "chart_q_001",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_002",
+        "templateRef": "ft_q_002",
+        "caption": "",
+        "captionTemplate": "Sl.No. 1 by CHAPTERS Introduction, {{period.current}}",
+        "chartRef": "chart_q_002",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_003",
+        "templateRef": "ft_q_003",
+        "caption": "",
+        "captionTemplate": "Sl.No. 1 by CHAPTERS Introduction, {{period.current}}",
+        "chartRef": "chart_q_003",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_004",
+        "templateRef": "ft_q_004",
+        "caption": "",
+        "captionTemplate": "Value by Statistics an n 15th Octo me Impleme, {{period.current}}",
+        "chartRef": "chart_q_004",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_005",
+        "templateRef": "ft_q_005",
+        "caption": "",
+        "captionTemplate": "Value by Statistics an n 15th Octo me Impleme, {{period.current}}",
+        "chartRef": "chart_q_005",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_006",
+        "templateRef": "ft_q_006",
+        "caption": "",
+        "captionTemplate": "Value by Statistics an n 15th Octo me Impleme, {{period.current}}",
+        "chartRef": "chart_q_006",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_007",
+        "templateRef": "ft_q_007",
+        "caption": "",
+        "captionTemplate": "Value by statistics and Ministry’s offi, {{period.current}}",
+        "chartRef": "chart_q_007",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_008",
+        "templateRef": "ft_q_008",
+        "caption": "",
+        "captionTemplate": "Value by statistics and Ministry’s offi, {{period.current}}",
+        "chartRef": "chart_q_008",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_010",
+        "templateRef": "ft_q_010",
+        "caption": "",
+        "captionTemplate": "Value by Category, {{period.current}}",
+        "chartRef": "chart_q_010",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_011",
+        "templateRef": "ft_q_011",
+        "caption": "",
+        "captionTemplate": "Value by Category, {{period.current}}",
+        "chartRef": "chart_q_011",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_012",
+        "templateRef": "ft_q_012",
+        "caption": "",
+        "captionTemplate": "Value by Category, {{period.current}}",
+        "chartRef": "chart_q_012",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_013",
+        "templateRef": "ft_q_013",
+        "caption": "",
+        "captionTemplate": "Value by Sl. No. 1\n2\n3\n4, {{period.current}}",
+        "chartRef": "chart_q_013",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_014",
+        "templateRef": "ft_q_014",
+        "caption": "",
+        "captionTemplate": "Value by Sl. No. 1\n2\n3\n4, {{period.current}}",
+        "chartRef": "chart_q_014",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_015",
+        "templateRef": "ft_q_015",
+        "caption": "",
+        "captionTemplate": "Value by Sl. No. 1\n2\n3\n4, {{period.current}}",
+        "chartRef": "chart_q_015",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_016",
+        "templateRef": "ft_q_016",
+        "caption": "",
+        "captionTemplate": "Value by Sl. No. 1\n2\n3\n4, {{period.current}}",
+        "chartRef": "chart_q_016",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_017",
+        "templateRef": "ft_q_017",
+        "caption": "",
+        "captionTemplate": "Value by Sl. No. 1\n2\n3\n4, {{period.current}}",
+        "chartRef": "chart_q_017",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_018",
+        "templateRef": "ft_q_018",
+        "caption": "",
+        "captionTemplate": "Value by Sl. No. 1\n2\n3\n4, {{period.current}}",
+        "chartRef": "chart_q_018",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      }
+    ]
+  },
+  "layoutAST": {
+    "pages": [
+      {
+        "pageId": "pg_1",
+        "size": "A4",
+        "regions": [
+          {
+            "regionId": "rg_sec_01",
+            "role": "heading",
+            "bindsTo": "sec_01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_001",
+            "role": "body",
+            "bindsTo": "p_q_001",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_002",
+            "role": "body",
+            "bindsTo": "p_q_002",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_003",
+            "role": "body",
+            "bindsTo": "p_q_003",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_004",
+            "role": "body",
+            "bindsTo": "p_q_004",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_005",
+            "role": "body",
+            "bindsTo": "p_q_005",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_006",
+            "role": "body",
+            "bindsTo": "p_q_006",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_007",
+            "role": "body",
+            "bindsTo": "p_q_007",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_008",
+            "role": "body",
+            "bindsTo": "p_q_008",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_009",
+            "role": "body",
+            "bindsTo": "p_q_009",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_010",
+            "role": "body",
+            "bindsTo": "p_q_010",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_011",
+            "role": "body",
+            "bindsTo": "p_q_011",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_012",
+            "role": "body",
+            "bindsTo": "p_q_012",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_013",
+            "role": "body",
+            "bindsTo": "p_q_013",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_014",
+            "role": "body",
+            "bindsTo": "p_q_014",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_015",
+            "role": "body",
+            "bindsTo": "p_q_015",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_016",
+            "role": "body",
+            "bindsTo": "p_q_016",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_017",
+            "role": "body",
+            "bindsTo": "p_q_017",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_q_018",
+            "role": "body",
+            "bindsTo": "p_q_018",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_001",
+            "role": "figure",
+            "bindsTo": "fig_q_001",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_002",
+            "role": "figure",
+            "bindsTo": "fig_q_002",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_003",
+            "role": "figure",
+            "bindsTo": "fig_q_003",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_004",
+            "role": "figure",
+            "bindsTo": "fig_q_004",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_005",
+            "role": "figure",
+            "bindsTo": "fig_q_005",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_006",
+            "role": "figure",
+            "bindsTo": "fig_q_006",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_007",
+            "role": "figure",
+            "bindsTo": "fig_q_007",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_008",
+            "role": "figure",
+            "bindsTo": "fig_q_008",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_010",
+            "role": "figure",
+            "bindsTo": "fig_q_010",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_011",
+            "role": "figure",
+            "bindsTo": "fig_q_011",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_012",
+            "role": "figure",
+            "bindsTo": "fig_q_012",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_013",
+            "role": "figure",
+            "bindsTo": "fig_q_013",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_014",
+            "role": "figure",
+            "bindsTo": "fig_q_014",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_015",
+            "role": "figure",
+            "bindsTo": "fig_q_015",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_016",
+            "role": "figure",
+            "bindsTo": "fig_q_016",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_017",
+            "role": "figure",
+            "bindsTo": "fig_q_017",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_q_018",
+            "role": "figure",
+            "bindsTo": "fig_q_018",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_2_1",
+            "role": "table",
+            "bindsTo": "table_2_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_3_1",
+            "role": "table",
+            "bindsTo": "table_3_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_4_1",
+            "role": "table",
+            "bindsTo": "table_4_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_5_1",
+            "role": "table",
+            "bindsTo": "table_5_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_6_1",
+            "role": "table",
+            "bindsTo": "table_6_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_7_1",
+            "role": "table",
+            "bindsTo": "table_7_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_8_1",
+            "role": "table",
+            "bindsTo": "table_8_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_8_2",
+            "role": "table",
+            "bindsTo": "table_8_2",
+            "bbox": null
+          }
+        ]
+      }
+    ]
+  },
+  "geometryAST": {
+    "_doc": "Relative flow only. Absolute bounding boxes are computed by the layout engine at render time.",
+    "flow": [
+      "rg_sec_01",
+      "rg_p_q_001",
+      "rg_p_q_002",
+      "rg_p_q_003",
+      "rg_p_q_004",
+      "rg_p_q_005",
+      "rg_p_q_006",
+      "rg_p_q_007",
+      "rg_p_q_008",
+      "rg_p_q_009",
+      "rg_p_q_010",
+      "rg_p_q_011",
+      "rg_p_q_012",
+      "rg_p_q_013",
+      "rg_p_q_014",
+      "rg_p_q_015",
+      "rg_p_q_016",
+      "rg_p_q_017",
+      "rg_p_q_018",
+      "rg_fig_q_001",
+      "rg_fig_q_002",
+      "rg_fig_q_003",
+      "rg_fig_q_004",
+      "rg_fig_q_005",
+      "rg_fig_q_006",
+      "rg_fig_q_007",
+      "rg_fig_q_008",
+      "rg_fig_q_010",
+      "rg_fig_q_011",
+      "rg_fig_q_012",
+      "rg_fig_q_013",
+      "rg_fig_q_014",
+      "rg_fig_q_015",
+      "rg_fig_q_016",
+      "rg_fig_q_017",
+      "rg_fig_q_018",
+      "rg_table_2_1",
+      "rg_table_3_1",
+      "rg_table_4_1",
+      "rg_table_5_1",
+      "rg_table_6_1",
+      "rg_table_7_1",
+      "rg_table_8_1",
+      "rg_table_8_2"
+    ]
+  }
+}

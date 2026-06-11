@@ -1,0 +1,1075 @@
+{
+  "entities_count": 37,
+  "table_structures_count": 8,
+  "chapters_count": 5,
+  "entities": [
+    {
+      "entityId": "ent_012",
+      "name": "Sl.No. 1",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_013",
+      "name": "CHAPTERS Introduction",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_014",
+      "name": "Page No. 1-9",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_015",
+      "name": "Statistics an n 15th Octo me Impleme",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        2
+      ]
+    },
+    {
+      "entityId": "ent_016",
+      "name": "(MoSPI) ca e Departm dal agency",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        2
+      ]
+    },
+    {
+      "entityId": "ent_017",
+      "name": "-12 is f IIP h trial ou",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_018",
+      "name": "Item Domestic Product",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        5
+      ]
+    },
+    {
+      "entityId": "ent_019",
+      "name": "Percentage Change\nOver Previous\n2024-25 2025-26",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_020",
+      "name": "Industry",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_021",
+      "name": "Percentage Change Over\nPrevious Year 2024-25",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_022",
+      "name": "Percentage Change Over\nPrevious Year 2025-26",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_023",
+      "name": "Government of India",
+      "source": "heading",
+      "entityType_hint": "metadata",
+      "pages": [
+        0
+      ]
+    },
+    {
+      "entityId": "ent_024",
+      "name": "Ministry of Statistics Programme Implementation",
+      "source": "heading",
+      "entityType_hint": "metadata",
+      "pages": [
+        0
+      ]
+    },
+    {
+      "entityId": "ent_025",
+      "name": "Khurshid Lal Bhawan, Janpath",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        0
+      ]
+    },
+    {
+      "entityId": "ent_026",
+      "name": "Annual Report",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        0
+      ]
+    },
+    {
+      "entityId": "ent_027",
+      "name": "Introduction 1-9",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_028",
+      "name": "National Sample Survey (NSS) 41-62",
+      "source": "heading",
+      "entityType_hint": "metadata",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_029",
+      "name": "Data Informatics Innovation 79-91",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_030",
+      "name": "Administrative Statistics 92-93",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_031",
+      "name": "India in United Nations 94-95",
+      "source": "heading",
+      "entityType_hint": "metadata",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_032",
+      "name": "Research and Analysis 96-97",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_033",
+      "name": "Support for Statistical Strengthening 98-101",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_034",
+      "name": "Annual Report 2025-26",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        2,
+        8,
+        9,
+        10,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "entityId": "ent_035",
+      "name": "September 2024 for the same.",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_036",
+      "name": "Domestic Product",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "entityId": "ent_037",
+      "name": "Expenditure Components",
+      "source": "heading",
+      "entityType_hint": "measure",
+      "pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "entityId": "ent_038",
+      "name": "Share in GDP(%)",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "entityId": "ent_039",
+      "name": "National Product",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        6,
+        5
+      ]
+    },
+    {
+      "entityId": "ent_040",
+      "name": "Item Sl. No. Over Previous",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_041",
+      "name": "Percentage Change Over",
+      "source": "heading",
+      "entityType_hint": "measure",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_042",
+      "name": "Eastern Region",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_043",
+      "name": "Services as on 1st January 2025",
+      "source": "vlm",
+      "entityType_hint": "metadata",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_044",
+      "name": "TABLE OF CONTENTS",
+      "source": "vlm",
+      "entityType_hint": "metadata",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_045",
+      "name": "Ministry is at Annexure IIA and IIB.",
+      "source": "vlm",
+      "entityType_hint": "metadata",
+      "pages": [
+        2
+      ]
+    },
+    {
+      "entityId": "ent_046",
+      "name": "Implementation is placed at Annexure",
+      "source": "vlm",
+      "entityType_hint": "metadata",
+      "pages": [
+        2
+      ]
+    },
+    {
+      "entityId": "ent_047",
+      "name": "Percentage Change",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "entityId": "ent_048",
+      "name": "Previous Year Industry",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        7
+      ]
+    }
+  ],
+  "table_structures": [
+    {
+      "tableId": "tbl_2_1",
+      "page": 1,
+      "tableTitle": "",
+      "columns": [
+        "Sl.No. 1",
+        "CHAPTERS Introduction",
+        "Page No. 1-9"
+      ],
+      "dimensions": [
+        "CHAPTERS Introduction",
+        "Page No. 1-9"
+      ],
+      "measures": [
+        "Sl.No. 1"
+      ],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": []
+    },
+    {
+      "tableId": "tbl_3_1",
+      "page": 2,
+      "tableTitle": "",
+      "columns": [
+        "1.1 The Ministry of independent Ministry o Department of Program",
+        "Statistics an n 15th Octo me Impleme",
+        "d Pro ber 1 ntatio",
+        "gramme I 999 after t n. The M",
+        "mplementation he merger of th inistry is the no",
+        "(MoSPI) ca e Departm dal agency",
+        "me into e ent of Sta for plann",
+        "xistence as an tistics and the ing integrated"
+      ],
+      "dimensions": [
+        "1.1 The Ministry of independent Ministry o Department of Program",
+        "Statistics an n 15th Octo me Impleme",
+        "d Pro ber 1 ntatio",
+        "gramme I 999 after t n. The M",
+        "mplementation he merger of th inistry is the no",
+        "(MoSPI) ca e Departm dal agency",
+        "me into e ent of Sta for plann",
+        "xistence as an tistics and the ing integrated"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": []
+    },
+    {
+      "tableId": "tbl_4_1",
+      "page": 3,
+      "tableTitle": "",
+      "columns": [
+        "statistics and Ministry’s offi",
+        "classific cials in i",
+        "ations, statistica nternational mee",
+        "l compilations an tings on these sub",
+        "d internat jects has be",
+        "ional p en high",
+        "ractices. The contri ly appreciated.",
+        "bution of the ly appreciated."
+      ],
+      "dimensions": [
+        "statistics and Ministry’s offi",
+        "classific cials in i",
+        "ations, statistica nternational mee",
+        "l compilations an tings on these sub",
+        "d internat jects has be",
+        "ional p en high",
+        "ractices. The contri ly appreciated.",
+        "bution of the ly appreciated."
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": []
+    },
+    {
+      "tableId": "tbl_5_1",
+      "page": 4,
+      "tableTitle": "",
+      "columns": [
+        "1.10 Econo from si",
+        "The Index of mic Statistics x weeks to fo",
+        "Industrial Division (E ur weeks,",
+        "Production (I SD) of MoSP ensuring time",
+        "IP I. lie",
+        ") with base The release r availabilit",
+        "year 2011 timeline o y of indus",
+        "-12 is f IIP h trial ou",
+        "compiled as been im tput data.",
+        "and pu prove It is p",
+        "blished by the d by reducing it ublished on the"
+      ],
+      "dimensions": [
+        "1.10 Econo from si",
+        "The Index of mic Statistics x weeks to fo",
+        "Industrial Division (E ur weeks,",
+        "Production (I SD) of MoSP ensuring time",
+        "IP I. lie",
+        ") with base The release r availabilit",
+        "year 2011 timeline o y of indus",
+        "-12 is f IIP h trial ou",
+        "compiled as been im tput data.",
+        "and pu prove It is p",
+        "blished by the d by reducing it ublished on the"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": []
+    },
+    {
+      "tableId": "tbl_6_1",
+      "page": 5,
+      "tableTitle": "",
+      "columns": [
+        "Sl. No.",
+        "Item Domestic Product",
+        "2023-24\n(FRE) Domestic Product",
+        "2024-25\n(PE) Domestic Product",
+        "2025-26\n(FAE) Domestic Product",
+        "Percentage Change\nOver Previous\nYear\n2024-25 2025-26 Domestic Product"
+      ],
+      "dimensions": [
+        "Sl. No.",
+        "Item Domestic Product",
+        "2023-24\n(FRE) Domestic Product",
+        "2024-25\n(PE) Domestic Product",
+        "2025-26\n(FAE) Domestic Product",
+        "Percentage Change\nOver Previous\nYear\n2024-25 2025-26 Domestic Product"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": []
+    },
+    {
+      "tableId": "tbl_7_1",
+      "page": 6,
+      "tableTitle": "",
+      "columns": [
+        "Sl. No.",
+        "Item",
+        "2023-24\n(FRE)",
+        "2024-25\n(PE)",
+        "2025-26\n(FAE)",
+        "Percentage Change\nOver Previous\n2024-25 2025-26"
+      ],
+      "dimensions": [
+        "Sl. No.",
+        "Item",
+        "2023-24\n(FRE)",
+        "2024-25\n(PE)",
+        "2025-26\n(FAE)",
+        "Percentage Change\nOver Previous\n2024-25 2025-26"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": []
+    },
+    {
+      "tableId": "tbl_8_1",
+      "page": 7,
+      "tableTitle": "",
+      "columns": [
+        "Industry",
+        "2023-24\n(FRE)",
+        "2024-25\n(PE)",
+        "2025-26\n(FAE)",
+        "Percentage Change Over\nPrevious Year 2024-25",
+        "Percentage Change Over\nPrevious Year 2025-26"
+      ],
+      "dimensions": [
+        "Industry",
+        "2023-24\n(FRE)",
+        "2024-25\n(PE)",
+        "2025-26\n(FAE)",
+        "Percentage Change Over\nPrevious Year 2024-25",
+        "Percentage Change Over\nPrevious Year 2025-26"
+      ],
+      "measures": [],
+      "breakdowns": [
+        {
+          "measure": "Percentage Change Over\nPrevious Year",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024-25",
+            "2025-26"
+          ]
+        }
+      ],
+      "layout": "cross_tabulation",
+      "columnGroups": [
+        {
+          "groupId": "grp_1",
+          "label": "Percentage Change Over\nPrevious Year",
+          "columnIndices": [
+            4,
+            5
+          ],
+          "span": 2
+        }
+      ]
+    },
+    {
+      "tableId": "tbl_8_2",
+      "page": 7,
+      "tableTitle": "",
+      "columns": [
+        "Industry",
+        "2023-24\n(FRE)",
+        "2024-25\n(PE)",
+        "2025-26\n(FAE)",
+        "Percentage Change Over\nPrevious Year 2024-25",
+        "Percentage Change Over\nPrevious Year 2025-26"
+      ],
+      "dimensions": [
+        "Industry",
+        "2023-24\n(FRE)",
+        "2024-25\n(PE)",
+        "2025-26\n(FAE)",
+        "Percentage Change Over\nPrevious Year 2024-25",
+        "Percentage Change Over\nPrevious Year 2025-26"
+      ],
+      "measures": [],
+      "breakdowns": [
+        {
+          "measure": "Percentage Change Over\nPrevious Year",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024-25",
+            "2025-26"
+          ]
+        }
+      ],
+      "layout": "cross_tabulation",
+      "columnGroups": [
+        {
+          "groupId": "grp_1",
+          "label": "Percentage Change Over\nPrevious Year",
+          "columnIndices": [
+            4,
+            5
+          ],
+          "span": 2
+        }
+      ]
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "ch_01",
+      "title": "Government of India",
+      "pageRange": [
+        0,
+        0
+      ],
+      "level": 2,
+      "sections": [
+        {
+          "sectionId": "sec_01_01",
+          "title": "Ministry of Statistics Programme Implementation",
+          "page": 0,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_01_02",
+          "title": "Khurshid Lal Bhawan, Janpath",
+          "page": 0,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_01_03",
+          "title": "New Delhi-110001",
+          "page": 0,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_01_04",
+          "title": "Annual Report",
+          "page": 0,
+          "level": 2
+        }
+      ]
+    },
+    {
+      "chapterId": "ch_02",
+      "title": "TABLE OF CONTENTS",
+      "pageRange": [
+        1,
+        6
+      ],
+      "level": 1,
+      "sections": [
+        {
+          "sectionId": "sec_02_01",
+          "title": "Sl.No. CHAPTERS Page No.",
+          "page": 1,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_02",
+          "title": "Introduction 1-9",
+          "page": 1,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_03",
+          "title": "National Sample Survey (NSS) 41-62",
+          "page": 1,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_04",
+          "title": "Data Informatics Innovation 79-91",
+          "page": 1,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_05",
+          "title": "Administrative Statistics 92-93",
+          "page": 1,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_06",
+          "title": "India in United Nations 94-95",
+          "page": 1,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_07",
+          "title": "Research and Analysis 96-97",
+          "page": 1,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_08",
+          "title": "Support for Statistical Strengthening 98-101",
+          "page": 1,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_09",
+          "title": "10 Media and Publicity 102-105",
+          "page": 1,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_10",
+          "title": "Members of Parliament Local Area Development Scheme( MPLADS)",
+          "page": 1,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_11",
+          "title": "1.4 The Statistics Wing, called National Statistics Office (NSO), coordinates the statistical activities in",
+          "page": 2,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_12",
+          "title": "the country and is responsible for evolving and laying, down statistical standards. India is subscriber to the",
+          "page": 2,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_13",
+          "title": "International Monetary Fund’s (IMF) Special Data Dissemination Standards (SDDS) and is currently",
+          "page": 2,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_14",
+          "title": "fulfilling the Standards. The Ministry maintains an ‘Advance Release Calendar’ for its data categories",
+          "page": 2,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_15",
+          "title": "covered under the SDDS, which is disseminated on the Ministry’s website as well as on the Dissemination",
+          "page": 2,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_16",
+          "title": "Standards Bulletin Board (DSBB) of the IMF. The Ministry releases the datasets covered under the Real",
+          "page": 2,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_17",
+          "title": "Sector of SDDS through press notes and its website simultaneously. India has strong system of official",
+          "page": 2,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_18",
+          "title": "statistics and is among the leading countries in the area of official statistics. The Ministry’s officials have been",
+          "page": 2,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_19",
+          "title": "associated with international agencies on the development of methodologies, particularly in the areas of",
+          "page": 2,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_20",
+          "title": "statistics and classifications, statistical compilations and international practices. The contribution of the",
+          "page": 3,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_21",
+          "title": "Ministry’s officials in international meetings on these subjects has been highly appreciated.",
+          "page": 3,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_22",
+          "title": "1.8 International Comparison Programme (ICP) is the largest statistical initiative in the world under the",
+          "page": 3,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_23",
+          "title": "aegis of United Nations Statistics Division (UNSD). The World Bank is implementing this programme at",
+          "page": 3,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_24",
+          "title": "global level and Asian Development Bank (ADB) is the nodal implementing agency at Asia and the Pacific",
+          "page": 3,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_25",
+          "title": "Region. The main objectives of ICP are to produce Purchasing Power Parities (PPPs) and Price Level Indices",
+          "page": 3,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_26",
+          "title": "and to convert volume and per capita measures of GDP into common currencies using PPPs. The World Bank",
+          "page": 3,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_27",
+          "title": "released the report of ICP 2021 cycle in August, 2025, which included data for India. According to these",
+          "page": 3,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_28",
+          "title": "results, India ranks as the third-largest economy globally.",
+          "page": 3,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_29",
+          "title": "1.5 The NSO, MoSPI is responsible for preparation of national accounts, which include the estimates of",
+          "page": 3,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_30",
+          "title": "In its endeavour to enhance the user experience and responsiveness, various new sections like",
+          "page": 4,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_31",
+          "title": "1.10 The Index of Industrial Production (IIP) with base year 2011-12 is compiled and published by the",
+          "page": 4,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_32",
+          "title": "Economic Statistics Division (ESD) of MoSPI. The release timeline of IIP has been improved by reducing it",
+          "page": 4,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_33",
+          "title": "from six weeks to four weeks, ensuring timelier availability of industrial output data. It is published on the",
+          "page": 4,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_34",
+          "title": "28th of every month (or the next working day if 28th is holiday) with time lag of four weeks from the",
+          "page": 4,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_35",
+          "title": "reference month. The IIP covers three sectors namely Mining, Manufacturing and Electricity. The IIP for",
+          "page": 4,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_36",
+          "title": "2024-25 stands at 152.6, registering growth of 4%. The base year revision exercise of IIP is in progress and",
+          "page": 4,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_37",
+          "title": "Technical Advisory Committee (TAC) for the base year revision of IIP has been constituted on 27th",
+          "page": 4,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_38",
+          "title": "September 2024 for the same.",
+          "page": 4,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_39",
+          "title": "1.11 The Ministry is entrusted with the development of indicator framework for Sustainable Development",
+          "page": 4,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_40",
+          "title": "Till 31st December, 2025, 38 meetings of ACNAS and its Sub -committees have been held. New series’",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_41",
+          "title": "release by MoSPI will be done on 27th February, 2026.",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_42",
+          "title": "Industry wise estimates of GVA at both Current and Constant Prices along with expenditure side 2.9",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_43",
+          "title": "estimates as per First Advance Estimates (FAE) of GDP for FY 2025-26 released on 7th January, 2026 and",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_44",
+          "title": "Provisional Estimates of GDP for FY 2024-25 released on 30th May, 2025 are given in the following",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_45",
+          "title": "statements and graphs:",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_46",
+          "title": "2024-25 2025-26",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_47",
+          "title": "Domestic Product",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_48",
+          "title": "Expenditure Components",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_49",
+          "title": "Share in GDP(%)",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_50",
+          "title": "National Product",
+          "page": 6,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_51",
+          "title": "Per Capita Income, National Product and Final Consumption",
+          "page": 6,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_52",
+          "title": "Item Sl. No. Over Previous",
+          "page": 6,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_53",
+          "title": "(PE) (FAE) (FRE)",
+          "page": 6,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_02_54",
+          "title": "Statement 2: First Advance Estimates of Annual GDP for FY 2025-26 and its Expenditure Components",
+          "page": 6,
+          "level": 2
+        }
+      ]
+    },
+    {
+      "chapterId": "ch_03",
+      "title": "1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7",
+      "pageRange": [
+        7,
+        7
+      ],
+      "level": 1,
+      "sections": []
+    },
+    {
+      "chapterId": "ch_04",
+      "title": "2 Secondary Sector 46,46,499 49,31,228 52,57,858 6.1 6.6",
+      "pageRange": [
+        7,
+        7
+      ],
+      "level": 1,
+      "sections": []
+    },
+    {
+      "chapterId": "ch_05",
+      "title": "3 Tertiary Sector 88,07,683 94,40,529 1,03,01,349 7.2 9.1",
+      "pageRange": [
+        7,
+        10
+      ],
+      "level": 1,
+      "sections": [
+        {
+          "sectionId": "sec_05_01",
+          "title": "1. Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7",
+          "page": 7,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_05_02",
+          "title": "2. Secondary Sector 46,46,499 49,31,228 52,57,858 6.1 6.6",
+          "page": 7,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_05_03",
+          "title": "3. Tertiary Sector 88,07,683 94,40,529 1,03,01,349 7.2 9.1",
+          "page": 7,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_05_04",
+          "title": "GVA at Basic Prices 1,61,51,477 1,71,87,446 1,84,49,828 6.4 7.3",
+          "page": 7,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_05_05",
+          "title": "Percentage Change Over",
+          "page": 7,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_05_06",
+          "title": "Previous Year",
+          "page": 7,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_05_07",
+          "title": "Statement 3: First Advance Estimates of GVA at Basic Prices by Economic Activity (at 2011- 12 Prices)",
+          "page": 7,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_05_08",
+          "title": "(FRE) (PE) (FAE)",
+          "page": 7,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_05_09",
+          "title": "Fig. 1: Annual GDP and GVA Estimates along with Y-o-Y Growth Rates at Constant",
+          "page": 8,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_05_10",
+          "title": "Fig. 2: Sectoral Composition and Growth Rates of Annual GVA",
+          "page": 9,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_05_11",
+          "title": "Fig. 3: Composition and Growth Rates of Annual GVA in Broad Sectors",
+          "page": 10,
+          "level": 2
+        }
+      ]
+    }
+  ]
+}

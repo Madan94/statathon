@@ -59,7 +59,52 @@ def main():
 
     # ── COMPILE ──
     from report_builder.template_compiler import compile_template_artifacts
-    result = compile_template_artifacts(raw_ast=ast, blueprint=bp)
+
+    # Load _pass_outputs if available (provides table_structures, layout, etc.)
+    pass_outputs_dir = input_dir / "_pass_outputs"
+    _extra_kwargs: dict = {}
+
+    if pass_outputs_dir.exists():
+        # Load pass2_5 knowledge graph → table_candidates
+        p25_path = pass_outputs_dir / "pass2_5_knowledge_graph.json"
+        if p25_path.exists():
+            p25 = json.loads(p25_path.read_text(encoding="utf-8"))
+            table_structures = p25.get("table_structures") or []
+            # Filter out fake/ghost tables: must have title OR real column count
+            real_tables = []
+            for ts in table_structures:
+                title = ts.get("tableTitle") or ""
+                cols = ts.get("columns") or []
+                # Real table: has a title starting with "Table" or "Statement"
+                # OR has columnGroups >= 2 AND non-fragmented columns
+                has_title = bool(re.match(r"^(Table|Statement|Annexure)\s+\d", title, re.I))
+                has_good_cols = len(cols) >= 3 and not any("Introduction" in c for c in cols[:5])
+                if has_title or (has_good_cols and ts.get("row_count", 0) > 0):
+                    real_tables.append(ts)
+            if real_tables:
+                # Convert to table_candidates format
+                from report_builder.table_candidate_adapter import table_candidates_from_pipeline
+                _extra_kwargs["table_candidates"] = table_candidates_from_pipeline(
+                    table_structures=real_tables
+                )
+
+            # Pass document_map for doc_type detection and entity context
+            _extra_kwargs["document_map"] = {
+                "doc_type": p25.get("doc_type") or "",
+                "chapters": p25.get("chapters") or [],
+                "table_structures": real_tables,
+                "all_entities": p25.get("entities") or [],
+            }
+
+        # Load pass0 for page_texts
+        p0_path = pass_outputs_dir / "pass0_text_extraction.json"
+        if p0_path.exists():
+            p0 = json.loads(p0_path.read_text(encoding="utf-8"))
+            _page_texts = [pg.get("raw_text", "") if isinstance(pg, dict) else "" for pg in (p0.get("pages") or [])]
+            if _page_texts:
+                _extra_kwargs["page_texts"] = _page_texts
+
+    result = compile_template_artifacts(raw_ast=ast, blueprint=bp, **_extra_kwargs)
 
     compiled_ast = result["template_ast"]
     compiled_bp = result["template_blueprint"]

@@ -1,0 +1,933 @@
+{
+  "$schema": "bharatstat/template-blueprint/v1",
+  "_doc": "VALUE-FREE + PROSE-FREE analytic brain. Defines WHAT to compute and HOW to render. Contains NO numbers, NO sentences, NO dataset. Pairs 1:1 with template.ast.json by shared IDs.",
+  "templateMeta": {
+    "templateId": "tpl_test_madhan_money_model_v1",
+    "name": "PLFS Annual Report Press Release",
+    "domain": "labour_force",
+    "locale": "en-IN",
+    "version": "3.0",
+    "valueFree": true,
+    "proseFree": true,
+    "sourceDocument": "Document",
+    "reportType": "pib_press_release"
+  },
+  "entities": [
+    {
+      "entityId": "ent_lfpr",
+      "canonicalName": "Labour Force Participation Rate",
+      "entityType": "measure",
+      "aliases": [
+        "LFPR",
+        "Labour",
+        "Labour Force Participation Rate (%)",
+        "Distribution (%)",
+        "Labour_Force_Participation_Rate"
+      ],
+      "unit": "percent",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "reported_value",
+      "scope": "indicator",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_ur",
+      "canonicalName": "Unemployment Rate",
+      "entityType": "measure",
+      "aliases": [
+        "UR",
+        "Unemployment",
+        "Unemployment Rate (%)",
+        "Distribution (%)",
+        "Unemployment_Rate"
+      ],
+      "unit": "percent",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "reported_value",
+      "scope": "indicator",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_gender",
+      "canonicalName": "Gender",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "valueDomain": {
+        "kind": "categorical",
+        "members": [
+          "Male",
+          "Female",
+          "Transgender"
+        ]
+      },
+      "aggregation": null,
+      "scope": "classifier",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_sector",
+      "canonicalName": "Sector",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "valueDomain": {
+        "kind": "categorical",
+        "members": [
+          "Rural",
+          "Urban"
+        ]
+      },
+      "aggregation": null,
+      "scope": "classifier",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_age_group",
+      "canonicalName": "Age Group",
+      "entityType": "dimension",
+      "aliases": [
+        "Age_Group"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "categorical",
+        "members": "open"
+      },
+      "aggregation": null,
+      "scope": "classifier",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_employment_status",
+      "canonicalName": "Employment Status",
+      "entityType": "measure",
+      "aliases": [
+        "Employment",
+        "Employment_Status"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0
+      },
+      "aggregation": null,
+      "scope": "indicator",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_activity_status",
+      "canonicalName": "Activity Status",
+      "entityType": "dimension",
+      "aliases": [
+        "Activity",
+        "Activity_Status"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "categorical",
+        "members": "open"
+      },
+      "aggregation": null,
+      "scope": "classifier",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_regular_wage_salary",
+      "canonicalName": "Regular wage/salary",
+      "entityType": "dimension",
+      "aliases": [
+        "Regular",
+        "Regular wage",
+        "salary",
+        "Regular_wage_salary"
+      ],
+      "unit": "INR",
+      "valueDomain": {
+        "kind": "categorical",
+        "members": "open"
+      },
+      "aggregation": null,
+      "scope": "classifier",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_current_weekly_status",
+      "canonicalName": "Current Weekly Status",
+      "entityType": "dimension",
+      "aliases": [
+        "Current",
+        "Current_Weekly_Status"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "categorical",
+        "members": "open"
+      },
+      "aggregation": null,
+      "scope": "classifier",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_activity_status_usual_status",
+      "canonicalName": "Activity Status - Usual Status",
+      "entityType": "dimension",
+      "aliases": [
+        "Activity",
+        "Activity_Status_-_Usual_Status"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "categorical",
+        "members": "open"
+      },
+      "aggregation": null,
+      "scope": "classifier",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_activity_status_current_weekly_status",
+      "canonicalName": "Activity Status - Current Weekly Status",
+      "entityType": "dimension",
+      "aliases": [
+        "Activity",
+        "Activity_Status_-_Current_Weekly_Status"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "categorical",
+        "members": "open"
+      },
+      "aggregation": null,
+      "scope": "classifier",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_mospi",
+      "canonicalName": "MoSPI",
+      "entityType": "metadata",
+      "aliases": [],
+      "unit": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aggregation": null,
+      "scope": "indicator",
+      "confidence": 0.85
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 - December, 2025]",
+      "order": 1,
+      "semanticRef": "sec_01",
+      "questions": [
+        {
+          "questionId": "q_percentage_distribution_workers_usu",
+          "intent": "Show Percentage distribution of workers (in usual status) by status in employment, {{period.current}}?",
+          "questionType": "composition",
+          "priority": 3,
+          "requiredEntities": [
+            {
+              "entityId": "ent_ur",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_current_weekly_status",
+              "role": "grouping",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_ur"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_current_weekly_status"
+              }
+            ]
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_percentage_distribution_workers_usu_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "maxWords": 90
+                }
+              },
+              {
+                "componentId": "q_percentage_distribution_workers_usu_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "pie",
+                  "xAxis": "ent_current_weekly_status",
+                  "yAxis": "ent_ur"
+                }
+              }
+            ]
+          },
+          "generationMethod": "chart_pattern",
+          "sourceFigure": "ft_ft_vlm_6_1",
+          "formulaIntent": {
+            "type": "DIRECT"
+          }
+        },
+        {
+          "questionId": "q_pib_plfs_lfpr_comparison",
+          "intent": "Compare LFPR by sector and gender for persons aged 15 years and above.",
+          "questionType": "comparison",
+          "priority": 2,
+          "requiredEntities": [
+            {
+              "entityId": "ent_lfpr",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_gender",
+              "role": "grouping",
+              "required": true
+            },
+            {
+              "entityId": "ent_sector",
+              "role": "grouping",
+              "required": false
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": "LFPR",
+            "groupBy": [
+              "Gender",
+              "Sector"
+            ]
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "kind": "narrative",
+                "outputContract": {
+                  "type": "prose",
+                  "maxWords": 80
+                },
+                "componentId": "q_pib_plfs_lfpr_comparison_c1"
+              },
+              {
+                "kind": "chart",
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar"
+                },
+                "componentId": "q_pib_plfs_lfpr_comparison_c2"
+              }
+            ]
+          },
+          "generationMethod": "pib_domain_template"
+        },
+        {
+          "questionId": "q_pib_plfs_ur_comparison",
+          "intent": "Compare Unemployment Rate by sector and gender for persons aged 15 years and above.",
+          "questionType": "comparison",
+          "priority": 2,
+          "requiredEntities": [
+            {
+              "entityId": "ent_ur",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_gender",
+              "role": "grouping",
+              "required": true
+            },
+            {
+              "entityId": "ent_sector",
+              "role": "grouping",
+              "required": false
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": "UR",
+            "groupBy": [
+              "Gender",
+              "Sector"
+            ]
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "kind": "narrative",
+                "outputContract": {
+                  "type": "prose",
+                  "maxWords": 80
+                },
+                "componentId": "q_pib_plfs_ur_comparison_c1"
+              },
+              {
+                "kind": "chart",
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar"
+                },
+                "componentId": "q_pib_plfs_ur_comparison_c2"
+              }
+            ]
+          },
+          "generationMethod": "pib_domain_template"
+        }
+      ]
+    },
+    {
+      "topicId": "topic_02",
+      "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "order": 2,
+      "semanticRef": "sec_02",
+      "questions": []
+    },
+    {
+      "topicId": "topic_03",
+      "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "order": 3,
+      "semanticRef": "sec_03",
+      "questions": []
+    },
+    {
+      "topicId": "topic_04",
+      "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "order": 4,
+      "semanticRef": "sec_04",
+      "questions": []
+    },
+    {
+      "topicId": "topic_05",
+      "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+      "order": 5,
+      "semanticRef": "sec_05",
+      "questions": []
+    },
+    {
+      "topicId": "topic_06",
+      "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "order": 6,
+      "semanticRef": "sec_06",
+      "questions": []
+    },
+    {
+      "topicId": "topic_08",
+      "title": "7 Average number of years in formal education",
+      "order": 7,
+      "semanticRef": "sec_08",
+      "questions": []
+    }
+  ],
+  "tableTemplates": [],
+  "documentMap": {
+    "order": [
+      "topic_01",
+      "topic_02",
+      "topic_03",
+      "topic_04",
+      "topic_05",
+      "topic_06",
+      "topic_08"
+    ],
+    "frontMatter": [
+      "title_page",
+      "toc"
+    ],
+    "backMatter": [
+      "glossary",
+      "notes"
+    ]
+  },
+  "glossary": {
+    "LFPR": "Labour Force Participation Rate - percentage of the population in the labour force (working or seeking work).",
+    "WPR": "Worker Population Ratio - percentage of employed persons in the population of age 15 years and above.",
+    "UR": "Unemployment Rate - percentage of the labour force that is unemployed.",
+    "PLFS": "Periodic Labour Force Survey - annual household survey conducted by NSO for employment/unemployment indicators.",
+    "NSO": "National Statistical Office - apex statistical body under MoSPI, Government of India.",
+    "MoSPI": "Ministry of Statistics and Programme Implementation - responsible for official statistics in India.",
+    "CWS": "Current Weekly Status - activity status of a person during the reference week preceding the date of survey.",
+    "Worker Share": "Worker Share (percent) - statistical indicator extracted from the source document.",
+    "Average Weekly Hours": "Average Weekly Hours (hours_per_week) - statistical indicator extracted from the source document.",
+    "Average Monthly Earnings": "Average Monthly Earnings (INR) - statistical indicator extracted from the source document.",
+    "Employment Status": "Employment Status - statistical indicator extracted from the source document.",
+    "Gender": "Gender - classification dimension with categories: Male, Female, Persons.",
+    "Sector": "Sector - classification dimension with categories: Rural, Urban.",
+    "Age Group": "Age Group - classification dimension with categories: 15 years and above, 15-29 years, 15-59 years.",
+    "Industry": "Industry - classification dimension with categories: Agriculture, Manufacturing, Construction, Services, Other.",
+    "Activity Status": "Activity Status - classification dimension with categories: Usual Status (ps+ss), CWS."
+  },
+  "palette": {
+    "paletteId": "pal_mospi_default",
+    "sequential": [
+      "#0B5394",
+      "#3D85C6",
+      "#6FA8DC",
+      "#9FC5E8",
+      "#CFE2F3"
+    ],
+    "categorical": {
+      "Rural": "#1F7A1F",
+      "Urban": "#0B5394",
+      "Male": "#0B5394",
+      "Female": "#CC4125",
+      "Total": "#666666"
+    },
+    "semantic": {
+      "positive": "#1F7A1F",
+      "negative": "#CC0000",
+      "neutral": "#666666"
+    }
+  },
+  "renderProfile": {
+    "numberFormat": {
+      "locale": "en-IN",
+      "grouping": "lakh-crore",
+      "decimalSeparator": "."
+    },
+    "percentFormat": {
+      "decimals": 1,
+      "suffix": "%"
+    },
+    "currencyFormat": {
+      "symbol": "₹",
+      "grouping": "lakh-crore",
+      "decimals": 0
+    },
+    "fontFamily": "Noto Sans",
+    "pageSize": "A4"
+  },
+  "figureTemplates": [
+    {
+      "figureTemplateId": "ft_ft_sp01_q02",
+      "chartType": "unknown",
+      "chartSubject": "Unemployment Rate by Survey Period, {{period.current}}",
+      "captionTemplate": "Unemployment Rate by Survey Period, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur",
+        "ent_employment_status"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_sp02_q02",
+      "chartType": "unknown",
+      "chartSubject": "Labour Force Participation Rate by Survey Period, {{period.current}}",
+      "captionTemplate": "Labour Force Participation Rate by Survey Period, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_lfpr",
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_sp03_q01",
+      "chartType": "unknown",
+      "chartSubject": "Worker Population Ratio by Gender, {{period.current}}",
+      "captionTemplate": "Worker Population Ratio by Gender, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_gender"
+    },
+    {
+      "figureTemplateId": "ft_ft_sp03_q02",
+      "chartType": "unknown",
+      "chartSubject": "Worker Population Ratio by Survey Period, {{period.current}}",
+      "captionTemplate": "Worker Population Ratio by Survey Period, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_sp04_q01",
+      "chartType": "unknown",
+      "chartSubject": "Unemployment Rate by Gender, {{period.current}}",
+      "captionTemplate": "Unemployment Rate by Gender, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur",
+        "ent_employment_status"
+      ],
+      "dimensionRef": "ent_gender"
+    },
+    {
+      "figureTemplateId": "ft_ft_sp04_q03",
+      "chartType": "unknown",
+      "chartSubject": "Unemployment Rate by Gender, {{period.current}}",
+      "captionTemplate": "Unemployment Rate by Gender, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur",
+        "ent_employment_status"
+      ],
+      "dimensionRef": "ent_gender"
+    },
+    {
+      "figureTemplateId": "ft_ft_sp05_q01",
+      "chartType": "unknown",
+      "chartSubject": "Worker Share by Survey Period, {{period.current}}",
+      "captionTemplate": "Worker Share by Survey Period, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_sp05_q02",
+      "chartType": "unknown",
+      "chartSubject": "Worker Share by Survey Period, {{period.current}}",
+      "captionTemplate": "Worker Share by Survey Period, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_sp06_q01",
+      "chartType": "unknown",
+      "chartSubject": "Worker Share by Survey Period, {{period.current}}",
+      "captionTemplate": "Worker Share by Survey Period, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_sp06_q02",
+      "chartType": "unknown",
+      "chartSubject": "Worker Share by Survey Period, {{period.current}}",
+      "captionTemplate": "Worker Share by Survey Period, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_sp06_q03",
+      "chartType": "unknown",
+      "chartSubject": "Worker Share by Survey Period, {{period.current}}",
+      "captionTemplate": "Worker Share by Survey Period, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_sp07_q02",
+      "chartType": "unknown",
+      "chartSubject": "Average Monthly Earnings by Survey Period, {{period.current}}",
+      "captionTemplate": "Average Monthly Earnings by Survey Period, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_sp08_q02",
+      "chartType": "unknown",
+      "chartSubject": "Formal Education Years, {{period.current}}",
+      "captionTemplate": "Formal Education Years, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_vlm_3_1",
+      "chartType": "unknown",
+      "chartSubject": "(a): LFPR(%) in usual status (ps+ss) for persons of age 15 years and above in rural areas, {{period.current}}",
+      "captionTemplate": "(a): LFPR(%) in usual status (ps+ss) for persons of age 15 years and above in rural areas, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_lfpr",
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_vlm_3_2",
+      "chartType": "unknown",
+      "chartSubject": "(b): LFPR(%) in usual status (ps+ss) for persons of age 15 years and above in urban areas, {{period.current}}",
+      "captionTemplate": "(b): LFPR(%) in usual status (ps+ss) for persons of age 15 years and above in urban areas, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_lfpr",
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_vlm_4_1",
+      "chartType": "unknown",
+      "chartSubject": "(a): WPR(%) in usual status (ps+ss) for persons of age 15 years and above in rural areas, {{period.current}}",
+      "captionTemplate": "(a): WPR(%) in usual status (ps+ss) for persons of age 15 years and above in rural areas, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_vlm_4_2",
+      "chartType": "unknown",
+      "chartSubject": "(b): WPR(%) in usual status (ps+ss) for persons of age 15 years and above in urban areas, {{period.current}}",
+      "captionTemplate": "(b): WPR(%) in usual status (ps+ss) for persons of age 15 years and above in urban areas, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_vlm_5_1",
+      "chartType": "unknown",
+      "chartSubject": "(a): UR(%) in usual status (ps+ss) for persons of age 15 years and above in rural areas, {{period.current}}",
+      "captionTemplate": "(a): UR(%) in usual status (ps+ss) for persons of age 15 years and above in rural areas, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_vlm_5_2",
+      "chartType": "unknown",
+      "chartSubject": "(b): UR(%) in usual status (ps+ss) for persons of age 15 years and above in urban areas, {{period.current}}",
+      "captionTemplate": "(b): UR(%) in usual status (ps+ss) for persons of age 15 years and above in urban areas, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_vlm_6_1",
+      "chartType": "pie",
+      "chartSubject": "Percentage distribution of workers (in usual status) by status in employment, {{period.current}}",
+      "captionTemplate": "Percentage distribution of workers (in usual status) by status in employment, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur",
+        "ent_employment_status"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_ft_vlm_7_1",
+      "chartType": "unknown",
+      "chartSubject": "(a): Earning from regular wage/ salary and self-employment, {{period.current}}",
+      "captionTemplate": "(a): Earning from regular wage/ salary and self-employment, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur",
+        "ent_employment_status"
+      ],
+      "dimensionRef": "ent_regular_wage_salary"
+    },
+    {
+      "figureTemplateId": "ft_ft_vlm_8_1",
+      "chartType": "unknown",
+      "chartSubject": "Average number of years in formal education, {{period.current}}",
+      "captionTemplate": "Average number of years in formal education, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_current_weekly_status"
+    },
+    {
+      "figureTemplateId": "ft_fig_sp01_q02",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp02_q02",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp03_q01",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp03_q02",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp04_q01",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp05_q01",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp07_q02",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp08_q02",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_vlm_3_1",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_vlm_3_2",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_vlm_4_1",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_vlm_4_2",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_vlm_5_1",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_vlm_5_2",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_vlm_6_1",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_vlm_7_1",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_vlm_8_1",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    }
+  ],
+  "statisticalContext": {
+    "sourceDocument": "Document",
+    "domain": "labour_force"
+  }
+}
