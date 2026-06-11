@@ -79,8 +79,14 @@ def compile_template_artifacts(
         _title_early = (_bp_meta_early.get("name") or "").lower()
         _ent_names_early = {(e.get("canonicalName") or "").lower() for e in raw_entities}
         _pib_check = {"labour force participation rate", "unemployment rate"}
-        if ("plfs" in _title_early or "labour force" in _title_early
-                or _pib_check.issubset(_ent_names_early)):
+        # Energy exclusion: don't classify as PIB if Energy entities dominate
+        _energy_check = {"coal reserves", "lignite reserves", "crude oil", "natural gas",
+                         "renewable power", "solar energy", "biomass power", "wind power"}
+        _is_energy_early = len(_energy_check & _ent_names_early) >= 2
+        if not _is_energy_early and (
+            "plfs" in _title_early or "labour force" in _title_early
+            or _pib_check.issubset(_ent_names_early)
+        ):
             _early_doc_type = "pib_press_release"
 
     if _early_doc_type == "pib_press_release":
@@ -327,9 +333,17 @@ def compile_template_artifacts(
         _title = (_bp_meta.get("name") or "").lower()
         _entity_names = {(e.get("canonicalName") or "").lower() for e in bp.get("entities", [])}
         _pib_indicators = {"labour force participation rate", "unemployment rate"}
-        if ("plfs" in _title or "labour force" in _title or "press" in _title
-                or _pib_indicators.issubset(_entity_names)):
+        # Energy exclusion: if energy-domain entities dominate, it's NOT PIB
+        _energy_indicators = {"coal reserves", "lignite reserves", "crude oil", "natural gas",
+                              "renewable power", "solar energy", "biomass power", "wind power"}
+        _has_energy = len(_energy_indicators & _entity_names) >= 2
+        if not _has_energy and (
+            "plfs" in _title or "labour force" in _title or "press" in _title
+            or _pib_indicators.issubset(_entity_names)
+        ):
             _doc_type = "pib_press_release"
+        elif _has_energy:
+            _doc_type = "statistical_annual_report"
 
     # If PIB detected, ensure metadata is set (may already be set from pre-hygiene)
     if _doc_type == "pib_press_release":
@@ -339,6 +353,22 @@ def compile_template_artifacts(
             _bp_meta["domain"] = "labour_force"
         if _bp_meta.get("name") in ("Document", "", None):
             _bp_meta["name"] = "PLFS Annual Report Press Release"
+
+    # If Energy detected, set domain/metadata
+    if _doc_type == "statistical_annual_report" and _has_energy:
+        if _bp_meta.get("domain") in ("general", "", None):
+            _bp_meta["domain"] = "energy"
+        if not _bp_meta.get("reportType"):
+            _bp_meta["reportType"] = "statistical_annual_report"
+        if _bp_meta.get("name") in ("Document", "", None):
+            # Try to derive from title or topic names
+            _topic_titles = [t.get("title", "") for t in (bp.get("topics") or []) if t.get("title")]
+            _energy_name = "Energy Statistics India"
+            for tt in _topic_titles:
+                if "energy" in tt.lower() or "reserves" in tt.lower():
+                    _energy_name = f"Energy Statistics India — {tt[:60]}"
+                    break
+            _bp_meta["name"] = _energy_name
 
     # Collect section headings for PIB question matcher
     _section_headings: list[str] = []

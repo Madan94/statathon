@@ -291,9 +291,34 @@ def enrich_entities(entities: list[Any], table_structures: list[Any] | None = No
     _unit_rules: dict[str, str] = {}
     try:
         from report_builder.domain_packs.plfs_press_release import PLFS_UNIT_RULES
-        _unit_rules = PLFS_UNIT_RULES
+        _unit_rules = dict(PLFS_UNIT_RULES)
     except ImportError:
         pass
+
+    # Energy domain unit rules (always loaded — applies to statistical reports)
+    _ENERGY_UNIT_RULES: dict[str, str] = {
+        "Coal Reserves": "million_tonnes",
+        "Lignite Reserves": "million_tonnes",
+        "Crude Oil": "million_tonnes",
+        "Crude Oil Reserves": "million_tonnes",
+        "Natural Gas": "billion_cubic_metres",
+        "Natural Gas Reserves": "billion_cubic_metres",
+        "Renewable Power": "MW",
+        "Wind Power": "MW",
+        "Solar Energy": "MW",
+        "Small Hydro Power": "MW",
+        "Small Hydro": "MW",
+        "Biomass Power": "MW",
+        "Large Hydro": "MW",
+        "Proved Reserves": "million_tonnes",
+        "Indicated Reserves": "million_tonnes",
+        "Inferred Reserves": "million_tonnes",
+        "Total Reserves": "million_tonnes",
+        "Distribution": "percent",
+        "Energy Reserves": "million_tonnes",
+        "Reserves": "million_tonnes",
+    }
+    _unit_rules.update(_ENERGY_UNIT_RULES)
 
     for entity in entities:
         # Unit inference from domain pack (if missing)
@@ -311,12 +336,22 @@ def enrich_entities(entities: list[Any], table_structures: list[Any] | None = No
                 name_lower = name.lower()
                 if "rate" in name_lower or "ratio" in name_lower or "share" in name_lower:
                     inferred_unit = "percent"
+                elif "distribution" in name_lower or "percent" in name_lower:
+                    inferred_unit = "percent"
                 elif "earning" in name_lower or "income" in name_lower or "wage" in name_lower:
                     inferred_unit = "INR"
                 elif "hours" in name_lower:
                     inferred_unit = "hours_per_week"
                 elif "years" in name_lower or "education" in name_lower:
                     inferred_unit = "years"
+                elif any(k in name_lower for k in ("coal", "lignite", "crude oil", "oil reserves")):
+                    inferred_unit = "million_tonnes"
+                elif "natural gas" in name_lower:
+                    inferred_unit = "billion_cubic_metres"
+                elif any(k in name_lower for k in ("solar", "wind", "hydro", "biomass", "renewable", "power potential")):
+                    inferred_unit = "MW"
+                elif "reserves" in name_lower:
+                    inferred_unit = "million_tonnes"
             if inferred_unit:
                 if isinstance(entity, dict):
                     entity["unit"] = inferred_unit
