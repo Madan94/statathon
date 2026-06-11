@@ -1,0 +1,239 @@
+{
+  "vlm_success_count": 11,
+  "total_entities": 80,
+  "chart_pages": 6,
+  "pages": [
+    {
+      "page": 0,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Unemployment Rate",
+        "Male",
+        "Female",
+        "Urban",
+        "Manufacturing",
+        "Agriculture",
+        "Self-employed",
+        "Regular wage",
+        "Casual labour",
+        "Education Level",
+        "Report, 2025 [January, 2025 December, 2025]"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 1,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Unemployment Rate",
+        "Gender",
+        "Rural",
+        "Urban",
+        "Self-employed",
+        "Regular wage",
+        "Casual labour"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "1. Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above"
+    },
+    {
+      "page": 2,
+      "vlm_used": true,
+      "structure_type": "chart_page",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [
+        "bar_chart",
+        "line_chart"
+      ],
+      "chart_titles": [
+        "Fig. 1(a): LFPR(%) in usual status (ps+ss) for persons of age 15 years and above in rural areas",
+        "Fig. 1(b): LFPR(%) in usual status (ps+ss) for persons of age 15 years and above in urban areas"
+      ],
+      "table_title": "",
+      "section_heading": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained"
+    },
+    {
+      "page": 3,
+      "vlm_used": true,
+      "structure_type": "chart_page",
+      "entities": [
+        "Unemployment Rate",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [
+        "bar_chart",
+        "line_chart"
+      ],
+      "chart_titles": [
+        "Fig 2(a): WPR(%) in usual status (ps+ss) for persons of age 15 years and above in rural areas",
+        "Fig 2(b): WPR(%) in usual status (ps+ss) for persons of age 15 years and above in urban areas"
+      ],
+      "table_title": "",
+      "section_heading": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and above"
+    },
+    {
+      "page": 4,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": [
+        "Unemployment Rate",
+        "Gender",
+        "Rural",
+        "Urban",
+        "Self-employed",
+        "Regular wage",
+        "Casual labour"
+      ],
+      "chart_types": [
+        "bar_chart",
+        "line_chart"
+      ],
+      "chart_titles": [
+        "Fig 3(a): UR(%) in usual status (ps+ss) for persons of age 15 years and above in rural areas",
+        "Fig 3(b): UR(%) in usual status (ps+ss) for persons of age 15 years and above in urban areas"
+      ],
+      "table_title": "",
+      "section_heading": "4. Increase in proportion of workers with regular wage/ salary employment"
+    },
+    {
+      "page": 5,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": [
+        "Percentage distribution of workers",
+        "Status in employment",
+        "Industry of work",
+        "Gender",
+        "Self employed",
+        "Regular wage/salary",
+        "Casual labour",
+        "Agriculture",
+        "Mining & quarrying",
+        "Manufacturing",
+        "Construction",
+        "Trade, hotel & restaurant",
+        "Transport, storage & communications",
+        "Other services",
+        "Male",
+        "Female",
+        "Average earnings"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [
+        "Fig 4: Percentage distribution of workers (in usual status) by status in employment",
+        "Fig 5: Percentage distribution of workers (in usual status) by industry of work"
+      ],
+      "table_title": "",
+      "section_heading": "5. Manufacturing and service sectors witnessed enhanced worker participation"
+    },
+    {
+      "page": 6,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": [
+        "Earning",
+        "Self-employment",
+        "Casual labour",
+        "Regular wage",
+        "Gender",
+        "Urban",
+        "Rural"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [
+        "Fig. 6(a): Earning from regular wage/ salary and self-employment",
+        "Fig. 6(b): Earning from casual labour work (other than public work)"
+      ],
+      "table_title": "",
+      "section_heading": "7. Average number of years in formal education"
+    },
+    {
+      "page": 7,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Gender",
+        "Rural",
+        "Urban",
+        "Labour Force Participation Rate",
+        "Worker Population Ratio",
+        "Unemployment Rate",
+        "Current Weekly Status",
+        "Usual status"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [
+        "Fig 7: Average number of years in formal education"
+      ],
+      "table_title": "Fig 7: Average number of years in formal education",
+      "section_heading": "Average number of years in formal education"
+    },
+    {
+      "page": 8,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Unemployment Rate",
+        "Rural",
+        "Urban",
+        "Labour Force Participation Rate",
+        "Worker Population Ratio",
+        "Sample Size"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "D. Conceptual Framework of Key Indicators"
+    },
+    {
+      "page": 9,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Worker Population Ratio",
+        "Unemployment Rate",
+        "Activity Status - Usual Status",
+        "Principal activity status",
+        "Subsidiary economic activity status",
+        "Activity Status - Current Weekly Status"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "E. Compatibility of PLFS 2025 results"
+    },
+    {
+      "page": 10,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    }
+  ]
+}
