@@ -183,8 +183,8 @@ PLFS_QUESTION_TEMPLATES: list[dict[str, Any]] = [
         "priority": 2,
         "requiredEntities": [
             {"entityRef": "Labour Force Participation Rate", "role": "measure", "required": True},
-            {"entityRef": "Gender", "role": "breakdown", "required": True},
-            {"entityRef": "Sector", "role": "breakdown", "required": False},
+            {"entityRef": "Gender", "role": "grouping", "required": True},
+            {"entityRef": "Sector", "role": "grouping", "required": False},
         ],
         "analyticsSpec": {"operation": "group_aggregate", "measure": "LFPR", "groupBy": ["Gender", "Sector"]},
         "answerStructure": {"components": [
@@ -200,8 +200,8 @@ PLFS_QUESTION_TEMPLATES: list[dict[str, Any]] = [
         "priority": 2,
         "requiredEntities": [
             {"entityRef": "Worker Population Ratio", "role": "measure", "required": True},
-            {"entityRef": "Gender", "role": "breakdown", "required": True},
-            {"entityRef": "Sector", "role": "breakdown", "required": False},
+            {"entityRef": "Gender", "role": "grouping", "required": True},
+            {"entityRef": "Sector", "role": "grouping", "required": False},
         ],
         "analyticsSpec": {"operation": "group_aggregate", "measure": "WPR", "groupBy": ["Gender", "Sector"]},
         "answerStructure": {"components": [
@@ -217,8 +217,8 @@ PLFS_QUESTION_TEMPLATES: list[dict[str, Any]] = [
         "priority": 2,
         "requiredEntities": [
             {"entityRef": "Unemployment Rate", "role": "measure", "required": True},
-            {"entityRef": "Gender", "role": "breakdown", "required": True},
-            {"entityRef": "Sector", "role": "breakdown", "required": False},
+            {"entityRef": "Gender", "role": "grouping", "required": True},
+            {"entityRef": "Sector", "role": "grouping", "required": False},
         ],
         "analyticsSpec": {"operation": "group_aggregate", "measure": "UR", "groupBy": ["Gender", "Sector"]},
         "answerStructure": {"components": [
@@ -234,7 +234,7 @@ PLFS_QUESTION_TEMPLATES: list[dict[str, Any]] = [
         "priority": 2,
         "requiredEntities": [
             {"entityRef": "Worker Share", "role": "measure", "required": True},
-            {"entityRef": "Employment Status", "role": "breakdown", "required": True},
+            {"entityRef": "Employment Status", "role": "grouping", "required": True},
             {"entityRef": "Survey Period", "role": "filter", "required": False},
         ],
         "analyticsSpec": {"operation": "composition", "measure": "Worker Share", "groupBy": ["Employment Status"]},
@@ -251,7 +251,7 @@ PLFS_QUESTION_TEMPLATES: list[dict[str, Any]] = [
         "priority": 2,
         "requiredEntities": [
             {"entityRef": "Worker Share", "role": "measure", "required": True},
-            {"entityRef": "Industry", "role": "breakdown", "required": True},
+            {"entityRef": "Industry", "role": "grouping", "required": True},
         ],
         "analyticsSpec": {"operation": "composition", "measure": "Worker Share", "groupBy": ["Industry"]},
         "answerStructure": {"components": [
@@ -267,8 +267,8 @@ PLFS_QUESTION_TEMPLATES: list[dict[str, Any]] = [
         "priority": 2,
         "requiredEntities": [
             {"entityRef": "Average Monthly Earnings", "role": "measure", "required": True},
-            {"entityRef": "Gender", "role": "breakdown", "required": True},
-            {"entityRef": "Employment Status", "role": "breakdown", "required": False},
+            {"entityRef": "Gender", "role": "grouping", "required": True},
+            {"entityRef": "Employment Status", "role": "grouping", "required": False},
         ],
         "analyticsSpec": {"operation": "group_aggregate", "measure": "Average Monthly Earnings", "groupBy": ["Gender", "Employment Status"]},
         "answerStructure": {"components": [
@@ -284,8 +284,8 @@ PLFS_QUESTION_TEMPLATES: list[dict[str, Any]] = [
         "priority": 3,
         "requiredEntities": [
             {"entityRef": "Formal Education Years", "role": "measure", "required": True},
-            {"entityRef": "Gender", "role": "breakdown", "required": True},
-            {"entityRef": "Sector", "role": "breakdown", "required": False},
+            {"entityRef": "Gender", "role": "grouping", "required": True},
+            {"entityRef": "Sector", "role": "grouping", "required": False},
         ],
         "analyticsSpec": {"operation": "group_aggregate", "measure": "Formal Education Years", "groupBy": ["Gender", "Sector"]},
         "answerStructure": {"components": [

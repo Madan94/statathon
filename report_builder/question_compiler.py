@@ -467,7 +467,7 @@ def _apply_budget(questions: list[QuestionPlan], budget: dict[str, int] | None =
 # Validation + repair
 # ─────────────────────────────────────────────────────────────────────────────
 
-_VALID_QTYPES = frozenset({"comparison", "trend", "composition", "ranking", "summary", "descriptive"})
+_VALID_QTYPES = frozenset({"comparison", "trend", "composition", "ranking", "summary", "descriptive", "snapshot"})
 _VALID_KINDS = frozenset({"narrative", "table", "chart", "metric_card"})
 
 

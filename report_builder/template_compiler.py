@@ -70,6 +70,50 @@ def compile_template_artifacts(
 
     raw_entities = bp.get("entities") or []
 
+    # Pre-hygiene: Detect doc type early and inject domain pack entities for PIB
+    _bp_meta_early = bp.get("templateMeta") or {}
+    _early_doc_type = ""
+    if _bp_meta_early.get("reportType") == "pib_press_release" or _bp_meta_early.get("domain") == "labour_force":
+        _early_doc_type = "pib_press_release"
+    else:
+        _title_early = (_bp_meta_early.get("name") or "").lower()
+        _ent_names_early = {(e.get("canonicalName") or "").lower() for e in raw_entities}
+        _pib_check = {"labour force participation rate", "unemployment rate"}
+        if ("plfs" in _title_early or "labour force" in _title_early
+                or _pib_check.issubset(_ent_names_early)):
+            _early_doc_type = "pib_press_release"
+
+    if _early_doc_type == "pib_press_release":
+        # Fix metadata so PIB weights activate in diagnostics
+        if _bp_meta_early.get("domain") in ("general", "", None):
+            _bp_meta_early["domain"] = "labour_force"
+        if not _bp_meta_early.get("reportType"):
+            _bp_meta_early["reportType"] = "pib_press_release"
+        if _bp_meta_early.get("name") in ("Document", "", None):
+            _bp_meta_early["name"] = "PLFS Annual Report Press Release"
+
+        # Inject missing domain pack entities so they survive through hygiene
+        try:
+            from report_builder.domain_packs.plfs_press_release import PLFS_ENTITIES
+            existing_names = {(e.get("canonicalName") or "").lower() for e in raw_entities}
+            for dp_ent in PLFS_ENTITIES:
+                name = dp_ent.get("name") or ""
+                if name.lower() not in existing_names:
+                    raw_entities.append({
+                        "canonicalName": name,
+                        "entityType": dp_ent.get("entityType", "measure"),
+                        "aliases": dp_ent.get("aliases", []),
+                        "unit": dp_ent.get("unit"),
+                        "valueDomain": dp_ent.get("valueDomain"),
+                        "source": "domain_pack",
+                        "sourcePriority": 0,
+                        "confidence": 0.95,
+                    })
+            logger.info("[template-compiler] I1: Injected %d domain pack entities for PIB",
+                        len(raw_entities) - len(bp.get("entities") or []))
+        except ImportError:
+            pass
+
     # E1: Hygiene
     hygiene_result = run_entity_hygiene(raw_entities)
     intermediate["hygiene"] = hygiene_result.to_dict()
@@ -242,6 +286,23 @@ def compile_template_artifacts(
         _doc_type = "pib_press_release"
     elif document_map and document_map.get("doc_type"):
         _doc_type = document_map["doc_type"]
+    else:
+        # Fallback heuristic: detect PIB from entities or title
+        _title = (_bp_meta.get("name") or "").lower()
+        _entity_names = {(e.get("canonicalName") or "").lower() for e in bp.get("entities", [])}
+        _pib_indicators = {"labour force participation rate", "unemployment rate"}
+        if ("plfs" in _title or "labour force" in _title or "press" in _title
+                or _pib_indicators.issubset(_entity_names)):
+            _doc_type = "pib_press_release"
+
+    # If PIB detected, ensure metadata is set (may already be set from pre-hygiene)
+    if _doc_type == "pib_press_release":
+        if not _bp_meta.get("reportType"):
+            _bp_meta["reportType"] = "pib_press_release"
+        if _bp_meta.get("domain") in ("general", "", None):
+            _bp_meta["domain"] = "labour_force"
+        if _bp_meta.get("name") in ("Document", "", None):
+            _bp_meta["name"] = "PLFS Annual Report Press Release"
 
     # Collect section headings for PIB question matcher
     _section_headings: list[str] = []
@@ -458,12 +519,24 @@ def _repair_question_entity_refs(
 ) -> tuple[dict[str, Any], bool, list[str]]:
     """Rewrite entity references in a question using ref_map.
 
+    Also normalizes deprecated roles (breakdown/groupBy → grouping).
+
     Returns (repaired_question, was_repaired, still_broken_refs).
     """
     import copy
     q = copy.deepcopy(question)
     repaired = False
     broken: list[str] = []
+
+    # Role normalization map
+    _ROLE_NORM: dict[str, str] = {
+        "breakdown": "grouping",
+        "groupBy": "grouping",
+        "group_by": "grouping",
+        "dimension": "grouping",
+        "metric": "measure",
+        "indicator": "measure",
+    }
 
     # Repair requiredEntities
     for req in (q.get("requiredEntities") or []):
@@ -476,6 +549,11 @@ def _repair_question_entity_refs(
                 repaired = True
             else:
                 broken.append(eid)
+        # Normalize role
+        role = req.get("role", "")
+        if role in _ROLE_NORM:
+            req["role"] = _ROLE_NORM[role]
+            repaired = True
 
     # Repair analyticsSpec refs
     spec = q.get("analyticsSpec") or {}
