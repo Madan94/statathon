@@ -298,7 +298,7 @@ def enrich_entities(entities: list[Any], table_structures: list[Any] | None = No
     for entity in entities:
         # Unit inference from domain pack (if missing)
         if not _get(entity, "unit"):
-            name = _get(entity, "name") or ""
+            name = _get(entity, "canonicalName") or _get(entity, "name") or ""
             inferred_unit = _unit_rules.get(name)
             if not inferred_unit:
                 # Try alias match
