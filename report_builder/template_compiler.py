@@ -167,6 +167,27 @@ def compile_template_artifacts(
     # Use provided table candidates, or derive from existing tableTemplates/tableAST
     if table_candidates:
         table_result = compile_tables(table_candidates)
+        # Enrich E3 models with pass2_5 dimensions/measures if E3 couldn't detect them
+        if table_result and table_result.tables:
+            _tc_lookup = {tc.get("tableId", ""): tc for tc in table_candidates if tc.get("tableId")}
+            for tmodel in table_result.tables:
+                tid = tmodel.tableId if hasattr(tmodel, "tableId") else ""
+                tc_orig = _tc_lookup.get(tid)
+                if tc_orig:
+                    # If E3 produced empty dimensions/measures, use pass2_5 classified ones
+                    if not (tmodel.dimensions if hasattr(tmodel, "dimensions") else []):
+                        p25_dims = tc_orig.get("_dimensions") or []
+                        if p25_dims and hasattr(tmodel, "dimensions"):
+                            tmodel.dimensions = p25_dims
+                    if not (tmodel.measures if hasattr(tmodel, "measures") else []):
+                        p25_meas = tc_orig.get("_measures") or []
+                        if p25_meas and hasattr(tmodel, "measures"):
+                            tmodel.measures = p25_meas
+                    # Enrich title if missing
+                    if not (tmodel.tableTitle if hasattr(tmodel, "tableTitle") else ""):
+                        p25_title = tc_orig.get("title") or ""
+                        if p25_title and hasattr(tmodel, "tableTitle"):
+                            tmodel.tableTitle = p25_title
     else:
         # Derive minimal candidates from existing blueprint tableTemplates
         existing_tables = bp.get("tableTemplates") or bp.get("tableStructures") or []

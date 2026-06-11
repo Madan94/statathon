@@ -344,6 +344,86 @@ def _questions_from_table(table: Any, entities: list[Any] | None, families: list
                 questions.append(q)
                 break  # One composition per table
 
+    # ── Pattern 5: Fallback for tables with title but unresolved measures ──
+    # Generates comparison + ranking from table title when standard patterns fail.
+    # Common in Energy/MoSPI tables with compound year-measure column headers.
+    if not questions and title and dim_ref:
+        # Clean the title for use in intent (strip dates, table numbers)
+        _clean_title = re.sub(r"(?:Table|Statement)\s+\d+[\.\d]*\s*:?\s*", "", title).strip()
+        _clean_title = re.sub(r"\(As on[^)]*\)", "", _clean_title).strip()
+        _clean_title = re.sub(r"\s{2,}", " ", _clean_title).strip()
+        _short_title = _clean_title[:60].rstrip(" ,;")
+
+        # Find any available measure entity (from _measures metadata or table columns)
+        _any_measure = measure_ref  # may be None
+        if not _any_measure and entities:
+            # Look for measure entities whose name appears in the table title
+            _title_lower = _clean_title.lower()
+            for ent in entities:
+                etype = _get(ent, "entityType") or ""
+                ename = (_get(ent, "canonicalName") or "").lower()
+                if etype == "measure" and ename and ename in _title_lower:
+                    _any_measure = _get(ent, "entityId")
+                    break
+            # If still none, use first measure entity available
+            if not _any_measure:
+                for ent in entities:
+                    if (_get(ent, "entityType") or "") == "measure" and _get(ent, "entityId"):
+                        _any_measure = _get(ent, "entityId")
+                        break
+
+        if _any_measure:
+            # Comparison question
+            intent = f"Compare {_short_title} across {dimensions[0]} for the current period?"
+            qid = generate_question_id(intent, table_id)
+            q = QuestionPlan(
+                questionId=qid,
+                intent=intent,
+                questionType="comparison",
+                priority=2,
+                requiredEntities=[
+                    {"entityId": _any_measure, "role": "measure", "required": True},
+                    {"entityId": dim_ref, "role": "grouping", "required": True},
+                ],
+                analyticsSpec={
+                    "operation": "group_aggregate",
+                    "measure": {"entityRef": _any_measure, "agg": "sum"},
+                    "groupBy": [{"entityRef": dim_ref}],
+                    "sort": {"by": "measure", "order": "desc"},
+                },
+                sourceTable=table_id,
+                generationMethod="table_title_fallback",
+                formulaIntent={"type": "DIRECT"},
+            )
+            q.answerStructure = _build_answer_structure(qid, "comparison", table_id, None, "bar", _any_measure, dim_ref)
+            questions.append(q)
+
+            # Ranking question
+            intent_rank = f"Rank {dimensions[0]} by {_short_title} for the current period?"
+            qid_rank = generate_question_id(intent_rank, table_id)
+            q_rank = QuestionPlan(
+                questionId=qid_rank,
+                intent=intent_rank,
+                questionType="ranking",
+                priority=2,
+                requiredEntities=[
+                    {"entityId": _any_measure, "role": "measure", "required": True},
+                    {"entityId": dim_ref, "role": "grouping", "required": True},
+                ],
+                analyticsSpec={
+                    "operation": "rank",
+                    "measure": {"entityRef": _any_measure},
+                    "groupBy": [{"entityRef": dim_ref}],
+                    "topN": 10,
+                    "sort": {"by": "measure", "order": "desc"},
+                },
+                sourceTable=table_id,
+                generationMethod="table_title_fallback",
+                formulaIntent={"type": "RANK", "topN": 10},
+            )
+            q_rank.answerStructure = _build_answer_structure(qid_rank, "ranking", table_id, None, "bar", _any_measure, dim_ref)
+            questions.append(q_rank)
+
     return questions
 
 
@@ -741,27 +821,39 @@ def _find_entity_ref(name: str | None, entities: list[Any] | None) -> str | None
     if not name or not entities:
         return None
     name_lower = name.lower().strip()
-    # Normalize slashes/spaces for matching
+    # Normalize slashes/spaces/plurals for matching
     name_norm = re.sub(r'[\s/]+', '', name_lower)
+    # Additional normalization: strip trailing 's' for plural handling (States→State, UTs→UT)
+    name_deplural = re.sub(r's\b', '', name_norm)
 
     for e in entities:
         eid = _get(e, "entityId") or ""
         ename = (_get(e, "canonicalName") or "").lower().strip()
         ename_norm = re.sub(r'[\s/]+', '', ename)
+        ename_deplural = re.sub(r's\b', '', ename_norm)
         aliases = _get(e, "aliases") or []
 
         # Exact match
         if ename == name_lower or ename_norm == name_norm:
             return eid
+        # Depluralized match (States/UTs → State/UT)
+        if ename_deplural == name_deplural:
+            return eid
         # Alias match
         for a in aliases:
-            if a and (a.lower().strip() == name_lower or re.sub(r'[\s/]+', '', a.lower()) == name_norm):
+            if not a:
+                continue
+            a_lower = a.lower().strip()
+            a_norm = re.sub(r'[\s/]+', '', a_lower)
+            if a_lower == name_lower or a_norm == name_norm:
+                return eid
+            if re.sub(r's\b', '', a_norm) == name_deplural:
                 return eid
 
     # Partial match (name contains entity name or vice versa)
     for e in entities:
         eid = _get(e, "entityId") or ""
         ename = (_get(e, "canonicalName") or "").lower().strip()
-        if ename and (ename in name_lower or name_lower in ename):
+        if ename and len(ename) >= 4 and (ename in name_lower or name_lower in ename):
             return eid
     return None
