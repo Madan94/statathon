@@ -4611,6 +4611,7 @@ def pass4_assemble_ast(
     # ════════════════════════════════════════════════════════════════════════════
     # ASSEMBLE FINAL OUTPUT
     # ════════════════════════════════════════════════════════════════════════════
+    cfg = _DOC_TYPE_CONFIG.get(doc_type, _DOC_TYPE_CONFIG["statistical_annual_report"])
     blueprint = {
         "$schema": "bharatstat/template-blueprint/v1",
         "templateMeta": {
