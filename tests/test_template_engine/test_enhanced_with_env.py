@@ -104,7 +104,11 @@ class TestEnvConfig:
 
     def test_redis_url_in_env(self):
         redis_url = os.getenv("REDIS_URL", "")
-        assert redis_url.startswith("redis://"), f"REDIS_URL not configured: {redis_url!r}"
+        # Accept both plain (redis://) and TLS (rediss://) URLs — managed
+        # providers like Upstash use rediss:// for TLS connections.
+        assert redis_url.startswith(("redis://", "rediss://")), (
+            f"REDIS_URL not configured: {redis_url!r}"
+        )
 
     def test_mail_config(self):
         assert os.getenv("SMTP_HOST"), "SMTP_HOST not set"
