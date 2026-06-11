@@ -712,6 +712,100 @@ def _questions_from_pib_templates(entities: list[Any] | None, section_headings: 
     return questions
 
 
+def _questions_from_energy_templates(entities: list[Any] | None, section_headings: list[str] | None) -> list[QuestionPlan]:
+    """Generate deterministic questions from Energy domain pack templates.
+
+    Same logic as PIB templates but loads from energy_statistics.py.
+    """
+    try:
+        from report_builder.domain_packs.energy_statistics import ENERGY_QUESTION_TEMPLATES
+    except ImportError:
+        return []
+
+    questions: list[QuestionPlan] = []
+    headings_lower = [h.lower() for h in (section_headings or [])]
+    all_headings_text = " ".join(headings_lower)
+
+    # Build entity name → entityId map
+    entity_map: dict[str, str] = {}
+    if entities:
+        for e in entities:
+            name = _get(e, "name") or _get(e, "canonicalName") or ""
+            eid = _get(e, "entityId") or ""
+            if name and eid:
+                entity_map[name.lower()] = eid
+                for alias in (_get(e, "aliases") or []):
+                    if alias:
+                        entity_map[alias.lower()] = eid
+
+    for tmpl in ENERGY_QUESTION_TEMPLATES:
+        # Check section match (if specified)
+        section_matches = tmpl.get("sectionMatch") or []
+        matched = False
+        if not section_matches:
+            matched = True
+        else:
+            for pattern in section_matches:
+                if pattern.lower() in all_headings_text:
+                    matched = True
+                    break
+            # For Energy, also match if entities suggest the domain
+            if not matched:
+                # Check if required entities exist — if so, emit regardless of headings
+                all_resolved_check = True
+                for req in (tmpl.get("requiredEntities") or []):
+                    ref = req.get("entityRef", "").lower()
+                    if req.get("required") and ref not in entity_map:
+                        # Partial match
+                        found = any(ref in k or k in ref for k in entity_map)
+                        if not found:
+                            all_resolved_check = False
+                            break
+                if all_resolved_check:
+                    matched = True
+
+        if not matched:
+            continue
+
+        # Resolve entity refs
+        required_entities: list[dict[str, Any]] = []
+        all_resolved = True
+        for req in (tmpl.get("requiredEntities") or []):
+            ref_name = req.get("entityRef") or ""
+            eid = entity_map.get(ref_name.lower(), "")
+            if not eid:
+                for ename, emap_id in entity_map.items():
+                    if ref_name.lower() in ename or ename in ref_name.lower():
+                        eid = emap_id
+                        break
+            if eid:
+                required_entities.append({
+                    "entityId": eid,
+                    "role": req.get("role", "measure"),
+                    "required": req.get("required", True),
+                })
+            elif req.get("required", True):
+                all_resolved = False
+
+        if not all_resolved or not required_entities:
+            continue
+
+        q_id = generate_question_id(f"energy_{tmpl['templateId']}")
+        q = QuestionPlan(
+            questionId=q_id,
+            intent=tmpl["intent"],
+            questionType=tmpl.get("questionType", "comparison"),
+            priority=tmpl.get("priority", 2),
+            requiredEntities=required_entities,
+            analyticsSpec=tmpl.get("analyticsSpec") or {},
+            answerStructure=tmpl.get("answerStructure") or {"components": [{"kind": "narrative", "outputContract": {"type": "prose", "maxWords": 100}}]},
+            generationMethod="energy_domain_template",
+        )
+        questions.append(q)
+
+    return questions
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Main compiler
 # ─────────────────────────────────────────────────────────────────────────────
@@ -764,6 +858,13 @@ def compile_questions(
         qs = _questions_from_pib_templates(entities, section_headings)
         all_questions.extend(qs)
         pib_questions = len(qs)
+
+    # 2c. Generate from Energy domain pack templates (for energy statistical reports)
+    energy_questions = 0
+    if doc_type == "statistical_annual_report":
+        qs = _questions_from_energy_templates(entities, section_headings)
+        all_questions.extend(qs)
+        energy_questions = len(qs)
 
     # 3. Deduplicate
     before_dedup = len(all_questions)

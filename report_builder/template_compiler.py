@@ -156,6 +156,20 @@ def compile_template_artifacts(
         len(raw_entities), len(enrichment_result.entities), len(norm_result.measureFamilies),
     )
 
+    # I1.5: Remove compound year-specific entities for Energy domain
+    # "Crude Oil 2024 Distribution" → already represented by Crude Oil + Distribution + Period
+    if _early_doc_type != "pib_press_release":
+        import re as _re_compound
+        _COMPOUND_PATTERN = _re_compound.compile(r"(Crude Oil|Natural Gas|Proved|Indicated|Inferred)\s+\d{4}")
+        _before_count = len(bp["entities"])
+        bp["entities"] = [
+            e for e in bp["entities"]
+            if not _COMPOUND_PATTERN.search(e.get("canonicalName") or "")
+        ]
+        _removed = _before_count - len(bp["entities"])
+        if _removed:
+            logger.info("[template-compiler] I1.5: Removed %d compound year-specific entities", _removed)
+
     # ═══════════════════════════════════════════════════════════════════════════
     # I2: Table Compiler
     # ═══════════════════════════════════════════════════════════════════════════
