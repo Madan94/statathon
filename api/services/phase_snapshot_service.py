@@ -11,7 +11,7 @@ from core.rule_validator import normalize_schema
 from database.models import Dataset, ImputationRowDecision, OutlierDecision, ValidationDecision
 from object_storage.object_store import try_build_default_store
 from pipelines.validation_gate import apply_user_decisions
-from services.analysis_dataframe_service import load_analysis_dataframe, load_snapshot_dataframe
+from services.analysis_dataframe_service import load_snapshot_dataframe
 from services.analysis_query import get_analysis_meta, load_analysis_checkpoint
 from services.apply_service import (
     _apply_imputation,
@@ -20,8 +20,14 @@ from services.apply_service import (
     _persist_snapshot,
     _validation_decisions,
 )
+from services.normalization_transform_service import (
+    build_column_resolver,
+    load_working_dataframe,
+    persist_normalized_snapshot,
+    resolve_validation_decisions,
+)
 
-STAGE_PRIORITY = ("imputed", "anomaly_reviewed", "validated", "original")
+STAGE_PRIORITY = ("imputed", "anomaly_reviewed", "validated", "normalized", "original")
 
 
 def latest_snapshot_stage(db: Session, analysis_id: int) -> str | None:
@@ -36,7 +42,7 @@ class PhaseSnapshotService:
     def __init__(self, db: Session):
         self.db = db
 
-    def _base_df(self, analysis_id: int) -> tuple[pd.DataFrame, Any, Dataset]:
+    def _base_df(self, analysis_id: int) -> tuple[pd.DataFrame, Any, Dataset, dict[str, str]]:
         an = get_analysis_meta(self.db, analysis_id)
         if not an:
             raise ValueError("Analysis not found")
@@ -45,16 +51,34 @@ class PhaseSnapshotService:
             raise ValueError("Dataset not found")
         store = try_build_default_store() if ds.object_key else None
 
-        snap_df = load_snapshot_dataframe(self.db, analysis_id)
-        if snap_df is not None:
-            schema = infer_schema(snap_df)
-            return normalize_schema(snap_df, schema), store, ds
+        for stage in ("normalized", "original"):
+            snap_df = load_snapshot_dataframe(self.db, analysis_id, stage)
+            if snap_df is not None:
+                schema = infer_schema(snap_df)
+                ui_to_physical, _ = _column_maps(self.db, analysis_id)
+                return normalize_schema(snap_df, schema), store, ds, ui_to_physical
 
-        df, schema = load_analysis_dataframe(self.db, analysis_id)
-        return df, store, ds
+        df, ui_to_physical, _ = load_working_dataframe(self.db, analysis_id, apply_user_norm=True)
+        return df, store, ds, ui_to_physical
+
+    def snapshot_normalized(self, analysis_id: int) -> dict[str, Any]:
+        return persist_normalized_snapshot(self.db, analysis_id)
 
     def snapshot_validation(self, analysis_id: int) -> dict[str, Any]:
-        df, store, ds = self._base_df(analysis_id)
+        normalized = load_snapshot_dataframe(self.db, analysis_id, "normalized")
+        if normalized is None:
+            self.snapshot_normalized(analysis_id)
+            normalized = load_snapshot_dataframe(self.db, analysis_id, "normalized")
+
+        if normalized is not None:
+            df = normalized
+            an = get_analysis_meta(self.db, analysis_id)
+            ds = self.db.query(Dataset).filter(Dataset.id == an.dataset_id).first()
+            store = try_build_default_store() if ds and ds.object_key else None
+            ui_to_physical, _ = _column_maps(self.db, analysis_id)
+        else:
+            df, store, ds, ui_to_physical = self._base_df(analysis_id)
+
         decisions = _validation_decisions(self.db, analysis_id)
         if not decisions:
             checkpoint = load_analysis_checkpoint(self.db, analysis_id) or {}
@@ -71,8 +95,11 @@ class PhaseSnapshotService:
                     }
                     for d in raw
                 ]
-        out = apply_user_decisions(df, decisions) if decisions else df.copy()
-        meta = {"validation_decisions": len(decisions)}
+
+        resolver = build_column_resolver(df, ui_to_physical)
+        resolved = resolve_validation_decisions(decisions, resolver) if decisions else []
+        out = apply_user_decisions(df, resolved) if resolved else df.copy()
+        meta = {"validation_decisions": len(decisions), "phase": "v3_rule_validation"}
         return _persist_snapshot(
             self.db,
             analysis_id=analysis_id,
@@ -89,14 +116,14 @@ class PhaseSnapshotService:
             self.snapshot_validation(analysis_id)
             validated = load_snapshot_dataframe(self.db, analysis_id, "validated")
         if validated is None:
-            df, store, ds = self._base_df(analysis_id)
+            df, store, ds, ui_to_physical = self._base_df(analysis_id)
         else:
             an = get_analysis_meta(self.db, analysis_id)
             ds = self.db.query(Dataset).filter(Dataset.id == an.dataset_id).first()
             store = try_build_default_store() if ds and ds.object_key else None
             df = validated
+            ui_to_physical, _ = _column_maps(self.db, analysis_id)
 
-        ui_to_physical, _ = _column_maps(self.db, analysis_id)
         decisions = (
             self.db.query(OutlierDecision).filter(OutlierDecision.analysis_id == analysis_id).all()
         )
@@ -108,7 +135,7 @@ class PhaseSnapshotService:
             stage="anomaly_reviewed",
             df=out,
             store=store,
-            meta={"outlier_stats": stats},
+            meta={"outlier_stats": stats, "phase": "v4_anomaly"},
         )
 
     def snapshot_imputation(self, analysis_id: int) -> dict[str, Any]:
@@ -117,14 +144,14 @@ class PhaseSnapshotService:
             self.snapshot_anomaly(analysis_id)
             base = load_snapshot_dataframe(self.db, analysis_id, "anomaly_reviewed")
         if base is None:
-            df, store, ds = self._base_df(analysis_id)
+            df, store, ds, ui_to_physical = self._base_df(analysis_id)
         else:
             an = get_analysis_meta(self.db, analysis_id)
             ds = self.db.query(Dataset).filter(Dataset.id == an.dataset_id).first()
             store = try_build_default_store() if ds and ds.object_key else None
             df = base
+            ui_to_physical, _ = _column_maps(self.db, analysis_id)
 
-        ui_to_physical, _ = _column_maps(self.db, analysis_id)
         checkpoint = load_analysis_checkpoint(self.db, analysis_id) or {}
         phase3 = checkpoint.get("phase3") if isinstance(checkpoint.get("phase3"), dict) else {}
         imputation_rows = (
@@ -140,5 +167,5 @@ class PhaseSnapshotService:
             stage="imputed",
             df=out,
             store=store,
-            meta={"imputation": applied},
+            meta={"imputation": applied, "phase": "v5_missing_value"},
         )

@@ -11,6 +11,7 @@ export const PIPELINE_STEPS = [
   { id: 5, label: 'Schema & KG', sublabel: 'Graph outputs' },
   { id: 6, label: 'Rule Validation', sublabel: 'Single & multi column' },
   { id: 7, label: 'Column Analysis', sublabel: 'Anomaly & missing' },
+  { id: 8, label: 'Dataset Review', sublabel: 'Approve & proceed' },
 ] as const;
 
 interface AnalysisStepperProps {

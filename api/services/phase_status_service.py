@@ -87,6 +87,31 @@ def ensure_phase_status_schema() -> None:
 
     AnalysisPhaseStatus.__table__.create(bind=engine, checkfirst=True)
     ColumnPhaseReview.__table__.create(bind=engine, checkfirst=True)
+    try:
+        from sqlalchemy import inspect, text
+
+        insp = inspect(engine)
+        if "analysis_phase_status" in insp.get_table_names():
+            cols = {c["name"] for c in insp.get_columns("analysis_phase_status")}
+            if "dataset_review_completed" not in cols:
+                dialect = engine.dialect.name
+                with engine.begin() as conn:
+                    if dialect == "postgresql":
+                        conn.execute(
+                            text(
+                                "ALTER TABLE analysis_phase_status "
+                                "ADD COLUMN IF NOT EXISTS dataset_review_completed BOOLEAN NOT NULL DEFAULT FALSE"
+                            )
+                        )
+                    else:
+                        conn.execute(
+                            text(
+                                "ALTER TABLE analysis_phase_status "
+                                "ADD COLUMN dataset_review_completed BOOLEAN NOT NULL DEFAULT 0"
+                            )
+                        )
+    except Exception:
+        pass
     _schema_ready = True
 
 
@@ -369,6 +394,7 @@ class PhaseStatusService:
             "rule_validation_completed": row.rule_validation_completed or val["complete"],
             "anomaly_completed": row.anomaly_completed,
             "missing_value_completed": row.missing_value_completed,
+            "dataset_review_completed": row.dataset_review_completed,
             "validation": val,
             "anomaly": anomaly,
             "imputation": imputation,

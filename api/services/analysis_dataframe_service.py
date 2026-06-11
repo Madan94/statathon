@@ -76,7 +76,7 @@ def load_snapshot_dataframe(db: Session, analysis_id: int, stage: str | None = N
     """Load the latest parquet snapshot for an analysis stage."""
     from database.models import DatasetLineageSnapshot
 
-    stage_priority = ("imputed", "anomaly_reviewed", "validated", "original")
+    stage_priority = ("imputed", "anomaly_reviewed", "validated", "normalized", "original", "final")
     stages = [stage] if stage else list(stage_priority)
     for st in stages:
         snap = (
@@ -106,41 +106,13 @@ def load_snapshot_dataframe(db: Session, analysis_id: int, stage: str | None = N
 
 
 def load_analysis_dataframe(db: Session, analysis_id: int) -> tuple[pd.DataFrame, dict[str, str]]:
-    an = get_analysis_meta(db, analysis_id)
-    if not an:
-        raise ValueError("Analysis not found")
-    ds = db.query(Dataset).filter(Dataset.id == an.dataset_id).first()
-    if not ds:
-        raise ValueError("Dataset not found")
-
     snap_df = load_snapshot_dataframe(db, analysis_id)
     if snap_df is not None:
         schema = infer_schema(snap_df)
-        checkpoint = load_analysis_checkpoint(db, analysis_id) or {}
-        rename_map = semantic_column_rename_map(checkpoint)
-        applicable = {k: v for k, v in rename_map.items() if k in snap_df.columns}
-        if applicable:
-            snap_df = snap_df.rename(columns=applicable)
-            schema = {rename_map.get(str(k), str(k)): v for k, v in schema.items()}
         return normalize_schema(snap_df, schema), schema
 
-    store = try_build_default_store() if ds.object_key else None
-    import os
+    from services.normalization_transform_service import load_working_dataframe
 
-    try:
-        df = dataframe_for_uploaded_dataset(ds.storage_path, ds.object_key, ds.filename, store)
-    except (FileNotFoundError, OSError):
-        if ds.object_key and store:
-            df = dataframe_for_uploaded_dataset(None, ds.object_key, ds.filename, store)
-        else:
-            raise
+    df, _, _ = load_working_dataframe(db, analysis_id, apply_user_norm=True)
     schema = infer_schema(df)
-
-    checkpoint = load_analysis_checkpoint(db, analysis_id) or {}
-    rename_map = semantic_column_rename_map(checkpoint)
-    applicable = {k: v for k, v in rename_map.items() if k in df.columns}
-    if applicable:
-        df = df.rename(columns=applicable)
-        schema = {rename_map.get(str(k), str(k)): v for k, v in schema.items()}
-
     return normalize_schema(df, schema), schema

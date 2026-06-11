@@ -1,6 +1,7 @@
 import os
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
@@ -48,6 +49,7 @@ from services.validation_workflow_service import ValidationWorkflowService
 from services.imputation_workflow_service import ImputationWorkflowService
 from services.phase_audit_service import PhaseAuditService
 from services.phase_status_service import PhaseStatusService
+from review.dataset_review_service import DatasetReviewService
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
@@ -211,6 +213,109 @@ def get_phase_status(
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
     return PhaseStatusService(db).get_status_payload(analysis_id)
+
+
+@router.get("/{analysis_id}/dataset-review")
+def get_dataset_review(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return DatasetReviewService(db).get_review_payload(analysis_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/{analysis_id}/dataset-review/rows")
+def get_dataset_review_rows(
+    analysis_id: int,
+    side: str,
+    offset: int = 0,
+    limit: int = 50,
+    search: str | None = None,
+    column_filter: str | None = None,
+    row_filter: str | None = None,
+    columns: str | None = None,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    col_list = [c.strip() for c in columns.split(",") if c.strip()] if columns else None
+    try:
+        return DatasetReviewService(db).get_rows(
+            analysis_id,
+            side,
+            offset=offset,
+            limit=limit,
+            columns=col_list,
+            search=search,
+            column_filter=column_filter,
+            row_filter=row_filter,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/{analysis_id}/dataset-review/column/{column_name}")
+def get_dataset_review_column(
+    analysis_id: int,
+    column_name: str,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return DatasetReviewService(db).get_column_changes(analysis_id, column_name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/{analysis_id}/dataset-review/row/{row_index}")
+def get_dataset_review_row(
+    analysis_id: int,
+    row_index: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return DatasetReviewService(db).get_row_inspection(analysis_id, row_index)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.post("/{analysis_id}/dataset-review/approve")
+def approve_dataset_review(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return DatasetReviewService(db).approve_dataset(analysis_id, user_id=user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/{analysis_id}/dataset-review/download/{kind}")
+def download_dataset_review_artifact(
+    analysis_id: int,
+    kind: str,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        data, mime, filename = DatasetReviewService(db).build_download(analysis_id, kind)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return Response(
+        content=data,
+        media_type=mime,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get("/{analysis_id}/validation/review-progress")

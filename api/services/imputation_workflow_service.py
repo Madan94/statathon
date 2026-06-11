@@ -217,6 +217,16 @@ class ImputationWorkflowService:
             PhaseSnapshotService(self.db).snapshot_imputation(analysis_id)
         except Exception as exc:
             logger.warning("imputation snapshot skipped for analysis %s: %s", analysis_id, exc)
+            try:
+                from services.apply_service import persist_processed_snapshot
+
+                persist_processed_snapshot(self.db, analysis_id)
+            except Exception as retry_exc:
+                logger.warning(
+                    "processed snapshot materialize failed for analysis %s: %s",
+                    analysis_id,
+                    retry_exc,
+                )
         progress = PhaseStatusService(self.db).recompute_imputation_columns(analysis_id)
         invalidate_analysis_cache(analysis_id)
         self.db.commit()

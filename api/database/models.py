@@ -501,6 +501,7 @@ class AnalysisPhaseStatus(Base):
     rule_validation_completed = Column(Boolean, nullable=False, default=False)
     anomaly_completed = Column(Boolean, nullable=False, default=False)
     missing_value_completed = Column(Boolean, nullable=False, default=False)
+    dataset_review_completed = Column(Boolean, nullable=False, default=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     analysis = relationship("Analysis", back_populates="phase_status")
 

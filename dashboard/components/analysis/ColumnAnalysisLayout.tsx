@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import type { AnalysisResult, ColumnProfile } from '@/lib/api';
 import { analysisApi } from '@/lib/api';
 import { isNumericColumn, resolveAnomalyBlock } from '@/lib/outlierColumnUtils';
@@ -16,7 +15,7 @@ import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/cn';
 import {
-  Network, LayoutList, ChevronRight, CheckCircle2, FileText,
+  Network, LayoutList, ChevronRight, CheckCircle2, ClipboardCheck,
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
@@ -24,6 +23,7 @@ interface Props {
   results: AnalysisResult;
   analysisId: number;
   onBack: () => void;
+  onProceedToDatasetReview: () => void;
 }
 
 type PhaseStatus = Awaited<ReturnType<typeof analysisApi.getPhaseStatus>>;
@@ -55,8 +55,12 @@ function columnNeedsReview(col: string, results: AnalysisResult): boolean {
   return true;
 }
 
-export default function ColumnAnalysisLayout({ results: initialResults, analysisId, onBack }: Props) {
-  const router = useRouter();
+export default function ColumnAnalysisLayout({
+  results: initialResults,
+  analysisId,
+  onBack,
+  onProceedToDatasetReview,
+}: Props) {
   const [results, setResults] = useState(initialResults);
   const [phaseStatus, setPhaseStatus] = useState<PhaseStatus | null>(null);
   const columns = useMemo(() => orderedColumns(results), [results]);
@@ -119,7 +123,7 @@ export default function ColumnAnalysisLayout({ results: initialResults, analysis
     void refreshPhaseStatus().catch(() => {});
   }, [refreshPhaseStatus]);
 
-  const canProceedToReport = Boolean(
+  const canProceedToDatasetReview = Boolean(
     phaseStatus?.rule_validation_completed &&
     phaseStatus?.anomaly_completed &&
     phaseStatus?.missing_value_completed,
@@ -147,11 +151,11 @@ export default function ColumnAnalysisLayout({ results: initialResults, analysis
   };
 
   const handleProceed = () => {
-    if (!canProceedToReport) {
+    if (!canProceedToDatasetReview) {
       toast.error('Complete anomaly and missing-value review before proceeding');
       return;
     }
-    router.push(`/report-builder?analysisId=${analysisId}`);
+    onProceedToDatasetReview();
   };
 
   const canMarkDone = !isNumeric
@@ -243,7 +247,7 @@ export default function ColumnAnalysisLayout({ results: initialResults, analysis
                 </div>
               )}
 
-              {phaseStatus && !canProceedToReport && (pendingAnomaly.length > 0 || pendingImputation.length > 0) && (
+              {phaseStatus && !canProceedToDatasetReview && (pendingAnomaly.length > 0 || pendingImputation.length > 0) && (
                 <Alert variant="warning" title="Review still pending">
                   {pendingAnomaly.length > 0 && (
                     <p className="text-sm">
@@ -333,7 +337,7 @@ export default function ColumnAnalysisLayout({ results: initialResults, analysis
           </Button>
 
           <div className="flex items-center gap-3 text-sm text-text-muted">
-            <CheckCircle2 className={cn('h-4 w-4', canProceedToReport ? 'text-success' : 'text-text-muted')} />
+            <CheckCircle2 className={cn('h-4 w-4', canProceedToDatasetReview ? 'text-success' : 'text-text-muted')} />
             <span>
               Columns {reviewedIssueCount}/{reviewColumns.length}
               {phaseStatus && (
@@ -342,9 +346,9 @@ export default function ColumnAnalysisLayout({ results: initialResults, analysis
             </span>
           </div>
 
-          <Button onClick={handleProceed} size="lg" className="gap-2" disabled={!canProceedToReport}>
-            <FileText className="h-4 w-4" />
-            Complete review & proceed to Report →
+          <Button onClick={handleProceed} size="lg" className="gap-2" disabled={!canProceedToDatasetReview}>
+            <ClipboardCheck className="h-4 w-4" />
+            Complete review & proceed to Dataset Review →
           </Button>
         </div>
       </div>

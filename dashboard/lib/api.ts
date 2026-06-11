@@ -792,6 +792,7 @@ export const analysisApi = {
       rule_validation_completed: boolean;
       anomaly_completed: boolean;
       missing_value_completed: boolean;
+      dataset_review_completed?: boolean;
       validation: {
         total: number;
         reviewed: number;
@@ -816,6 +817,116 @@ export const analysisApi = {
       };
     };
   },
+  getDatasetReview: async (id: number) => {
+    const { data } = await api.get(`/analysis/${id}/dataset-review`);
+    return data as {
+      analysis_id: number;
+      original_dataset: {
+        row_count: number;
+        column_count: number;
+        columns: string[];
+        missing_cells: number;
+      };
+      processed_dataset: {
+        row_count: number;
+        column_count: number;
+        columns: string[];
+        missing_cells: number;
+      };
+      summary: {
+        rows_before: number;
+        rows_after: number;
+        rows_removed: number;
+        columns_before: number;
+        columns_after: number;
+        columns_removed: number;
+        missing_values_before: number;
+        missing_values_after: number;
+        rule_violations_fixed: number;
+        anomalies_processed: number;
+        values_imputed: number;
+      };
+      diff_summary: {
+        rows_removed: Array<Record<string, unknown>>;
+        columns_removed: string[];
+        columns_renamed: Array<{ from: string; to: string }>;
+        columns_excluded: string[];
+        values_changed: Array<Record<string, unknown>>;
+        values_set_missing?: Array<Record<string, unknown>>;
+        missing_values_imputed: Array<Record<string, unknown>>;
+        anomalies_handled: Array<Record<string, unknown>>;
+        rules_applied: Array<Record<string, unknown>>;
+      };
+      snapshots: Array<Record<string, unknown>>;
+      dataset_review_completed: boolean;
+      missing_value_completed: boolean;
+      can_approve: boolean;
+      can_proceed_to_report: boolean;
+    };
+  },
+  getDatasetReviewRows: async (
+    id: number,
+    side: 'original' | 'processed',
+    options?: {
+      offset?: number;
+      limit?: number;
+      search?: string;
+      columnFilter?: string;
+      columns?: string[];
+    },
+  ) => {
+    const { data } = await api.get(`/analysis/${id}/dataset-review/rows`, {
+      params: {
+        side,
+        offset: options?.offset ?? 0,
+        limit: options?.limit ?? 50,
+        search: options?.search,
+        column_filter: options?.columnFilter,
+        columns: options?.columns?.join(','),
+      },
+    });
+    return data as {
+      side: string;
+      total_rows: number;
+      offset: number;
+      limit: number;
+      columns: string[];
+      rows: Array<Record<string, unknown>>;
+    };
+  },
+  getDatasetReviewColumn: async (id: number, column: string) => {
+    const { data } = await api.get(`/analysis/${id}/dataset-review/column/${encodeURIComponent(column)}`);
+    return data as {
+      column: string;
+      before_label: string | null;
+      after_label: string | null;
+      rows_changed: number;
+      reason: string;
+      phase: string;
+      sample_changes: Array<Record<string, unknown>>;
+    };
+  },
+  getDatasetReviewRow: async (id: number, rowIndex: number) => {
+    const { data } = await api.get(`/analysis/${id}/dataset-review/row/${rowIndex}`);
+    return data as {
+      row_index: number;
+      original_row: Record<string, unknown> | null;
+      processed_row: Record<string, unknown> | null;
+      changed_cells: Array<{ column: string; before: unknown; after: unknown; kind: string }>;
+      decisions: Array<Record<string, unknown>>;
+    };
+  },
+  approveDatasetReview: async (id: number) => {
+    const { data } = await api.post(`/analysis/${id}/dataset-review/approve`);
+    return data as {
+      success: boolean;
+      analysis_id: number;
+      dataset_review_completed: boolean;
+      can_proceed_to_report: boolean;
+    };
+  },
+  datasetReviewDownloadUrl: (id: number, kind: string) =>
+    `${API_BASE}/analysis/${id}/dataset-review/download/${kind}`,
   getValidationReviewProgress: async (id: number) => {
     const { data } = await api.get(`/analysis/${id}/validation/review-progress`);
     return data as {

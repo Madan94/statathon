@@ -14,6 +14,7 @@ import Step4Cluster from '@/components/analysis/pipeline/Step4Cluster';
 import Step5SchemaKG from '@/components/analysis/pipeline/Step5SchemaKG';
 import Step6RuleValidation from '@/components/analysis/pipeline/Step6RuleValidation';
 import ColumnAnalysisLayout from '@/components/analysis/ColumnAnalysisLayout';
+import Step8DatasetReview from '@/components/analysis/pipeline/Step8DatasetReview';
 import { SkeletonCard } from '@/components/ui/Skeleton';
 import { Alert } from '@/components/ui/Alert';
 import type { ColumnDecision } from '@/components/analysis/pipeline/Step2Normalize';
@@ -169,8 +170,24 @@ export default function AnalysisPage() {
     );
   }
 
+  if (step === 8) {
+    return (
+      <Step8DatasetReview
+        analysisId={analysisId}
+        onBack={() => setStep(7)}
+      />
+    );
+  }
+
   if (step === 7) {
-    return <ColumnAnalysisLayout results={results} analysisId={analysisId} onBack={() => setStep(6)} />;
+    return (
+      <ColumnAnalysisLayout
+        results={results}
+        analysisId={analysisId}
+        onBack={() => setStep(6)}
+        onProceedToDatasetReview={() => setStep(8)}
+      />
+    );
   }
 
   if (step === 6) {

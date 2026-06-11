@@ -17,6 +17,7 @@ from database.models import SemanticProfile
 from services.analysis_query import (
     get_analysis_meta,
     get_normalization_version,
+    load_analysis_checkpoint,
     load_checkpoint_top_keys,
     set_normalization_meta,
 )
@@ -177,7 +178,33 @@ class NormalizationService:
             raise ValueError("Analysis not found")
 
         records = self._ensure_columns_seeded(analysis_id)
+        checkpoint = load_analysis_checkpoint(self.db, analysis_id) or {}
         by_name = {c.name: c for c in records}
+        for c in records:
+            if c.normalized_name:
+                by_name[str(c.normalized_name)] = c
+        for row in checkpoint.get("column_normalization") or []:
+            if not isinstance(row, dict):
+                continue
+            target = None
+            for key in (
+                row.get("canonical_name"),
+                row.get("normalized_name"),
+                row.get("original_name"),
+            ):
+                if key and str(key) in by_name:
+                    target = by_name[str(key)]
+                    break
+            if not target:
+                continue
+            for alias in (
+                row.get("original_name"),
+                row.get("canonical_name"),
+                row.get("normalized_name"),
+                row.get("display_name"),
+            ):
+                if alias:
+                    by_name[str(alias)] = target
         if not by_name:
             raise ValueError("Column registry not initialized for this analysis")
 
@@ -286,8 +313,20 @@ class NormalizationService:
             user_normalization=user_norm,
         )
         from services.analysis_payload_cache import invalidate_analysis_cache
+        from services.normalization_transform_service import persist_normalized_snapshot
+        from services.phase_status_service import PhaseStatusService
 
         invalidate_analysis_cache(analysis_id)
+        try:
+            persist_normalized_snapshot(self.db, analysis_id)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(
+                "normalized snapshot skipped for analysis %s: %s", analysis_id, exc
+            )
+        row = PhaseStatusService(self.db).get_or_create(analysis_id)
+        row.normalization_completed = True
+        row.updated_at = datetime.utcnow()
         self.db.commit()
 
         return {

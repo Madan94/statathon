@@ -31,6 +31,7 @@ def migrate_phase_status_schema(engine) -> dict:
                             rule_validation_completed BOOLEAN NOT NULL DEFAULT FALSE,
                             anomaly_completed BOOLEAN NOT NULL DEFAULT FALSE,
                             missing_value_completed BOOLEAN NOT NULL DEFAULT FALSE,
+                            dataset_review_completed BOOLEAN NOT NULL DEFAULT FALSE,
                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )
                         """
@@ -80,5 +81,26 @@ def migrate_phase_status_schema(engine) -> dict:
 
             ColumnPhaseReview.__table__.create(bind=engine, checkfirst=True)
         applied.append("column_phase_reviews")
+
+    if "analysis_phase_status" in tables:
+        cols = {c["name"] for c in insp.get_columns("analysis_phase_status")}
+        if "dataset_review_completed" not in cols:
+            dialect = engine.dialect.name
+            with engine.begin() as conn:
+                if dialect == "postgresql":
+                    conn.execute(
+                        text(
+                            "ALTER TABLE analysis_phase_status "
+                            "ADD COLUMN IF NOT EXISTS dataset_review_completed BOOLEAN NOT NULL DEFAULT FALSE"
+                        )
+                    )
+                else:
+                    conn.execute(
+                        text(
+                            "ALTER TABLE analysis_phase_status "
+                            "ADD COLUMN dataset_review_completed BOOLEAN NOT NULL DEFAULT 0"
+                        )
+                    )
+            applied.append("analysis_phase_status.dataset_review_completed")
 
     return {"migration": "phase_status_schema", "state": "applied", "tables": applied or ["exists"]}

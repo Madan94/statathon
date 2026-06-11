@@ -378,8 +378,16 @@ class OutlierWorkflowService:
             phase3["converted_to_missing"] = handoff
         self._save_phase3(analysis_id, an.dataset_id, phase3)
         PhaseStatusService(self.db).recompute_anomaly_columns(analysis_id)
-        if PhaseStatusService(self.db).get_or_create(analysis_id).anomaly_completed:
+        try:
             PhaseSnapshotService(self.db).snapshot_anomaly(analysis_id)
+            from services.apply_service import persist_processed_snapshot
+
+            persist_processed_snapshot(self.db, analysis_id)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(
+                "anomaly/processed snapshot skipped for analysis %s: %s", analysis_id, exc
+            )
         invalidate_analysis_cache(analysis_id)
         self.db.commit()
         return {"success": True, "analysis_id": analysis_id, "column": column, "saved": len(rows)}
