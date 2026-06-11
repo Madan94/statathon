@@ -1,0 +1,68 @@
+{
+  "status": "INVALID",
+  "contractVersion": "template.extraction.v2",
+  "binderReadinessScore": 0.468,
+  "passScores": {},
+  "categoryScores": {
+    "entityHygiene": 0.809,
+    "entityCompleteness": 0.55,
+    "tableSemantics": 0.5,
+    "unitCoverage": 0.0,
+    "questionCompleteness": 0.0,
+    "crossReferenceIntegrity": 0.571,
+    "valueFreeCompliance": 1.0,
+    "chartSemantics": 0.483
+  },
+  "counts": {
+    "entities": 7,
+    "entitiesDropped": 4,
+    "charts": 23,
+    "figures": 23,
+    "slotsWired": 4
+  },
+  "blockingErrors": [],
+  "warnings": [
+    {
+      "severity": "warn",
+      "code": "GENERIC_TEMPLATE_NAME",
+      "message": "templateMeta.name is generic — should identify the report",
+      "sourcePhase": "E0"
+    },
+    {
+      "severity": "warn",
+      "code": "GENERIC_DOMAIN",
+      "message": "templateMeta.domain is 'general' — should be specific (energy, labour_force, etc.)",
+      "sourcePhase": "E0"
+    },
+    {
+      "severity": "warn",
+      "code": "MEASURES_MISSING_UNIT",
+      "message": "3 measure entities have no unit",
+      "sourcePhase": "E0"
+    },
+    {
+      "severity": "warn",
+      "code": "ENTITIES_MISSING_ALIASES",
+      "message": "1 measure/dimension entities have empty aliases",
+      "sourcePhase": "E0"
+    },
+    {
+      "severity": "warn",
+      "code": "NO_TABLE_TEMPLATES",
+      "message": "No tableTemplates despite having questions",
+      "sourcePhase": "E0"
+    }
+  ],
+  "quarantinedCount": 4,
+  "repairsCount": 0,
+  "binderCompatibility": {
+    "blueprintQAWillPass": true,
+    "expectedResolverConfidence": "medium",
+    "expectedIssues": [
+      "Questions need analyticsSpec/answerStructure"
+    ],
+    "recommendation": "fix_questions"
+  },
+  "runtime": {},
+  "generatedAt": "2026-06-11T03:00:33.840922+00:00"
+}

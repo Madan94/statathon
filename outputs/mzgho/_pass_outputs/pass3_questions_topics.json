@@ -1,0 +1,1399 @@
+{
+  "questions_count": 21,
+  "topics_count": 6,
+  "questions": [
+    {
+      "questionId": "sp01_q01",
+      "intent": "Compare the Unemployment Rate (UR) for males and females in the PLFS report.",
+      "questionType": "comparison",
+      "page": 0,
+      "sourceHeading": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+      "requiredEntities": [
+        {
+          "entityRef": "Unemployment Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Report",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Unemployment Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Survey Year"
+          },
+          {
+            "entityRef": "Report"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp01_q02",
+      "intent": "Determine if there was an increase or decrease in the Unemployment Rate (UR) for urban females over the period from 2024 to 2025.",
+      "questionType": "trend",
+      "page": 0,
+      "sourceHeading": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+      "requiredEntities": [
+        {
+          "entityRef": "Unemployment Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Rural/Urban Sector",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Unemployment Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Gender"
+          },
+          {
+            "entityRef": "Rural/Urban Sector"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          },
+          {
+            "type": "line_chart",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp01_q03",
+      "intent": "Identify the distribution of Unemployment Rate (UR) across different age groups in the PLFS report.",
+      "questionType": "distribution",
+      "page": 0,
+      "sourceHeading": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+      "requiredEntities": [
+        {
+          "entityRef": "Unemployment Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Age Group",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Report",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "distribution",
+        "measure": {
+          "entityRef": "Unemployment Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Age Group"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Report"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 2
+          },
+          {
+            "type": "data_table",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.84
+    },
+    {
+      "questionId": "sp02_q01",
+      "intent": "What is the difference in LFPR between male and female workers aged 15 years and above?",
+      "questionType": "comparison",
+      "page": 1,
+      "sourceHeading": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "requiredEntities": [
+        {
+          "entityRef": "Labour Force Participation Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Age Group",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Labour Force Participation Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Age Group"
+          },
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 2
+          },
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp02_q02",
+      "intent": "How has the LFPR changed from rural to urban areas for persons aged 15 years and above?",
+      "questionType": "trend",
+      "page": 1,
+      "sourceHeading": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "requiredEntities": [
+        {
+          "entityRef": "Labour Force Participation Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Rural/Urban Sector",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Age Group",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Periodic Labour Force Survey",
+          "role": "source"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Labour Force Participation Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Rural/Urban Sector"
+          },
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Age Group"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "line_chart",
+            "renderOrder": 2
+          },
+          {
+            "type": "data_table",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp02_q03",
+      "intent": "What is the LFPR for persons aged 15-29 years compared to those aged 15-59 years?",
+      "questionType": "composition",
+      "page": 1,
+      "sourceHeading": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "requiredEntities": [
+        {
+          "entityRef": "Labour Force Participation Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Age Group",
+          "role": "breakdown"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "share",
+        "measure": {
+          "entityRef": "Labour Force Participation Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Age Group"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "data_table",
+            "renderOrder": 2
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp03_q01",
+      "intent": "What is the difference in WPR between rural and urban areas in 2025?",
+      "questionType": "comparison",
+      "page": 2,
+      "sourceHeading": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "requiredEntities": [
+        {
+          "entityRef": "Worker Population Ratio",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Rural/Urban Sector",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Worker Population Ratio"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Rural/Urban Sector"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 2
+          },
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp03_q02",
+      "intent": "How has the WPR for males changed from 2022 to 2025?",
+      "questionType": "trend",
+      "page": 2,
+      "sourceHeading": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "requiredEntities": [
+        {
+          "entityRef": "Worker Population Ratio",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "breakdown"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Worker Population Ratio"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "line_chart",
+            "renderOrder": 2
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp03_q03",
+      "intent": "What is the percentage difference in WPR between rural and urban areas in 2025?",
+      "questionType": "composition",
+      "page": 2,
+      "sourceHeading": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "requiredEntities": [
+        {
+          "entityRef": "Worker Population Ratio",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Rural/Urban Sector",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "share",
+        "measure": {
+          "entityRef": "Worker Population Ratio"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Rural/Urban Sector"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          },
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp05_q01",
+      "intent": "How did the proportion of workers with regular wage/salary employment change from 2022 to 2025?",
+      "questionType": "trend",
+      "page": 4,
+      "sourceHeading": "4. Increase in proportion of workers with regular wage/ salary employment",
+      "requiredEntities": [
+        {
+          "entityRef": "Survey Year",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Status in Employment",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Worker Population Ratio",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Worker Population Ratio"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Status in Employment"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "line_chart",
+            "renderOrder": 1
+          },
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp05_q02",
+      "intent": "What was the difference in the proportion of male workers with regular wage/salary employment between 2022 and 2025?",
+      "questionType": "comparison",
+      "page": 4,
+      "sourceHeading": "4. Increase in proportion of workers with regular wage/ salary employment",
+      "requiredEntities": [
+        {
+          "entityRef": "Gender",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Status in Employment",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Proportion",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Proportion"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Gender"
+          },
+          {
+            "entityRef": "Status in Employment"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp05_q03",
+      "intent": "How did the proportion of female workers with regular wage/salary employment compare to that of males in 2025?",
+      "questionType": "composition",
+      "page": 4,
+      "sourceHeading": "4. Increase in proportion of workers with regular wage/ salary employment",
+      "requiredEntities": [
+        {
+          "entityRef": "Gender",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Status in Employment",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Periodic Labour Force Survey",
+          "role": "source"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "share",
+        "measure": null,
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Status in Employment"
+          },
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp06_q01",
+      "intent": "What was the change in the unemployment rate for male workers in manufacturing and service sectors from 2024 to 2025?",
+      "questionType": "trend",
+      "page": 5,
+      "sourceHeading": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+      "requiredEntities": [
+        {
+          "entityRef": "Unemployment Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Sector",
+          "role": "breakdown"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Unemployment Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Sector"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Gender"
+          },
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "data_table",
+            "renderOrder": 2
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.84
+    },
+    {
+      "questionId": "sp06_q02",
+      "intent": "How did the unemployment rate for female workers in manufacturing and service sectors change from 2024 to 2025?",
+      "questionType": "trend",
+      "page": 5,
+      "sourceHeading": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": "pattern",
+      "inferenceConfidence": 0.3
+    },
+    {
+      "questionId": "sp06_q03",
+      "intent": "What was the difference in the unemployment rate between rural and urban areas in manufacturing and service sectors from 2024 to 2025?",
+      "questionType": "comparison",
+      "page": 5,
+      "sourceHeading": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+      "requiredEntities": [
+        {
+          "entityRef": "Unemployment Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Rural/Urban Sector",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Status in Employment",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Unemployment Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Rural/Urban Sector"
+          },
+          {
+            "entityRef": "Status in Employment"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "data_table",
+            "renderOrder": 2
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp07_q01",
+      "intent": "What was the average increase in earnings for male workers in regular wage/salary employment from 2024 to 2025?",
+      "questionType": "trend",
+      "page": 5,
+      "sourceHeading": "6. Earnings of female workers have seen a notable shift",
+      "requiredEntities": [
+        {
+          "entityRef": "Gender",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Status in Employment",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Earnings",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Earnings"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Gender"
+          },
+          {
+            "entityRef": "Status in Employment"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          },
+          {
+            "type": "line_chart",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp07_q02",
+      "intent": "How much did the earnings of female workers increase from 2024 to 2025 in the context of regular wage/salary employment?",
+      "questionType": "trend",
+      "page": 5,
+      "sourceHeading": "6. Earnings of female workers have seen a notable shift",
+      "requiredEntities": [
+        {
+          "entityRef": "Gender",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Status in Employment",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Earnings",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Earnings"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Gender"
+          },
+          {
+            "entityRef": "Status in Employment"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          },
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp07_q03",
+      "intent": "What was the percentage increase in earnings for female workers in casual labour employment from 2024 to 2025?",
+      "questionType": "trend",
+      "page": 5,
+      "sourceHeading": "6. Earnings of female workers have seen a notable shift",
+      "requiredEntities": [
+        {
+          "entityRef": "Gender",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Status in Employment",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Earnings",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Earnings"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Gender"
+          },
+          {
+            "entityRef": "Status in Employment"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          },
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "sp08_q01",
+      "intent": "What is the average number of years in formal education for males compared to females?",
+      "questionType": "comparison",
+      "page": 6,
+      "sourceHeading": "7 Average number of years in formal education",
+      "requiredEntities": [
+        {
+          "entityRef": "Gender",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Survey Year",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Average Years of Formal Education",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Average Years of Formal Education"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Survey Year"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 2
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.85
+    },
+    {
+      "questionId": "sp08_q02",
+      "intent": "How many more years did males in urban areas spend in formal education compared to rural areas?",
+      "questionType": "trend",
+      "page": 6,
+      "sourceHeading": "7 Average number of years in formal education",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": "pattern",
+      "inferenceConfidence": 0.3
+    },
+    {
+      "questionId": "sp08_q03",
+      "intent": "What is the difference in the average number of years spent in formal education between males and females in urban areas?",
+      "questionType": "comparison",
+      "page": 6,
+      "sourceHeading": "7 Average number of years in formal education",
+      "requiredEntities": [
+        {
+          "entityRef": "Gender",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Rural/Urban Sector",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Average Years of Formal Education",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Average Years of Formal Education"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Rural/Urban Sector"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.82
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+      "description": "Questions from chapter: Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+      "questionIds": [
+        "sp01_q01",
+        "sp01_q02",
+        "sp01_q03"
+      ],
+      "pageRange": [
+        0,
+        0
+      ]
+    },
+    {
+      "topicId": "topic_02",
+      "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "description": "Questions from chapter: 1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "questionIds": [
+        "sp02_q01",
+        "sp02_q02",
+        "sp02_q03"
+      ],
+      "pageRange": [
+        1,
+        1
+      ]
+    },
+    {
+      "topicId": "topic_03",
+      "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "description": "Questions from chapter: 2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "questionIds": [
+        "sp03_q01",
+        "sp03_q02",
+        "sp03_q03"
+      ],
+      "pageRange": [
+        2,
+        2
+      ]
+    },
+    {
+      "topicId": "topic_05",
+      "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+      "description": "Questions from chapter: 4 Increase in proportion of workers with regular wage/ salary employment",
+      "questionIds": [
+        "sp05_q01",
+        "sp05_q02",
+        "sp05_q03"
+      ],
+      "pageRange": [
+        4,
+        4
+      ]
+    },
+    {
+      "topicId": "topic_06",
+      "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "description": "Questions from chapter: 5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "questionIds": [
+        "sp06_q01",
+        "sp06_q02",
+        "sp06_q03",
+        "sp07_q01",
+        "sp07_q02",
+        "sp07_q03"
+      ],
+      "pageRange": [
+        5,
+        5
+      ]
+    },
+    {
+      "topicId": "topic_08",
+      "title": "7 Average number of years in formal education",
+      "description": "Questions from chapter: 7 Average number of years in formal education",
+      "questionIds": [
+        "sp08_q01",
+        "sp08_q02",
+        "sp08_q03"
+      ],
+      "pageRange": [
+        6,
+        10
+      ]
+    }
+  ]
+}
