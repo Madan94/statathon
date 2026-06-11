@@ -48,6 +48,7 @@ from report_builder.generation import (
     run_execution,
     attach_insights,
     enrich_report_provenance,
+    ensure_lifecycle,
     evaluate_gate,
     validate_report,
     verify_report,
@@ -451,6 +452,10 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
         logger.warning("[generate-phase] %s__%s — BLOCKED by verifier gate: %s",
                        template_id, signature, gate.reason)
         raise HTTPException(status_code=409, detail=gate.reason)
+
+    # S5h — lifecycle defaults: a freshly generated, publishable report starts at
+    # publishStatus=generated with an empty officer-review/lifecycle audit log.
+    ensure_lifecycle(report)
 
     # S6 — render + persist
     html_str = render_html(report)
