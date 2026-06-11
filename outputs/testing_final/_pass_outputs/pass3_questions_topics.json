@@ -1,0 +1,424 @@
+{
+  "questions_count": 6,
+  "topics_count": 2,
+  "questions": [
+    {
+      "questionId": "sp01_q01",
+      "intent": "What was the Unemployment Rate (UR) among urban females (age 15+) in 2025 compared to 2024?",
+      "questionType": "comparison",
+      "page": 0,
+      "sourceHeading": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+      "requiredEntities": [
+        {
+          "entityRef": "Unemployment Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Sector",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Age Group",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Survey Period",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Unemployment Rate"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Gender"
+          },
+          {
+            "entityRef": "Sector"
+          },
+          {
+            "entityRef": "Age Group"
+          },
+          {
+            "entityRef": "Survey Period"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 2
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.0
+    },
+    {
+      "questionId": "sp01_q02",
+      "intent": "How did the Unemployment Rate (UR) in usual status (ps+ss) among educated persons (secondary and above) change from 7.0% in 2024 to 2025?",
+      "questionType": "trend",
+      "page": 0,
+      "sourceHeading": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+      "requiredEntities": [
+        {
+          "entityRef": "Unemployment Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Survey Period",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Education Level",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Employment Status",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Unemployment Rate"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Survey Period"
+          },
+          {
+            "entityRef": "Education Level"
+          },
+          {
+            "entityRef": "Employment Status"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          },
+          {
+            "type": "line_chart",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.86
+    },
+    {
+      "questionId": "sp01_q03",
+      "intent": "What was the Unemployment Rate (UR) in 2025 for the age group 15 years and above, and how did it compare to the previous year?",
+      "questionType": "comparison",
+      "page": 0,
+      "sourceHeading": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+      "requiredEntities": [
+        {
+          "entityRef": "Unemployment Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Age Group",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Survey Period",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Unemployment Rate"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Age Group"
+          },
+          {
+            "entityRef": "Survey Period"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          },
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 2
+          },
+          {
+            "type": "line_chart",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.88
+    },
+    {
+      "questionId": "sp02_q01",
+      "intent": "What was the Labour Force Participation Rate (LFPR) for rural male and female persons aged 15 years and above, and how did it compare between rural and urban areas in 2025?",
+      "questionType": "comparison",
+      "page": 1,
+      "sourceHeading": "1. Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "requiredEntities": [
+        {
+          "entityRef": "Labour Force Participation Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Sector",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Age Group",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Survey Period",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Labour Force Participation Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          },
+          {
+            "entityRef": "Sector"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Age Group"
+          },
+          {
+            "entityRef": "Survey Period"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "data_table",
+            "renderOrder": 2
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.86
+    },
+    {
+      "questionId": "sp02_q02",
+      "intent": "How did the rural male labour force participation rate compare to the rural female participation rate in 2025, and was there a significant change from 2024?",
+      "questionType": "comparison",
+      "page": 1,
+      "sourceHeading": "1. Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "requiredEntities": [
+        {
+          "entityRef": "Labour Force Participation Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Sector",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Survey Period",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Labour Force Participation Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Sector"
+          },
+          {
+            "entityRef": "Survey Period"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.88
+    },
+    {
+      "questionId": "sp02_q03",
+      "intent": "What was the Labour Force Participation Rate (LFPR) for persons aged 15 years and above in rural and urban areas, and how did it change for males and females from 2024 to 2025?",
+      "questionType": "trend",
+      "page": 1,
+      "sourceHeading": "1. Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": "pattern",
+      "inferenceConfidence": 0.3
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+      "description": "Questions from chapter: Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+      "questionIds": [
+        "sp01_q01",
+        "sp01_q02",
+        "sp01_q03"
+      ],
+      "pageRange": [
+        0,
+        0
+      ]
+    },
+    {
+      "topicId": "topic_02",
+      "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "description": "Questions from chapter: 1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "questionIds": [
+        "sp02_q01",
+        "sp02_q02",
+        "sp02_q03"
+      ],
+      "pageRange": [
+        1,
+        1
+      ]
+    }
+  ]
+}

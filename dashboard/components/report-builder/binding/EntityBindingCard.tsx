@@ -1,12 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, ChevronDown, Pencil, X, RotateCcw } from 'lucide-react';
+import { AlertTriangle, Check, ChevronDown, Lock, Pencil, RotateCcw, Share2, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { Button } from '@/components/ui/Button';
-import type { BindingAction, DatasetColumnProfile, EntityBinding } from '@/lib/api';
+import type { BindingAction, ColumnOwner, ColumnOwnershipMap, DatasetColumnProfile, EntityBinding } from '@/lib/api';
 
-type Decision = { action: BindingAction; columns?: string[] };
+type Decision = {
+  action: BindingAction;
+  columns?: string[];
+  note?: string;
+  force_transfer?: boolean;
+  transfer_from_entity_ids?: string[];
+  share_policy?: 'exclusive' | 'shared';
+  share_reason?: string;
+};
 
 const STATUS_META: Record<
   EntityBinding['status'],
@@ -42,6 +50,8 @@ interface EntityBindingCardProps {
   binding: EntityBinding;
   /** All dataset column names, for the override picker. */
   columns: DatasetColumnProfile[];
+  /** Global column ownership map, used to show locks and controlled reassignments. */
+  columnOwnership?: ColumnOwnershipMap;
   /** Current human decision for this entity, if any. */
   decided?: Decision;
   busy?: boolean;
@@ -56,31 +66,93 @@ interface EntityBindingCardProps {
 export function EntityBindingCard({
   binding,
   columns,
+  columnOwnership,
   decided,
   busy,
   onDecide,
   className,
 }: EntityBindingCardProps) {
   const [overriding, setOverriding] = useState(false);
+  const [pendingConflict, setPendingConflict] = useState<{ column: string; owners: ColumnOwner[] } | null>(null);
+  const [shareReason, setShareReason] = useState('');
 
   const effectiveStatus = decided
     ? decided.action === 'confirm'
       ? 'confirmed'
       : decided.action === 'override'
         ? 'overridden'
-        : 'rejected'
+        : decided.action === 'share'
+          ? 'overridden'
+          : 'rejected'
     : binding.status;
   const meta = STATUS_META[effectiveStatus] ?? STATUS_META.proposed;
 
   const proposedColumn = binding.columns[0]?.column ?? null;
-  const overrideColumn = decided?.action === 'override' ? decided.columns?.[0] : undefined;
+  const overrideColumn = decided?.action === 'override' || decided?.action === 'share' ? decided.columns?.[0] : undefined;
   const shownColumn = overrideColumn ?? proposedColumn;
   const isResolved = !!decided;
 
-  const handleConfirm = () => onDecide(binding.entityId, { action: 'confirm' });
+  const ownersFor = (column: string): ColumnOwner[] => {
+    const owners = columnOwnership?.columns?.[column]?.owners ?? [];
+    return owners.filter(
+      (owner) => owner.entityId !== binding.entityId && owner.status !== 'rejected'
+    );
+  };
+
+  const blockingOwnersFor = (column: string): ColumnOwner[] => {
+    return ownersFor(column).filter(
+      (owner) => ['confirmed', 'overridden'].includes(owner.status) && owner.sharePolicy !== 'shared'
+    );
+  };
+
+  const handleConflict = (column: string, owners: ColumnOwner[]) => {
+    setShareReason('');
+    setPendingConflict({ column, owners });
+  };
+
+  const handleConfirm = () => {
+    if (proposedColumn) {
+      const owners = blockingOwnersFor(proposedColumn);
+      if (owners.length > 0) {
+        handleConflict(proposedColumn, owners);
+        return;
+      }
+    }
+    onDecide(binding.entityId, { action: 'confirm' });
+  };
   const handleReject = () => onDecide(binding.entityId, { action: 'reject' });
   const handleOverride = (column: string) => {
+    const owners = blockingOwnersFor(column);
+    if (owners.length > 0) {
+      handleConflict(column, owners);
+      return;
+    }
     onDecide(binding.entityId, { action: 'override', columns: [column] });
+    setOverriding(false);
+  };
+
+  const handleMoveColumn = () => {
+    if (!pendingConflict) return;
+    onDecide(binding.entityId, {
+      action: 'override',
+      columns: [pendingConflict.column],
+      force_transfer: true,
+      transfer_from_entity_ids: pendingConflict.owners.map((owner) => owner.entityId),
+      note: `Moved from ${pendingConflict.owners.map((owner) => owner.entityName).join(', ')}`,
+    });
+    setPendingConflict(null);
+    setOverriding(false);
+  };
+
+  const handleShareColumn = () => {
+    if (!pendingConflict || !shareReason.trim()) return;
+    onDecide(binding.entityId, {
+      action: 'share',
+      columns: [pendingConflict.column],
+      share_policy: 'shared',
+      share_reason: shareReason.trim(),
+    });
+    setPendingConflict(null);
     setOverriding(false);
   };
 
@@ -134,18 +206,35 @@ export function EntityBindingCard({
             {columns.map((col) => {
               const alt = binding.alternatives.find((a) => a.column === col.name);
               const isProposed = col.name === proposedColumn;
+              const owners = ownersFor(col.name);
+              const blockingOwners = blockingOwnersFor(col.name);
+              const isLocked = blockingOwners.length > 0;
+              const sharedOwners = owners.filter((owner) => owner.sharePolicy === 'shared');
               return (
                 <button
                   key={col.name}
                   type="button"
                   onClick={() => handleOverride(col.name)}
-                  className="flex w-full items-center justify-between gap-2 rounded-md border border-transparent px-2.5 py-1.5 text-left text-sm hover:border-border hover:bg-surface-card"
+                  className={cn(
+                    'flex w-full items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-left text-sm transition-colors hover:border-border hover:bg-surface-card',
+                    isLocked ? 'border-warning/30 bg-warning/5' : 'border-transparent'
+                  )}
                 >
                   <span className="min-w-0">
-                    <span className="font-mono text-xs text-text">{col.name}</span>
-                    <span className="ml-2 text-[11px] capitalize text-text-muted">{col.role}</span>
-                    {isProposed && (
-                      <span className="ml-2 text-[10px] font-medium uppercase text-primary">proposed</span>
+                    <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+                      {isLocked && <Lock className="h-3.5 w-3.5 text-warning" aria-hidden />}
+                      {!isLocked && sharedOwners.length > 0 && <Share2 className="h-3.5 w-3.5 text-primary" aria-hidden />}
+                      <span className="font-mono text-xs text-text">{col.name}</span>
+                      <span className="text-[11px] capitalize text-text-muted">{col.role}</span>
+                      {isProposed && (
+                        <span className="text-[10px] font-medium uppercase text-primary">proposed</span>
+                      )}
+                    </span>
+                    {owners.length > 0 && (
+                      <span className="mt-0.5 block truncate text-[11px] text-text-muted">
+                        {isLocked ? 'Locked by ' : 'Shared with '}
+                        {owners.map((owner) => owner.entityName).join(', ')}
+                      </span>
                     )}
                   </span>
                   {alt && (
@@ -157,6 +246,37 @@ export function EntityBindingCard({
               );
             })}
           </div>
+          {pendingConflict && (
+            <div className="mt-3 rounded-lg border border-warning/40 bg-warning/10 p-3">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-text">Column already allocated</p>
+                  <p className="mt-1 text-xs text-text-muted">
+                    <span className="font-mono text-text">{pendingConflict.column}</span> is assigned to{' '}
+                    {pendingConflict.owners.map((owner) => owner.entityName).join(', ')}.
+                  </p>
+                </div>
+              </div>
+              <textarea
+                value={shareReason}
+                onChange={(e) => setShareReason(e.target.value)}
+                placeholder="Reason for sharing this column"
+                className="mt-3 h-16 w-full resize-none rounded-md border border-border bg-surface px-2.5 py-2 text-xs text-text outline-none focus:ring-2 focus:ring-accent/30"
+              />
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Button size="sm" disabled={busy} onClick={handleMoveColumn}>
+                  Move column
+                </Button>
+                <Button variant="outline" size="sm" disabled={busy || !shareReason.trim()} onClick={handleShareColumn}>
+                  Share with reason
+                </Button>
+                <Button variant="ghost" size="sm" disabled={busy} onClick={() => setPendingConflict(null)} className="text-text-muted">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => setOverriding(false)}
@@ -174,7 +294,7 @@ export function EntityBindingCard({
             variant="ghost"
             size="sm"
             disabled={busy}
-            onClick={() => onDecide(binding.entityId, { action: 'confirm', columns: undefined })}
+            onClick={() => onDecide(binding.entityId, { action: 'reopen' })}
             className="text-text-muted"
             title="Re-open this binding for review"
           >

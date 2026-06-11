@@ -238,6 +238,191 @@ def test_review_caches_confirmations(plfs_df: pd.DataFrame, blueprint: dict, tmp
     assert "ent_wpr" not in {e.entityId for e in deltas2}
 
 
+def test_review_reopen_removes_confirmation(plfs_df: pd.DataFrame, blueprint: dict, tmp_path: Path):
+    d = profile_dataframe(plfs_df, dataset_id="plfs")
+    ebs = resolve_entities(blueprint["entities"], d)
+    b = BindingAST(templateId="t", datasetId="plfs", entityBindings=ebs)
+    b, rec, _ = open_review(b, d, storage_dir=tmp_path)
+    from report_builder.binding.review import confirm, reopen
+
+    confirm(rec, "ent_wpr")
+    assert "ent_wpr" in rec.confirmations
+    reopen(rec, "ent_wpr")
+    finalize_review(b, rec, storage_dir=tmp_path)
+
+    ebs2 = resolve_entities(blueprint["entities"], d)
+    b2 = BindingAST(templateId="t", datasetId="plfs", entityBindings=ebs2)
+    b2, _rec2, deltas2 = open_review(b2, d, storage_dir=tmp_path)
+    assert b2.binding_for("ent_wpr").status == "proposed"
+    assert "ent_wpr" in {e.entityId for e in deltas2}
+
+
+def test_column_ownership_locks_confirmed_exclusive():
+    from report_builder.binding.review import compute_column_ownership, confirm
+
+    rec = ReviewRecord(
+        templateId="t",
+        datasetSignature="s",
+        proposals=[
+            {
+                "entityId": "ent_lfpr",
+                "entityName": "LFPR",
+                "entityType": "measure",
+                "cardinality": "oneToOne",
+                "status": "proposed",
+                "columns": [{"column": "LFPR"}],
+            },
+            {
+                "entityId": "ent_wpr",
+                "entityName": "WPR",
+                "entityType": "measure",
+                "cardinality": "oneToOne",
+                "status": "proposed",
+                "columns": [{"column": "WPR"}],
+            },
+        ],
+    )
+    confirm(rec, "ent_lfpr")
+
+    ownership = compute_column_ownership(rec)
+    lfpr = ownership["columns"]["LFPR"]
+    assert lfpr["locked"] is True
+    assert lfpr["owners"][0]["entityId"] == "ent_lfpr"
+    assert lfpr["owners"][0]["sharePolicy"] == "exclusive"
+    assert ownership["columns"]["WPR"]["locked"] is False
+
+
+def test_column_conflict_detects_existing_exclusive_owner():
+    from report_builder.binding.review import confirm, find_exclusive_column_conflicts
+
+    rec = ReviewRecord(
+        templateId="t",
+        datasetSignature="s",
+        proposals=[
+            {"entityId": "ent_lfpr", "entityName": "LFPR", "entityType": "measure", "columns": [{"column": "LFPR"}]},
+            {"entityId": "ent_wpr", "entityName": "WPR", "entityType": "measure", "columns": [{"column": "WPR"}]},
+        ],
+    )
+    confirm(rec, "ent_lfpr")
+
+    conflicts = find_exclusive_column_conflicts(rec, "ent_wpr", ["LFPR"])
+    assert len(conflicts) == 1
+    assert conflicts[0]["column"] == "LFPR"
+    assert conflicts[0]["owners"][0]["entityId"] == "ent_lfpr"
+
+
+def test_confirm_blocks_duplicate_exclusive_assignment():
+    from report_builder.binding.review import ColumnOwnershipConflict, confirm
+
+    rec = ReviewRecord(
+        templateId="t",
+        datasetSignature="s",
+        proposals=[
+            {"entityId": "ent_lfpr", "entityName": "LFPR", "entityType": "measure", "columns": [{"column": "LFPR"}]},
+            {"entityId": "ent_wpr", "entityName": "WPR", "entityType": "measure", "columns": [{"column": "WPR"}]},
+        ],
+    )
+    confirm(rec, "ent_lfpr")
+
+    with pytest.raises(ColumnOwnershipConflict) as exc:
+        confirm(rec, "ent_wpr", columns=["LFPR"])
+
+    assert exc.value.conflicts[0]["column"] == "LFPR"
+    assert exc.value.conflicts[0]["owners"][0]["entityId"] == "ent_lfpr"
+
+
+def test_move_column_reopens_previous_owner():
+    from report_builder.binding.review import (
+        compute_column_ownership,
+        confirm,
+        move_columns_from_entities,
+    )
+
+    rec = ReviewRecord(
+        templateId="t",
+        datasetSignature="s",
+        proposals=[
+            {"entityId": "ent_lfpr", "entityName": "LFPR", "entityType": "measure", "columns": [{"column": "LFPR"}]},
+            {"entityId": "ent_wpr", "entityName": "WPR", "entityType": "measure", "columns": [{"column": "WPR"}]},
+        ],
+    )
+    confirm(rec, "ent_lfpr")
+    move_columns_from_entities(rec, columns=["LFPR"], from_entity_ids=["ent_lfpr"])
+    confirm(rec, "ent_wpr", columns=["LFPR"])
+
+    assert "ent_lfpr" not in rec.confirmations
+    ownership = compute_column_ownership(rec)
+    owners = ownership["columns"]["LFPR"]["owners"]
+    assert any(o["entityId"] == "ent_wpr" and o["status"] == "overridden" for o in owners)
+    assert any(o["entityId"] == "ent_lfpr" and o["status"] == "proposed" for o in owners)
+
+
+def test_shared_column_requires_explicit_policy():
+    from report_builder.binding.review import compute_column_ownership, confirm
+
+    rec = ReviewRecord(
+        templateId="t",
+        datasetSignature="s",
+        proposals=[
+            {"entityId": "ent_period", "entityName": "Period", "entityType": "time", "columns": [{"column": "Year"}]},
+            {"entityId": "ent_year_filter", "entityName": "Year Filter", "entityType": "filter", "columns": [{"column": "Year"}]},
+        ],
+    )
+    confirm(rec, "ent_period", share_policy="shared", share_reason="time context reused")
+    confirm(rec, "ent_year_filter", share_policy="shared", share_reason="filter uses same time column")
+
+    ownership = compute_column_ownership(rec)
+    year = ownership["columns"]["Year"]
+    assert year["locked"] is False
+    assert ownership["conflicts"] == []
+    assert {o["sharePolicy"] for o in year["owners"]} == {"shared"}
+
+
+def test_add_manual_entity_from_column():
+    from report_builder.binding.review import add_manual_entity, compute_column_ownership
+
+    rec = ReviewRecord(templateId="t", datasetSignature="s", proposals=[])
+
+    add_manual_entity(
+        rec,
+        entity_name="Custom Measure",
+        entity_type="measure",
+        columns=["Custom_Column"],
+        note="officer added",
+    )
+
+    assert len(rec.proposals) == 1
+    prop = rec.proposals[0]
+    assert prop["entityId"].startswith("ent_manual_custom_measure")
+    assert prop["method"] == "manual"
+    assert prop["columns"] == [{"column": "Custom_Column"}]
+    assert rec.confirmations[prop["entityId"]].columns == ["Custom_Column"]
+    ownership = compute_column_ownership(rec)
+    assert ownership["columns"]["Custom_Column"]["locked"] is True
+
+
+def test_add_manual_entity_blocks_locked_column():
+    from report_builder.binding.review import ColumnOwnershipConflict, add_manual_entity, confirm
+
+    rec = ReviewRecord(
+        templateId="t",
+        datasetSignature="s",
+        proposals=[
+            {"entityId": "ent_lfpr", "entityName": "LFPR", "entityType": "measure", "columns": [{"column": "LFPR"}]},
+        ],
+    )
+    confirm(rec, "ent_lfpr")
+
+    with pytest.raises(ColumnOwnershipConflict):
+        add_manual_entity(
+            rec,
+            entity_name="Duplicate LFPR",
+            entity_type="measure",
+            columns=["LFPR"],
+        )
+    assert len(rec.proposals) == 1
+
+
 # ── B6: coverage report ─────────────────────────────────────────────────────
 
 
@@ -297,3 +482,25 @@ def test_golden_plfs_end_to_end(plfs_df: pd.DataFrame, blueprint: dict, tmp_path
     assert cov["questions"]["executable"] >= 1
     assert binding.binding_for("ent_wpr").column_names == ["Worker_Population_Ratio"]
     assert binding.binding_for("ent_period").column_names == ["Year"]
+
+
+def test_reviewed_plan_builds_from_binding_fast_path(plfs_df: pd.DataFrame, blueprint: dict):
+    from report_builder.binding.reviewed_plan import build_reviewed_plan
+
+    d = profile_dataframe(plfs_df, dataset_id="plfs")
+    ebs = resolve_entities(blueprint["entities"], d)
+    b = BindingAST(templateId="tpl_plfs_annual_v1", datasetId="plfs", entityBindings=ebs)
+    b.questionBindings = bind_questions(blueprint, ebs, d, df=plfs_df)
+    build_coverage(b)
+
+    plan = build_reviewed_plan(
+        template_id="tpl_plfs_annual_v1",
+        signature=dataset_signature(d),
+        dataset=d,
+        blueprint=blueprint,
+        binding=b,
+    )
+    assert plan.datasetId == "plfs"
+    assert plan.planTree
+    assert plan.entityBindings
+    assert plan.questionBindings

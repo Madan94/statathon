@@ -142,6 +142,8 @@ def compile_template_artifacts(
 
     # Replace blueprint entities with enriched result
     bp["entities"] = [_entity_to_dict(e) for e in enrichment_result.entities]
+    if _early_doc_type == "pib_press_release":
+        _apply_plfs_entity_overrides(bp)
 
     # Add measure families
     if norm_result.measureFamilies:
@@ -239,6 +241,7 @@ def compile_template_artifacts(
             "sourceDocument": stat_ctx.sourceDocument,
             "domain": stat_ctx.domain,
         }
+    _add_external_table_references(bp, page_texts)
 
     logger.info("[template-compiler] I2 done: tables=%d context_units=%d",
                 len(table_result.tables) if table_result else 0, len(stat_ctx.unitRegistry))
@@ -250,27 +253,13 @@ def compile_template_artifacts(
 
     from report_builder.chart_semantic_compiler import compile_figure_semantics
 
-    # Use provided figure candidates, or derive from existing
+    # Use provided figure candidates, or derive from existing template artifacts.
+    # Important: chart-heavy PIB releases often carry the useful caption/title in
+    # chartAST rather than figureAST/figureTemplates, so include chartAST too.
     if figure_candidates:
         chart_result = compile_figure_semantics(figure_candidates, entities=enrichment_result.entities)
     else:
-        # Derive from existing figureTemplates or figureAST
-        existing_figs = bp.get("figureTemplates") or []
-        fig_candidates = []
-        for ft in existing_figs:
-            fig_candidates.append({
-                "figureId": ft.get("figureTemplateId") or ft.get("figureId") or "",
-                "caption": ft.get("chartSubject") or ft.get("captionTemplate") or "",
-                "chartType": ft.get("chartType") or "",
-                "page": ft.get("page"),
-            })
-        # Also check figureAST
-        for fig in (skeleton.get("figureAST") or {}).get("figures") or []:
-            fig_candidates.append({
-                "figureId": fig.get("figureId") or "",
-                "caption": fig.get("caption") or "",
-                "page": fig.get("page"),
-            })
+        fig_candidates = _derive_figure_candidates(skeleton, bp)
         chart_result = compile_figure_semantics(fig_candidates, entities=enrichment_result.entities) if fig_candidates else None
 
     intermediate["charts"] = chart_result.to_dict() if chart_result else {"figureCount": 0}
@@ -295,10 +284,10 @@ def compile_template_artifacts(
                     {"title": ch.get("title", ""), "page": ch.get("pageRange", [0])[0], "level": 1}
                     for ch in document_map["chapters"]
                 ]
-                _sg = build_section_graph(_sg_entries, [], doc_type=_early_doc_type, doc_title=_bp_meta.get("name", ""))
+                _sg = build_section_graph(_sg_entries, [], doc_type=_early_doc_type, doc_title=_bp_meta_early.get("name", ""))
 
             if _sg:
-                sg_result = compile_section_graph_figures(_sg, entities=enrichment_result.entities, doc_type=_doc_type)
+                sg_result = compile_section_graph_figures(_sg, entities=enrichment_result.entities, doc_type=_early_doc_type)
                 if sg_result.figures:
                     # Merge: SectionGraph figures supplement existing (don't replace)
                     existing_ids = {f.figureTemplateId for f in (chart_result.figures if chart_result else [])}
@@ -427,12 +416,13 @@ def compile_template_artifacts(
     existing_q_ids = {q.get("questionId") or "" for q in kept_questions}
     new_questions = [q for q in compiled_q_dicts if q.get("questionId") not in existing_q_ids]
 
-    # Assign all questions to topics
+    # Assign all questions to topics. The old behavior put every question into
+    # topics[0], which makes multi-section PIB reports unusable in binder.
     all_final_questions = kept_questions + new_questions
-    if bp.get("topics"):
-        bp["topics"][0]["questions"] = all_final_questions
-    else:
-        bp["topics"] = [{"topicId": "topic_compiled", "title": "Compiled Questions", "questions": all_final_questions}]
+    if _doc_type == "pib_press_release":
+        all_final_questions = _prune_pib_duplicate_chart_questions(all_final_questions)
+    _add_legacy_question_entity_fields(all_final_questions)
+    _assign_questions_to_topics(bp, all_final_questions)
 
     logger.info("[template-compiler] I4 done: %d final questions (%d kept + %d new)",
                 len(all_final_questions), len(kept_questions), len(new_questions))
@@ -455,19 +445,23 @@ def compile_template_artifacts(
     if _dropped_prose:
         logger.info("[template-compiler] I4.5: dropped %d unrepairable prose questions", _dropped_prose)
     all_final_questions = _sanitized_qs
+    if _doc_type == "pib_press_release":
+        all_final_questions = _prune_pib_duplicate_chart_questions(all_final_questions)
 
-    # Re-assign sanitized questions to topics
-    if bp.get("topics"):
-        bp["topics"][0]["questions"] = all_final_questions
-    else:
-        bp["topics"] = [{"topicId": "topic_compiled", "title": "Compiled Questions", "questions": all_final_questions}]
+    # Re-assign sanitized questions to topics after value-free cleanup.
+    _add_legacy_question_entity_fields(all_final_questions)
+    _assign_questions_to_topics(bp, all_final_questions)
+    _backfill_chart_ast_semantics(skeleton, chart_result, all_final_questions)
+    _drop_stale_generated_chart_slots(skeleton)
+    _add_chart_panel_groups(bp, skeleton)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # I5: Slot Wiring + Validation + Diagnostics
     # ═══════════════════════════════════════════════════════════════════════════
     logger.info("[template-compiler] I5: Wiring + validation + diagnostics")
 
-    from report_builder.slot_wiring import wire_template, iter_questions as _iter_qs
+    from report_builder.slot_wiring import wire_template, iter_questions as _iter_qs, build_semantic_slot_graph
+    from report_builder.template_package import build_template_package_manifest
     from report_builder.value_free_validator import validate_value_free
     from report_builder.extraction_contracts import validate_extraction_contract, ExtractionMode
     from report_builder.extraction_diagnostics import build_extraction_diagnostics
@@ -479,7 +473,10 @@ def compile_template_artifacts(
     # Wire slots
     wiring_result = wire_template(skeleton, bp, auto_repair=True)
     skeleton = wiring_result.skeleton
+    _drop_stale_generated_chart_slots(skeleton, remove_only_unwired=True)
     intermediate["wiring"] = wiring_result.to_dict()
+    semantic_slot_graph = build_semantic_slot_graph(skeleton, bp, wiring_result)
+    intermediate["semanticSlotGraph"] = semantic_slot_graph.to_dict()
 
     # Value-free validation
     vf_result = validate_value_free(skeleton, bp)
@@ -510,9 +507,18 @@ def compile_template_artifacts(
         contract_result.status, vf_result.status,
     )
 
+    package_manifest = build_template_package_manifest(
+        template_ast=skeleton,
+        template_blueprint=bp,
+        semantic_slot_graph=semantic_slot_graph.to_dict(),
+        diagnostics=diagnostics,
+    )
+
     return {
         "template_ast": skeleton,
         "template_blueprint": bp,
+        "semantic_slot_graph": semantic_slot_graph.to_dict(),
+        "template_package_manifest": package_manifest.to_dict(),
         "diagnostics": diagnostics,
         "intermediate": intermediate,
     }
@@ -521,6 +527,278 @@ def compile_template_artifacts(
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
+
+def _derive_figure_candidates(skeleton: dict[str, Any], blueprint: dict[str, Any]) -> list[dict[str, Any]]:
+    """Collect unique chart/figure candidates from blueprint + AST sidecars."""
+    candidates: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str]] = set()
+
+    def add(candidate: dict[str, Any]) -> None:
+        caption = str(candidate.get("caption") or candidate.get("title") or "").strip()
+        fig_id = str(candidate.get("figureId") or candidate.get("chartId") or "").strip()
+        chart_type = str(candidate.get("chartType") or candidate.get("chart_type") or "").strip()
+        page = str(candidate.get("page") or "")
+        # Prefer caption/page/type dedupe because the same visual can appear as a
+        # figureTemplate, figureAST entry, and chartAST entry with different IDs.
+        key = (caption.lower(), page, chart_type.lower()) if caption else (fig_id, page, chart_type.lower())
+        if not caption and not fig_id:
+            return
+        if key in seen:
+            return
+        seen.add(key)
+        candidates.append(candidate)
+
+    # Prefer chartAST first because it usually carries the richest raw title in PIB
+    # press releases.
+    chart_ast_charts = (skeleton.get("chartAST") or {}).get("charts") or []
+    for chart in chart_ast_charts:
+        add({
+            "figureId": chart.get("chartId") or chart.get("id") or "",
+            "caption": chart.get("title") or chart.get("caption") or "",
+            "chartType": chart.get("chartType") or "",
+            "page": chart.get("page"),
+            "sectionRef": chart.get("sectionRef"),
+        })
+
+    if not chart_ast_charts:
+        for ft in blueprint.get("figureTemplates") or []:
+            add({
+                "figureId": ft.get("figureTemplateId") or ft.get("figureId") or ft.get("chartId") or "",
+                "caption": ft.get("chartSubject") or ft.get("captionTemplate") or ft.get("title") or "",
+                "chartType": ft.get("chartType") or "",
+                "page": ft.get("page"),
+                "sectionRef": ft.get("sectionRef"),
+            })
+
+    for fig in (skeleton.get("figureAST") or {}).get("figures") or []:
+        add({
+            "figureId": fig.get("figureId") or fig.get("chartRef") or "",
+            "caption": fig.get("caption") or fig.get("label") or fig.get("title") or fig.get("captionTemplate") or "",
+            "chartType": fig.get("chartType") or fig.get("figureType") or "",
+            "page": fig.get("page"),
+            "sectionRef": fig.get("sectionRef"),
+        })
+
+    return candidates
+
+
+def _add_legacy_question_entity_fields(questions: list[dict[str, Any]]) -> None:
+    """Backfill dimensionEntityId/measureEntityId from requiredEntities.
+
+    New binder code uses requiredEntities, but many diagnostics and older tools look
+    for these flat fields. Leaving them blank creates false audit failures.
+    """
+    for question in questions:
+        measure = question.get("measureEntityId") or ""
+        dimension = question.get("dimensionEntityId") or ""
+        for req in question.get("requiredEntities") or []:
+            role = str(req.get("role") or "")
+            entity_id = req.get("entityId") or req.get("entityRef") or ""
+            if not entity_id:
+                continue
+            if not measure and role == "measure":
+                measure = entity_id
+            if not dimension and role in ("grouping", "dimension", "breakdown", "groupBy"):
+                dimension = entity_id
+        if measure:
+            question["measureEntityId"] = measure
+        if dimension:
+            question["dimensionEntityId"] = dimension
+
+
+def _question_measure_ids(question: dict[str, Any]) -> tuple[str, ...]:
+    ids: list[str] = []
+    for req in question.get("requiredEntities") or []:
+        if req.get("role") == "measure" and (req.get("entityId") or req.get("entityRef")):
+            ids.append(str(req.get("entityId") or req.get("entityRef")))
+    return tuple(sorted(set(ids)))
+
+
+def _prune_pib_duplicate_chart_questions(questions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep curated PIB/domain questions first, then only novel chart questions.
+
+    Chart-heavy press releases often have separate rural/urban or panel-level
+    figures for the same indicator. Those should become supporting chart slots,
+    not separate near-duplicate analytical questions.
+    """
+    covered_measures: set[str] = set()
+    kept: list[dict[str, Any]] = []
+
+    # Curated/domain/template questions define the analytical surface.
+    for question in questions:
+        method = str(question.get("generationMethod") or "")
+        measures = _question_measure_ids(question)
+        if method != "chart_pattern":
+            kept.append(question)
+            covered_measures.update(measures)
+
+    seen_chart_signatures: set[tuple[str, ...]] = set()
+    for question in questions:
+        if str(question.get("generationMethod") or "") != "chart_pattern":
+            continue
+        measures = _question_measure_ids(question)
+        if measures and any(m in covered_measures for m in measures):
+            continue
+        signature = measures or (str(question.get("sourceFigure") or question.get("questionId") or ""),)
+        if signature in seen_chart_signatures:
+            continue
+        seen_chart_signatures.add(signature)
+        kept.append(question)
+        covered_measures.update(measures)
+
+    return kept
+
+
+def _norm_tokens(text: str) -> set[str]:
+    import re
+    stop = {"the", "and", "for", "with", "from", "current", "period", "status", "usual", "persons", "years", "above"}
+    return {t for t in re.findall(r"[a-z0-9]+", str(text).lower()) if len(t) > 1 and t not in stop}
+
+
+def _assign_questions_to_topics(blueprint: dict[str, Any], questions: list[dict[str, Any]]) -> None:
+    topics = blueprint.get("topics") or []
+    if not topics:
+        blueprint["topics"] = [{"topicId": "topic_compiled", "title": "Compiled Questions", "questions": list(questions)}]
+        return
+
+    for topic in topics:
+        topic["questions"] = []
+
+    topic_tokens = [(topic, _norm_tokens(topic.get("title") or topic.get("topicId") or "")) for topic in topics]
+    for question in questions:
+        text = " ".join(str(question.get(k) or "") for k in ("sourceHeading", "intent", "sourceFigure"))
+        q_tokens = _norm_tokens(text)
+        best_topic = topics[0]
+        best_score = -1
+        for topic, tokens in topic_tokens:
+            score = len(q_tokens & tokens)
+            title = str(topic.get("title") or "").lower()
+            # Boost common PLFS abbreviations because chart titles usually carry them.
+            for marker in ("lfpr", "wpr", "ur", "unemployment", "manufacturing", "education", "wage", "salary"):
+                if marker in text.lower() and marker in title:
+                    score += 3
+            text_low = text.lower()
+            if "industry" in text_low and any(k in title for k in ("manufacturing", "service", "sector")):
+                score += 4
+            if any(k in text_low for k in ("earning", "earnings", "wage", "salary")) and any(k in title for k in ("wage", "salary", "earning")):
+                score += 4
+            if score > best_score:
+                best_topic = topic
+                best_score = score
+        best_topic.setdefault("questions", []).append(question)
+
+
+def _backfill_chart_ast_semantics(
+    skeleton: dict[str, Any],
+    chart_result: Any,
+    questions: list[dict[str, Any]],
+) -> None:
+    """Write chart semantic refs back to chartAST/figureAST for binder preview."""
+    if not chart_result or not getattr(chart_result, "figures", None):
+        return
+
+    by_raw_id: dict[str, Any] = {}
+    for figure in chart_result.figures:
+        ft_id = getattr(figure, "figureTemplateId", "") or ""
+        raw_id = ft_id[3:] if ft_id.startswith("ft_") else ft_id
+        by_raw_id[raw_id] = figure
+
+    question_by_source_figure = {q.get("sourceFigure"): q for q in questions if q.get("sourceFigure")}
+
+    for chart in (skeleton.get("chartAST") or {}).get("charts") or []:
+        chart_id = chart.get("chartId") or chart.get("id") or ""
+        figure = by_raw_id.get(chart_id) or by_raw_id.get(str(chart_id).lower())
+        if figure is None:
+            continue
+        measure_refs = list(getattr(figure, "measureRefs", []) or [])
+        dimension_ref = getattr(figure, "dimensionRef", None)
+        category_ref = getattr(figure, "categoryEntityRef", None)
+        period_ref = getattr(figure, "periodRef", None)
+        refs = [*measure_refs, *[r for r in (dimension_ref, category_ref, period_ref) if r]]
+        if refs:
+            chart["entityRefs"] = refs
+        if measure_refs:
+            chart["measureEntityId"] = measure_refs[0]
+        if dimension_ref or category_ref:
+            chart["dimensionEntityId"] = dimension_ref or category_ref
+        chart["chartSubject"] = getattr(figure, "chartSubject", "")
+        if getattr(figure, "figureNumber", None):
+            chart["figureNumber"] = getattr(figure, "figureNumber", "")
+        if getattr(figure, "panel", None):
+            chart["panel"] = getattr(figure, "panel", "")
+        if getattr(figure, "filters", None):
+            chart["filters"] = list(getattr(figure, "filters", []) or [])
+        chart["semanticConfidence"] = getattr(figure, "confidence", 0.0)
+        source_question = question_by_source_figure.get(getattr(figure, "figureTemplateId", ""))
+        if source_question:
+            chart["biQuery"] = source_question.get("questionId") or ""
+
+    for fig in (skeleton.get("figureAST") or {}).get("figures") or []:
+        fig_id = fig.get("figureId") or fig.get("chartRef") or ""
+        figure = by_raw_id.get(fig_id) or by_raw_id.get(str(fig_id).lower())
+        if figure is None:
+            continue
+        fig["figureType"] = getattr(figure, "chartType", "")
+        fig["label"] = fig.get("label") or getattr(figure, "figureNumber", None) or getattr(figure, "chartSubject", "")
+        source_question = question_by_source_figure.get(getattr(figure, "figureTemplateId", ""))
+        if source_question:
+            fig["linkedQuestionId"] = source_question.get("questionId") or ""
+
+
+def _add_chart_panel_groups(blueprint: dict[str, Any], skeleton: dict[str, Any]) -> None:
+    try:
+        from report_builder.chart_panel_parser import group_chart_panels
+    except ImportError:
+        return
+    charts = (skeleton.get("chartAST") or {}).get("charts") or []
+    groups = group_chart_panels(charts)
+    if groups:
+        blueprint["chartPanelGroups"] = groups
+
+
+def _add_external_table_references(blueprint: dict[str, Any], page_texts: list[Any] | None) -> None:
+    texts: list[str] = []
+    for item in page_texts or []:
+        if isinstance(item, str):
+            texts.append(item)
+        elif isinstance(item, dict):
+            texts.append(str(item.get("raw_text") or item.get("text") or item))
+    joined = "\n".join(texts).lower()
+    if "detailed tables" not in joined and "annual report" not in joined:
+        return
+    refs = blueprint.setdefault("externalTableReferences", [])
+    if any(ref.get("refId") == "ext_plfs_annual_report_tables" for ref in refs if isinstance(ref, dict)):
+        return
+    refs.append({
+        "refId": "ext_plfs_annual_report_tables",
+        "label": "Detailed tables included in the Annual Report",
+        "sourceDocument": "PLFS Annual Report",
+        "status": "external_not_embedded",
+        "accessHint": "MoSPI publication / QR link",
+        "binderAction": "optional_external_dataset",
+    })
+
+
+def _drop_stale_generated_chart_slots(skeleton: dict[str, Any], *, remove_only_unwired: bool = False) -> None:
+    """Remove auto-generated chart slots from previous compiler runs.
+
+    Raw extraction charts have titles/captions and stable ``chart_vlm_*`` style ids.
+    Generated slots like ``chart_q_*``/``chart_ft_*`` are recreated by slot_wiring if
+    still needed. Keeping them across recompiles causes runaway chart counts.
+    """
+    chart_ast = skeleton.get("chartAST") or {}
+    charts = chart_ast.get("charts") or []
+    kept: list[dict[str, Any]] = []
+    for chart in charts:
+        chart_id = str(chart.get("chartId") or chart.get("id") or "")
+        title = str(chart.get("title") or chart.get("caption") or "").strip()
+        generated = chart_id.startswith("chart_q_") or chart_id.startswith("chart_ft_") or chart_id.startswith("chart_comp_")
+        wired = bool(chart.get("biQuery") or (chart.get("slot") or {}).get("fillFrom"))
+        if generated and not title and (not remove_only_unwired or not wired):
+            continue
+        kept.append(chart)
+    chart_ast["charts"] = kept
 
 
 def _clean_orphan_slots(skeleton: dict[str, Any], valid_question_ids: set[str]) -> dict[str, Any]:
@@ -569,6 +847,41 @@ def _entity_to_dict(entity: Any) -> dict[str, Any]:
         if val is not None and val != "" and val != [] and val != {}:
             d[attr] = val
     return d
+
+
+def _apply_plfs_entity_overrides(blueprint: dict[str, Any]) -> None:
+    """Apply deterministic PLFS ontology corrections after generic enrichment."""
+    try:
+        from report_builder.domain_packs.plfs_press_release import PLFS_ENTITIES
+    except ImportError:
+        return
+
+    domain_by_name = {str(e.get("name") or "").strip().lower(): e for e in PLFS_ENTITIES}
+    referenced: set[str] = set()
+    for topic in blueprint.get("topics") or []:
+        for question in topic.get("questions") or []:
+            for req in question.get("requiredEntities") or []:
+                if req.get("entityId"):
+                    referenced.add(req["entityId"])
+
+    out: list[dict[str, Any]] = []
+    for entity in blueprint.get("entities") or []:
+        entity = dict(entity)
+        name = str(entity.get("canonicalName") or entity.get("name") or "").strip().lower()
+        domain = domain_by_name.get(name)
+        if domain:
+            entity["entityType"] = domain.get("entityType") or entity.get("entityType")
+            if domain.get("unit") is not None:
+                entity["unit"] = domain.get("unit")
+            if domain.get("valueDomain") is not None:
+                entity["valueDomain"] = domain.get("valueDomain")
+            aliases = list(dict.fromkeys([*(entity.get("aliases") or []), *(domain.get("aliases") or [])]))
+            entity["aliases"] = aliases
+
+        if entity.get("entityType") == "metadata" and entity.get("entityId") not in referenced:
+            continue
+        out.append(entity)
+    blueprint["entities"] = out
 
 
 # ─────────────────────────────────────────────────────────────────────────────

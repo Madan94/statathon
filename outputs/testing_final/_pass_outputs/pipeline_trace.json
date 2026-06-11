@@ -1,0 +1,272 @@
+{
+  "passes": {
+    "pass0_rasterize": {
+      "elapsed_s": 8.3,
+      "images": 11,
+      "text_pages": 11
+    },
+    "pass1_layout": {
+      "elapsed_s": 74.3,
+      "layoutlm_used": true,
+      "pages_with_regions": 11,
+      "total_regions": 75,
+      "toc_entries": 23,
+      "toc_l1_chapters": 7
+    },
+    "pass1_5_section_graph": {
+      "docType": "pib_press_release",
+      "title": "testing final",
+      "sections": 9,
+      "backMatter": 6,
+      "figuresAssociated": 11,
+      "orphanRegions": 0,
+      "sectionList": [
+        {
+          "sectionId": "sg_00",
+          "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+          "pageStart": 0,
+          "pageEnd": 0,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": [
+            "Unemployment Rate",
+            "Gender",
+            "Sector"
+          ]
+        },
+        {
+          "sectionId": "sg_01",
+          "title": "Key findings",
+          "pageStart": 0,
+          "pageEnd": 0,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": [
+            "Labour Force Participation Rate",
+            "Worker Population Ratio",
+            "Unemployment Rate"
+          ]
+        },
+        {
+          "sectionId": "sg_02",
+          "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+          "pageStart": 1,
+          "pageEnd": 1,
+          "level": 1,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": [
+            "Labour Force Participation Rate",
+            "Gender",
+            "Sector",
+            "Unemployment Rate"
+          ]
+        },
+        {
+          "sectionId": "sg_03",
+          "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+          "pageStart": 2,
+          "pageEnd": 2,
+          "level": 1,
+          "isBackMatter": false,
+          "figureCount": 2,
+          "expectedEntities": [
+            "Worker Population Ratio",
+            "Gender",
+            "Sector"
+          ]
+        },
+        {
+          "sectionId": "sg_04",
+          "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+          "pageStart": 3,
+          "pageEnd": 3,
+          "level": 1,
+          "isBackMatter": false,
+          "figureCount": 2,
+          "expectedEntities": [
+            "Unemployment Rate",
+            "Gender",
+            "Sector"
+          ]
+        },
+        {
+          "sectionId": "sg_05",
+          "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+          "pageStart": 4,
+          "pageEnd": 4,
+          "level": 1,
+          "isBackMatter": false,
+          "figureCount": 2,
+          "expectedEntities": [
+            "Worker Share",
+            "Employment Status",
+            "Gender",
+            "Average Monthly Earnings"
+          ]
+        },
+        {
+          "sectionId": "sg_06",
+          "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+          "pageStart": 5,
+          "pageEnd": 5,
+          "level": 1,
+          "isBackMatter": false,
+          "figureCount": 2,
+          "expectedEntities": [
+            "Worker Share",
+            "Industry",
+            "Gender"
+          ]
+        },
+        {
+          "sectionId": "sg_07",
+          "title": "6 Earnings of female workers have seen a notable shift",
+          "pageStart": 5,
+          "pageEnd": 5,
+          "level": 1,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": [
+            "Average Monthly Earnings",
+            "Gender",
+            "Employment Status"
+          ]
+        },
+        {
+          "sectionId": "sg_08",
+          "title": "7 Average number of years in formal education",
+          "pageStart": 6,
+          "pageEnd": 10,
+          "level": 1,
+          "isBackMatter": false,
+          "figureCount": 3,
+          "expectedEntities": [
+            "Formal Education Years",
+            "Gender",
+            "Sector"
+          ]
+        },
+        {
+          "sectionId": "sg_09",
+          "title": "A. Introduction",
+          "pageStart": 7,
+          "pageEnd": 7,
+          "level": 2,
+          "isBackMatter": true,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_10",
+          "title": "B Sample Size",
+          "pageStart": 7,
+          "pageEnd": 7,
+          "level": 2,
+          "isBackMatter": true,
+          "figureCount": 0,
+          "expectedEntities": [
+            "Survey Period"
+          ]
+        },
+        {
+          "sectionId": "sg_11",
+          "title": "C. Changes in Sample Design of PLFS",
+          "pageStart": 8,
+          "pageEnd": 8,
+          "level": 2,
+          "isBackMatter": true,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_12",
+          "title": "D Conceptual Framework of Key Indicators",
+          "pageStart": 8,
+          "pageEnd": 8,
+          "level": 2,
+          "isBackMatter": true,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_13",
+          "title": "E. Compatibility of PLFS 2025 results",
+          "pageStart": 9,
+          "pageEnd": 9,
+          "level": 2,
+          "isBackMatter": true,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_14",
+          "title": "E Detailed tables included in the Annual Report",
+          "pageStart": 9,
+          "pageEnd": 10,
+          "level": 2,
+          "isBackMatter": true,
+          "figureCount": 0,
+          "expectedEntities": []
+        }
+      ]
+    },
+    "pass2_entities": {
+      "elapsed_s": 13.0,
+      "pages_total": 11,
+      "vlm_success": 9,
+      "vlm_success_rate": 82,
+      "total_entities": 40,
+      "chart_pages_detected": 6,
+      "total_chart_types": 6,
+      "vlm_provider": "openai",
+      "vlm_fallback_used": true
+    },
+    "pass2_5_kg": {
+      "elapsed_s": 0.2,
+      "entities": 26,
+      "total_entities": 26,
+      "hierarchy_nodes": 26,
+      "table_structures": 0,
+      "chapters": 8,
+      "section_patterns": 13
+    },
+    "pass2_6_classification": {
+      "elapsed_s": 9.9,
+      "measures": 10,
+      "dimensions": 14,
+      "filters": 0,
+      "metadata": 2
+    },
+    "pass2_7_enrichment": {
+      "elapsed_s": 0.1,
+      "ok": true,
+      "with_unit": 11,
+      "with_value_domain": 26,
+      "glossary_terms": 0
+    },
+    "pass3_questions": {
+      "elapsed_s": 12.6,
+      "questions": 6,
+      "topics": 2
+    },
+    "pass4_assembly": {
+      "elapsed_s": 0.0,
+      "paragraphs": 6,
+      "tables": 0,
+      "figures": 11,
+      "charts_detected": 11,
+      "chart_pages": 1,
+      "blueprint_topics": 2,
+      "blueprint_entities": 20
+    },
+    "pass5_gemini": {
+      "elapsed_s": 0.0,
+      "status": "success"
+    }
+  },
+  "total_elapsed": 147.0,
+  "doc_type": "pib_press_release"
+}

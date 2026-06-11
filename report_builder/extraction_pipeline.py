@@ -5279,6 +5279,13 @@ def run_extraction_pipeline(
             with open(_diag_path, "w", encoding="utf-8") as _fh:
                 json.dump(_diag.to_dict(), _fh, ensure_ascii=False, indent=2, default=str)
 
+            _graph_path = _out_dir / "semantic_slot_graph.json"
+            with open(_graph_path, "w", encoding="utf-8") as _fh:
+                json.dump(_compiled["semantic_slot_graph"], _fh, ensure_ascii=False, indent=2, default=str)
+            _package_path = _out_dir / "template.package.json"
+            with open(_package_path, "w", encoding="utf-8") as _fh:
+                json.dump(_compiled["template_package_manifest"], _fh, ensure_ascii=False, indent=2, default=str)
+
             logger.info(
                 "[pipeline] ✓ Compiler V2: score=%.3f status=%s entities=%d questions=%d",
                 _diag.binderReadinessScore, _diag.status,
@@ -5289,6 +5296,8 @@ def run_extraction_pipeline(
                 "score": _diag.binderReadinessScore,
                 "status": _diag.status,
                 "tableCandidatesCount": len(_table_candidates) if _table_candidates else 0,
+                "semanticSlotGraphPath": str(_graph_path),
+                "templatePackagePath": str(_package_path),
             }
         except Exception as _compiler_exc:
             if _compiler_strict:

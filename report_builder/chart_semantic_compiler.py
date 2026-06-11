@@ -20,6 +20,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from report_builder.chart_panel_parser import parse_chart_panel_title
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Models
@@ -42,6 +44,8 @@ class FigureSemanticModel:
     measureRefs: list[str] = field(default_factory=list)
     dimensionRef: str | None = None
     periodRef: str | None = None
+    panel: str | None = None
+    filters: list[dict[str, Any]] = field(default_factory=list)
 
     # Template (value-free)
     captionTemplate: str = ""
@@ -78,6 +82,10 @@ class FigureSemanticModel:
             d["dimensionRef"] = self.dimensionRef
         if self.periodRef:
             d["periodRef"] = self.periodRef
+        if self.panel:
+            d["panel"] = self.panel
+        if self.filters:
+            d["filters"] = list(self.filters)
         if self.axisLabels:
             d["axisLabels"] = dict(self.axisLabels)
         if self.legendLabels:
@@ -247,12 +255,24 @@ def link_chart_entities(
     matched_dimensions: list[str] = []
     matched_category: str | None = None
 
+    subject_tokens = set(re.findall(r"[a-z0-9]+", subject_lower))
+
+    def _alias_matches(alias: str) -> bool:
+        alias_low = alias.lower().strip()
+        if not alias_low:
+            return False
+        # Short abbreviations like UR must match as tokens, not substrings inside
+        # rural/urban/manufacturing.
+        if len(alias_low) <= 3:
+            return alias_low in subject_tokens
+        return alias_low in subject_lower
+
     for eid, info in entity_map.items():
         name_lower = info["name"].lower()
         etype = info["type"]
 
         # Check if entity name appears in subject
-        if name_lower and (name_lower in subject_lower or any(a.lower() in subject_lower for a in info["aliases"] if a)):
+        if name_lower and (name_lower in subject_lower or any(_alias_matches(a) for a in info["aliases"] if a)):
             if etype == "measure":
                 matched_measures.append(eid)
             elif etype == "dimension":
@@ -285,6 +305,31 @@ def link_chart_entities(
                     matched_measures.append(eid)
 
     # Assign results
+    # PLFS-specific correction: "average number of years in formal education" is
+    # frequently mislinked to Average Weekly Hours because both had generic
+    # "Average" aliases. Prefer the education-years measure when explicit.
+    if "formal education" in subject_lower or "years in formal education" in subject_lower:
+        for eid, info in entity_map.items():
+            if info["type"] == "measure" and (
+                "education" in info["name"].lower() or any("education" in a.lower() for a in info["aliases"])
+            ):
+                matched_measures = [eid]
+                break
+
+    if any(k in subject_lower for k in ("earning", "earnings", "wage", "salary")):
+        for eid, info in entity_map.items():
+            if info["type"] == "measure" and (
+                "earnings" in info["name"].lower() or any("earnings" in a.lower() or "wage" in a.lower() for a in info["aliases"])
+            ):
+                matched_measures = [eid]
+                break
+
+    if "weekly hours" in subject_lower or "hours per week" in subject_lower:
+        for eid, info in entity_map.items():
+            if info["type"] == "measure" and "weekly hours" in info["name"].lower():
+                matched_measures = [eid]
+                break
+
     result["measureRefs"] = matched_measures[:5]
     if matched_dimensions:
         result["dimensionRef"] = matched_dimensions[0]
@@ -363,11 +408,16 @@ def compile_single_figure(
 
     # Entity linking
     links = link_chart_entities(model.chartSubject, entities, tables)
+    panel_semantics = parse_chart_panel_title(caption or model.chartSubject, entities)
     model.categoryEntityRef = links["categoryEntityRef"]
-    model.measureRefs = links["measureRefs"]
-    model.dimensionRef = links["dimensionRef"]
+    model.measureRefs = panel_semantics.measureRefs or links["measureRefs"]
+    model.dimensionRef = (panel_semantics.dimensionRefs[0] if panel_semantics.dimensionRefs else None) or links["dimensionRef"]
     model.periodRef = links["periodRef"]
-    model.confidence = links["confidence"]
+    model.panel = panel_semantics.panel or None
+    model.filters = panel_semantics.filters
+    model.confidence = max(links["confidence"], panel_semantics.confidence)
+    if panel_semantics.figureNumber and not model.figureNumber:
+        model.figureNumber = panel_semantics.figureNumber
 
     # Caption template
     model.captionTemplate = make_caption_template(model.chartSubject, model.periodRef)
