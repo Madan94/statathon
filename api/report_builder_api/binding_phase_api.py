@@ -45,9 +45,51 @@ _GOLD_TEMPLATE_IDS = {"tpl_plfs_annual_v1", "gold", "default", ""}
 
 class ConfirmIn(BaseModel):
     entity_id: str
-    action: str = "confirm"                 # confirm | override | reject
+    action: str = "confirm"                 # confirm | override | reject | share | reopen
     columns: Optional[list[str]] = None     # override columns
     note: Optional[str] = None
+    force_transfer: bool = False
+    transfer_from_entity_ids: Optional[list[str]] = None
+    share_policy: Optional[str] = None       # exclusive | shared
+    share_reason: Optional[str] = None
+
+
+class ManualEntityIn(BaseModel):
+    entity_name: str
+    entity_type: str = "dimension"          # dimension | measure | time | filter | metadata
+    columns: list[str]
+    cardinality: str = "oneToOne"
+    note: Optional[str] = None
+    share_policy: Optional[str] = None
+    share_reason: Optional[str] = None
+
+
+class ReviewedPlanNodePatchIn(BaseModel):
+    title: Optional[str] = None
+    enabled: Optional[bool] = None
+    required_entities: Optional[list[dict[str, Any]]] = None
+
+
+class ReviewedPlanQuestionIn(BaseModel):
+    parent_node_id: str
+    title: str
+    required_entities: list[dict[str, Any]] = []
+    analytics_spec: dict[str, Any] = {}
+
+
+class ReviewedPlanComponentIn(BaseModel):
+    component_type: str
+    payload: dict[str, Any] = {}
+
+
+class ReviewedPlanComponentPatchIn(BaseModel):
+    required_entities: Optional[list[dict[str, Any]]] = None
+    analytics_spec: Optional[dict[str, Any]] = None
+    formula_spec: Optional[dict[str, Any]] = None
+
+
+class ReviewedPlanPromoteIn(BaseModel):
+    name: Optional[str] = None
 
 
 class ProposalsOut(BaseModel):
@@ -57,6 +99,7 @@ class ProposalsOut(BaseModel):
     proposals: list[dict[str, Any]]
     confirmations: dict[str, dict[str, Any]]
     pending: list[str]
+    column_ownership: dict[str, Any]
 
 
 class RecordOut(BaseModel):
@@ -65,6 +108,7 @@ class RecordOut(BaseModel):
     dataset_id: str
     proposals: list[dict[str, Any]]
     confirmations: dict[str, dict[str, Any]]
+    column_ownership: dict[str, Any]
     updated_at: float
 
 
@@ -76,6 +120,7 @@ class StartOut(BaseModel):
     proposals: list[dict[str, Any]]
     confirmations: dict[str, dict[str, Any]]
     pending: list[str]
+    column_ownership: dict[str, Any]
     blueprint_qa: dict[str, Any] | None = None
     statistical_qa: dict[str, Any] | None = None
 
@@ -86,6 +131,7 @@ class FinalizeOut(BaseModel):
     coverage: dict[str, Any]
     question_bindings: list[dict[str, Any]]
     binding_ast: dict[str, Any]
+    reviewed_plan: dict[str, Any] | None = None
     has_errors: bool
 
 
@@ -113,6 +159,25 @@ def _pending_ids(record: R.ReviewRecord) -> list[str]:
         if eid and status in ("proposed", "unresolved") and eid not in record.confirmations:
             pending.append(eid)
     return pending
+
+
+def _ownership(record: R.ReviewRecord) -> dict[str, Any]:
+    return R.compute_column_ownership(record)
+
+
+def _columns_for_decision(record: R.ReviewRecord, entity_id: str, columns: list[str] | None) -> list[str]:
+    if columns is not None:
+        return [c for c in columns if c]
+    prop = next((p for p in record.proposals if str(p.get("entityId") or "") == entity_id), None)
+    out: list[str] = []
+    for col in (prop or {}).get("columns") or []:
+        if isinstance(col, dict):
+            name = str(col.get("column") or "")
+        else:
+            name = str(col or "")
+        if name:
+            out.append(name)
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -155,6 +220,46 @@ def _read_stash(template_id: str, signature: str) -> tuple[DatasetAST, dict[str,
     blueprint = json.loads(bp_path.read_text(encoding="utf-8"))
     df = pd.read_csv(csv_path)
     return dataset, blueprint, df
+
+
+def _read_optional_stash_json(template_id: str, signature: str, suffix: str) -> dict[str, Any] | None:
+    path = _stash_path(template_id, signature, suffix)
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def _reviewed_plan_payload(reviewed_plan: "Any", path: str | None = None) -> dict[str, Any]:
+    semantic_slots = (reviewed_plan.semanticSlotGraph or {}).get("slots") or []
+    return {
+        "planId": reviewed_plan.planId,
+        "status": reviewed_plan.status,
+        "bindingAstId": reviewed_plan.bindingAstId,
+        "path": path or "",
+        "topicCount": len(reviewed_plan.planTree),
+        "questionCount": sum(len(topic.children) for topic in reviewed_plan.planTree),
+        "componentCount": sum(
+            len(question.components)
+            for topic in reviewed_plan.planTree
+            for question in topic.children
+        ),
+        "semanticSlotCount": len(semantic_slots),
+        "virtualSlotCount": len(reviewed_plan.virtualSlots),
+        "virtualSlots": list(reviewed_plan.virtualSlots),
+        "planTree": [node.to_dict() for node in reviewed_plan.planTree],
+    }
+
+
+def _load_reviewed_plan_or_404(template_id: str, signature: str) -> "Any":
+    from report_builder.binding.reviewed_plan import load_reviewed_plan
+
+    plan = load_reviewed_plan(template_id, signature)
+    if plan is None:
+        raise HTTPException(status_code=404, detail="no reviewed plan for this binding session; finalize first")
+    return plan
 
 
 async def _resolve_blueprint(template_id: str, blueprint_file: Optional[UploadFile]) -> dict[str, Any]:
@@ -271,6 +376,7 @@ async def start_binding(
         proposals=record.proposals,
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         pending=_pending_ids(record),
+        column_ownership=_ownership(record),
         blueprint_qa=blueprint_qa.to_dict(),
         statistical_qa=statistical_qa.to_dict(),
     )
@@ -287,6 +393,7 @@ def get_proposals(template_id: str, signature: str) -> ProposalsOut:
         proposals=record.proposals,
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         pending=_pending_ids(record),
+        column_ownership=_ownership(record),
     )
 
 
@@ -297,8 +404,65 @@ def post_confirm(template_id: str, signature: str, body: ConfirmIn) -> RecordOut
     action = body.action.lower()
     if action == "reject":
         R.reject(record, body.entity_id, note=body.note or "")
-    elif action in ("confirm", "override"):
-        R.confirm(record, body.entity_id, columns=body.columns, note=body.note or "")
+    elif action == "reopen":
+        R.reopen(record, body.entity_id)
+    elif action in ("confirm", "override", "share"):
+        selected_columns = _columns_for_decision(record, body.entity_id, body.columns)
+        share_policy = body.share_policy or ("shared" if action == "share" else "exclusive")
+        conflicts = R.find_exclusive_column_conflicts(record, body.entity_id, selected_columns)
+        if conflicts and share_policy == "shared" and not body.share_reason:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "SHARE_REASON_REQUIRED",
+                    "message": "sharing an already-owned column requires a reason",
+                    "conflicts": conflicts,
+                    "column_ownership": _ownership(record),
+                },
+            )
+        if conflicts and share_policy != "shared":
+            if body.force_transfer:
+                transfer_from = body.transfer_from_entity_ids or sorted({
+                    owner.get("entityId")
+                    for conflict in conflicts
+                    for owner in conflict.get("owners", [])
+                    if owner.get("entityId")
+                })
+                R.move_columns_from_entities(
+                    record,
+                    columns=selected_columns,
+                    from_entity_ids=transfer_from,
+                    note=f"column moved to {body.entity_id}",
+                )
+            else:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "COLUMN_ALREADY_OWNED",
+                        "message": "column is already assigned to another exclusive entity",
+                        "conflicts": conflicts,
+                        "column_ownership": _ownership(record),
+                    },
+                )
+        try:
+            R.confirm(
+                record,
+                body.entity_id,
+                columns=body.columns,
+                note=body.note or "",
+                share_policy=share_policy,
+                share_reason=body.share_reason or "",
+            )
+        except R.ColumnOwnershipConflict as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "COLUMN_ALREADY_OWNED",
+                    "message": str(exc),
+                    "conflicts": exc.conflicts,
+                    "column_ownership": _ownership(record),
+                },
+            ) from exc
     else:
         raise HTTPException(status_code=400, detail=f"unknown action '{body.action}'")
 
@@ -311,6 +475,7 @@ def post_confirm(template_id: str, signature: str, body: ConfirmIn) -> RecordOut
         dataset_id=record.datasetId,
         proposals=record.proposals,
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
+        column_ownership=_ownership(record),
         updated_at=record.updatedAt,
     )
 
@@ -325,6 +490,49 @@ def get_record(template_id: str, signature: str) -> RecordOut:
         dataset_id=record.datasetId,
         proposals=record.proposals,
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
+        column_ownership=_ownership(record),
+        updated_at=record.updatedAt,
+    )
+
+
+@router.post("/{template_id}/{signature}/entities", response_model=RecordOut)
+def post_manual_entity(template_id: str, signature: str, body: ManualEntityIn) -> RecordOut:
+    """Add an officer-created entity from one or more dataset columns."""
+    record = _load_or_404(template_id, signature)
+    if not body.entity_name.strip():
+        raise HTTPException(status_code=400, detail="entity_name is required")
+    if not [c for c in body.columns if c]:
+        raise HTTPException(status_code=400, detail="at least one column is required")
+    try:
+        R.add_manual_entity(
+            record,
+            entity_name=body.entity_name.strip(),
+            entity_type=body.entity_type,
+            columns=body.columns,
+            cardinality=body.cardinality,
+            note=body.note or "",
+            share_policy=body.share_policy or "exclusive",
+            share_reason=body.share_reason or "",
+        )
+    except R.ColumnOwnershipConflict as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "COLUMN_ALREADY_OWNED",
+                "message": str(exc),
+                "conflicts": exc.conflicts,
+                "column_ownership": _ownership(record),
+            },
+        ) from exc
+    path = R.save_record(record)
+    logger.info("[binding-phase] manual entity %s on %s → %s", body.entity_name, signature, path.name)
+    return RecordOut(
+        template_id=record.templateId,
+        signature=record.datasetSignature,
+        dataset_id=record.datasetId,
+        proposals=record.proposals,
+        confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
+        column_ownership=_ownership(record),
         updated_at=record.updatedAt,
     )
 
@@ -351,6 +559,26 @@ def finalize_binding(template_id: str, signature: str) -> FinalizeOut:
     binding.questionBindings = bind_questions(blueprint, binding.entityBindings, dataset, df=df)
     build_coverage(binding)
 
+    reviewed_plan_payload: dict[str, Any] | None = None
+    try:
+        from report_builder.binding.reviewed_plan import build_reviewed_plan, save_reviewed_plan
+
+        semantic_slot_graph = _read_optional_stash_json(template_id, signature, "semantic_slot_graph.json")
+        template_ast = _read_optional_stash_json(template_id, signature, "template_ast.json")
+        reviewed_plan = build_reviewed_plan(
+            template_id=record.templateId,
+            signature=signature,
+            dataset=dataset,
+            blueprint=blueprint,
+            binding=binding,
+            semantic_slot_graph=semantic_slot_graph,
+            template_ast=template_ast,
+        )
+        reviewed_plan_path = save_reviewed_plan(reviewed_plan)
+        reviewed_plan_payload = _reviewed_plan_payload(reviewed_plan, str(reviewed_plan_path))
+    except Exception as exc:  # noqa: BLE001 - finalize should stay compatible if plan sidecar fails
+        logger.warning("[binding-phase] reviewed plan build failed for %s__%s: %s", template_id, signature, exc)
+
     has_errors = any(i.get("severity") == "error" for i in binding.coverage.get("issues", []))
     logger.info(
         "[binding-phase] finalize %s__%s — gate=%s",
@@ -362,8 +590,171 @@ def finalize_binding(template_id: str, signature: str) -> FinalizeOut:
         coverage=binding.coverage,
         question_bindings=[q.to_dict() for q in binding.questionBindings],
         binding_ast=binding.to_dict(),
+        reviewed_plan=reviewed_plan_payload,
         has_errors=has_errors,
     )
+
+
+@router.get("/{template_id}/{signature}/reviewed-plan")
+def get_reviewed_plan(template_id: str, signature: str) -> dict[str, Any]:
+    plan = _load_reviewed_plan_or_404(template_id, signature)
+    return _reviewed_plan_payload(plan)
+
+
+@router.patch("/{template_id}/{signature}/reviewed-plan/nodes/{node_id}")
+def patch_reviewed_plan_node(
+    template_id: str,
+    signature: str,
+    node_id: str,
+    body: ReviewedPlanNodePatchIn,
+) -> dict[str, Any]:
+    from report_builder.binding.reviewed_plan import patch_plan_node, save_reviewed_plan
+
+    plan = _load_reviewed_plan_or_404(template_id, signature)
+    try:
+        patch_plan_node(
+            plan,
+            node_id,
+            title=body.title,
+            enabled=body.enabled,
+            required_entities=body.required_entities,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"plan node not found: {node_id}") from exc
+    path = save_reviewed_plan(plan)
+    return _reviewed_plan_payload(plan, str(path))
+
+
+@router.post("/{template_id}/{signature}/reviewed-plan/questions")
+def post_reviewed_plan_question(
+    template_id: str,
+    signature: str,
+    body: ReviewedPlanQuestionIn,
+) -> dict[str, Any]:
+    from report_builder.binding.reviewed_plan import add_question_to_plan, save_reviewed_plan
+
+    plan = _load_reviewed_plan_or_404(template_id, signature)
+    if not body.title.strip():
+        raise HTTPException(status_code=400, detail="question title is required")
+    try:
+        add_question_to_plan(
+            plan,
+            parent_node_id=body.parent_node_id,
+            title=body.title,
+            required_entities=body.required_entities,
+            analytics_spec=body.analytics_spec,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"parent node not found: {body.parent_node_id}") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    path = save_reviewed_plan(plan)
+    return _reviewed_plan_payload(plan, str(path))
+
+
+@router.get("/component-registry")
+def get_component_registry() -> list[dict[str, Any]]:
+    from report_builder.binding.component_registry import list_component_definitions
+
+    return list_component_definitions()
+
+
+@router.post("/{template_id}/{signature}/reviewed-plan/nodes/{node_id}/components")
+def post_reviewed_plan_component(
+    template_id: str,
+    signature: str,
+    node_id: str,
+    body: ReviewedPlanComponentIn,
+) -> dict[str, Any]:
+    from report_builder.binding.reviewed_plan import add_component_to_plan_node, save_reviewed_plan
+
+    plan = _load_reviewed_plan_or_404(template_id, signature)
+    try:
+        add_component_to_plan_node(
+            plan,
+            node_id=node_id,
+            component_type=body.component_type,
+            payload=body.payload,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"plan node not found: {node_id}") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    path = save_reviewed_plan(plan)
+    return _reviewed_plan_payload(plan, str(path))
+
+
+@router.patch("/{template_id}/{signature}/reviewed-plan/nodes/{node_id}/components/{component_id}")
+def patch_reviewed_plan_component(
+    template_id: str,
+    signature: str,
+    node_id: str,
+    component_id: str,
+    body: ReviewedPlanComponentPatchIn,
+) -> dict[str, Any]:
+    from report_builder.binding.reviewed_plan import patch_plan_component, save_reviewed_plan
+
+    plan = _load_reviewed_plan_or_404(template_id, signature)
+    try:
+        patch_plan_component(
+            plan,
+            node_id=node_id,
+            component_id=component_id,
+            required_entities=body.required_entities,
+            analytics_spec=body.analytics_spec,
+            formula_spec=body.formula_spec,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"plan component not found: {exc}") from exc
+    path = save_reviewed_plan(plan)
+    return _reviewed_plan_payload(plan, str(path))
+
+
+@router.post("/{template_id}/{signature}/reviewed-plan/promote")
+def post_reviewed_plan_promote(
+    template_id: str,
+    signature: str,
+    body: ReviewedPlanPromoteIn,
+) -> dict[str, Any]:
+    from report_builder.binding.reviewed_plan import promote_reviewed_plan, reviewed_plan_to_template_ast
+
+    plan = _load_reviewed_plan_or_404(template_id, signature)
+    result = promote_reviewed_plan(plan, name=body.name)
+    try:
+        from database.database import SessionLocal
+        from database.models import ReportTemplate
+
+        db = SessionLocal()
+        try:
+            row = ReportTemplate(
+                user_id=None,
+                name=body.name or f"Derived {plan.templatePackageRef.templateId}",
+                description=f"Derived from reviewed plan {plan.planId}",
+                source_filename=f"{plan.planId}.reviewed_plan.json",
+                source_storage_path=result.get("path"),
+                source_hash=plan.planId,
+                ast_json=reviewed_plan_to_template_ast(plan),
+                extraction_method="reviewed_plan_promotion",
+                page_count=None,
+            )
+            db.add(row)
+            db.commit()
+            db.refresh(row)
+            result["templateId"] = row.id
+        finally:
+            db.close()
+    except Exception as exc:  # noqa: BLE001 - sidecar promotion remains valid without DB
+        logger.warning("[binding-phase] DB template promotion failed for %s: %s", plan.planId, exc)
+        result["templateId"] = None
+        result["dbWarning"] = str(exc)
+    return result
+
+
+@router.get("/learned-entities")
+def get_learned_entities(template_id: str | None = None) -> list[dict[str, Any]]:
+    from report_builder.binding.reviewed_plan import list_learned_entities
+
+    return list_learned_entities(template_id)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

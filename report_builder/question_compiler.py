@@ -670,6 +670,14 @@ def _questions_from_pib_templates(entities: list[Any] | None, section_headings: 
                     break
 
         if not matched:
+            # Some PIB pages combine two numbered headings on one visual page, and
+            # the topic extractor can miss the earnings heading while entities/charts
+            # still clearly contain Average Monthly Earnings. Keep this high-value
+            # domain template when its measure entity exists.
+            if tmpl.get("templateId") == "plfs_earnings" and "average monthly earnings" in entity_map:
+                matched = True
+
+        if not matched:
             continue
 
         # Resolve entity refs to actual entityIds

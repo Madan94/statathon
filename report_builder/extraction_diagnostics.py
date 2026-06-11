@@ -312,6 +312,7 @@ def predict_binder_compatibility(
     category_scores: dict[str, float],
     contract_result: Any = None,
     value_free_result: Any = None,
+    doc_type: str = "",
 ) -> BinderCompatibilityPrediction:
     """Predict binder compatibility from category scores."""
     pred = BinderCompatibilityPrediction()
@@ -341,7 +342,7 @@ def predict_binder_compatibility(
         pred.expectedIssues.append("Low entity completeness — resolver confidence will be low")
 
     # Recommendations
-    readiness = compute_binder_readiness(category_scores)
+    readiness = compute_binder_readiness(category_scores, doc_type=doc_type)
     if readiness >= 0.75:
         pred.recommendation = "proceed"
         pred.blueprintQAWillPass = True
@@ -351,7 +352,7 @@ def predict_binder_compatibility(
     elif category_scores.get("questionCompleteness", 0) < 0.5:
         pred.recommendation = "fix_questions"
         pred.expectedIssues.append("Questions need analyticsSpec/answerStructure")
-    elif category_scores.get("tableSemantics", 0) < 0.5:
+    elif doc_type != "pib_press_release" and category_scores.get("tableSemantics", 0) < 0.5:
         pred.recommendation = "fix_tables"
         pred.expectedIssues.append("Tables need columnGroups/headerPath")
     else:
@@ -389,6 +390,20 @@ def build_extraction_diagnostics(
     diag = ExtractionDiagnostics()
     diag.generatedAt = datetime.now(timezone.utc).isoformat()
 
+    # ── Document type ──
+    _doc_type = ""
+    if blueprint:
+        _meta = blueprint.get("templateMeta") or {}
+        _doc_type = _meta.get("reportType") or ""
+        # Infer PIB from domain if reportType not set
+        if not _doc_type and _meta.get("domain") == "labour_force":
+            _doc_type = "pib_press_release"
+        # Infer from title
+        if not _doc_type:
+            _title = (_meta.get("name") or "").lower()
+            if "plfs" in _title or "labour force" in _title or "press" in _title:
+                _doc_type = "pib_press_release"
+
     # ── Category scores ──
     entities = None
     if enrichment_result and hasattr(enrichment_result, "entities"):
@@ -407,19 +422,12 @@ def build_extraction_diagnostics(
         "chartSemantics": score_chart_semantics(chart_result),
     }
 
+    if _doc_type == "pib_press_release" and not table_result:
+        # PIB press releases can be chart/text-only. Absence of data tables should
+        # not depress the displayed score or trigger fix_tables recommendations.
+        diag.categoryScores["tableSemantics"] = 1.0
+
     # ── Binder readiness ──
-    _doc_type = ""
-    if blueprint:
-        _meta = blueprint.get("templateMeta") or {}
-        _doc_type = _meta.get("reportType") or ""
-        # Infer PIB from domain if reportType not set
-        if not _doc_type and _meta.get("domain") == "labour_force":
-            _doc_type = "pib_press_release"
-        # Infer from title
-        if not _doc_type:
-            _title = (_meta.get("name") or "").lower()
-            if "plfs" in _title or "labour force" in _title or "press" in _title:
-                _doc_type = "pib_press_release"
     diag.binderReadinessScore = compute_binder_readiness(diag.categoryScores, doc_type=_doc_type)
 
     # ── Blocking errors ──
@@ -491,7 +499,7 @@ def build_extraction_diagnostics(
     diag.status = determine_status(diag.binderReadinessScore, diag.blockingErrors)
 
     # ── Binder compatibility ──
-    diag.binderCompatibility = predict_binder_compatibility(diag.categoryScores, contract_result, value_free_result)
+    diag.binderCompatibility = predict_binder_compatibility(diag.categoryScores, contract_result, value_free_result, doc_type=_doc_type)
 
     # ── Runtime summary ──
     if runtime_config:

@@ -48,6 +48,10 @@ function ReportBuilderContent() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const bindingAstId = searchParams.get('binding_ast_id');
+  const bindingTemplateId = searchParams.get('template_id');
+  const bindingSignature = searchParams.get('signature');
+  const bindingStatus = searchParams.get('execution_status');
 
   const refresh = async () => {
     try {
@@ -194,6 +198,20 @@ function ReportBuilderContent() {
 
       <div className="space-y-6">
         {error && !extractionModalOpen && <Alert variant="error">{error}</Alert>}
+
+        {bindingAstId && (
+          <Alert variant={bindingStatus === 'DEGRADED' ? 'warning' : 'success'}>
+            <div className="space-y-1">
+              <p className="font-semibold">Execution bundle prepared from binder</p>
+              <p className="text-sm">
+                Status: <span className="font-mono">{bindingStatus || 'READY'}</span>
+                {bindingTemplateId ? <> · Template: <span className="font-mono">{bindingTemplateId}</span></> : null}
+                {bindingSignature ? <> · Signature: <span className="font-mono">{bindingSignature}</span></> : null}
+                {' '}· Binding AST: <span className="font-mono">{bindingAstId}</span>
+              </p>
+            </div>
+          </Alert>
+        )}
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Phase 0: upload template */}

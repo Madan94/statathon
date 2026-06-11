@@ -81,6 +81,82 @@ class SlotWiringResult:
             "warnings": sum(1 for i in self.issues if i.severity == "warn"),
         }
 
+@dataclass
+class SemanticSlot:
+    """Persisted bridge from a render AST slot to a blueprint component/question."""
+
+    slotId: str
+    astBlockId: str
+    astKind: str = "content"
+    topicId: str | None = None
+    questionId: str | None = None
+    componentId: str | None = None
+    componentKind: str = ""
+    source: str = "existing"          # existing | auto_created | inferred | figureTemplate_wire
+    confidence: float = 0.8
+
+    def to_dict(self) -> dict[str, Any]:
+        d: dict[str, Any] = {
+            "slotId": self.slotId,
+            "astBlockId": self.astBlockId,
+            "astKind": self.astKind,
+            "source": self.source,
+            "confidence": self.confidence,
+        }
+        if self.topicId:
+            d["topicId"] = self.topicId
+        if self.questionId:
+            d["questionId"] = self.questionId
+        if self.componentId:
+            d["componentId"] = self.componentId
+        if self.componentKind:
+            d["componentKind"] = self.componentKind
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "SemanticSlot":
+        return cls(
+            slotId=str(d.get("slotId") or ""),
+            astBlockId=str(d.get("astBlockId") or ""),
+            astKind=str(d.get("astKind") or "content"),
+            topicId=d.get("topicId"),
+            questionId=d.get("questionId"),
+            componentId=d.get("componentId"),
+            componentKind=str(d.get("componentKind") or ""),
+            source=str(d.get("source") or "existing"),
+            confidence=float(d.get("confidence") or 0.0),
+        )
+
+
+@dataclass
+class SemanticSlotGraph:
+    """Sidecar graph that makes AST-blueprint wiring durable for binder/review."""
+
+    templateId: str = ""
+    schema: str = "bharatstat/semantic-slot-graph/v1"
+    slots: list[SemanticSlot] = field(default_factory=list)
+    issues: list[WiringIssue] = field(default_factory=list)
+    counts: dict[str, int] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "$schema": self.schema,
+            "templateId": self.templateId,
+            "slots": [s.to_dict() for s in self.slots],
+            "issues": [i.to_dict() for i in self.issues],
+            "counts": dict(self.counts),
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "SemanticSlotGraph":
+        return cls(
+            templateId=str(d.get("templateId") or ""),
+            schema=str(d.get("$schema") or d.get("schema") or "bharatstat/semantic-slot-graph/v1"),
+            slots=[SemanticSlot.from_dict(s) for s in (d.get("slots") or [])],
+            issues=[WiringIssue(**i) for i in (d.get("issues") or [])],
+            counts={str(k): int(v) for k, v in (d.get("counts") or {}).items()},
+        )
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Utilities
@@ -142,6 +218,9 @@ def collect_skeleton_slots(skeleton: dict[str, Any]) -> dict[str, dict[str, Any]
                 "type": "chart", "id": cid,
                 "biQuery": chart.get("biQuery"),
                 "fillFrom": (chart.get("slot") or {}).get("fillFrom"),
+                "measureEntityId": chart.get("measureEntityId"),
+                "dimensionEntityId": chart.get("dimensionEntityId"),
+                "entityRefs": list(chart.get("entityRefs") or []),
             }
 
     # Figures
@@ -324,6 +403,13 @@ def auto_wire_missing_slots(
             if cid in slot_fill_froms or qid in slot_bi_queries:
                 continue
 
+            reused = _try_reuse_existing_slot(skeleton, slots, q, comp, kind)
+            if reused:
+                repairs.append(reused)
+                slot_fill_froms.add(cid)
+                slot_bi_queries.add(qid)
+                continue
+
             # Create appropriate slot
             placement = SlotPlacement(
                 questionId=qid, componentId=cid, componentKind=kind,
@@ -410,14 +496,34 @@ def auto_wire_missing_slots(
             repairs.append(placement)
 
     # ── Wire figureTemplates without matching AST slots ──
-    # PIB Phase 3 creates figureTemplates via SectionGraph. Ensure each has a chart+figure slot.
+    # PIB Phase 3 creates many figureTemplates via SectionGraph. Only materialize
+    # those referenced by a question/component; otherwise chart-heavy PDFs create
+    # dozens of empty render slots unrelated to the reviewed plan. If the blueprint
+    # has no questions yet, keep the legacy fallback and materialize all.
     existing_chart_ids = {c.get("chartId") for c in (skeleton.get("chartAST") or {}).get("charts") or []}
     existing_figure_ids = {f.get("figureId") for f in (skeleton.get("figureAST") or {}).get("figures") or []}
+    referenced_figures: set[str] = set()
+    for q in questions:
+        source_figure = q.get("sourceFigure") or q.get("figureTemplateRef")
+        if source_figure:
+            referenced_figures.add(str(source_figure))
+        for comp in iter_components(q):
+            oc = comp.get("outputContract") or {}
+            refs = comp.get("refs") or {}
+            for ref in (
+                oc.get("figureTemplateRef"), oc.get("figureRef"), oc.get("chartRef"),
+                refs.get("figureTemplateRef"), refs.get("figureRef"), refs.get("chartRef"),
+            ):
+                if ref:
+                    referenced_figures.add(str(ref))
 
     for ft in (blueprint.get("figureTemplates") or []):
         ft_id = ft.get("figureTemplateId") or ft.get("chartId") or ""
         chart_id = ft.get("chartId") or f"chart_{ft_id}"
         fig_id = ft_id.replace("ft_", "fig_") if ft_id.startswith("ft_") else f"fig_{ft_id}"
+
+        if questions and ft_id not in referenced_figures and chart_id not in referenced_figures and fig_id not in referenced_figures:
+            continue
 
         if chart_id not in existing_chart_ids:
             skeleton["chartAST"]["charts"].append({
@@ -449,6 +555,78 @@ def auto_wire_missing_slots(
             ))
 
     return skeleton, repairs
+
+
+def _question_measure_dimension(q: dict[str, Any], comp: dict[str, Any]) -> tuple[str, str]:
+    oc = comp.get("outputContract") or {}
+    measure = oc.get("yAxis") or q.get("measureEntityId") or ""
+    dimension = oc.get("xAxis") or q.get("dimensionEntityId") or ""
+    for req in q.get("requiredEntities") or []:
+        role = req.get("role")
+        eid = req.get("entityId") or req.get("entityRef") or ""
+        if role == "measure" and not measure:
+            measure = eid
+        if role in ("grouping", "dimension") and not dimension:
+            dimension = eid
+    return str(measure or ""), str(dimension or "")
+
+
+def _try_reuse_existing_slot(
+    skeleton: dict[str, Any],
+    slots: dict[str, dict[str, Any]],
+    q: dict[str, Any],
+    comp: dict[str, Any],
+    kind: str,
+) -> SlotPlacement | None:
+    """Attach a component to an existing value-free slot when semantics match."""
+    cid = comp.get("componentId") or ""
+    qid = q.get("questionId") or ""
+    if not cid or not qid:
+        return None
+    if kind != "chart":
+        return None
+
+    measure, dimension = _question_measure_dimension(q, comp)
+    if not measure and not dimension:
+        return None
+
+    chart_ast = skeleton.get("chartAST") or {}
+    charts = chart_ast.get("charts") or []
+    for chart in charts:
+        chart_id = chart.get("chartId") or chart.get("id") or ""
+        if not chart_id:
+            continue
+        if (chart.get("slot") or {}).get("fillFrom") or chart.get("biQuery"):
+            continue
+        entity_refs = set(chart.get("entityRefs") or [])
+        chart_measure = chart.get("measureEntityId")
+        chart_dimension = chart.get("dimensionEntityId")
+        measure_match = bool(measure and (measure == chart_measure or measure in entity_refs))
+        # If the raw chart has no dimension metadata yet, a measure match is still
+        # strong enough to reuse it. This avoids creating duplicate generated chart
+        # slots for curated questions whose chart panels already exist in the PDF.
+        has_panel_filters = bool(chart.get("filters"))
+        dimension_match = bool(
+            not dimension
+            or not chart_dimension
+            or dimension == chart_dimension
+            or dimension in entity_refs
+            or (measure_match and has_panel_filters)
+        )
+        if measure_match and dimension_match:
+            chart["biQuery"] = qid
+            chart.setdefault("slot", {})["fillFrom"] = cid
+            chart.setdefault("slot", {})["status"] = "empty"
+            return SlotPlacement(
+                questionId=qid,
+                componentId=cid,
+                componentKind=kind,
+                targetAst="chartAST",
+                targetId=chart_id,
+                source="existing_semantic_match",
+                confidence=0.85,
+            )
+    return None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -507,6 +685,97 @@ def build_crosswalk(skeleton: dict[str, Any], blueprint: dict[str, Any]) -> dict
             if info.get("type") == "chart" and info.get("biQuery")
         },
     }
+
+
+def build_semantic_slot_graph(
+    skeleton: dict[str, Any],
+    blueprint: dict[str, Any],
+    wiring_result: SlotWiringResult | None = None,
+    *,
+    template_id: str | None = None,
+) -> SemanticSlotGraph:
+    """Build a durable slot graph from the current skeleton/blueprint wiring.
+
+    ``SlotWiringResult`` is intentionally compact and diagnostic-oriented. The
+    binder needs a persisted graph it can extend with virtual slots during review.
+    This projection keeps one row per addressable AST slot that is connected to a
+    blueprint question or component.
+    """
+    questions = iter_questions(blueprint)
+    slots = collect_skeleton_slots(skeleton)
+    crosswalk = wiring_result.crosswalk if wiring_result is not None else build_crosswalk(skeleton, blueprint)
+    repair_by_target = {
+        r.targetId: r for r in (wiring_result.repairs if wiring_result is not None else [])
+        if r.targetId
+    }
+
+    topic_by_question: dict[str, str] = {}
+    component_meta: dict[str, dict[str, str]] = {}
+    for topic in (blueprint.get("topics") or []):
+        topic_id = str(topic.get("topicId") or "")
+        for question in (topic.get("questions") or []):
+            question_id = str(question.get("questionId") or "")
+            if question_id:
+                topic_by_question[question_id] = topic_id
+            for comp in iter_components(question):
+                component_id = str(comp.get("componentId") or "")
+                if component_id:
+                    component_meta[component_id] = {
+                        "questionId": question_id,
+                        "topicId": topic_id,
+                        "componentKind": str(comp.get("kind") or comp.get("componentKind") or ""),
+                    }
+
+    slot_to_component = crosswalk.get("slotToComponent") or {}
+    question_to_slots = crosswalk.get("questionToSlots") or {}
+    question_by_slot: dict[str, str] = {}
+    for question_id, slot_ids in question_to_slots.items():
+        for slot_id in slot_ids or []:
+            question_by_slot[str(slot_id)] = str(question_id)
+
+    semantic_slots: list[SemanticSlot] = []
+    seen: set[str] = set()
+    for ast_block_id, slot_info in slots.items():
+        component_id = str(slot_to_component.get(ast_block_id) or "")
+        meta = component_meta.get(component_id, {})
+        question_id = meta.get("questionId") or question_by_slot.get(ast_block_id) or str(slot_info.get("biQuery") or "")
+        if not component_id and not question_id:
+            continue
+
+        repair = repair_by_target.get(ast_block_id)
+        source = repair.source if repair is not None else "existing"
+        confidence = repair.confidence if repair is not None else 0.9
+        slot_id = f"slot_{component_id or question_id or ast_block_id}"
+        if slot_id in seen:
+            slot_id = f"{slot_id}_{ast_block_id}"
+        seen.add(slot_id)
+
+        semantic_slots.append(SemanticSlot(
+            slotId=slot_id,
+            astBlockId=ast_block_id,
+            astKind=str(slot_info.get("type") or "content"),
+            topicId=meta.get("topicId") or topic_by_question.get(question_id),
+            questionId=question_id or None,
+            componentId=component_id or None,
+            componentKind=meta.get("componentKind") or "",
+            source=source,
+            confidence=confidence,
+        ))
+
+    manifest_template_id = template_id or str(
+        (blueprint.get("templateMeta") or {}).get("templateId")
+        or (skeleton.get("metadata") or {}).get("templateId")
+        or ""
+    )
+    issues = wiring_result.issues if wiring_result is not None else validate_wiring(skeleton, blueprint)
+    counts = dict(wiring_result.counts if wiring_result is not None else {})
+    counts["semanticSlots"] = len(semantic_slots)
+    return SemanticSlotGraph(
+        templateId=manifest_template_id,
+        slots=semantic_slots,
+        issues=issues,
+        counts=counts,
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
