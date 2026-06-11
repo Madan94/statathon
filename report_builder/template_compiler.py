@@ -373,6 +373,31 @@ def compile_template_artifacts(
                 len(all_final_questions), len(kept_questions), len(new_questions))
 
     # ═══════════════════════════════════════════════════════════════════════════
+    # I4.5: Question Intent Sanitizer (value-free guard)
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Strip exact dates, table numbers, actual values from question intents.
+    # Drop questions that remain prose-like after sanitization.
+    _sanitized_qs: list[dict[str, Any]] = []
+    _dropped_prose = 0
+    for q in all_final_questions:
+        intent = q.get("intent") or ""
+        clean_intent = _sanitize_question_intent(intent)
+        if clean_intent:
+            q["intent"] = clean_intent
+            _sanitized_qs.append(q)
+        else:
+            _dropped_prose += 1
+    if _dropped_prose:
+        logger.info("[template-compiler] I4.5: dropped %d unrepairable prose questions", _dropped_prose)
+    all_final_questions = _sanitized_qs
+
+    # Re-assign sanitized questions to topics
+    if bp.get("topics"):
+        bp["topics"][0]["questions"] = all_final_questions
+    else:
+        bp["topics"] = [{"topicId": "topic_compiled", "title": "Compiled Questions", "questions": all_final_questions}]
+
+    # ═══════════════════════════════════════════════════════════════════════════
     # I5: Slot Wiring + Validation + Diagnostics
     # ═══════════════════════════════════════════════════════════════════════════
     logger.info("[template-compiler] I5: Wiring + validation + diagnostics")
@@ -546,6 +571,107 @@ def _build_entity_ref_map(old_entities: list[dict[str, Any]], new_entities: list
                     break
 
     return ref_map
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# I4.5: Question Intent Sanitizer
+# ─────────────────────────────────────────────────────────────────────────────
+
+import re as _re_sanitize
+
+# Patterns to strip from question intents
+_DATE_PATTERNS = _re_sanitize.compile(
+    r"""(?x)
+    (?:as\s+on\s+)?                              # optional "as on"
+    (?:
+        \d{1,2}(?:st|nd|rd|th)?\s+              # 1st, 31st
+        (?:January|February|March|April|May|June|July|August|September|October|November|December)\s*,?\s*
+        \d{4}                                    # 2025
+    |
+        (?:January|February|March|April|May|June|July|August|September|October|November|December)\s+
+        \d{1,2}(?:st|nd|rd|th)?\s*,?\s*\d{4}   # March 31, 2025
+    |
+        \d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}        # 01-04-2025, 31.03.2025
+    |
+        \d{4}[-/.]\d{1,2}[-/.]\d{1,2}          # 2025-04-01
+    )
+    """,
+    _re_sanitize.IGNORECASE,
+)
+
+_TABLE_NUMBER_RE = _re_sanitize.compile(
+    r"(?:Table|Statement|Annexure)\s+\d+[\.\d]*\s*:?\s*",
+    _re_sanitize.IGNORECASE,
+)
+
+_PAREN_DATE_RE = _re_sanitize.compile(
+    r"\(\s*(?:As\s+on|as\s+of|dated?|w\.?e\.?f\.?)[^)]*\)",
+    _re_sanitize.IGNORECASE,
+)
+
+_NUMERIC_FACT_RE = _re_sanitize.compile(
+    r"\b\d{2,}(?:,\d{3})*(?:\.\d+)?\s*(?:million|billion|crore|lakh|MT|MW|GW|BCM|MTOE|tonnes?|%)\b",
+    _re_sanitize.IGNORECASE,
+)
+
+
+def _sanitize_question_intent(intent: str) -> str:
+    """Sanitize a question intent to be value-free and concise.
+
+    Strips: exact dates, table numbers, parenthetical dates, numeric facts.
+    Shortens: excessively long intents.
+    Returns: cleaned intent, or empty string if unrepairable.
+    """
+    if not intent or not intent.strip():
+        return ""
+
+    text = intent.strip()
+
+    # Strip table/statement numbers: "Table 1.3: ..." → "..."
+    text = _TABLE_NUMBER_RE.sub("", text)
+
+    # Strip parenthetical dates: "(As on 1st April 2025)" → ""
+    text = _PAREN_DATE_RE.sub("", text)
+
+    # Strip inline dates: "31st March 2025", "01-04-2025"
+    text = _DATE_PATTERNS.sub("the current period", text)
+
+    # Strip numeric facts: "400.7 million tonnes"
+    text = _NUMERIC_FACT_RE.sub("", text)
+
+    # Clean up double spaces, trailing punctuation fragments
+    text = _re_sanitize.sub(r"\s{2,}", " ", text).strip()
+    text = _re_sanitize.sub(r"\s*[,;]\s*$", "", text).strip()
+    text = _re_sanitize.sub(r"^[,;:\s]+", "", text).strip()
+
+    # Replace "for the current period the current period" with single
+    text = text.replace("the current period the current period", "the current period")
+    text = text.replace("for for", "for")
+
+    # If still too long (>120 chars), truncate at last complete phrase
+    if len(text) > 120:
+        # Try to cut at a natural break
+        cut = text[:120].rfind(" ")
+        if cut > 60:
+            text = text[:cut].rstrip(".,;: ") + "?"
+        else:
+            text = text[:120].rstrip(".,;: ") + "?"
+
+    # Ensure ends with ? if it's a question
+    if text and not text.endswith("?") and not text.endswith("."):
+        text = text.rstrip(".,;: ") + "?"
+
+    # Final check: if still >25 words with 2+ sentences → unrepairable prose
+    words = len(text.split())
+    sentences = text.count(".") + text.count("!") + text.count("?")
+    if words > 30 and sentences >= 3:
+        return ""  # Drop
+
+    # If nothing meaningful left
+    if len(text) < 10:
+        return ""
+
+    return text
 
 
 def _infer_entity_from_intent(
