@@ -235,11 +235,28 @@ def compile_template_artifacts(
         bp["topics"][0]["questions"] = kept_questions
 
     # E7: Generate deterministic new questions
+    # Detect doc_type from blueprint metadata or document_map
+    _doc_type = "statistical_annual_report"
+    _bp_meta = bp.get("templateMeta") or {}
+    if _bp_meta.get("reportType") == "pib_press_release" or _bp_meta.get("domain") == "labour_force":
+        _doc_type = "pib_press_release"
+    elif document_map and document_map.get("doc_type"):
+        _doc_type = document_map["doc_type"]
+
+    # Collect section headings for PIB question matcher
+    _section_headings: list[str] = []
+    for topic in (bp.get("topics") or []):
+        t = topic.get("title") or ""
+        if t:
+            _section_headings.append(t)
+
     question_result = compile_questions(
         tables=table_result.tables if table_result else None,
         entities=enrichment_result.entities,
         measure_families=norm_result.measureFamilies,
         figures=chart_result.figures if chart_result else None,
+        doc_type=_doc_type,
+        section_headings=_section_headings,
     )
     intermediate["questions"] = question_result.to_dict()
 

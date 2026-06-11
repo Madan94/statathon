@@ -432,40 +432,74 @@ def _call_gemini(prompt: str, image_bytes: bytes | None, max_tokens: int, temper
     return None
 
 
+# ── SSL verification ───────────────────────────────────────────────────────────
+# Python on Windows often lacks system CA certs. We use certifi's bundle.
+# Set SSL_VERIFY=0 to disable verification entirely (not recommended).
+def _get_ssl_verify():
+    """Resolve SSL verify setting: True, False, or path to CA bundle."""
+    val = (os.getenv("SSL_VERIFY") or "1").strip().lower()
+    if val in ("0", "false", "no", "off"):
+        # Suppress InsecureRequestWarning spam in logs
+        try:
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        except Exception:
+            pass
+        return False
+    # Use REQUESTS_CA_BUNDLE or certifi
+    ca_bundle = os.getenv("REQUESTS_CA_BUNDLE") or os.getenv("SSL_CERT_FILE") or ""
+    if ca_bundle:
+        return ca_bundle
+    try:
+        import certifi
+        return certifi.where()
+    except ImportError:
+        pass
+    return True
+
+_SSL_VERIFY = _get_ssl_verify()
+
+
 def _call_groq(prompt: str, image_bytes: bytes | None, max_tokens: int, temperature: float,
                api_key: str | None = None, key_label: str = "") -> str | None:
+    """Call Groq via plain HTTP (OpenAI-compatible /chat/completions). No SDK needed."""
     api_key = api_key or os.getenv("GROQ_API_KEY") or ""
     if not api_key:
         logger.info("[llm_router][groq] No GROQ_API_KEY — skipping")
         return None
     if image_bytes:
-        model = os.getenv("GROQ_VISION_MODEL") or "meta-llama/llama-4-maverick-17b-128e-instruct"
+        model = os.getenv("GROQ_VISION_MODEL") or "meta-llama/llama-4-scout-17b-16e-instruct"
     else:
-        model = os.getenv("GROQ_MODEL") or "meta-llama/llama-4-scout-17b-16e-instruct"
+        model = os.getenv("GROQ_MODEL") or "llama-3.3-70b-versatile"
+    timeout = int(os.getenv("GROQ_TIMEOUT") or "120")
+    if image_bytes:
+        mime = _detect_image_mime(image_bytes)
+        img_b64 = base64.b64encode(image_bytes).decode("utf-8")
+        messages: list[dict[str, Any]] = [{"role": "user", "content": [
+            {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{img_b64}"}},
+            {"type": "text", "text": prompt},
+        ]}]
+    else:
+        messages = [{"role": "user", "content": prompt}]
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
+    groq_base = (os.getenv("GROQ_BASE_URL") or "https://api.groq.com/openai/v1").rstrip("/")
     try:
-        from groq import Groq  # type: ignore[import]
-        client = Groq(api_key=api_key)
-        if image_bytes:
-            mime = _detect_image_mime(image_bytes)
-            img_b64 = base64.b64encode(image_bytes).decode("utf-8")
-            messages: list[dict[str, Any]] = [{"role": "user", "content": [
-                {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{img_b64}"}},
-                {"type": "text", "text": prompt},
-            ]}]
-        else:
-            messages = [{"role": "user", "content": prompt}]
-        resp = client.chat.completions.create(
-            model=model,
-            messages=messages,  # type: ignore[arg-type]
-            temperature=temperature,
-            max_tokens=max_tokens,
+        r = requests.post(
+            f"{groq_base}/chat/completions",
+            json=payload, headers=headers, timeout=timeout, verify=_SSL_VERIFY,
         )
-        content = resp.choices[0].message.content
-        return content.strip() if content else None
-    except ImportError:
-        logger.warning("[llm_router][groq] groq package not installed — pip install groq")
+        if r.status_code == 200:
+            content = r.json()["choices"][0]["message"]["content"]
+            return content.strip() if content else None
+        logger.warning("[llm_router][groq]%s HTTP %d: %s", f" [{key_label}]" if key_label else "", r.status_code, r.text[:300])
     except Exception as exc:
-        logger.warning("[llm_router][groq]%s Call failed: %s", f" [{key_label}]" if key_label else "", exc)
+        logger.warning("[llm_router][groq]%s Request failed: %s", f" [{key_label}]" if key_label else "", exc)
     return None
 
 
@@ -506,7 +540,7 @@ def _call_openai(prompt: str, image_bytes: bytes | None, max_tokens: int, temper
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     try:
-        r = requests.post(f"{base}/chat/completions", json=payload, headers=headers, timeout=timeout)
+        r = requests.post(f"{base}/chat/completions", json=payload, headers=headers, timeout=timeout, verify=_SSL_VERIFY)
         if r.status_code == 200:
             content_out = r.json()["choices"][0]["message"]["content"]
             return content_out.strip() if content_out else None
@@ -584,9 +618,9 @@ def llm_text_call(
         logger.debug("[llm_router] Budget resolution failed (using legacy clamp): %s", _budget_exc)
         max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
 
-    # Resolve key from pool (rotation for high-volume tasks)
-    _HIGH_VOLUME_TASKS = frozenset({"entity_extraction", "question_generation", "entity_binding", "fact_extraction"})
-    if task in _HIGH_VOLUME_TASKS:
+    # Resolve key from pool (rotation for all Groq tasks to spread across 8 keys)
+    _ROTATE_TASKS = frozenset({"entity_extraction", "question_generation", "entity_binding", "fact_extraction", "gap_fill", "toc_extraction", "semantic_fallback", "entity_classification"})
+    if task in _ROTATE_TASKS or provider == "groq":
         api_key, key_label = get_rotated_key_for_task(task, provider)
     else:
         api_key, key_label = get_api_key_for_task(task, provider)
@@ -699,9 +733,9 @@ def llm_vision_call(
         logger.debug("[llm_router] Budget resolution failed (using legacy clamp): %s", _budget_exc)
         max_tokens = _clamp_tokens_for_provider(provider, max_tokens)
 
-    # Resolve key from pool (rotation for high-volume vision tasks)
-    _HIGH_VOLUME_TASKS = frozenset({"entity_extraction", "question_generation", "entity_binding", "fact_extraction"})
-    if task in _HIGH_VOLUME_TASKS:
+    # Resolve key from pool (rotation for all Groq tasks to spread across 8 keys)
+    _ROTATE_TASKS = frozenset({"entity_extraction", "question_generation", "entity_binding", "fact_extraction", "gap_fill", "toc_extraction", "semantic_fallback", "entity_classification"})
+    if task in _ROTATE_TASKS or provider == "groq":
         api_key, key_label = get_rotated_key_for_task(task, provider)
     else:
         api_key, key_label = get_api_key_for_task(task, provider)

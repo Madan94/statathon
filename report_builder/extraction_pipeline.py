@@ -342,34 +342,45 @@ import re as _re_entity_extra
 # Document Type Detection + PLFS Core Entity Seeds
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Pre-seeded entities for PLFS press releases — always present regardless of extraction
-_PLFS_CORE_ENTITIES: list[dict[str, Any]] = [
-    {"name": "Labour Force Participation Rate", "aliases": ["LFPR"], "entityType": "measure", "source": "pre_seeded"},
-    {"name": "Worker Population Ratio", "aliases": ["WPR"], "entityType": "measure", "source": "pre_seeded"},
-    {"name": "Unemployment Rate", "aliases": ["UR"], "entityType": "measure", "source": "pre_seeded"},
-    {"name": "Gender", "aliases": ["Male", "Female", "Persons"], "entityType": "dimension", "source": "pre_seeded"},
-    {"name": "Rural/Urban Sector", "aliases": ["Rural", "Urban"], "entityType": "dimension", "source": "pre_seeded"},
-    {"name": "Survey Year", "aliases": ["2022", "2023", "2024", "2025"], "entityType": "dimension", "source": "pre_seeded"},
-    {"name": "Age Group", "aliases": ["15+", "15-29", "15-59", "Youth"], "entityType": "dimension", "source": "pre_seeded"},
-    {"name": "Status in Employment", "aliases": ["Self-employed", "Regular wage", "Casual labour"], "entityType": "dimension", "source": "pre_seeded"},
-    {"name": "Usual Status (ps+ss)", "aliases": ["ps+ss", "usual status"], "entityType": "filter", "source": "pre_seeded"},
-    {"name": "Periodic Labour Force Survey", "aliases": ["PLFS"], "entityType": "metadata", "source": "pre_seeded"},
-    {"name": "MoSPI", "aliases": ["Ministry of Statistics"], "entityType": "metadata", "source": "pre_seeded"},
-]
+# Pre-seeded entities for PLFS press releases — loaded from domain pack
+def _load_plfs_entities() -> list[dict[str, Any]]:
+    """Load PLFS entities from domain pack (with units, valueDomains, richer aliases)."""
+    try:
+        from report_builder.domain_packs.plfs_press_release import PLFS_ENTITIES
+        return [dict(e) for e in PLFS_ENTITIES]
+    except ImportError:
+        # Fallback minimal set if domain pack not available
+        return [
+            {"name": "Labour Force Participation Rate", "aliases": ["LFPR"], "entityType": "measure", "unit": "percent", "source": "pre_seeded"},
+            {"name": "Worker Population Ratio", "aliases": ["WPR"], "entityType": "measure", "unit": "percent", "source": "pre_seeded"},
+            {"name": "Unemployment Rate", "aliases": ["UR"], "entityType": "measure", "unit": "percent", "source": "pre_seeded"},
+            {"name": "Gender", "aliases": ["Male", "Female", "Persons"], "entityType": "dimension", "source": "pre_seeded"},
+            {"name": "Sector", "aliases": ["Rural", "Urban"], "entityType": "dimension", "source": "pre_seeded"},
+            {"name": "Survey Period", "aliases": ["2024", "2025"], "entityType": "dimension", "source": "pre_seeded"},
+            {"name": "Age Group", "aliases": ["15+", "15-29", "15-59"], "entityType": "dimension", "source": "pre_seeded"},
+            {"name": "Employment Status", "aliases": ["Self-employed", "Regular wage", "Casual labour"], "entityType": "dimension", "source": "pre_seeded"},
+            {"name": "Periodic Labour Force Survey", "aliases": ["PLFS"], "entityType": "metadata", "source": "pre_seeded"},
+        ]
+
+_PLFS_CORE_ENTITIES: list[dict[str, Any]] = _load_plfs_entities()
 
 # Document-type-specific configuration
 _DOC_TYPE_CONFIG: dict[str, dict[str, Any]] = {
     "pib_press_release": {
-        "entity_cap": 25,        # pre-seeded 11 + up to 14 from extraction
+        "entity_cap": 30,         # domain pack has ~16 + up to 14 from text extraction
         "table_cap": 0,           # PIB press releases have NO real data tables
-        "q_per_chapter": 2,
-        "seed_entities": True,    # inject _PLFS_CORE_ENTITIES
+        "q_per_chapter": 3,
+        "seed_entities": True,    # inject _PLFS_CORE_ENTITIES (from domain pack)
+        "text_first_extraction": True,   # prefer text/heading extraction over VLM
+        "domain": "labour_force",
     },
     "statistical_annual_report": {
         "entity_cap": 80,
         "table_cap": 30,
         "q_per_chapter": 3,
         "seed_entities": False,
+        "text_first_extraction": False,
+        "domain": "general",
     },
 }
 
@@ -1997,27 +2008,52 @@ def pass2_5_document_knowledge_graph(
     # Source 4 (bold_word) intentionally removed — individual bold words are too
     # noisy and register stopwords ("and", "the"), single letters, and word fragments.
 
+    # Resolve doc-type config early (needed by text-first extraction + pre-seeding)
+    cfg = _DOC_TYPE_CONFIG.get(doc_type, _DOC_TYPE_CONFIG["statistical_annual_report"])
+
+    # Source 5 (text-first): For PIB press releases, extract entities from page text
+    # using domain-specific regex patterns. This catches entities the VLM misses.
+    if cfg.get("text_first_extraction"):
+        try:
+            import re as _re_tf
+            from report_builder.domain_packs.plfs_press_release import PIB_TEXT_ENTITY_PATTERNS
+            _text_entities_found = 0
+            for page_idx, pt in enumerate(page_texts):
+                raw_text = (pt.get("raw_text") or "") if isinstance(pt, dict) else ""
+                for pat in PIB_TEXT_ENTITY_PATTERNS:
+                    if _re_tf.search(pat["pattern"], raw_text, _re_tf.IGNORECASE):
+                        _register_entity(pat["entity"], "text_pattern", page_idx, 1)
+                        _text_entities_found += 1
+            if _text_entities_found:
+                logger.info("[pass2.5]   Text-first extraction: %d pattern matches across %d pages", _text_entities_found, len(page_texts))
+        except Exception as _tf_exc:
+            logger.debug("[pass2.5]   Text-first extraction skipped: %s", _tf_exc)
+
     # ── Pre-seed known entities for PIB press releases ──
     # These entities are guaranteed to appear in PLFS press releases and anchor
     # the entity graph even when extraction quality is poor.
     all_entities: list[dict[str, Any]] = []
     _ent_id_counter = 1
 
-    cfg = _DOC_TYPE_CONFIG.get(doc_type, _DOC_TYPE_CONFIG["statistical_annual_report"])
-
     if cfg.get("seed_entities"):
         for _seed in _PLFS_CORE_ENTITIES:
             _eid = f"ent_{_ent_id_counter:03d}"
             _ent_id_counter += 1
-            all_entities.append({
+            _ent_dict: dict[str, Any] = {
                 "entityId": _eid,
                 "name": _seed["name"],
-                "source": _seed["source"],
+                "source": _seed.get("source", "domain_pack"),
                 "pages": list(range(len(page_texts))),  # appears across all pages
                 "entityType_hint": _seed["entityType"],
                 "aliases": list(_seed.get("aliases") or []),
                 "_priority_protect": True,
-            })
+            }
+            # Carry unit and valueDomain from domain pack
+            if _seed.get("unit"):
+                _ent_dict["unit"] = _seed["unit"]
+            if _seed.get("valueDomain"):
+                _ent_dict["valueDomain"] = _seed["valueDomain"]
+            all_entities.append(_ent_dict)
         logger.info("[pass2.5]   Pre-seeded %d core entities for %s", len(all_entities), doc_type)
 
     # Finalize entities from extraction
@@ -3694,6 +3730,7 @@ def pass4_assemble_ast(
     doc_title: str = "Document",
     source_hash: str = "",
     entity_pages: list[dict[str, Any]] | None = None,
+    doc_type: str = "statistical_annual_report",
 ) -> dict[str, Any]:
     """Assemble Enterprise AST + embedded blueprint subtree (gold-standard shape).
 
@@ -4575,16 +4612,19 @@ def pass4_assemble_ast(
     # ════════════════════════════════════════════════════════════════════════════
     # ASSEMBLE FINAL OUTPUT
     # ════════════════════════════════════════════════════════════════════════════
+    cfg = _DOC_TYPE_CONFIG.get(doc_type, _DOC_TYPE_CONFIG["statistical_annual_report"])
     blueprint = {
         "$schema": "bharatstat/template-blueprint/v1",
         "templateMeta": {
             "templateId": template_id,
-            "name": doc_title,
+            "name": doc_title or "Document",
+            "domain": cfg.get("domain", "general"),
+            "reportType": doc_type,
             "locale": "en-IN",
             "version": "3.0",
             "valueFree": True,
             "proseFree": True,
-            "sourceDocument": doc_title,
+            "sourceDocument": doc_title or "Document",
         },
         "glossary": glossary,
         "palette": palette,
@@ -4924,7 +4964,7 @@ def run_extraction_pipeline(
     # ── Pass 4: AST Assembly + Blueprint ──
     _tick("pass4_ast_assembly", 80)
     t0 = _time.monotonic()
-    ast = pass4_assemble_ast(layout_pages, page_texts, document_map, ast_result, doc_title, source_hash, entity_pages)
+    ast = pass4_assemble_ast(layout_pages, page_texts, document_map, ast_result, doc_title, source_hash, entity_pages, doc_type=doc_type)
     pass4_elapsed = _time.monotonic() - t0
     pipeline_trace["passes"]["pass4_assembly"] = {
         "elapsed_s": round(pass4_elapsed, 1),

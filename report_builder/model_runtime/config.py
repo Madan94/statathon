@@ -410,6 +410,15 @@ _MODEL_PROFILES: dict[str, dict[str, Any]] = {
         "textFallbackEnabled": True,
         "description": "Full fallback chains. Maximum reliability.",
     },
+    "ec2_hosted_full": {
+        "vlmProvider": "openai",
+        "reasoningProvider": "groq",
+        "enrichmentEnabled": False,
+        "enrichmentProvider": "groq",
+        "visionFallbackEnabled": True,
+        "textFallbackEnabled": True,
+        "description": "LayoutLM on EC2 + OpenRouter vision (Gemini Flash) + Groq 8-key rotation reasoning.",
+    },
 }
 
 

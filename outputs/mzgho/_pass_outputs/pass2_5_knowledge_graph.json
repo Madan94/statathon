@@ -1,0 +1,460 @@
+{
+  "entities_count": 15,
+  "table_structures_count": 0,
+  "chapters_count": 8,
+  "entities": [
+    {
+      "entityId": "ent_001",
+      "name": "Labour Force Participation Rate",
+      "source": "pre_seeded",
+      "entityType_hint": "measure",
+      "pages": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_002",
+      "name": "Worker Population Ratio",
+      "source": "pre_seeded",
+      "entityType_hint": "measure",
+      "pages": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_003",
+      "name": "Unemployment Rate",
+      "source": "pre_seeded",
+      "entityType_hint": "measure",
+      "pages": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_004",
+      "name": "Gender",
+      "source": "pre_seeded",
+      "entityType_hint": "dimension",
+      "pages": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_005",
+      "name": "Rural/Urban Sector",
+      "source": "pre_seeded",
+      "entityType_hint": "dimension",
+      "pages": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_006",
+      "name": "Survey Year",
+      "source": "pre_seeded",
+      "entityType_hint": "dimension",
+      "pages": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_007",
+      "name": "Age Group",
+      "source": "pre_seeded",
+      "entityType_hint": "dimension",
+      "pages": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_008",
+      "name": "Status in Employment",
+      "source": "pre_seeded",
+      "entityType_hint": "measure",
+      "pages": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_009",
+      "name": "Usual Status (ps+ss)",
+      "source": "pre_seeded",
+      "entityType_hint": "dimension",
+      "pages": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_010",
+      "name": "Periodic Labour Force Survey",
+      "source": "pre_seeded",
+      "entityType_hint": "dimension",
+      "pages": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_011",
+      "name": "MoSPI",
+      "source": "pre_seeded",
+      "entityType_hint": "metadata",
+      "pages": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_012",
+      "name": "LFPR",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_014",
+      "name": "Rural",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_015",
+      "name": "Urban",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_016",
+      "name": "Report, 2025 [January, 2025 December, 2025]",
+      "source": "vlm",
+      "entityType_hint": "metadata",
+      "pages": [
+        0
+      ]
+    }
+  ],
+  "table_structures": [],
+  "chapters": [
+    {
+      "chapterId": "ch_01",
+      "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+      "pageRange": [
+        0,
+        0
+      ],
+      "level": 2,
+      "sections": [
+        {
+          "sectionId": "sec_01_01",
+          "title": "Key findings",
+          "page": 0,
+          "level": 2
+        }
+      ]
+    },
+    {
+      "chapterId": "ch_02",
+      "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "pageRange": [
+        1,
+        1
+      ],
+      "level": 1,
+      "sections": []
+    },
+    {
+      "chapterId": "ch_03",
+      "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "pageRange": [
+        2,
+        2
+      ],
+      "level": 1,
+      "sections": [
+        {
+          "sectionId": "sec_03_01",
+          "title": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+          "page": 2,
+          "level": 2
+        }
+      ]
+    },
+    {
+      "chapterId": "ch_04",
+      "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "pageRange": [
+        3,
+        3
+      ],
+      "level": 1,
+      "sections": []
+    },
+    {
+      "chapterId": "ch_05",
+      "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+      "pageRange": [
+        4,
+        4
+      ],
+      "level": 1,
+      "sections": [
+        {
+          "sectionId": "sec_05_01",
+          "title": "4. Increase in proportion of workers with regular wage/ salary employment",
+          "page": 4,
+          "level": 2
+        }
+      ]
+    },
+    {
+      "chapterId": "ch_06",
+      "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "pageRange": [
+        5,
+        5
+      ],
+      "level": 1,
+      "sections": []
+    },
+    {
+      "chapterId": "ch_07",
+      "title": "6 Earnings of female workers have seen a notable shift",
+      "pageRange": [
+        5,
+        5
+      ],
+      "level": 1,
+      "sections": [
+        {
+          "sectionId": "sec_07_01",
+          "title": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_07_02",
+          "title": "6. Earnings of female workers have seen a notable shift",
+          "page": 5,
+          "level": 2
+        }
+      ]
+    },
+    {
+      "chapterId": "ch_08",
+      "title": "7 Average number of years in formal education",
+      "pageRange": [
+        6,
+        10
+      ],
+      "level": 1,
+      "sections": [
+        {
+          "sectionId": "sec_08_01",
+          "title": "7. Average number of years in formal education",
+          "page": 6,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_08_02",
+          "title": "A. Introduction",
+          "page": 7,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_08_03",
+          "title": "A Introduction",
+          "page": 7,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_08_04",
+          "title": "B Sample Size",
+          "page": 7,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_08_05",
+          "title": "C. Changes in Sample Design of PLFS",
+          "page": 8,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_08_06",
+          "title": "C Changes in Sample Design of PLFS",
+          "page": 8,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_08_07",
+          "title": "D Conceptual Framework of Key Indicators",
+          "page": 8,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_08_08",
+          "title": "E. Compatibility of PLFS 2025 results",
+          "page": 9,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_08_09",
+          "title": "E Compatibility of PLFS 2025 results",
+          "page": 9,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_08_10",
+          "title": "E Detailed tables included in the Annual Report",
+          "page": 9,
+          "level": 2
+        }
+      ]
+    }
+  ]
+}
