@@ -138,20 +138,14 @@ class TestPLFSGoldQuestions:
                 assert comps, f"Question {q.get('questionId')} missing components"
 
     def test_no_empty_required_entity_ids(self, gold_blueprint):
-        """No requiredEntity with empty entityId (warn: some old VLM questions may have gaps)."""
-        empty_count = 0
-        total_reqs = 0
+        """No requiredEntity with empty entityId — strict gold standard."""
         for topic in gold_blueprint.get("topics", []):
             for q in topic.get("questions", []):
                 for req in (q.get("requiredEntities") or []):
-                    total_reqs += 1
-                    if not req.get("entityId", ""):
-                        empty_count += 1
-        # Allow up to 10% empty (old VLM questions with unresolved refs)
-        max_allowed = max(1, int(total_reqs * 0.10))
-        assert empty_count <= max_allowed, (
-            f"Too many empty entityIds: {empty_count}/{total_reqs} (max allowed: {max_allowed})"
-        )
+                    eid = req.get("entityId", "")
+                    assert eid, (
+                        f"Empty entityId in question {q.get('questionId')}: role={req.get('role')}"
+                    )
 
 
 class TestPLFSGoldDiagnostics:

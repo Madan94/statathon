@@ -548,6 +548,49 @@ def _build_entity_ref_map(old_entities: list[dict[str, Any]], new_entities: list
     return ref_map
 
 
+def _infer_entity_from_intent(
+    intent: str, role: str, valid_entity_ids: set[str], ref_map: dict[str, str]
+) -> str:
+    """Attempt to infer the correct entityId from question intent text.
+
+    Uses keyword matching against known entity IDs. Only for repairing
+    questions with empty entityId where the intent clearly names the measure.
+    """
+    # Keywords that map to entity IDs (lowercase intent → entity ID pattern)
+    _INTENT_KEYWORDS: list[tuple[str, str]] = [
+        ("formal education", "formal_education"),
+        ("education years", "formal_education"),
+        ("years in formal", "formal_education"),
+        ("monthly earnings", "monthly_earnings"),
+        ("earnings", "earnings"),
+        ("weekly hours", "weekly_hours"),
+        ("lfpr", "lfpr"),
+        ("labour force participation", "lfpr"),
+        ("worker population ratio", "wpr"),
+        ("wpr", "wpr"),
+        ("unemployment rate", "ur"),
+        ("unemployment", "ur"),
+        ("worker share", "worker_share"),
+        ("proportion", "worker_share"),
+        ("industry", "industry"),
+        ("manufacturing", "industry"),
+        ("employment status", "employment_status"),
+    ]
+
+    for keyword, id_fragment in _INTENT_KEYWORDS:
+        if keyword in intent:
+            # Find matching entity ID
+            for eid in valid_entity_ids:
+                if id_fragment in eid.lower():
+                    return eid
+            # Try ref_map
+            for old_ref, new_eid in ref_map.items():
+                if id_fragment in old_ref.lower() or id_fragment in new_eid.lower():
+                    return new_eid
+
+    return ""
+
+
 def _repair_question_entity_refs(
     question: dict[str, Any],
     ref_map: dict[str, str],
@@ -577,7 +620,19 @@ def _repair_question_entity_refs(
     # Repair requiredEntities
     for req in (q.get("requiredEntities") or []):
         eid = req.get("entityId") or req.get("entityRef") or ""
-        if eid and eid not in valid_entity_ids:
+        if not eid:
+            # Empty entityId — attempt inference from question intent + role
+            role = req.get("role", "")
+            intent = (q.get("intent") or "").lower()
+            inferred = _infer_entity_from_intent(intent, role, valid_entity_ids, ref_map)
+            if inferred:
+                req["entityId"] = inferred
+                if "entityRef" in req:
+                    req["entityRef"] = inferred
+                repaired = True
+            else:
+                broken.append(f"<empty:{role}>")
+        elif eid not in valid_entity_ids:
             if eid in ref_map:
                 req["entityId"] = ref_map[eid]
                 if "entityRef" in req:
