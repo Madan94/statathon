@@ -102,14 +102,22 @@ def pool_stats() -> dict:
     if _is_sqlite:
         return {"backend": "sqlite", "url": DATABASE_URL}
     p = engine.pool
-    return {
+    stats = {
         "backend": "postgresql",
         "host_redacted": DATABASE_URL.split("@")[-1].split("/")[0] if "@" in DATABASE_URL else "",
-        "size": p.size(),
-        "checked_in": p.checkedin(),
-        "checked_out": p.checkedout(),
-        "overflow": p.overflow(),
+        "pool_class": type(p).__name__,
     }
+    # NullPool (DB_NULL_POOL=true / serverless) holds no connections and does
+    # not implement size()/checkedin()/checkedout()/overflow(). Only report
+    # these for pools that expose them (QueuePool etc.).
+    for attr in ("size", "checkedin", "checkedout", "overflow"):
+        meth = getattr(p, attr, None)
+        if callable(meth):
+            try:
+                stats[attr] = meth()
+            except Exception:
+                pass
+    return stats
 
 
 def is_transient_db_error(exc: BaseException) -> bool:
