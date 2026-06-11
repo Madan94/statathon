@@ -131,25 +131,46 @@ def _close(a: float, b: float, policy: VerifierPolicy) -> bool:
 
 
 def _analytics_values(analytics: dict[str, Any]) -> set[float]:
-    """Every numeric value the analytics produced (rounded to 1dp), for narrative checks."""
-    vals: set[float] = set()
+    """Every number the prose is allowed to state (rounded to 1dp).
 
-    def add(v: Any) -> None:
+    Mirrors the narrator's ``QuestionFacts.allowed_values``: the raw analytics values
+    **plus** the within-question pairwise gaps a desk officer derives from them (e.g.
+    "a gap of 18.0 points" between two group values). Without the gaps the verifier
+    would falsely FAIL legitimate prose the narrator itself emits and validated.
+    """
+    vals: set[float] = set()
+    # questionId → pool of values that can be differenced against each other.
+    pools: dict[str, list[float]] = {}
+
+    def add(v: Any, qid: str | None = None) -> None:
         n = _num(v)
-        if n is not None:
-            vals.add(round(n, 1))
+        if n is None:
+            return
+        r = round(n, 1)
+        vals.add(r)
+        if qid is not None:
+            pools.setdefault(qid, []).append(r)
 
     for a in analytics.get("aggregations", []):
+        qid = a.get("questionId") or ""
         for row in a.get("rows", []):
-            add(row.get("value"))
-    for r in analytics.get("rankings", []):
-        for it in r.get("items", []):
-            add(it.get("value"))
-    for t in analytics.get("trends", []):
-        for p in t.get("points", []):
-            add(p.get("value"))
+            add(row.get("value"), qid)
     for m in analytics.get("metrics", []):
-        add(m.get("value"))
+        add(m.get("value"), m.get("questionId") or "")
+    for r in analytics.get("rankings", []):
+        qid = r.get("questionId") or ""
+        for it in r.get("items", []):
+            add(it.get("value"), qid)
+    for t in analytics.get("trends", []):
+        qid = t.get("questionId") or ""
+        for p in t.get("points", []):
+            add(p.get("value"), qid)
+
+    # Pairwise within-question gaps (the figures the narrator derives + validates).
+    for pool in pools.values():
+        for i in range(len(pool)):
+            for j in range(i + 1, len(pool)):
+                vals.add(round(abs(pool[i] - pool[j]), 1))
     return vals
 
 
@@ -538,3 +559,63 @@ def verify_report(
     logger.info("[verifier] verdict=%s score=%s fails=%d warns=%d",
                 verdict, quality["finalScore"], fail_count, warn_count)
     return VerificationReport(verdict=verdict, checks=checks, quality=quality)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Publish gate — turn a verdict into a publish decision (a judge, still not a fixer)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@dataclass
+class GateDecision:
+    """Whether a verified report may be published, and whether output is blocked.
+
+    ``publishable`` is the trust decision (a FAIL is never publishable). ``blocked``
+    is the *action*: in ``strict`` mode a non-publishable report blocks output (the
+    caller should refuse, e.g. HTTP 409); in ``draft`` mode it is allowed through but
+    stays marked non-publishable so a reviewer can inspect it.
+    """
+
+    verdict: str
+    publishMode: str                 # strict | draft
+    publishable: bool
+    blocked: bool
+    reason: str = ""
+    failedChecks: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "verdict": self.verdict,
+            "publishMode": self.publishMode,
+            "publishable": self.publishable,
+            "blocked": self.blocked,
+            "reason": self.reason,
+            "failedChecks": list(self.failedChecks),
+        }
+
+
+def is_publishable(verdict: str) -> bool:
+    """A report is publishable unless the verifier returned FAIL."""
+    return verdict != FAIL
+
+
+def evaluate_gate(verification: VerificationReport, *, publish_mode: str = "strict") -> GateDecision:
+    """Decide whether ``verification`` permits publishing under ``publish_mode``.
+
+    Pure + deterministic. PASS/WARN are always publishable (WARN never blocks). A FAIL
+    is non-publishable; it **blocks** only in ``strict`` mode — ``draft`` lets it
+    through, still flagged ``publishable=False`` so nothing FAILed is silently shipped.
+    """
+    mode = publish_mode if publish_mode in ("strict", "draft") else "strict"
+    publishable = is_publishable(verification.verdict)
+    failed = [c.code for c in verification.failures]
+    if publishable:
+        return GateDecision(verification.verdict, mode, True, False, "", failed)
+    blocked = (mode == "strict")
+    reason = (
+        f"report failed verification (FAIL): {', '.join(failed) or 'see checks'}"
+        + (" — blocked in strict publish mode; retry with publish_mode='draft' to inspect."
+           if blocked else " — allowed in draft mode but marked non-publishable.")
+    )
+    return GateDecision(verification.verdict, mode, False, blocked, reason, failed)
+

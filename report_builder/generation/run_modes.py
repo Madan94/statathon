@@ -36,6 +36,12 @@ logger = logging.getLogger(__name__)
 GENERATION_MODES = ("fresh", "frozen", "test")
 DEFAULT_MODE = "fresh"
 
+# Publish gating is ORTHOGONAL to the reproducibility mode above: it decides whether a
+# verifier FAIL blocks output. ``strict`` (official, default) refuses to publish a FAILed
+# report; ``draft`` lets it through but marks it non-publishable for inspection.
+PUBLISH_MODES = ("strict", "draft")
+DEFAULT_PUBLISH_MODE = "strict"
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Mode resolution
@@ -46,6 +52,16 @@ def resolve_mode(value: str | None) -> str:
     """Resolve the generation mode: request override > env ``GENERATION_MODE`` > fresh."""
     mode = (value or os.getenv("GENERATION_MODE") or DEFAULT_MODE).strip().lower()
     return mode if mode in GENERATION_MODES else DEFAULT_MODE
+
+
+def resolve_publish_mode(value: str | None) -> str:
+    """Resolve the publish gate: request override > env ``GENERATION_PUBLISH_MODE`` > strict.
+
+    ``strict`` (official) blocks a verifier FAIL; ``draft`` allows it but the report is
+    marked non-publishable. Unknown values fall back to the safe default (``strict``).
+    """
+    mode = (value or os.getenv("GENERATION_PUBLISH_MODE") or DEFAULT_PUBLISH_MODE).strip().lower()
+    return mode if mode in PUBLISH_MODES else DEFAULT_PUBLISH_MODE
 
 
 # ─────────────────────────────────────────────────────────────────────────────

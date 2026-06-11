@@ -16,7 +16,10 @@ from report_builder.binding.execution_contracts import (
 )
 from report_builder.generation.bundle_adapter import AdaptedPlan
 from report_builder.generation.schema import AnalyticsPlanRec, PlanMeasure
-from report_builder.generation.verifier import FAIL, PASS, WARN, verify_report
+from report_builder.generation.verifier import (
+    FAIL, PASS, WARN, GateDecision, VerificationCheck, VerificationReport,
+    evaluate_gate, is_publishable, verify_report,
+)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -325,3 +328,51 @@ def test_verification_report_to_dict():
     assert d["verdict"] in (PASS, WARN, FAIL)
     assert isinstance(d["checks"], list) and d["checks"]
     assert "finalScore" in d["quality"]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 10. Publish gate (evaluate_gate / is_publishable) — Phase 8
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _vr(verdict: str, *, fails: list[str] | None = None) -> VerificationReport:
+    checks = [VerificationCheck(code=c, severity="fail", message="x") for c in (fails or [])]
+    return VerificationReport(verdict=verdict, checks=checks, quality={"finalScore": 50.0})
+
+
+class TestPublishGate:
+    def test_is_publishable(self):
+        assert is_publishable(PASS) is True
+        assert is_publishable(WARN) is True
+        assert is_publishable(FAIL) is False
+
+    def test_pass_publishable_not_blocked(self):
+        g = evaluate_gate(_vr(PASS), publish_mode="strict")
+        assert g.publishable and not g.blocked
+
+    def test_warn_publishable_not_blocked_in_either_mode(self):
+        for mode in ("strict", "draft"):
+            g = evaluate_gate(_vr(WARN), publish_mode=mode)
+            assert g.publishable and not g.blocked
+
+    def test_fail_blocks_in_strict(self):
+        g = evaluate_gate(_vr(FAIL, fails=["CONTENT_HASH"]), publish_mode="strict")
+        assert not g.publishable
+        assert g.blocked
+        assert "CONTENT_HASH" in g.failedChecks
+        assert "strict" in g.reason
+
+    def test_fail_allowed_but_marked_in_draft(self):
+        g = evaluate_gate(_vr(FAIL, fails=["PROVENANCE"]), publish_mode="draft")
+        assert not g.publishable          # never publishable when FAILed
+        assert not g.blocked              # but draft does not block output
+        assert g.publishMode == "draft"
+
+    def test_unknown_publish_mode_defaults_to_strict(self):
+        g = evaluate_gate(_vr(FAIL), publish_mode="banana")
+        assert g.publishMode == "strict" and g.blocked
+
+    def test_gate_to_dict_roundtrips(self):
+        d = evaluate_gate(_vr(FAIL, fails=["STRUCTURE"]), publish_mode="strict").to_dict()
+        assert d["verdict"] == FAIL and d["blocked"] is True
+        assert d["failedChecks"] == ["STRUCTURE"]
+

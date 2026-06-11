@@ -54,9 +54,12 @@ from .filler import fill_visuals
 from .narrator import narrate, validate_numbers
 from .assembler import assemble_report, validate_report
 from .verifier import (
+    GateDecision,
     VerificationCheck,
     VerificationReport,
     VerifierPolicy,
+    evaluate_gate,
+    is_publishable,
     verify_report,
 )
 from .lineage import (
@@ -111,6 +114,9 @@ __all__ = [
     "assemble_report",
     "validate_report",
     "verify_report",
+    "evaluate_gate",
+    "is_publishable",
+    "GateDecision",
     "VerificationCheck",
     "VerificationReport",
     "VerifierPolicy",

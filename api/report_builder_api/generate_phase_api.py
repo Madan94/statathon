@@ -48,6 +48,7 @@ from report_builder.generation import (
     run_execution,
     attach_insights,
     enrich_report_provenance,
+    evaluate_gate,
     validate_report,
     verify_report,
     EditRejected,
@@ -62,6 +63,7 @@ from report_builder.generation.run_modes import (
     bundle_data_hash,
     compute_data_content_hash,
     resolve_mode,
+    resolve_publish_mode,
     verify_data_hash,
 )
 
@@ -85,6 +87,7 @@ class GenerateIn(BaseModel):
     plan_source: Optional[str] = None       # "bundle" (gold, default) | "legacy" (override; else env GENERATION_PLAN_SOURCE)
     mode: Optional[str] = None              # "fresh" (default) | "frozen" | "test" (else env GENERATION_MODE)
     bundle_version: Optional[int] = None    # frozen mode: which frozen version to load (None ⇒ latest)
+    publish_mode: Optional[str] = None      # "strict" (default, FAIL→409) | "draft" (FAIL allowed, non-publishable)
 
 
 class GenerateOut(BaseModel):
@@ -102,8 +105,10 @@ class GenerateOut(BaseModel):
     mode: str = "fresh"                      # fresh | frozen | test
     data_content_hash: str = ""             # value-level hash of the executed dataset
     bundle_version: Optional[int] = None    # frozen bundle version used (when known)
-    verdict: str = "PASS"                    # verifier gate: PASS | WARN | FAIL (advisory here)
+    verdict: str = "PASS"                    # verifier gate: PASS | WARN | FAIL
     quality_score: float = 0.0              # report quality score 0..100
+    publishable: bool = True                # False when verifier FAILed (draft mode)
+    publish_mode: str = "strict"            # strict | draft
 
 
 # ---------------------------------------------------------------------------
@@ -417,9 +422,8 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
         content_hash=data_content_hash,
     )
 
-    # S5d — verify (advisory judge): score trust without mutating the report. The verdict
-    # is recorded into auditAST + returned; it does NOT block draft generation here
-    # (FAIL will gate official *publish* in a later phase).
+    # S5d — verify: judge trust without mutating the report's values. The verdict is
+    # recorded into auditAST and then enforced by the publish gate below.
     verification = verify_report(
         report, analytics, evidence,
         bundle=bundle, adapted=adapted, dataframe=df,
@@ -435,6 +439,18 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
         quality=verification.quality,
         verifier_checks=[c.to_dict() for c in verification.checks],
     )
+
+    # S5g — publish gate. A verifier FAIL is never publishable; in `strict` (official,
+    # default) mode it blocks output with 409 and nothing is persisted, in `draft` mode
+    # the report is returned but clearly marked non-publishable. WARN never blocks.
+    publish_mode = resolve_publish_mode(body.publish_mode)
+    gate = evaluate_gate(verification, publish_mode=publish_mode)
+    report["auditAST"]["gate"] = gate.to_dict()
+    report["auditAST"]["publishable"] = gate.publishable
+    if gate.blocked:
+        logger.warning("[generate-phase] %s__%s — BLOCKED by verifier gate: %s",
+                       template_id, signature, gate.reason)
+        raise HTTPException(status_code=409, detail=gate.reason)
 
     # S6 — render + persist
     html_str = render_html(report)
@@ -463,6 +479,8 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
         bundle_version=bundle_version,
         verdict=verification.verdict,
         quality_score=verification.quality.get("finalScore", 0.0),
+        publishable=gate.publishable,
+        publish_mode=publish_mode,
     )
 
 
