@@ -268,11 +268,26 @@ _CATEGORY_WEIGHTS = {
     "valueFreeCompliance": 0.05,
 }
 
+# PIB press releases don't have data tables — redistribute weight to questions/entities
+_CATEGORY_WEIGHTS_PIB = {
+    "entityHygiene": 0.20,
+    "questionCompleteness": 0.30,
+    "crossReferenceIntegrity": 0.15,
+    "tableSemantics": 0.0,         # N/A for PIB
+    "unitCoverage": 0.15,
+    "entityCompleteness": 0.15,
+    "valueFreeCompliance": 0.05,
+}
 
-def compute_binder_readiness(category_scores: dict[str, float]) -> float:
-    """Compute weighted binder readiness score (0-1)."""
+
+def compute_binder_readiness(category_scores: dict[str, float], doc_type: str = "") -> float:
+    """Compute weighted binder readiness score (0-1).
+
+    Uses doc-type-specific weights when available.
+    """
+    weights = _CATEGORY_WEIGHTS_PIB if doc_type == "pib_press_release" else _CATEGORY_WEIGHTS
     score = 0.0
-    for cat, weight in _CATEGORY_WEIGHTS.items():
+    for cat, weight in weights.items():
         score += category_scores.get(cat, 0.5) * weight
     return min(score, 1.0)
 
@@ -393,7 +408,19 @@ def build_extraction_diagnostics(
     }
 
     # ── Binder readiness ──
-    diag.binderReadinessScore = compute_binder_readiness(diag.categoryScores)
+    _doc_type = ""
+    if blueprint:
+        _meta = blueprint.get("templateMeta") or {}
+        _doc_type = _meta.get("reportType") or ""
+        # Infer PIB from domain if reportType not set
+        if not _doc_type and _meta.get("domain") == "labour_force":
+            _doc_type = "pib_press_release"
+        # Infer from title
+        if not _doc_type:
+            _title = (_meta.get("name") or "").lower()
+            if "plfs" in _title or "labour force" in _title or "press" in _title:
+                _doc_type = "pib_press_release"
+    diag.binderReadinessScore = compute_binder_readiness(diag.categoryScores, doc_type=_doc_type)
 
     # ── Blocking errors ──
     if value_free_result and hasattr(value_free_result, "leakages"):

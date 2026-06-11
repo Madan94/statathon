@@ -287,7 +287,42 @@ def enrich_entities(entities: list[Any], table_structures: list[Any] | None = No
     with_domain = 0
     with_agg = 0
 
+    # Load domain-specific unit rules for inferring missing units
+    _unit_rules: dict[str, str] = {}
+    try:
+        from report_builder.domain_packs.plfs_press_release import PLFS_UNIT_RULES
+        _unit_rules = PLFS_UNIT_RULES
+    except ImportError:
+        pass
+
     for entity in entities:
+        # Unit inference from domain pack (if missing)
+        if not _get(entity, "unit"):
+            name = _get(entity, "name") or ""
+            inferred_unit = _unit_rules.get(name)
+            if not inferred_unit:
+                # Try alias match
+                for alias in (_get(entity, "aliases") or []):
+                    inferred_unit = _unit_rules.get(alias)
+                    if inferred_unit:
+                        break
+            # Also infer from name patterns
+            if not inferred_unit:
+                name_lower = name.lower()
+                if "rate" in name_lower or "ratio" in name_lower or "share" in name_lower:
+                    inferred_unit = "percent"
+                elif "earning" in name_lower or "income" in name_lower or "wage" in name_lower:
+                    inferred_unit = "INR"
+                elif "hours" in name_lower:
+                    inferred_unit = "hours_per_week"
+                elif "years" in name_lower or "education" in name_lower:
+                    inferred_unit = "years"
+            if inferred_unit:
+                if isinstance(entity, dict):
+                    entity["unit"] = inferred_unit
+                elif hasattr(entity, "unit"):
+                    entity.unit = inferred_unit
+
         # Aliases
         raw = generate_aliases(entity, table_structures, glossary, domain)
         filtered = filter_aliases(raw, entity)
