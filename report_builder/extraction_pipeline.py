@@ -3730,6 +3730,7 @@ def pass4_assemble_ast(
     doc_title: str = "Document",
     source_hash: str = "",
     entity_pages: list[dict[str, Any]] | None = None,
+    doc_type: str = "statistical_annual_report",
 ) -> dict[str, Any]:
     """Assemble Enterprise AST + embedded blueprint subtree (gold-standard shape).
 
@@ -4963,7 +4964,7 @@ def run_extraction_pipeline(
     # ── Pass 4: AST Assembly + Blueprint ──
     _tick("pass4_ast_assembly", 80)
     t0 = _time.monotonic()
-    ast = pass4_assemble_ast(layout_pages, page_texts, document_map, ast_result, doc_title, source_hash, entity_pages)
+    ast = pass4_assemble_ast(layout_pages, page_texts, document_map, ast_result, doc_title, source_hash, entity_pages, doc_type=doc_type)
     pass4_elapsed = _time.monotonic() - t0
     pipeline_trace["passes"]["pass4_assembly"] = {
         "elapsed_s": round(pass4_elapsed, 1),
