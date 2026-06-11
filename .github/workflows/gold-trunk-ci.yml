@@ -1,0 +1,108 @@
+name: CI — Gold Integration Trunk
+
+# Validation gate for the integration/gold-trunk deploy trunk: backend offline
+# tests (generation/render/verifier/lifecycle/insights + guardians), an import
+# smoke, the dashboard production gate (lint + typecheck + build), and a hygiene
+# guard against committing local/secret artifacts. Runs fully offline
+# (LLM_DISABLED=1) so it needs no model endpoints or credentials.
+
+on:
+  push:
+    branches: [integration/gold-trunk]
+  pull_request:
+    branches: [integration/gold-trunk, main]
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: gold-trunk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-tests:
+    name: Backend offline tests (generation/render/verifier/lifecycle)
+    runs-on: ubuntu-latest
+    env:
+      LLM_DISABLED: "1"
+      CHECKPOINT_ENABLED: "false"
+      TRACING_ENABLED: "0"
+      LTM_ENABLED: "0"
+      NEO4J_ENABLED: "0"
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Import smoke (generation core + API routers)
+        run: |
+          python -c "from report_builder.generation import run_execution, compute_data_content_hash, verify_report, evaluate_gate, attach_insights, enrich_report_provenance, ensure_lifecycle; from report_builder_api.generate_phase_api import router; print('import smoke OK —', len(router.routes), 'generation routes')"
+
+      - name: Offline test suite (-m 'not live')
+        run: |
+          python -m pytest -m "not live" -q -p no:cacheprovider --tb=short
+
+  dashboard:
+    name: Dashboard production gate (lint + typecheck + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+  hygiene:
+    name: Repo hygiene guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: No local/secret artifacts tracked
+        run: |
+          set -e
+          fail=0
+          # Local SQLite databases must never be tracked.
+          if git ls-files '*.db' | grep -q .; then
+            echo "::error::tracked *.db file(s):"; git ls-files '*.db'; fail=1
+          fi
+          # Only *.example env templates may be tracked — never a real .env.
+          real_env=$(git ls-files '.env' '.env.*' | grep -v '\.example$' || true)
+          if [ -n "$real_env" ]; then
+            echo "::error::tracked real .env file(s):"; echo "$real_env"; fail=1
+          fi
+          # Frozen-bundle / generated report artifacts must stay out of git.
+          if git ls-files 'storage/bindings/*' | grep -q .; then
+            echo "::error::tracked storage/bindings artifact(s):"; git ls-files 'storage/bindings/*'; fail=1
+          fi
+          if [ "$fail" -ne 0 ]; then
+            echo "Repo hygiene guard failed — see errors above."; exit 1
+          fi
+          echo "Repo hygiene guard passed."
