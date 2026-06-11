@@ -1,0 +1,454 @@
+{
+  "questions_count": 13,
+  "topics_count": 4,
+  "questions": [
+    {
+      "questionId": "q_001",
+      "intent": "What are the key findings and statistics in the section on 'CHAPTER 1'?",
+      "questionType": "describe",
+      "page": 2,
+      "sourceHeading": "CHAPTER 1",
+      "requiredEntities": [
+        {
+          "entityRef": "CHAPTER 1 Energy Reserves and Potential Introduction",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [
+          {
+            "entityRef": "CHAPTER 1 Energy Reserves and Potential Introduction"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": "programmatic_chapter",
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "q_002",
+      "intent": "What are the key findings and statistics in the section on 'Energy Reserves and Potential'?",
+      "questionType": "describe",
+      "page": 2,
+      "sourceHeading": "Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "Labour Force Participation Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Unemployment Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "CHAPTER 1 Energy Reserves and Potential Introduction",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": {
+          "entityRef": "Labour Force Participation Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "CHAPTER 1 Energy Reserves and Potential Introduction"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": "programmatic_chapter",
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "q_003",
+      "intent": "What are the key findings and statistics in the section on '2 Total may not tally due to rounding off'?",
+      "questionType": "describe",
+      "page": 8,
+      "sourceHeading": "2 Total may not tally due to rounding off",
+      "requiredEntities": [
+        {
+          "entityRef": "Chapter 1: Energy Reserves and Potential",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [
+          {
+            "entityRef": "Chapter 1: Energy Reserves and Potential"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": "programmatic_chapter",
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "q_004",
+      "intent": "What are the key findings and statistics in the section on '1 Energy Reserves and Potential'?",
+      "questionType": "describe",
+      "page": 9,
+      "sourceHeading": "1 Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "Chapter 1: Energy Reserves and Potential",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [
+          {
+            "entityRef": "Chapter 1: Energy Reserves and Potential"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": "programmatic_chapter",
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "pq_1",
+      "intent": "What are the key findings in the section on Coal Reserves?",
+      "questionType": "describe",
+      "page": null,
+      "sourceHeading": "Coal Reserves",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_2",
+      "intent": "What are the key findings in the section on Lignite Reserves?",
+      "questionType": "describe",
+      "page": null,
+      "sourceHeading": "Lignite Reserves",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_3",
+      "intent": "What are the key findings in the section on Crude Oil Reserves?",
+      "questionType": "describe",
+      "page": null,
+      "sourceHeading": "Crude Oil Reserves",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_4",
+      "intent": "What is the UR and how does it compare across groups?",
+      "questionType": "comparison",
+      "page": null,
+      "sourceHeading": "Natural Gas Reserves",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_5",
+      "intent": "What are the key findings in the section on BCM (CBM) 3%?",
+      "questionType": "describe",
+      "page": null,
+      "sourceHeading": "BCM (CBM) 3%",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_6",
+      "intent": "What are the key findings in the section on Renewable Energy Potential in India?",
+      "questionType": "describe",
+      "page": null,
+      "sourceHeading": "Renewable Energy Potential in India",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_7",
+      "intent": "What are the key findings in the section on 21.66 144.73 21.53 164.51 15.03 163.33 15.22?",
+      "questionType": "describe",
+      "page": null,
+      "sourceHeading": "21.66 144.73 21.53 164.51 15.03 163.33 15.22",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_8",
+      "intent": "What are the key findings in the section on Western offshore includes Gujarat offshore?",
+      "questionType": "describe",
+      "page": null,
+      "sourceHeading": "Western offshore includes Gujarat offshore",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_9",
+      "intent": "What are the key findings in the section on Total may not tally due to rounding off?",
+      "questionType": "describe",
+      "page": null,
+      "sourceHeading": "Total may not tally due to rounding off",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "CHAPTER 1",
+      "description": "Programmatic questions from: CHAPTER 1",
+      "questionIds": [
+        "q_001",
+        "q_002"
+      ],
+      "pageRange": [
+        2,
+        2
+      ]
+    },
+    {
+      "topicId": "topic_02",
+      "title": "Energy Reserves and Potential",
+      "description": "Programmatic questions from: Energy Reserves and Potential",
+      "questionIds": [
+        "q_001",
+        "q_002"
+      ],
+      "pageRange": [
+        2,
+        7
+      ]
+    },
+    {
+      "topicId": "topic_03",
+      "title": "2 Total may not tally due to rounding off",
+      "description": "Programmatic questions from: 2 Total may not tally due to rounding off",
+      "questionIds": [
+        "q_003"
+      ],
+      "pageRange": [
+        8,
+        8
+      ]
+    },
+    {
+      "topicId": "topic_04",
+      "title": "1 Energy Reserves and Potential",
+      "description": "Programmatic questions from: 1 Energy Reserves and Potential",
+      "questionIds": [
+        "q_004"
+      ],
+      "pageRange": [
+        9,
+        9
+      ]
+    }
+  ]
+}

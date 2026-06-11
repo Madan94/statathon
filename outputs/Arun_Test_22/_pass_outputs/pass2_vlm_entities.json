@@ -1,0 +1,167 @@
+{
+  "vlm_success_count": 9,
+  "total_entities": 52,
+  "chart_pages": 0,
+  "pages": [
+    {
+      "page": 0,
+      "vlm_used": true,
+      "structure_type": "title_page",
+      "entities": [
+        "Energy Reserves and Potential"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 1,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 2,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Energy Reserves",
+        "Global Classification of Energy Reserves",
+        "Energy Reserves and Potential",
+        "Energy Reserves in India"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 3,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "Coal Reserves",
+        "Lignite Reserves"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 4,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "Western Offshore",
+        "Eastern Offshore",
+        "Assam",
+        "Gujarat",
+        "Rajasthan",
+        "Tamil Nadu",
+        "Andhra Pradesh"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 5,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 6,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "State/UT",
+        "Rural",
+        "Urban",
+        "Labour Force Participation Rate",
+        "Unemployment Rate",
+        "MPCE",
+        "Geographical Distr",
+        "Energy Re enewable",
+        "Potential ential"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "Chapter I: Energy Reserves and Potential"
+    },
+    {
+      "page": 7,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "State/UT",
+        "States/UTs",
+        "States/ UTs",
+        "Proved 2024",
+        "Proved 2025",
+        "Indicated 2024",
+        "Indicated 2025",
+        "Inferred 2024",
+        "Inferred 2025",
+        "Total 2024",
+        "Total 2025",
+        "Distribution (%) 2024",
+        "Distribution (%) 2025"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "Chapter I: Energy Reserves and Potential"
+    },
+    {
+      "page": 8,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "States/UTs",
+        "Region",
+        "Crude Oil (Million Tonne)",
+        "Natural Gas (Billion Cubic Metres)",
+        "States/ UTs/ Region",
+        "Crude Oil (Million Tonnes) 2024 Distribution\n(%)",
+        "Crude Oil (Million Tonnes) 2025 Distribution\n(%)"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "Chapter I: Energy Reserves and Potential"
+    },
+    {
+      "page": 9,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "State/UTs",
+        "Renewable Power",
+        "States/ UTs",
+        "Small Hydro\nPower*",
+        "Biomass\nPower",
+        "Cogeneration-\nbagasse",
+        "Solar Energy",
+        "Large Hydro#",
+        "Distribution (%)"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "Chapter 1: Energy Reserves and Potential"
+    }
+  ]
+}
