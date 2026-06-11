@@ -234,6 +234,42 @@ def compile_template_artifacts(
 
     intermediate["charts"] = chart_result.to_dict() if chart_result else {"figureCount": 0}
 
+    # Phase 3: SectionGraph-based figure compilation for PIB
+    # If doc_type is PIB and we have a section graph (from document_map or built here),
+    # supplement with section-aware infographic panels.
+    if _early_doc_type == "pib_press_release":
+        try:
+            from report_builder.chart_semantic_compiler import compile_section_graph_figures
+            from report_builder.chunking import build_section_graph
+
+            # Build section graph from existing blueprint topics/figureTemplates
+            _sg_toc = []
+            for topic in (bp.get("topics") or []):
+                _sg_toc.append({"title": topic.get("title", ""), "page": 0, "level": 1})
+
+            # If document_map has actual SectionGraph data, use it
+            _sg = None
+            if document_map and document_map.get("chapters"):
+                _sg_entries = [
+                    {"title": ch.get("title", ""), "page": ch.get("pageRange", [0])[0], "level": 1}
+                    for ch in document_map["chapters"]
+                ]
+                _sg = build_section_graph(_sg_entries, [], doc_type=_early_doc_type, doc_title=_bp_meta.get("name", ""))
+
+            if _sg:
+                sg_result = compile_section_graph_figures(_sg, entities=enrichment_result.entities, doc_type=_doc_type)
+                if sg_result.figures:
+                    # Merge: SectionGraph figures supplement existing (don't replace)
+                    existing_ids = {f.figureTemplateId for f in (chart_result.figures if chart_result else [])}
+                    new_sg_figs = [f for f in sg_result.figures if f.figureTemplateId not in existing_ids]
+                    if chart_result:
+                        chart_result.figures.extend(new_sg_figs)
+                    else:
+                        chart_result = sg_result
+                    logger.info("[template-compiler] I3: +%d SectionGraph infographic panels", len(new_sg_figs))
+        except Exception as _sg_exc:
+            logger.debug("[template-compiler] SectionGraph figure compilation skipped: %s", _sg_exc)
+
     # Update figureTemplates if chart compiler produced better models
     if chart_result and chart_result.figures:
         bp["figureTemplates"] = [f.to_dict() for f in chart_result.figures]
