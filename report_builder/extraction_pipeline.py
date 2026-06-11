@@ -2008,6 +2008,9 @@ def pass2_5_document_knowledge_graph(
     # Source 4 (bold_word) intentionally removed — individual bold words are too
     # noisy and register stopwords ("and", "the"), single letters, and word fragments.
 
+    # Resolve doc-type config early (needed by text-first extraction + pre-seeding)
+    cfg = _DOC_TYPE_CONFIG.get(doc_type, _DOC_TYPE_CONFIG["statistical_annual_report"])
+
     # Source 5 (text-first): For PIB press releases, extract entities from page text
     # using domain-specific regex patterns. This catches entities the VLM misses.
     if cfg.get("text_first_extraction"):
@@ -2031,8 +2034,6 @@ def pass2_5_document_knowledge_graph(
     # the entity graph even when extraction quality is poor.
     all_entities: list[dict[str, Any]] = []
     _ent_id_counter = 1
-
-    cfg = _DOC_TYPE_CONFIG.get(doc_type, _DOC_TYPE_CONFIG["statistical_annual_report"])
 
     if cfg.get("seed_entities"):
         for _seed in _PLFS_CORE_ENTITIES:
