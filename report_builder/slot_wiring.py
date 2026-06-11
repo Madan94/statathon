@@ -382,7 +382,71 @@ def auto_wire_missing_slots(
                 placement.targetAst = "contentAST"
                 placement.targetId = block_id
 
+            elif kind in ("infographic", "figure", "visual_summary"):
+                # PIB visual panels → create both chart + figure skeleton entries
+                chart_id = f"chart_{cid}"
+                fig_id = f"fig_{cid}"
+                chart_type = oc.get("chartType") or "infographic_panel"
+                ft_ref = oc.get("figureTemplateRef") or ""
+                skeleton["chartAST"]["charts"].append({
+                    "chartId": chart_id,
+                    "biQuery": qid,
+                    "chartType": chart_type,
+                    "series": [],
+                    "slot": {"fillFrom": cid, "status": "empty"},
+                })
+                skeleton["figureAST"].setdefault("figures", [])
+                skeleton["figureAST"]["figures"].append({
+                    "figureId": fig_id,
+                    "templateRef": ft_ref,
+                    "chartRef": chart_id,
+                    "caption": "",
+                    "captionTemplate": "",
+                    "slot": {"fillFrom": cid, "status": "empty"},
+                })
+                placement.targetAst = "chartAST"
+                placement.targetId = chart_id
+
             repairs.append(placement)
+
+    # ── Wire figureTemplates without matching AST slots ──
+    # PIB Phase 3 creates figureTemplates via SectionGraph. Ensure each has a chart+figure slot.
+    existing_chart_ids = {c.get("chartId") for c in (skeleton.get("chartAST") or {}).get("charts") or []}
+    existing_figure_ids = {f.get("figureId") for f in (skeleton.get("figureAST") or {}).get("figures") or []}
+
+    for ft in (blueprint.get("figureTemplates") or []):
+        ft_id = ft.get("figureTemplateId") or ft.get("chartId") or ""
+        chart_id = ft.get("chartId") or f"chart_{ft_id}"
+        fig_id = ft_id.replace("ft_", "fig_") if ft_id.startswith("ft_") else f"fig_{ft_id}"
+
+        if chart_id not in existing_chart_ids:
+            skeleton["chartAST"]["charts"].append({
+                "chartId": chart_id,
+                "biQuery": "",
+                "chartType": ft.get("chartType") or "infographic_panel",
+                "series": [],
+                "slot": {"status": "empty"},
+            })
+            existing_chart_ids.add(chart_id)
+            repairs.append(SlotPlacement(
+                componentKind="chart", targetAst="chartAST", targetId=chart_id,
+                source="figureTemplate_wire",
+            ))
+
+        if fig_id not in existing_figure_ids:
+            skeleton["figureAST"]["figures"].append({
+                "figureId": fig_id,
+                "templateRef": ft_id,
+                "chartRef": chart_id,
+                "caption": "",
+                "captionTemplate": ft.get("captionTemplate") or "",
+                "slot": {"status": "empty"},
+            })
+            existing_figure_ids.add(fig_id)
+            repairs.append(SlotPlacement(
+                componentKind="figure", targetAst="figureAST", targetId=fig_id,
+                source="figureTemplate_wire",
+            ))
 
     return skeleton, repairs
 
@@ -432,6 +496,16 @@ def build_crosswalk(skeleton: dict[str, Any], blueprint: dict[str, Any]) -> dict
         "questionToSlots": question_to_slots,
         "componentToSlot": component_to_slot,
         "slotToComponent": slot_to_component,
+        "figureToQuestion": {
+            info["id"]: info["biQuery"]
+            for info in slots.values()
+            if info.get("type") == "figure" and info.get("biQuery")
+        },
+        "chartToQuestion": {
+            info["id"]: info["biQuery"]
+            for info in slots.values()
+            if info.get("type") == "chart" and info.get("biQuery")
+        },
     }
 
 
