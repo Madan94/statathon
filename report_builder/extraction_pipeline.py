@@ -1304,6 +1304,7 @@ def pass0_rasterize(pdf_path: Path) -> tuple[list[bytes], list[dict[str, Any]]]:
     images: list = []
     try:
         import fitz  # PyMuPDF — bundled C libs, no system install required
+        from PIL import Image
         doc = fitz.open(str(pdf_path))
         for page in doc:
             mat = fitz.Matrix(_pdf_dpi / 72, _pdf_dpi / 72)
