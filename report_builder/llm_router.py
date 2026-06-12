@@ -186,6 +186,9 @@ def get_api_key_for_task(task: str, provider: str) -> tuple[str | None, str]:
     elif provider == "openai":
         key = os.getenv("OPENAI_API_KEY") or ""
         label = "legacy:OPENAI_API_KEY"
+    elif provider == "azure":
+        key = os.getenv("AZURE_OPENAI_API_KEY") or ""
+        label = "legacy:AZURE_OPENAI_API_KEY"
     else:
         key = ""
         label = f"legacy:{provider}"
@@ -263,7 +266,12 @@ def _resolve_model_for_task(task: str, provider: str, is_vision: bool = False) -
         if override:
             return override
     # Provider global
-    if provider == "openai":
+    if provider == "azure":
+        # For Azure the "model" is the deployment name (used in the URL path)
+        if is_vision:
+            return (os.getenv("AZURE_OPENAI_VISION_DEPLOYMENT") or "gpt-4o-graphiti-2")
+        return (os.getenv("AZURE_OPENAI_TEXT_DEPLOYMENT") or os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME") or "gpt-5.2-chat")
+    elif provider == "openai":
         if is_vision:
             return (os.getenv("OPENAI_VISION_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini")
         return (os.getenv("OPENAI_MODEL") or "gpt-4o-mini")
@@ -301,6 +309,7 @@ _PROVIDER_MAX_OUTPUT: dict[str, int] = {
     "openai": 4000,   # Ollama default 8192 ctx → ~4000 for output
     "gemini": 8000,   # Gemini Flash supports 8192 output tokens
     "groq":   8000,   # Groq llama-3.3-70b: 32K output, scout-17b: 16K output - safe at 8K
+    "azure":  16000,  # Azure gpt-5.x reasoning model: reasoning_tokens eat into max_completion_tokens
 }
 
 
@@ -359,6 +368,72 @@ def _apply_guided_json(payload: dict, schema: dict | None) -> None:
 
 
 # ── Backend implementations ────────────────────────────────────────────────────
+
+def _call_azure(prompt: str, image_bytes: bytes | None, max_tokens: int, temperature: float,
+                api_key: str | None = None, key_label: str = "",
+                task: str = "") -> str | None:
+    """Call Azure OpenAI chat/completions (gpt-4o for vision, gpt-5.x for text).
+
+    Uses ``api-key`` header and deployment-in-path URL format required by Azure.
+    Activated via AZURE_OPENAI_* env vars; no credentials are hardcoded.
+    """
+    api_key = api_key or os.getenv("AZURE_OPENAI_API_KEY") or ""
+    if not api_key:
+        logger.info("[llm_router][azure] No AZURE_OPENAI_API_KEY — skipping")
+        return None
+    endpoint = (os.getenv("AZURE_OPENAI_ENDPOINT") or "").rstrip("/")
+    if not endpoint:
+        logger.info("[llm_router][azure] No AZURE_OPENAI_ENDPOINT — skipping")
+        return None
+    api_version = os.getenv("AZURE_OPENAI_API_VERSION") or "2025-04-01-preview"
+    is_vision = bool(image_bytes)
+    deployment = _resolve_model_for_task(task, "azure", is_vision=is_vision) if task else (
+        os.getenv("AZURE_OPENAI_VISION_DEPLOYMENT", "gpt-4o-graphiti-2") if is_vision
+        else os.getenv("AZURE_OPENAI_TEXT_DEPLOYMENT",
+                       os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-5.2-chat"))
+    )
+    url = f"{endpoint}/openai/deployments/{deployment}/chat/completions?api-version={api_version}"
+    timeout = int(os.getenv("AZURE_OPENAI_TIMEOUT") or os.getenv("OPENAI_TIMEOUT") or "120")
+    if image_bytes:
+        mime = _detect_image_mime(image_bytes)
+        img_b64 = base64.b64encode(image_bytes).decode("utf-8")
+        content: list[dict[str, Any]] = [
+            {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{img_b64}"}},
+            {"type": "text", "text": prompt},
+        ]
+        messages: list[dict[str, Any]] = [{"role": "user", "content": content}]
+    else:
+        messages = [{"role": "user", "content": prompt}]
+    payload: dict[str, Any] = {
+        "messages": messages,
+        "max_completion_tokens": max_tokens,  # gpt-5.x+ uses max_completion_tokens
+    }
+    # gpt-5.x models do not support temperature (only default=1 allowed).
+    # gpt-4o supports it. We omit it to stay compatible with both.
+    # Callers can set AZURE_OPENAI_ALLOW_TEMPERATURE=1 to force-include it (gpt-4o only).
+
+    # Reasoning-model token multiplier: gpt-5.x is a reasoning model that spends
+    # internal reasoning_tokens before writing output. If max_completion_tokens is too
+    # small all tokens go to thinking and content is empty. Multiply for text deployments.
+    # Set AZURE_OPENAI_REASONING_MULTIPLIER=1 to disable (e.g. for gpt-4o vision deploy).
+    _text_deploy = os.getenv("AZURE_OPENAI_TEXT_DEPLOYMENT") or os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "")
+    _is_reasoning_deploy = deployment == _text_deploy
+    if _is_reasoning_deploy:
+        _multiplier = int(os.getenv("AZURE_OPENAI_REASONING_MULTIPLIER") or "8")
+        payload["max_completion_tokens"] = max_tokens * _multiplier
+    headers = {"Content-Type": "application/json", "api-key": api_key}
+    try:
+        r = requests.post(url, json=payload, headers=headers, timeout=timeout, verify=_SSL_VERIFY)
+        if r.status_code == 200:
+            content_out = r.json()["choices"][0]["message"]["content"]
+            return content_out.strip() if content_out else None
+        logger.warning("[llm_router][azure]%s HTTP %d: %s",
+                       f" [{key_label}]" if key_label else "", r.status_code, r.text[:300])
+    except Exception as exc:
+        logger.warning("[llm_router][azure]%s Request failed: %s",
+                       f" [{key_label}]" if key_label else "", exc)
+    return None
+
 
 def _call_qwen_text(prompt: str, max_tokens: int, temperature: float,
                     schema: dict | None = None) -> str | None:
@@ -702,7 +777,9 @@ def llm_text_call(
             logger.info("[llm_router] Fallback %s→%s for task=%s", provider, attempt_provider, task)
 
         try:
-            if attempt_provider == "gemini":
+            if attempt_provider == "azure":
+                result = _call_azure(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label, task=task)
+            elif attempt_provider == "gemini":
                 result = _call_gemini(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
             elif attempt_provider == "groq":
                 result = _call_groq(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label, task=task)
@@ -819,7 +896,9 @@ def llm_vision_call(
                 continue  # Skip cloud providers without keys
         result = None
         try:
-            if attempt_provider == "gemini":
+            if attempt_provider == "azure":
+                result = _call_azure(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label, task=task)
+            elif attempt_provider == "gemini":
                 result = _call_gemini(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
             elif attempt_provider == "groq":
                 result = _call_groq(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label, task=task)
