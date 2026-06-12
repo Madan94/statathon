@@ -43,6 +43,27 @@ def _bound_plfs():
     return blueprint, dataset, binding
 
 
+def _question_leaves(node):
+    """All question-type nodes under a node, regardless of nesting depth."""
+    found = [node] if getattr(node, "nodeType", None) == "question" else []
+    for child in node.children:
+        found.extend(_question_leaves(child))
+    return found
+
+
+def _all_question_leaves(plan):
+    out = []
+    for topic in plan.planTree:
+        out.extend(_question_leaves(topic))
+    return out
+
+
+def _first_question(plan):
+    leaves = _all_question_leaves(plan)
+    assert leaves, "plan has no question nodes"
+    return leaves[0]
+
+
 def test_reviewed_plan_fast_path_builds_topic_tree():
     blueprint, dataset, binding = _bound_plfs()
 
@@ -58,8 +79,9 @@ def test_reviewed_plan_fast_path_builds_topic_tree():
     assert plan.planId.startswith("rplan_tpl_plfs_annual_v1_sig_")
     assert plan.status in {"READY", "DEGRADED", "BLOCKED"}
     assert plan.planTree
-    assert sum(len(topic.children) for topic in plan.planTree) == len(binding.questionBindings)
-    first_question = next(topic.children[0] for topic in plan.planTree if topic.children)
+    # Blueprint may nest questions under subtopics/chapters/sections; count leaves recursively.
+    assert len(_all_question_leaves(plan)) == len(binding.questionBindings)
+    first_question = _first_question(plan)
     assert first_question.nodeType == "question"
     assert first_question.components
 
@@ -96,7 +118,7 @@ def test_reviewed_plan_patch_node_and_disable_question():
         binding=binding,
     )
     topic = plan.planTree[0]
-    question = topic.children[0]
+    question = _first_question(plan)
 
     patch_plan_node(plan, topic.nodeId, title="Renamed Topic")
     patch_plan_node(plan, question.nodeId, enabled=False)
@@ -167,7 +189,7 @@ def test_reviewed_plan_patch_component_formula_spec():
         blueprint=blueprint,
         binding=binding,
     )
-    question = plan.planTree[0].children[0]
+    question = _first_question(plan)
     component = question.components[0]
 
     patch_plan_component(
@@ -180,7 +202,8 @@ def test_reviewed_plan_patch_component_formula_spec():
     updated = find_plan_node(plan, question.nodeId).components[0]
     assert updated.formulaSpec["type"] == "SHARE"
     assert updated.formulaSpec["numeratorColumn"] == "LFPR"
-    assert ReviewedPlan.from_dict(plan.to_dict()).planTree[0].children[0].components[0].formulaSpec["type"] == "SHARE"
+    reloaded = find_plan_node(ReviewedPlan.from_dict(plan.to_dict()), question.nodeId)
+    assert reloaded.components[0].formulaSpec["type"] == "SHARE"
 
 
 def test_reviewed_plan_promotion_writes_sidecar(tmp_path: Path):
