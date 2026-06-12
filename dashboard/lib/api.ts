@@ -190,8 +190,43 @@ export interface GraphPayload {
 
 export interface AnomalyExplain {
   primary_method?: string;
+  method_used?: string;
   metric?: number | null;
+  z_abs?: number | null;
+  iqr_excess?: number | null;
+  lower_fence?: number | null;
+  upper_fence?: number | null;
+  reason?: string;
   isolation_forest?: boolean;
+}
+
+export type OutlierRowDecision =
+  | 'KEEP'
+  | 'NORMALIZE'
+  | 'DELETE_VALUE'
+  | 'DELETE_ROW'
+  | 'EDIT_VALUE';
+
+export interface GoodnessOfFitResult {
+  column: string;
+  mean?: number;
+  median?: number;
+  standard_deviation?: number;
+  skewness?: number;
+  kurtosis?: number;
+  shapiro_w_statistic?: number | null;
+  p_value?: number | null;
+}
+
+export interface AnomalyColumnBlock {
+  column: string;
+  recommended?: string;
+  z_score_confidence?: number;
+  iqr_confidence?: number;
+  reason?: string[];
+  method_selected?: string | null;
+  detection_run?: boolean;
+  goodness_of_fit?: GoodnessOfFitResult;
 }
 
 export interface AnomalyCandidate {
@@ -369,6 +404,31 @@ export interface ValidationCandidate {
   severity?: string;
   candidate_action?: string;
   row?: number;
+  value?: string | number | null;
+  rule_id?: string;
+  /** Rule id string or legacy nested rule object */
+  rule?: string | { rule_id?: string; rule_expression?: string };
+  reason?: string;
+  expected?: string;
+  explanation?: string;
+  domain?: string;
+  confidence?: number;
+  confidence_band?: string;
+  rule_source?: string;
+  kg_relationships?: unknown;
+  rule_params?: Record<string, unknown>;
+}
+
+export interface ValidationDecisionItem {
+  rule_id?: string;
+  column: string;
+  row_index?: number | null;
+  rule_type?: string;
+  severity?: string;
+  confidence?: number;
+  decision: string;
+  old_value?: string | number | null;
+  new_value?: string | number | null;
 }
 
 export interface ImputationCandidate {
@@ -419,6 +479,7 @@ export interface AnalysisResult {
   dataset_context?: Record<string, unknown>;
   clusters?: Array<Record<string, unknown>>;
   schema_graph?: { nodes?: unknown[]; edges?: unknown[] };
+  knowledge_graph?: Record<string, unknown>;
   profiling_summary?: Record<string, unknown>;
   column_profiles?: Record<string, unknown>;
   priority_dependencies?: Record<string, unknown> | unknown[];
@@ -636,8 +697,10 @@ export const analysisApi = {
     }
     throw new Error('Analysis timed out');
   },
-  getResults: async (id: number): Promise<AnalysisResult> => {
-    const { data } = await api.get(`/analysis/${id}/results`);
+  getResults: async (id: number, options?: { includePhase3?: boolean }): Promise<AnalysisResult> => {
+    const { data } = await api.get(`/analysis/${id}/results`, {
+      params: { include_phase3: options?.includePhase3 ?? false },
+    });
     return data;
   },
   getNormalization: async (id: number): Promise<{ normalization_version: number | null; columns: NormalizationColumnRecord[] }> => {
@@ -664,6 +727,289 @@ export const analysisApi = {
   },
   submitDecisions: async (id: number, decisions: Record<string, 'keep' | 'delete' | 'normalize'>) => {
     const { data } = await api.post(`/analysis/${id}/decisions`, { decisions });
+    return data;
+  },
+  selectOutlierMethod: async (id: number, column: string, method: 'Z_SCORE' | 'IQR') => {
+    const { data } = await api.post(`/analysis/${id}/outliers/method`, { column, method });
+    return data;
+  },
+  runOutlierDetection: async (id: number, column: string) => {
+    const { data } = await api.post(`/analysis/${id}/outliers/detect`, { column });
+    return data;
+  },
+  saveOutlierDecisions: async (
+    id: number,
+    column: string,
+    decisions: Array<{
+      row_index: number;
+      method: string;
+      severity: string;
+      decision: OutlierRowDecision;
+      old_value?: string | number | null;
+      new_value?: string | number | null;
+      confidence?: number;
+      methodology?: string;
+    }>,
+  ) => {
+    const { data } = await api.post(`/analysis/${id}/outliers/decisions`, { column, decisions });
+    return data as { success?: boolean; saved: number; analysis_id: number; column: string };
+  },
+  getOutlierDecisions: async (id: number, column?: string) => {
+    const { data } = await api.get(`/analysis/${id}/outliers/decisions`, {
+      params: column ? { column } : undefined,
+    });
+    return data;
+  },
+  getAnomalyReviewProgress: async (id: number) => {
+    const { data } = await api.get(`/analysis/${id}/anomaly/review-progress`);
+    return data as {
+      total_anomalies: number;
+      reviewed: number;
+      remaining: number;
+      progress_pct: number;
+      complete: boolean;
+      columns_total?: number;
+      columns_reviewed?: number;
+      auto_reviewed?: number;
+    };
+  },
+  getImputationReviewProgress: async (id: number) => {
+    const { data } = await api.get(`/analysis/${id}/imputation/review-progress`);
+    return data as {
+      columns_with_missing: number;
+      reviewed_columns: number;
+      remaining_columns: number;
+      progress_pct: number;
+      complete: boolean;
+      columns_total?: number;
+      columns_reviewed?: number;
+      auto_reviewed?: number;
+    };
+  },
+  getPhaseStatus: async (id: number) => {
+    const { data } = await api.get(`/analysis/${id}/phase-status`);
+    return data as {
+      analysis_id: number;
+      rule_validation_completed: boolean;
+      anomaly_completed: boolean;
+      missing_value_completed: boolean;
+      dataset_review_completed?: boolean;
+      validation: {
+        total: number;
+        reviewed: number;
+        complete: boolean;
+        acknowledged: boolean;
+      };
+      anomaly: {
+        columns_total: number;
+        columns_reviewed: number;
+        auto_reviewed: number;
+        complete: boolean;
+      };
+      imputation: {
+        columns_total: number;
+        columns_reviewed: number;
+        auto_reviewed: number;
+        complete: boolean;
+      };
+      column_reviews?: {
+        anomaly?: Array<{ column: string; status: string; item_count: number; reviewed_count: number }>;
+        imputation?: Array<{ column: string; status: string; item_count: number; reviewed_count: number }>;
+      };
+    };
+  },
+  getDatasetReview: async (id: number) => {
+    const { data } = await api.get(`/analysis/${id}/dataset-review`);
+    return data as {
+      analysis_id: number;
+      original_dataset: {
+        row_count: number;
+        column_count: number;
+        columns: string[];
+        missing_cells: number;
+      };
+      processed_dataset: {
+        row_count: number;
+        column_count: number;
+        columns: string[];
+        missing_cells: number;
+      };
+      summary: {
+        rows_before: number;
+        rows_after: number;
+        rows_removed: number;
+        columns_before: number;
+        columns_after: number;
+        columns_removed: number;
+        missing_values_before: number;
+        missing_values_after: number;
+        rule_violations_fixed: number;
+        anomalies_processed: number;
+        values_imputed: number;
+      };
+      diff_summary: {
+        rows_removed: Array<Record<string, unknown>>;
+        columns_removed: string[];
+        columns_renamed: Array<{ from: string; to: string }>;
+        columns_excluded: string[];
+        values_changed: Array<Record<string, unknown>>;
+        values_set_missing?: Array<Record<string, unknown>>;
+        missing_values_imputed: Array<Record<string, unknown>>;
+        anomalies_handled: Array<Record<string, unknown>>;
+        rules_applied: Array<Record<string, unknown>>;
+      };
+      snapshots: Array<Record<string, unknown>>;
+      dataset_review_completed: boolean;
+      missing_value_completed: boolean;
+      can_approve: boolean;
+      can_proceed_to_report: boolean;
+    };
+  },
+  getDatasetReviewRows: async (
+    id: number,
+    side: 'original' | 'processed',
+    options?: {
+      offset?: number;
+      limit?: number;
+      search?: string;
+      columnFilter?: string;
+      columns?: string[];
+    },
+  ) => {
+    const { data } = await api.get(`/analysis/${id}/dataset-review/rows`, {
+      params: {
+        side,
+        offset: options?.offset ?? 0,
+        limit: options?.limit ?? 50,
+        search: options?.search,
+        column_filter: options?.columnFilter,
+        columns: options?.columns?.join(','),
+      },
+    });
+    return data as {
+      side: string;
+      total_rows: number;
+      offset: number;
+      limit: number;
+      columns: string[];
+      rows: Array<Record<string, unknown>>;
+    };
+  },
+  getDatasetReviewColumn: async (id: number, column: string) => {
+    const { data } = await api.get(`/analysis/${id}/dataset-review/column/${encodeURIComponent(column)}`);
+    return data as {
+      column: string;
+      before_label: string | null;
+      after_label: string | null;
+      rows_changed: number;
+      reason: string;
+      phase: string;
+      sample_changes: Array<Record<string, unknown>>;
+    };
+  },
+  getDatasetReviewRow: async (id: number, rowIndex: number) => {
+    const { data } = await api.get(`/analysis/${id}/dataset-review/row/${rowIndex}`);
+    return data as {
+      row_index: number;
+      original_row: Record<string, unknown> | null;
+      processed_row: Record<string, unknown> | null;
+      changed_cells: Array<{ column: string; before: unknown; after: unknown; kind: string }>;
+      decisions: Array<Record<string, unknown>>;
+    };
+  },
+  approveDatasetReview: async (id: number) => {
+    const { data } = await api.post(`/analysis/${id}/dataset-review/approve`);
+    return data as {
+      success: boolean;
+      analysis_id: number;
+      dataset_review_completed: boolean;
+      can_proceed_to_report: boolean;
+    };
+  },
+  datasetReviewDownloadUrl: (id: number, kind: string) =>
+    `${API_BASE}/analysis/${id}/dataset-review/download/${kind}`,
+  getValidationReviewProgress: async (id: number) => {
+    const { data } = await api.get(`/analysis/${id}/validation/review-progress`);
+    return data as {
+      total: number;
+      reviewed: number;
+      remaining: number;
+      progress_pct: number;
+      complete: boolean;
+      acknowledged: boolean;
+    };
+  },
+  proceedValidation: async (
+    id: number,
+    decisions: ValidationDecisionItem[],
+    meta: { critical_count?: number; candidate_count?: number },
+  ) => {
+    const { data } = await api.post(`/analysis/${id}/validation/proceed`, {
+      decisions,
+      ...meta,
+    });
+    return data as {
+      success?: boolean;
+      saved: number;
+      rule_validation_completed: boolean;
+    };
+  },
+  getImputationMissingRows: async (
+    id: number,
+    column: string,
+    options?: { method?: string; offset?: number; limit?: number },
+  ) => {
+    const { data } = await api.get(`/analysis/${id}/imputation/missing-rows`, {
+      params: { column, ...options },
+    });
+    return data as {
+      total_missing: number;
+      offset: number;
+      limit: number;
+      column: string;
+      method: string;
+      rows: Array<{
+        row_index: number;
+        missing_column: string;
+        original_value: null;
+        recommended_value: unknown;
+        confidence: number;
+        method: string;
+        reason: string;
+        context: Record<string, unknown>;
+      }>;
+    };
+  },
+  acknowledgeValidation: async (
+    id: number,
+    meta: { critical_count?: number; candidate_count?: number },
+  ) => {
+    const { data } = await api.post(`/analysis/${id}/validation/acknowledge`, meta);
+    return data;
+  },
+  saveValidationDecisions: async (id: number, decisions: ValidationDecisionItem[]) => {
+    const { data } = await api.post(`/analysis/${id}/validation/decisions`, { decisions });
+    return data;
+  },
+  saveImputationDecisions: async (
+    id: number,
+    column: string,
+    method: string,
+    decisions?: Array<Record<string, unknown>>,
+  ) => {
+    const { data } = await api.post(`/analysis/${id}/imputation/decisions`, {
+      column,
+      method,
+      decisions: decisions ?? [],
+    });
+    return data as { success?: boolean; saved: number; column: string; method: string };
+  },
+  applyLineage: async (id: number) => {
+    const { data } = await api.post(`/analysis/${id}/apply`);
+    return data;
+  },
+  getLineage: async (id: number) => {
+    const { data } = await api.get(`/analysis/${id}/lineage`);
     return data;
   },
   applyDecisions: async (id: number) => {

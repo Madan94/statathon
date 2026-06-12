@@ -1,9 +1,8 @@
-"""IQR outlier probes with skew/kurtosis-adapted fence multiplier.
+"""IQR outlier detection with percentage-beyond-boundary severity.
 
-Tukey's classic 1.5×IQR fence assumes near-normal data. For heavy-tailed
-or asymmetric columns the shared profiler recommends 2.0× or 2.5× to keep
-false-positive rates sane. We honour that recommendation when available
-and fall back to 1.5× otherwise.
+LOW:      0–50% beyond boundary
+MEDIUM:   50–100% beyond boundary
+EXTREME:  100%+ beyond boundary
 """
 from __future__ import annotations
 
@@ -12,53 +11,46 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from analytics.distribution import profile_column
 
-
-def _severity_iqr_excess(excess_in_iqr_units: float,
-                         bands: tuple[float, float]) -> str | None:
-    """excess beyond the inner fence, expressed in IQR multiples."""
-    medium_floor, extreme_floor = bands
-    if excess_in_iqr_units <= 0:
+def _severity_pct_beyond(pct: float) -> str | None:
+    if pct <= 0:
         return None
-    if excess_in_iqr_units <= medium_floor:
+    if pct <= 0.50:
         return "LOW"
-    if excess_in_iqr_units <= extreme_floor:
+    if pct <= 1.0:
         return "MEDIUM"
     return "EXTREME"
 
 
-def iqr_records(series: pd.Series, column_name: str) -> list[dict[str, Any]]:
+def iqr_records(series: pd.Series, column_name: str, multiplier: float = 1.5) -> list[dict[str, Any]]:
     s = pd.to_numeric(series, errors="coerce").reset_index(drop=True)
     valid = s.dropna()
     if valid.size < 4:
         return []
-
-    profile = profile_column(series)
-    multiplier = float(profile.iqr_multiplier_recommended or 1.5)
-    # Severity bands derived from the chosen multiplier
-    medium_floor = max(0.3, multiplier - 1.0)   # how far past fence = MEDIUM
-    extreme_floor = max(medium_floor + 0.5, multiplier - 0.0)
-    bands = (medium_floor, extreme_floor)
 
     q1, q3 = float(valid.quantile(0.25)), float(valid.quantile(0.75))
     iqr = q3 - q1
     eiqr = max(iqr, 1e-12)
     lo = q1 - multiplier * eiqr
     hi = q3 + multiplier * eiqr
+    fence_width = multiplier * eiqr
+
     rows: list[dict[str, Any]] = []
     for pos in range(len(s)):
         v = s.iloc[pos]
         if pd.isna(v):
             continue
         vf = float(v)
-        if vf < lo:
-            excess = (lo - vf) / eiqr
-        elif vf > hi:
-            excess = (vf - hi) / eiqr
-        else:
+        if lo <= vf <= hi:
             continue
-        sev = _severity_iqr_excess(excess, bands)
+        if vf < lo:
+            distance = lo - vf
+            boundary = lo
+        else:
+            distance = vf - hi
+            boundary = hi
+        pct_beyond = distance / max(fence_width, 1e-12)
+        sev = _severity_pct_beyond(pct_beyond)
         if sev is None:
             continue
         rows.append(
@@ -67,12 +59,14 @@ def iqr_records(series: pd.Series, column_name: str) -> list[dict[str, Any]]:
                 "column": column_name,
                 "value": vf,
                 "method": "IQR",
-                "iqr_excess": float(excess),
+                "iqr_excess": float(pct_beyond),
                 "severity": sev,
+                "reason": f"{pct_beyond * 100:.0f}% beyond IQR fence ({sev})",
                 "fence_multiplier": multiplier,
                 "q1": q1,
                 "q3": q3,
                 "iqr": float(iqr),
+                "boundary": boundary,
             }
         )
     return rows

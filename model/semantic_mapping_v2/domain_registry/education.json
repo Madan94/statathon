@@ -1,0 +1,24 @@
+{
+  "usecase": "education",
+  "version": "2026.1",
+  "description": "Education statistics: enrolment, schooling, performance and institutions.",
+  "keywords": ["education", "school", "student", "enrolment", "literacy", "teacher", "institution", "dropout", "attendance", "exam", "scholarship", "grade"],
+  "domains": [
+    {"domain": "student", "description": "Student identity and demographics.", "synonyms": ["student", "pupil", "learner", "child", "student id"], "examples": ["student_id", "pupil_name", "learner_id"]},
+    {"domain": "demographic", "description": "Demographics of students: age, sex, social group.", "synonyms": ["age", "sex", "gender", "social group", "caste", "religion"], "examples": ["age", "gender", "social_group"]},
+    {"domain": "enrollment", "description": "Enrolment status, admission and registration.", "synonyms": ["enrolment", "enrollment", "admission", "registration", "enrolled"], "examples": ["enrollment_status", "admission_date", "enrolled"]},
+    {"domain": "attendance", "description": "Attendance and participation in schooling.", "synonyms": ["attendance", "present days", "absence", "attendance rate"], "examples": ["attendance_rate", "days_present", "absence_count"]},
+    {"domain": "performance", "description": "Academic performance, marks and exam results.", "synonyms": ["marks", "grade", "score", "result", "exam performance", "gpa"], "examples": ["exam_marks", "grade", "test_score", "result"]},
+    {"domain": "literacy", "description": "Literacy and basic learning levels.", "synonyms": ["literacy", "can read", "can write", "literacy rate", "basic learning"], "examples": ["literacy_rate", "can_read", "literacy_status"]},
+    {"domain": "education_level", "description": "Level / grade / class of education.", "synonyms": ["grade", "class", "standard", "level", "education stage"], "examples": ["grade", "class", "education_level", "standard"]},
+    {"domain": "institution", "description": "School / college identity and type.", "synonyms": ["school", "college", "institution", "institution type", "management"], "examples": ["school_id", "institution_type", "school_name"]},
+    {"domain": "teacher", "description": "Teacher counts, qualification and pupil-teacher ratio.", "synonyms": ["teacher", "faculty", "pupil teacher ratio", "teaching staff", "teacher count"], "examples": ["num_teachers", "pupil_teacher_ratio", "teacher_qualification"]},
+    {"domain": "dropout", "description": "Dropout, retention and completion.", "synonyms": ["dropout", "retention", "completion", "discontinued", "out of school"], "examples": ["dropout_rate", "retention_rate", "completion_status"]},
+    {"domain": "scholarship", "description": "Scholarships, fees and financial support.", "synonyms": ["scholarship", "stipend", "fee", "financial aid", "fee waiver"], "examples": ["scholarship_amount", "fee_paid", "stipend"]},
+    {"domain": "infrastructure", "description": "School facilities: classrooms, toilets, library.", "synonyms": ["classroom", "toilet", "library", "facility", "infrastructure", "building"], "examples": ["num_classrooms", "has_library", "toilet_facility"]},
+    {"domain": "geography", "description": "Geographic location: state, district, block, village.", "synonyms": ["state", "district", "block", "village", "region", "rural", "urban"], "examples": ["state", "district", "block", "village"]},
+    {"domain": "survey_metadata", "description": "Academic year, session, reporting period.", "synonyms": ["academic year", "session", "year", "period", "term"], "examples": ["academic_year", "session", "year"]},
+    {"domain": "identifier", "description": "Unique student / school identifiers.", "synonyms": ["id", "key", "code", "udise code", "student id", "school id"], "examples": ["student_id", "school_id", "udise_code"]},
+    {"domain": "uncorrelated", "description": "Free-text or values with no clear education domain.", "synonyms": ["remarks", "notes", "comment", "misc"], "examples": ["remarks", "notes", "comment"]}
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "usecase": "energy",
+  "version": "2026.1",
+  "description": "Energy statistics: reserves, generation, consumption and infrastructure across resources.",
+  "keywords": ["energy", "power", "electricity", "coal", "petroleum", "reserves", "generation", "consumption", "renewable", "capacity", "fuel", "megawatt", "mw"],
+  "domains": [
+    {"domain": "reserves", "description": "Proved, indicated and inferred resource reserves.", "synonyms": ["reserves", "proved reserves", "indicated reserves", "inferred reserves", "total reserves", "resource stock"], "examples": ["proved_reserves", "indicated_reserves", "inferred_reserves", "total_reserves"]},
+    {"domain": "generation", "description": "Energy and electricity generation volumes.", "synonyms": ["generation", "electricity generated", "power generation", "output", "gwh generated"], "examples": ["power_generation", "electricity_generated", "generation_gwh"]},
+    {"domain": "consumption", "description": "Energy and electricity consumption.", "synonyms": ["consumption", "energy consumed", "power consumption", "demand", "usage"], "examples": ["energy_consumption", "power_consumed", "electricity_demand"]},
+    {"domain": "capacity", "description": "Installed and potential generation capacity (MW).", "synonyms": ["capacity", "installed capacity", "potential capacity", "megawatt", "mw", "capacity factor"], "examples": ["potential_capacity_mw", "installed_capacity", "capacity_mw"]},
+    {"domain": "renewable_energy", "description": "Renewable sources: solar, wind, hydro, biomass.", "synonyms": ["renewable", "solar", "wind", "hydro", "biomass", "green energy", "clean energy"], "examples": ["solar_capacity", "wind_generation", "renewable_share", "hydro_mw"]},
+    {"domain": "coal", "description": "Coal and lignite resources and production.", "synonyms": ["coal", "lignite", "coal reserves", "coal production", "coking coal"], "examples": ["coal_reserves", "lignite_production", "coal_output"]},
+    {"domain": "petroleum", "description": "Crude oil, petroleum products and natural gas.", "synonyms": ["petroleum", "crude oil", "natural gas", "lpg", "diesel", "petrol", "gas"], "examples": ["crude_oil_reserves", "natural_gas", "petroleum_products"]},
+    {"domain": "electricity_infrastructure", "description": "Grid, transmission, distribution and plants.", "synonyms": ["grid", "transmission", "distribution", "substation", "power plant", "feeder", "infrastructure"], "examples": ["transmission_line", "substation_count", "power_plant", "grid_length"]},
+    {"domain": "resource_category", "description": "Type/category of energy resource.", "synonyms": ["resource category", "resource type", "fuel type", "energy source", "category"], "examples": ["resource_category", "fuel_type", "energy_source"]},
+    {"domain": "unit_of_measure", "description": "Measurement units for energy quantities.", "synonyms": ["unit", "unit of measure", "uom", "measurement unit", "mw", "gwh", "tonnes"], "examples": ["unit_of_measure", "uom", "measurement_unit"]},
+    {"domain": "emissions", "description": "Emissions and environmental impact of energy.", "synonyms": ["emissions", "co2", "carbon", "greenhouse gas", "pollution"], "examples": ["co2_emissions", "carbon_intensity", "ghg_emissions"]},
+    {"domain": "tariff", "description": "Energy prices, tariffs and cost.", "synonyms": ["tariff", "price", "cost", "rate per unit", "energy price"], "examples": ["tariff_rate", "price_per_unit", "energy_cost"]},
+    {"domain": "geography", "description": "Geographic location of the site/state.", "synonyms": ["state", "district", "region", "site", "location", "zone"], "examples": ["state", "site_id", "region", "location"]},
+    {"domain": "survey_metadata", "description": "Reporting period, year and source metadata.", "synonyms": ["year", "period", "reporting year", "source", "quarter"], "examples": ["year", "reporting_period", "data_source"]},
+    {"domain": "identifier", "description": "Unique site / record identifiers.", "synonyms": ["id", "site id", "key", "code", "plant id"], "examples": ["site_id", "plant_id", "record_id"]},
+    {"domain": "uncorrelated", "description": "Free-text notes or values with no clear energy domain.", "synonyms": ["remarks", "notes", "comment", "description text", "misc"], "examples": ["remarks", "notes", "comment"]}
+  ]
+}

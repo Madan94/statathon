@@ -313,11 +313,12 @@ def _maybe_refine_with_llm(dom: DynamicDomain) -> None:
     if not api_key:
         return
     try:
-        import google.generativeai as g  # type: ignore
+        from core.gemini_client import get_generative_model
         import json as _json
 
-        g.configure(api_key=api_key)
-        model = g.GenerativeModel(os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash"))
+        model = get_generative_model()
+        if model is None:
+            return
         prompt = (
             "You are naming a cluster of statistical columns. Given the members "
             f"below, produce a JSON object with keys: name (snake_case), "

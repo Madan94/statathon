@@ -4,6 +4,7 @@ ensure_paths()
 
 from core.ingestion import dataframe_for_uploaded_dataset, infer_schema, health_summary
 from core.json_safe import make_json_safe
+from services.analysis_query import slim_checkpoint_payload
 from core.rule_validator import normalize_schema
 from reports.ingestion_reporter import write_ingestion_report
 from reports.math_vault import write_math_vault
@@ -65,7 +66,39 @@ def run_pipeline(
         list(df.columns),
         column_enrichment=enrichment or None,
         column_profiles=column_profiles,
+        df=df,
+        dataset_id=str(dataset_id),
+        dataset_name=filename,
+        filename=filename,
+        dataset_domain=None,
     )
+
+    # --- Adopt the normalized identity for the rest of the pipeline ----------
+    # The semantic pipeline corrected/expanded every header into a canonical
+    # name. Rename the DataFrame (and the schema/health/profiles derived from
+    # it) so phase-3 (validation, z-score, IQR, missing) and persistence all
+    # run on the normalized columns instead of the raw/cryptic ones. The raw
+    # headers are preserved in semantic_bundle['column_normalization'].
+    rename_map: dict[str, str] = {}
+    for row in semantic_bundle.get("column_normalization") or []:
+        if not isinstance(row, dict):
+            continue
+        raw = str(row.get("original_name") or "")
+        canon = str(row.get("canonical_name") or row.get("normalized_name") or "")
+        if raw and canon and raw in df.columns and raw != canon:
+            rename_map[raw] = canon
+    if rename_map:
+        df = df.rename(columns=rename_map)
+        schema = {rename_map.get(str(k), str(k)): v for k, v in schema.items()}
+        if isinstance(health, dict):
+            for _hk in ("missing_per_column", "dtypes"):
+                sub = health.get(_hk)
+                if isinstance(sub, dict):
+                    health[_hk] = {rename_map.get(str(k), str(k)): v for k, v in sub.items()}
+        column_profiles = {
+            rename_map.get(str(k), str(k)): v for k, v in (column_profiles or {}).items()
+        }
+
     state = build_analysis_state(
         dataset_id=dataset_id,
         analysis_id=analysis_id,
@@ -93,13 +126,18 @@ def run_pipeline(
     weight_col = None
     if analysis_cfg_row and isinstance(analysis_cfg_row.config, dict):
         weight_col = analysis_cfg_row.config.get("weight_column")
+    # The configured weight column is a raw header — translate to canonical.
+    if weight_col and rename_map:
+        weight_col = rename_map.get(str(weight_col), weight_col)
     state.weighted_profile = compute_survey_weight_profile(df, schema, weight_column=weight_col)
     SemanticPersistenceService(db).persist_state(state)
+    db.commit()
     Phase3PersistenceService(db).persist_state(state)
+    db.commit()
 
     analysis_row = db.query(Analysis).filter(Analysis.id == analysis_id).first()
     if analysis_row:
-        cp = make_json_safe(state.to_api_payload())
+        cp = slim_checkpoint_payload(make_json_safe(state.to_api_payload()))
         cp["raw_schema"] = [str(c) for c in df.columns]
         analysis_row.checkpoint = cp
 
@@ -112,7 +150,7 @@ def run_pipeline(
         payload=analysis_row.checkpoint if analysis_row and isinstance(analysis_row.checkpoint, dict) else state.to_api_payload(),
     )
 
-    db.flush()
+    db.commit()
 
     semantic_labels = {}
     for col in df.columns:

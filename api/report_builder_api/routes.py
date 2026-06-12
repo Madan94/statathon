@@ -31,7 +31,7 @@ from fastapi import (
     WebSocket, WebSocketDisconnect,
 )
 from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 
 from database.database import SessionLocal
 from database.models import Analysis, Dataset, ReportCorrection, ReportJob, ReportTemplate
@@ -39,6 +39,7 @@ from database.models import ReportTemplateExtractionJob
 from deps import get_current_user_id
 from auth.permissions import require_analysis_owner
 from services.analysis_results_service import resolve_semantic_analysis_payload, enrich_payload_for_dashboard
+from services.analysis_dataframe_service import load_analysis_dataframe
 from core.ingestion import dataframe_for_uploaded_dataset
 from object_storage.object_store import try_build_default_store
 from utils.datetime_json import isoformat_utc
@@ -60,6 +61,16 @@ from .schemas import (
 from . import delivery as delivery_mod
 
 logger = logging.getLogger(__name__)
+
+
+def _approved_df_loader(db: Session, analysis_id: int):
+    """Load latest approved working dataset (lineage snapshot or upload)."""
+
+    def _load_df():
+        df, _ = load_analysis_dataframe(db, analysis_id)
+        return df
+
+    return _load_df
 
 router = APIRouter(prefix="/report-builder", tags=["report-builder"])
 
@@ -159,7 +170,17 @@ def list_ready_analyses(
     user_id: int = Depends(get_current_user_id),
 ):
     rows = (
-        db.query(Analysis, Dataset)
+        db.query(
+            Analysis.id,
+            Analysis.dataset_id,
+            Analysis.status,
+            Analysis.created_at,
+            Dataset.id,
+            Dataset.filename,
+            Dataset.row_count,
+            Dataset.column_count,
+            Dataset.upload_status,
+        )
         .join(Dataset, Analysis.dataset_id == Dataset.id)
         .filter(Dataset.user_id == user_id, Analysis.status == "complete")
         .order_by(Analysis.id.desc())
@@ -168,16 +189,16 @@ def list_ready_analyses(
     )
     return [
         ReadyAnalysisOut(
-            analysis_id=an.id,
-            dataset_id=ds.id,
-            filename=ds.filename,
-            row_count=ds.row_count or 0,
-            column_count=ds.column_count or 0,
-            status=an.status,
-            upload_status=ds.upload_status,
-            created_at=isoformat_utc(an.created_at),
+            analysis_id=an_id,
+            dataset_id=ds_id,
+            filename=filename,
+            row_count=row_count or 0,
+            column_count=column_count or 0,
+            status=status,
+            upload_status=upload_status,
+            created_at=isoformat_utc(created_at),
         )
-        for an, ds in rows
+        for an_id, ds_id, status, created_at, _, filename, row_count, column_count, upload_status in rows
     ]
 
 
@@ -660,15 +681,7 @@ def _run_job(job_id: int):
 
         # Lazy DataFrame loader (Phase 3 kernel caches it)
         def _load_df():
-            store = None
-            if dataset.object_key:
-                store = try_build_default_store()
-            return dataframe_for_uploaded_dataset(
-                dataset_storage_path=dataset.storage_path,
-                dataset_object_key=dataset.object_key,
-                filename=dataset.filename,
-                object_store=store,
-            )
+            return _approved_df_loader(db, analysis.id)()
 
         template_ast = None
         if job.template_id:
@@ -1274,13 +1287,7 @@ def deep_context(
     payload = enrich_payload_for_dashboard(db, analysis.id, payload)
 
     def _load_df():
-        store = try_build_default_store() if dataset.object_key else None
-        return dataframe_for_uploaded_dataset(
-            dataset_storage_path=dataset.storage_path,
-            dataset_object_key=dataset.object_key,
-            filename=dataset.filename,
-            object_store=store,
-        )
+        return _approved_df_loader(db, analysis.id)()
 
     from report_builder.deep_bi import get_context_status
     return get_context_status(
@@ -1318,13 +1325,7 @@ def deep_chat(
     payload = enrich_payload_for_dashboard(db, analysis.id, payload)
 
     def _load_df():
-        store = try_build_default_store() if dataset.object_key else None
-        return dataframe_for_uploaded_dataset(
-            dataset_storage_path=dataset.storage_path,
-            dataset_object_key=dataset.object_key,
-            filename=dataset.filename,
-            object_store=store,
-        )
+        return _approved_df_loader(db, analysis.id)()
 
     ledger = ReflectionLedger(db)
     stm = STM()
@@ -1379,13 +1380,7 @@ def chat(
     payload = enrich_payload_for_dashboard(db, analysis.id, payload)
 
     def _load_df():
-        store = try_build_default_store() if dataset.object_key else None
-        return dataframe_for_uploaded_dataset(
-            dataset_storage_path=dataset.storage_path,
-            dataset_object_key=dataset.object_key,
-            filename=dataset.filename,
-            object_store=store,
-        )
+        return _approved_df_loader(db, analysis.id)()
 
     turn = bi_chat.chat_query(
         job_id=job.id,
@@ -1459,14 +1454,8 @@ async def ws_job(websocket: WebSocket, job_id: int):
                     payload = resolve_semantic_analysis_payload(db, analysis.id) or {}
                     payload = enrich_payload_for_dashboard(db, analysis.id, payload)
 
-                    def _load_df(_ds=dataset):
-                        store = try_build_default_store() if _ds.object_key else None
-                        return dataframe_for_uploaded_dataset(
-                            dataset_storage_path=_ds.storage_path,
-                            dataset_object_key=_ds.object_key,
-                            filename=_ds.filename,
-                            object_store=store,
-                        )
+                    def _load_df():
+                        return _approved_df_loader(db, analysis.id)()
 
                     turn = bi_chat.chat_query(
                         job_id=job.id, analysis_id=analysis.id,

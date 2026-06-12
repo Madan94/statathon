@@ -135,6 +135,9 @@ def finalize_successful_analysis(
         raise ValueError("Analysis row missing")
     analysis_row.status = "complete"
     analysis_row.completed_at = datetime.utcnow()
+    from services.analysis_payload_cache import invalidate_analysis_cache
+
+    invalidate_analysis_cache(analysis_id)
     report_dir = os.getenv("REPORT_STORAGE_PATH", "./storage/reports")
     db.add(
         Report(

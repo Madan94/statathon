@@ -143,6 +143,8 @@ def apply_user_decisions(
         action = str(d.get("user_action") or "").upper()
         row_id = d.get("row_id")
         col = d.get("column")
+        if col and col not in out.columns:
+            continue
         if action in ("KEEP", "IGNORE_RULE"):
             continue
         if action == "REMOVE_ROW" and isinstance(row_id, int):
@@ -161,7 +163,6 @@ def apply_user_decisions(
                 logger.info("MODIFY failed for row %s col %s: %s", row_id, col, exc)
 
     if rows_to_drop:
-        keep_mask = ~out.index.isin([out.index[i] for i in rows_to_drop
-                                       if 0 <= i < len(out)])
-        out = out[keep_mask].reset_index(drop=True)
+        keep = [i for i in range(len(out)) if i not in rows_to_drop]
+        out = out.iloc[keep].reset_index(drop=True)
     return out

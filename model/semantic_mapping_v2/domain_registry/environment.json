@@ -1,0 +1,24 @@
+{
+  "usecase": "environment",
+  "version": "2026.1",
+  "description": "Environmental statistics: air, water, forest, climate, emissions and biodiversity.",
+  "keywords": ["environment", "air quality", "water quality", "forest", "climate", "emission", "pollution", "biodiversity", "rainfall", "temperature", "waste", "carbon"],
+  "domains": [
+    {"domain": "air_quality", "description": "Air quality indices and pollutants.", "synonyms": ["air quality", "aqi", "pm2.5", "pm10", "no2", "so2", "pollutant"], "examples": ["aqi", "pm25", "pm10", "no2_level"]},
+    {"domain": "water_quality", "description": "Water quality parameters and pollution.", "synonyms": ["water quality", "bod", "cod", "ph", "dissolved oxygen", "turbidity", "contamination"], "examples": ["water_ph", "bod_level", "dissolved_oxygen"]},
+    {"domain": "forest", "description": "Forest cover, area and type.", "synonyms": ["forest", "forest cover", "tree cover", "green cover", "forest area", "deforestation"], "examples": ["forest_cover", "forest_area_sqkm", "tree_density"]},
+    {"domain": "climate", "description": "Climate variables: temperature, rainfall, humidity.", "synonyms": ["climate", "temperature", "rainfall", "humidity", "precipitation", "weather"], "examples": ["temperature", "rainfall_mm", "humidity"]},
+    {"domain": "emissions", "description": "Greenhouse gas and pollutant emissions.", "synonyms": ["emissions", "co2", "carbon", "greenhouse gas", "ghg", "methane"], "examples": ["co2_emissions", "ghg_emissions", "carbon_footprint"]},
+    {"domain": "waste", "description": "Waste generation, treatment and management.", "synonyms": ["waste", "garbage", "solid waste", "waste generated", "recycling", "landfill"], "examples": ["waste_generated", "waste_treated", "recycling_rate"]},
+    {"domain": "biodiversity", "description": "Species, biodiversity and ecological measures.", "synonyms": ["biodiversity", "species", "wildlife", "flora", "fauna", "habitat"], "examples": ["species_count", "biodiversity_index", "habitat_type"]},
+    {"domain": "land_use", "description": "Land use, land cover and change.", "synonyms": ["land use", "land cover", "cropland", "wasteland", "built up", "land change"], "examples": ["land_use_type", "land_cover", "built_up_area"]},
+    {"domain": "water_resources", "description": "Water bodies, groundwater and availability.", "synonyms": ["water resources", "groundwater", "river", "lake", "water table", "watershed"], "examples": ["groundwater_level", "water_body_area", "water_table"]},
+    {"domain": "energy_use", "description": "Energy use and renewable share in environment context.", "synonyms": ["energy use", "renewable share", "fossil fuel", "energy consumption", "clean energy"], "examples": ["energy_consumption", "renewable_share", "fossil_fuel_use"]},
+    {"domain": "disaster", "description": "Natural disasters and hazard events.", "synonyms": ["disaster", "flood", "drought", "cyclone", "hazard", "calamity"], "examples": ["disaster_type", "flood_affected", "drought_status"]},
+    {"domain": "conservation", "description": "Conservation, protected areas and measures.", "synonyms": ["conservation", "protected area", "sanctuary", "reserve", "afforestation"], "examples": ["protected_area", "afforestation", "conservation_status"]},
+    {"domain": "geography", "description": "Geographic location: state, district, region, station.", "synonyms": ["state", "district", "region", "station", "location", "zone"], "examples": ["state", "district", "monitoring_station"]},
+    {"domain": "survey_metadata", "description": "Monitoring year, period, frequency and source.", "synonyms": ["year", "period", "frequency", "reporting year", "source", "date"], "examples": ["year", "monitoring_period", "data_source"]},
+    {"domain": "identifier", "description": "Unique station / record identifiers.", "synonyms": ["id", "key", "code", "station id", "monitoring id"], "examples": ["station_id", "record_id", "monitoring_id"]},
+    {"domain": "uncorrelated", "description": "Free-text or values with no clear environment domain.", "synonyms": ["remarks", "notes", "comment", "misc"], "examples": ["remarks", "notes", "comment"]}
+  ]
+}

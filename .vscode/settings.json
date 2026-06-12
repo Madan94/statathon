@@ -2,5 +2,6 @@
     "python.analysis.extraPaths": [
         "./model",
         "./api"
-    ]
+    ],
+    "python-envs.defaultEnvManager": "ms-python.python:venv"
 }

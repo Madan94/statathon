@@ -24,6 +24,31 @@ from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_EMBEDDING_MODEL = "BAAI/bge-m3"
+
+
+def embedding_model_slug(model_path: str) -> str:
+    """Filesystem-safe slug for model-scoped embedding caches."""
+    slug = model_path.replace("/", "_").replace("\\", "_").strip()
+    return slug or "unknown_model"
+
+
+def vector_cache_dir_for_model(
+    repo_root: Path,
+    model_path: str,
+    vector_cache_dir: str | None = None,
+) -> str:
+    """Resolve on-disk cache path; busts legacy MiniLM 384D caches by model name."""
+    if vector_cache_dir:
+        return vector_cache_dir
+    slug = embedding_model_slug(model_path)
+    if "bge_m3" in slug or "bge-m3" in slug.lower():
+        subdir = "vector_cache_bge_m3"
+    else:
+        subdir = f"vector_cache_{slug}"
+    return str(repo_root / "model" / "storage" / subdir)
+
+
 # ==========================================
 # THE LOCAL HIERARCHY MAP (Replaces Neo4j Macro-Routing)
 # ==========================================
@@ -62,7 +87,6 @@ LOCAL_HIERARCHY_MAP = {
     "survey_metadata": "survey_metadata",
     "geography": "geography",
     "demographic": "demographic",
-    "household": "household",
     "uncorrelated_metadata": "uncorrelated"
 }
 
@@ -71,26 +95,29 @@ class SemanticPipeline:
 
     def __init__(self, vector_cache_dir: str | None = None):
         repo_root = Path(__file__).resolve().parents[2]
-        cache = vector_cache_dir or str(repo_root / "model" / "storage" / "vector_cache")
-        self.vector_store = VectorStore(cache_dir=cache)
         self.preprocessor = ColumnPreprocessor()
         self.domain_repo = DomainRepository()
 
         custom_weights = os.getenv("MOSPI_EMBEDDING_MODEL_PATH")
-        default_weights = repo_root / "model" / "weights" / "mospi-minilm-v1"
-        
         if custom_weights:
             model_path = custom_weights
-        elif default_weights.exists():
-            model_path = str(default_weights)
         else:
-            logger.warning("Custom MoSPI weights not found. Falling back to base model.")
-            model_path = "sentence-transformers/all-MiniLM-L6-v2"
+            model_path = os.getenv("SEMANTIC_EMBEDDING_MODEL", DEFAULT_EMBEDDING_MODEL)
+
+        cache = vector_cache_dir_for_model(repo_root, model_path, vector_cache_dir)
+        os.makedirs(cache, exist_ok=True)
+        logger.info("Embedding vector cache directory: %s", cache)
 
         logger.info("Loading Bi-Encoder from: %s", model_path)
         self.encoder_model = SentenceTransformer(model_path)
-        
-        self.embedder = BertEmbedder(model=self.encoder_model, vector_store=self.vector_store)
+        embedding_dim = int(self.encoder_model.get_sentence_embedding_dimension())
+        self.vector_store = VectorStore(cache_dir=cache, expected_dim=embedding_dim)
+
+        self.embedder = BertEmbedder(
+            model=self.encoder_model,
+            model_name=model_path,
+            vector_store=self.vector_store,
+        )
         
         json_path = str(repo_root / "model" / "config" / "domain_definitions.json")
         self.hierarchical_router = HierarchicalDomainRouter(json_path, self.embedder)
@@ -112,15 +139,18 @@ class SemanticPipeline:
         if domain_name in LOCAL_HIERARCHY_MAP:
             return LOCAL_HIERARCHY_MAP[domain_name]
         
-        # 2. Dynamic Heuristic (Categorize dynamic domains by their prefix)
+        # 2. Dynamic Identity Preservation
         if domain_name.startswith("dyn_"):
             parts = domain_name.split('_')
-            valid_archetypes = {"labor", "health", "education", "agriculture", "census", "economic_industry"}
-            if len(parts) > 1 and parts[1] in valid_archetypes:
+            # If it has a valid theme like dyn_labor_123, roll it up to labor
+            if len(parts) > 1 and parts[1] in LOCAL_HIERARCHY_MAP.values():
                 return parts[1]
+            # Otherwise, keep its unique dynamic identity so it doesn't merge into a giant bucket
+            return domain_name
                 
-        # 3. Final Fallback
-        return dataset_archetype or domain_name
+        # 3. Final Fallback 
+        # Trust the engine and return the raw name. NO archetype bucket.
+        return domain_name
 
     def run(
         self,
@@ -175,6 +205,7 @@ class SemanticPipeline:
         
         locked_columns = []
         unknown_columns = []
+        phase_1_scores_by_column: dict[str, dict[str, float]] = {}
         
         # ==========================================
         # PHASE 1: THE GATEKEEPER (Static Ontology Dominance)
@@ -186,6 +217,11 @@ class SemanticPipeline:
             
             prediction = self.hierarchical_router.predict_domain(col, emb, archetype)
             routing_by_column[col] = dict(prediction)
+            sub_scores = prediction.get("sub_domain_scores")
+            if isinstance(sub_scores, dict):
+                phase_1_scores_by_column[col] = {
+                    k: float(v) for k, v in sub_scores.items()
+                }
             static_domain = prediction["predicted_domain"]
             static_score = prediction.get("confidence", 0.0)
             is_locked = bool(prediction.get("is_locked", False))
@@ -218,6 +254,12 @@ class SemanticPipeline:
                 column_embeddings=unknown_embeddings,
                 provisional_domains={},
                 dataset_domain=dataset_domain,
+                column_phase_1_scores={
+                    c: phase_1_scores_by_column[c]
+                    for c in unknown_columns
+                    if c in phase_1_scores_by_column
+                },
+                embed_text_fn=self.embedder.embed_text,
             )
             self.domain_repo.merge_runtime(dynamic_specs)
 
@@ -227,9 +269,15 @@ class SemanticPipeline:
             for dom_key, spec in dynamic_specs.items():
                 meta = spec.get("metadata", {})
                 cohesion = float(meta.get("cohesion", 0.75))
+                anchor_scores = meta.get("anchor_scores") or {}
+                semantic_title = meta.get("semantic_title")
                 for member in meta.get("members", []):
                     dyn_mapping[member] = dom_key
-                    dyn_confidence[member] = cohesion
+                    dyn_confidence[member] = float(
+                        anchor_scores.get(member, cohesion)
+                    )
+                if semantic_title:
+                    meta["display_label"] = semantic_title
 
             # ==========================================
             # PHASE 3: THE UNCORRELATED SINK
@@ -238,7 +286,14 @@ class SemanticPipeline:
                 new_domain = dyn_mapping.get(col)
                 if new_domain:
                     real_conf = dyn_confidence.get(col, 0.75)
+                    spec = dynamic_specs.get(new_domain, {})
+                    meta = spec.get("metadata", {})
+                    display_label = meta.get("display_label") or meta.get(
+                        "semantic_title"
+                    ) or new_domain.replace("_", " ").title()
                     final_domain = self.resolve_macro_domain(new_domain, archetype)
+                    if meta.get("semantic_title"):
+                        final_domain = str(meta["semantic_title"])
                     column_domains[col] = final_domain
                     column_metadata[col]["predicted_domain"] = final_domain
                     domain_scores_all[col][final_domain] = real_conf
@@ -246,7 +301,7 @@ class SemanticPipeline:
                         **routing_by_column.get(col, {}),
                         "match_method": "dynamic_cluster",
                         "predicted_domain": final_domain,
-                        "display_label": final_domain.replace("_", " ").title(),
+                        "display_label": display_label,
                         "is_locked": False,
                         "dynamic_cohesion": round(real_conf, 4),
                     }
@@ -401,25 +456,20 @@ class SemanticPipeline:
 
     def _build_domain_registry(self, archetype: str, dynamic_specs: dict) -> dict:
         """Produce a structured domain registry merging static ontology + this-run dynamic domains."""
-        repo_root = Path(__file__).resolve().parents[2]
-        json_path = repo_root / "model" / "config" / "domain_definitions.json"
-        try:
-            import json as _json
-            ontology = _json.loads(json_path.read_text(encoding="utf-8"))
-        except Exception:
-            ontology = {}
-
-        static_by_type: dict[str, Any] = {}
-        for tier_name, tier_data in (ontology.get("dataset_types") or {}).items():
-            subdomains = list((tier_data.get("subdomains") or {}).keys())
-            static_by_type[tier_name] = {
-                "label": tier_data.get("label", tier_name),
-                "domains": subdomains,
+        
+        # Extract the unique macro domains from your LOCAL_HIERARCHY_MAP
+        unique_macro_domains = sorted(list(set(LOCAL_HIERARCHY_MAP.values())))
+        
+        static_by_type = {
+            "macro_categories": {
+                "label": "Macro Domains",
+                "domains": unique_macro_domains,
                 "keywords_sample": {
-                    sd: list(kws)[:6]
-                    for sd, kws in (tier_data.get("subdomains") or {}).items()
-                },
+                    dom: [k for k, v in LOCAL_HIERARCHY_MAP.items() if v == dom][:5]
+                    for dom in unique_macro_domains
+                }
             }
+        }
 
         dynamic_entries = {}
         for dom_key, spec in (dynamic_specs or {}).items():
@@ -428,6 +478,8 @@ class SemanticPipeline:
                 "parent_theme": meta.get("parent_theme", "unknown"),
                 "members": meta.get("members", []),
                 "cohesion": meta.get("cohesion", 0.0),
+                "semantic_title": meta.get("semantic_title"),
+                "description": spec.get("description"),
                 "keywords": (spec.get("keywords") or [])[:12],
                 "is_dynamic": True,
             }

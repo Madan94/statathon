@@ -1,114 +1,125 @@
-"""Bayesian-style anomaly method selection.
+"""Confidence score engine for Z-Score vs IQR method recommendation.
 
-Decides per-column whether **Z-score**, **IQR**, or both are appropriate,
-using all distributional evidence from the shared profile (normality
-tests, robust skew, kurtosis, multimodality, sample size).
-
-The output schema is backward-compatible with the legacy snippet:
-    {
-      "recommended":         "Z_SCORE" | "IQR" | "ROBUST_ENSEMBLE",
-      "z_score_confidence":  float 0..1,
-      "iqr_confidence":      float 0..1,
-      "distribution_hint":   {skewness, kurtosis_excess, normality_score, ...},
-    }
-
-Adds:
-    "rationale":     human-readable explanation (string)
-    "signals":       dict of every signal used (for audit)
-    "score_breakdown": calibrated confidence per method
+Uses Shapiro-Wilk as the primary normality signal. Does NOT auto-run detection;
+returns confidence percentages and human-readable reasons only.
 """
 from __future__ import annotations
 
 from typing import Any
 
-from analytics import default_calibrator
 from outliers.distribution_engine import distribution_snippet
+
+
+def _pct(value: float) -> int:
+    return int(round(max(0.0, min(100.0, value * 100.0))))
 
 
 def method_recommendation(series) -> dict[str, Any]:
     sn = distribution_snippet(series)
 
-    # ---------------- signals supporting Z-SCORE (normality) ----------------
-    normality = float(sn.get("normality_score") or 0.55)
-    var_stab = float(sn.get("variance_stability") or 0.8)
-    sample_size = float(sn.get("n") or 0)
-    multimodal_penalty = 0.5 if sn.get("is_multimodal") else 1.0
-    sample_adequacy = min(1.0, sample_size / 30.0)
-
-    z_signals = {
-        "normality": normality * multimodal_penalty,
-        "variance_stability": var_stab,
-        "sample_size_adequacy": sample_adequacy,
-        # robustness_need is the *opposite* signal for Z-score
-        "robustness_need": max(0.0, 1.0 - float(sn.get("heaviness_score") or 0.0)),
-    }
-    z_calibrated = default_calibrator.combine("anomaly_method", z_signals)
-
-    # ---------------- signals supporting IQR (robust) ----------------
-    heaviness = float(sn.get("heaviness_score") or 0.0)
-    robust_skew = abs(float(sn.get("robust_skew") or 0.0))
-    iqr = float(sn.get("iqr") or 1e-9)
-    mad = float(sn.get("median_abs_dev_approx") or 1e-9)
-    robust_ratio = min(1.5, iqr / max(mad, 1e-12)) / 1.5  # normalised 0..1
-
-    iqr_signals = {
-        # IQR wants the *inverse* of normality
-        "normality": max(0.0, 1.0 - normality),
-        "robustness_need": min(1.0, heaviness + 0.6 * robust_skew),
-        "variance_stability": min(1.0, robust_ratio),
-        "sample_size_adequacy": min(1.0, sample_size / 20.0),
-    }
-    iqr_calibrated = default_calibrator.combine("anomaly_method", iqr_signals)
-
-    z_conf = round(z_calibrated.value, 4)
-    iqr_conf = round(iqr_calibrated.value, 4)
-
-    # ---------------- Recommendation decision ----------------
-    multimodal = bool(sn.get("is_multimodal"))
+    shapiro_p = sn.get("shapiro_p")
+    skewness = abs(float(sn.get("skewness") or 0.0))
+    kurtosis = abs(float(sn.get("kurtosis_excess") or 0.0))
     is_normal = bool(sn.get("is_normal_5pct"))
-    rationale_bits: list[str] = []
+    heaviness = float(sn.get("heaviness_score") or 0.0)
+    sample_size = float(sn.get("n") or 0)
 
-    if multimodal:
-        rationale_bits.append("multimodality detected -> robust ensemble recommended")
-    if is_normal:
-        rationale_bits.append("data approximately normal at 5%")
-    if heaviness > 0.5:
-        rationale_bits.append(f"heavy-tailed (heaviness={heaviness:.2f})")
-    if robust_skew > 0.3:
-        rationale_bits.append(f"asymmetric (robust_skew={robust_skew:.2f})")
-    if sample_size < 30:
-        rationale_bits.append(f"small sample (n={int(sample_size)})")
-
-    if multimodal or heaviness > 0.6:
-        recommended = "ROBUST_ENSEMBLE"
-    elif iqr_conf > z_conf + 0.05:
-        recommended = "IQR"
+    # --- Shapiro-primary Z-Score confidence ---
+    if shapiro_p is not None:
+        z_base = float(shapiro_p)
+    elif is_normal:
+        z_base = 0.75
     else:
-        recommended = "Z_SCORE"
+        z_base = 0.25
+
+    if skewness < 0.5:
+        z_base += 0.10
+    elif skewness > 1.0:
+        z_base -= 0.20
+
+    if kurtosis < 1.0:
+        z_base += 0.05
+    elif kurtosis > 3.0:
+        z_base -= 0.15
+
+    if sample_size < 30:
+        z_base -= 0.10
+
+    z_conf = max(0.05, min(0.95, z_base))
+
+    # --- IQR confidence (inverse of normality + heavy tails) ---
+    iqr_base = 0.15
+    if shapiro_p is not None and shapiro_p <= 0.05:
+        iqr_base += 0.35
+    if not is_normal:
+        iqr_base += 0.15
+    if skewness >= 0.5:
+        iqr_base += min(0.25, skewness * 0.15)
+    if kurtosis >= 1.0:
+        iqr_base += min(0.20, kurtosis * 0.05)
+    if heaviness > 0.4:
+        iqr_base += heaviness * 0.20
+
+    iqr_conf = max(0.05, min(0.95, iqr_base))
+
+    # Normalize to percentages summing ~100
+    total = z_conf + iqr_conf
+    z_pct = _pct(z_conf / total)
+    iqr_pct = 100 - z_pct
+
+    recommended = "Z_SCORE" if z_pct >= iqr_pct else "IQR"
+
+    reasons: list[str] = []
+    if shapiro_p is not None and shapiro_p > 0.05:
+        reasons.append("Data passes normality test")
+    elif shapiro_p is not None:
+        reasons.append("Data fails Shapiro-Wilk normality test")
+    if skewness < 0.5:
+        reasons.append("Low skewness")
+    elif skewness >= 1.0:
+        reasons.append("High skewness")
+    if kurtosis < 1.0:
+        reasons.append("Low kurtosis")
+    elif kurtosis >= 3.0:
+        reasons.append("Heavy tails (high kurtosis)")
+    if heaviness > 0.5:
+        reasons.append("Outliers or heavy tails already present")
+    if sample_size < 30:
+        reasons.append(f"Small sample (n={int(sample_size)})")
+
+    z_pros = [
+        "Best for bell-shaped distributions",
+        "Interpretable standard-deviation bands",
+    ]
+    z_cons = [
+        "Sensitive to extreme values affecting mean/std",
+        "Assumes approximate normality",
+    ]
+    iqr_pros = [
+        "Robust to skew and heavy tails",
+        "Not affected by extreme values in spread estimate",
+    ]
+    iqr_cons = [
+        "Less precise for truly normal data",
+        "Fence distance harder to interpret than z-scores",
+    ]
 
     return {
         "recommended": recommended,
-        "z_score_confidence": z_conf,
-        "iqr_confidence": iqr_conf,
+        "z_score_confidence": z_pct,
+        "iqr_confidence": iqr_pct,
+        "reason": reasons or ["Default recommendation from confidence margin"],
+        "rationale": "; ".join(reasons) if reasons else "Default recommendation from confidence margin",
+        "z_score_pros": z_pros,
+        "z_score_cons": z_cons,
+        "iqr_pros": iqr_pros,
+        "iqr_cons": iqr_cons,
         "distribution_hint": {
             "skewness": sn.get("skewness"),
             "kurtosis_excess": sn.get("kurtosis_excess"),
-            "normality_score": normality,
-            "robust_skew": sn.get("robust_skew"),
-            "is_normal_5pct": sn.get("is_normal_5pct"),
-            "is_multimodal": sn.get("is_multimodal"),
-            "heaviness_score": heaviness,
-            "z_threshold_extreme": sn.get("z_threshold_extreme"),
-            "iqr_multiplier_recommended": sn.get("iqr_multiplier_recommended"),
+            "shapiro_p": shapiro_p,
+            "shapiro_w_statistic": sn.get("shapiro_w_statistic"),
+            "is_normal_5pct": is_normal,
             "n": int(sample_size),
-        },
-        "rationale": "; ".join(rationale_bits) or "default selection by confidence margin",
-        "signals": {
-            "z_score": z_signals,
-            "iqr": iqr_signals,
-        },
-        "score_breakdown": {
-            "z_score": z_calibrated.to_dict(),
-            "iqr": iqr_calibrated.to_dict(),
         },
     }

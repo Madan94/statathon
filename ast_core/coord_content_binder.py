@@ -28,17 +28,13 @@ class ContentBindReport:
 
 def _gemini_model():
     try:
-        import google.generativeai as genai  # type: ignore
+        from core.gemini_client import get_generative_model
     except Exception:
         return None
-    key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    if not key:
+    if not (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")):
         return None
     try:
-        genai.configure(api_key=key)
-        return genai.GenerativeModel(
-            os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash")
-        )
+        return get_generative_model()
     except Exception as exc:
         logger.warning("Gemini init failed: %s", exc)
         return None

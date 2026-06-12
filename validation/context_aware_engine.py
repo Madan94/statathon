@@ -40,6 +40,7 @@ import pandas as pd
 
 from validation.rule_discovery import DiscoveredRule, discover_all_rules
 from validation.rule_confidence import score_rule_confidence
+from validation.candidate_display import format_expected, format_reason
 from validation.violation_classifier import (
     classify_violation, relative_magnitude, severity_summary,
 )
@@ -153,6 +154,7 @@ def execute_single_column_rule(
         "rule_source": rule.source,
         "rule_severity_hint": rule.severity,
         "explanation": rule.explanation,
+        "rule_params": params,
         "kg_relationships": rule.kg_relationships,
         "confidence_signals": rule.confidence_signals,
     }
@@ -348,18 +350,18 @@ def run_context_aware_validation(
             if target and target in df.columns:
                 hit = execute_single_column_rule(df, rule, target_column=target)
                 if hit:
-                    single_results.append(_finalize(hit, rule))
+                    single_results.append(_finalize(hit, rule, columns_meta))
             elif target:
                 # Treat as regex pattern — match every column that fits
                 for col in columns:
                     if _matches_column(target, col):
                         hit = execute_single_column_rule(df, rule, target_column=col)
                         if hit:
-                            single_results.append(_finalize(hit, rule))
+                            single_results.append(_finalize(hit, rule, columns_meta))
         else:
             hit = execute_multi_column_rule(df, rule)
             if hit:
-                multi_results.append(_finalize(hit, rule))
+                multi_results.append(_finalize(hit, rule, columns_meta))
 
     candidates = _build_review_candidates(single_results + multi_results)
     sev_counts = severity_summary(candidates)
@@ -381,12 +383,21 @@ def run_context_aware_validation(
     }
 
 
-def _finalize(hit: dict[str, Any], rule: DiscoveredRule) -> dict[str, Any]:
+def _finalize(
+    hit: dict[str, Any],
+    rule: DiscoveredRule,
+    columns_meta: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """Attach calibrated confidence + per-violation severity classification."""
     conf = score_rule_confidence(rule.confidence_signals or {})
     hit["confidence"] = round(conf.get("value", 0.5), 4)
     hit["confidence_band"] = conf.get("band", "medium")
     hit["confidence_explain"] = conf.get("explain")
+
+    col = hit.get("column")
+    if columns_meta and col and isinstance(columns_meta.get(col), dict):
+        meta = columns_meta[col]
+        hit["domain"] = meta.get("domain") or meta.get("semantic_domain")
 
     # Classify the rule overall + each violation row
     overall_severity = classify_violation(
@@ -418,9 +429,11 @@ def _build_review_candidates(
     """Row-level rollup the AGUI can render for user review."""
     out: list[dict[str, Any]] = []
     for hit in rule_hits:
+        expected = format_expected(hit)
         for v in hit.get("violations") or []:
             out.append({
                 "rule_id": hit["rule_id"],
+                "rule": hit["rule_id"],
                 "rule_type": hit["rule_type"],
                 "kind": hit["kind"],
                 "column": hit.get("column"),
@@ -431,8 +444,12 @@ def _build_review_candidates(
                 "confidence": hit.get("confidence"),
                 "confidence_band": hit.get("confidence_band"),
                 "rule_source": hit.get("rule_source"),
+                "domain": hit.get("domain"),
+                "rule_params": hit.get("rule_params"),
                 "kg_relationships": hit.get("kg_relationships"),
                 "explanation": hit.get("explanation"),
+                "expected": expected,
+                "reason": format_reason(hit, v),
                 "user_actions_allowed": [
                     "KEEP", "MODIFY", "TREAT_AS_MISSING", "REMOVE_ROW", "IGNORE_RULE",
                 ],

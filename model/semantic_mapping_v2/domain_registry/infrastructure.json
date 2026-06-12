@@ -1,0 +1,24 @@
+{
+  "usecase": "infrastructure",
+  "version": "2026.1",
+  "description": "Infrastructure statistics: transport, roads, water, sanitation, telecom and assets.",
+  "keywords": ["infrastructure", "road", "transport", "water", "sanitation", "telecom", "electricity", "asset", "facility", "connectivity", "construction", "network"],
+  "domains": [
+    {"domain": "roads", "description": "Road length, type and surface.", "synonyms": ["road", "highway", "road length", "road type", "paved", "surface"], "examples": ["road_length_km", "road_type", "surface_type"]},
+    {"domain": "transport", "description": "Transport mode, vehicles and traffic.", "synonyms": ["transport", "vehicle", "traffic", "bus", "rail", "mode of transport"], "examples": ["vehicle_count", "transport_mode", "traffic_volume"]},
+    {"domain": "water_supply", "description": "Water supply source, coverage and access.", "synonyms": ["water supply", "drinking water", "water source", "tap", "borewell", "water access"], "examples": ["water_source", "water_coverage", "tap_connections"]},
+    {"domain": "sanitation", "description": "Sanitation, toilets and waste management.", "synonyms": ["sanitation", "toilet", "latrine", "sewerage", "waste", "drainage"], "examples": ["toilet_access", "sanitation_type", "sewerage_coverage"]},
+    {"domain": "electricity_access", "description": "Electricity connection and access.", "synonyms": ["electricity", "power connection", "electrified", "grid access", "power supply"], "examples": ["has_electricity", "power_connection", "electrified"]},
+    {"domain": "telecom", "description": "Telecom, internet and mobile connectivity.", "synonyms": ["telecom", "internet", "mobile", "broadband", "connectivity", "network coverage"], "examples": ["internet_access", "mobile_coverage", "broadband"]},
+    {"domain": "housing_infra", "description": "Housing stock and building infrastructure.", "synonyms": ["housing", "building", "dwelling", "construction", "house type", "structure"], "examples": ["house_type", "building_count", "construction_type"]},
+    {"domain": "facility", "description": "Public facilities: schools, health centres, markets.", "synonyms": ["facility", "amenity", "public facility", "service centre", "availability"], "examples": ["facility_type", "has_school", "amenity_count"]},
+    {"domain": "asset", "description": "Physical assets and ownership.", "synonyms": ["asset", "ownership", "equipment", "machinery", "durable"], "examples": ["asset_type", "owns_asset", "equipment_count"]},
+    {"domain": "investment", "description": "Infrastructure investment and expenditure.", "synonyms": ["investment", "expenditure", "project cost", "funding", "capital outlay"], "examples": ["project_cost", "investment_amount", "capital_outlay"]},
+    {"domain": "capacity", "description": "Capacity, coverage and utilisation metrics.", "synonyms": ["capacity", "coverage", "utilisation", "throughput", "load"], "examples": ["capacity", "coverage_pct", "utilisation"]},
+    {"domain": "condition", "description": "Condition, quality and maintenance status.", "synonyms": ["condition", "quality", "maintenance", "status", "functional"], "examples": ["condition", "is_functional", "maintenance_status"]},
+    {"domain": "geography", "description": "Geographic location: state, district, block, village, ward.", "synonyms": ["state", "district", "block", "village", "ward", "region", "rural", "urban"], "examples": ["state", "district", "block", "village"]},
+    {"domain": "survey_metadata", "description": "Reporting year, period and source.", "synonyms": ["year", "period", "reporting year", "source", "as on date"], "examples": ["year", "reporting_period", "as_on_date"]},
+    {"domain": "identifier", "description": "Unique facility / asset / record identifiers.", "synonyms": ["id", "key", "code", "facility id", "asset id"], "examples": ["facility_id", "asset_id", "record_id"]},
+    {"domain": "uncorrelated", "description": "Free-text or values with no clear infrastructure domain.", "synonyms": ["remarks", "notes", "comment", "misc"], "examples": ["remarks", "notes", "comment"]}
+  ]
+}

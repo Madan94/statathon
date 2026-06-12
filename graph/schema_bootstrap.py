@@ -23,9 +23,6 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-_BOOTSTRAP_SENTINEL = "_statathon_schema_bootstrap_v2"
-
-
 def ensure_schema() -> dict[str, Any]:
     """Idempotently create indexes + constraints. Returns a status dict."""
     if os.getenv("NEO4J_ENABLED", "false").lower() != "true":
@@ -43,7 +40,6 @@ def ensure_schema() -> dict[str, Any]:
         return {"enabled": True, "ok": False, "error": "no password"}
 
     statements = [
-        # Composite uniqueness — one StatathonCol per (analysis_id, name)
         "CREATE CONSTRAINT statathon_col_uniq IF NOT EXISTS "
         "FOR (c:StatathonCol) REQUIRE (c.analysis_id, c.name) IS UNIQUE",
         "CREATE CONSTRAINT statathon_cluster_uniq IF NOT EXISTS "
@@ -52,8 +48,6 @@ def ensure_schema() -> dict[str, Any]:
         "FOR (d:StatathonSemanticDomainStub) REQUIRE (d.analysis_id, d.slug) IS UNIQUE",
         "CREATE CONSTRAINT statathon_dataset_uniq IF NOT EXISTS "
         "FOR (ds:StatathonSemanticDatasetAnchor) REQUIRE ds.analysis_id IS UNIQUE",
-
-        # Indexes that support common query patterns
         "CREATE INDEX statathon_col_domain IF NOT EXISTS "
         "FOR (c:StatathonCol) ON (c.analysis_id, c.semantic_domain)",
         "CREATE INDEX statathon_col_cluster IF NOT EXISTS "
