@@ -1,17 +1,9 @@
 ﻿'use client';
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  Upload as UploadIcon,
-  Loader2,
-  Trash2,
-  RefreshCw,
-  Link2,
-  ArrowRight,
-  Eye,
-} from 'lucide-react';
+import { Upload as UploadIcon, Loader2, Trash2, RefreshCw, Link2, ArrowRight } from 'lucide-react';
 
 import PageHeader from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
@@ -22,21 +14,15 @@ import TemplateExtractionModal, {
   type TemplateExtractionModalPhase,
 } from '@/components/report-builder/TemplateExtractionModal';
 import {
-  TypeFilterDropdown,
-  collectTypeOptions,
-  useTypeFilter,
-} from '@/components/report-builder/TypeFilterDropdown';
-import {
   reportBuilderApi,
   ReportTemplate,
   ReportJob,
   TemplateExtractionJob,
 } from '@/lib/api';
-import { buildEntityNameMap, resolveEntityLabel } from '@/lib/entityDisplayUtils';
 
 export default function ReportBuilderLanding() {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-text-muted">Loading Report Builderâ€¦</div>}>
+    <Suspense fallback={<div className="p-8 text-sm text-text-muted">Loading Report Builder...</div>}>
       <ReportBuilderContent />
     </Suspense>
   );
@@ -59,14 +45,9 @@ function ReportBuilderContent() {
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [pendingTemplateName, setPendingTemplateName] = useState('');
   const [extractedTemplateAst, setExtractedTemplateAst] = useState<Record<string, unknown> | null>(null);
-  const [viewingTemplateId, setViewingTemplateId] = useState<number | null>(null);
-  const [previewTemplateName, setPreviewTemplateName] = useState<string | null>(null);
-  const [loadingTemplateAst, setLoadingTemplateAst] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const previewRef = useRef<HTMLDivElement>(null);
-  const loadedTemplateIdRef = useRef<number | null>(null);
   const bindingAstId = searchParams.get('binding_ast_id');
   const bindingTemplateId = searchParams.get('template_id');
   const bindingSignature = searchParams.get('signature');
@@ -100,49 +81,14 @@ function ReportBuilderContent() {
     }
   }, [searchParams]);
 
-  const loadExtractedTemplate = async (
-    templateId: number,
-    scrollToPreview = false,
-    updateUrl = true
-  ) => {
-    setViewingTemplateId(templateId);
-    setLoadingTemplateAst(true);
-    setError(null);
-    try {
-      const tpl = await reportBuilderApi.getTemplate(templateId);
-      loadedTemplateIdRef.current = templateId;
-      setPreviewTemplateName(tpl.name);
-      setExtractedTemplateAst(
-        tpl.ast && typeof tpl.ast === 'object' ? tpl.ast : null
-      );
-      if (updateUrl) {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set('templateId', String(templateId));
-        router.replace(`/report-builder?${params.toString()}`, { scroll: false });
-      }
-      if (scrollToPreview) {
-        requestAnimationFrame(() => {
-          previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-      }
-    } catch (err) {
-      loadedTemplateIdRef.current = null;
-      setExtractedTemplateAst(null);
-      setPreviewTemplateName(null);
-      setError(err instanceof Error ? err.message : 'Failed to load template AST');
-    } finally {
-      setLoadingTemplateAst(false);
-    }
+  const loadExtractedTemplate = async (templateId: number) => {
+    const tpl = await reportBuilderApi.getTemplate(templateId);
+    setExtractedTemplateAst(
+      tpl && typeof tpl === 'object' && 'ast' in tpl
+        ? (tpl as { ast: Record<string, unknown> }).ast
+        : null
+    );
   };
-
-  useEffect(() => {
-    const tid = searchParams.get('templateId');
-    if (!tid || Number.isNaN(Number(tid)) || loading) return;
-    const id = Number(tid);
-    if (loadedTemplateIdRef.current === id) return;
-    void loadExtractedTemplate(id, false, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- deep-link load once per template id
-  }, [searchParams, loading]);
 
   const onUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,7 +113,7 @@ function ReportBuilderContent() {
         return;
       }
       if (final.created_template_id) {
-        await loadExtractedTemplate(final.created_template_id, true);
+        await loadExtractedTemplate(final.created_template_id);
       }
       setExtractionModalPhase('success');
       setUploadName('');
@@ -219,16 +165,6 @@ function ReportBuilderContent() {
     try {
       await reportBuilderApi.deleteTemplate(id);
       if (selectedTemplate === id) setSelectedTemplate(null);
-      if (viewingTemplateId === id) {
-        setViewingTemplateId(null);
-        setExtractedTemplateAst(null);
-        setPreviewTemplateName(null);
-        loadedTemplateIdRef.current = null;
-        const params = new URLSearchParams(searchParams.toString());
-        params.delete('templateId');
-        const qs = params.toString();
-        router.replace(qs ? `/report-builder?${qs}` : '/report-builder', { scroll: false });
-      }
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Delete failed');
@@ -269,12 +205,8 @@ function ReportBuilderContent() {
               <p className="font-semibold">Execution bundle prepared from binder</p>
               <p className="text-sm">
                 Status: <span className="font-mono">{bindingStatus || 'READY'}</span>
-                {bindingTemplateId ? (
-                  <> · Template: <span className="font-mono">{bindingTemplateId}</span></>
-                ) : null}
-                {bindingSignature ? (
-                  <> · Signature: <span className="font-mono">{bindingSignature}</span></>
-                ) : null}
+                {bindingTemplateId ? <> · Template: <span className="font-mono">{bindingTemplateId}</span></> : null}
+                {bindingSignature ? <> · Signature: <span className="font-mono">{bindingSignature}</span></> : null}
                 {' '}· Binding AST: <span className="font-mono">{bindingAstId}</span>
               </p>
             </div>
@@ -324,7 +256,7 @@ function ReportBuilderContent() {
                 {uploading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Extracting full production ASTâ€¦
+                    Extracting full production AST...
                   </>
                 ) : (
                   <>
@@ -376,7 +308,7 @@ function ReportBuilderContent() {
                 {generating ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Queuingâ€¦
+                    Queuing...
                   </>
                 ) : (
                   'Generate report'
@@ -412,35 +344,22 @@ function ReportBuilderContent() {
           </Card>
         </Link>
 
-        {(extractedTemplateAst || loadingTemplateAst) && (
-          <div ref={previewRef}>
-            <Card
-              title="Extracted PDF layout and blueprint"
-              description={
-                previewTemplateName
-                  ? `${previewTemplateName}${viewingTemplateId ? ` (template #${viewingTemplateId})` : ''} — structure, text snippets, table signals and question blueprint from stored AST.`
-                  : 'Actual structure, text snippets, table signals and generated question blueprint from uploaded PDF.'
-              }
-            >
-              {loadingTemplateAst && !extractedTemplateAst ? (
-                <div className="flex items-center gap-2 py-8 text-sm text-text-muted">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading template AST…
-                </div>
-              ) : extractedTemplateAst ? (
-                <TemplateExtractionPreview ast={extractedTemplateAst} />
-              ) : null}
-            </Card>
-          </div>
+        {extractedTemplateAst && (
+          <Card
+            title="Extracted PDF layout and blueprint"
+            description="Actual structure, text snippets, table signals and generated question blueprint from uploaded PDF."
+          >
+            <TemplateExtractionPreview ast={extractedTemplateAst} />
+          </Card>
         )}
 
         {/* Templates list */}
         <Card title="Uploaded templates" description="Source PDFs reverse-engineered into block ASTs.">
           {loading ? (
-            <p className="text-sm text-text-muted">Loadingâ€¦</p>
+            <p className="text-sm text-text-muted">Loading...</p>
           ) : templates.length === 0 ? (
             <p className="text-sm text-text-muted">
-              No templates yet â€” the built-in MoSPI default will be used.
+              No templates yet - the built-in MoSPI default will be used.
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -453,60 +372,30 @@ function ReportBuilderContent() {
                     <th className="py-2 pr-4 font-medium text-text-muted">Blocks</th>
                     <th className="py-2 pr-4 font-medium text-text-muted">Method</th>
                     <th className="py-2 pr-4 font-medium text-text-muted">Hash</th>
-                    <th className="py-2 pr-4 font-medium text-text-muted">Actions</th>
+                    <th />
                   </tr>
                 </thead>
                 <tbody>
                   {templates.map((t) => (
-                    <tr
-                      key={t.id}
-                      className={`border-b border-border/40 ${
-                        viewingTemplateId === t.id ? 'bg-accent/5' : ''
-                      }`}
-                    >
+                    <tr key={t.id} className="border-b border-border/40">
                       <td className="py-2 pr-4">{t.id}</td>
-                      <td className="py-2 pr-4 font-medium">
-                        <button
-                          type="button"
-                          onClick={() => loadExtractedTemplate(t.id, true)}
-                          className="text-left hover:text-accent hover:underline disabled:opacity-50"
-                          disabled={loadingTemplateAst && viewingTemplateId === t.id}
-                        >
-                          {t.name}
-                        </button>
-                      </td>
-                      <td className="py-2 pr-4">{t.page_count ?? '—'}</td>
+                      <td className="py-2 pr-4 font-medium">{t.name}</td>
+                      <td className="py-2 pr-4">{t.page_count ?? '-'}</td>
                       <td className="py-2 pr-4">{t.block_count}</td>
                       <td className="py-2 pr-4 text-xs">
-                        {t.extraction_method ?? '—'}
+                        {t.extraction_method ?? '-'}
                       </td>
                       <td className="py-2 pr-4 font-mono text-[10px] text-text-muted">
-                        {t.source_hash ? t.source_hash.slice(0, 12) + '…' : '—'}
+                        {t.source_hash ? t.source_hash.slice(0, 12) + '...' : '-'}
                       </td>
                       <td className="py-2 pr-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => loadExtractedTemplate(t.id, true)}
-                            className="text-text-muted hover:text-accent disabled:opacity-50"
-                            title="View blueprint"
-                            disabled={loadingTemplateAst && viewingTemplateId === t.id}
-                          >
-                            {loadingTemplateAst && viewingTemplateId === t.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onDeleteTemplate(t.id)}
-                            className="text-red-600 hover:text-red-700"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => onDeleteTemplate(t.id)}
+                          className="text-red-600 hover:text-red-700"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -553,17 +442,17 @@ function ReportBuilderContent() {
                         <StatusBadge status={j.status} />
                       </td>
                       <td className="py-2 pr-4 text-xs text-text-muted">
-                        {j.stage ?? 'â€”'}
+                        {j.stage ?? '-'}
                       </td>
                       <td className="py-2 pr-4 font-mono text-[10px] text-text-muted">
-                        {j.content_hash ? j.content_hash.slice(0, 12) + 'â€¦' : 'â€”'}
+                        {j.content_hash ? j.content_hash.slice(0, 12) + '...' : '-'}
                       </td>
                       <td className="py-2 pr-4">
                         <Link
                           href={`/report-builder/${j.id}`}
                           className="text-primary hover:underline text-xs"
                         >
-                          Open canvas â†’
+                          Open canvas {'->'}
                         </Link>
                       </td>
                     </tr>
@@ -593,7 +482,7 @@ function StatusBadge({ status }: { status: string }) {
 function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
   const [activeTab, setActiveTab] = useState<string>('overview');
 
-  // V2/V3 enterprise AST data â€” pipeline v3 stores all keys at top level
+  // V2/V3 enterprise AST data - pipeline v3 stores all keys at top level
   const enterpriseAst = (ast.enterprise_ast as Record<string, unknown>) || {};
   const assets = (ast.extracted_assets as Record<string, unknown> | undefined) || {};
   const pipelineTrace = (ast.pipeline_trace as Record<string, unknown>) || (enterpriseAst.pipeline_trace as Record<string, unknown>) || {};
@@ -606,6 +495,8 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
   const hierarchy = sections.length > 0 ? sections : (Array.isArray(semanticAST.hierarchy) ? (semanticAST.hierarchy as Array<Record<string, unknown>>) : []);
   const entityGraph = (ast.entityGraph as Record<string, unknown>) || (enterpriseAst.entityGraph as Record<string, unknown>) || {};
   const entities = Array.isArray(entityGraph.entities) ? (entityGraph.entities as Array<Record<string, unknown>>) : [];
+  const templateSlots = (ast.templateSlots as Record<string, unknown>) || (enterpriseAst.templateSlots as Record<string, unknown>) || {};
+  const slots = Array.isArray(templateSlots.slots) ? (templateSlots.slots as Array<Record<string, unknown>>) : [];
   const tableAST = (ast.tableAST as Record<string, unknown>) || (enterpriseAst.tableAST as Record<string, unknown>) || {};
   const tables = Array.isArray(tableAST.tables) ? (tableAST.tables as Array<Record<string, unknown>>) : [];
   const factGraph = (ast.factGraph as Record<string, unknown>) || (enterpriseAst.factGraph as Record<string, unknown>) || {};
@@ -623,24 +514,11 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
   const chartFigures = charts.length > 0 ? charts : allFigures.filter(f => f.type === 'chart' || Boolean(f.chartType));
   const pureFigures = allFigures.filter(f => !f.chartRef);
 
-  // V3 blueprint â€” directly at ast.blueprint
+  // V3 blueprint - directly at ast.blueprint
   const blueprint = (ast.blueprint as Record<string, unknown>) || (enterpriseAst.blueprint as Record<string, unknown>) || {};
   const bpTopics = Array.isArray(blueprint.topics) ? (blueprint.topics as Array<Record<string, unknown>>) : [];
   const bpEntities = Array.isArray(blueprint.entities) ? (blueprint.entities as Array<Record<string, unknown>>) : [];
   const bpTableTemplates = Array.isArray(blueprint.tableTemplates) ? (blueprint.tableTemplates as Array<Record<string, unknown>>) : [];
-  const bpFigureTemplates = Array.isArray(blueprint.figureTemplates) ? (blueprint.figureTemplates as Array<Record<string, unknown>>) : [];
-  const bpGlossary = (blueprint.glossary as Record<string, string>) || {};
-  const bpPalette = (blueprint.palette as Record<string, unknown>) || {};
-  const bpRenderProfile = (blueprint.renderProfile as Record<string, unknown>) || {};
-  const entityNameById = buildEntityNameMap(bpEntities, entities);
-
-  // Style AST
-  const styleAST = (ast.styleAST as Record<string, unknown>) || {};
-  const styles = Array.isArray(styleAST.styles) ? (styleAST.styles as Array<Record<string, unknown>>) : [];
-
-  // Content blocks (gold-standard: blocks with biQuery, slot)
-  const contentAST = (ast.contentAST as Record<string, unknown>) || {};
-  const contentBlocks = Array.isArray(contentAST.blocks) ? (contentAST.blocks as Array<Record<string, unknown>>) : [];
 
   const textPages = Array.isArray(assets.text_pages) ? (assets.text_pages as Array<Record<string, unknown>>) : [];
 
@@ -651,6 +529,7 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
     { id: 'overview', label: 'Overview' },
     { id: 'blocks', label: `Blocks (${blocks.length})` },
     { id: 'entities', label: `Entities (${entities.length})` },
+    { id: 'slots', label: `Slots (${slots.length})` },
     { id: 'tables', label: `Tables (${tables.length})` },
     { id: 'charts', label: `Charts (${allFigures.length})` },
     { id: 'blueprint', label: `Blueprint (${bpTopics.length})` },
@@ -679,39 +558,13 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
     resource: 'bg-teal-100 text-teal-700',
   };
 
-  const blockTypeOptions = useMemo(
-    () => collectTypeOptions(blocks, (b) => String(b.kind || b.type || 'unknown')),
-    [blocks]
-  );
-  const entityTypeOptions = useMemo(
-    () => collectTypeOptions(entities, (e) => String(e.type || e.entityType || 'unknown')),
-    [entities]
-  );
-  const [selectedBlockTypes, setSelectedBlockTypes] = useTypeFilter(blockTypeOptions.types);
-  const [selectedEntityTypes, setSelectedEntityTypes] = useTypeFilter(entityTypeOptions.types);
-
-  const filteredBlocks = useMemo(
-    () =>
-      blocks.filter((b) =>
-        selectedBlockTypes.has(String(b.kind || b.type || 'unknown'))
-      ),
-    [blocks, selectedBlockTypes]
-  );
-  const filteredEntities = useMemo(
-    () =>
-      entities.filter((e) =>
-        selectedEntityTypes.has(String(e.type || e.entityType || 'unknown'))
-      ),
-    [entities, selectedEntityTypes]
-  );
-
   return (
     <div className="space-y-4">
       {/* Summary badges */}
       <div className="grid gap-3 grid-cols-2 md:grid-cols-6">
         <div className="rounded-lg border border-border bg-surface px-3 py-2">
           <p className="text-[10px] text-text-muted uppercase tracking-wider">Doc ID</p>
-          <p className="text-sm font-mono truncate">{String(ast.doc_id || enterpriseAst.metadata && (enterpriseAst.metadata as Record<string,unknown>).documentId || 'â€”')}</p>
+          <p className="text-sm font-mono truncate">{String(ast.doc_id || enterpriseAst.metadata && (enterpriseAst.metadata as Record<string,unknown>).documentId || '-')}</p>
         </div>
         <div className="rounded-lg border border-border bg-surface px-3 py-2">
           <p className="text-[10px] text-text-muted uppercase tracking-wider">Pages</p>
@@ -726,6 +579,10 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
           <p className="text-sm font-bold">{entities.length}</p>
         </div>
         <div className="rounded-lg border border-border bg-surface px-3 py-2">
+          <p className="text-[10px] text-text-muted uppercase tracking-wider">Slots</p>
+          <p className="text-sm font-bold">{slots.length}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface px-3 py-2">
           <p className="text-[10px] text-text-muted uppercase tracking-wider">Charts</p>
           <p className="text-sm font-bold">{allFigures.length}</p>
         </div>
@@ -735,7 +592,7 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
         </div>
         <div className="rounded-lg border border-border bg-surface px-3 py-2">
           <p className="text-[10px] text-text-muted uppercase tracking-wider">Time</p>
-          <p className="text-sm font-bold">{pipelineTrace.total_elapsed ? `${pipelineTrace.total_elapsed}s` : 'â€”'}</p>
+          <p className="text-sm font-bold">{pipelineTrace.total_elapsed ? `${pipelineTrace.total_elapsed}s` : '-'}</p>
         </div>
       </div>
 
@@ -785,7 +642,7 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                     <div key={`h-${node.nodeId || idx}`} className="flex items-center gap-2" style={{ paddingLeft: `${(level - 1) * 16}px` }}>
                       <span className="text-[10px] text-text-muted font-mono w-4">{level}</span>
                       <span className={`w-1.5 h-1.5 rounded-full ${level === 1 ? 'bg-primary' : level === 2 ? 'bg-blue-400' : 'bg-gray-300'}`} />
-                      <span className="text-xs text-text">{String(node.title || node.name || 'â€”')}</span>
+                      <span className="text-xs text-text">{String(node.title || node.name || '-')}</span>
                       {Boolean(node.pageSpan) && (
                         <span className="text-[10px] text-text-muted">p.{JSON.stringify(node.pageSpan)}</span>
                       )}
@@ -804,7 +661,7 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                 {facts.slice(0, 8).map((f, idx) => (
                   <li key={`f-${f.factId || idx}`} className="text-xs text-text flex gap-2">
                     <span className="text-text-muted shrink-0">{idx + 1}.</span>
-                    <span>{String(f.statement || f.text || 'â€”')}</span>
+                    <span>{String(f.statement || f.text || '-')}</span>
                     {Boolean(f.confidence) && <Badge variant="muted" className="text-[9px]">{Math.round(Number(f.confidence) * 100)}%</Badge>}
                   </li>
                 ))}
@@ -812,6 +669,26 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
             </div>
           )}
 
+          {/* Text pages collapsible */}
+          {textPages.length > 0 && (
+            <details className="rounded-lg border border-border bg-surface">
+              <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-text">
+                Extracted Text ({textPages.length} pages)
+              </summary>
+              <div className="px-4 pb-4 space-y-2">
+                {textPages.slice(0, 5).map((tp, idx) => (
+                  <details key={`tp-${tp.page_index ?? idx}`} className="rounded border border-border/60">
+                    <summary className="cursor-pointer px-3 py-1.5 text-xs text-text-muted">
+                      Page {Number(tp.page_index ?? idx) + 1}
+                    </summary>
+                    <pre className="px-3 pb-2 whitespace-pre-wrap text-[11px] text-text-muted max-h-40 overflow-auto">
+                      {String(tp.text || '(empty)')}
+                    </pre>
+                  </details>
+                ))}
+              </div>
+            </details>
+          )}
         </div>
       )}
 
@@ -820,46 +697,32 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
           {blocks.length === 0 ? (
             <p className="text-sm text-text-muted">No blocks extracted.</p>
           ) : (
-            <>
-              <TypeFilterDropdown
-                label="Filter block types"
-                types={blockTypeOptions.types}
-                selected={selectedBlockTypes}
-                onChange={setSelectedBlockTypes}
-                counts={blockTypeOptions.counts}
-                typeColors={kindColors}
-              />
-              {filteredBlocks.length === 0 ? (
-                <p className="text-sm text-text-muted">No blocks match the selected types.</p>
-              ) : (
-                <div className="overflow-x-auto rounded-lg border border-border">
-                  <table className="w-full text-xs">
-                    <thead className="bg-surface">
-                      <tr className="border-b border-border">
-                        <th className="py-2.5 px-3 text-left text-text-muted font-medium">Block ID</th>
-                        <th className="py-2.5 px-3 text-left text-text-muted font-medium">Type</th>
-                        <th className="py-2.5 px-3 text-left text-text-muted font-medium">Section</th>
-                        <th className="py-2.5 px-3 text-left text-text-muted font-medium">Title</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredBlocks.map((b, idx) => (
-                        <tr key={`${b.block_id ?? idx}`} className="border-b border-border/30 hover:bg-surface/50">
-                          <td className="py-2 px-3 font-mono text-text-muted">{String(b.block_id || '—')}</td>
-                          <td className="py-2 px-3">
-                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${kindColors[String(b.kind)] || 'bg-gray-100 text-gray-700'}`}>
-                              {String(b.kind || '—')}
-                            </span>
-                          </td>
-                          <td className="py-2 px-3 text-text-muted">{String(b.section || '—')}</td>
-                          <td className="py-2 px-3 text-text max-w-[300px] truncate">{String(b.title || '—')}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </>
+            <div className="overflow-x-auto rounded-lg border border-border">
+              <table className="w-full text-xs">
+                <thead className="bg-surface">
+                  <tr className="border-b border-border">
+                    <th className="py-2.5 px-3 text-left text-text-muted font-medium">Block ID</th>
+                    <th className="py-2.5 px-3 text-left text-text-muted font-medium">Type</th>
+                    <th className="py-2.5 px-3 text-left text-text-muted font-medium">Section</th>
+                    <th className="py-2.5 px-3 text-left text-text-muted font-medium">Title</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {blocks.map((b, idx) => (
+                    <tr key={`${b.block_id ?? idx}`} className="border-b border-border/30 hover:bg-surface/50">
+                      <td className="py-2 px-3 font-mono text-text-muted">{String(b.block_id || '-')}</td>
+                      <td className="py-2 px-3">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${kindColors[String(b.kind)] || 'bg-gray-100 text-gray-700'}`}>
+                          {String(b.kind || '-')}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 text-text-muted">{String(b.section || '-')}</td>
+                      <td className="py-2 px-3 text-text max-w-[300px] truncate">{String(b.title || '-')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
@@ -870,45 +733,81 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
             <p className="text-sm text-text-muted">No entities extracted.</p>
           ) : (
             <>
-              <TypeFilterDropdown
-                label="Filter entity types"
-                types={entityTypeOptions.types}
-                selected={selectedEntityTypes}
-                onChange={setSelectedEntityTypes}
-                counts={entityTypeOptions.counts}
-                typeColors={entityTypeColors}
-              />
-              {filteredEntities.length === 0 ? (
-                <p className="text-sm text-text-muted">No entities match the selected types.</p>
-              ) : (
-                <div className="overflow-x-auto rounded-lg border border-border">
-                  <table className="w-full text-xs">
-                    <thead className="bg-surface">
-                      <tr className="border-b border-border">
-                        <th className="py-2.5 px-3 text-left text-text-muted font-medium">ID</th>
-                        <th className="py-2.5 px-3 text-left text-text-muted font-medium">Type</th>
-                        <th className="py-2.5 px-3 text-left text-text-muted font-medium">Name</th>
-                        <th className="py-2.5 px-3 text-left text-text-muted font-medium">Context</th>
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {Object.entries(
+                  entities.reduce<Record<string, number>>((acc, e) => {
+                    const t = String(e.type || 'unknown');
+                    acc[t] = (acc[t] || 0) + 1;
+                    return acc;
+                  }, {})
+                ).map(([type, count]) => (
+                  <span key={type} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-medium ${entityTypeColors[type] || 'bg-gray-100 text-gray-700'}`}>
+                    {type}: {count}
+                  </span>
+                ))}
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-xs">
+                  <thead className="bg-surface">
+                    <tr className="border-b border-border">
+                      <th className="py-2.5 px-3 text-left text-text-muted font-medium">ID</th>
+                      <th className="py-2.5 px-3 text-left text-text-muted font-medium">Type</th>
+                      <th className="py-2.5 px-3 text-left text-text-muted font-medium">Name</th>
+                      <th className="py-2.5 px-3 text-left text-text-muted font-medium">Context</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {entities.slice(0, 30).map((e, idx) => (
+                      <tr key={`${e.entityId || idx}`} className="border-b border-border/30 hover:bg-surface/50">
+                        <td className="py-2 px-3 font-mono text-text-muted text-[10px]">{String(e.entityId || '-')}</td>
+                        <td className="py-2 px-3">
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${entityTypeColors[String(e.type)] || 'bg-gray-100 text-gray-700'}`}>
+                            {String(e.type || '-')}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-text font-medium">{String(e.name || '-')}</td>
+                        <td className="py-2 px-3 text-text-muted max-w-[200px] truncate">{String(e.context || '-')}</td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {filteredEntities.map((e, idx) => (
-                        <tr key={`${e.entityId || idx}`} className="border-b border-border/30 hover:bg-surface/50">
-                          <td className="py-2 px-3 font-mono text-text-muted text-[10px]">{String(e.entityId || '—')}</td>
-                          <td className="py-2 px-3">
-                            <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${entityTypeColors[String(e.type || e.entityType)] || 'bg-gray-100 text-gray-700'}`}>
-                              {String(e.type || e.entityType || '—')}
-                            </span>
-                          </td>
-                          <td className="py-2 px-3 text-text font-medium">{String(e.name || '—')}</td>
-                          <td className="py-2 px-3 text-text-muted max-w-[200px] truncate">{String(e.context || '—')}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'slots' && (
+        <div className="space-y-3">
+          {slots.length === 0 ? (
+            <p className="text-sm text-text-muted">No template slots detected.</p>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-border">
+              <table className="w-full text-xs">
+                <thead className="bg-surface">
+                  <tr className="border-b border-border">
+                    <th className="py-2.5 px-3 text-left text-text-muted font-medium">Slot ID</th>
+                    <th className="py-2.5 px-3 text-left text-text-muted font-medium">Type</th>
+                    <th className="py-2.5 px-3 text-left text-text-muted font-medium">Entity Ref</th>
+                    <th className="py-2.5 px-3 text-left text-text-muted font-medium">Current Value</th>
+                    <th className="py-2.5 px-3 text-left text-text-muted font-medium">Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {slots.slice(0, 30).map((s, idx) => (
+                    <tr key={`${s.slotId || idx}`} className="border-b border-border/30 hover:bg-surface/50">
+                      <td className="py-2 px-3 font-mono text-text-muted text-[10px]">{String(s.slotId || '-')}</td>
+                      <td className="py-2 px-3">
+                        <Badge variant="muted">{String(s.slotType || '-')}</Badge>
+                      </td>
+                      <td className="py-2 px-3 font-mono text-[10px]">{String(s.entityRef || '-')}</td>
+                      <td className="py-2 px-3 text-text font-medium">{String(s.currentValue || '-')}</td>
+                      <td className="py-2 px-3 text-text-muted max-w-[250px] truncate">{String(s.description || '-')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
@@ -941,7 +840,7 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                       {JSON.stringify(t.sampleRows, null, 2)}
                     </pre>
                   )}
-                  <p className="text-[10px] text-text-muted mt-1">Rows: {String(t.rowCount || 'â€”')}</p>
+                  <p className="text-[10px] text-text-muted mt-1">Rows: {String(t.rowCount || '-')}</p>
                 </div>
               ))}
             </div>
@@ -988,7 +887,7 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                       type.includes('map') ? 'bg-green-100 text-green-700' :
                       'bg-amber-100 text-amber-700'
                     }`}>
-                      {type.replace(/_/g, ' ')}&nbsp;Ã—{count}
+                      {type.replace(/_/g, ' ')} x {count}
                     </span>
                   ))}
                 </div>
@@ -1043,7 +942,7 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                   );
                 })}
                 {allFigures.length > 20 && (
-                  <p className="text-xs text-text-muted text-center py-1">â€¦and {allFigures.length - 20} more</p>
+                  <p className="text-xs text-text-muted text-center py-1">...and {allFigures.length - 20} more</p>
                 )}
               </div>
             </>
@@ -1058,7 +957,7 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
           ) : (
             <>
               <p className="text-xs text-text-muted">
-                {bpTopics.length} topics Â· {bpEntities.length} entities Â· {bpTableTemplates.length} table structures
+                {bpTopics.length} topics - {bpEntities.length} entities - {bpTableTemplates.length} table structures
               </p>
 
               {/* Topics tree */}
@@ -1085,13 +984,13 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                                 q.questionType === 'ranking' ? 'bg-purple-100 text-purple-700' :
                                 'bg-gray-100 text-gray-600'
                               }`}>{String(q.questionType || 'describe')}</span>
-                              <span className="text-xs text-text flex-1">{String(q.intent || q.questionId || 'â€”')}</span>
+                              <span className="text-xs text-text flex-1">{String(q.intent || q.questionId || '-')}</span>
                             </div>
                             {Array.isArray(q.requiredEntities) && (q.requiredEntities as Array<Record<string, unknown>>).length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-1.5">
                                 {(q.requiredEntities as Array<Record<string, unknown>>).slice(0, 5).map((re, ri) => (
                                   <span key={ri} className="text-[9px] bg-indigo-50 text-indigo-700 rounded px-1.5 py-0.5">
-                                    {resolveEntityLabel(re.entityRef || re.entityId, entityNameById)}
+                                    {String(re.entityRef || re.entityId || '?')}
                                     <span className="opacity-60 ml-0.5">({String(re.role || '?')})</span>
                                   </span>
                                 ))}
@@ -1099,12 +998,32 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                             )}
                           </div>
                         ))}
-                        {qs.length > 8 && <p className="text-[10px] text-text-muted">â€¦{qs.length - 8} more questions</p>}
+                        {qs.length > 8 && <p className="text-[10px] text-text-muted">...{qs.length - 8} more questions</p>}
                       </div>
                     </details>
                   );
                 })}
               </div>
+
+              {/* Entity chips */}
+              {bpEntities.length > 0 && (
+                <div className="rounded-lg border border-border bg-surface p-3">
+                  <h4 className="text-xs font-semibold text-text mb-2">Template Entities ({bpEntities.length})</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(bpEntities as Array<Record<string, unknown>>).slice(0, 50).map((e, ei) => (
+                      <span key={ei} className={`text-[10px] rounded-full px-2 py-0.5 border font-medium ${
+                        e.entityType === 'dimension' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                        e.entityType === 'measure' ? 'bg-green-50 text-green-700 border-green-200' :
+                        e.entityType === 'filter' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                        'bg-gray-50 text-gray-600 border-gray-200'
+                      }`}>
+                        {String(e.name || e.entityId || '?')}
+                      </span>
+                    ))}
+                    {bpEntities.length > 50 && <span className="text-[10px] text-text-muted self-center">+{bpEntities.length - 50} more</span>}
+                  </div>
+                </div>
+              )}
 
               {/* Blueprint table structures */}
               {bpTableTemplates.length > 0 && (
@@ -1140,7 +1059,7 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                 </div>
               ))}
               {questionStrings.length > 20 && (
-                <p className="text-xs text-text-muted text-center py-1">â€¦and {questionStrings.length - 20} more</p>
+                <p className="text-xs text-text-muted text-center py-1">...and {questionStrings.length - 20} more</p>
               )}
             </div>
           )}
@@ -1211,8 +1130,14 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                       <p className="text-[10px] text-text-muted">Questions Extracted</p>
                       <p className="text-sm font-bold">{String(
                         ((passes.pass3_questions || passes.pass3_semantic) as Record<string,unknown>).questions ||
-                        ((passes.pass3_questions || passes.pass3_semantic) as Record<string,unknown>).source || 'â€”'
+                        ((passes.pass3_questions || passes.pass3_semantic) as Record<string,unknown>).source || '-'
                       )}</p>
+                    </div>
+                  )}
+                  {passes.pass1_layout && (
+                    <div>
+                      <p className="text-[10px] text-text-muted">LayoutLM Used</p>
+                      <p className="text-sm font-bold">{(passes.pass1_layout as Record<string,unknown>).layoutlm_used ? 'Yes' : 'Fallback'}</p>
                     </div>
                   )}
                   {(passes.pass2_5_kg || passes.pass2_5_merge) && (
@@ -1224,6 +1149,12 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                       )}</p>
                     </div>
                   )}
+                  {passes.pass5_gemini && (
+                    <div>
+                      <p className="text-[10px] text-text-muted">Gemini Status</p>
+                      <p className="text-sm font-bold">{String((passes.pass5_gemini as Record<string,unknown>).status || '-')}</p>
+                    </div>
+                  )}
                   {passes.pass4_assembly && (
                     <div>
                       <p className="text-[10px] text-text-muted">Tables Found</p>
@@ -1232,14 +1163,26 @@ function TemplateExtractionPreview({ ast }: { ast: Record<string, unknown> }) {
                   )}
                   {passes.pass4_assembly && (
                     <div>
-                      <p className="text-[10px] text-text-muted">Charts</p>
+                      <p className="text-[10px] text-text-muted">Figures / Charts</p>
                       <p className="text-sm font-bold">
-                        {String(
-                          (passes.pass4_assembly as Record<string, unknown>).charts_detected ??
-                            (passes.pass4_assembly as Record<string, unknown>).figures ??
-                            0
-                        )}
+                        {String((passes.pass4_assembly as Record<string,unknown>).figures || 0)}
+                        {' / '}
+                        {String((passes.pass4_assembly as Record<string,unknown>).charts_detected || 0)}
                       </p>
+                    </div>
+                  )}
+                  {passes.pass4_assembly && (
+                    <div>
+                      <p className="text-[10px] text-text-muted">Chart Pages</p>
+                      <p className="text-sm font-bold">{String((passes.pass4_assembly as Record<string,unknown>).chart_pages || 0)}</p>
+                    </div>
+                  )}
+                  {(passes.pass2_entities || passes.pass2_vlm) && (
+                    <div>
+                      <p className="text-[10px] text-text-muted">Chart Pages (VLM)</p>
+                      <p className="text-sm font-bold">{String(
+                        ((passes.pass2_entities || passes.pass2_vlm) as Record<string,unknown>).chart_pages_detected || 0
+                      )}</p>
                     </div>
                   )}
                 </div>
