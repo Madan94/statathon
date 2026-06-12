@@ -14,6 +14,7 @@ import { DatasetProfileCard } from '@/components/report-builder/binding/DatasetP
 import { CoveragePanel } from '@/components/report-builder/binding/CoveragePanel';
 import { StructureCanvas } from '@/components/report-builder/binding/StructureCanvas';
 import { EntityMatrixPanel, type EntityDecision } from '@/components/report-builder/binding/EntityMatrixPanel';
+import { TemplatePackagePicker } from '@/components/report-builder/binding/TemplatePackagePicker';
 import {
   bindingPhaseApi,
   type BindingAction,
@@ -1299,88 +1300,59 @@ export default function BindingWorkflowPage() {
 
         {/* ───────────────────────── Step 0 — upload ───────────────────────── */}
         {step === 0 && (
-          <div className="mx-auto max-w-2xl">
-            <Card
-              title="Create binding session"
-              description="Choose a report template package, upload the dataset, then open the review workspace."
-            >
-              <form onSubmit={onStart} className="space-y-6">
-                <section className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">1. Report template</p>
-                      <p className="mt-1 text-sm text-text-muted">Select the package that contains the blueprint, render skeleton, and slot graph.</p>
-                    </div>
-                    {templatesLoading && <Loader2 className="h-4 w-4 animate-spin text-text-muted" />}
-                  </div>
+          <div className="mx-auto max-w-6xl space-y-5">
+            <section className="rounded-2xl border border-border bg-surface-card p-4 shadow-sm sm:p-6">
+              <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">1. Template package</p>
+                  <h2 className="mt-1 text-xl font-semibold text-text">Pick the binder brain first</h2>
+                  <p className="mt-1 max-w-3xl text-sm text-text-muted">
+                    Search templates by domain, readiness, richness, and question coverage. The selected package controls entity binding, ReviewedPlan generation, slot lineage, and S3.5 handoff quality.
+                  </p>
+                </div>
+                {selectedPackage && (
+                  <Badge variant={selectedPackage.status === 'VALID' ? 'success' : 'warning'} className="shrink-0">
+                    {selectedPackage.status}
+                  </Badge>
+                )}
+              </div>
 
-                  <div className="grid gap-3">
-                    {templatePackages.map((pkg) => {
-                      const selected = pkg.template_id === templateId;
-                      const statusVariant = pkg.status === 'VALID' ? 'success' : pkg.status === 'INVALID' ? 'danger' : pkg.source === 'built_in' ? 'muted' : 'warning';
-                      return (
-                        <button
-                          key={`${pkg.source}-${pkg.template_id}`}
-                          type="button"
-                          onClick={() => setTemplateId(pkg.template_id)}
-                          className={`rounded-xl border p-4 text-left transition-colors ${selected ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-surface hover:border-accent/60'}`}
-                        >
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-text">{pkg.name}</p>
-                              <p className="mt-1 text-xs text-text-muted">
-                                {pkg.source === 'built_in' ? 'Built-in demo' : `Template ${pkg.template_id}`} · v{pkg.version}
-                              </p>
-                            </div>
-                            <Badge variant={statusVariant}>{pkg.status || (pkg.source === 'built_in' ? 'DEMO' : 'UNKNOWN')}</Badge>
-                          </div>
-                          <div className="mt-3 grid grid-cols-3 gap-2 text-xs sm:grid-cols-6">
-                            <span><strong className="text-text">{pkg.topics_count}</strong> topics</span>
-                            <span><strong className="text-text">{pkg.questions_count}</strong> questions</span>
-                            <span><strong className="text-text">{pkg.entities_count}</strong> entities</span>
-                            <span><strong className="text-text">{pkg.chart_slots_count}</strong> charts</span>
-                            <span><strong className="text-text">{pkg.table_slots_count}</strong> tables</span>
-                            <span><strong className="text-text">{pkg.external_refs_count}</strong> external</span>
-                          </div>
-                          <div className="mt-3 flex flex-wrap gap-1.5 text-[11px] text-text-muted">
-                            <span className="rounded bg-border px-2 py-0.5">AST {pkg.ast_available ? 'ready' : 'missing'}</span>
-                            <span className="rounded bg-border px-2 py-0.5">Blueprint {pkg.blueprint_available ? 'ready' : 'missing'}</span>
-                            <span className="rounded bg-border px-2 py-0.5">Slots {pkg.semantic_slot_graph_available ? 'ready' : 'generated on finalize'}</span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                    {!templatesLoading && templatePackages.length === 0 && (
-                      <div className="rounded-xl border border-border bg-surface p-4 text-sm text-text-muted">
-                        No extracted templates were returned. Use the built-in id or an advanced blueprint override.
-                      </div>
-                    )}
-                  </div>
+              <TemplatePackagePicker
+                packages={templatePackages}
+                selectedTemplateId={templateId}
+                loading={templatesLoading}
+                onSelect={setTemplateId}
+              />
+            </section>
 
-                  {selectedPackage && (
-                    <div className="rounded-xl border border-success/20 bg-success/5 px-4 py-3 text-sm">
-                      <p className="font-semibold text-text">Selected: {selectedPackage.name}</p>
-                      <p className="mt-1 text-xs text-text-muted">
-                        This package will drive entity matching, question planning, and slot-aware ReviewedPlan generation.
-                      </p>
-                    </div>
-                  )}
-                </section>
-
-                <section className="space-y-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">2. Dataset</p>
-                    <p className="mt-1 text-sm text-text-muted">Upload the CSV that will be profiled into DatasetAST.</p>
+            <form onSubmit={onStart} className="space-y-5">
+              <section className="rounded-2xl border border-border bg-surface-card p-4 shadow-sm sm:p-6">
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-primary">2. Dataset upload</p>
+                    <h2 className="mt-1 text-xl font-semibold text-text">Create the binding session</h2>
+                    <p className="mt-1 max-w-3xl text-sm text-text-muted">
+                      Upload a CSV after selecting the template. The binder profiles columns, infers roles, tracks ownership, and opens the review workspace.
+                    </p>
                   </div>
+                  <div className="rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-xs">
+                    <p className="font-semibold uppercase tracking-wide text-primary">Selected ID</p>
+                    <p className="mt-1 max-w-[18rem] break-words font-mono text-text">{templateId || 'tpl_plfs_annual_v1'}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
                   <label
                     htmlFor="binding-dataset"
-                    className="block cursor-pointer rounded-xl border-2 border-dashed border-border p-6 text-center transition-colors hover:border-accent/50"
+                    className="block cursor-pointer rounded-2xl border-2 border-dashed border-border bg-surface p-8 text-center transition-colors hover:border-primary/50 hover:bg-primary/5"
                   >
-                    <UploadIcon className="mx-auto mb-2 h-6 w-6 text-text-muted" />
-                    <p className="text-sm font-medium text-text">
-                      {datasetFile ? datasetFile.name : 'Click to choose a CSV dataset'}
+                    <UploadIcon className="mx-auto mb-3 h-8 w-8 text-primary" />
+                    <p className="break-words text-base font-semibold text-text">
+                      {datasetFile ? datasetFile.name : 'Choose CSV dataset'}
                     </p>
-                    <p className="mt-1 text-xs text-text-muted">The binder will infer measures, dimensions, time columns, samples, and column ownership.</p>
+                    <p className="mx-auto mt-2 max-w-2xl text-sm text-text-muted">
+                      Measures, dimensions, time columns, samples, column ownership, conflicts, and binder proposals are computed from this file.
+                    </p>
                   </label>
                   <input
                     id="binding-dataset"
@@ -1389,65 +1361,66 @@ export default function BindingWorkflowPage() {
                     className="hidden"
                     onChange={(e) => setDatasetFile(e.target.files?.[0] ?? null)}
                   />
-                </section>
 
-                <section className="rounded-xl border border-border bg-surface p-4">
-                  <button
-                    type="button"
-                    onClick={() => setAdvancedOpen((v) => !v)}
-                    className="flex w-full items-center justify-between text-left text-sm font-semibold text-text"
-                  >
-                    Advanced template controls
-                    <span className="text-xs font-medium text-primary">{advancedOpen ? 'Hide' : 'Show'}</span>
-                  </button>
-                  {advancedOpen && (
-                    <div className="mt-4 space-y-3">
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-text-muted">Manual template id</label>
-                        <input
-                          type="text"
-                          value={templateId}
-                          onChange={(e) => setTemplateId(e.target.value)}
-                          placeholder="tpl_plfs_annual_v1"
-                          className="w-full rounded-lg border border-border bg-surface-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
-                        />
-                        <p className="mt-1 text-xs text-text-muted">Use this only for built-in ids, debugging, or a known DB template id.</p>
+                  <section className="rounded-xl border border-border bg-surface p-4">
+                    <button
+                      type="button"
+                      onClick={() => setAdvancedOpen((v) => !v)}
+                      className="flex w-full items-center justify-between gap-3 text-left text-sm font-semibold text-text"
+                    >
+                      <span>Advanced template controls</span>
+                      <span className="shrink-0 text-xs font-medium text-primary">{advancedOpen ? 'Hide' : 'Show'}</span>
+                    </button>
+                    {advancedOpen && (
+                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-text-muted">Manual template id</label>
+                          <input
+                            type="text"
+                            value={templateId}
+                            onChange={(e) => setTemplateId(e.target.value)}
+                            placeholder="tpl_plfs_annual_v1"
+                            className="w-full rounded-lg border border-border bg-surface-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
+                          />
+                          <p className="mt-1 text-xs text-text-muted">Use only for a known built-in or DB template id.</p>
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="binding-blueprint"
+                            className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-surface-card px-3 py-2 text-sm transition-colors hover:border-accent/50"
+                          >
+                            <span className="min-w-0 truncate text-text-muted">
+                              {blueprintFile ? blueprintFile.name : 'Override blueprint.json'}
+                            </span>
+                            <span className="shrink-0 text-xs font-medium text-primary">Browse</span>
+                          </label>
+                          <input
+                            id="binding-blueprint"
+                            type="file"
+                            accept="application/json,.json"
+                            className="hidden"
+                            onChange={(e) => setBlueprintFile(e.target.files?.[0] ?? null)}
+                          />
+                          <p className="mt-1 text-xs text-text-muted">Optional override for debugging or officer-supplied packages.</p>
+                        </div>
                       </div>
-                      <div>
-                        <label
-                          htmlFor="binding-blueprint"
-                          className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-surface-card px-3 py-2 text-sm transition-colors hover:border-accent/50"
-                        >
-                          <span className="text-text-muted">
-                            {blueprintFile ? blueprintFile.name : 'Override blueprint.json'}
-                          </span>
-                          <span className="text-xs font-medium text-primary">Browse</span>
-                        </label>
-                        <input
-                          id="binding-blueprint"
-                          type="file"
-                          accept="application/json,.json"
-                          className="hidden"
-                          onChange={(e) => setBlueprintFile(e.target.files?.[0] ?? null)}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </section>
+                    )}
+                  </section>
 
-                <Button type="submit" disabled={starting || !datasetFile || !templateId.trim()} className="w-full">
-                  {starting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Creating binding session…
-                    </>
-                  ) : (
-                    <>
-                      Create binding session <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
-            </Card>
+                  <Button type="submit" disabled={starting || !datasetFile || !templateId.trim()} className="w-full py-3">
+                    {starting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Creating binding session
+                      </>
+                    ) : (
+                      <>
+                        Create binding session <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </section>
+            </form>
           </div>
         )}
 

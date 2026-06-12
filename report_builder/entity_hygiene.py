@@ -59,7 +59,9 @@ class SourceRef:
     sourceType: str = ""
     tableId: str | None = None
     figureId: str | None = None
+    regionRef: str | None = None
     page: int | None = None
+    bbox: list[float] = field(default_factory=list)
     headerPath: list[str] = field(default_factory=list)
     physicalColumn: str | None = None
     confidence: float = 0.85
@@ -68,8 +70,14 @@ class SourceRef:
         d: dict[str, Any] = {"sourceType": self.sourceType, "confidence": self.confidence}
         if self.tableId:
             d["tableId"] = self.tableId
+        if self.figureId:
+            d["figureId"] = self.figureId
+        if self.regionRef:
+            d["regionRef"] = self.regionRef
         if self.page is not None:
             d["page"] = self.page
+        if self.bbox:
+            d["bbox"] = list(self.bbox)
         if self.headerPath:
             d["headerPath"] = list(self.headerPath)
         if self.physicalColumn:
@@ -463,6 +471,31 @@ def classify_entity_candidate(
         document_domain=context.document_domain,
     )
 
+    def _candidate_refs(default_source: str | None = None, default_confidence: float = 0.85) -> list[SourceRef]:
+        refs: list[SourceRef] = []
+        for ref in candidate.get("sourceRefs") or []:
+            if not isinstance(ref, dict):
+                continue
+            refs.append(SourceRef(
+                sourceType=str(ref.get("sourceType") or default_source or source_type),
+                tableId=ref.get("tableId"),
+                figureId=ref.get("figureId"),
+                regionRef=ref.get("regionRef") or ref.get("regionId"),
+                page=ref.get("page", ctx.page),
+                bbox=list(ref.get("bbox") or []),
+                headerPath=list(ref.get("headerPath") or []),
+                physicalColumn=ref.get("physicalColumn"),
+                confidence=float(ref.get("confidence", default_confidence)),
+            ))
+        if refs:
+            return refs
+        return [SourceRef(
+            sourceType=default_source or ctx.source_type,
+            page=ctx.page,
+            tableId=ctx.table_id,
+            confidence=default_confidence,
+        )]
+
     # ── Stage 0: Domain-pack / pre-seeded entity protection ──
     # These entities are domain-authoritative and skip all rejection gates.
     # They preserve their stated entityType, unit, aliases, and valueDomain.
@@ -484,7 +517,7 @@ def classify_entity_candidate(
             classificationSignals=signals,
             classificationConfidence=0.95,
             sourcePriority=0,
-            sourceRefs=[SourceRef(sourceType=source_type, page=ctx.page, confidence=0.95)],
+            sourceRefs=_candidate_refs(source_type, 0.95),
             aliases=candidate.get("aliases") or [],
             unit=candidate.get("unit"),
             valueDomain=candidate.get("valueDomain") or {},
@@ -514,7 +547,7 @@ def classify_entity_candidate(
             classificationSignals=signals,
             classificationConfidence=0.8,
             sourcePriority=ctx.source_priority,
-            sourceRefs=[SourceRef(sourceType=ctx.source_type, page=ctx.page)],
+            sourceRefs=_candidate_refs(ctx.source_type),
         )
 
     # ── Stage 2: Signal-based classification ──
@@ -560,7 +593,7 @@ def classify_entity_candidate(
         classificationSignals=signals,
         classificationConfidence=min(confidence, 1.0),
         sourcePriority=ctx.source_priority,
-        sourceRefs=[SourceRef(sourceType=ctx.source_type, page=ctx.page, tableId=ctx.table_id)],
+        sourceRefs=_candidate_refs(ctx.source_type),
         unit=unit,
     )
 

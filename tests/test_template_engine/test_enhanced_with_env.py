@@ -123,9 +123,14 @@ class TestPipelineMockFull:
     """Comprehensive mock pipeline cycle — no external services required."""
 
     @pytest.fixture(autouse=True)
-    def _pdf(self, tmp_path):
+    def _pdf(self, tmp_path, monkeypatch, request):
+        from template_engine.config import CheckpointConfig, PipelineConfig
+        import template_engine.pipeline as pipeline_module
+
+        cfg = PipelineConfig(checkpoint=CheckpointConfig(enabled=False))
+        monkeypatch.setattr(pipeline_module, "get_config", lambda: cfg)
         self.pdf = tmp_path / "report.pdf"
-        self.pdf.write_bytes(b"%PDF-1.4\nMoSPI Survey 2024\n%%EOF\n")
+        self.pdf.write_bytes(f"%PDF-1.4\nMoSPI Survey 2024\n{request.node.name}\n%%EOF\n".encode("utf-8"))
 
     def test_complete_pipeline_cycle(self):
         """One complete cycle: PDF → hash → VLM → entities → questions → AST → review."""
@@ -723,6 +728,11 @@ class TestVLMPageProperties:
 @pytest.mark.live_llm
 class TestGeminiHybridInference:
     """Live tests using real Gemini API. Requires GEMINI_API_KEY in .env."""
+
+    @pytest.fixture(autouse=True)
+    def _requires_gemini_config(self, gemini_api_key):
+        if not os.getenv("GEMINI_SEMANTIC_MODEL", ""):
+            pytest.skip("GEMINI_SEMANTIC_MODEL not set — skipping live Gemini tests")
 
     def test_gemini_key_is_accessible(self):
         key = os.getenv("GEMINI_API_KEY", "")

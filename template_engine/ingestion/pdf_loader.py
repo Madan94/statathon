@@ -313,7 +313,19 @@ def _stub_pages(pdf_path: Path) -> list[PageData]:
 # Public API
 # ---------------------------------------------------------------------------
 
-def load_pdf(pdf_path: str | Path) -> tuple[list[PageData], str]:
+def pdf_parser_mode() -> str:
+    """Return the configured parser mode used by the strict-loader compatibility API."""
+    mode = os.getenv("PDF_PARSER", "colpali").strip().lower()
+    return mode or "colpali"
+
+
+def _load_colpali_inprocess(pdf_path: Path) -> list[PageData] | None:
+    from template_engine.ingestion.colpali_runtime import extract_pdf_colpali_inprocess
+
+    return extract_pdf_colpali_inprocess(pdf_path)
+
+
+def load_pdf(pdf_path: str | Path, *, strict_colpali: bool = False) -> tuple[list[PageData], str]:
     """Load a PDF using the best available extractor.
 
     Returns:
@@ -333,11 +345,22 @@ def load_pdf(pdf_path: str | Path) -> tuple[list[PageData], str]:
     file_size_kb = path.stat().st_size / 1024
     logger.info("[pdf_loader] ▶ load_pdf      file=%s   size=%.1f KB", path.name, file_size_kb)
 
-    logger.info("[pdf_loader] · cascade 1/4    extractor=ColPali")
-    pages = _load_colpali(path)
-    if pages:
-        logger.info("[pdf_loader] ✓ selected      extractor=colpali       pages=%d", len(pages))
-        return pages, "colpali"
+    mode = pdf_parser_mode()
+    if strict_colpali:
+        try:
+            pages = _load_colpali_inprocess(path)
+        except Exception as exc:
+            raise RuntimeError(f"ColPali extraction failed: {exc}") from exc
+        if pages:
+            return pages, "colpali"
+        raise RuntimeError("ColPali extraction failed: no pages returned")
+
+    if mode != "legacy":
+        logger.info("[pdf_loader] · cascade 1/4    extractor=ColPali")
+        pages = _load_colpali(path)
+        if pages:
+            logger.info("[pdf_loader] ✓ selected      extractor=colpali       pages=%d", len(pages))
+            return pages, "colpali"
 
     logger.info("[pdf_loader] · cascade 2/4    extractor=pdfplumber")
     pages = _load_pdfplumber(path)

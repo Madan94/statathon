@@ -18,6 +18,22 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
+def _iter_blueprint_questions(node: Any) -> list[dict[str, Any]]:
+    """Flatten questions from topics/chapters/sections/subsections."""
+    if isinstance(node, dict):
+        out = [q for q in (node.get("questions") or []) if isinstance(q, dict)]
+        for key in ("topics", "chapters", "sections", "children", "subtopics", "subsections"):
+            for child in node.get(key) or []:
+                out.extend(_iter_blueprint_questions(child))
+        return out
+    if isinstance(node, list):
+        out: list[dict[str, Any]] = []
+        for item in node:
+            out.extend(_iter_blueprint_questions(item))
+        return out
+    return []
+
+
 @dataclass
 class BlueprintQAResult:
     """Result of blueprint quality validation."""
@@ -78,12 +94,7 @@ def validate_blueprint_qa(blueprint: dict[str, Any]) -> BlueprintQAResult:
     if not topics:
         result.warnings.append({"code": "NO_TOPICS", "message": "Blueprint has no topics — questions may be unstructured"})
 
-    all_questions: list[dict] = []
-    for topic in topics:
-        for q in (topic.get("questions") or []):
-            all_questions.append(q)
-    for q in (blueprint.get("questions") or []):
-        all_questions.append(q)
+    all_questions = _iter_blueprint_questions(blueprint)
 
     if not all_questions:
         result.errors.append({"code": "NO_QUESTIONS", "message": "Blueprint has no questions"})
@@ -168,11 +179,7 @@ def validate_statistical_concepts(blueprint: dict[str, Any]) -> BlueprintQAResul
                 })
 
     # Check: growth/trend questions need time dimension
-    all_questions: list[dict] = []
-    for topic in topics:
-        all_questions.extend(topic.get("questions") or [])
-    # Also include top-level questions (some blueprints use flat structure)
-    all_questions.extend(blueprint.get("questions") or [])
+    all_questions = _iter_blueprint_questions(blueprint)
 
     growth_questions = [q for q in all_questions if q.get("questionType") in ("trend", "growth")]
     if growth_questions and not time_entities:

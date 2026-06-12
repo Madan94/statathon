@@ -1,0 +1,1193 @@
+{
+  "$schema": "bharatstat/template-blueprint/v1",
+  "_doc": "VALUE-FREE + PROSE-FREE compact enterprise demo blueprint. Designed to generate a PDF of at most 9 pages with 3 topics, 2 subtopics, short sections, and restrained chart/table density. Contains no observed values and no generated prose.",
+  "templateMeta": {
+    "templateId": "tpl_mospi_short_enterprise_demo_v1",
+    "name": "MoSPI Short Enterprise Demo Report",
+    "domain": "labour_force",
+    "reportType": "mospi_short_enterprise_demo",
+    "locale": "en-IN",
+    "version": "1.0.0",
+    "sourceDocument": "Officer demo template package",
+    "valueFree": true,
+    "proseFree": true,
+    "templateClass": "compact_enterprise_publication",
+    "releaseStage": "built_in_demo",
+    "targetPageCount": "7-9",
+    "standardPageCount": 8,
+    "maximumPageCount": 9,
+    "createdBy": "BharatStat deterministic template generator",
+    "lastUpdated": "2026-06-12",
+    "description": "Compact enterprise-grade demo blueprint for officers who need a short, high-quality PDF with binder-ready questions, officer controls, source lineage, and restrained visuals.",
+    "compatibleStages": [
+      "S0",
+      "S1",
+      "S2",
+      "S3",
+      "S3.5",
+      "S4",
+      "S5",
+      "S6",
+      "S7"
+    ],
+    "governance": {
+      "ownerRole": "MoSPI report officer",
+      "reviewRoles": [
+        "statistical reviewer",
+        "publication reviewer"
+      ],
+      "auditMode": "lineage_required",
+      "approvalRequiredFor": [
+        "publication status",
+        "formula policy changes",
+        "source note overrides",
+        "blocked question release"
+      ]
+    }
+  },
+  "enterprisePlan": {
+    "targetPages": 8,
+    "minimumPages": 7,
+    "maximumPages": 9,
+    "layoutModel": "compact_enterprise_pdf",
+    "outlineDepth": [
+      "topic",
+      "subtopic",
+      "section",
+      "question",
+      "answer_component"
+    ],
+    "pageBudget": [
+      {
+        "pageRange": "1",
+        "role": "cover_and_key_findings",
+        "contentPolicy": "title, reporting period, dataset scope, 3-5 officer-approved key findings"
+      },
+      {
+        "pageRange": "2",
+        "role": "data_quality_and_method",
+        "contentPolicy": "dataset profile, coverage gate, important caveats, lineage summary"
+      },
+      {
+        "pageRange": "3-7",
+        "role": "three_topic_analysis",
+        "contentPolicy": "short sections only, one compact visual/table per section at most"
+      },
+      {
+        "pageRange": "8-9",
+        "role": "officer_notes_and_provenance",
+        "contentPolicy": "review checklist, source notes, annexure mini table if required"
+      }
+    ],
+    "shapeConstraints": {
+      "topics": 3,
+      "subtopics": 2,
+      "sectionsPerTopic": "1-3",
+      "maxQuestions": 8,
+      "maxAnswerComponentsPerQuestion": 4,
+      "maxChartsPerSection": 1,
+      "maxTablesPerSection": 1,
+      "maxNarrativeParagraphsPerSection": 2,
+      "maxBulletsPerSection": 5
+    },
+    "officerDeliverables": [
+      "searchable compact template catalog card",
+      "entity binding matrix",
+      "question readiness summary",
+      "visual density controls",
+      "lineage and source-note export",
+      "S3.5 execution bundle readiness"
+    ]
+  },
+  "officerCustomization": {
+    "customizationVersion": "officer.template.controls.v1",
+    "principles": [
+      "Customization may change scope, ordering, visual density, and publication metadata only.",
+      "No customization may fabricate a value, remove a required source note, or soften a blocked readiness gate.",
+      "Optional sections can be hidden, but hidden questions remain visible in the audit log."
+    ],
+    "controls": [
+      {
+        "controlId": "page_budget",
+        "label": "Page budget",
+        "type": "single_select",
+        "default": "standard_8_pages",
+        "options": [
+          {
+            "value": "brief_7_pages",
+            "label": "Brief 7 pages",
+            "targetPages": [
+              7,
+              7
+            ]
+          },
+          {
+            "value": "standard_8_pages",
+            "label": "Standard 8 pages",
+            "targetPages": [
+              8,
+              8
+            ]
+          },
+          {
+            "value": "max_9_pages",
+            "label": "Maximum 9 pages",
+            "targetPages": [
+              9,
+              9
+            ]
+          }
+        ]
+      },
+      {
+        "controlId": "visual_density",
+        "label": "Visual density",
+        "type": "single_select",
+        "default": "balanced_low",
+        "options": [
+          "minimal",
+          "balanced_low",
+          "table_first"
+        ]
+      },
+      {
+        "controlId": "geography_depth",
+        "label": "Geography depth",
+        "type": "single_select",
+        "default": "rural_urban",
+        "options": [
+          "national",
+          "rural_urban",
+          "state_ut_if_available"
+        ]
+      },
+      {
+        "controlId": "priority_lens",
+        "label": "Priority lens",
+        "type": "multi_select",
+        "default": [
+          "gender",
+          "youth",
+          "rural_urban"
+        ],
+        "options": [
+          "gender",
+          "youth",
+          "rural_urban",
+          "state_variation",
+          "education"
+        ]
+      },
+      {
+        "controlId": "publication_status",
+        "label": "Publication status",
+        "type": "single_select",
+        "default": "draft_for_review",
+        "options": [
+          "draft_for_review",
+          "internal_review",
+          "publication_ready"
+        ]
+      }
+    ],
+    "officerEditableFields": [
+      "cover.title",
+      "cover.subtitle",
+      "publication.status",
+      "reporting.period",
+      "topic.enabled",
+      "subtopic.enabled",
+      "section.enabled",
+      "component.visibility",
+      "chart.type",
+      "table.sort",
+      "source_note.override"
+    ],
+    "lockedFields": [
+      "entity.aggregationPolicy",
+      "question.requiredEntities.required",
+      "formulaSpec.type",
+      "formulaSpec.numeratorColumn",
+      "formulaSpec.denominatorColumn",
+      "slot.lineage"
+    ]
+  },
+  "dataContract": {
+    "contractVersion": "mospi.short.demo.dataset.contract.v1",
+    "minimumViableDataset": {
+      "requiredMeasures": [
+        "ent_lfpr",
+        "ent_wpr",
+        "ent_ur"
+      ],
+      "requiredDimensions": [
+        "ent_sector",
+        "ent_gender",
+        "ent_period"
+      ],
+      "optionalDimensions": [
+        "ent_age_group",
+        "ent_state_ut",
+        "ent_education_level"
+      ],
+      "optionalWeights": [
+        "ent_sample_weight"
+      ]
+    },
+    "acceptedInputShapes": [
+      {
+        "shapeId": "reported_indicator_wide",
+        "description": "Rows identify period and classification dimensions; LFPR/WPR/UR are separate reported-value columns.",
+        "normalizationPlan": {
+          "operation": "WIDE_TO_LONG",
+          "measureColumns": [
+            "lfpr",
+            "wpr",
+            "ur"
+          ],
+          "indicatorColumn": "indicator",
+          "valueColumn": "reported_value"
+        }
+      },
+      {
+        "shapeId": "microdata_weighted_counts",
+        "description": "Rows are records or grouped counts with labour force, worker, unemployed, population, and weight columns.",
+        "normalizationPlan": {
+          "operation": "NONE",
+          "formulaSource": "formulaCatalog"
+        }
+      }
+    ],
+    "readinessRules": [
+      {
+        "ruleId": "required_measures_bound",
+        "severity": "error",
+        "message": "LFPR, WPR, and UR must be bound or explicitly marked not applicable."
+      },
+      {
+        "ruleId": "period_available",
+        "severity": "error",
+        "message": "A reporting period column or fixed report period must be available."
+      },
+      {
+        "ruleId": "source_note_required",
+        "severity": "warning",
+        "message": "Officer must confirm source note before publication-ready export."
+      }
+    ]
+  },
+  "binderDeliverableContract": {
+    "contractVersion": "binding.executionBundle.v1",
+    "requiredArtifacts": [
+      "template.blueprint.json",
+      "template.ast.json",
+      "semantic_slot_graph.json",
+      "binding_ast",
+      "execution_bundle",
+      "provenance_manifest"
+    ],
+    "readinessGate": {
+      "readyStatusesAllowedForGeneration": [
+        "READY",
+        "DEGRADED"
+      ],
+      "blockedStatus": "NOT_READY",
+      "degradedRequiresOfficerAcknowledgement": true
+    },
+    "lineagePolicy": {
+      "everyAnswerComponentRequiresSlot": true,
+      "everySlotRequiresQuestionId": true,
+      "everyFormulaRequiresSourceColumns": true,
+      "sourceNotesMustRender": true
+    }
+  },
+  "publicationContract": {
+    "publicationVersion": "mospi.short.demo.publication.v1",
+    "pageSize": "A4",
+    "orientation": "portrait",
+    "fontFamily": "Noto Sans",
+    "maxPages": 9,
+    "frontMatter": [
+      "cover_title",
+      "reporting_period",
+      "key_findings"
+    ],
+    "backMatter": [
+      "source_notes",
+      "method_caveats",
+      "officer_review_checklist"
+    ],
+    "visualPolicy": {
+      "chartStyle": "minimal_mospi",
+      "tableStyle": "compact_government",
+      "avoid3dCharts": true,
+      "requireAltText": true,
+      "maxLegendItems": 6
+    },
+    "languagePolicy": {
+      "tone": "formal_statistical",
+      "noUnsupportedCausalClaims": true,
+      "uncertaintyMustBeShownWhenAvailable": true
+    }
+  },
+  "qualityGateProfile": {
+    "profileId": "qgp_short_enterprise_demo_v1",
+    "minimumBinderReadinessScore": 0.82,
+    "blockingChecks": [
+      "BROKEN_FILLFROM",
+      "MISSING_REQUIRED_ENTITY",
+      "BLOCKED_FORMULA_SPEC",
+      "MISSING_SLOT_LINEAGE",
+      "UNBOUND_REPORTING_PERIOD"
+    ],
+    "warningChecks": [
+      "LOW_ENTITY_CONFIDENCE",
+      "MISSING_OPTIONAL_DIMENSION",
+      "MISSING_SOURCE_NOTE",
+      "VISUAL_DENSITY_HIGH"
+    ],
+    "scoreCaps": {
+      "anyBlockingError": 0.59,
+      "missingSourceNotes": 0.79,
+      "unreviewedOfficerControls": 0.88
+    }
+  },
+  "officerWorkbench": {
+    "defaultPanels": [
+      "template_catalog",
+      "dataset_profile",
+      "entity_matrix",
+      "question_readiness",
+      "slot_lineage",
+      "publication_controls"
+    ],
+    "recommendedWorkflow": [
+      "Select compact enterprise template.",
+      "Upload CSV and review DatasetAST profile.",
+      "Confirm LFPR, WPR, UR, period, sector, and gender bindings.",
+      "Resolve optional youth/state fields if available.",
+      "Check question readiness and slot lineage.",
+      "Export compact PDF only after source-note review."
+    ],
+    "reviewChecklist": [
+      "All required entities are bound or explicitly not applicable.",
+      "Every visual/table is traceable to a question and source column.",
+      "No section exceeds its compact page budget.",
+      "Publication status and reporting period are officer-confirmed.",
+      "DEGRADED questions, if any, have visible caveats."
+    ]
+  },
+  "formulaCatalog": {
+    "catalogVersion": "formula.catalog.short.demo.v1",
+    "formulas": [
+      {
+        "formulaId": "formula_lfpr_weighted",
+        "type": "RATE",
+        "label": "Labour Force Participation Rate",
+        "numeratorColumn": "labour_force_count",
+        "denominatorColumn": "population_count",
+        "multiplier": 100,
+        "weightColumn": "sample_weight",
+        "aggregationPolicy": "aggregate_numerator_denominator_then_divide",
+        "requiredFor": [
+          "q_exec_summary_lfpr",
+          "q_gender_sector_lfpr"
+        ]
+      },
+      {
+        "formulaId": "formula_wpr_weighted",
+        "type": "RATE",
+        "label": "Worker Population Ratio",
+        "numeratorColumn": "worker_count",
+        "denominatorColumn": "population_count",
+        "multiplier": 100,
+        "weightColumn": "sample_weight",
+        "aggregationPolicy": "aggregate_numerator_denominator_then_divide",
+        "requiredFor": [
+          "q_employment_wpr"
+        ]
+      },
+      {
+        "formulaId": "formula_ur_weighted",
+        "type": "RATE",
+        "label": "Unemployment Rate",
+        "numeratorColumn": "unemployed_count",
+        "denominatorColumn": "labour_force_count",
+        "multiplier": 100,
+        "weightColumn": "sample_weight",
+        "aggregationPolicy": "aggregate_numerator_denominator_then_divide",
+        "requiredFor": [
+          "q_exec_summary_ur"
+        ]
+      }
+    ]
+  },
+  "glossary": {
+    "LFPR": "Labour Force Participation Rate: percentage of persons in the labour force.",
+    "WPR": "Worker Population Ratio: percentage of persons who are employed.",
+    "UR": "Unemployment Rate: percentage of labour force that is unemployed.",
+    "usual_status": "Activity status measured over the reference period used by the survey.",
+    "sector": "Rural or Urban classification.",
+    "reporting_period": "The survey or administrative period covered by the report."
+  },
+  "palette": {
+    "paletteId": "pal_mospi_short_demo",
+    "sequential": [
+      "#0B5394",
+      "#3D85C6",
+      "#6FA8DC",
+      "#CFE2F3"
+    ],
+    "categorical": {
+      "Rural": "#1F7A1F",
+      "Urban": "#0B5394",
+      "Male": "#0B5394",
+      "Female": "#CC4125",
+      "Total": "#666666"
+    },
+    "semantic": {
+      "positive": "#1F7A1F",
+      "negative": "#CC0000",
+      "neutral": "#666666",
+      "warning": "#B45F06"
+    }
+  },
+  "renderProfile": {
+    "numberFormat": {
+      "locale": "en-IN",
+      "grouping": "lakh-crore",
+      "decimalSeparator": "."
+    },
+    "percentFormat": {
+      "decimals": 1,
+      "suffix": "%"
+    },
+    "fontFamily": "Noto Sans",
+    "pageSize": "A4",
+    "compactSpacing": true,
+    "sectionNumbering": true,
+    "showQuestionIdsInAudit": true
+  },
+  "entities": [
+    {
+      "entityId": "ent_lfpr",
+      "canonicalName": "Labour Force Participation Rate",
+      "entityType": "measure",
+      "aliases": [
+        "LFPR",
+        "Labour Force Participation Rate",
+        "participation rate"
+      ],
+      "unit": "percent",
+      "format": "percent.1",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "reported_value_or_weighted_rate",
+      "aggregationPolicy": {
+        "preferred": "reported_value",
+        "fallback": "formula_lfpr_weighted",
+        "reportedValuePolicy": "single_or_equal_values_only_else_weighted_if_valid"
+      },
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_wpr",
+      "canonicalName": "Worker Population Ratio",
+      "entityType": "measure",
+      "aliases": [
+        "WPR",
+        "Worker Population Ratio",
+        "employment ratio"
+      ],
+      "unit": "percent",
+      "format": "percent.1",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "reported_value_or_weighted_rate",
+      "aggregationPolicy": {
+        "preferred": "reported_value",
+        "fallback": "formula_wpr_weighted",
+        "reportedValuePolicy": "single_or_equal_values_only_else_weighted_if_valid"
+      },
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_ur",
+      "canonicalName": "Unemployment Rate",
+      "entityType": "measure",
+      "aliases": [
+        "UR",
+        "Unemployment Rate",
+        "unemployment"
+      ],
+      "unit": "percent",
+      "format": "percent.1",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "reported_value_or_weighted_rate",
+      "aggregationPolicy": {
+        "preferred": "reported_value",
+        "fallback": "formula_ur_weighted",
+        "reportedValuePolicy": "single_or_equal_values_only_else_weighted_if_valid"
+      },
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_sector",
+      "canonicalName": "Sector",
+      "entityType": "dimension",
+      "aliases": [
+        "Sector",
+        "Rural/Urban",
+        "Area"
+      ],
+      "valueDomain": {
+        "kind": "categorical",
+        "members": [
+          "Rural",
+          "Urban"
+        ],
+        "allowOther": false
+      },
+      "cardinalityHint": "low",
+      "scope": "classifier",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_gender",
+      "canonicalName": "Gender",
+      "entityType": "dimension",
+      "aliases": [
+        "Gender",
+        "Sex",
+        "Male/Female"
+      ],
+      "valueDomain": {
+        "kind": "categorical",
+        "members": [
+          "Male",
+          "Female",
+          "Total"
+        ],
+        "allowOther": true
+      },
+      "cardinalityHint": "low",
+      "scope": "classifier",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_period",
+      "canonicalName": "Reporting Period",
+      "entityType": "time",
+      "aliases": [
+        "Period",
+        "Year",
+        "Survey Period",
+        "Reference Period"
+      ],
+      "valueDomain": {
+        "kind": "time_period",
+        "granularity": [
+          "annual",
+          "quarterly"
+        ]
+      },
+      "scope": "time",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_age_group",
+      "canonicalName": "Age Group",
+      "entityType": "dimension",
+      "aliases": [
+        "Age",
+        "Age group",
+        "Youth",
+        "15-29"
+      ],
+      "valueDomain": {
+        "kind": "ordinal",
+        "members": [
+          "15-29",
+          "15-59",
+          "15+",
+          "All ages"
+        ],
+        "allowOther": true
+      },
+      "cardinalityHint": "low",
+      "scope": "filter",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_state_ut",
+      "canonicalName": "State/UT",
+      "entityType": "dimension",
+      "aliases": [
+        "State",
+        "State/UT",
+        "Region"
+      ],
+      "valueDomain": {
+        "kind": "categorical",
+        "members": "open",
+        "expectedCardinality": 36
+      },
+      "cardinalityHint": "high",
+      "scope": "classifier",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_sample_weight",
+      "canonicalName": "Sample Weight",
+      "entityType": "measure",
+      "aliases": [
+        "Weight",
+        "Multiplier",
+        "Sample weight"
+      ],
+      "unit": "weight",
+      "valueDomain": {
+        "kind": "non_negative_number"
+      },
+      "aggregation": "sum",
+      "scope": "weight",
+      "confidence": null
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01_executive_snapshot",
+      "title": "Executive Snapshot",
+      "purpose": "Give officers a one-page overview of headline labour-force indicators and readiness caveats.",
+      "pageBudget": {
+        "min": 1,
+        "target": 1,
+        "max": 2
+      },
+      "sections": [
+        {
+          "sectionId": "sec_01_headline_indicators",
+          "title": "Headline indicators",
+          "sectionType": "key_findings",
+          "pageBudget": {
+            "target": 1
+          },
+          "questions": [
+            {
+              "questionId": "q_exec_summary_lfpr",
+              "prompt": "What is the headline labour force participation picture for the selected reporting period?",
+              "priority": "required",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_lfpr",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_period",
+                  "role": "time",
+                  "required": true
+                }
+              ],
+              "formulaSpec": {
+                "type": "DIRECT_OR_RATE",
+                "directEntity": "ent_lfpr",
+                "fallbackFormulaId": "formula_lfpr_weighted"
+              },
+              "binderContract": {
+                "readiness": "READY_IF_REQUIRED_ENTITIES_BOUND",
+                "slotPrefix": "slot_exec_lfpr",
+                "blockedIf": [
+                  "ent_lfpr unbound and formula_lfpr_weighted unresolved",
+                  "ent_period unbound"
+                ]
+              },
+              "answerPlan": {
+                "maxNarrativeSentences": 3,
+                "visualPolicy": "metric_cards_only",
+                "officerReviewRequired": true
+              },
+              "answerComponents": [
+                {
+                  "componentId": "cmp_exec_lfpr_metric",
+                  "componentKind": "metric_card",
+                  "slotId": "slot_exec_lfpr_metric",
+                  "title": "LFPR headline",
+                  "requiredEntities": [
+                    "ent_lfpr",
+                    "ent_period"
+                  ],
+                  "renderHint": {
+                    "format": "percent.1",
+                    "emphasis": "primary"
+                  }
+                },
+                {
+                  "componentId": "cmp_exec_lfpr_note",
+                  "componentKind": "narrative_paragraph",
+                  "slotId": "slot_exec_lfpr_note",
+                  "purpose": "Interpret headline LFPR with no causal claim.",
+                  "maxSentences": 2
+                }
+              ],
+              "provenanceRequirements": {
+                "sourceColumnsRequired": true,
+                "sourceNoteRequired": true,
+                "lineageRequired": true
+              }
+            },
+            {
+              "questionId": "q_exec_summary_ur",
+              "prompt": "What unemployment-rate headline should be highlighted with caveats?",
+              "priority": "required",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_ur",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_period",
+                  "role": "time",
+                  "required": true
+                }
+              ],
+              "formulaSpec": {
+                "type": "DIRECT_OR_RATE",
+                "directEntity": "ent_ur",
+                "fallbackFormulaId": "formula_ur_weighted"
+              },
+              "binderContract": {
+                "readiness": "READY_IF_REQUIRED_ENTITIES_BOUND",
+                "slotPrefix": "slot_exec_ur",
+                "blockedIf": [
+                  "ent_ur unbound and formula_ur_weighted unresolved"
+                ]
+              },
+              "answerComponents": [
+                {
+                  "componentId": "cmp_exec_ur_metric",
+                  "componentKind": "metric_card",
+                  "slotId": "slot_exec_ur_metric",
+                  "title": "UR headline",
+                  "requiredEntities": [
+                    "ent_ur",
+                    "ent_period"
+                  ],
+                  "renderHint": {
+                    "format": "percent.1",
+                    "emphasis": "secondary"
+                  }
+                }
+              ],
+              "provenanceRequirements": {
+                "sourceColumnsRequired": true,
+                "sourceNoteRequired": true,
+                "lineageRequired": true
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec_02_data_quality",
+          "title": "Data quality and coverage",
+          "sectionType": "method_note",
+          "pageBudget": {
+            "target": 1
+          },
+          "questions": [
+            {
+              "questionId": "q_data_quality_coverage",
+              "prompt": "Is the dataset complete enough for the compact publication?",
+              "priority": "required",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_period",
+                  "role": "time",
+                  "required": true
+                }
+              ],
+              "binderContract": {
+                "readiness": "READY_IF_DATASET_PROFILE_AVAILABLE",
+                "slotPrefix": "slot_quality",
+                "blockedIf": [
+                  "dataset profile unavailable",
+                  "reporting period unresolved"
+                ]
+              },
+              "answerComponents": [
+                {
+                  "componentId": "cmp_quality_table",
+                  "componentKind": "table",
+                  "slotId": "slot_quality_table",
+                  "title": "Binder readiness checklist",
+                  "maxRows": 6,
+                  "columns": [
+                    "Check",
+                    "Status",
+                    "Officer action"
+                  ]
+                },
+                {
+                  "componentId": "cmp_quality_note",
+                  "componentKind": "narrative_paragraph",
+                  "slotId": "slot_quality_note",
+                  "purpose": "Summarize caveats and any degraded readiness.",
+                  "maxSentences": 2
+                }
+              ],
+              "provenanceRequirements": {
+                "datasetProfileRequired": true,
+                "sourceNoteRequired": true,
+                "lineageRequired": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_02_participation_and_employment",
+      "title": "Participation and Employment",
+      "purpose": "Show the minimum labour-market story using two officer-friendly subtopics.",
+      "pageBudget": {
+        "min": 3,
+        "target": 4,
+        "max": 4
+      },
+      "subtopics": [
+        {
+          "subtopicId": "subtopic_02_01_participation",
+          "title": "Participation lens",
+          "sections": [
+            {
+              "sectionId": "sec_03_gender_sector_lfpr",
+              "title": "Participation by gender and sector",
+              "sectionType": "analysis",
+              "pageBudget": {
+                "target": 1
+              },
+              "questions": [
+                {
+                  "questionId": "q_gender_sector_lfpr",
+                  "prompt": "How does LFPR vary across gender and rural/urban sector?",
+                  "priority": "required",
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_lfpr",
+                      "role": "measure",
+                      "required": true
+                    },
+                    {
+                      "entityId": "ent_gender",
+                      "role": "dimension",
+                      "required": true
+                    },
+                    {
+                      "entityId": "ent_sector",
+                      "role": "dimension",
+                      "required": true
+                    },
+                    {
+                      "entityId": "ent_period",
+                      "role": "time",
+                      "required": true
+                    }
+                  ],
+                  "formulaSpec": {
+                    "type": "DIRECT_OR_RATE",
+                    "directEntity": "ent_lfpr",
+                    "fallbackFormulaId": "formula_lfpr_weighted",
+                    "groupBy": [
+                      "ent_gender",
+                      "ent_sector"
+                    ]
+                  },
+                  "binderContract": {
+                    "readiness": "READY_IF_REQUIRED_ENTITIES_BOUND",
+                    "slotPrefix": "slot_lfpr_gender_sector",
+                    "blockedIf": [
+                      "ent_gender unbound",
+                      "ent_sector unbound"
+                    ]
+                  },
+                  "answerComponents": [
+                    {
+                      "componentId": "cmp_lfpr_gender_sector_chart",
+                      "componentKind": "chart",
+                      "slotId": "slot_lfpr_gender_sector_chart",
+                      "title": "LFPR by gender and sector",
+                      "chartType": "grouped_bar",
+                      "maxSeries": 4,
+                      "requiredEntities": [
+                        "ent_lfpr",
+                        "ent_gender",
+                        "ent_sector"
+                      ]
+                    },
+                    {
+                      "componentId": "cmp_lfpr_gender_sector_note",
+                      "componentKind": "narrative_paragraph",
+                      "slotId": "slot_lfpr_gender_sector_note",
+                      "maxSentences": 2
+                    }
+                  ],
+                  "provenanceRequirements": {
+                    "sourceColumnsRequired": true,
+                    "sourceNoteRequired": true,
+                    "lineageRequired": true
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "subtopicId": "subtopic_02_02_employment",
+          "title": "Employment lens",
+          "sections": [
+            {
+              "sectionId": "sec_05_wpr_overview",
+              "title": "Employment ratio overview",
+              "sectionType": "analysis",
+              "pageBudget": {
+                "target": 1
+              },
+              "questions": [
+                {
+                  "questionId": "q_employment_wpr",
+                  "prompt": "What is the compact employment-ratio picture for the selected period?",
+                  "priority": "required",
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_wpr",
+                      "role": "measure",
+                      "required": true
+                    },
+                    {
+                      "entityId": "ent_sector",
+                      "role": "dimension",
+                      "required": false
+                    },
+                    {
+                      "entityId": "ent_period",
+                      "role": "time",
+                      "required": true
+                    }
+                  ],
+                  "formulaSpec": {
+                    "type": "DIRECT_OR_RATE",
+                    "directEntity": "ent_wpr",
+                    "fallbackFormulaId": "formula_wpr_weighted",
+                    "groupBy": [
+                      "ent_sector"
+                    ]
+                  },
+                  "binderContract": {
+                    "readiness": "READY_IF_REQUIRED_ENTITIES_BOUND",
+                    "slotPrefix": "slot_wpr",
+                    "blockedIf": [
+                      "ent_wpr unbound and formula_wpr_weighted unresolved"
+                    ]
+                  },
+                  "answerComponents": [
+                    {
+                      "componentId": "cmp_wpr_table",
+                      "componentKind": "table",
+                      "slotId": "slot_wpr_table",
+                      "title": "WPR compact table",
+                      "maxRows": 6,
+                      "requiredEntities": [
+                        "ent_wpr",
+                        "ent_period"
+                      ]
+                    },
+                    {
+                      "componentId": "cmp_wpr_note",
+                      "componentKind": "narrative_paragraph",
+                      "slotId": "slot_wpr_note",
+                      "maxSentences": 2
+                    }
+                  ],
+                  "provenanceRequirements": {
+                    "sourceColumnsRequired": true,
+                    "sourceNoteRequired": true,
+                    "lineageRequired": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_03_officer_publication_close",
+      "title": "Officer Review and Publication Close",
+      "purpose": "Close the compact report with state coverage, caveats, and release controls.",
+      "pageBudget": {
+        "min": 1,
+        "target": 2,
+        "max": 2
+      },
+      "sections": [
+        {
+          "sectionId": "sec_07_state_coverage_optional",
+          "title": "State/UT coverage snapshot",
+          "sectionType": "coverage_note",
+          "pageBudget": {
+            "target": 1
+          },
+          "questions": [
+            {
+              "questionId": "q_state_coverage_optional",
+              "prompt": "If State/UT is available, which coverage caveat should the officer see?",
+              "priority": "optional",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_state_ut",
+                  "role": "dimension",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_period",
+                  "role": "time",
+                  "required": true
+                }
+              ],
+              "binderContract": {
+                "readiness": "DEGRADED_IF_STATE_MISSING",
+                "slotPrefix": "slot_state_coverage",
+                "degradedIf": [
+                  "ent_state_ut unavailable"
+                ]
+              },
+              "answerComponents": [
+                {
+                  "componentId": "cmp_state_coverage_table",
+                  "componentKind": "table",
+                  "slotId": "slot_state_coverage_table",
+                  "title": "State/UT coverage",
+                  "maxRows": 8,
+                  "visibility": "show_if_ent_state_ut_bound"
+                },
+                {
+                  "componentId": "cmp_state_coverage_note",
+                  "componentKind": "narrative_paragraph",
+                  "slotId": "slot_state_coverage_note",
+                  "maxSentences": 2
+                }
+              ],
+              "provenanceRequirements": {
+                "datasetProfileRequired": true,
+                "sourceNoteRequired": true,
+                "lineageRequired": true
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec_08_publication_checklist",
+          "title": "Publication checklist",
+          "sectionType": "officer_review",
+          "pageBudget": {
+            "target": 1
+          },
+          "questions": [
+            {
+              "questionId": "q_publication_readiness",
+              "prompt": "Is the compact report ready for PDF export?",
+              "priority": "required",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_period",
+                  "role": "time",
+                  "required": true
+                }
+              ],
+              "binderContract": {
+                "readiness": "READY_IF_QUALITY_GATES_PASS",
+                "slotPrefix": "slot_publication",
+                "blockedIf": [
+                  "quality gate has blocking errors",
+                  "publication status unresolved"
+                ]
+              },
+              "answerComponents": [
+                {
+                  "componentId": "cmp_publication_checklist",
+                  "componentKind": "checklist",
+                  "slotId": "slot_publication_checklist",
+                  "items": [
+                    "Required entities bound",
+                    "Source notes confirmed",
+                    "No blocked formula specs",
+                    "Lineage rendered",
+                    "Officer status selected"
+                  ]
+                },
+                {
+                  "componentId": "cmp_publication_source_notes",
+                  "componentKind": "source_note_block",
+                  "slotId": "slot_publication_source_notes",
+                  "required": true
+                }
+              ],
+              "provenanceRequirements": {
+                "sourceNoteRequired": true,
+                "auditTrailRequired": true,
+                "lineageRequired": true
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "semanticSlotPolicy": {
+    "slotGraphRequired": true,
+    "defaultFillFromPattern": "question.answerComponents[].slotId",
+    "stableSlotIdPolicy": "slot_<section_or_question>_<component>",
+    "lineageFieldsRequired": [
+      "topicId",
+      "sectionId",
+      "questionId",
+      "componentId",
+      "requiredEntities"
+    ],
+    "repairPolicy": {
+      "allowStaleFillFromRepair": true,
+      "failIfUnrepairableAfterNormalization": true
+    }
+  },
+  "pdfAssemblyHints": {
+    "maxPages": 9,
+    "pageBreakPolicy": "topic_soft_break_section_hard_if_overflow",
+    "frontMatterPages": 1,
+    "methodAndQualityPages": 1,
+    "analysisPages": 5,
+    "reviewAndNotesPages": 1,
+    "overflowPolicy": "hide_optional_low_priority_components_before_reducing_required_caveats",
+    "compactComponents": [
+      "metric_card",
+      "narrative_paragraph",
+      "grouped_bar",
+      "compact_table",
+      "checklist",
+      "source_note_block"
+    ]
+  }
+}

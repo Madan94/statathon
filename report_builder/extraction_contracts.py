@@ -206,7 +206,9 @@ class SourceRef:
     sourceType: str = ""                # table_header | chart_axis | vlm_entity | heading | caption
     tableId: str | None = None
     figureId: str | None = None
+    regionRef: str | None = None
     page: int | None = None
+    bbox: list[float] = field(default_factory=list)
     headerPath: list[str] = field(default_factory=list)
     physicalColumn: str | None = None
     confidence: float | None = None
@@ -217,8 +219,12 @@ class SourceRef:
             d["tableId"] = self.tableId
         if self.figureId:
             d["figureId"] = self.figureId
+        if self.regionRef:
+            d["regionRef"] = self.regionRef
         if self.page is not None:
             d["page"] = self.page
+        if self.bbox:
+            d["bbox"] = list(self.bbox)
         if self.headerPath:
             d["headerPath"] = list(self.headerPath)
         if self.physicalColumn:
@@ -301,6 +307,7 @@ class ExtractionEntityContract:
             "familyRef": self.familyRef,
             "normalizationHints": dict(self.normalizationHints),
             "confidence": self.confidence,
+            "runtimeTraceRefs": list(self.runtimeTraceRefs),
         }
 
 
@@ -363,6 +370,7 @@ class ExtractionBlueprintContract:
     palette: dict[str, Any] = field(default_factory=dict)
     renderProfile: dict[str, Any] = field(default_factory=dict)
     documentMap: dict[str, Any] = field(default_factory=dict)
+    templateSemanticGraph: dict[str, Any] = field(default_factory=dict)
     statisticalContext: dict[str, Any] = field(default_factory=dict)
     extractionDiagnostics: dict[str, Any] = field(default_factory=dict)
 
@@ -380,6 +388,7 @@ class ExtractionBlueprintContract:
             "palette": self.palette,
             "renderProfile": self.renderProfile,
             "documentMap": self.documentMap,
+            "templateSemanticGraph": self.templateSemanticGraph,
             "statisticalContext": self.statisticalContext,
             "extractionDiagnostics": self.extractionDiagnostics,
         }
@@ -409,6 +418,43 @@ def iter_blueprint_questions(blueprint: dict[str, Any]) -> list[dict[str, Any]]:
         questions.extend(topic.get("questions") or [])
     questions.extend(blueprint.get("questions") or [])
     return questions
+
+
+def _question_requires_measure(question: dict[str, Any]) -> bool:
+    qtype = str(question.get("questionType") or "")
+    spec = question.get("analyticsSpec") or {}
+    operation = str(spec.get("operation") or "").lower() if isinstance(spec, dict) else ""
+    if qtype in ("descriptive", "summary"):
+        return False
+    if operation in ("describe", "summary", "summary_stats"):
+        return False
+    return True
+
+
+def _has_measure_spec(question: dict[str, Any]) -> bool:
+    spec = question.get("analyticsSpec") or {}
+    if not isinstance(spec, dict):
+        return False
+    measure = spec.get("measure")
+    if _has_measure_ref(measure):
+        return True
+    measures = spec.get("measures")
+    if isinstance(measures, list):
+        return any(_has_measure_ref(m) for m in measures)
+    return _has_measure_ref(measures)
+
+
+def _has_measure_ref(value: Any) -> bool:
+    if isinstance(value, dict):
+        return bool(value.get("entityRef") or value.get("entityId") or value.get("column"))
+    return bool(value)
+
+
+def _has_required_measure(question: dict[str, Any]) -> bool:
+    for req in question.get("requiredEntities") or []:
+        if req.get("role") == "measure" and (req.get("entityId") or req.get("entityRef")):
+            return True
+    return False
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -557,6 +603,8 @@ def validate_extraction_contract(
         missing_analytics = 0
         missing_answer_structure = 0
         missing_components = 0
+        missing_measure_spec = 0
+        missing_measure_entity = 0
         broken_entity_refs = 0
         weak_intents = 0
 
@@ -579,6 +627,11 @@ def validate_extraction_contract(
             if qtype not in ("descriptive", "summary", ""):
                 if not aspec.get("operation"):
                     missing_analytics += 1
+                if _question_requires_measure(q):
+                    if not _has_measure_spec(q):
+                        missing_measure_spec += 1
+                    if not _has_required_measure(q):
+                        missing_measure_entity += 1
 
             # Answer structure
             if not ans:
@@ -602,6 +655,18 @@ def validate_extraction_contract(
                    f"{missing_analytics} non-descriptive questions have no analyticsSpec.operation",
                    path="topics[].questions[].analyticsSpec",
                    action="Add operation (group_aggregate, trend, etc.)")
+
+        if missing_measure_spec > 0:
+            _issue("MISSING_MEASURE_SPEC",
+                   f"{missing_measure_spec} analytic questions have no executable analyticsSpec.measure/measures",
+                   path="topics[].questions[].analyticsSpec.measure",
+                   action="Add measure entity refs before binding")
+
+        if missing_measure_entity > 0:
+            _issue("MISSING_MEASURE_ENTITY",
+                   f"{missing_measure_entity} analytic questions have no requiredEntities role='measure'",
+                   path="topics[].questions[].requiredEntities",
+                   action="Add the measure entity required by S3 binding")
 
         if missing_answer_structure > 0:
             _issue("MISSING_ANSWER_STRUCTURE",

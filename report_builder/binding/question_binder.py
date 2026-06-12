@@ -124,6 +124,24 @@ def bind_question(
     qid = str(question.get("questionId") or "")
     required = question.get("requiredEntities") or []
     spec = question.get("analyticsSpec") or {}
+    if not required and spec:
+        required = []
+        measure = spec.get("measure") if isinstance(spec.get("measure"), dict) else {}
+        measure_ref = measure.get("entityId") or measure.get("entityRef")
+        if measure_ref:
+            required.append({"entityId": measure_ref, "role": "measure", "required": True})
+        for group in spec.get("groupBy") or []:
+            if not isinstance(group, dict):
+                continue
+            group_ref = group.get("entityId") or group.get("entityRef")
+            if group_ref:
+                required.append({"entityId": group_ref, "role": "grouping", "required": True})
+        for filt in spec.get("filters") or []:
+            if not isinstance(filt, dict):
+                continue
+            filt_ref = filt.get("entityId") or filt.get("entityRef")
+            if filt_ref:
+                required.append({"entityId": filt_ref, "role": "filter", "required": bool(filt.get("required", False))})
     filter_specs = _filter_specs(spec)
 
     roles = ResolvedRoles()

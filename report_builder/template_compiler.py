@@ -30,6 +30,7 @@ def compile_template_artifacts(
     figure_candidates: list[dict[str, Any]] | None = None,
     document_map: dict[str, Any] | None = None,
     runtime_config: Any | None = None,
+    runtime_trace: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run the full compiler pipeline on existing extraction output.
 
@@ -48,6 +49,7 @@ def compile_template_artifacts(
         page_texts: Optional per-page text for context extraction.
         document_map: Optional document structure for topic context.
         runtime_config: Optional RuntimeConfig for diagnostics.
+        runtime_trace: Optional safe provider/runtime summary for package metadata.
 
     Returns:
         Dict with keys: template_ast, template_blueprint, diagnostics, intermediate
@@ -55,6 +57,7 @@ def compile_template_artifacts(
     # Work on copies to avoid mutating input
     skeleton = copy.deepcopy(raw_ast)
     bp = copy.deepcopy(blueprint)
+    _sync_template_ids(skeleton, bp)
 
     intermediate: dict[str, Any] = {}
 
@@ -97,6 +100,7 @@ def compile_template_artifacts(
             _bp_meta_early["reportType"] = "pib_press_release"
         if _bp_meta_early.get("name") in ("Document", "", None):
             _bp_meta_early["name"] = "PLFS Annual Report Press Release"
+        _sync_template_ids(skeleton, bp)
 
         # Inject missing domain pack entities so they survive through hygiene
         try:
@@ -241,6 +245,8 @@ def compile_template_artifacts(
             "sourceDocument": stat_ctx.sourceDocument,
             "domain": stat_ctx.domain,
         }
+    if document_map and document_map.get("templateSemanticGraph"):
+        bp["templateSemanticGraph"] = document_map["templateSemanticGraph"]
     _add_external_table_references(bp, page_texts)
 
     logger.info("[template-compiler] I2 done: tables=%d context_units=%d",
@@ -499,6 +505,7 @@ def compile_template_artifacts(
         question_result=question_result,
         wiring_result=wiring_result,
         runtime_config=runtime_config,
+        runtime_trace=runtime_trace,
     )
 
     logger.info(
@@ -512,6 +519,7 @@ def compile_template_artifacts(
         template_blueprint=bp,
         semantic_slot_graph=semantic_slot_graph.to_dict(),
         diagnostics=diagnostics,
+        runtime_trace=runtime_trace,
     )
 
     return {
@@ -527,6 +535,18 @@ def compile_template_artifacts(
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
+
+def _sync_template_ids(skeleton: dict[str, Any], blueprint: dict[str, Any]) -> None:
+    """Keep template.ast and template.blueprint on one binder address."""
+    ast_meta = skeleton.setdefault("metadata", {})
+    bp_meta = blueprint.setdefault("templateMeta", {})
+    tid = str(bp_meta.get("templateId") or ast_meta.get("templateId") or "tpl_document").strip()
+    if not tid:
+        tid = "tpl_document"
+    bp_meta["templateId"] = tid
+    ast_meta["templateId"] = tid
+    ast_meta["blueprintRef"] = tid
 
 
 def _derive_figure_candidates(skeleton: dict[str, Any], blueprint: dict[str, Any]) -> list[dict[str, Any]]:
@@ -638,6 +658,8 @@ def _prune_pib_duplicate_chart_questions(questions: list[dict[str, Any]]) -> lis
         if str(question.get("generationMethod") or "") != "chart_pattern":
             continue
         measures = _question_measure_ids(question)
+        if not measures:
+            continue
         if measures and any(m in covered_measures for m in measures):
             continue
         signature = measures or (str(question.get("sourceFigure") or question.get("questionId") or ""),)
@@ -842,7 +864,8 @@ def _entity_to_dict(entity: Any) -> dict[str, Any]:
     d: dict[str, Any] = {}
     for attr in ("entityId", "canonicalName", "entityType", "aliases", "unit", "format",
                  "valueDomain", "aggregation", "scope", "confidence", "isTotal", "isDerived",
-                 "cardinalityHint", "familyRef", "normalizationHints"):
+                 "cardinalityHint", "familyRef", "normalizationHints", "sourceRefs",
+                 "roleEvidence", "riskFlags", "runtimeTraceRefs"):
         val = getattr(entity, attr, None)
         if val is not None and val != "" and val != [] and val != {}:
             d[attr] = val

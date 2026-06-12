@@ -1597,13 +1597,19 @@ export interface BindingTemplatePackage {
   blueprint_available: boolean;
   semantic_slot_graph_available: boolean;
   topics_count: number;
+  chapters_count?: number;
+  sections_count?: number;
   questions_count: number;
   entities_count: number;
   chart_slots_count: number;
   table_slots_count: number;
   external_refs_count: number;
   diagnostics_score?: number | null;
+  richness_score?: number | null;
   description?: string | null;
+  domain?: string | null;
+  report_type?: string | null;
+  updated_at?: string | null;
 }
 
 export interface BindingProposalsResult {

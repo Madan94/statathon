@@ -26,12 +26,17 @@ def test_parse_plfs_like_chart_title_without_hardcoded_ids():
     }
 
 
-def test_group_chart_panels_by_measure_and_figure():
-    groups = group_chart_panels([
-        {"chartId": "c1", "figureNumber": "1", "panel": "a", "measureEntityId": "ent_lfpr", "filters": []},
-        {"chartId": "c2", "figureNumber": "1", "panel": "b", "measureEntityId": "ent_lfpr", "filters": []},
-        {"chartId": "c3", "figureNumber": "2", "panel": "a", "measureEntityId": "ent_wpr", "filters": []},
-    ])
+def test_group_chart_panels_by_measure_and_figure(caplog):
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="report_builder.chart_panel_parser"):
+        groups = group_chart_panels([
+            {"chartId": "c1", "figureNumber": "1", "panel": "a", "measureEntityId": "ent_lfpr", "filters": []},
+            {"chartId": "c2", "figureNumber": "1", "panel": "b", "measureEntityId": "ent_lfpr", "filters": []},
+            {"chartId": "c3", "figureNumber": "2", "panel": "a", "measureEntityId": "ent_wpr", "filters": []},
+            {"chartId": "c4", "figureNumber": "3", "panel": "a", "measureEntityId": "", "filters": []},
+        ])
     assert len(groups) == 2
     lfpr = next(g for g in groups if g["measureEntityId"] == "ent_lfpr")
     assert len(lfpr["panels"]) == 2
+    assert "without measureEntityId" in caplog.text

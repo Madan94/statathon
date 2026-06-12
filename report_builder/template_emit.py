@@ -21,7 +21,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import copy
 from pathlib import Path
 from typing import Any
 
@@ -77,6 +76,57 @@ def clear_prefilled_slots(skeleton: dict[str, Any]) -> dict[str, Any]:
 # Builders
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _blueprint_is_enterprise(blueprint: dict[str, Any]) -> bool:
+    """Whether a blueprint opts in to enterprise AST overlays + multi-page scaffold.
+
+    Gated opt-in: legacy/gold built-in packages keep the compact one-page skeleton.
+    """
+    if not isinstance(blueprint, dict):
+        return False
+    meta = blueprint.get("templateMeta") or {}
+    if meta.get("enterpriseReady"):
+        return True
+    return any(
+        blueprint.get(key)
+        for key in ("officerCustomization", "binderDeliverableContract", "publicationContract", "officerWorkbench")
+    )
+
+
+def _enterprise_layout_pages(skeleton: dict[str, Any], blueprint: dict[str, Any]) -> list[dict[str, Any]]:
+    """Build a deterministic multi-page publication scaffold for enterprise packages.
+
+    Produces front-matter, one body page per outline section (chapter/section/topic),
+    and back-matter pages. Always returns more than one page.
+    """
+    from report_builder.template_traversal import iter_question_contexts
+
+    pub = blueprint.get("publicationContract") or {}
+    front_matter = pub.get("requiredMatter") or ["title_page", "toc", "source_notes"]
+    pages: list[dict[str, Any]] = [{
+        "pageId": "pg_front",
+        "size": "A4",
+        "role": "front_matter",
+        "regions": [{"regionId": f"rg_{m}", "role": m, "bindsTo": m, "bbox": None} for m in front_matter],
+    }]
+
+    seen_sections: list[str] = []
+    for ctx in iter_question_contexts(blueprint):
+        sid = ctx.get("sectionId") or ctx.get("chapterId") or ctx.get("topicId")
+        if sid and sid not in seen_sections:
+            seen_sections.append(sid)
+    for i, sid in enumerate(seen_sections, 1):
+        pages.append({
+            "pageId": f"pg_body_{i}",
+            "size": "A4",
+            "role": "body",
+            "bindsTo": sid,
+            "regions": [],
+        })
+
+    pages.append({"pageId": "pg_back", "size": "A4", "role": "back_matter", "regions": []})
+    return pages
+
+
 def build_value_free_skeleton(ast: dict[str, Any]) -> dict[str, Any]:
     """Derive \u2460 template.ast.json (render skeleton) from the assembled AST."""
     meta = dict(ast.get("metadata") or {})
@@ -103,8 +153,18 @@ def build_value_free_skeleton(ast: dict[str, Any]) -> dict[str, Any]:
         "geometryAST": ast.get("geometryAST") or {"nodes": []},
     }
     skeleton = clear_prefilled_slots(skeleton)
-    topics = (ast.get("blueprint") or {}).get("topics") or []
-    return compact_skeleton_ast(skeleton, topics)
+    blueprint = ast.get("blueprint") or {}
+    topics = blueprint.get("topics") or []
+    skeleton = compact_skeleton_ast(skeleton, topics)
+
+    # Enterprise packages get AST overlays + a multi-page publication scaffold. Legacy
+    # and gold built-in packages keep the compact one-page skeleton (gated, no leak).
+    if _blueprint_is_enterprise(blueprint):
+        from report_builder.enterprise_template_contract import enrich_enterprise_ast
+        skeleton = enrich_enterprise_ast(skeleton, blueprint)
+        skeleton["layoutAST"] = {"pages": _enterprise_layout_pages(skeleton, blueprint)}
+    return skeleton
+
 
 
 def build_value_free_blueprint(ast: dict[str, Any]) -> dict[str, Any]:
@@ -747,46 +807,55 @@ def assert_value_free(template: dict[str, Any], *, label: str = "template") -> l
 # Emission
 # ─────────────────────────────────────────────────────────────────────────────
 
-def emit_templates(ast: dict[str, Any], out_dir: Path) -> dict[str, Any]:
+def emit_templates(ast: dict[str, Any], out_dir: Path, *, enterprise: bool = True) -> dict[str, Any]:
     """Write \u2460 template.ast.json + \u2461 template.blueprint.json to ``out_dir``.
 
     Returns a report dict with the written paths and any value-free violations
     (violations are logged as warnings but do not block writing, so the artifacts
     remain inspectable during migration).
+
+    When ``enterprise`` is True (default for extraction output) the blueprint is
+    enriched with deterministic enterprise contracts, entity evidence and binder-native
+    question contracts, the AST receives publication overlays + a multi-page scaffold,
+    and a ``semantic_slot_graph.json`` is written alongside the two core files.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
-    skeleton = build_value_free_skeleton(ast)
     blueprint = build_value_free_blueprint(ast)
+    if enterprise:
+        from report_builder.enterprise_template_contract import enrich_enterprise_blueprint
+        blueprint = enrich_enterprise_blueprint(blueprint)
+
+    # Build the skeleton from the (possibly enriched) blueprint so enterprise overlays
+    # and the multi-page scaffold are emitted when the blueprint is enterprise.
+    ast_for_skeleton = dict(ast)
+    ast_for_skeleton["blueprint"] = blueprint
+    skeleton = build_value_free_skeleton(ast_for_skeleton)
 
     violations = assert_value_free(skeleton, label="template.ast")
     violations += assert_value_free(blueprint, label="template.blueprint")
 
     skeleton_path = out_dir / "template.ast.json"
     blueprint_path = out_dir / "template.blueprint.json"
-    graph_path = out_dir / "semantic_slot_graph.json"
-    package_path = out_dir / "template.package.json"
     with open(skeleton_path, "w", encoding="utf-8") as fh:
         json.dump(skeleton, fh, ensure_ascii=False, indent=2, default=str)
     with open(blueprint_path, "w", encoding="utf-8") as fh:
         json.dump(blueprint, fh, ensure_ascii=False, indent=2, default=str)
 
-    from report_builder.slot_wiring import build_semantic_slot_graph, wire_template
-    from report_builder.template_package import build_template_package_manifest
+    # Emit the component-first semantic slot graph as a first-class artifact.
+    slot_graph_path = out_dir / "semantic_slot_graph.json"
+    try:
+        from report_builder.slot_wiring import wire_template, build_semantic_slot_graph
+        wiring_result = wire_template(skeleton, blueprint, auto_repair=True)
+        skeleton = wiring_result.skeleton
+        graph = build_semantic_slot_graph(skeleton, blueprint, wiring_result)
+        with open(slot_graph_path, "w", encoding="utf-8") as fh:
+            json.dump(graph.to_dict(), fh, ensure_ascii=False, indent=2, default=str)
+        # Re-persist the wired skeleton so its slots match the graph.
+        with open(skeleton_path, "w", encoding="utf-8") as fh:
+            json.dump(skeleton, fh, ensure_ascii=False, indent=2, default=str)
+    except Exception as exc:  # pragma: no cover - defensive; slot graph is best-effort
+        logger.warning("[template_emit] semantic slot graph emission failed: %s", exc)
 
-    wiring_result = wire_template(copy.deepcopy(skeleton), blueprint, auto_repair=False)
-    semantic_slot_graph = build_semantic_slot_graph(
-        wiring_result.skeleton, blueprint, wiring_result
-    ).to_dict()
-    with open(graph_path, "w", encoding="utf-8") as fh:
-        json.dump(semantic_slot_graph, fh, ensure_ascii=False, indent=2, default=str)
-
-    manifest = build_template_package_manifest(
-        template_ast=skeleton,
-        template_blueprint=blueprint,
-        semantic_slot_graph=semantic_slot_graph,
-    )
-    with open(package_path, "w", encoding="utf-8") as fh:
-        json.dump(manifest.to_dict(), fh, ensure_ascii=False, indent=2, default=str)
 
     # Diagnostic rejected entities are NOT part of the gold template; persist them to a
     # sidecar so the hygiene information remains inspectable without bloating ②.
@@ -809,8 +878,6 @@ def emit_templates(ast: dict[str, Any], out_dir: Path) -> dict[str, Any]:
     return {
         "skeleton_path": str(skeleton_path),
         "blueprint_path": str(blueprint_path),
-        "semantic_slot_graph_path": str(graph_path),
-        "package_path": str(package_path),
         "violations": violations,
     }
 

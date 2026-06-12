@@ -27,7 +27,7 @@ export default function AppShell({ children, breadcrumbs }: AppShellProps) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc]">
+    <div className="min-h-screen bg-[#f8fafc]">
       <Sidebar />
       {mobileOpen && (
         <>
@@ -73,7 +73,7 @@ export default function AppShell({ children, breadcrumbs }: AppShellProps) {
           </div>
         </>
       )}
-      <div className="flex flex-1 flex-col min-w-0">
+      <div className="flex min-h-screen min-w-0 flex-col md:pl-20">
         <TopBar breadcrumbs={breadcrumbs} onMenuClick={() => setMobileOpen(true)} />
         <main className="flex-1 px-4 md:px-8 py-6 max-w-7xl w-full mx-auto">
           <SessionGuard>{children}</SessionGuard>

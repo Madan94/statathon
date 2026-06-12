@@ -7,7 +7,9 @@ This file only contains session-scoped fixtures used across test classes.
 from __future__ import annotations
 
 import os
+import socket
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 
@@ -28,11 +30,33 @@ def gemini_api_key():
     return key
 
 
+def _tcp_service_reachable(endpoint: str, *, timeout: float = 2.0) -> bool:
+    parsed = urlparse(endpoint)
+    host = parsed.hostname
+    port = parsed.port
+    if not host or not port:
+        return False
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
 @pytest.fixture(scope="session")
 def database_url():
     url = os.getenv("DATABASE_URL", "")
     if not url or "your-host" in url:
         pytest.skip("DATABASE_URL not configured — skipping live DB test")
+    parsed = urlparse(url)
+    host = parsed.hostname
+    port = parsed.port or 5432
+    if host in {"localhost", "127.0.0.1", "::1"}:
+        try:
+            with socket.create_connection((host, port), timeout=2.0):
+                pass
+        except OSError:
+            pytest.skip(f"DATABASE_URL points to {host}:{port}, but Postgres is not reachable — skipping live DB test")
     return url
 
 
@@ -56,6 +80,8 @@ def colpali_endpoint():
     endpoint = os.getenv("COLPALI_ENDPOINT", "")
     if not endpoint:
         pytest.skip("COLPALI_ENDPOINT not set — skipping live VLM test")
+    if not _tcp_service_reachable(endpoint):
+        pytest.skip(f"COLPALI_ENDPOINT not reachable at {endpoint} — skipping live VLM test")
     return endpoint
 
 
@@ -64,6 +90,8 @@ def sglang_endpoint():
     endpoint = os.getenv("SGLANG_ENDPOINT", "")
     if not endpoint:
         pytest.skip("SGLANG_ENDPOINT not set — skipping live SGLang test")
+    if not _tcp_service_reachable(endpoint):
+        pytest.skip(f"SGLANG_ENDPOINT not reachable at {endpoint} — skipping live SGLang test")
     return endpoint
 
 

@@ -41,9 +41,6 @@ def _blueprint() -> dict:
         "topics": [{"topicId": "topic_sal", "questions": [{
             "questionId": "q_sal_01", "intent": "Average salary by sector",
             "questionType": "comparison",
-            "requiredEntities": [
-                {"entityId": "ent_sal", "role": "measure", "required": True},
-                {"entityId": "ent_sector", "role": "grouping", "required": True}],
             "analyticsSpec": {"operation": "group_aggregate",
                               "measure": {"entityRef": "ent_sal", "agg": "mean"},
                               "groupBy": [{"entityRef": "ent_sector"}],
@@ -108,9 +105,6 @@ def stashed(tmp_path, monkeypatch):
     monkeypatch.setattr(R, "_DEFAULT_STORE", store)
     # the router reads R._DEFAULT_STORE via its own _stash_path → picks up the patch.
     monkeypatch.setattr(G, "_load_template_ast", _template_ast)
-    # Sandbox the freeze store too (the bundle factory freezes internally).
-    from report_builder.binding import freeze_store
-    monkeypatch.setattr(freeze_store, "FREEZE_DIR", store / "frozen")
 
     dataset, blueprint, df = _dataset(), _blueprint(), _frame()
 

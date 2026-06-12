@@ -125,6 +125,8 @@ class NormalizedEntity:
             d["familyRef"] = self.familyRef
         if self.normalizationHints:
             d["normalizationHints"] = dict(self.normalizationHints)
+        if self.sourceRefs:
+            d["sourceRefs"] = list(self.sourceRefs)
         if self.physicalColumns:
             d["physicalColumns"] = list(self.physicalColumns)
         if self.isTotal:

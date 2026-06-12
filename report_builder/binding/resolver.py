@@ -235,6 +235,67 @@ def _type_mismatch(entity_type: str, profile: ColumnProfile | None) -> bool:
     return profile.role not in fit
 
 
+def _binding_evidence(
+    view: dict[str, Any],
+    ranked: list[tuple[str, float, str]],
+    columns: list[BoundColumn],
+    method: str,
+    confidence: float,
+    status: str,
+) -> list[dict[str, Any]]:
+    """Human/audit-readable evidence for why the resolver proposed this binding."""
+    if status != "proposed" or not columns:
+        return []
+    primary = columns[0].column if columns else (ranked[0][0] if ranked else "")
+    signal = {
+        "exact": "exact_name",
+        "alias": "alias",
+        "glossary": "glossary",
+        "embedding": "embedding",
+        "synonym": "synonym",
+        "manual": "manual",
+    }.get(method, method or "synonym")
+    evidence: list[dict[str, Any]] = [{
+        "signal": signal,
+        "score": round(float(confidence), 4),
+        "detail": f"{view['name'] or view['id']} matched dataset column '{primary}'",
+        "column": primary,
+    }]
+    for col, score, cand_method in ranked[:3]:
+        if col == primary:
+            continue
+        evidence.append({
+            "signal": f"candidate_{cand_method}",
+            "score": round(float(score), 4),
+            "detail": f"alternative candidate column '{col}'",
+            "column": col,
+        })
+    if len(columns) > 1:
+        evidence.append({
+            "signal": "wide_group",
+            "score": round(float(confidence), 4),
+            "detail": f"{len(columns)} columns participate in the binding",
+            "columns": [c.column for c in columns],
+        })
+    return evidence
+
+
+def _binding_risks(type_mismatch: bool, view: dict[str, Any], best_col: str | None,
+                   profile: ColumnProfile | None) -> list[dict[str, Any]]:
+    risks: list[dict[str, Any]] = []
+    if type_mismatch:
+        risks.append({
+            "code": "TYPE_MISMATCH",
+            "severity": "warn",
+            "message": (
+                f"{view['type']} entity '{view['name'] or view['id']}' matched "
+                f"{profile.role if profile else 'unknown'} column '{best_col or ''}'"
+            ),
+            "column": best_col or "",
+        })
+    return risks
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
@@ -259,6 +320,7 @@ def resolve_entity(
         confidence = max(best_conf, 0.85)
         method = "alias"
         type_mismatch = False
+        prof = None
     else:
         confidence = best_conf
         method = best_method
@@ -283,40 +345,6 @@ def resolve_entity(
         if conf > 0.0
     ]
 
-    # ── Build evidence (signal-level explainability) ──
-    evidence: list[dict[str, Any]] = []
-    if method == "exact":
-        evidence.append({"signal": "exact_name", "score": confidence, "detail": f"Exact match: '{best_col}'"})
-    elif method == "alias":
-        evidence.append({"signal": "alias", "score": confidence, "detail": f"Alias matched to '{best_col}'"})
-    elif method == "synonym":
-        evidence.append({"signal": "synonym", "score": confidence, "detail": f"Synonym/token match to '{best_col}'"})
-    elif method == "embedding":
-        evidence.append({"signal": "embedding", "score": confidence, "detail": f"Embedding similarity to '{best_col}'"})
-    # Role compatibility signal
-    if best_col:
-        prof = dataset.column(best_col)
-        if prof:
-            role_compat = view["type"] == prof.role or (view["type"] == "measure" and prof.role == "measure")
-            evidence.append({"signal": "role_compatibility", "score": 1.0 if role_compat else 0.3, "detail": f"entity={view['type']} col_role={prof.role}"})
-            if prof.unit:
-                evidence.append({"signal": "unit", "score": 0.8, "detail": f"Column has unit: {prof.unit}"})
-    if cardinality in ("memberSet", "timeSeries"):
-        evidence.append({"signal": "group_match", "score": 0.9, "detail": f"Cardinality: {cardinality} ({len(columns)} columns)"})
-
-    # ── Build risks ──
-    risks: list[dict[str, Any]] = []
-    if type_mismatch:
-        risks.append({"code": "TYPE_MISMATCH", "severity": "warn", "message": f"Entity type '{view['type']}' != column role"})
-    if confidence < 0.6 and status == "proposed":
-        risks.append({"code": "LOW_CONFIDENCE", "severity": "warn", "message": f"Confidence {confidence:.2f} is below 0.60"})
-    if method == "synonym" and confidence < 0.7:
-        risks.append({"code": "WEAK_ALIAS_ONLY", "severity": "warn", "message": "Matched by synonym/token only, no exact or alias match"})
-    if len(ranked) >= 2 and ranked[0][1] > 0 and ranked[1][1] > 0:
-        gap = ranked[0][1] - ranked[1][1]
-        if gap < 0.1:
-            risks.append({"code": "AMBIGUOUS_ALTERNATIVES", "severity": "warn", "message": f"Top two candidates differ by only {gap:.3f}"})
-
     return EntityBinding(
         entityId=view["id"],
         entityName=view["name"],
@@ -330,8 +358,8 @@ def resolve_entity(
         alternatives=alternatives,
         typeMismatch=type_mismatch,
         notes=notes,
-        evidence=evidence,
-        risks=risks,
+        evidence=_binding_evidence(view, ranked, columns, method, confidence, status),
+        risks=_binding_risks(type_mismatch, view, best_col, prof),
     )
 
 

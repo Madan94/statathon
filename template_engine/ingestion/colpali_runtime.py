@@ -300,13 +300,6 @@ def extract_pdf_colpali_inprocess(pdf_path: Path) -> list[PageData]:
     if not pdf_path.exists():
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
 
-    try:
-        import pdf2image  # type: ignore  # noqa: F401
-    except ImportError as exc:
-        raise RuntimeError(
-            "pdf2image is required for ColPali PDF parsing. Install: pip install pdf2image"
-        ) from exc
-
     page_count = _pdf_page_count(pdf_path)
     if page_count <= 0:
         try:

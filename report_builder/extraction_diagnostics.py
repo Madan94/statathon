@@ -38,6 +38,8 @@ class DiagnosticIssue:
             d["path"] = self.path
         if self.sourcePhase:
             d["sourcePhase"] = self.sourcePhase
+        if self.recommendedAction:
+            d["recommendedAction"] = self.recommendedAction
         return d
 
 
@@ -204,9 +206,16 @@ def score_question_completeness(question_result: Any = None) -> float:
     with_spec = sum(1 for q in questions if _has_spec(q))
     with_structure = sum(1 for q in questions if _has_structure(q))
     with_entities = sum(1 for q in questions if _get(q, "requiredEntities"))
+    with_measure = sum(1 for q in questions if _has_executable_measure(q))
     with_formula = sum(1 for q in questions if _get(q, "formulaIntent"))
 
-    return (with_spec / total * 0.3 + with_structure / total * 0.3 + with_entities / total * 0.25 + with_formula / total * 0.15)
+    return (
+        with_spec / total * 0.25
+        + with_structure / total * 0.25
+        + with_entities / total * 0.20
+        + with_measure / total * 0.20
+        + with_formula / total * 0.10
+    )
 
 
 def score_cross_reference_integrity(wiring_result: Any = None) -> float:
@@ -331,6 +340,13 @@ def predict_binder_compatibility(
         pred.expectedIssues.append("Extraction contract validation failed")
         return pred
 
+    xref = category_scores.get("crossReferenceIntegrity", 1.0)
+    if xref < 0.5:
+        pred.blueprintQAWillPass = False
+        pred.recommendation = "fix_wiring"
+        pred.expectedIssues.append("Low slot cross-reference integrity - repair semantic_slot_graph before binding")
+        return pred
+
     # Entity completeness → resolver confidence
     ec = category_scores.get("entityCompleteness", 0.5)
     if ec >= 0.80:
@@ -362,6 +378,291 @@ def predict_binder_compatibility(
     return pred
 
 
+def _iter_questions(blueprint: dict[str, Any]) -> list[dict[str, Any]]:
+    from report_builder.template_traversal import iter_questions
+
+    return iter_questions(blueprint)
+
+
+def _question_requires_measure(question: dict[str, Any]) -> bool:
+    qtype = str(question.get("questionType") or "").lower()
+    spec = question.get("analyticsSpec") or {}
+    operation = str(spec.get("operation") or "").lower() if isinstance(spec, dict) else ""
+    return qtype not in ("descriptive", "describe", "summary") and operation not in ("describe", "summary", "summary_stats")
+
+
+def _has_measure_ref(value: Any) -> bool:
+    if isinstance(value, dict):
+        return bool(value.get("entityRef") or value.get("entityId") or value.get("column"))
+    return bool(value)
+
+
+def _has_measure_spec(question: dict[str, Any]) -> bool:
+    spec = question.get("analyticsSpec") or {}
+    if not isinstance(spec, dict):
+        return False
+    if _has_measure_ref(spec.get("measure")):
+        return True
+    measures = spec.get("measures")
+    if isinstance(measures, list):
+        return any(_has_measure_ref(m) for m in measures)
+    return _has_measure_ref(measures)
+
+
+def _has_required_measure(question: dict[str, Any]) -> bool:
+    for req in question.get("requiredEntities") or []:
+        if req.get("role") == "measure" and (req.get("entityId") or req.get("entityRef")):
+            return True
+    return False
+
+
+def is_enterprise_blueprint(blueprint: dict[str, Any]) -> bool:
+    """Whether a blueprint opts in to enterprise-grade S3.5 validation.
+
+    Enterprise mode is a deliberate opt-in so legacy/gold/built-in packages keep their
+    compact behaviour. A blueprint is enterprise when ``templateMeta.enterpriseReady`` is
+    set (the deterministic enricher sets this) or when it already carries enterprise
+    contract blocks (a partially-enriched blueprint must still be validated for the rest).
+    """
+    if not isinstance(blueprint, dict):
+        return False
+    meta = blueprint.get("templateMeta") or {}
+    if meta.get("enterpriseReady"):
+        return True
+    return any(
+        blueprint.get(key)
+        for key in ("officerCustomization", "binderDeliverableContract", "publicationContract", "officerWorkbench")
+    )
+
+
+def apply_s35_emission_gate(
+    diag: ExtractionDiagnostics,
+    *,
+    blueprint: dict[str, Any],
+    skeleton: dict[str, Any] | None = None,
+    runtime_trace: dict[str, Any] | None = None,
+) -> None:
+    """Apply S3.5 binder-executability blockers to final extraction diagnostics.
+
+    Binder-executability blockers (broken refs, non-executable analytic questions,
+    missing measure evidence) apply to every package. Enterprise-shape blockers
+    (top-level contracts, per-question enterprise fields, provenance components, AST
+    overlays) apply **only** when the blueprint opts in to enterprise mode, so legacy
+    and gold built-in packages are not forced INVALID for lacking enterprise structure.
+    """
+    semantic_graph = blueprint.get("templateSemanticGraph") or {}
+    active = bool(blueprint) or bool(semantic_graph) or bool(runtime_trace)
+    if not active:
+        return
+
+    enterprise_mode = is_enterprise_blueprint(blueprint)
+
+    def _block(code: str, message: str, path: str = "", action: str = "") -> None:
+        diag.blockingErrors.append(DiagnosticIssue(
+            severity="error",
+            code=code,
+            message=message,
+            path=path,
+            recommendedAction=action,
+            sourcePhase="S3.5",
+        ))
+
+    bp_meta = blueprint.get("templateMeta") or {}
+    ast_meta = (skeleton or {}).get("metadata") or {}
+    bp_tid = bp_meta.get("templateId")
+    ast_tid = ast_meta.get("templateId")
+    if bp_tid and ast_tid and bp_tid != ast_tid:
+        _block(
+            "TEMPLATE_ID_MISMATCH",
+            f"template.ast metadata.templateId '{ast_tid}' differs from template.blueprint templateId '{bp_tid}'",
+            path="metadata.templateId",
+            action="Emit one stable templateId across AST, blueprint, slot graph, and package",
+        )
+
+    enterprise_required = (
+        "officerCustomization",
+        "dataContract",
+        "binderDeliverableContract",
+        "publicationContract",
+        "formulaCatalog",
+        "qualityGateProfile",
+        "officerWorkbench",
+    )
+    missing_contracts = [key for key in enterprise_required if not blueprint.get(key)]
+    if enterprise_mode and missing_contracts:
+        _block(
+            "ENTERPRISE_CONTRACTS_MISSING",
+            f"Blueprint is missing enterprise contract block(s): {', '.join(missing_contracts)}",
+            path="template.blueprint",
+            action="Run deterministic enterprise blueprint enrichment before S3.5 diagnostics",
+        )
+
+    entities = blueprint.get("entities") or []
+    evidence_required = [e for e in entities if e.get("entityType") in ("measure", "dimension", "time")]
+    if enterprise_mode:
+        # Enterprise packages must carry both raw sourceRefs and normalized evidence.
+        missing_source_refs = [
+            e.get("entityId") or e.get("canonicalName")
+            for e in evidence_required
+            if not e.get("sourceRefs") or not e.get("evidence")
+        ]
+    else:
+        # Legacy/gold packages only require traceable evidence in either shape.
+        missing_source_refs = [
+            e.get("entityId") or e.get("canonicalName")
+            for e in evidence_required
+            if not e.get("sourceRefs") and not e.get("evidence")
+        ]
+    if missing_source_refs:
+        _block(
+            "ENTITY_MISSING_SOURCE_REFS",
+            f"{len(missing_source_refs)} binder entities lack sourceRefs/evidence",
+            path="entities[].sourceRefs",
+            action="Thread LayoutLM/pdfplumber/VLM evidence refs into every binder entity",
+        )
+
+    if semantic_graph:
+        sg_diag = semantic_graph.get("diagnostics") or {}
+        if sg_diag.get("entityCount", 0) and not sg_diag.get("evidenceCount", 0):
+            _block(
+                "SEMANTIC_GRAPH_WITHOUT_EVIDENCE",
+                "templateSemanticGraph has entities but no evidenceIndex",
+                path="templateSemanticGraph.evidenceIndex",
+                action="Build evidenceIndex from sourceRefs before Pass 3/4",
+            )
+        missing_graph_refs = [
+            e.get("entityId") or e.get("name") or i
+            for i, e in enumerate(semantic_graph.get("entities") or [])
+            if isinstance(e, dict)
+            and (e.get("entityType") or e.get("entityType_hint")) in ("measure", "dimension", "time")
+            and not (e.get("evidenceRefs") or e.get("sourceRefs"))
+        ]
+        if missing_graph_refs:
+            _block(
+                "SEMANTIC_GRAPH_ENTITY_EVIDENCE_GAP",
+                f"{len(missing_graph_refs)} semantic graph entit(ies) lack evidenceRefs/sourceRefs",
+                path="templateSemanticGraph.entities[].evidenceRefs",
+                action="Preserve sourceRefs in Pass 2.5/2.7 and index every binder-relevant graph entity",
+            )
+
+    bad_questions = []
+    missing_enterprise_question_fields: list[str] = []
+    missing_provenance_components: list[str] = []
+    for q in _iter_questions(blueprint):
+        if _question_requires_measure(q) and (not _has_measure_spec(q) or not _has_required_measure(q)):
+            bad_questions.append(q.get("questionId") or q.get("intent") or "<unknown>")
+        qid = q.get("questionId") or q.get("intent") or "<unknown>"
+        required_q_fields = (
+            "questionText",
+            "formulaSpec",
+            "binderContract",
+            "qualityGates",
+            "provenanceRequirements",
+            "customization",
+            "answerPlan",
+        )
+        if any(not q.get(field) for field in required_q_fields):
+            missing_enterprise_question_fields.append(str(qid))
+        components = ((q.get("answerStructure") or {}).get("components") or []) if isinstance(q.get("answerStructure"), dict) else []
+        has_provenance = any(
+            isinstance(c, dict)
+            and str(c.get("kind") or c.get("componentKind") or c.get("type") or "").lower() in ("provenance", "source_note", "evidence")
+            for c in components
+        )
+        if not has_provenance:
+            missing_provenance_components.append(str(qid))
+    if bad_questions:
+        _block(
+            "ANALYTIC_QUESTION_NOT_EXECUTABLE",
+            f"{len(bad_questions)} analytic question(s) lack executable measure spec or required measure entity",
+            path="topics[].questions[]",
+            action="Drop or repair questions before S3.5; S4 must not infer the measure",
+        )
+    if enterprise_mode and missing_enterprise_question_fields:
+        _block(
+            "QUESTION_ENTERPRISE_FIELDS_MISSING",
+            f"{len(missing_enterprise_question_fields)} question(s) are missing enterprise binder fields",
+            path="topics[].questions[]",
+            action="Run question enrichment before S3.5 diagnostics",
+        )
+    if enterprise_mode and missing_provenance_components:
+        _block(
+            "QUESTION_PROVENANCE_COMPONENT_MISSING",
+            f"{len(missing_provenance_components)} question(s) lack a provenance component",
+            path="topics[].questions[].answerStructure.components",
+            action="Add a mandatory provenance component to every question",
+        )
+
+    if enterprise_mode and skeleton:
+        missing_ast = [
+            key
+            for key in ("customizationAST", "publicationAST", "officerGuideAST")
+            if not skeleton.get(key)
+        ]
+        if missing_ast:
+            _block(
+                "ENTERPRISE_AST_OVERLAYS_MISSING",
+                f"template.ast is missing enterprise AST overlay(s): {', '.join(missing_ast)}",
+                path="template.ast",
+                action="Run enterprise AST enrichment before package emission",
+            )
+
+    chart_groups = blueprint.get("chartPanelGroups") or []
+    empty_chart_measures = [
+        g.get("groupId") or g.get("chartId") or i
+        for i, g in enumerate(chart_groups)
+        if isinstance(g, dict) and not (g.get("measureEntityId") or g.get("measureRefs") or g.get("measureRef"))
+    ]
+    if empty_chart_measures:
+        _block(
+            "CHART_GROUP_MISSING_MEASURE",
+            f"{len(empty_chart_measures)} chart panel group(s) have no measureEntityId/measureRefs",
+            path="chartPanelGroups[].measureEntityId",
+            action="Bind chart semantics to measure entities before emitting chart slots",
+        )
+    unbound_chart_panels = [
+        c.get("chartId") or c.get("id") or i
+        for i, c in enumerate(((skeleton or {}).get("chartAST") or {}).get("charts") or [])
+        if isinstance(c, dict) and not (c.get("measureEntityId") or c.get("measureRefs") or c.get("measureRef"))
+    ]
+    if unbound_chart_panels:
+        diag.warnings.append(DiagnosticIssue(
+            severity="warn",
+            code="UNBOUND_CHART_PANELS",
+            message=f"{len(unbound_chart_panels)} chart panel(s) are renderable but not binder-grouped because no measure entity was resolved",
+            path="chartAST.charts[].measureEntityId",
+            recommendedAction="Bind chart panels to measure entities or keep them as ungrouped render-only panels",
+            sourcePhase="S3.5",
+        ))
+
+    if diag.categoryScores.get("crossReferenceIntegrity", 1.0) < 0.8:
+        _block(
+            "LOW_CROSS_REFERENCE_INTEGRITY",
+            "semantic slot graph cross-reference integrity is below the S3.5 threshold",
+            path="semantic_slot_graph",
+            action="Repair slot fillFrom/biQuery/component references before binding",
+        )
+
+    if runtime_trace:
+        status_counts = runtime_trace.get("statusCounts") or {}
+        if status_counts.get("failed"):
+            diag.warnings.append(DiagnosticIssue(
+                severity="warn",
+                code="PROVIDER_CALL_FAILURES",
+                message=f"{status_counts.get('failed')} provider call(s) failed and required deterministic fallback",
+                sourcePhase="S3.5",
+            ))
+        required = int(runtime_trace.get("schemaRequiredCalls") or 0)
+        enforced = int(runtime_trace.get("schemaEnforcedCalls") or 0)
+        if required and enforced < required:
+            diag.warnings.append(DiagnosticIssue(
+                severity="warn",
+                code="SCHEMA_NOT_API_ENFORCED",
+                message=f"{required - enforced} schema-required provider call(s) were prompt-validated but not API-enforced",
+                sourcePhase="S3.5",
+            ))
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Main builder
 # ─────────────────────────────────────────────────────────────────────────────
@@ -381,6 +682,7 @@ def build_extraction_diagnostics(
     question_result: Any = None,
     wiring_result: Any = None,
     runtime_config: Any = None,
+    runtime_trace: dict[str, Any] | None = None,
     checkpoint_summary: dict[str, Any] | None = None,
 ) -> ExtractionDiagnostics:
     """Build complete extraction diagnostics from all phase results.
@@ -448,6 +750,18 @@ def build_extraction_diagnostics(
                 sourcePhase="E0",
             ))
 
+    if wiring_result and hasattr(wiring_result, "issues"):
+        for issue in wiring_result.issues:
+            severity = issue.severity if hasattr(issue, "severity") else (issue.get("severity", "") if isinstance(issue, dict) else "")
+            if severity != "error":
+                continue
+            diag.blockingErrors.append(DiagnosticIssue(
+                severity="error",
+                code=issue.code if hasattr(issue, "code") else issue.get("code", "WIRING_ERROR"),
+                message=issue.message if hasattr(issue, "message") else issue.get("message", str(issue)),
+                sourcePhase="E8",
+            ))
+
     # ── Warnings from contract ──
     if contract_result and hasattr(contract_result, "warnings"):
         for w in contract_result.warnings:
@@ -495,11 +809,27 @@ def build_extraction_diagnostics(
         w_counts = wiring_result.counts if hasattr(wiring_result, "counts") else {}
         c.slotsWired = w_counts.get("crosswalkComponents", 0)
 
+    # ── S3.5 binder executability gate ──
+    if blueprint:
+        apply_s35_emission_gate(
+            diag,
+            blueprint=blueprint,
+            skeleton=skeleton,
+            runtime_trace=runtime_trace,
+        )
+
     # ── Status ──
+    if diag.blockingErrors:
+        diag.binderReadinessScore = min(diag.binderReadinessScore, 0.59)
     diag.status = determine_status(diag.binderReadinessScore, diag.blockingErrors)
 
     # ── Binder compatibility ──
     diag.binderCompatibility = predict_binder_compatibility(diag.categoryScores, contract_result, value_free_result, doc_type=_doc_type)
+    if diag.blockingErrors:
+        diag.binderCompatibility.blueprintQAWillPass = False
+        diag.binderCompatibility.recommendation = "invalid"
+        if "S3.5 emission gate blocked template generation" not in diag.binderCompatibility.expectedIssues:
+            diag.binderCompatibility.expectedIssues.append("S3.5 emission gate blocked template generation")
 
     # ── Runtime summary ──
     if runtime_config:
@@ -548,6 +878,49 @@ def _has_spec(q: Any) -> bool:
     if isinstance(spec, dict):
         return bool(spec.get("operation"))
     return False
+
+
+def _question_requires_measure(q: Any) -> bool:
+    qtype = str(_get(q, "questionType") or "")
+    spec = _get(q, "analyticsSpec") or {}
+    operation = str(spec.get("operation") or "").lower() if isinstance(spec, dict) else ""
+    if qtype in ("descriptive", "summary"):
+        return False
+    if operation in ("describe", "summary", "summary_stats"):
+        return False
+    return True
+
+
+def _has_measure_spec(q: Any) -> bool:
+    spec = _get(q, "analyticsSpec") or {}
+    if not isinstance(spec, dict):
+        return False
+    measure = spec.get("measure")
+    if _has_measure_ref(measure):
+        return True
+    measures = spec.get("measures")
+    if isinstance(measures, list):
+        return any(_has_measure_ref(m) for m in measures)
+    return _has_measure_ref(measures)
+
+
+def _has_measure_ref(value: Any) -> bool:
+    if isinstance(value, dict):
+        return bool(value.get("entityRef") or value.get("entityId") or value.get("column"))
+    return bool(value)
+
+
+def _has_required_measure(q: Any) -> bool:
+    for req in _get(q, "requiredEntities") or []:
+        if req.get("role") == "measure" and (req.get("entityId") or req.get("entityRef")):
+            return True
+    return False
+
+
+def _has_executable_measure(q: Any) -> bool:
+    if not _question_requires_measure(q):
+        return True
+    return _has_measure_spec(q) and _has_required_measure(q)
 
 
 def _has_structure(q: Any) -> bool:

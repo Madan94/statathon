@@ -1,0 +1,492 @@
+{
+  "$schema": "bharatstat/template-ast/v1",
+  "_doc": "VALUE-FREE compact render skeleton for tpl_mospi_short_enterprise_demo_v1. Designed for a PDF of at most 9 pages. All content blocks are placeholders filled from semantic slots.",
+  "metadata": {
+    "templateId": "tpl_mospi_short_enterprise_demo_v1",
+    "blueprintRef": "tpl_mospi_short_enterprise_demo_v1",
+    "name": "MoSPI Short Enterprise Demo Report",
+    "locale": "en-IN",
+    "version": "1.0.0",
+    "valueFree": true,
+    "generatedFrom": "mospi_short_enterprise_demo_built_in",
+    "targetPageRange": "7-9",
+    "standardPageCount": 8,
+    "maximumPageCount": 9,
+    "officerReady": true,
+    "auditRequired": true
+  },
+  "styleAST": {
+    "styles": [
+      {
+        "styleId": "s_cover_title",
+        "role": "coverTitle",
+        "font": "Noto Sans",
+        "sizePt": 22,
+        "bold": true,
+        "color": "#0B5394"
+      },
+      {
+        "styleId": "s_h1",
+        "role": "heading1",
+        "font": "Noto Sans",
+        "sizePt": 17,
+        "bold": true,
+        "color": "#0B5394"
+      },
+      {
+        "styleId": "s_h2",
+        "role": "heading2",
+        "font": "Noto Sans",
+        "sizePt": 13,
+        "bold": true,
+        "color": "#1155CC"
+      },
+      {
+        "styleId": "s_body",
+        "role": "body",
+        "font": "Noto Sans",
+        "sizePt": 10,
+        "color": "#222222"
+      },
+      {
+        "styleId": "s_metric",
+        "role": "metric",
+        "font": "Noto Sans",
+        "sizePt": 16,
+        "bold": true,
+        "color": "#0B5394"
+      },
+      {
+        "styleId": "s_table",
+        "role": "tableCell",
+        "font": "Noto Sans",
+        "sizePt": 8,
+        "align": "right"
+      },
+      {
+        "styleId": "s_note",
+        "role": "sourceNote",
+        "font": "Noto Sans",
+        "sizePt": 8,
+        "color": "#666666"
+      }
+    ]
+  },
+  "customizationAST": {
+    "controls": [
+      {
+        "controlId": "page_budget",
+        "label": "Page budget",
+        "type": "single_select",
+        "default": "standard_8_pages",
+        "options": [
+          "brief_7_pages",
+          "standard_8_pages",
+          "max_9_pages"
+        ]
+      },
+      {
+        "controlId": "visual_density",
+        "label": "Visual density",
+        "type": "single_select",
+        "default": "balanced_low",
+        "options": [
+          "minimal",
+          "balanced_low",
+          "table_first"
+        ]
+      },
+      {
+        "controlId": "publication_status",
+        "label": "Publication status",
+        "type": "single_select",
+        "default": "draft_for_review",
+        "options": [
+          "draft_for_review",
+          "internal_review",
+          "publication_ready"
+        ]
+      }
+    ],
+    "lockedFields": [
+      "slot.fillFrom",
+      "slot.lineage",
+      "formulaSpec.type",
+      "requiredEntities"
+    ]
+  },
+  "publicationAST": {
+    "pageSize": "A4",
+    "orientation": "portrait",
+    "maxPages": 9,
+    "pageBudget": {
+      "cover": 1,
+      "dataQuality": 1,
+      "analysis": 5,
+      "reviewAndNotes": 1,
+      "spareOverflow": 1
+    },
+    "overflowPolicy": "hide_optional_low_priority_components_before_required_caveats"
+  },
+  "layoutAST": {
+    "pages": [
+      {
+        "pageId": "page_01_cover_snapshot",
+        "pageNumber": 1,
+        "role": "cover_and_key_findings",
+        "regions": [
+          {
+            "regionId": "region_cover_title",
+            "kind": "cover",
+            "blocks": [
+              "block_cover_title",
+              "block_cover_meta"
+            ]
+          },
+          {
+            "regionId": "region_headline_metrics",
+            "kind": "metric_grid",
+            "blocks": [
+              "metric_exec_lfpr",
+              "metric_exec_ur"
+            ]
+          },
+          {
+            "regionId": "region_headline_note",
+            "kind": "narrative",
+            "blocks": [
+              "text_exec_lfpr_note"
+            ]
+          }
+        ]
+      },
+      {
+        "pageId": "page_02_quality_method",
+        "pageNumber": 2,
+        "role": "data_quality_and_method",
+        "regions": [
+          {
+            "regionId": "region_quality_table",
+            "kind": "table",
+            "blocks": [
+              "table_quality"
+            ]
+          },
+          {
+            "regionId": "region_quality_note",
+            "kind": "narrative",
+            "blocks": [
+              "text_quality_note"
+            ]
+          }
+        ]
+      },
+      {
+        "pageId": "page_03_participation",
+        "pageNumber": 3,
+        "role": "analysis",
+        "topicId": "topic_02_participation_and_employment",
+        "sectionId": "sec_03_gender_sector_lfpr",
+        "regions": [
+          {
+            "regionId": "region_lfpr_chart",
+            "kind": "chart",
+            "blocks": [
+              "chart_lfpr_gender_sector"
+            ]
+          },
+          {
+            "regionId": "region_lfpr_note",
+            "kind": "narrative",
+            "blocks": [
+              "text_lfpr_gender_sector_note"
+            ]
+          }
+        ]
+      },
+      {
+        "pageId": "page_04_employment",
+        "pageNumber": 4,
+        "role": "analysis",
+        "topicId": "topic_02_participation_and_employment",
+        "sectionId": "sec_05_wpr_overview",
+        "regions": [
+          {
+            "regionId": "region_wpr_table",
+            "kind": "table",
+            "blocks": [
+              "table_wpr"
+            ]
+          },
+          {
+            "regionId": "region_wpr_note",
+            "kind": "narrative",
+            "blocks": [
+              "text_wpr_note"
+            ]
+          }
+        ]
+      },
+      {
+        "pageId": "page_05_state_coverage",
+        "pageNumber": 5,
+        "role": "coverage_note",
+        "topicId": "topic_03_officer_publication_close",
+        "sectionId": "sec_07_state_coverage_optional",
+        "regions": [
+          {
+            "regionId": "region_state_table",
+            "kind": "table",
+            "blocks": [
+              "table_state_coverage"
+            ]
+          },
+          {
+            "regionId": "region_state_note",
+            "kind": "narrative",
+            "blocks": [
+              "text_state_coverage_note"
+            ]
+          }
+        ]
+      },
+      {
+        "pageId": "page_06_publication_checklist",
+        "pageNumber": 6,
+        "role": "officer_review",
+        "topicId": "topic_03_officer_publication_close",
+        "sectionId": "sec_08_publication_checklist",
+        "regions": [
+          {
+            "regionId": "region_publication_checklist",
+            "kind": "checklist",
+            "blocks": [
+              "checklist_publication"
+            ]
+          },
+          {
+            "regionId": "region_source_notes",
+            "kind": "source_note",
+            "blocks": [
+              "source_notes_publication"
+            ]
+          }
+        ]
+      },
+      {
+        "pageId": "page_07_08_overflow_annexure",
+        "pageNumber": "7-8",
+        "role": "optional_overflow",
+        "regions": [
+          {
+            "regionId": "region_optional_annexure",
+            "kind": "annexure",
+            "blocks": [
+              "annexure_optional_state_or_youth"
+            ]
+          }
+        ],
+        "visibility": "only_if_overflow_or_officer_enabled"
+      },
+      {
+        "pageId": "page_09_audit_manifest",
+        "pageNumber": 9,
+        "role": "audit_manifest",
+        "regions": [
+          {
+            "regionId": "region_audit_manifest",
+            "kind": "provenance",
+            "blocks": [
+              "audit_lineage_manifest"
+            ]
+          }
+        ],
+        "visibility": "only_if_audit_appendix_enabled"
+      }
+    ]
+  },
+  "contentAST": {
+    "blocks": [
+      {
+        "blockId": "block_cover_title",
+        "kind": "cover_title",
+        "styleId": "s_cover_title",
+        "fillFrom": "officer.cover.title",
+        "placeholder": "MoSPI Short Enterprise Demo Report",
+        "officerEditable": true
+      },
+      {
+        "blockId": "block_cover_meta",
+        "kind": "publication_meta",
+        "fillFrom": "officer.reporting_period",
+        "placeholder": "Reporting period and publication status",
+        "officerEditable": true
+      },
+      {
+        "blockId": "metric_exec_lfpr",
+        "kind": "metric_card",
+        "fillFrom": "slot_exec_lfpr_metric",
+        "questionId": "q_exec_summary_lfpr",
+        "componentId": "cmp_exec_lfpr_metric"
+      },
+      {
+        "blockId": "metric_exec_ur",
+        "kind": "metric_card",
+        "fillFrom": "slot_exec_ur_metric",
+        "questionId": "q_exec_summary_ur",
+        "componentId": "cmp_exec_ur_metric"
+      },
+      {
+        "blockId": "text_exec_lfpr_note",
+        "kind": "narrative_paragraph",
+        "fillFrom": "slot_exec_lfpr_note",
+        "questionId": "q_exec_summary_lfpr",
+        "componentId": "cmp_exec_lfpr_note"
+      },
+      {
+        "blockId": "text_quality_note",
+        "kind": "narrative_paragraph",
+        "fillFrom": "slot_quality_note",
+        "questionId": "q_data_quality_coverage",
+        "componentId": "cmp_quality_note"
+      },
+      {
+        "blockId": "text_lfpr_gender_sector_note",
+        "kind": "narrative_paragraph",
+        "fillFrom": "slot_lfpr_gender_sector_note",
+        "questionId": "q_gender_sector_lfpr",
+        "componentId": "cmp_lfpr_gender_sector_note"
+      },
+      {
+        "blockId": "text_wpr_note",
+        "kind": "narrative_paragraph",
+        "fillFrom": "slot_wpr_note",
+        "questionId": "q_employment_wpr",
+        "componentId": "cmp_wpr_note"
+      },
+      {
+        "blockId": "text_state_coverage_note",
+        "kind": "narrative_paragraph",
+        "fillFrom": "slot_state_coverage_note",
+        "questionId": "q_state_coverage_optional",
+        "componentId": "cmp_state_coverage_note"
+      },
+      {
+        "blockId": "source_notes_publication",
+        "kind": "source_note_block",
+        "fillFrom": "slot_publication_source_notes",
+        "questionId": "q_publication_readiness",
+        "componentId": "cmp_publication_source_notes"
+      },
+      {
+        "blockId": "annexure_optional_state_or_youth",
+        "kind": "annexure_placeholder",
+        "fillFrom": "officer.optional_annexure",
+        "officerEditable": true
+      },
+      {
+        "blockId": "audit_lineage_manifest",
+        "kind": "audit_manifest",
+        "fillFrom": "semantic_slot_graph",
+        "officerEditable": false
+      }
+    ]
+  },
+  "metricAST": {
+    "metrics": [
+      {
+        "metricId": "metric_exec_lfpr",
+        "blockId": "metric_exec_lfpr",
+        "slotId": "slot_exec_lfpr_metric",
+        "entityRef": "ent_lfpr",
+        "format": "percent.1"
+      },
+      {
+        "metricId": "metric_exec_ur",
+        "blockId": "metric_exec_ur",
+        "slotId": "slot_exec_ur_metric",
+        "entityRef": "ent_ur",
+        "format": "percent.1"
+      }
+    ]
+  },
+  "chartAST": {
+    "charts": [
+      {
+        "chartId": "chart_lfpr_gender_sector",
+        "blockId": "chart_lfpr_gender_sector",
+        "slotId": "slot_lfpr_gender_sector_chart",
+        "questionId": "q_gender_sector_lfpr",
+        "componentId": "cmp_lfpr_gender_sector_chart",
+        "chartType": "grouped_bar",
+        "xEntityRef": "ent_sector",
+        "seriesEntityRef": "ent_gender",
+        "yEntityRef": "ent_lfpr",
+        "maxSeries": 4,
+        "sourceNoteRequired": true
+      }
+    ]
+  },
+  "tableAST": {
+    "tables": [
+      {
+        "tableId": "table_quality",
+        "blockId": "table_quality",
+        "slotId": "slot_quality_table",
+        "questionId": "q_data_quality_coverage",
+        "componentId": "cmp_quality_table",
+        "columns": [
+          "Check",
+          "Status",
+          "Officer action"
+        ],
+        "maxRows": 6
+      },
+      {
+        "tableId": "table_wpr",
+        "blockId": "table_wpr",
+        "slotId": "slot_wpr_table",
+        "questionId": "q_employment_wpr",
+        "componentId": "cmp_wpr_table",
+        "columns": [
+          "Sector",
+          "WPR",
+          "Reporting period"
+        ],
+        "maxRows": 6
+      },
+      {
+        "tableId": "table_state_coverage",
+        "blockId": "table_state_coverage",
+        "slotId": "slot_state_coverage_table",
+        "questionId": "q_state_coverage_optional",
+        "componentId": "cmp_state_coverage_table",
+        "columns": [
+          "State/UT",
+          "Rows",
+          "Coverage note"
+        ],
+        "maxRows": 8,
+        "visibility": "show_if_ent_state_ut_bound"
+      }
+    ]
+  },
+  "checklistAST": {
+    "checklists": [
+      {
+        "checklistId": "checklist_publication",
+        "blockId": "checklist_publication",
+        "slotId": "slot_publication_checklist",
+        "questionId": "q_publication_readiness",
+        "componentId": "cmp_publication_checklist",
+        "items": [
+          "Required entities bound",
+          "Source notes confirmed",
+          "No blocked formula specs",
+          "Lineage rendered",
+          "Officer status selected"
+        ]
+      }
+    ]
+  }
+}

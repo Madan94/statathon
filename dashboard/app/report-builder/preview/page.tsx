@@ -18,7 +18,6 @@ import { generatePhaseApi } from '@/lib/api';
 import type { EditInput, Locale, ReportAST } from '@/lib/report/types';
 import { applyProfile, type ReportOverrides } from '@/lib/report/profile';
 import { ReportPreview } from '@/components/report-builder/render/ReportPreview';
-import { ReportTrustPanel } from '@/components/report-builder/render/ReportTrustPanel';
 import { CustomizePanel } from '@/components/report-builder/render/CustomizePanel';
 import { VersionHistory } from '@/components/report-builder/render/VersionHistory';
 
@@ -210,28 +209,29 @@ function PreviewInner() {
               />
             </div>
           </div>
-          <div className="hidden w-80 shrink-0 space-y-5 lg:block">
-            <ReportTrustPanel report={activeReport ?? report} />
-            {customizing && (
-              <CustomizePanel
-                report={report}
-                value={overrides}
-                onChange={setOverrides}
-                onSave={saveOverrides}
-                saving={saving}
-              />
-            )}
-            {editMode && (
-              <div className="rounded-lg border border-border bg-surface p-4">
-                <VersionHistory
-                  versions={versions.versions}
-                  current={versions.current}
-                  selected={selectedVersion}
-                  onSelect={selectVersion}
+          {(customizing || editMode) && (
+            <div className="hidden w-80 shrink-0 space-y-5 lg:block">
+              {customizing && (
+                <CustomizePanel
+                  report={report}
+                  value={overrides}
+                  onChange={setOverrides}
+                  onSave={saveOverrides}
+                  saving={saving}
                 />
-              </div>
-            )}
-          </div>
+              )}
+              {editMode && (
+                <div className="rounded-lg border border-border bg-surface p-4">
+                  <VersionHistory
+                    versions={versions.versions}
+                    current={versions.current}
+                    selected={selectedVersion}
+                    onSelect={selectVersion}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

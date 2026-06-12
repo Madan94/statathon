@@ -41,7 +41,6 @@ def save_template(db: Session, ast: TemplateAST, name: str, description: str | N
         description=description,
         page_count=ast.page_count,
         extraction_method=ast.extraction_method,
-        block_count=len(ast.blocks),
         source_hash=ast.source_hash,
         ast_json=serialize_template(ast),
     )
@@ -78,7 +77,7 @@ def list_templates(db: Session) -> list[dict[str, Any]]:
             "name": r.name,
             "description": r.description,
             "page_count": r.page_count,
-            "block_count": r.block_count,
+            "block_count": _block_count_from_ast_json(r.ast_json),
             "extraction_method": r.extraction_method,
             "source_hash": r.source_hash,
             "created_at": r.created_at.isoformat() if r.created_at else None,
@@ -96,3 +95,15 @@ def delete_template(db: Session, template_id: int) -> bool:
     db.delete(row)
     db.commit()
     return True
+
+
+def _block_count_from_ast_json(ast_json: Any) -> int:
+    if not isinstance(ast_json, dict):
+        return 0
+    blocks = ast_json.get("blocks")
+    if isinstance(blocks, list):
+        return len(blocks)
+    sections = ast_json.get("sections")
+    if isinstance(sections, list):
+        return len(sections)
+    return 0

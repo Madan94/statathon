@@ -34,7 +34,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/report-builder/binding-phase", tags=["binding-phase"])
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_GOLD_BLUEPRINT = _REPO_ROOT / "report_builder" / "gold_standard" / "template.blueprint.json"
+_GOLD_STANDARD_DIR = _REPO_ROOT / "report_builder" / "gold_standard"
+_GOLD_BLUEPRINT = _GOLD_STANDARD_DIR / "template.blueprint.json"
 # Built-in template ids that map to the bundled gold PLFS blueprint (zero-config demo path).
 _GOLD_TEMPLATE_IDS = {"tpl_plfs_annual_v1", "gold", "default", ""}
 
@@ -238,7 +239,13 @@ def _stash_path(template_id: str, signature: str, suffix: str) -> Path:
 
 
 def _write_stash(
-    template_id: str, signature: str, dataset: DatasetAST, blueprint: dict[str, Any], csv_bytes: bytes
+    template_id: str,
+    signature: str,
+    dataset: DatasetAST,
+    blueprint: dict[str, Any],
+    csv_bytes: bytes,
+    template_ast: dict[str, Any] | None = None,
+    semantic_slot_graph: dict[str, Any] | None = None,
 ) -> None:
     R._DEFAULT_STORE.mkdir(parents=True, exist_ok=True)
     _stash_path(template_id, signature, "dataset.json").write_text(
@@ -247,6 +254,14 @@ def _write_stash(
     _stash_path(template_id, signature, "blueprint.json").write_text(
         json.dumps(blueprint, ensure_ascii=False), encoding="utf-8"
     )
+    if template_ast is not None:
+        _stash_path(template_id, signature, "template_ast.json").write_text(
+            json.dumps(template_ast, ensure_ascii=False), encoding="utf-8"
+        )
+    if semantic_slot_graph is not None:
+        _stash_path(template_id, signature, "semantic_slot_graph.json").write_text(
+            json.dumps(semantic_slot_graph, ensure_ascii=False), encoding="utf-8"
+        )
     _stash_path(template_id, signature, "data.csv").write_bytes(csv_bytes)
 
 
@@ -659,8 +674,18 @@ def _component_recommendations_for_node(node: "Any") -> list[dict[str, Any]]:
 
 def _count_questions(blueprint: dict[str, Any]) -> int:
     count = len(blueprint.get("questions") or [])
+
+    def walk(node: dict[str, Any]) -> None:
+        nonlocal count
+        count += len(node.get("questions") or [])
+        for key in ("topics", "chapters", "subtopics", "sections", "subsections", "children"):
+            for child in node.get(key) or []:
+                if isinstance(child, dict):
+                    walk(child)
+
     for topic in blueprint.get("topics") or []:
-        count += len(topic.get("questions") or [])
+        if isinstance(topic, dict):
+            walk(topic)
     return count
 
 
@@ -691,6 +716,89 @@ def _package_from_ast_json(template_id: str, name: str, source: str, ast_json: d
         diagnostics_score=float(score) if score is not None else None,
         description=description,
     )
+
+
+def _load_builtin_gold_package(template_id: str) -> tuple[dict[str, Any], dict[str, Any] | None, dict[str, Any] | None, Path] | None:
+    """Load a built-in gold-standard package by templateMeta.templateId.
+
+    A package is keyed by the blueprint's templateId and may have companion
+    ``*.template.ast.json`` and ``*.semantic_slot_graph.json`` files sharing
+    the same filename prefix.
+    """
+    for blueprint_path in sorted(_GOLD_STANDARD_DIR.glob("*.template.blueprint.json")):
+        try:
+            blueprint = json.loads(blueprint_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        meta = blueprint.get("templateMeta") if isinstance(blueprint.get("templateMeta"), dict) else {}
+        if meta.get("templateId") != template_id:
+            continue
+        prefix = blueprint_path.name.removesuffix(".template.blueprint.json")
+        ast_path = blueprint_path.with_name(f"{prefix}.template.ast.json")
+        slot_path = blueprint_path.with_name(f"{prefix}.semantic_slot_graph.json")
+        template_ast = None
+        slot_graph = None
+        if ast_path.exists():
+            template_ast = json.loads(ast_path.read_text(encoding="utf-8"))
+        if slot_path.exists():
+            slot_graph = json.loads(slot_path.read_text(encoding="utf-8"))
+        return blueprint, template_ast, slot_graph, blueprint_path
+    return None
+
+
+def _iter_builtin_gold_packages() -> list[TemplatePackageOut]:
+    packages: list[TemplatePackageOut] = []
+    seen: set[str] = set()
+
+    try:
+        gold_bp = json.loads(_GOLD_BLUEPRINT.read_text(encoding="utf-8"))
+        packages.append(_package_from_ast_json(
+            "tpl_plfs_annual_v1",
+            "Built-in PLFS demo",
+            "built_in",
+            {"blueprint": gold_bp},
+            "Bundled value-free PLFS blueprint for demo binding.",
+        ))
+        seen.add("tpl_plfs_annual_v1")
+    except Exception as exc:
+        logger.warning("[binding-phase] failed to summarize built-in PLFS package: %s", exc)
+
+    for blueprint_path in sorted(_GOLD_STANDARD_DIR.glob("*.template.blueprint.json")):
+        try:
+            blueprint = json.loads(blueprint_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            logger.warning("[binding-phase] failed to read built-in package blueprint %s: %s", blueprint_path, exc)
+            continue
+        meta = blueprint.get("templateMeta") if isinstance(blueprint.get("templateMeta"), dict) else {}
+        template_id = str(meta.get("templateId") or "")
+        if not template_id or template_id in seen:
+            continue
+        prefix = blueprint_path.name.removesuffix(".template.blueprint.json")
+        ast_path = blueprint_path.with_name(f"{prefix}.template.ast.json")
+        slot_path = blueprint_path.with_name(f"{prefix}.semantic_slot_graph.json")
+        template_ast = None
+        slot_graph = None
+        try:
+            if ast_path.exists():
+                template_ast = json.loads(ast_path.read_text(encoding="utf-8"))
+            if slot_path.exists():
+                slot_graph = json.loads(slot_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            logger.warning("[binding-phase] failed to read built-in package companions for %s: %s", template_id, exc)
+        packages.append(_package_from_ast_json(
+            template_id,
+            str(meta.get("name") or template_id),
+            "built_in",
+            {
+                "blueprint": blueprint,
+                "template_ast": template_ast,
+                "semantic_slot_graph": slot_graph,
+            },
+            meta.get("description"),
+        ))
+        seen.add(template_id)
+
+    return packages
 
 
 async def _resolve_blueprint(template_id: str, blueprint_file: Optional[UploadFile]) -> dict[str, Any]:
@@ -730,6 +838,11 @@ async def _resolve_blueprint(template_id: str, blueprint_file: Optional[UploadFi
     # 3. Bundled gold templates
     if template_id in _GOLD_TEMPLATE_IDS:
         return json.loads(_GOLD_BLUEPRINT.read_text(encoding="utf-8"))
+    package = _load_builtin_gold_package(template_id)
+    if package is not None:
+        blueprint, _template_ast, _slot_graph, blueprint_path = package
+        logger.info("[binding-phase] Blueprint auto-loaded from built-in package %s", blueprint_path.name)
+        return blueprint
 
     raise HTTPException(
         status_code=400,
@@ -745,19 +858,7 @@ async def _resolve_blueprint(template_id: str, blueprint_file: Optional[UploadFi
 @router.get("/template-packages", response_model=list[TemplatePackageOut])
 def list_template_packages() -> list[TemplatePackageOut]:
     """List template packages suitable for binder start screen."""
-    packages: list[TemplatePackageOut] = []
-
-    try:
-        gold_bp = json.loads(_GOLD_BLUEPRINT.read_text(encoding="utf-8"))
-        packages.append(_package_from_ast_json(
-            "tpl_plfs_annual_v1",
-            "Built-in PLFS demo",
-            "built_in",
-            {"blueprint": gold_bp},
-            "Bundled value-free PLFS blueprint for demo binding.",
-        ))
-    except Exception as exc:
-        logger.warning("[binding-phase] failed to summarize built-in PLFS package: %s", exc)
+    packages: list[TemplatePackageOut] = _iter_builtin_gold_packages()
 
     try:
         from database.database import SessionLocal
@@ -801,6 +902,7 @@ async def start_binding(
     from report_builder.binding.profiler import profile_dataframe
     from report_builder.binding.resolver import resolve_entities
 
+    builtin_package = None if blueprint is not None else _load_builtin_gold_package(template_id)
     bp = await _resolve_blueprint(template_id, blueprint)
 
     # ── BlueprintQA gate: validate before binding starts ──
@@ -834,7 +936,9 @@ async def start_binding(
     )
     binding, record, _deltas = R.open_review(binding, profile)
     R.save_record(record)
-    _write_stash(binding.templateId, signature, profile, bp, raw)
+    template_ast = builtin_package[1] if builtin_package is not None else None
+    semantic_slot_graph = builtin_package[2] if builtin_package is not None else None
+    _write_stash(binding.templateId, signature, profile, bp, raw, template_ast, semantic_slot_graph)
 
     logger.info(
         "[binding-phase] start %s__%s — %d entities proposed (%d pending)",
@@ -972,6 +1076,8 @@ def get_workspace(template_id: str, signature: str) -> WorkspaceOut:
     """Return the consolidated binder workbench state for one session."""
     record = _load_or_404(template_id, signature)
     dataset, blueprint, _df = _read_stash(template_id, signature)
+    template_ast = _read_optional_stash_json(template_id, signature, "template_ast.json")
+    semantic_slot_graph = _read_optional_stash_json(template_id, signature, "semantic_slot_graph.json")
     binding = _binding_for_workspace(record, signature)
     ownership = _ownership(record)
     reviewed_plan = _load_reviewed_plan_optional(template_id, signature)
@@ -980,7 +1086,11 @@ def get_workspace(template_id: str, signature: str) -> WorkspaceOut:
         template_id,
         (blueprint.get("templateMeta") or {}).get("name") or template_id,
         "session",
-        {"blueprint": blueprint},
+        {
+            "blueprint": blueprint,
+            "template_ast": template_ast,
+            "semantic_slot_graph": semantic_slot_graph,
+        },
     ).dict()
     dependency_graph = _build_dependency_graph(blueprint, binding, reviewed_plan)
     issues = _workspace_issues(record, binding, ownership, reviewed_plan)

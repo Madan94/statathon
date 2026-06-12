@@ -91,3 +91,28 @@ class TestTemplateCompilerWrapper:
         d = result["diagnostics"].to_dict()
         s = json.dumps(d, default=str)
         assert len(s) > 100
+
+    def test_repairs_template_id_mismatch_for_saved_artifacts(self):
+        from report_builder.template_compiler import compile_template_artifacts
+
+        ast = {
+            "metadata": {"templateId": "tpl_document", "blueprintRef": "tpl_document", "name": "Document"},
+            "contentAST": {"blocks": []},
+            "tableAST": {"tables": []},
+            "chartAST": {"charts": []},
+            "figureAST": {"figures": []},
+            "semanticAST": {},
+            "styleAST": {},
+        }
+        bp = {
+            "templateMeta": {"templateId": "tpl_real", "name": "PLFS", "domain": "labour_force"},
+            "entities": [],
+            "topics": [],
+        }
+        result = compile_template_artifacts(raw_ast=ast, blueprint=bp, runtime_trace={"totalCalls": 0})
+        assert result["template_ast"]["metadata"]["templateId"] == "tpl_real"
+        assert result["template_ast"]["metadata"]["blueprintRef"] == "tpl_real"
+        assert result["template_blueprint"]["templateMeta"]["templateId"] == "tpl_real"
+        assert "TEMPLATE_ID_MISMATCH" not in {
+            e.code for e in result["diagnostics"].blockingErrors
+        }

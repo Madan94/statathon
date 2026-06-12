@@ -1,23 +1,13 @@
 """P5 tests: entity enrichment (Q17 units/format, Q18 valueDomain, Q19 glossary/palette)."""
 from __future__ import annotations
 
-import pytest
-
-try:
-    from report_builder.entity_enrichment import (
-        MOSPI_GLOSSARY,
-        build_glossary,
-        build_palette,
-        enrich_document_map,
-        enrich_entity,
-    )
-except ImportError:  # pragma: no cover - environment/refactor guard
-    pytest.skip(
-        "report_builder.entity_enrichment was rewritten by the E6 alias/value-domain "
-        "enrichment work (now enrich_entities/AliasCandidate); this suite targets the "
-        "superseded glossary/palette API. Skipped until the team updates these tests.",
-        allow_module_level=True,
-    )
+from report_builder.entity_enrichment import (
+    MOSPI_GLOSSARY,
+    build_glossary,
+    build_palette,
+    enrich_document_map,
+    enrich_entity,
+)
 
 
 # ── Q17: units / format / dtype ─────────────────────────────────────────────
