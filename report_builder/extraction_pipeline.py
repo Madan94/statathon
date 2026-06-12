@@ -1299,14 +1299,28 @@ def pass0_rasterize(pdf_path: Path) -> tuple[list[bytes], list[dict[str, Any]]]:
     t0 = time.monotonic()
 
     # Rasterize pages to PNG
+    # Try PyMuPDF first (no Poppler install needed), fall back to pdf2image
+    _pdf_dpi = int(os.getenv("PDF_DPI", "150"))
+    images: list = []
     try:
-        import pdf2image
-        poppler_path = os.getenv("POPPLER_PATH") or None
-        _pdf_dpi = int(os.getenv("PDF_DPI", "150"))
-        images = pdf2image.convert_from_path(str(pdf_path), dpi=_pdf_dpi, fmt="png", poppler_path=poppler_path)
+        import fitz  # PyMuPDF — bundled C libs, no system install required
+        doc = fitz.open(str(pdf_path))
+        for page in doc:
+            mat = fitz.Matrix(_pdf_dpi / 72, _pdf_dpi / 72)
+            pix = page.get_pixmap(matrix=mat)
+            pil_img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            images.append(pil_img)
+        doc.close()
+        logger.info("[pass0] PyMuPDF rasterized %d pages", len(images))
     except Exception as exc:
-        logger.error("[pass0] pdf2image failed: %s — trying Pillow fallback", exc)
-        images = []
+        logger.warning("[pass0] PyMuPDF failed (%s), trying pdf2image", exc)
+        try:
+            import pdf2image
+            poppler_path = os.getenv("POPPLER_PATH") or None
+            images = pdf2image.convert_from_path(str(pdf_path), dpi=_pdf_dpi, fmt="png", poppler_path=poppler_path)
+        except Exception as exc2:
+            logger.error("[pass0] pdf2image also failed: %s — vision pass skipped", exc2)
+            images = []
 
     # Resize images to fit within max dimension to reduce VLM token count
     _max_dim = int(os.getenv("VLM_MAX_IMAGE_DIM", "800"))
