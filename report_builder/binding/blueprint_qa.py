@@ -18,20 +18,35 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def _iter_blueprint_questions(node: Any) -> list[dict[str, Any]]:
-    """Flatten questions from topics/chapters/sections/subsections."""
-    if isinstance(node, dict):
-        out = [q for q in (node.get("questions") or []) if isinstance(q, dict)]
-        for key in ("topics", "chapters", "sections", "children", "subtopics", "subsections"):
-            for child in node.get(key) or []:
-                out.extend(_iter_blueprint_questions(child))
-        return out
-    if isinstance(node, list):
-        out: list[dict[str, Any]] = []
-        for item in node:
-            out.extend(_iter_blueprint_questions(item))
-        return out
-    return []
+def _iter_section_questions(section: dict[str, Any]) -> list[dict[str, Any]]:
+    """Recursively collect questions from a topic/section and nested children.
+
+    Includes ``chapters`` so questions nested under topics[].chapters[].sections[]
+    are not missed (superset of both pre-merge variants).
+    """
+    out: list[dict[str, Any]] = list(section.get("questions") or [])
+    for key in ("chapters", "subtopics", "sections", "children", "subsections"):
+        for child in section.get(key) or []:
+            if isinstance(child, dict):
+                out.extend(_iter_section_questions(child))
+    return out
+
+
+def _iter_blueprint_questions(blueprint: Any) -> list[dict[str, Any]]:
+    """Return all questions from a blueprint regardless of nesting depth."""
+    if isinstance(blueprint, list):
+        acc: list[dict[str, Any]] = []
+        for item in blueprint:
+            if isinstance(item, dict):
+                acc.extend(_iter_blueprint_questions(item))
+        return acc
+    if not isinstance(blueprint, dict):
+        return []
+    out: list[dict[str, Any]] = [q for q in (blueprint.get("questions") or []) if isinstance(q, dict)]
+    for topic in (blueprint.get("topics") or blueprint.get("sections") or blueprint.get("chapters") or []):
+        if isinstance(topic, dict):
+            out.extend(_iter_section_questions(topic))
+    return out
 
 
 @dataclass

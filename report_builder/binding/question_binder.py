@@ -244,13 +244,23 @@ def bind_question(
 # ─────────────────────────────────────────────────────────────────────────────
 
 
+def _iter_section_questions(section: dict[str, Any]) -> list[dict[str, Any]]:
+    """Recursively collect questions from a topic/section and any nested children."""
+    out: list[dict[str, Any]] = list(section.get("questions") or [])
+    for key in ("subtopics", "sections", "children", "subsections"):
+        for child in section.get(key) or []:
+            if isinstance(child, dict):
+                out.extend(_iter_section_questions(child))
+    return out
+
+
 def _iter_questions(blueprint: dict[str, Any]) -> list[dict[str, Any]]:
-    """Flatten topics[].questions[] (or a top-level questions[])."""
+    """Flatten topics[].questions[] recursively (or a top-level questions[])."""
     if blueprint.get("questions"):
         return list(blueprint["questions"])
     out: list[dict[str, Any]] = []
-    for topic in (blueprint.get("topics") or []):
-        out.extend(topic.get("questions") or [])
+    for topic in (blueprint.get("topics") or blueprint.get("sections") or []):
+        out.extend(_iter_section_questions(topic))
     return out
 
 
