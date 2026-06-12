@@ -24,18 +24,18 @@ Per-task overrides (override the provider for a specific task only):
     PROVIDER_SEMANTIC_FALLBACK   (semantic fallback — text-only)
 
 Model overrides:
-    SGLANG_ENDPOINT   = http://localhost:8002  (Qwen vLLM server)
-    SGLANG_MODEL      = Qwen/Qwen2.5-VL-3B-Instruct-AWQ
+    SGLANG_ENDPOINT   = http://localhost:8002  (local SGLang server)
+    SGLANG_MODEL      = <set SGLANG_MODEL in .env>
     SGLANG_TIMEOUT    = 120
-    GEMINI_MODEL      = gemini-2.5-flash
+    GEMINI_MODEL      = <set GEMINI_MODEL in .env>
     GEMINI_API_KEY    (or GOOGLE_API_KEY)
     GROQ_API_KEY
-    GROQ_MODEL        = meta-llama/llama-4-scout-17b-16e-instruct
-    GROQ_VISION_MODEL = meta-llama/llama-4-maverick-17b-128e-instruct
+    GROQ_MODEL        = <set GROQ_MODEL in .env>
+    GROQ_VISION_MODEL = <set GROQ_VISION_MODEL in .env>
     OPENAI_API_KEY    (not required for local servers like Ollama/LM Studio)
     OPENAI_BASE_URL   = https://api.openai.com/v1
-    OPENAI_MODEL      = gpt-4o-mini
-    OPENAI_VISION_MODEL = gpt-4o-mini
+    OPENAI_MODEL      = <set OPENAI_MODEL in .env>
+    OPENAI_VISION_MODEL = <set OPENAI_VISION_MODEL in .env>
     OPENAI_TIMEOUT    = 120
 
 The 'openai' provider speaks the OpenAI /chat/completions wire format, so a single
@@ -131,7 +131,47 @@ for _slot in _KEY_POOL.values():
                _slot.label, _slot.provider, _slot.value[-4:] if len(_slot.value) > 4 else "****")
 
 
-def _resolve_key_for_task(task: str, provider: str) -> _KeySlot | None:
+# ── Gemini multi-key pool (GEMINI_KEY_1 .. GEMINI_KEY_N + legacy GEMINI_API_KEY) ──────────
+# Load all Gemini keys at import time; caller rotates via get_rotated_gemini_key().
+# Add as many keys as you want in .env: GEMINI_KEY_1=..., GEMINI_KEY_2=..., etc.
+
+def _load_gemini_key_pool() -> list[str]:
+    """Load all GEMINI_KEY_1..GEMINI_KEY_N + legacy fallback keys."""
+    keys: list[str] = []
+    for i in range(1, 25):  # supports up to 24 Gemini keys
+        k = (os.getenv(f"GEMINI_KEY_{i}") or "").strip()
+        if k:
+            keys.append(k)
+    for legacy in ("GEMINI_API_KEY", "GOOGLE_API_KEY"):
+        k = (os.getenv(legacy) or "").strip()
+        if k and k not in keys:
+            keys.append(k)
+    return keys
+
+
+_GEMINI_KEY_POOL: list[str] = _load_gemini_key_pool()
+_GEMINI_KEY_COUNTER: int = 0
+
+for _i, _gk in enumerate(_GEMINI_KEY_POOL, 1):
+    logger.info("[gemini_key_pool] Loaded GEMINI_KEY_%d (...%s)", _i, _gk[-4:] if len(_gk) > 4 else "****")
+
+
+def get_rotated_gemini_key() -> tuple[str | None, str]:
+    """Round-robin across all configured Gemini API keys.
+
+    Rotates through GEMINI_KEY_1..GEMINI_KEY_N on every call so concurrent
+    requests spread across keys, staying within each key's free-tier RPM limit.
+    """
+    global _GEMINI_KEY_COUNTER
+    pool = _GEMINI_KEY_POOL
+    if not pool:
+        return None, "no_gemini_key"
+    idx = _GEMINI_KEY_COUNTER % len(pool)
+    _GEMINI_KEY_COUNTER += 1
+    return pool[idx], f"GEMINI_KEY_{idx + 1}"
+
+
+def _resolve_key_for_task(task: str, provider: str) -> "_KeySlot | None":
     """Find the assigned key slot for a task, or first matching provider key.
 
     Priority:
@@ -257,32 +297,49 @@ def _resolve_model_for_task(task: str, provider: str, is_vision: bool = False) -
     """Resolve the model name for a task+provider.
 
     Priority:
-    1. TASK_<TASK>_MODEL env var  (per-task override — works for any provider)
-    2. Provider-global model env  (OPENAI_MODEL / GROQ_MODEL / GEMINI_MODEL / SGLANG_MODEL)
+    1. TASK_<TASK>_MODEL env var   (per-task override, works for any provider)
+    2. Provider vision/text global (OPENAI_VISION_MODEL / OPENAI_MODEL / GROQ_VISION_MODEL /
+       GROQ_MODEL / GEMINI_VISION_MODEL / GEMINI_MODEL / SGLANG_VISION_MODEL / SGLANG_MODEL)
+
+    NO hardcoded fallbacks. If the env var is not set the model string will be
+    empty and the call will be skipped with a logged warning. Configure every
+    model explicitly in .env.
     """
+    # Priority 1: per-task env override
     model_env = _TASK_MODEL_ENVS.get(task, "")
     if model_env:
         override = (os.getenv(model_env) or "").strip()
         if override:
             return override
-    # Provider global
+
+    # Priority 2: provider-global env (separate vision / text vars per provider)
     if provider == "azure":
-        # For Azure the "model" is the deployment name (used in the URL path)
-        if is_vision:
-            return (os.getenv("AZURE_OPENAI_VISION_DEPLOYMENT") or "gpt-4o-graphiti-2")
-        return (os.getenv("AZURE_OPENAI_TEXT_DEPLOYMENT") or os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME") or "gpt-5.2-chat")
+        # Azure uses deployment names (not model IDs) in the URL path
+        key = "AZURE_OPENAI_VISION_DEPLOYMENT" if is_vision else "AZURE_OPENAI_TEXT_DEPLOYMENT"
+        fallback_key = "AZURE_OPENAI_DEPLOYMENT_NAME" if not is_vision else None
     elif provider == "openai":
-        if is_vision:
-            return (os.getenv("OPENAI_VISION_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini")
-        return (os.getenv("OPENAI_MODEL") or "gpt-4o-mini")
+        key = "OPENAI_VISION_MODEL" if is_vision else "OPENAI_MODEL"
+        fallback_key = "OPENAI_MODEL" if is_vision else None  # vision can fall back to text
     elif provider == "groq":
-        if is_vision:
-            return (os.getenv("GROQ_VISION_MODEL") or "meta-llama/llama-4-scout-17b-16e-instruct")
-        return (os.getenv("GROQ_MODEL") or "llama-3.3-70b-versatile")
+        key = "GROQ_VISION_MODEL" if is_vision else "GROQ_MODEL"
+        fallback_key = "GROQ_MODEL" if is_vision else None
     elif provider == "gemini":
-        return (os.getenv("GEMINI_MODEL") or "gemini-2.5-flash")
-    else:  # qwen
-        return (os.getenv("SGLANG_MODEL") or "Qwen/Qwen2.5-VL-3B-Instruct-AWQ")
+        key = "GEMINI_VISION_MODEL" if is_vision else "GEMINI_MODEL"
+        fallback_key = "GEMINI_MODEL" if is_vision else None  # gemini is multimodal
+    else:  # qwen / sglang
+        key = "SGLANG_VISION_MODEL" if is_vision else "SGLANG_MODEL"
+        fallback_key = "SGLANG_MODEL" if is_vision else None  # VL model serves both
+
+    model = (os.getenv(key) or "").strip()
+    if not model and fallback_key:
+        model = (os.getenv(fallback_key) or "").strip()
+    if not model:
+        logger.warning(
+            "[llm_router] No model configured for task=%s provider=%s is_vision=%s. "
+            "Set %s in .env to fix this.",
+            task, provider, is_vision, key,
+        )
+    return model
 
 
 def _resolve_provider(task: str) -> str:
@@ -305,10 +362,10 @@ def _resolve_provider(task: str) -> str:
 # Qwen 3B with 2048 context: prompts are 400-1200 tokens, so safe output = 700.
 # This prevents "max context 2048" errors even with long prompts (tables, entities).
 _PROVIDER_MAX_OUTPUT: dict[str, int] = {
-    "qwen":   500,    # 2048 ctx − ~1500 reserved for prompt+image. ONLY use for entity_extraction (256 tok)
-    "openai": 4000,   # Ollama default 8192 ctx → ~4000 for output
-    "gemini": 8000,   # Gemini Flash supports 8192 output tokens
-    "groq":   8000,   # Groq llama-3.3-70b: 32K output, scout-17b: 16K output - safe at 8K
+    "qwen":   500,    # local 3B model -- last-resort vision fallback
+    "openai": 32500,  # OpenRouter: varies by model; conservative cap
+    "gemini": 8000,   # Gemini Flash 8K safe output
+    "groq":   16000,  # Groq: most models support 32K+; cap at 16K
     "azure":  16000,  # Azure gpt-5.x reasoning model: reasoning_tokens eat into max_completion_tokens
 }
 
@@ -439,7 +496,10 @@ def _call_azure(prompt: str, image_bytes: bytes | None, max_tokens: int, tempera
 def _call_qwen_text(prompt: str, max_tokens: int, temperature: float,
                     schema: dict | None = None) -> str | None:
     endpoint = (os.getenv("SGLANG_ENDPOINT") or "http://localhost:8002").rstrip("/") + "/v1/chat/completions"
-    model = os.getenv("SGLANG_MODEL") or "Qwen/Qwen2.5-VL-3B-Instruct-AWQ"
+    model = (os.getenv("SGLANG_MODEL") or "").strip()
+    if not model:
+        logger.warning("[llm_router][qwen] SGLANG_MODEL not set in .env -- skipping")
+        return None
     timeout = int(os.getenv("SGLANG_TIMEOUT") or "120")
     payload = {
         "model": model,
@@ -461,7 +521,11 @@ def _call_qwen_text(prompt: str, max_tokens: int, temperature: float,
 def _call_qwen_vision(prompt: str, image_bytes: bytes, max_tokens: int, temperature: float,
                       schema: dict | None = None) -> str | None:
     endpoint = (os.getenv("SGLANG_ENDPOINT") or "http://localhost:8002").rstrip("/") + "/v1/chat/completions"
-    model = os.getenv("SGLANG_MODEL") or "Qwen/Qwen2.5-VL-3B-Instruct-AWQ"
+    # Prefer a dedicated vision model; fall back to general SGLANG_MODEL (e.g. a VL model)
+    model = (os.getenv("SGLANG_VISION_MODEL") or os.getenv("SGLANG_MODEL") or "").strip()
+    if not model:
+        logger.warning("[llm_router][qwen-vision] SGLANG_VISION_MODEL / SGLANG_MODEL not set -- skipping")
+        return None
     timeout = int(os.getenv("SGLANG_TIMEOUT") or "120")
     mime = _detect_image_mime(image_bytes)
     img_b64 = base64.b64encode(image_bytes).decode("utf-8")
@@ -500,12 +564,20 @@ def _call_qwen_vision(prompt: str, image_bytes: bytes, max_tokens: int, temperat
 
 
 def _call_gemini(prompt: str, image_bytes: bytes | None, max_tokens: int, temperature: float,
-                 api_key: str | None = None, key_label: str = "") -> str | None:
-    api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+                 api_key: str | None = None, key_label: str = "",
+                 task: str = "") -> str | None:
+    # Use the rotated key pool; caller may supply a specific key for testing
     if not api_key:
-        logger.info("[llm_router][gemini] No API key — skipping")
+        api_key, key_label = get_rotated_gemini_key()
+    if not api_key:
+        logger.info("[llm_router][gemini] No Gemini key configured (GEMINI_KEY_1..N / GEMINI_API_KEY) -- skipping")
         return None
-    model = os.getenv("GEMINI_MODEL") or "gemini-2.5-flash"
+    model = _resolve_model_for_task(task, "gemini", is_vision=bool(image_bytes)) if task else (
+        os.getenv("GEMINI_VISION_MODEL" if image_bytes else "GEMINI_MODEL") or ""
+    )
+    if not model:
+        logger.warning("[llm_router][gemini] GEMINI_MODEL not set in .env -- skipping")
+        return None
     mime = _detect_image_mime(image_bytes) if image_bytes else "image/png"
     try:
         try:
@@ -588,9 +660,12 @@ def _call_groq(prompt: str, image_bytes: bytes | None, max_tokens: int, temperat
         logger.info("[llm_router][groq] No GROQ_API_KEY — skipping")
         return None
     model = _resolve_model_for_task(task, "groq", is_vision=bool(image_bytes)) if task else (
-        os.getenv("GROQ_VISION_MODEL" if image_bytes else "GROQ_MODEL") or
-        ("meta-llama/llama-4-scout-17b-16e-instruct" if image_bytes else "llama-3.3-70b-versatile")
+        (os.getenv("GROQ_VISION_MODEL") if image_bytes else os.getenv("GROQ_MODEL")) or ""
     )
+    if not model:
+        logger.warning("[llm_router][groq] %s not set in .env -- skipping",
+                       "GROQ_VISION_MODEL" if image_bytes else "GROQ_MODEL")
+        return None
     timeout = int(os.getenv("GROQ_TIMEOUT") or "120")
     if image_bytes:
         mime = _detect_image_mime(image_bytes)
@@ -637,8 +712,12 @@ def _call_openai(prompt: str, image_bytes: bytes | None, max_tokens: int, temper
         logger.info("[llm_router][openai] No OPENAI_API_KEY for api.openai.com — skipping")
         return None
     model = _resolve_model_for_task(task, "openai", is_vision=bool(image_bytes)) if task else (
-        os.getenv("OPENAI_VISION_MODEL" if image_bytes else "OPENAI_MODEL") or "gpt-4o-mini"
+        os.getenv("OPENAI_VISION_MODEL" if image_bytes else "OPENAI_MODEL") or ""
     )
+    if not model:
+        logger.warning("[llm_router][openai] %s not set in .env -- skipping",
+                       "OPENAI_VISION_MODEL" if image_bytes else "OPENAI_MODEL")
+        return None
     timeout = int(os.getenv("OPENAI_TIMEOUT") or "120")
     if image_bytes:
         mime = _detect_image_mime(image_bytes)
@@ -771,17 +850,22 @@ def llm_text_call(
         attempt_max_tokens = _clamp_tokens_for_provider(attempt_provider, max_tokens)
         if attempt_provider == provider:
             attempt_key, attempt_label = api_key, key_label
+        elif attempt_provider == "gemini":
+            attempt_key, attempt_label = get_rotated_gemini_key()
+            if not attempt_key:
+                continue
+            logger.info("[llm_router] Fallback %s->gemini for task=%s [%s]", provider, task, attempt_label)
         else:
             attempt_key, attempt_label = get_api_key_for_task(task, attempt_provider)
             if not attempt_key:
                 continue  # Skip providers without keys
-            logger.info("[llm_router] Fallback %s→%s for task=%s", provider, attempt_provider, task)
+            logger.info("[llm_router] Fallback %s->%s for task=%s", provider, attempt_provider, task)
 
         try:
             if attempt_provider == "azure":
                 result = _call_azure(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label, task=task)
             elif attempt_provider == "gemini":
-                result = _call_gemini(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
+                result = _call_gemini(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label, task=task)
             elif attempt_provider == "groq":
                 result = _call_groq(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label, task=task)
             elif attempt_provider == "openai":
@@ -791,7 +875,7 @@ def llm_text_call(
 
             if result:
                 if attempt_provider != provider:
-                    logger.info("[llm_router] ✓ Text fallback %s→%s succeeded for task=%s", provider, attempt_provider, task)
+                    logger.info("[llm_router] Text fallback %s->%s succeeded for task=%s", provider, attempt_provider, task)
                 return result
         except Exception as _exc:
             logger.warning("[llm_router] [%s] %s text call failed for task=%s: %s", attempt_label, attempt_provider, task, _exc)
@@ -891,6 +975,10 @@ def llm_vision_call(
         # Resolve key for the attempt provider
         if attempt_provider == provider:
             attempt_key, attempt_label = api_key, key_label
+        elif attempt_provider == "gemini":
+            attempt_key, attempt_label = get_rotated_gemini_key()
+            if not attempt_key:
+                continue
         else:
             attempt_key, attempt_label = get_api_key_for_task(task, attempt_provider)
             if not attempt_key and attempt_provider not in ("qwen",):
@@ -900,7 +988,7 @@ def llm_vision_call(
             if attempt_provider == "azure":
                 result = _call_azure(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label, task=task)
             elif attempt_provider == "gemini":
-                result = _call_gemini(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
+                result = _call_gemini(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label, task=task)
             elif attempt_provider == "groq":
                 result = _call_groq(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label, task=task)
             elif attempt_provider == "openai":
@@ -915,7 +1003,7 @@ def llm_vision_call(
 
         if result:
             if attempt_provider != provider:
-                logger.info("[llm_router] ✓ Fallback %s→%s succeeded for task=%s", provider, attempt_provider, task)
+                logger.info("[llm_router] Fallback %s->%s succeeded for task=%s", provider, attempt_provider, task)
             return result
 
         # For text-only calls without fallback enabled, don't cascade
