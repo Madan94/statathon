@@ -54,6 +54,7 @@ from report_builder_api.progress_sse import router as progress_sse_router
 from report_builder_api.entity_binding_api import router as entity_binding_router
 from report_builder_api.binding_phase_api import router as binding_phase_router
 from report_builder_api.generate_phase_api import router as generate_phase_router
+from report_builder_api.model_config_api import router as model_config_router
 from dashboard.routes import router as dashboard_router
 
 logger = logging.getLogger("bharatstat.api")
@@ -239,6 +240,7 @@ app.include_router(progress_sse_router)
 app.include_router(entity_binding_router)
 app.include_router(binding_phase_router)
 app.include_router(generate_phase_router)
+app.include_router(model_config_router)
 app.include_router(dashboard_router)
 
 

@@ -55,6 +55,7 @@ class TaskConfig:
     task: str
     modality: str = "text"               # "vision" | "text" | "vision_or_text"
     provider: str = "qwen"               # Resolved provider
+    modelName: str = ""                  # Resolved model name for this task
     fallbackOrder: list[str] = field(default_factory=list)
     maxOutputTokens: int = 256
     maxInputChars: int = 2500
@@ -67,6 +68,7 @@ class TaskConfig:
             "task": self.task,
             "modality": self.modality,
             "provider": self.provider,
+            "modelName": self.modelName,
             "fallbackOrder": self.fallbackOrder,
             "maxOutputTokens": self.maxOutputTokens,
             "maxInputChars": self.maxInputChars,
@@ -301,6 +303,20 @@ _TASK_TEMP_ENVS: dict[str, str] = {
     "entity_classification": "ENTITY_CLASSIFICATION_TEMPERATURE",
 }
 
+# Env var for per-task model name overrides (TASK_<TASK>_MODEL)
+_TASK_MODEL_ENVS: dict[str, str] = {
+    "entity_extraction":    "TASK_ENTITY_EXTRACTION_MODEL",
+    "question_generation":  "TASK_QUESTION_GENERATION_MODEL",
+    "entity_binding":       "TASK_ENTITY_BINDING_MODEL",
+    "entity_classification":"TASK_ENTITY_CLASSIFICATION_MODEL",
+    "toc_extraction":       "TASK_TOC_EXTRACTION_MODEL",
+    "gap_fill":             "TASK_GAP_FILL_MODEL",
+    "fact_extraction":      "TASK_FACT_EXTRACTION_MODEL",
+    "semantic_fallback":    "TASK_SEMANTIC_FALLBACK_MODEL",
+    "semantic_enrichment":  "TASK_SEMANTIC_ENRICHMENT_MODEL",
+    "question_repair":      "TASK_QUESTION_REPAIR_MODEL",
+}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Model capability profiles (what each model can safely handle)
@@ -325,6 +341,30 @@ MODEL_CAPABILITIES: dict[str, dict[str, Any]] = {
         "bestFor": ["entity_extraction", "question_generation"],
         "avoidFor": ["enrichment"],
     },
+    "qwen_vl_plus": {
+        "provider": "openai",  # via OpenRouter
+        "contextWindow": 256000,
+        "safeOutput": 4000,
+        "safeInput": 20000,
+        "modalities": ["vision", "text"],
+        "bestFor": ["entity_extraction", "question_generation"],
+        "avoidFor": [],
+        "modelId": "qwen/qwen3-vl-plus",
+    },
+    "qwen35_flash": {
+        "provider": "openai",  # via OpenRouter
+        "contextWindow": 1000000,
+        "safeOutput": 65500,
+        "safeInput": 80000,
+        "modalities": ["text"],
+        "bestFor": ["entity_binding", "gap_fill", "semantic_fallback", "toc_extraction",
+                    "fact_extraction", "entity_classification", "question_repair"],
+        "avoidFor": ["vision"],
+        "modelId": "qwen/qwen3.5-flash-02-23",
+        "supportsReasoning": True,
+        "inputPricePerM": 0.065,
+        "outputPricePerM": 0.26,
+    },
     "gemma2_9b": {
         "provider": "openai",
         "contextWindow": 8192,
@@ -342,6 +382,17 @@ MODEL_CAPABILITIES: dict[str, dict[str, Any]] = {
         "modalities": ["vision", "text"],
         "bestFor": ["semantic_enrichment", "gap_fill", "fallback"],
         "avoidFor": ["high_volume_per_page"],
+    },
+    "groq_llama33_70b": {
+        "provider": "groq",
+        "contextWindow": 131072,
+        "safeOutput": 8000,
+        "safeInput": 12000,
+        "modalities": ["text"],
+        "bestFor": ["fast_text_reasoning", "question_repair", "entity_binding",
+                    "toc_extraction", "gap_fill"],
+        "avoidFor": ["vision"],
+        "modelId": "llama-3.3-70b-versatile",
     },
     "groq_scout": {
         "provider": "groq",
@@ -388,6 +439,56 @@ _MODEL_PROFILES: dict[str, dict[str, Any]] = {
         "enrichmentProvider": "openai",
         "description": "Qwen-VL + OpenRouter DeepSeek + enrichment enabled.",
     },
+    # ── NEW: Full OpenRouter with Qwen3.5-Flash for all text tasks ─────────────────────────
+    "openrouter_qwen35_flash": {
+        "vlmProvider": "openai",       # OpenRouter Qwen3-VL-Plus for vision
+        "reasoningProvider": "openai", # OpenRouter Qwen3.5-Flash for text (OPENAI_MODEL)
+        "enrichmentEnabled": False,
+        "visionFallbackEnabled": True,
+        "textFallbackEnabled": True,
+        "description": "All tasks via OpenRouter: Qwen3-VL-Plus (vision) + Qwen3.5-Flash (text, 1M ctx, cheap).",
+        "taskModelHints": {
+            "entity_extraction":    "qwen/qwen3-vl-plus",
+            "question_generation":  "qwen/qwen3-vl-plus",
+            "entity_binding":       "qwen/qwen3.5-flash-02-23",
+            "entity_classification":"qwen/qwen3.5-flash-02-23",
+            "toc_extraction":       "qwen/qwen3.5-flash-02-23",
+            "gap_fill":             "qwen/qwen3.5-flash-02-23",
+            "fact_extraction":      "qwen/qwen3.5-flash-02-23",
+            "semantic_fallback":    "qwen/qwen3.5-flash-02-23",
+            "semantic_enrichment":  "qwen/qwen3.5-flash-02-23",
+            "question_repair":      "qwen/qwen3.5-flash-02-23",
+        },
+    },
+    # ── NEW: All text tasks on Groq (llama-3.3-70b OSS, fast free tier) ──────────────────
+    "groq_oss_all": {
+        "vlmProvider": "openai",       # OpenRouter Qwen3-VL-Plus for vision
+        "reasoningProvider": "groq",   # Groq 8-key rotation for text
+        "enrichmentEnabled": False,
+        "visionFallbackEnabled": True,
+        "textFallbackEnabled": True,
+        "description": "Vision: OpenRouter Qwen3-VL-Plus. Text: Groq llama-3.3-70b (8-key rotation, free tier).",
+        "taskModelHints": {
+            "entity_extraction":    "qwen/qwen3-vl-plus",
+            "question_generation":  "qwen/qwen3-vl-plus",
+            "entity_binding":       "llama-3.3-70b-versatile",
+            "entity_classification":"llama-3.3-70b-versatile",
+            "toc_extraction":       "llama-3.3-70b-versatile",
+            "gap_fill":             "llama-3.3-70b-versatile",
+            "fact_extraction":      "llama-3.3-70b-versatile",
+            "semantic_fallback":    "llama-3.3-70b-versatile",
+            "question_repair":      "llama-3.3-70b-versatile",
+        },
+    },
+    # ── NEW: Fully local ─────────────────────────────────────────────────────────────
+    "local_qwen_full": {
+        "vlmProvider": "qwen",         # Local SGLang Qwen-VL for vision
+        "reasoningProvider": "qwen",   # Local SGLang Qwen for text
+        "enrichmentEnabled": False,
+        "visionFallbackEnabled": False,
+        "textFallbackEnabled": False,
+        "description": "100% local SGLang Qwen-VL. Zero cloud. Offline/air-gapped.",
+    },
     "qwen_groq_hybrid": {
         "vlmProvider": "qwen",
         "reasoningProvider": "groq",
@@ -410,14 +511,27 @@ _MODEL_PROFILES: dict[str, dict[str, Any]] = {
         "textFallbackEnabled": True,
         "description": "Full fallback chains. Maximum reliability.",
     },
+    # ── UPDATED: EC2 hosted ──────────────────────────────────────────────────────────
     "ec2_hosted_full": {
-        "vlmProvider": "openai",
-        "reasoningProvider": "groq",
+        "vlmProvider": "openai",        # OpenRouter Qwen3-VL-Plus for vision
+        "reasoningProvider": "openai",  # OpenRouter Qwen3.5-Flash for text
         "enrichmentEnabled": False,
         "enrichmentProvider": "groq",
         "visionFallbackEnabled": True,
         "textFallbackEnabled": True,
-        "description": "LayoutLM on EC2 + OpenRouter vision (Gemini Flash) + Groq 8-key rotation reasoning.",
+        "description": "LayoutLM on EC2 + OpenRouter Qwen3-VL-Plus (vision) + Qwen3.5-Flash (text, 1M ctx).",
+        "taskModelHints": {
+            "entity_extraction":    "qwen/qwen3-vl-plus",
+            "question_generation":  "qwen/qwen3-vl-plus",
+            "entity_binding":       "qwen/qwen3.5-flash-02-23",
+            "entity_classification":"qwen/qwen3.5-flash-02-23",
+            "toc_extraction":       "qwen/qwen3.5-flash-02-23",
+            "gap_fill":             "qwen/qwen3.5-flash-02-23",
+            "fact_extraction":      "qwen/qwen3.5-flash-02-23",
+            "semantic_fallback":    "qwen/qwen3.5-flash-02-23",
+            "semantic_enrichment":  "llama-3.3-70b-versatile",  # Groq fallback for enrichment
+            "question_repair":      "llama-3.3-70b-versatile",  # Groq for quick repairs
+        },
     },
 }
 
@@ -471,6 +585,29 @@ def _resolve_task_config(task: str, profile_defaults: dict[str, Any]) -> TaskCon
     else:
         provider = profile_defaults.get("reasoningProvider", defaults.get("defaultProvider", "qwen"))
 
+    # Model name resolution:
+    # 1. TASK_<TASK>_MODEL env var (highest priority — explicit per-task override)
+    # 2. Profile taskModelHints (profile preset recommendations)
+    # 3. Provider-global env (OPENAI_MODEL / GROQ_MODEL / etc.)
+    model_name = ""
+    model_env = _TASK_MODEL_ENVS.get(task, "")
+    if model_env:
+        model_name = _env(model_env)
+    if not model_name:
+        task_hints = profile_defaults.get("taskModelHints", {})
+        model_name = task_hints.get(task, "")
+    if not model_name:
+        # Fall back to provider global
+        is_vision = task in _VISION_TASKS
+        if provider == "openai":
+            model_name = _env("OPENAI_VISION_MODEL" if is_vision else "OPENAI_MODEL", "")
+        elif provider == "groq":
+            model_name = _env("GROQ_VISION_MODEL" if is_vision else "GROQ_MODEL", "")
+        elif provider == "gemini":
+            model_name = _env("GEMINI_MODEL", "gemini-2.5-flash")
+        else:
+            model_name = _env("SGLANG_MODEL", "Qwen/Qwen2.5-VL-3B-Instruct-AWQ")
+
     # Token override: per-task env > Qwen model-specific > task default
     token_env = _TASK_TOKEN_ENVS.get(task, "")
     max_tokens = _env_int(token_env) if token_env and _env(token_env) else 0
@@ -507,6 +644,7 @@ def _resolve_task_config(task: str, profile_defaults: dict[str, Any]) -> TaskCon
         task=task,
         modality=defaults.get("modality", "text"),
         provider=provider,
+        modelName=model_name,
         fallbackOrder=fallback_order,
         maxOutputTokens=max_tokens,
         maxInputChars=max_input,
@@ -566,6 +704,8 @@ def build_runtime_config() -> RuntimeConfig:
     profile_defaults = {
         "vlmProvider": vlm_provider,
         "reasoningProvider": reasoning_provider,
+        # Forward profile-level task model hints so _resolve_task_config can use them
+        "taskModelHints": profile.get("taskModelHints", {}),
     }
 
     # 3. Resolve all task configs
