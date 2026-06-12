@@ -25,7 +25,7 @@ from report_builder.binding.review import (
     ReviewRecord,
 )
 from report_builder.binding.report import build_coverage, to_markdown
-from report_builder.binding.schema import BindingAST, BoundColumn, ColumnProfile, DatasetAST, EntityBinding
+from report_builder.binding.schema import BindingAST, BoundColumn, ColumnProfile, DatasetAST, EntityBinding, QuestionBinding
 
 _REPO = Path(__file__).resolve().parent.parent
 GOLD_BP = _REPO / "report_builder" / "gold_standard" / "template.blueprint.json"
@@ -605,6 +605,55 @@ def test_component_patch_recomputes_readiness():
     )
 
     assert plan.planTree[0].components[0].readiness == "ready"
+
+
+def test_reviewed_plan_preserves_nested_blueprint_sections():
+    from report_builder.binding.reviewed_plan import build_reviewed_plan
+
+    blueprint = {
+        "topics": [{
+            "topicId": "topic_employment",
+            "title": "Employment",
+            "subtopics": [{
+                "sectionId": "sec_wpr",
+                "title": "Worker Population Ratio",
+                "sections": [{
+                    "sectionId": "sec_wpr_sector",
+                    "title": "Sector comparison",
+                    "questions": [{
+                        "questionId": "q_nested_wpr",
+                        "intent": "Compare WPR by sector",
+                        "requiredEntities": [{"entityId": "ent_wpr", "role": "measure"}],
+                        "answerStructure": {"components": [{"componentId": "comp_nested_chart", "kind": "chart"}]},
+                    }],
+                }],
+            }],
+        }],
+    }
+    binding = BindingAST(
+        templateId="tpl",
+        datasetId="ds",
+        questionBindings=[QuestionBinding(questionId="q_nested_wpr", status="executable")],
+    )
+
+    plan = build_reviewed_plan(
+        template_id="tpl",
+        signature="sig",
+        dataset=DatasetAST(datasetId="ds"),
+        blueprint=blueprint,
+        binding=binding,
+    )
+
+    topic = plan.planTree[0]
+    subtopic = topic.children[0]
+    subsubtopic = subtopic.children[0]
+    question = subsubtopic.children[0]
+    assert topic.nodeType == "topic"
+    assert subtopic.nodeType == "subtopic"
+    assert subsubtopic.nodeType == "subsubtopic"
+    assert question.nodeType == "question"
+    assert question.questionId == "q_nested_wpr"
+    assert question.components[0].componentId == "comp_nested_chart"
 
 
 # ── B6: coverage report ─────────────────────────────────────────────────────
