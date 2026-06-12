@@ -49,6 +49,8 @@ GEMINI_EMBED_MODEL = os.getenv("SEMV2_GEMINI_EMBED_MODEL", "models/gemini-embedd
 GEMINI_EMBED_DIM = int(os.getenv("SEMV2_GEMINI_EMBED_DIM", "3072"))
 BGE_DIM = int(os.getenv("SEMANTIC_V2_EMBED_DIM", "1024"))
 
+AZURE_EMBED_DIM = int(os.getenv("SEMV2_AZURE_EMBED_DIM", "3072"))  # text-embedding-3-large default
+
 # Gemini embedding throttling: batch to cut request count, retry on 429/quota.
 GEMINI_EMBED_BATCH = int(os.getenv("SEMV2_GEMINI_EMBED_BATCH", "32"))
 GEMINI_EMBED_MAX_RETRIES = int(os.getenv("SEMV2_GEMINI_EMBED_RETRIES", "6"))
@@ -64,8 +66,12 @@ def _gemini_key() -> str | None:
 def _resolve_provider() -> str:
     """Decide which embedding backend to use."""
     choice = (os.getenv("SEMV2_EMBED_PROVIDER", "auto") or "auto").strip().lower()
-    if choice in {"local", "gemini"}:
+    if choice in {"local", "gemini", "azure_openai"}:
         return choice
+    # auto: prefer azure_openai if configured (works on corporate network)
+    if os.getenv("AZURE_OPENAI_API_KEY") and os.getenv("AZURE_OPENAI_ENDPOINT") and os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME"):
+        logger.info("Embedder auto: BGE-M3 not cached + Azure configured -> using Azure OpenAI embeddings.")
+        return "azure_openai"
     if hf_model_cache_status(EMBEDDING_MODEL).get("present"):
         return "local"
     if _gemini_key():
@@ -84,6 +90,10 @@ class SemanticEmbedder:
             self.model_name = GEMINI_EMBED_MODEL
             self.dim = GEMINI_EMBED_DIM
             self.signature = f"gem{self.dim}"
+        elif self.provider == "azure_openai":
+            self.model_name = os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME", "text-embedding-3-large")
+            self.dim = AZURE_EMBED_DIM
+            self.signature = f"az{self.dim}"
         else:
             self.model_name = EMBEDDING_MODEL
             self.dim = BGE_DIM
@@ -117,6 +127,35 @@ class SemanticEmbedder:
             normalize_embeddings=True,
         )
         return [np.asarray(v, dtype=np.float32) for v in vectors]
+
+    def _embed_azure_openai(self, texts: list[str]) -> list[np.ndarray]:
+        """Embed via Azure OpenAI Embeddings API (text-embedding-3-large)."""
+        import requests as _req
+
+        api_key = os.getenv("AZURE_OPENAI_API_KEY") or ""
+        endpoint = (os.getenv("AZURE_OPENAI_ENDPOINT") or "").rstrip("/")
+        deployment = os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME", "text-embedding-3-large")
+        api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2025-04-01-preview")
+        if not api_key or not endpoint:
+            raise RuntimeError("AZURE_OPENAI_API_KEY / AZURE_OPENAI_ENDPOINT not set")
+        url = f"{endpoint}/openai/deployments/{deployment}/embeddings?api-version={api_version}"
+        headers = {"Content-Type": "application/json", "api-key": api_key}
+        out: list[np.ndarray] = []
+        # Azure embeddings: max 2048 items or 8192 tokens per batch; use 64 to be safe
+        batch_size = int(os.getenv("SEMV2_AZURE_EMBED_BATCH", "64"))
+        for start in range(0, len(texts), batch_size):
+            chunk = texts[start : start + batch_size]
+            payload = {"input": chunk}
+            resp = _req.post(url, json=payload, headers=headers, timeout=60)
+            resp.raise_for_status()
+            data = resp.json()["data"]
+            for item in sorted(data, key=lambda x: x["index"]):
+                vec = np.asarray(item["embedding"], dtype=np.float32)
+                norm = float(np.linalg.norm(vec))
+                if norm > 0:
+                    vec = vec / norm
+                out.append(vec)
+        return out
 
     def _embed_gemini(self, texts: list[str], task_type: str) -> list[np.ndarray]:
         import google.generativeai as genai
@@ -183,6 +222,8 @@ class SemanticEmbedder:
             if self.provider == "gemini":
                 task = "retrieval_query" if is_query else "retrieval_document"
                 vectors = self._embed_gemini(to_embed, task)
+            elif self.provider == "azure_openai":
+                vectors = self._embed_azure_openai(to_embed)
             else:
                 vectors = self._embed_local(to_embed)
             for slot, vec in zip(missing_idx, vectors):
