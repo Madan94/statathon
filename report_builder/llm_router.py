@@ -404,23 +404,24 @@ def _call_azure(prompt: str, image_bytes: bytes | None, max_tokens: int, tempera
         messages: list[dict[str, Any]] = [{"role": "user", "content": content}]
     else:
         messages = [{"role": "user", "content": prompt}]
-    payload: dict[str, Any] = {
-        "messages": messages,
-        "max_completion_tokens": max_tokens,  # gpt-5.x+ uses max_completion_tokens
-    }
-    # gpt-5.x models do not support temperature (only default=1 allowed).
-    # gpt-4o supports it. We omit it to stay compatible with both.
-    # Callers can set AZURE_OPENAI_ALLOW_TEMPERATURE=1 to force-include it (gpt-4o only).
+    payload: dict[str, Any] = {"messages": messages}
 
-    # Reasoning-model token multiplier: gpt-5.x is a reasoning model that spends
-    # internal reasoning_tokens before writing output. If max_completion_tokens is too
-    # small all tokens go to thinking and content is empty. Multiply for text deployments.
-    # Set AZURE_OPENAI_REASONING_MULTIPLIER=1 to disable (e.g. for gpt-4o vision deploy).
+    # Deployment-aware parameter selection:
+    # - gpt-4o-graphiti-2 (vision) = standard gpt-4o → max_tokens + temperature supported
+    # - gpt-5.2-chat (text)        = reasoning model  → max_completion_tokens only,
+    #   no temperature, needs a multiplier so reasoning_tokens don't consume all budget
     _text_deploy = os.getenv("AZURE_OPENAI_TEXT_DEPLOYMENT") or os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "")
-    _is_reasoning_deploy = deployment == _text_deploy
+    _is_reasoning_deploy = (deployment == _text_deploy)
+
     if _is_reasoning_deploy:
+        # gpt-5.x reasoning model: multiply tokens to leave room after internal thinking
         _multiplier = int(os.getenv("AZURE_OPENAI_REASONING_MULTIPLIER") or "8")
         payload["max_completion_tokens"] = max_tokens * _multiplier
+        # temperature NOT set — gpt-5.x only accepts the default (1)
+    else:
+        # gpt-4o (vision deployment): standard params fully supported
+        payload["max_tokens"] = max_tokens
+        payload["temperature"] = temperature
     headers = {"Content-Type": "application/json", "api-key": api_key}
     try:
         r = requests.post(url, json=payload, headers=headers, timeout=timeout, verify=_SSL_VERIFY)
@@ -1037,5 +1038,8 @@ def is_provider_available(provider: str, vision: bool = False) -> bool:
             return r.status_code == 200
         except Exception:
             return False
+    if provider == "azure":
+        # Key-presence check (same pattern as groq/gemini — no billable ping needed)
+        return bool(os.getenv("AZURE_OPENAI_API_KEY") and os.getenv("AZURE_OPENAI_ENDPOINT"))
     logger.warning("[llm_router] Unknown provider '%s' — treating as unavailable", provider)
     return False
