@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -24,7 +25,7 @@ from report_builder.binding.review import (
     ReviewRecord,
 )
 from report_builder.binding.report import build_coverage, to_markdown
-from report_builder.binding.schema import BindingAST, DatasetAST
+from report_builder.binding.schema import BindingAST, BoundColumn, ColumnProfile, DatasetAST, EntityBinding
 
 _REPO = Path(__file__).resolve().parent.parent
 GOLD_BP = _REPO / "report_builder" / "gold_standard" / "template.blueprint.json"
@@ -421,6 +422,189 @@ def test_add_manual_entity_blocks_locked_column():
             columns=["LFPR"],
         )
     assert len(rec.proposals) == 1
+
+
+def test_workspace_dependency_graph_and_issues_are_ui_ready():
+    from api.report_builder_api.binding_phase_api import _build_dependency_graph, _finalize_workspace_issues, _workspace_issues, _workspace_phase_statuses
+
+    binding = BindingAST(
+        templateId="t",
+        datasetId="d",
+        datasetSignature="s",
+        entityBindings=[
+            EntityBinding(
+                entityId="ent_wpr",
+                entityName="Worker Population Ratio",
+                entityType="measure",
+                columns=[BoundColumn("Worker_Population_Ratio")],
+                status="confirmed",
+                risks=[{"code": "LOW_CONFIDENCE", "severity": "warn"}],
+            ),
+            EntityBinding(entityId="ent_sector", entityName="Sector", entityType="dimension", status="unresolved"),
+        ],
+    )
+    blueprint = {
+        "topics": [{
+            "questions": [{
+                "questionId": "q_wpr_sector",
+                "requiredEntities": [
+                    {"entityId": "ent_wpr", "role": "measure"},
+                    {"entityId": "ent_sector", "role": "grouping"},
+                ],
+            }],
+        }],
+    }
+    reviewed_plan = SimpleNamespace(planTree=[
+        SimpleNamespace(
+            nodeId="node_q_wpr_sector",
+            nodeType="question",
+            questionId="q_wpr_sector",
+            components=[SimpleNamespace(
+                componentId="comp_chart",
+                componentType="chart",
+                requiredEntities=[{"entityId": "ent_wpr"}],
+                analyticsSpec={},
+                formulaSpec={},
+                slotIds=["slot_chart_01"],
+            )],
+            children=[],
+        )
+    ], coverage={"issues": [{"severity": "error", "code": "QUESTION_BLOCKED", "questionId": "q_wpr_sector", "message": "Question blocked"}]})
+
+    graph = _build_dependency_graph(blueprint, binding, reviewed_plan)
+    assert graph["entityToQuestions"]["ent_wpr"] == ["q_wpr_sector"]
+    assert graph["entityToComponents"]["ent_wpr"] == ["comp_chart"]
+    assert graph["columnToEntities"]["Worker_Population_Ratio"] == ["ent_wpr"]
+    assert graph["questionToColumns"]["q_wpr_sector"] == ["Worker_Population_Ratio"]
+    assert graph["slotToQuestion"]["slot_chart_01"] == "q_wpr_sector"
+
+    record = ReviewRecord(
+        templateId="t",
+        datasetSignature="s",
+        proposals=[entity.to_dict() for entity in binding.entityBindings],
+    )
+    issues = _workspace_issues(record, binding, {"conflicts": [{"column": "Sector"}]}, reviewed_plan)
+    assert all(issue.get("issueId", "").startswith("issue_") for issue in issues)
+    assert len({issue["issueId"] for issue in issues}) == len(issues)
+    assert all(issue.get("message") for issue in issues)
+    assert any(issue.get("code") == "ENTITY_UNRESOLVED" for issue in issues)
+    assert any(issue.get("code") == "LOW_CONFIDENCE" for issue in issues)
+    assert any(issue.get("code") == "COLUMN_OWNERSHIP_CONFLICT" for issue in issues)
+    assert any(issue.get("code") == "QUESTION_BLOCKED" and issue.get("targetMode") == "questions" for issue in issues)
+    assert any(issue.get("code") == "ANALYTICS_SPEC_MISSING" and issue.get("componentId") == "comp_chart" for issue in issues)
+    assert {issue.get("targetMode") for issue in issues} >= {"entities", "columns", "questions"}
+
+    phases = _workspace_phase_statuses(
+        record,
+        DatasetAST(rowCount=10, columns=[ColumnProfile(name="Worker_Population_Ratio", role="measure")]),
+        binding,
+        {"conflicts": [{"column": "Sector"}]},
+        reviewed_plan,
+        issues,
+    )
+    assert phases["dataset"]["counts"]["columns"] == 1
+    assert phases["columns"]["status"] == "Blocked"
+    assert phases["questions"]["counts"]["issues"] >= 2
+    assert phases["handoff"]["status"] == "Blocked"
+    assert phases["handoff"]["counts"]["blockingIssues"] == 2
+
+    duplicate = {"severity": "warn", "code": "X", "message": "Duplicate", "entityId": "ent_wpr"}
+    deduped = _finalize_workspace_issues([duplicate, duplicate])
+    assert len(deduped) == 1
+
+
+def test_component_recommendations_use_question_context():
+    from api.report_builder_api.binding_phase_api import _component_recommendations_for_node
+
+    node = SimpleNamespace(
+        nodeType="question",
+        title="Compare Worker Population Ratio across rural and urban sectors",
+        questionId="q_wpr_sector",
+        requiredEntities=[
+            {"entityId": "ent_wpr", "role": "measure"},
+            {"entityId": "ent_sector", "role": "grouping"},
+        ],
+        components=[SimpleNamespace(componentType="narrative")],
+    )
+
+    recommendations = _component_recommendations_for_node(node)
+    by_type = {item["component_type"]: item for item in recommendations}
+
+    assert "chart" in by_type
+    assert "table" in by_type
+    assert "formula_metric" in by_type
+    assert "narrative" not in by_type  # already present on the node
+    assert by_type["chart"]["payload"]["requiredEntities"][0]["entityId"] == "ent_wpr"
+    assert by_type["chart"]["payload"]["analyticsSpec"]["operation"] == "group_aggregate"
+
+
+def test_reviewed_plan_payload_counts_nested_questions_and_components():
+    from api.report_builder_api.binding_phase_api import _reviewed_plan_payload
+
+    plan = SimpleNamespace(
+        planId="plan_nested",
+        status="READY",
+        bindingAstId="binding_1",
+        semanticSlotGraph={"slots": [{"slotId": "s1"}]},
+        virtualSlots=[{"slotId": "v1"}],
+        planTree=[SimpleNamespace(
+            nodeType="topic",
+            components=[],
+            children=[SimpleNamespace(
+                nodeType="subtopic",
+                components=[],
+                children=[SimpleNamespace(
+                    nodeType="question",
+                    components=[SimpleNamespace(), SimpleNamespace()],
+                    children=[],
+                    to_dict=lambda: {},
+                )],
+                to_dict=lambda: {},
+            )],
+            to_dict=lambda: {},
+        )],
+    )
+
+    payload = _reviewed_plan_payload(plan)
+    assert payload["topicCount"] == 2
+    assert payload["questionCount"] == 1
+    assert payload["componentCount"] == 2
+    assert payload["semanticSlotCount"] == 1
+    assert payload["virtualSlotCount"] == 1
+
+
+def test_component_patch_recomputes_readiness():
+    from report_builder.binding.reviewed_plan import PlanComponent, PlanNode, ReviewedPlan, TemplatePackageRef, patch_plan_component
+
+    component = PlanComponent(
+        componentId="comp_chart",
+        componentType="chart",
+        questionId="q1",
+        requiredEntities=[],
+        analyticsSpec={},
+        readiness="draft",
+    )
+    plan = ReviewedPlan(
+        planId="plan_component_ready",
+        templatePackageRef=TemplatePackageRef(templateId="tpl"),
+        planTree=[PlanNode(
+            nodeId="node_q1",
+            nodeType="question",
+            title="Question",
+            questionId="q1",
+            components=[component],
+        )],
+    )
+
+    patch_plan_component(
+        plan,
+        node_id="node_q1",
+        component_id="comp_chart",
+        required_entities=[{"entityId": "ent_wpr", "role": "measure"}],
+        analytics_spec={"operation": "group_aggregate"},
+    )
+
+    assert plan.planTree[0].components[0].readiness == "ready"
 
 
 # ── B6: coverage report ─────────────────────────────────────────────────────

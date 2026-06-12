@@ -448,6 +448,8 @@ def patch_plan_node(
     enabled: bool | None = None,
     required_entities: list[dict[str, Any]] | None = None,
 ) -> ReviewedPlan:
+    from report_builder.binding.component_registry import validate_component_payload
+
     node = find_plan_node(plan, node_id)
     if node is None:
         raise KeyError(node_id)
@@ -611,6 +613,8 @@ def patch_plan_component(
     analytics_spec: dict[str, Any] | None = None,
     formula_spec: dict[str, Any] | None = None,
 ) -> ReviewedPlan:
+    from report_builder.binding.component_registry import validate_component_payload
+
     node = find_plan_node(plan, node_id)
     if node is None:
         raise KeyError(node_id)
@@ -626,8 +630,17 @@ def patch_plan_component(
         changes["analyticsSpec"] = dict(analytics_spec)
     if formula_spec is not None:
         component.formulaSpec = dict(formula_spec)
-        component.readiness = "draft" if formula_spec else component.readiness
         changes["formulaSpec"] = dict(formula_spec)
+    validation_payload = {
+        "requiredEntities": list(component.requiredEntities),
+        "analyticsSpec": dict(component.analyticsSpec),
+        "formulaSpec": dict(component.formulaSpec),
+    }
+    validation_issues = validate_component_payload(component.componentType, validation_payload, node_type=node.nodeType)
+    component.readiness = "draft" if validation_issues else "ready"
+    changes["readiness"] = component.readiness
+    if validation_issues:
+        changes["validationIssues"] = validation_issues
     plan.auditTrail.append({
         "event": "reviewed_plan_component_patched",
         "nodeId": node_id,

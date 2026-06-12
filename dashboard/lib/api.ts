@@ -940,7 +940,7 @@ export const reportBuilderApi = {
     }
     throw new Error('Template extraction timed out');
   },
-  getTemplate: async (id: number): Promise<ReportTemplateWithAst> => {
+  getTemplate: async (id: number) => {
     const { data } = await api.get(`/report-builder/templates/${id}`);
     return data;
   },
@@ -1240,6 +1240,25 @@ export interface BindingStartResult {
   column_ownership: ColumnOwnershipMap;
 }
 
+export interface BindingTemplatePackage {
+  template_id: string;
+  name: string;
+  source: 'built_in' | 'db' | string;
+  status: 'VALID' | 'VALID_WITH_WARNINGS' | 'INVALID' | 'UNKNOWN' | 'DEMO' | string;
+  version: string;
+  ast_available: boolean;
+  blueprint_available: boolean;
+  semantic_slot_graph_available: boolean;
+  topics_count: number;
+  questions_count: number;
+  entities_count: number;
+  chart_slots_count: number;
+  table_slots_count: number;
+  external_refs_count: number;
+  diagnostics_score?: number | null;
+  description?: string | null;
+}
+
 export interface BindingProposalsResult {
   template_id: string;
   signature: string;
@@ -1258,6 +1277,51 @@ export interface BindingRecordResult {
   confirmations: Record<string, unknown>;
   column_ownership: ColumnOwnershipMap;
   updated_at: number;
+}
+
+export interface BindingDependencyGraph {
+  entityToQuestions: Record<string, string[]>;
+  entityToComponents: Record<string, string[]>;
+  columnToEntities: Record<string, string[]>;
+  questionToEntities: Record<string, string[]>;
+  questionToColumns: Record<string, string[]>;
+  slotToQuestion: Record<string, string>;
+}
+
+export interface BindingWorkspaceIssue {
+  issueId?: string;
+  severity?: CoverageSeverity | string;
+  code?: string;
+  message: string;
+  entityId?: string;
+  questionId?: string;
+  nodeId?: string;
+  componentId?: string;
+  column?: string;
+  targetMode?: string;
+}
+
+export interface BindingPhaseStatus {
+  status: 'Ready' | 'Review' | 'Blocked' | 'Open' | string;
+  message: string;
+  targetMode?: string;
+  counts?: Record<string, number>;
+}
+
+export interface BindingWorkspace {
+  template_id: string;
+  signature: string;
+  dataset_id: string;
+  template_package: BindingTemplatePackage;
+  dataset_ast: DatasetAst;
+  proposals: EntityBinding[];
+  confirmations: Record<string, unknown>;
+  pending: string[];
+  column_ownership: ColumnOwnershipMap;
+  reviewed_plan?: ReviewedPlanSummary | null;
+  dependency_graph: BindingDependencyGraph;
+  issues: BindingWorkspaceIssue[];
+  phase_statuses?: Record<string, BindingPhaseStatus>;
 }
 
 export interface BindingFinalizeResult {
@@ -1310,6 +1374,15 @@ export interface ComponentDefinition {
 export interface ReviewedPlanComponentPayload {
   component_type: string;
   payload?: Record<string, unknown>;
+}
+
+export interface ComponentRecommendation {
+  component_type: string;
+  label: string;
+  group: string;
+  score: number;
+  reason: string;
+  payload: Record<string, unknown>;
 }
 
 export interface ReviewedPlanComponentPatchPayload {
@@ -1410,6 +1483,11 @@ export interface ManualEntityPayload {
 }
 
 export const bindingPhaseApi = {
+  /** Binder-native template package list with blueprint/AST/slot metadata. */
+  listTemplatePackages: async (): Promise<BindingTemplatePackage[]> => {
+    const { data } = await api.get('/report-builder/binding-phase/template-packages');
+    return data;
+  },
   /** S0 profile + S1 propose. Optional blueprint file; defaults to the bundled gold PLFS template. */
   start: async (
     datasetFile: File,
@@ -1431,6 +1509,15 @@ export const bindingPhaseApi = {
   ): Promise<BindingProposalsResult> => {
     const { data } = await api.get(
       `/report-builder/binding-phase/${templateId}/${signature}/proposals`
+    );
+    return data;
+  },
+  getWorkspace: async (
+    templateId: string,
+    signature: string
+  ): Promise<BindingWorkspace> => {
+    const { data } = await api.get(
+      `/report-builder/binding-phase/${templateId}/${signature}/workspace`
     );
     return data;
   },
@@ -1512,6 +1599,16 @@ export const bindingPhaseApi = {
   },
   listComponentRegistry: async (): Promise<ComponentDefinition[]> => {
     const { data } = await api.get('/report-builder/binding-phase/component-registry');
+    return data;
+  },
+  listComponentRecommendations: async (
+    templateId: string,
+    signature: string,
+    nodeId: string
+  ): Promise<ComponentRecommendation[]> => {
+    const { data } = await api.get(
+      `/report-builder/binding-phase/${templateId}/${signature}/reviewed-plan/nodes/${nodeId}/component-recommendations`
+    );
     return data;
   },
   addReviewedPlanComponent: async (
