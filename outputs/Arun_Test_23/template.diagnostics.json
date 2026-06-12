@@ -1,0 +1,71 @@
+{
+  "status": "INVALID",
+  "contractVersion": "template.extraction.v2",
+  "binderReadinessScore": 0.814,
+  "passScores": {},
+  "categoryScores": {
+    "entityHygiene": 0.794,
+    "entityCompleteness": 0.766,
+    "tableSemantics": 0.761,
+    "unitCoverage": 0.6,
+    "questionCompleteness": 1.0,
+    "crossReferenceIntegrity": 1.0,
+    "valueFreeCompliance": 0.0,
+    "chartSemantics": 0.5
+  },
+  "counts": {
+    "entities": 32,
+    "entitiesDropped": 21,
+    "questions": 3,
+    "questionsFromTemplates": 3,
+    "tables": 9,
+    "topics": 4,
+    "slotsWired": 9
+  },
+  "blockingErrors": [
+    {
+      "severity": "error",
+      "code": "PROSE_IN_QUESTION",
+      "message": "Question intent is full prose — should be concise analytical intent",
+      "sourcePhase": "E12"
+    },
+    {
+      "severity": "error",
+      "code": "PROSE_IN_QUESTION",
+      "message": "Question intent is full prose — should be concise analytical intent",
+      "sourcePhase": "E12"
+    },
+    {
+      "severity": "error",
+      "code": "PROSE_IN_QUESTION",
+      "message": "Question intent is full prose — should be concise analytical intent",
+      "sourcePhase": "E12"
+    }
+  ],
+  "warnings": [
+    {
+      "severity": "warn",
+      "code": "MEASURES_MISSING_UNIT",
+      "message": "8 measure entities have no unit",
+      "sourcePhase": "E0"
+    },
+    {
+      "severity": "warn",
+      "code": "ENTITIES_MISSING_ALIASES",
+      "message": "5 measure/dimension entities have empty aliases",
+      "sourcePhase": "E0"
+    }
+  ],
+  "quarantinedCount": 21,
+  "repairsCount": 9,
+  "binderCompatibility": {
+    "blueprintQAWillPass": false,
+    "expectedResolverConfidence": "medium",
+    "expectedIssues": [
+      "Value leakage detected — must fix before binding"
+    ],
+    "recommendation": "invalid"
+  },
+  "runtime": {},
+  "generatedAt": "2026-06-11T11:07:22.675782+00:00"
+}

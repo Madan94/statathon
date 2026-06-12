@@ -181,7 +181,7 @@ export default function ReportBuilderWizardPage() {
         title="New report"
         description="Template-based builder — configure data, blocks, and filters before generation."
         actions={
-          <Link href="/report-builder" className="text-sm text-primary hover:underline">
+          <Link href="/report/report-builder" className="text-sm text-primary hover:underline">
             Back to jobs
           </Link>
         }

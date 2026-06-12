@@ -1,0 +1,381 @@
+{
+  "questions_count": 6,
+  "topics_count": 2,
+  "questions": [
+    {
+      "questionId": "sp01_q01",
+      "intent": "Which state has the highest proven coal reserves in India?",
+      "questionType": "comparison",
+      "page": 2,
+      "sourceHeading": "Highlights of r 1.1 Coal Rese",
+      "requiredEntities": [
+        {
+          "entityRef": "States/ UTs",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Proved 2024",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Proved 2024"
+        },
+        "groupBy": [
+          {
+            "entityRef": "States/ UTs"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp01_q02",
+      "intent": "How many years of coal reserves does India have at its disposal?",
+      "questionType": "trend",
+      "page": 2,
+      "sourceHeading": "Highlights of r 1.1 Coal Rese",
+      "requiredEntities": [
+        {
+          "entityRef": "Proved 2024",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Proved 2025",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Indicated 2024",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Indicated 2025",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Inferred 2024",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Inferred 2025",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Highlights of r 1.1 Coal Rese",
+          "role": "filter"
+        },
+        {
+          "entityRef": "India rves",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Proved 2024"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Highlights of r 1.1 Coal Rese"
+          },
+          {
+            "entityRef": "India rves"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp01_q03",
+      "intent": "What percentage of India's total energy reserves are currently classified as non-commercial deposits?",
+      "questionType": "composition",
+      "page": 2,
+      "sourceHeading": "Highlights of r 1.3 Crude Oil",
+      "requiredEntities": [
+        {
+          "entityRef": "Energy Reserves",
+          "role": "measure"
+        },
+        {
+          "entityRef": "India",
+          "role": "filter"
+        },
+        {
+          "entityRef": "non-commercial deposits",
+          "role": "breakdown"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "share",
+        "measure": {
+          "entityRef": "Energy Reserves"
+        },
+        "groupBy": [
+          {
+            "entityRef": "non-commercial deposits"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "India"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp02_q01",
+      "intent": "Which state has the highest wind power potential at 150 meters?",
+      "questionType": "ranking",
+      "page": 9,
+      "sourceHeading": "Chapter 1: Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "States/ UTs",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Potential Introduction",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Inferred 2025",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "entityRef": "Inferred 2025"
+        },
+        "groupBy": [
+          {
+            "entityRef": "States/ UTs"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Potential Introduction"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 10,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "sp02_q02",
+      "intent": "How much more biomass power potential does Tamil Nadu have compared to Kerala?",
+      "questionType": "comparison",
+      "page": 9,
+      "sourceHeading": "Chapter 1: Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "Tamil Nadu",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Kerala",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Biomass power potential",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Biomass power potential"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Tamil Nadu"
+          },
+          {
+            "entityRef": "Kerala"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp02_q03",
+      "intent": "What is the difference in large hydroelectric power potential between Karnataka and Maharashtra?",
+      "questionType": "comparison",
+      "page": 9,
+      "sourceHeading": "Chapter 1: Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "Karnataka",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Maharashtra",
+          "role": "filter"
+        },
+        {
+          "entityRef": "large hydroelectric power potential",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "large hydroelectric power potential"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Karnataka"
+          },
+          {
+            "entityRef": "Maharashtra"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Energy Reserves and Potential",
+      "description": "Questions from chapter: Energy Reserves and Potential",
+      "questionIds": [
+        "sp01_q01",
+        "sp01_q02",
+        "sp01_q03"
+      ],
+      "pageRange": [
+        2,
+        7
+      ]
+    },
+    {
+      "topicId": "topic_02",
+      "title": "1 Energy Reserves and Potential",
+      "description": "Questions from chapter: 1 Energy Reserves and Potential",
+      "questionIds": [
+        "sp02_q01",
+        "sp02_q02",
+        "sp02_q03"
+      ],
+      "pageRange": [
+        9,
+        9
+      ]
+    }
+  ]
+}

@@ -1,0 +1,660 @@
+{
+  "questions_count": 12,
+  "topics_count": 2,
+  "questions": [
+    {
+      "questionId": "sp01_q01",
+      "intent": "What is the percentage difference in employment rates between men and women in the rural and urban areas?",
+      "questionType": "comparison",
+      "page": 0,
+      "sourceHeading": "Annual Report 2025-26",
+      "requiredEntities": [
+        {
+          "entityRef": "employment rates",
+          "role": "measure"
+        },
+        {
+          "entityRef": "men and women",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "rural and urban areas",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "employment rates"
+        },
+        "groupBy": [
+          {
+            "entityRef": "men and women"
+          },
+          {
+            "entityRef": "rural and urban areas"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp01_q02",
+      "intent": "How did the average age of respondents in the National Sample Survey (NSS) change from 2024-25 to 2025-26?",
+      "questionType": "trend",
+      "page": 0,
+      "sourceHeading": "Annual Report 2025-26",
+      "requiredEntities": [
+        {
+          "entityRef": "National Sample Survey (NSS)",
+          "role": "filter"
+        },
+        {
+          "entityRef": "average age of respondents",
+          "role": "measure"
+        },
+        {
+          "entityRef": "2024-25 and 2025-26",
+          "role": "breakdown"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "average age of respondents"
+        },
+        "groupBy": [
+          {
+            "entityRef": "2024-25 and 2025-26"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "National Sample Survey (NSS)"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp01_q03",
+      "intent": "What was the distribution of data informatics and innovation projects across different regions in the 2025-26 report?",
+      "questionType": "distribution",
+      "page": 0,
+      "sourceHeading": "Annual Report 2025-26",
+      "requiredEntities": [
+        {
+          "entityRef": "regions",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "data informatics and innovation projects",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "distribution",
+        "measure": {
+          "entityRef": "data informatics and innovation projects"
+        },
+        "groupBy": [
+          {
+            "entityRef": "regions"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp02_q01",
+      "intent": "How did the employment distribution in the primary sector change between 2023-24 and 2025-26?",
+      "questionType": "trend",
+      "page": 7,
+      "sourceHeading": "Statement 3: First Advance Estimates of GVA at Basic Prices by Economic Activity (at 2011- 12 Prices)",
+      "requiredEntities": [
+        {
+          "entityRef": "Table",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Primary sector",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Table"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Primary sector"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp02_q02",
+      "intent": "What was the percentage increase in the employment distribution in the primary sector from 2023-24 to 2025-26?",
+      "questionType": "comparison",
+      "page": 7,
+      "sourceHeading": "Statement 3: First Advance Estimates of GVA at Basic Prices by Economic Activity (at 2011- 12 Prices)",
+      "requiredEntities": [
+        {
+          "entityRef": "Table",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Primary Sector",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Employment Distribution",
+          "role": "measure"
+        },
+        {
+          "entityRef": "2023-24 to 2025-26",
+          "role": "breakdown"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Table"
+        },
+        "groupBy": [
+          {
+            "entityRef": "2023-24 to 2025-26"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Primary Sector"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "sp02_q03",
+      "intent": "Which year had the highest percentage increase in the employment distribution in the primary sector compared to the previous year?",
+      "questionType": "ranking",
+      "page": 7,
+      "sourceHeading": "Statement 3: First Advance Estimates of GVA at Basic Prices by Economic Activity (at 2011- 12 Prices)",
+      "requiredEntities": [
+        {
+          "entityRef": "Sl. No.",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Item Domestic Product",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Percentage Change Over Previous Year",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "entityRef": "Item Domestic Product"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Sl. No."
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 10,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "sp03_q01",
+      "intent": "How did the employment distribution in the secondary sector change between 2023-24 and 2025-26?",
+      "questionType": "trend",
+      "page": 7,
+      "sourceHeading": "Statement 3: First Advance Estimates of GVA at Basic Prices by Economic Activity (at 2011- 12 Prices)",
+      "requiredEntities": [
+        {
+          "entityRef": "Table",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Secondary sector",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Table"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Secondary sector"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "sp03_q02",
+      "intent": "What was the percentage increase in the secondary sector's employment from 2023-24 to 2025-26?",
+      "questionType": "comparison",
+      "page": 7,
+      "sourceHeading": "Statement 3: First Advance Estimates of GVA at Basic Prices by Economic Activity (at 2011- 12 Prices)",
+      "requiredEntities": [
+        {
+          "entityRef": "Table",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Secondary sector's employment",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Time period (2023-24 to 2025-26)",
+          "role": "breakdown"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Table"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Time period (2023-24 to 2025-26)"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Secondary sector's employment"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "sp03_q03",
+      "intent": "Which industry had the highest percentage increase in employment in the secondary sector between 2023-24 and 2025-26?",
+      "questionType": "ranking",
+      "page": 7,
+      "sourceHeading": "Statement 3: First Advance Estimates of GVA at Basic Prices by Economic Activity (at 2011- 12 Prices)",
+      "requiredEntities": [
+        {
+          "entityRef": "Industry",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Percentage Change Over Previous Year",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Secondary Sector",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "entityRef": "Percentage Change Over Previous Year"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Industry"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Secondary Sector"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 10,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp04_q01",
+      "intent": "How has the employment distribution in the Tertiary sector changed over the past two years?",
+      "questionType": "trend",
+      "page": 7,
+      "sourceHeading": "Statement 3: First Advance Estimates of GVA at Basic Prices by Economic Activity (at 2011- 12 Prices)",
+      "requiredEntities": [
+        {
+          "entityRef": "Tertiary sector employment data",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Time period (past two years)",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Tertiary sector employment data"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Time period (past two years)"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp04_q02",
+      "intent": "What is the percentage change in the employment distribution in the Tertiary sector from 2023-24 to 2025-26?",
+      "questionType": "composition",
+      "page": 7,
+      "sourceHeading": "Statement 3: First Advance Estimates of GVA at Basic Prices by Economic Activity (at 2011- 12 Prices)",
+      "requiredEntities": [
+        {
+          "entityRef": "Table",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Tertiary sector",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Percentage Change",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "share",
+        "measure": {
+          "entityRef": "Table"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Tertiary sector"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp04_q03",
+      "intent": "How much has the employment distribution in the Tertiary sector increased from 2023-24 to 2025-26?",
+      "questionType": "trend",
+      "page": 7,
+      "sourceHeading": "Statement 3: First Advance Estimates of GVA at Basic Prices by Economic Activity (at 2011- 12 Prices)",
+      "requiredEntities": [
+        {
+          "entityRef": "Tertiary sector employment distribution",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Time period (2023-24 to 2025-26)",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Tertiary sector employment distribution"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Time period (2023-24 to 2025-26)"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Annual Report 2025-26",
+      "description": "Questions from chapter: Annual Report 2025-26",
+      "questionIds": [
+        "sp01_q01",
+        "sp01_q02",
+        "sp01_q03"
+      ],
+      "pageRange": [
+        0,
+        6
+      ]
+    },
+    {
+      "topicId": "topic_02",
+      "title": "1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7",
+      "description": "Questions from chapter: 1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7",
+      "questionIds": [
+        "sp02_q01",
+        "sp02_q02",
+        "sp02_q03",
+        "sp03_q01",
+        "sp03_q02",
+        "sp03_q03",
+        "sp04_q01",
+        "sp04_q02",
+        "sp04_q03"
+      ],
+      "pageRange": [
+        7,
+        7
+      ]
+    }
+  ]
+}

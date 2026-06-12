@@ -1,0 +1,1091 @@
+{
+  "$schema": "bharatstat/template-ast/v1",
+  "_doc": "VALUE-FREE render skeleton. Keeps every structural label (headings, column headers, roles, units, formats, palette refs, slot wiring) but NO data: content=\"\", rows=[], series=[], caption=\"\". Pairs 1:1 with template.blueprint.json by shared IDs. The binder clones this, fills the slots from a dataset, and emits report.output.ast.json.",
+  "metadata": {
+    "templateId": "tpl_document",
+    "blueprintRef": "tpl_document",
+    "name": "Document",
+    "locale": "en-IN",
+    "version": "3.0",
+    "valueFree": true,
+    "generatedFrom": "Document"
+  },
+  "styleAST": {
+    "styles": [
+      {
+        "styleId": "s_h1",
+        "role": "heading1",
+        "font": "Noto Sans",
+        "sizePt": 18,
+        "bold": true,
+        "color": "#0B5394"
+      },
+      {
+        "styleId": "s_h2",
+        "role": "heading2",
+        "font": "Noto Sans",
+        "sizePt": 14,
+        "bold": true,
+        "color": "#1155CC"
+      },
+      {
+        "styleId": "s_body",
+        "role": "body",
+        "font": "Noto Sans",
+        "sizePt": 11,
+        "bold": false,
+        "color": "#222222"
+      },
+      {
+        "styleId": "s_table",
+        "role": "tableCell",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "align": "right"
+      },
+      {
+        "styleId": "s_caption",
+        "role": "caption",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "italic": true,
+        "color": "#555555"
+      }
+    ]
+  },
+  "semanticAST": {
+    "sections": [
+      {
+        "sectionId": "sec_01",
+        "title": "Annual Report 2025-26",
+        "level": 1,
+        "order": 1,
+        "styleRef": "s_h1",
+        "topicRef": "topic_01",
+        "children": [
+          "p_sp01_q01",
+          "p_sp01_q02",
+          "p_sp01_q03",
+          "fig_sp01_q03"
+        ]
+      },
+      {
+        "sectionId": "sec_02",
+        "title": "1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7",
+        "level": 1,
+        "order": 2,
+        "styleRef": "s_h1",
+        "topicRef": "topic_02",
+        "children": [
+          "p_sp02_q01",
+          "p_sp02_q02",
+          "p_sp02_q03",
+          "table_6_1",
+          "table_7_1",
+          "p_sp03_q01",
+          "p_sp03_q02",
+          "p_sp03_q03",
+          "table_8_1",
+          "table_8_2",
+          "p_sp04_q01",
+          "p_sp04_q02",
+          "p_sp04_q03"
+        ]
+      }
+    ],
+    "entities": [
+      {
+        "entityId": "ent_017",
+        "name": "Sl.No. 1",
+        "type": "measure",
+        "confidence": 0.85
+      },
+      {
+        "entityId": "ent_018",
+        "name": "CHAPTERS Introduction",
+        "type": "dimension",
+        "confidence": 0.85
+      },
+      {
+        "entityId": "ent_019",
+        "name": "Page No. 1-9",
+        "type": "dimension",
+        "confidence": 0.85
+      },
+      {
+        "entityId": "ent_020",
+        "name": "Statistics an n 15th Octo me Impleme",
+        "type": "dimension",
+        "confidence": 0.85
+      },
+      {
+        "entityId": "ent_021",
+        "name": "(MoSPI) ca e Departm dal agency",
+        "type": "dimension",
+        "confidence": 0.85
+      },
+      {
+        "entityId": "ent_022",
+        "name": "-12 is f IIP h trial ou",
+        "type": "dimension",
+        "confidence": 0.85
+      },
+      {
+        "entityId": "ent_023",
+        "name": "Item Domestic Product",
+        "type": "dimension",
+        "confidence": 0.85
+      },
+      {
+        "entityId": "ent_024",
+        "name": "Percentage Change\nOver Previous\n2024-25 2025-26",
+        "type": "dimension",
+        "confidence": 0.85
+      },
+      {
+        "entityId": "ent_025",
+        "name": "Industry",
+        "type": "dimension",
+        "confidence": 0.85
+      },
+      {
+        "entityId": "ent_026",
+        "name": "Percentage Change Over\nPrevious Year 2024-25",
+        "type": "dimension",
+        "confidence": 0.85
+      },
+      {
+        "entityId": "ent_027",
+        "name": "Percentage Change Over\nPrevious Year 2025-26",
+        "type": "dimension",
+        "confidence": 0.85
+      },
+      {
+        "entityId": "ent_028",
+        "name": "Annual Report 2025-26",
+        "type": "dimension",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_029",
+        "name": "TABLE OF CONTENTS",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_030",
+        "name": "Annual Report",
+        "type": "dimension",
+        "confidence": 0.7
+      },
+      {
+        "entityId": "ent_031",
+        "name": "Government of India",
+        "type": "metadata",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_032",
+        "name": "Ministry of Statistics Programme Implementation",
+        "type": "metadata",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_033",
+        "name": "Khurshid Lal Bhawan, Janpath",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_034",
+        "name": "CHAPTERS",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_035",
+        "name": "ANNEXURES",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_036",
+        "name": "Introduction 1-9",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_037",
+        "name": "National Sample Survey (NSS) 41-62",
+        "type": "metadata",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_038",
+        "name": "Data Informatics Innovation 79-91",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_039",
+        "name": "Administrative Statistics 92-93",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_040",
+        "name": "India in United Nations 94-95",
+        "type": "metadata",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_041",
+        "name": "Research and Analysis 96-97",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_042",
+        "name": "Support for Statistical Strengthening 98-101",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_043",
+        "name": "Eastern Region",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_044",
+        "name": "Services as on 1st January 2025",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_045",
+        "name": "Ministry is at Annexure IIA and IIB.",
+        "type": "metadata",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_046",
+        "name": "Implementation is placed at Annexure",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_047",
+        "name": "Index of Industrial Production (IIP)",
+        "type": "measure",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_048",
+        "name": "SDGs",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_049",
+        "name": "National Indicator Framework (NIF)",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_050",
+        "name": "Sustainable Development Goals (SDGs)",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_051",
+        "name": "UNSEEA Framework",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_052",
+        "name": "MoSPI",
+        "type": "metadata",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_053",
+        "name": "September 2024 for the same.",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_054",
+        "name": "Statement",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_055",
+        "name": "Gross Domestic Product",
+        "type": "dimension",
+        "confidence": 0.6
+      },
+      {
+        "entityId": "ent_056",
+        "name": "Private Consumption",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_057",
+        "name": "Government Consumption",
+        "type": "metadata",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_058",
+        "name": "Fixed Capital Formation",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_059",
+        "name": "Changes in Stocks",
+        "type": "dimension",
+        "confidence": 0.6
+      },
+      {
+        "entityId": "ent_060",
+        "name": "Valuables",
+        "type": "dimension",
+        "confidence": 0.6
+      },
+      {
+        "entityId": "ent_061",
+        "name": "Exports",
+        "type": "dimension",
+        "confidence": 0.6
+      },
+      {
+        "entityId": "ent_062",
+        "name": "Imports",
+        "type": "dimension",
+        "confidence": 0.6
+      },
+      {
+        "entityId": "ent_063",
+        "name": "Depreciations",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_064",
+        "name": "National Income",
+        "type": "measure",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_065",
+        "name": "Final Consumption",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_066",
+        "name": "Per Capita GDP",
+        "type": "measure",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_067",
+        "name": "Per Capita GNI",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_068",
+        "name": "Per Capita National Income",
+        "type": "measure",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_069",
+        "name": "Domestic Product",
+        "type": "dimension",
+        "confidence": 0.6
+      },
+      {
+        "entityId": "ent_070",
+        "name": "Expenditure Components",
+        "type": "measure",
+        "confidence": 0.6
+      },
+      {
+        "entityId": "ent_071",
+        "name": "Share in GDP(%)",
+        "type": "dimension",
+        "confidence": 0.6
+      },
+      {
+        "entityId": "ent_072",
+        "name": "National Product",
+        "type": "dimension",
+        "confidence": 0.6
+      },
+      {
+        "entityId": "ent_073",
+        "name": "Percentage Change",
+        "type": "measure",
+        "confidence": 0.6
+      },
+      {
+        "entityId": "ent_075",
+        "name": "Private Final Consumption Expenditure (PFCE)",
+        "type": "measure",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_076",
+        "name": "Government Final Consumption",
+        "type": "metadata",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_077",
+        "name": "Gross Fixed Capital Formation (GFCEF)",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_079",
+        "name": "Discrepancies",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_080",
+        "name": "Share of GDP%",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_081",
+        "name": "Per Capita Income",
+        "type": "measure",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_082",
+        "name": "National Product and Final Consumption",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_083",
+        "name": "Item Sl. No. Over Previous",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_084",
+        "name": "Percentage Change Over",
+        "type": "measure",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_085",
+        "name": "Previous Year Industry",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_086",
+        "name": "Composition (%) of Nominal GVA",
+        "type": "measure",
+        "confidence": 0.45
+      }
+    ],
+    "topics": [
+      {
+        "topicId": "topic_01",
+        "title": "Annual Report 2025-26"
+      },
+      {
+        "topicId": "topic_02",
+        "title": "1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7"
+      }
+    ]
+  },
+  "contentAST": {
+    "blocks": [],
+    "lists": [],
+    "quotes": []
+  },
+  "tableAST": {
+    "tables": [
+      {
+        "tableId": "table_2_1",
+        "templateRef": "tt_2_1",
+        "biQuery": "",
+        "title": "Sl.No. 1 by CHAPTERS Introduction (3 cols, p.2)",
+        "columnGroups": [],
+        "columns": [
+          {
+            "columnId": "col_chapters_introductio",
+            "header": "CHAPTERS Introduction",
+            "role": "dimension",
+            "entityRef": "ent_018",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_page_no__1_9",
+            "header": "Page No. 1-9",
+            "role": "dimension",
+            "entityRef": "ent_019",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_sl_no__1",
+            "header": "Sl.No. 1",
+            "role": "measure",
+            "entityRef": "ent_017",
+            "dtype": "number",
+            "unit": null,
+            "format": "number",
+            "align": "right"
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_table_2_1_src",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_3_1",
+        "templateRef": "tt_3_1",
+        "biQuery": "",
+        "title": "Table p.3: 1.1 The Ministry of independent Ministry o Department of Program, Statistics an n 15th Octo me Impleme, d Pro ber 1 ntatio... (8 cols, 40 rows)",
+        "columnGroups": [],
+        "columns": [
+          {
+            "columnId": "col_1_1_the_ministry_of_",
+            "header": "1.1 The Ministry of independent Ministry o Department of Program",
+            "role": "dimension",
+            "entityRef": "ent_032",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_statistics_an_n_15th",
+            "header": "Statistics an n 15th Octo me Impleme",
+            "role": "dimension",
+            "entityRef": "ent_020",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_d_pro_ber_1_ntatio",
+            "header": "d Pro ber 1 ntatio",
+            "role": "dimension",
+            "entityRef": "ent_017",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_gramme_i_999_after_t",
+            "header": "gramme I 999 after t n. The M",
+            "role": "dimension",
+            "entityRef": "",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_mplementation_he_mer",
+            "header": "mplementation he merger of th inistry is the no",
+            "role": "dimension",
+            "entityRef": "ent_022",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col__mospi__ca_e_departm",
+            "header": "(MoSPI) ca e Departm dal agency",
+            "role": "dimension",
+            "entityRef": "ent_021",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_me_into_e_ent_of_sta",
+            "header": "me into e ent of Sta for plann",
+            "role": "dimension",
+            "entityRef": "ent_020",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_xistence_as_an_tisti",
+            "header": "xistence as an tistics and the ing integrated",
+            "role": "measure",
+            "entityRef": "ent_044",
+            "dtype": "number",
+            "unit": "percent",
+            "format": "percent.1",
+            "align": "right"
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_table_3_1_src",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_4_1",
+        "templateRef": "tt_4_1",
+        "biQuery": "",
+        "title": "Table p.4: statistics and Ministry's offi, classific cials in i, ations, statistica nternational mee... (8 cols, 44 rows)",
+        "columnGroups": [],
+        "columns": [
+          {
+            "columnId": "col_statistics_and_minis",
+            "header": "statistics and Ministry's offi",
+            "role": "dimension",
+            "entityRef": "ent_020",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_classific_cials_in_i",
+            "header": "classific cials in i",
+            "role": "dimension",
+            "entityRef": "",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_ations__statistica_n",
+            "header": "ations, statistica nternational mee",
+            "role": "dimension",
+            "entityRef": "",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_l_compilations_an_ti",
+            "header": "l compilations an tings on these sub",
+            "role": "dimension",
+            "entityRef": "ent_044",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_d_internat_jects_has",
+            "header": "d internat jects has be",
+            "role": "dimension",
+            "entityRef": "",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_ional_p_en_high",
+            "header": "ional p en high",
+            "role": "dimension",
+            "entityRef": "",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_ractices__the_contri",
+            "header": "ractices. The contri ly appreciated.",
+            "role": "dimension",
+            "entityRef": "",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_bution_of_the_ly_app",
+            "header": "bution of the ly appreciated.",
+            "role": "dimension",
+            "entityRef": "",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_table_4_1_src",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_5_1",
+        "templateRef": "tt_5_1",
+        "biQuery": "",
+        "title": "Table p.5: 1.10 Econo from si, The Index of mic Statistics x weeks to fo, Industrial Division (E ur weeks,... (11 cols, 46 rows)",
+        "columnGroups": [],
+        "columns": [
+          {
+            "columnId": "col_1_10_econo_from_si",
+            "header": "1.10 Econo from si",
+            "role": "dimension",
+            "entityRef": "",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_the_index_of_mic_sta",
+            "header": "The Index of mic Statistics x weeks to fo",
+            "role": "dimension",
+            "entityRef": "ent_020",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_industrial_division_",
+            "header": "Industrial Division (E ur weeks,",
+            "role": "dimension",
+            "entityRef": "ent_047",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_ip_i__lie",
+            "header": "IP I. lie",
+            "role": "dimension",
+            "entityRef": "",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col___with_base_the_rele",
+            "header": ") with base The release r availabilit",
+            "role": "dimension",
+            "entityRef": "",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_year_2011_timeline_o",
+            "header": "year 2011 timeline o y of indus",
+            "role": "dimension",
+            "entityRef": "ent_026",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col__12_is_f_iip_h_trial",
+            "header": "-12 is f IIP h trial ou",
+            "role": "dimension",
+            "entityRef": "ent_022",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_compiled_as_been_im_",
+            "header": "compiled as been im tput data.",
+            "role": "dimension",
+            "entityRef": "ent_044",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_and_pu_prove_it_is_p",
+            "header": "and pu prove It is p",
+            "role": "dimension",
+            "entityRef": "ent_022",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_blished_by_the_d_by_",
+            "header": "blished by the d by reducing it ublished on the",
+            "role": "dimension",
+            "entityRef": "ent_044",
+            "dtype": "string",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_production__i_sd__of",
+            "header": "Production (I SD) of MoSP ensuring time",
+            "role": "measure",
+            "entityRef": "ent_047",
+            "dtype": "number",
+            "unit": null,
+            "format": "number",
+            "align": "right"
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_table_5_1_src",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "",
+          "status": "empty"
+        }
+      }
+    ]
+  },
+  "chartAST": {
+    "charts": []
+  },
+  "figureAST": {
+    "figures": [
+      {
+        "figureId": "fig_sp01_q03",
+        "templateRef": "ft_sp01_q03",
+        "type": "chart",
+        "title": "Data Informatics Innovation 79-91",
+        "caption": "",
+        "captionTemplate": "Data Informatics Innovation 79-91, {{period.current}}",
+        "chartRef": "chart_sp01_q03",
+        "chartType": "grouped_bar",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_chart_sp01_q03",
+        "templateRef": "ft_chart_sp01_q03",
+        "chartRef": "chart_ft_chart_sp01_q03",
+        "caption": "",
+        "captionTemplate": "Data Informatics Innovation 79-91",
+        "slot": {
+          "status": "empty"
+        }
+      }
+    ]
+  },
+  "layoutAST": {
+    "pages": [
+      {
+        "pageId": "pg_1",
+        "size": "A4",
+        "regions": [
+          {
+            "regionId": "rg_sec_01",
+            "role": "heading",
+            "bindsTo": "sec_01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_sec_02",
+            "role": "heading",
+            "bindsTo": "sec_02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp01_q01",
+            "role": "body",
+            "bindsTo": "p_sp01_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp01_q02",
+            "role": "body",
+            "bindsTo": "p_sp01_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp01_q03",
+            "role": "body",
+            "bindsTo": "p_sp01_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp02_q01",
+            "role": "body",
+            "bindsTo": "p_sp02_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp02_q02",
+            "role": "body",
+            "bindsTo": "p_sp02_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp02_q03",
+            "role": "body",
+            "bindsTo": "p_sp02_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp03_q01",
+            "role": "body",
+            "bindsTo": "p_sp03_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp03_q02",
+            "role": "body",
+            "bindsTo": "p_sp03_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp03_q03",
+            "role": "body",
+            "bindsTo": "p_sp03_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp04_q01",
+            "role": "body",
+            "bindsTo": "p_sp04_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp04_q02",
+            "role": "body",
+            "bindsTo": "p_sp04_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp04_q03",
+            "role": "body",
+            "bindsTo": "p_sp04_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp01_q03",
+            "role": "figure",
+            "bindsTo": "fig_sp01_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_2_1",
+            "role": "table",
+            "bindsTo": "table_2_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_3_1",
+            "role": "table",
+            "bindsTo": "table_3_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_4_1",
+            "role": "table",
+            "bindsTo": "table_4_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_5_1",
+            "role": "table",
+            "bindsTo": "table_5_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_6_1",
+            "role": "table",
+            "bindsTo": "table_6_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_7_1",
+            "role": "table",
+            "bindsTo": "table_7_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_8_1",
+            "role": "table",
+            "bindsTo": "table_8_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_8_2",
+            "role": "table",
+            "bindsTo": "table_8_2",
+            "bbox": null
+          }
+        ]
+      }
+    ]
+  },
+  "geometryAST": {
+    "_doc": "Relative flow only. Absolute bounding boxes are computed by the layout engine at render time.",
+    "flow": [
+      "rg_sec_01",
+      "rg_sec_02",
+      "rg_p_sp01_q01",
+      "rg_p_sp01_q02",
+      "rg_p_sp01_q03",
+      "rg_p_sp02_q01",
+      "rg_p_sp02_q02",
+      "rg_p_sp02_q03",
+      "rg_p_sp03_q01",
+      "rg_p_sp03_q02",
+      "rg_p_sp03_q03",
+      "rg_p_sp04_q01",
+      "rg_p_sp04_q02",
+      "rg_p_sp04_q03",
+      "rg_fig_sp01_q03",
+      "rg_table_2_1",
+      "rg_table_3_1",
+      "rg_table_4_1",
+      "rg_table_5_1",
+      "rg_table_6_1",
+      "rg_table_7_1",
+      "rg_table_8_1",
+      "rg_table_8_2"
+    ]
+  }
+}

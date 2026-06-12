@@ -81,7 +81,7 @@ export default function ColumnAnalysisLayout({ results, analysisId, onBack }: Pr
   };
 
   const handleProceed = () => {
-    router.push(`/report-builder?analysisId=${analysisId}`);
+    router.push(`/report/report-builder?analysisId=${analysisId}`);
   };
 
   return (

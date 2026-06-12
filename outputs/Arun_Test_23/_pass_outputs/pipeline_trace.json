@@ -1,0 +1,332 @@
+{
+  "passes": {
+    "pass0_rasterize": {
+      "elapsed_s": 16.6,
+      "images": 10,
+      "text_pages": 10
+    },
+    "pass1_layout": {
+      "elapsed_s": 48.7,
+      "layoutlm_used": true,
+      "pages_with_regions": 10,
+      "total_regions": 151,
+      "toc_entries": 25,
+      "toc_l1_chapters": 4
+    },
+    "pass1_5_section_graph": {
+      "docType": "statistical_annual_report",
+      "title": "Arun Test 23",
+      "sections": 22,
+      "backMatter": 3,
+      "figuresAssociated": 3,
+      "orphanRegions": 1,
+      "sectionList": [
+        {
+          "sectionId": "sg_00",
+          "title": "CHAPTER 1",
+          "pageStart": 2,
+          "pageEnd": 2,
+          "level": 1,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_01",
+          "title": "Energy Reserves and Potential",
+          "pageStart": 2,
+          "pageEnd": 7,
+          "level": 1,
+          "isBackMatter": false,
+          "figureCount": 3,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_03",
+          "title": "Global Classification of Energy Reserves",
+          "pageStart": 2,
+          "pageEnd": 2,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_04",
+          "title": "Energy Reserves in India",
+          "pageStart": 2,
+          "pageEnd": 2,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_06",
+          "title": "Chapter 1: Energy Reserves and Potential Highlights of reserves in India 1.1 Coal Reserves",
+          "pageStart": 3,
+          "pageEnd": 3,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_07",
+          "title": "1.2 Lignite Reserves",
+          "pageStart": 3,
+          "pageEnd": 3,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_08",
+          "title": "Highlights of reserves in India",
+          "pageStart": 3,
+          "pageEnd": 3,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_09",
+          "title": "1.1 Coal Reserves",
+          "pageStart": 3,
+          "pageEnd": 3,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_10",
+          "title": "Chapter 1: Energy Reserves and Potential 1.3 Crude Oil Reserves",
+          "pageStart": 4,
+          "pageEnd": 4,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_11",
+          "title": "1.4 Natural Gas Reserves",
+          "pageStart": 4,
+          "pageEnd": 4,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_12",
+          "title": "1.3 Crude Oil Reserves",
+          "pageStart": 4,
+          "pageEnd": 4,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_13",
+          "title": "As of 01-04-2025 , the estimated reserves of crude oil in India stood at 672.07 million tonnes ,",
+          "pageStart": 4,
+          "pageEnd": 4,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_14",
+          "title": "Chapter 1: Energy Reserves and Potential 1.5 Renewable Energy Potential in India",
+          "pageStart": 5,
+          "pageEnd": 5,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_15",
+          "title": "1.5 Renewable Energy Potential in India",
+          "pageStart": 5,
+          "pageEnd": 5,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_17",
+          "title": "Chapter 1: Energy Reserves and Potential Geographical Distribution of Renewable Energy Potential",
+          "pageStart": 6,
+          "pageEnd": 6,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_18",
+          "title": "Geographical Distribution of Renewable Energy Potential",
+          "pageStart": 6,
+          "pageEnd": 6,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_19",
+          "title": "The geographical distribution of renewable energy potential in India ( Figure 1.6 ) shows",
+          "pageStart": 6,
+          "pageEnd": 6,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_20",
+          "title": "Chapter 1: Energy Reserves and Potential",
+          "pageStart": 7,
+          "pageEnd": 7,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_21",
+          "title": "2 Total may not tally due to rounding off",
+          "pageStart": 8,
+          "pageEnd": 8,
+          "level": 1,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_22",
+          "title": "Chapter 1: Energy Reserves and Potential",
+          "pageStart": 8,
+          "pageEnd": 8,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_23",
+          "title": "1 Energy Reserves and Potential",
+          "pageStart": 9,
+          "pageEnd": 9,
+          "level": 1,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_24",
+          "title": "Chapter 1: Energy Reserves and Potential",
+          "pageStart": 9,
+          "pageEnd": 9,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_02",
+          "title": "CHAPTER 1 Energy Reserves and Potential Introduction",
+          "pageStart": 2,
+          "pageEnd": 2,
+          "level": 2,
+          "isBackMatter": true,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_05",
+          "title": "Energy reserves part of the energy resources that, based on technical, economic and other",
+          "pageStart": 2,
+          "pageEnd": 2,
+          "level": 2,
+          "isBackMatter": true,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_16",
+          "title": "India is increasingly focusing on renewable energy sources as part of its sustainable",
+          "pageStart": 5,
+          "pageEnd": 5,
+          "level": 2,
+          "isBackMatter": true,
+          "figureCount": 0,
+          "expectedEntities": []
+        }
+      ]
+    },
+    "pass2_entities": {
+      "elapsed_s": 32.3,
+      "pages_total": 10,
+      "vlm_success": 9,
+      "vlm_success_rate": 90,
+      "total_entities": 53,
+      "chart_pages_detected": 0,
+      "total_chart_types": 0,
+      "vlm_provider": "qwen",
+      "vlm_fallback_used": true
+    },
+    "pass2_5_kg": {
+      "elapsed_s": 0.0,
+      "entities": 55,
+      "total_entities": 55,
+      "hierarchy_nodes": 55,
+      "table_structures": 9,
+      "chapters": 2,
+      "section_patterns": 6
+    },
+    "pass2_6_classification": {
+      "elapsed_s": 2.0,
+      "measures": 27,
+      "dimensions": 26,
+      "filters": 0,
+      "metadata": 2
+    },
+    "pass2_7_enrichment": {
+      "elapsed_s": 0.0,
+      "ok": true,
+      "with_unit": 3,
+      "with_value_domain": 55,
+      "glossary_terms": 0
+    },
+    "pass3_questions": {
+      "elapsed_s": 16.1,
+      "questions": 6,
+      "topics": 2
+    },
+    "pass4_assembly": {
+      "elapsed_s": 0.0,
+      "paragraphs": 4,
+      "tables": 9,
+      "figures": 0,
+      "charts_detected": 0,
+      "chart_pages": 0,
+      "blueprint_topics": 2,
+      "blueprint_entities": 55
+    },
+    "pass5_gemini": {
+      "elapsed_s": 0.0,
+      "status": "success"
+    }
+  },
+  "total_elapsed": 128.8,
+  "doc_type": "statistical_annual_report"
+}

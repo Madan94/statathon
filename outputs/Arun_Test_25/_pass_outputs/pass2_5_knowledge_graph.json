@@ -1,0 +1,978 @@
+{
+  "entities_count": 70,
+  "table_structures_count": 8,
+  "chapters_count": 4,
+  "entities": [
+    {
+      "entityId": "ent_017",
+      "name": "Sl.No. 1",
+      "source": "table_header",
+      "entityType_hint": "measure",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_018",
+      "name": "CHAPTERS Introduction",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_019",
+      "name": "Page No. 1-9",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_020",
+      "name": "Statistics an n 15th Octo me Impleme",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        2
+      ]
+    },
+    {
+      "entityId": "ent_021",
+      "name": "(MoSPI) ca e Departm dal agency",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        2
+      ]
+    },
+    {
+      "entityId": "ent_022",
+      "name": "-12 is f IIP h trial ou",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_023",
+      "name": "Item Domestic Product",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        5
+      ]
+    },
+    {
+      "entityId": "ent_024",
+      "name": "Percentage Change\nOver Previous\n2024-25 2025-26",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_025",
+      "name": "Industry",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_026",
+      "name": "Percentage Change Over\nPrevious Year 2024-25",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_027",
+      "name": "Percentage Change Over\nPrevious Year 2025-26",
+      "source": "table_header",
+      "entityType_hint": "dimension",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_028",
+      "name": "Annual Report 2025-26",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        0,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "entityId": "ent_029",
+      "name": "TABLE OF CONTENTS",
+      "source": "heading",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_030",
+      "name": "Annual Report",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        0,
+        3,
+        4
+      ]
+    },
+    {
+      "entityId": "ent_031",
+      "name": "Government of India",
+      "source": "vlm",
+      "entityType_hint": "metadata",
+      "pages": [
+        0
+      ]
+    },
+    {
+      "entityId": "ent_032",
+      "name": "Ministry of Statistics Programme Implementation",
+      "source": "vlm",
+      "entityType_hint": "metadata",
+      "pages": [
+        0
+      ]
+    },
+    {
+      "entityId": "ent_033",
+      "name": "Khurshid Lal Bhawan, Janpath",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        0
+      ]
+    },
+    {
+      "entityId": "ent_034",
+      "name": "CHAPTERS",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_035",
+      "name": "ANNEXURES",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_036",
+      "name": "Introduction 1-9",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_037",
+      "name": "National Sample Survey (NSS) 41-62",
+      "source": "vlm",
+      "entityType_hint": "metadata",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_038",
+      "name": "Data Informatics Innovation 79-91",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_039",
+      "name": "Administrative Statistics 92-93",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_040",
+      "name": "India in United Nations 94-95",
+      "source": "vlm",
+      "entityType_hint": "metadata",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_041",
+      "name": "Research and Analysis 96-97",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_042",
+      "name": "Support for Statistical Strengthening 98-101",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_043",
+      "name": "Eastern Region",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_044",
+      "name": "Services as on 1st January 2025",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        1
+      ]
+    },
+    {
+      "entityId": "ent_045",
+      "name": "Ministry is at Annexure IIA and IIB.",
+      "source": "vlm",
+      "entityType_hint": "metadata",
+      "pages": [
+        2
+      ]
+    },
+    {
+      "entityId": "ent_046",
+      "name": "Implementation is placed at Annexure",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        2
+      ]
+    },
+    {
+      "entityId": "ent_047",
+      "name": "Index of Industrial Production (IIP)",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_048",
+      "name": "SDGs",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_049",
+      "name": "National Indicator Framework (NIF)",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_050",
+      "name": "Sustainable Development Goals (SDGs)",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_051",
+      "name": "UNSEEA Framework",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_052",
+      "name": "MoSPI",
+      "source": "vlm",
+      "entityType_hint": "metadata",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_053",
+      "name": "September 2024 for the same.",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "entityId": "ent_054",
+      "name": "Statement",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        5
+      ]
+    },
+    {
+      "entityId": "ent_055",
+      "name": "Gross Domestic Product",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "entityId": "ent_056",
+      "name": "Private Consumption",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        5
+      ]
+    },
+    {
+      "entityId": "ent_057",
+      "name": "Government Consumption",
+      "source": "vlm",
+      "entityType_hint": "metadata",
+      "pages": [
+        5
+      ]
+    },
+    {
+      "entityId": "ent_058",
+      "name": "Fixed Capital Formation",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        5
+      ]
+    },
+    {
+      "entityId": "ent_059",
+      "name": "Changes in Stocks",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "entityId": "ent_060",
+      "name": "Valuables",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "entityId": "ent_061",
+      "name": "Exports",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "entityId": "ent_062",
+      "name": "Imports",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "entityId": "ent_063",
+      "name": "Depreciations",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        5
+      ]
+    },
+    {
+      "entityId": "ent_064",
+      "name": "National Income",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        5
+      ]
+    },
+    {
+      "entityId": "ent_065",
+      "name": "Final Consumption",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        5
+      ]
+    },
+    {
+      "entityId": "ent_066",
+      "name": "Per Capita GDP",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        5
+      ]
+    },
+    {
+      "entityId": "ent_067",
+      "name": "Per Capita GNI",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        5
+      ]
+    },
+    {
+      "entityId": "ent_068",
+      "name": "Per Capita National Income",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        5
+      ]
+    },
+    {
+      "entityId": "ent_069",
+      "name": "Domestic Product",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "entityId": "ent_070",
+      "name": "Expenditure Components",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "entityId": "ent_071",
+      "name": "Share in GDP(%)",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "entityId": "ent_072",
+      "name": "National Product",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "entityId": "ent_073",
+      "name": "Percentage Change",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "entityId": "ent_074",
+      "name": "Gross Domestic Product (GDP)",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_075",
+      "name": "Private Final Consumption Expenditure (PFCE)",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_076",
+      "name": "Government Final Consumption",
+      "source": "vlm",
+      "entityType_hint": "metadata",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_077",
+      "name": "Gross Fixed Capital Formation (GFCEF)",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_078",
+      "name": "Changes in Stocks (CIS)",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_079",
+      "name": "Discrepancies",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_080",
+      "name": "Share of GDP%",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_081",
+      "name": "Per Capita Income",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_082",
+      "name": "National Product and Final Consumption",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_083",
+      "name": "Item Sl. No. Over Previous",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "entityId": "ent_084",
+      "name": "Percentage Change Over",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_085",
+      "name": "Previous Year Industry",
+      "source": "vlm",
+      "entityType_hint": "dimension",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "entityId": "ent_086",
+      "name": "Composition (%) of Nominal GVA",
+      "source": "vlm",
+      "entityType_hint": "measure",
+      "pages": [
+        10
+      ]
+    }
+  ],
+  "table_structures": [
+    {
+      "tableId": "tbl_2_1",
+      "page": 1,
+      "tableTitle": "",
+      "columns": [
+        "Sl.No. 1",
+        "CHAPTERS Introduction",
+        "Page No. 1-9"
+      ],
+      "dimensions": [
+        "CHAPTERS Introduction",
+        "Page No. 1-9"
+      ],
+      "measures": [
+        "Sl.No. 1"
+      ],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": []
+    },
+    {
+      "tableId": "tbl_3_1",
+      "page": 2,
+      "tableTitle": "",
+      "columns": [
+        "1.1 The Ministry of independent Ministry o Department of Program",
+        "Statistics an n 15th Octo me Impleme",
+        "d Pro ber 1 ntatio",
+        "gramme I 999 after t n. The M",
+        "mplementation he merger of th inistry is the no",
+        "(MoSPI) ca e Departm dal agency",
+        "me into e ent of Sta for plann",
+        "xistence as an tistics and the ing integrated"
+      ],
+      "dimensions": [
+        "1.1 The Ministry of independent Ministry o Department of Program",
+        "Statistics an n 15th Octo me Impleme",
+        "d Pro ber 1 ntatio",
+        "gramme I 999 after t n. The M",
+        "mplementation he merger of th inistry is the no",
+        "(MoSPI) ca e Departm dal agency",
+        "me into e ent of Sta for plann",
+        "xistence as an tistics and the ing integrated"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": []
+    },
+    {
+      "tableId": "tbl_4_1",
+      "page": 3,
+      "tableTitle": "",
+      "columns": [
+        "statistics and Ministry’s offi",
+        "classific cials in i",
+        "ations, statistica nternational mee",
+        "l compilations an tings on these sub",
+        "d internat jects has be",
+        "ional p en high",
+        "ractices. The contri ly appreciated.",
+        "bution of the ly appreciated."
+      ],
+      "dimensions": [
+        "statistics and Ministry’s offi",
+        "classific cials in i",
+        "ations, statistica nternational mee",
+        "l compilations an tings on these sub",
+        "d internat jects has be",
+        "ional p en high",
+        "ractices. The contri ly appreciated.",
+        "bution of the ly appreciated."
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": []
+    },
+    {
+      "tableId": "tbl_5_1",
+      "page": 4,
+      "tableTitle": "",
+      "columns": [
+        "1.10 Econo from si",
+        "The Index of mic Statistics x weeks to fo",
+        "Industrial Division (E ur weeks,",
+        "Production (I SD) of MoSP ensuring time",
+        "IP I. lie",
+        ") with base The release r availabilit",
+        "year 2011 timeline o y of indus",
+        "-12 is f IIP h trial ou",
+        "compiled as been im tput data.",
+        "and pu prove It is p",
+        "blished by the d by reducing it ublished on the"
+      ],
+      "dimensions": [
+        "1.10 Econo from si",
+        "The Index of mic Statistics x weeks to fo",
+        "Industrial Division (E ur weeks,",
+        "Production (I SD) of MoSP ensuring time",
+        "IP I. lie",
+        ") with base The release r availabilit",
+        "year 2011 timeline o y of indus",
+        "-12 is f IIP h trial ou",
+        "compiled as been im tput data.",
+        "and pu prove It is p",
+        "blished by the d by reducing it ublished on the"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": []
+    },
+    {
+      "tableId": "tbl_6_1",
+      "page": 5,
+      "tableTitle": "",
+      "columns": [
+        "Sl. No.",
+        "Item Domestic Product",
+        "2023-24\n(FRE) Domestic Product",
+        "2024-25\n(PE) Domestic Product",
+        "2025-26\n(FAE) Domestic Product",
+        "Percentage Change\nOver Previous\nYear\n2024-25 2025-26 Domestic Product"
+      ],
+      "dimensions": [
+        "Sl. No.",
+        "Item Domestic Product",
+        "2023-24\n(FRE) Domestic Product",
+        "2024-25\n(PE) Domestic Product",
+        "2025-26\n(FAE) Domestic Product",
+        "Percentage Change\nOver Previous\nYear\n2024-25 2025-26 Domestic Product"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": []
+    },
+    {
+      "tableId": "tbl_7_1",
+      "page": 6,
+      "tableTitle": "",
+      "columns": [
+        "Sl. No.",
+        "Item",
+        "2023-24\n(FRE)",
+        "2024-25\n(PE)",
+        "2025-26\n(FAE)",
+        "Percentage Change\nOver Previous\n2024-25 2025-26"
+      ],
+      "dimensions": [
+        "Sl. No.",
+        "Item",
+        "2023-24\n(FRE)",
+        "2024-25\n(PE)",
+        "2025-26\n(FAE)",
+        "Percentage Change\nOver Previous\n2024-25 2025-26"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "layout": "multi_dimension",
+      "columnGroups": []
+    },
+    {
+      "tableId": "tbl_8_1",
+      "page": 7,
+      "tableTitle": "",
+      "columns": [
+        "Industry",
+        "2023-24\n(FRE)",
+        "2024-25\n(PE)",
+        "2025-26\n(FAE)",
+        "Percentage Change Over\nPrevious Year 2024-25",
+        "Percentage Change Over\nPrevious Year 2025-26"
+      ],
+      "dimensions": [
+        "Industry",
+        "2023-24\n(FRE)",
+        "2024-25\n(PE)",
+        "2025-26\n(FAE)",
+        "Percentage Change Over\nPrevious Year 2024-25",
+        "Percentage Change Over\nPrevious Year 2025-26"
+      ],
+      "measures": [],
+      "breakdowns": [
+        {
+          "measure": "Percentage Change Over\nPrevious Year",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024-25",
+            "2025-26"
+          ]
+        }
+      ],
+      "layout": "cross_tabulation",
+      "columnGroups": [
+        {
+          "groupId": "grp_1",
+          "label": "Percentage Change Over\nPrevious Year",
+          "columnIndices": [
+            4,
+            5
+          ],
+          "span": 2
+        }
+      ]
+    },
+    {
+      "tableId": "tbl_8_2",
+      "page": 7,
+      "tableTitle": "",
+      "columns": [
+        "Industry",
+        "2023-24\n(FRE)",
+        "2024-25\n(PE)",
+        "2025-26\n(FAE)",
+        "Percentage Change Over\nPrevious Year 2024-25",
+        "Percentage Change Over\nPrevious Year 2025-26"
+      ],
+      "dimensions": [
+        "Industry",
+        "2023-24\n(FRE)",
+        "2024-25\n(PE)",
+        "2025-26\n(FAE)",
+        "Percentage Change Over\nPrevious Year 2024-25",
+        "Percentage Change Over\nPrevious Year 2025-26"
+      ],
+      "measures": [],
+      "breakdowns": [
+        {
+          "measure": "Percentage Change Over\nPrevious Year",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024-25",
+            "2025-26"
+          ]
+        }
+      ],
+      "layout": "cross_tabulation",
+      "columnGroups": [
+        {
+          "groupId": "grp_1",
+          "label": "Percentage Change Over\nPrevious Year",
+          "columnIndices": [
+            4,
+            5
+          ],
+          "span": 2
+        }
+      ]
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "ch_01",
+      "title": "Annual Report 2025-26",
+      "pageRange": [
+        0,
+        6
+      ],
+      "level": 2,
+      "sections": [
+        {
+          "sectionId": "sec_01_01",
+          "title": "TABLE OF CONTENTS",
+          "page": 1,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_01_02",
+          "title": "Chapter 1 Introduction",
+          "page": 2,
+          "level": 3
+        },
+        {
+          "sectionId": "sec_01_03",
+          "title": "Statement 1: First Advance Estimates of Annual GDP for FY 2025-26 and its Expenditure Components (at 2011- 12 Prices)",
+          "page": 5,
+          "level": 2
+        },
+        {
+          "sectionId": "sec_01_04",
+          "title": "Statement 2: First Advance Estimates of Annual GDP for FY 2025-26 and its Expenditure Components (at Current Prices)",
+          "page": 6,
+          "level": 2
+        }
+      ]
+    },
+    {
+      "chapterId": "ch_02",
+      "title": "1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7",
+      "pageRange": [
+        7,
+        7
+      ],
+      "level": 1,
+      "sections": []
+    },
+    {
+      "chapterId": "ch_03",
+      "title": "2 Secondary Sector 46,46,499 49,31,228 52,57,858 6.1 6.6",
+      "pageRange": [
+        7,
+        7
+      ],
+      "level": 1,
+      "sections": []
+    },
+    {
+      "chapterId": "ch_04",
+      "title": "3 Tertiary Sector 88,07,683 94,40,529 1,03,01,349 7.2 9.1",
+      "pageRange": [
+        7,
+        10
+      ],
+      "level": 1,
+      "sections": []
+    }
+  ]
+}

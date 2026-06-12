@@ -9,7 +9,7 @@ import { cn } from '@/lib/cn';
 import Link from 'next/link';
 import { X } from 'lucide-react';
 import SessionGuard from '@/components/auth/SessionGuard';
-import { PLATFORM_NAV, isNavActive } from '@/lib/nav';
+import PlatformNavLinks from '@/components/layout/PlatformNavLinks';
 
 const PUBLIC_PATHS = ['/', '/login', '/signup'];
 
@@ -51,24 +51,7 @@ export default function AppShell({ children, breadcrumbs }: AppShellProps) {
               </button>
             </div>
             <nav className="flex-1 p-4 space-y-1">
-              {PLATFORM_NAV.map(({ href, label, icon: Icon }) => {
-                const active = isNavActive(pathname, href);
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium',
-                      active
-                        ? 'bg-[#f5c518] text-[#0a0a0a]'
-                        : 'text-white/75 hover:bg-white/10 hover:text-white'
-                    )}
-                  >
-                    <Icon className="h-4 w-4" /> {label}
-                  </Link>
-                );
-              })}
+              <PlatformNavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} />
             </nav>
           </div>
         </>

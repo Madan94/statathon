@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FileBarChart } from 'lucide-react';
-import { cn } from '@/lib/cn';
-import { PLATFORM_NAV, isNavActive } from '@/lib/nav';
+import PlatformNavLinks from './PlatformNavLinks';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -26,25 +25,7 @@ export default function Sidebar() {
         </Link>
       </div>
       <nav className="flex-1 p-4 space-y-1">
-        {PLATFORM_NAV.map(({ href, label, icon: Icon }) => {
-          const active = isNavActive(pathname, href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f5c518]/50',
-                active
-                  ? 'bg-[#f5c518] text-[#0a0a0a]'
-                  : 'text-white hover:bg-white/10 hover:text-white'
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" aria-hidden />
-              {label}
-            </Link>
-          );
-        })}
+        <PlatformNavLinks pathname={pathname} />
         {pathname.startsWith('/datasets') && (
           <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium bg-white/10 text-[#f5c518] ring-1 ring-[#f5c518]/30">
             <FileBarChart className="h-4 w-4 shrink-0" aria-hidden />
@@ -52,7 +33,6 @@ export default function Sidebar() {
           </div>
         )}
       </nav>
-      
     </aside>
   );
 }
