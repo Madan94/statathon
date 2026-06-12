@@ -18,6 +18,26 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
+def _iter_section_questions(section: dict[str, Any]) -> list[dict[str, Any]]:
+    """Recursively collect questions from a topic/section and nested children."""
+    out: list[dict[str, Any]] = list(section.get("questions") or [])
+    for key in ("subtopics", "sections", "children", "subsections"):
+        for child in section.get(key) or []:
+            if isinstance(child, dict):
+                out.extend(_iter_section_questions(child))
+    return out
+
+
+def _iter_blueprint_questions(blueprint: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return all questions from a blueprint regardless of nesting depth."""
+    if blueprint.get("questions"):
+        return list(blueprint["questions"])
+    out: list[dict[str, Any]] = []
+    for topic in (blueprint.get("topics") or blueprint.get("sections") or []):
+        out.extend(_iter_section_questions(topic))
+    return out
+
+
 @dataclass
 class BlueprintQAResult:
     """Result of blueprint quality validation."""
@@ -78,12 +98,7 @@ def validate_blueprint_qa(blueprint: dict[str, Any]) -> BlueprintQAResult:
     if not topics:
         result.warnings.append({"code": "NO_TOPICS", "message": "Blueprint has no topics — questions may be unstructured"})
 
-    all_questions: list[dict] = []
-    for topic in topics:
-        for q in (topic.get("questions") or []):
-            all_questions.append(q)
-    for q in (blueprint.get("questions") or []):
-        all_questions.append(q)
+    all_questions = _iter_blueprint_questions(blueprint)
 
     if not all_questions:
         result.errors.append({"code": "NO_QUESTIONS", "message": "Blueprint has no questions"})
@@ -168,11 +183,7 @@ def validate_statistical_concepts(blueprint: dict[str, Any]) -> BlueprintQAResul
                 })
 
     # Check: growth/trend questions need time dimension
-    all_questions: list[dict] = []
-    for topic in topics:
-        all_questions.extend(topic.get("questions") or [])
-    # Also include top-level questions (some blueprints use flat structure)
-    all_questions.extend(blueprint.get("questions") or [])
+    all_questions = _iter_blueprint_questions(blueprint)
 
     growth_questions = [q for q in all_questions if q.get("questionType") in ("trend", "growth")]
     if growth_questions and not time_entities:
