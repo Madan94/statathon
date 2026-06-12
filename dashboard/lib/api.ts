@@ -940,7 +940,7 @@ export const reportBuilderApi = {
     }
     throw new Error('Template extraction timed out');
   },
-  getTemplate: async (id: number) => {
+  getTemplate: async (id: number): Promise<ReportTemplateWithAst> => {
     const { data } = await api.get(`/report-builder/templates/${id}`);
     return data;
   },
