@@ -83,25 +83,35 @@ class ProgressBus:
                 pass  # Drop if subscriber is too slow
 
     async def subscribe(self, job_id: int) -> AsyncGenerator[ProgressEvent, None]:
-        """Subscribe to progress events for a job."""
+        """Subscribe to progress events for a job.
+
+        Sends a keepalive every 25 s to prevent idle-timeout kills at every
+        proxy/load-balancer layer (nginx default is 60 s, Cloudflare is 100 s).
+        The generator only exits when:
+          - a 'complete' or 'error' event arrives, OR
+          - the caller breaks / the HTTP connection is closed (GeneratorExit)
+        It never exits on its own due to inactivity.
+        """
         queue: asyncio.Queue[ProgressEvent | None] = asyncio.Queue(maxsize=100)
         self._subscribers[job_id].append(queue)
 
-        # Replay recent history
+        # Replay recent history so a reconnecting client catches up instantly
         for event in self._history.get(job_id, []):
             yield event
 
         try:
             while True:
-                event = await asyncio.wait_for(queue.get(), timeout=30.0)
-                if event is None:
-                    break
-                yield event
-                if event.event_type in ("complete", "error"):
-                    break
-        except asyncio.TimeoutError:
-            # Send keepalive
-            yield ProgressEvent(event_type="progress", message="keepalive", pct=-1)
+                try:
+                    event = await asyncio.wait_for(queue.get(), timeout=25.0)
+                    if event is None:
+                        break
+                    yield event
+                    if event.event_type in ("complete", "error"):
+                        break
+                except asyncio.TimeoutError:
+                    # Send keepalive comment — keeps connection alive, client ignores it
+                    yield ProgressEvent(event_type="progress", pct=-1, message="keepalive")
+                    # Loop continues — do NOT break here
         finally:
             if queue in self._subscribers.get(job_id, []):
                 self._subscribers[job_id].remove(queue)

@@ -233,6 +233,49 @@ _TASK_TO_ENV: dict[str, str] = {
 
 _VISION_TASKS = frozenset({"entity_extraction", "question_generation"})
 
+# ── Per-task model env var overrides ─────────────────────────────────────────
+# TASK_<TASK>_MODEL overrides the model name used for that specific task,
+# regardless of which provider is active.  Set in .env.
+_TASK_MODEL_ENVS: dict[str, str] = {
+    "entity_extraction":    "TASK_ENTITY_EXTRACTION_MODEL",
+    "question_generation":  "TASK_QUESTION_GENERATION_MODEL",
+    "entity_binding":       "TASK_ENTITY_BINDING_MODEL",
+    "entity_classification":"TASK_ENTITY_CLASSIFICATION_MODEL",
+    "toc_extraction":       "TASK_TOC_EXTRACTION_MODEL",
+    "gap_fill":             "TASK_GAP_FILL_MODEL",
+    "fact_extraction":      "TASK_FACT_EXTRACTION_MODEL",
+    "semantic_fallback":    "TASK_SEMANTIC_FALLBACK_MODEL",
+    "semantic_enrichment":  "TASK_SEMANTIC_ENRICHMENT_MODEL",
+    "question_repair":      "TASK_QUESTION_REPAIR_MODEL",
+}
+
+
+def _resolve_model_for_task(task: str, provider: str, is_vision: bool = False) -> str:
+    """Resolve the model name for a task+provider.
+
+    Priority:
+    1. TASK_<TASK>_MODEL env var  (per-task override — works for any provider)
+    2. Provider-global model env  (OPENAI_MODEL / GROQ_MODEL / GEMINI_MODEL / SGLANG_MODEL)
+    """
+    model_env = _TASK_MODEL_ENVS.get(task, "")
+    if model_env:
+        override = (os.getenv(model_env) or "").strip()
+        if override:
+            return override
+    # Provider global
+    if provider == "openai":
+        if is_vision:
+            return (os.getenv("OPENAI_VISION_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini")
+        return (os.getenv("OPENAI_MODEL") or "gpt-4o-mini")
+    elif provider == "groq":
+        if is_vision:
+            return (os.getenv("GROQ_VISION_MODEL") or "meta-llama/llama-4-scout-17b-16e-instruct")
+        return (os.getenv("GROQ_MODEL") or "llama-3.3-70b-versatile")
+    elif provider == "gemini":
+        return (os.getenv("GEMINI_MODEL") or "gemini-2.5-flash")
+    else:  # qwen
+        return (os.getenv("SGLANG_MODEL") or "Qwen/Qwen2.5-VL-3B-Instruct-AWQ")
+
 
 def _resolve_provider(task: str) -> str:
     """Determine which provider to use for a given task.
@@ -461,16 +504,17 @@ _SSL_VERIFY = _get_ssl_verify()
 
 
 def _call_groq(prompt: str, image_bytes: bytes | None, max_tokens: int, temperature: float,
-               api_key: str | None = None, key_label: str = "") -> str | None:
+               api_key: str | None = None, key_label: str = "",
+               task: str = "") -> str | None:
     """Call Groq via plain HTTP (OpenAI-compatible /chat/completions). No SDK needed."""
     api_key = api_key or os.getenv("GROQ_API_KEY") or ""
     if not api_key:
         logger.info("[llm_router][groq] No GROQ_API_KEY — skipping")
         return None
-    if image_bytes:
-        model = os.getenv("GROQ_VISION_MODEL") or "meta-llama/llama-4-scout-17b-16e-instruct"
-    else:
-        model = os.getenv("GROQ_MODEL") or "llama-3.3-70b-versatile"
+    model = _resolve_model_for_task(task, "groq", is_vision=bool(image_bytes)) if task else (
+        os.getenv("GROQ_VISION_MODEL" if image_bytes else "GROQ_MODEL") or
+        ("meta-llama/llama-4-scout-17b-16e-instruct" if image_bytes else "llama-3.3-70b-versatile")
+    )
     timeout = int(os.getenv("GROQ_TIMEOUT") or "120")
     if image_bytes:
         mime = _detect_image_mime(image_bytes)
@@ -504,7 +548,8 @@ def _call_groq(prompt: str, image_bytes: bytes | None, max_tokens: int, temperat
 
 
 def _call_openai(prompt: str, image_bytes: bytes | None, max_tokens: int, temperature: float,
-                 api_key: str | None = None, key_label: str = "") -> str | None:
+                 api_key: str | None = None, key_label: str = "",
+                 task: str = "") -> str | None:
     """Call any OpenAI-compatible /chat/completions endpoint (OpenAI, OpenRouter, Ollama, LM Studio).
 
     Uses plain HTTP (no openai package needed). A key is only required when talking to
@@ -515,10 +560,9 @@ def _call_openai(prompt: str, image_bytes: bytes | None, max_tokens: int, temper
     if not api_key and "api.openai.com" in base:
         logger.info("[llm_router][openai] No OPENAI_API_KEY for api.openai.com — skipping")
         return None
-    if image_bytes:
-        model = os.getenv("OPENAI_VISION_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
-    else:
-        model = os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+    model = _resolve_model_for_task(task, "openai", is_vision=bool(image_bytes)) if task else (
+        os.getenv("OPENAI_VISION_MODEL" if image_bytes else "OPENAI_MODEL") or "gpt-4o-mini"
+    )
     timeout = int(os.getenv("OPENAI_TIMEOUT") or "120")
     if image_bytes:
         mime = _detect_image_mime(image_bytes)
@@ -661,9 +705,9 @@ def llm_text_call(
             if attempt_provider == "gemini":
                 result = _call_gemini(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
             elif attempt_provider == "groq":
-                result = _call_groq(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
+                result = _call_groq(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label, task=task)
             elif attempt_provider == "openai":
-                result = _call_openai(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
+                result = _call_openai(prompt, None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label, task=task)
             else:  # qwen
                 result = _call_qwen_text(prompt, attempt_max_tokens, temperature, schema=schema)
 
@@ -778,9 +822,9 @@ def llm_vision_call(
             if attempt_provider == "gemini":
                 result = _call_gemini(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
             elif attempt_provider == "groq":
-                result = _call_groq(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
+                result = _call_groq(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label, task=task)
             elif attempt_provider == "openai":
-                result = _call_openai(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label)
+                result = _call_openai(prompt, image_bytes if has_image else None, attempt_max_tokens, temperature, api_key=attempt_key, key_label=attempt_label, task=task)
             else:  # qwen
                 if has_image:
                     result = _call_qwen_vision(prompt, image_bytes, attempt_max_tokens, temperature, schema=schema)  # type: ignore[arg-type]
