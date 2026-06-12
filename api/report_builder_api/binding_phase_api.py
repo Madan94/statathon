@@ -14,6 +14,7 @@ one is the value-free binding-phase (datasetAST + bindingAST) review surface.
 """
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import logging
@@ -88,8 +89,36 @@ class ReviewedPlanComponentPatchIn(BaseModel):
     formula_spec: Optional[dict[str, Any]] = None
 
 
+class ComponentRecommendationOut(BaseModel):
+    component_type: str
+    label: str
+    group: str
+    score: float
+    reason: str
+    payload: dict[str, Any]
+
+
 class ReviewedPlanPromoteIn(BaseModel):
     name: Optional[str] = None
+
+
+class TemplatePackageOut(BaseModel):
+    template_id: str
+    name: str
+    source: str
+    status: str = "UNKNOWN"
+    version: str = "1.0.0"
+    ast_available: bool = False
+    blueprint_available: bool = False
+    semantic_slot_graph_available: bool = False
+    topics_count: int = 0
+    questions_count: int = 0
+    entities_count: int = 0
+    chart_slots_count: int = 0
+    table_slots_count: int = 0
+    external_refs_count: int = 0
+    diagnostics_score: float | None = None
+    description: str | None = None
 
 
 class ProposalsOut(BaseModel):
@@ -133,6 +162,22 @@ class FinalizeOut(BaseModel):
     binding_ast: dict[str, Any]
     reviewed_plan: dict[str, Any] | None = None
     has_errors: bool
+
+
+class WorkspaceOut(BaseModel):
+    template_id: str
+    signature: str
+    dataset_id: str
+    template_package: dict[str, Any]
+    dataset_ast: dict[str, Any]
+    proposals: list[dict[str, Any]]
+    confirmations: dict[str, dict[str, Any]]
+    pending: list[str]
+    column_ownership: dict[str, Any]
+    reviewed_plan: dict[str, Any] | None = None
+    dependency_graph: dict[str, Any]
+    issues: list[dict[str, Any]]
+    phase_statuses: dict[str, Any]
 
 
 # ---------------------------------------------------------------------------
@@ -232,20 +277,34 @@ def _read_optional_stash_json(template_id: str, signature: str, suffix: str) -> 
         return None
 
 
+def _reviewed_plan_tree_counts(reviewed_plan: "Any") -> dict[str, int]:
+    counts = {"topics": 0, "questions": 0, "components": 0}
+
+    def walk(nodes: list[Any]) -> None:
+        for node in nodes:
+            node_type = str(getattr(node, "nodeType", "") or "")
+            if node_type == "question":
+                counts["questions"] += 1
+            else:
+                counts["topics"] += 1
+            counts["components"] += len(getattr(node, "components", []) or [])
+            walk(getattr(node, "children", []) or [])
+
+    walk(getattr(reviewed_plan, "planTree", []) or [])
+    return counts
+
+
 def _reviewed_plan_payload(reviewed_plan: "Any", path: str | None = None) -> dict[str, Any]:
     semantic_slots = (reviewed_plan.semanticSlotGraph or {}).get("slots") or []
+    counts = _reviewed_plan_tree_counts(reviewed_plan)
     return {
         "planId": reviewed_plan.planId,
         "status": reviewed_plan.status,
         "bindingAstId": reviewed_plan.bindingAstId,
         "path": path or "",
-        "topicCount": len(reviewed_plan.planTree),
-        "questionCount": sum(len(topic.children) for topic in reviewed_plan.planTree),
-        "componentCount": sum(
-            len(question.components)
-            for topic in reviewed_plan.planTree
-            for question in topic.children
-        ),
+        "topicCount": counts["topics"],
+        "questionCount": counts["questions"],
+        "componentCount": counts["components"],
         "semanticSlotCount": len(semantic_slots),
         "virtualSlotCount": len(reviewed_plan.virtualSlots),
         "virtualSlots": list(reviewed_plan.virtualSlots),
@@ -260,6 +319,378 @@ def _load_reviewed_plan_or_404(template_id: str, signature: str) -> "Any":
     if plan is None:
         raise HTTPException(status_code=404, detail="no reviewed plan for this binding session; finalize first")
     return plan
+
+
+def _load_reviewed_plan_optional(template_id: str, signature: str) -> "Any":
+    try:
+        from report_builder.binding.reviewed_plan import load_reviewed_plan
+
+        return load_reviewed_plan(template_id, signature)
+    except Exception:
+        return None
+
+
+def _binding_for_workspace(record: R.ReviewRecord, signature: str) -> BindingAST:
+    entity_bindings = [EntityBinding.from_dict(p) for p in record.proposals]
+    binding = BindingAST(
+        templateId=record.templateId,
+        datasetId=record.datasetId,
+        datasetSignature=signature,
+        entityBindings=entity_bindings,
+    )
+    R.apply_confirmations(binding, record)
+    return binding
+
+
+def _build_dependency_graph(
+    blueprint: dict[str, Any],
+    binding: BindingAST,
+    reviewed_plan: "Any" = None,
+) -> dict[str, Any]:
+    entity_to_questions: dict[str, list[str]] = {}
+    entity_to_components: dict[str, list[str]] = {}
+    question_to_entities: dict[str, list[str]] = {}
+    question_to_columns: dict[str, list[str]] = {}
+    column_to_entities: dict[str, list[str]] = {}
+    slot_to_question: dict[str, str] = {}
+
+    bindings_by_entity = {b.entityId: b for b in binding.entityBindings}
+    for b in binding.entityBindings:
+        for col in b.column_names:
+            column_to_entities.setdefault(col, []).append(b.entityId)
+
+    questions: list[dict[str, Any]] = []
+    for topic in blueprint.get("topics") or []:
+        questions.extend(topic.get("questions") or [])
+    questions.extend(blueprint.get("questions") or [])
+
+    for q in questions:
+        qid = str(q.get("questionId") or "")
+        if not qid:
+            continue
+        entity_ids: list[str] = []
+        columns: list[str] = []
+        for req in q.get("requiredEntities") or []:
+            eid = str(req.get("entityId") or req.get("entityRef") or "")
+            if not eid:
+                continue
+            entity_ids.append(eid)
+            entity_to_questions.setdefault(eid, []).append(qid)
+            binding_for_entity = bindings_by_entity.get(eid)
+            if binding_for_entity:
+                columns.extend(binding_for_entity.column_names)
+        question_to_entities[qid] = list(dict.fromkeys(entity_ids))
+        question_to_columns[qid] = list(dict.fromkeys(columns))
+
+    if reviewed_plan is not None:
+        def walk(nodes: list[Any]) -> None:
+            for node in nodes:
+                qid = getattr(node, "questionId", None)
+                for component in getattr(node, "components", []) or []:
+                    cid = getattr(component, "componentId", "")
+                    for req in getattr(component, "requiredEntities", []) or []:
+                        eid = str(req.get("entityId") or req.get("entityRef") or "")
+                        if eid and cid:
+                            entity_to_components.setdefault(eid, []).append(cid)
+                    for slot_id in getattr(component, "slotIds", []) or []:
+                        if slot_id and qid:
+                            slot_to_question[str(slot_id)] = str(qid)
+                walk(getattr(node, "children", []) or [])
+        walk(getattr(reviewed_plan, "planTree", []) or [])
+
+    return {
+        "entityToQuestions": {k: list(dict.fromkeys(v)) for k, v in entity_to_questions.items()},
+        "entityToComponents": {k: list(dict.fromkeys(v)) for k, v in entity_to_components.items()},
+        "columnToEntities": {k: list(dict.fromkeys(v)) for k, v in column_to_entities.items()},
+        "questionToEntities": question_to_entities,
+        "questionToColumns": question_to_columns,
+        "slotToQuestion": slot_to_question,
+    }
+
+
+def _workspace_issues(
+    record: R.ReviewRecord,
+    binding: BindingAST,
+    ownership: dict[str, Any],
+    reviewed_plan: "Any" = None,
+) -> list[dict[str, Any]]:
+    issues = []
+    for conflict in ownership.get("conflicts") or []:
+        issue = dict(conflict)
+        issue.setdefault("severity", "error")
+        issue.setdefault("code", "COLUMN_OWNERSHIP_CONFLICT")
+        issue.setdefault("message", f"Column {issue.get('column') or 'unknown'} has conflicting exclusive owners.")
+        issue.setdefault("targetMode", "columns")
+        issues.append(issue)
+    for entity in binding.entityBindings:
+        if entity.status == "unresolved":
+            issues.append({
+                "severity": "warn",
+                "code": "ENTITY_UNRESOLVED",
+                "entityId": entity.entityId,
+                "message": f"{entity.entityName or entity.entityId} has no matched column.",
+                "targetMode": "entities",
+            })
+        for risk in entity.risks or []:
+            issue = dict(risk)
+            issue.setdefault("entityId", entity.entityId)
+            issue.setdefault("message", f"{entity.entityName or entity.entityId} has a binding risk.")
+            issue.setdefault("targetMode", "entities")
+            issues.append(issue)
+    for pending_id in _pending_ids(record):
+        issues.append({
+            "severity": "info",
+            "code": "ENTITY_NEEDS_DECISION",
+            "entityId": pending_id,
+            "message": f"{pending_id} still needs officer review.",
+            "targetMode": "entities",
+        })
+    if reviewed_plan is not None:
+        for issue in (getattr(reviewed_plan, "coverage", {}) or {}).get("issues") or []:
+            normalized = dict(issue)
+            normalized.setdefault("severity", "warn")
+            normalized.setdefault("code", "COVERAGE_ISSUE")
+            normalized.setdefault("message", "Coverage issue requires officer review.")
+            normalized.setdefault("targetMode", "questions" if normalized.get("questionId") else "entities" if normalized.get("entityId") else "issues")
+            issues.append(normalized)
+
+        try:
+            from report_builder.binding.component_registry import validate_component_payload
+        except Exception:
+            validate_component_payload = None
+
+        if validate_component_payload is not None:
+            def walk(nodes: list[Any]) -> None:
+                for node in nodes:
+                    for component in getattr(node, "components", []) or []:
+                        payload = {
+                            "requiredEntities": list(getattr(component, "requiredEntities", []) or []),
+                            "analyticsSpec": dict(getattr(component, "analyticsSpec", {}) or {}),
+                            "formulaSpec": dict(getattr(component, "formulaSpec", {}) or {}),
+                        }
+                        for issue in validate_component_payload(
+                            getattr(component, "componentType", ""),
+                            payload,
+                            node_type=getattr(node, "nodeType", "question"),
+                        ):
+                            normalized = dict(issue)
+                            normalized.setdefault("componentId", getattr(component, "componentId", ""))
+                            normalized.setdefault("nodeId", getattr(node, "nodeId", ""))
+                            if getattr(node, "questionId", None):
+                                normalized.setdefault("questionId", getattr(node, "questionId"))
+                            normalized.setdefault("targetMode", "questions")
+                            issues.append(normalized)
+                    walk(getattr(node, "children", []) or [])
+            walk(getattr(reviewed_plan, "planTree", []) or [])
+    return _finalize_workspace_issues(issues)
+
+
+def _finalize_workspace_issues(issues: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for issue in issues:
+        normalized = dict(issue)
+        normalized.setdefault("severity", "info")
+        normalized.setdefault("code", "WORKSPACE_ISSUE")
+        normalized.setdefault("message", "Workspace issue requires review.")
+        normalized.setdefault("targetMode", "issues")
+        key_payload = {
+            "code": normalized.get("code"),
+            "severity": normalized.get("severity"),
+            "entityId": normalized.get("entityId"),
+            "questionId": normalized.get("questionId"),
+            "nodeId": normalized.get("nodeId"),
+            "componentId": normalized.get("componentId"),
+            "column": normalized.get("column"),
+            "message": normalized.get("message"),
+        }
+        issue_id = "issue_" + hashlib.sha1(json.dumps(key_payload, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:12]
+        if issue_id in seen:
+            continue
+        seen.add(issue_id)
+        normalized["issueId"] = issue_id
+        out.append(normalized)
+    return out
+
+
+def _workspace_phase_statuses(
+    record: R.ReviewRecord,
+    dataset: DatasetAST,
+    binding: BindingAST,
+    ownership: dict[str, Any],
+    reviewed_plan: "Any",
+    issues: list[dict[str, Any]],
+) -> dict[str, Any]:
+    pending_count = len(_pending_ids(record))
+    error_count = sum(1 for issue in issues if str(issue.get("severity") or "").lower() == "error")
+    question_issue_count = sum(1 for issue in issues if issue.get("targetMode") == "questions")
+    entity_issue_count = sum(1 for issue in issues if issue.get("targetMode") == "entities")
+    conflict_count = len(ownership.get("conflicts") or [])
+    unresolved_count = sum(1 for entity in binding.entityBindings if entity.status == "unresolved")
+    reviewed_question_count = 0
+    reviewed_component_count = 0
+    if reviewed_plan is not None:
+        counts = _reviewed_plan_tree_counts(reviewed_plan)
+        reviewed_question_count = counts["questions"]
+        reviewed_component_count = counts["components"]
+
+    return {
+        "overview": {
+            "status": "Open",
+            "message": "Binder workspace is active.",
+            "targetMode": "overview",
+        },
+        "package": {
+            "status": "Ready",
+            "message": "Template package and blueprint are available for binding.",
+            "targetMode": "overview",
+        },
+        "dataset": {
+            "status": "Ready" if dataset.columns else "Blocked",
+            "message": f"Dataset profile contains {len(dataset.columns)} columns.",
+            "targetMode": "columns",
+            "counts": {"columns": len(dataset.columns), "rows": dataset.rowCount},
+        },
+        "entities": {
+            "status": "Ready" if pending_count == 0 and unresolved_count == 0 else "Review",
+            "message": "All entities reviewed." if pending_count == 0 else f"{pending_count} entities need officer decisions.",
+            "targetMode": "entities",
+            "counts": {"pending": pending_count, "unresolved": unresolved_count, "issues": entity_issue_count},
+        },
+        "columns": {
+            "status": "Blocked" if conflict_count else "Ready",
+            "message": "Column ownership conflicts must be resolved." if conflict_count else "Column ownership has no exclusive conflicts.",
+            "targetMode": "columns",
+            "counts": {"conflicts": conflict_count},
+        },
+        "questions": {
+            "status": "Ready" if reviewed_plan is not None and question_issue_count == 0 else "Review" if reviewed_plan is not None else "Blocked",
+            "message": "ReviewedPlan is available." if reviewed_plan is not None else "Finalize matching to build the ReviewedPlan.",
+            "targetMode": "questions",
+            "counts": {"questions": reviewed_question_count, "components": reviewed_component_count, "issues": question_issue_count},
+        },
+        "issues": {
+            "status": "Blocked" if error_count else "Review" if issues else "Ready",
+            "message": f"{len(issues)} workspace issues, {error_count} blocking." if issues else "No workspace issues reported.",
+            "targetMode": "issues",
+            "counts": {"total": len(issues), "errors": error_count},
+        },
+        "handoff": {
+            "status": "Blocked" if reviewed_plan is None or error_count else "Review",
+            "message": "Prepare the S3.5 bundle after reviewing the plan." if reviewed_plan is not None else "ReviewedPlan is required before handoff.",
+            "targetMode": "handoff",
+            "counts": {"blockingIssues": error_count},
+        },
+    }
+
+
+def _component_recommendations_for_node(node: "Any") -> list[dict[str, Any]]:
+    from report_builder.binding.component_registry import get_component_definition, list_component_definitions
+
+    if node.nodeType != "question":
+        return []
+
+    existing = {str(component.componentType) for component in getattr(node, "components", []) or []}
+    required_entities = list(getattr(node, "requiredEntities", []) or [])
+    title = str(getattr(node, "title", "") or "")
+    question_id = str(getattr(node, "questionId", "") or "")
+    text = f"{title} {json.dumps(required_entities, default=str)}".lower()
+    entity_roles = {str(entity.get("role") or "").lower() for entity in required_entities if isinstance(entity, dict)}
+    definitions = {definition["componentType"]: definition for definition in list_component_definitions()}
+
+    candidates: list[tuple[str, float, str, dict[str, Any]]] = [
+        ("key_finding", 0.82, "Summarizes the main officer-facing answer for this question.", {}),
+        ("narrative", 0.78, "Adds explanatory prose around the resolved data bindings.", {}),
+        ("source_note", 0.48, "Documents the source and caveats for the answer block.", {}),
+    ]
+    if any(token in text for token in ("compare", "across", "sector", "gender", "rural", "urban", "state")) or "grouping" in entity_roles or "dimension" in entity_roles:
+        payload = {
+            "requiredEntities": required_entities,
+            "analyticsSpec": {"operation": "group_aggregate", "recommendedBy": "binder_workspace"},
+        }
+        candidates.extend([
+            ("chart", 0.9, "Question compares a measure across a dimension, so a chart is likely useful.", payload),
+            ("table", 0.76, "A generated data table helps officers inspect the same comparison values.", payload),
+        ])
+    if any(token in text for token in ("trend", "time", "year", "monthly", "annual", "period")) or "time" in entity_roles:
+        candidates.append((
+            "chart",
+            0.88,
+            "Question has time/period context, so a trend chart is a natural answer component.",
+            {"requiredEntities": required_entities, "analyticsSpec": {"operation": "time_series", "recommendedBy": "binder_workspace"}},
+        ))
+    if any(token in text for token in ("rate", "ratio", "share", "average", "percentage", "monthly earnings")):
+        candidates.append((
+            "formula_metric",
+            0.84,
+            "Question likely needs a governed metric or formula definition.",
+            {"requiredEntities": required_entities, "formulaSpec": {"type": "DIRECT"}, "analyticsSpec": {"recommendedBy": "binder_workspace"}},
+        ))
+    if any(token in text for token in ("method", "methodology", "definition", "usual status", "current weekly")):
+        candidates.append(("methodology_note", 0.7, "Question references a concept that may need methodological context.", {}))
+    if any(token in text for token in ("caveat", "limitation", "estimate", "sample")):
+        candidates.append(("caveat", 0.68, "Question may need a data-quality caveat.", {}))
+
+    best: dict[str, tuple[float, str, dict[str, Any]]] = {}
+    for component_type, score, reason, payload in candidates:
+        if component_type in existing and component_type in {"key_finding", "narrative", "source_note"}:
+            continue
+        if component_type not in definitions:
+            continue
+        previous = best.get(component_type)
+        if previous is None or score > previous[0]:
+            best[component_type] = (score, reason, payload)
+
+    out: list[dict[str, Any]] = []
+    for component_type, (score, reason, payload) in sorted(best.items(), key=lambda item: item[1][0], reverse=True):
+        definition = get_component_definition(component_type)
+        if definition is None:
+            continue
+        out.append({
+            "component_type": component_type,
+            "label": definition.label,
+            "group": definition.group,
+            "score": score,
+            "reason": reason,
+            "payload": payload,
+        })
+    return out
+
+
+def _count_questions(blueprint: dict[str, Any]) -> int:
+    count = len(blueprint.get("questions") or [])
+    for topic in blueprint.get("topics") or []:
+        count += len(topic.get("questions") or [])
+    return count
+
+
+def _package_from_ast_json(template_id: str, name: str, source: str, ast_json: dict[str, Any], description: str | None = None) -> TemplatePackageOut:
+    blueprint = ast_json.get("blueprint") if isinstance(ast_json.get("blueprint"), dict) else ast_json
+    template_ast = ast_json.get("template_ast") or ast_json.get("templateAst") or ast_json
+    slot_graph = ast_json.get("semantic_slot_graph") or ast_json.get("semanticSlotGraph") or ast_json.get("semanticSlotGraph")
+    diagnostics = ast_json.get("diagnostics") or ast_json.get("template_diagnostics") or ast_json.get("templateDiagnostics") or {}
+    meta = blueprint.get("templateMeta") or ast_json.get("metadata") or ast_json.get("templateMeta") or {}
+    chart_slots = len((template_ast.get("chartAST") or {}).get("charts") or []) if isinstance(template_ast, dict) else 0
+    table_slots = len((template_ast.get("tableAST") or {}).get("tables") or []) if isinstance(template_ast, dict) else 0
+    score = diagnostics.get("binderReadinessScore") if isinstance(diagnostics, dict) else None
+    return TemplatePackageOut(
+        template_id=str(template_id),
+        name=name or meta.get("name") or meta.get("title") or f"Template {template_id}",
+        source=source,
+        status=str((diagnostics.get("status") if isinstance(diagnostics, dict) else None) or "VALID"),
+        version=str(meta.get("version") or "1.0.0"),
+        ast_available=bool(template_ast),
+        blueprint_available=bool(isinstance(blueprint, dict) and blueprint.get("entities")),
+        semantic_slot_graph_available=bool(isinstance(slot_graph, dict) and slot_graph.get("slots")),
+        topics_count=len(blueprint.get("topics") or []) if isinstance(blueprint, dict) else 0,
+        questions_count=_count_questions(blueprint) if isinstance(blueprint, dict) else 0,
+        entities_count=len(blueprint.get("entities") or []) if isinstance(blueprint, dict) else 0,
+        chart_slots_count=chart_slots,
+        table_slots_count=table_slots,
+        external_refs_count=len(blueprint.get("externalTableReferences") or []) if isinstance(blueprint, dict) else 0,
+        diagnostics_score=float(score) if score is not None else None,
+        description=description,
+    )
 
 
 async def _resolve_blueprint(template_id: str, blueprint_file: Optional[UploadFile]) -> dict[str, Any]:
@@ -309,6 +740,47 @@ async def _resolve_blueprint(template_id: str, blueprint_file: Optional[UploadFi
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
+
+@router.get("/template-packages", response_model=list[TemplatePackageOut])
+def list_template_packages() -> list[TemplatePackageOut]:
+    """List template packages suitable for binder start screen."""
+    packages: list[TemplatePackageOut] = []
+
+    try:
+        gold_bp = json.loads(_GOLD_BLUEPRINT.read_text(encoding="utf-8"))
+        packages.append(_package_from_ast_json(
+            "tpl_plfs_annual_v1",
+            "Built-in PLFS demo",
+            "built_in",
+            {"blueprint": gold_bp},
+            "Bundled value-free PLFS blueprint for demo binding.",
+        ))
+    except Exception as exc:
+        logger.warning("[binding-phase] failed to summarize built-in PLFS package: %s", exc)
+
+    try:
+        from database.database import SessionLocal
+        from database.models import ReportTemplate
+
+        db = SessionLocal()
+        try:
+            rows = db.query(ReportTemplate).order_by(ReportTemplate.id.desc()).limit(100).all()
+            for row in rows:
+                ast_json = row.ast_json if isinstance(row.ast_json, dict) else {}
+                packages.append(_package_from_ast_json(
+                    str(row.id),
+                    row.name,
+                    "db",
+                    ast_json,
+                    row.description,
+                ))
+        finally:
+            db.close()
+    except Exception as exc:
+        logger.warning("[binding-phase] failed to list DB template packages: %s", exc)
+
+    return packages
 
 
 @router.post("/start", response_model=StartOut)
@@ -495,6 +967,40 @@ def get_record(template_id: str, signature: str) -> RecordOut:
     )
 
 
+@router.get("/{template_id}/{signature}/workspace", response_model=WorkspaceOut)
+def get_workspace(template_id: str, signature: str) -> WorkspaceOut:
+    """Return the consolidated binder workbench state for one session."""
+    record = _load_or_404(template_id, signature)
+    dataset, blueprint, _df = _read_stash(template_id, signature)
+    binding = _binding_for_workspace(record, signature)
+    ownership = _ownership(record)
+    reviewed_plan = _load_reviewed_plan_optional(template_id, signature)
+    reviewed_payload = _reviewed_plan_payload(reviewed_plan) if reviewed_plan is not None else None
+    template_package = _package_from_ast_json(
+        template_id,
+        (blueprint.get("templateMeta") or {}).get("name") or template_id,
+        "session",
+        {"blueprint": blueprint},
+    ).dict()
+    dependency_graph = _build_dependency_graph(blueprint, binding, reviewed_plan)
+    issues = _workspace_issues(record, binding, ownership, reviewed_plan)
+    return WorkspaceOut(
+        template_id=record.templateId,
+        signature=record.datasetSignature,
+        dataset_id=record.datasetId,
+        template_package=template_package,
+        dataset_ast=dataset.to_dict(),
+        proposals=record.proposals,
+        confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
+        pending=_pending_ids(record),
+        column_ownership=ownership,
+        reviewed_plan=reviewed_payload,
+        dependency_graph=dependency_graph,
+        issues=issues,
+        phase_statuses=_workspace_phase_statuses(record, dataset, binding, ownership, reviewed_plan, issues),
+    )
+
+
 @router.post("/{template_id}/{signature}/entities", response_model=RecordOut)
 def post_manual_entity(template_id: str, signature: str, body: ManualEntityIn) -> RecordOut:
     """Add an officer-created entity from one or more dataset columns."""
@@ -657,6 +1163,20 @@ def get_component_registry() -> list[dict[str, Any]]:
     from report_builder.binding.component_registry import list_component_definitions
 
     return list_component_definitions()
+
+
+@router.get(
+    "/{template_id}/{signature}/reviewed-plan/nodes/{node_id}/component-recommendations",
+    response_model=list[ComponentRecommendationOut],
+)
+def get_component_recommendations(template_id: str, signature: str, node_id: str) -> list[ComponentRecommendationOut]:
+    from report_builder.binding.reviewed_plan import find_plan_node
+
+    plan = _load_reviewed_plan_or_404(template_id, signature)
+    node = find_plan_node(plan, node_id)
+    if node is None:
+        raise HTTPException(status_code=404, detail=f"plan node not found: {node_id}")
+    return [ComponentRecommendationOut(**item) for item in _component_recommendations_for_node(node)]
 
 
 @router.post("/{template_id}/{signature}/reviewed-plan/nodes/{node_id}/components")

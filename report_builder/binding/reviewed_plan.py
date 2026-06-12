@@ -272,57 +272,135 @@ def _components_for_question(question: dict[str, Any], slot_index: dict[str, lis
     return out
 
 
+def _question_node(
+    question: dict[str, Any],
+    *,
+    parent_id: str,
+    order: int,
+    status_by_question: dict[str, str],
+    slot_index: dict[str, list[str]],
+) -> PlanNode:
+    question_id = str(question.get("questionId") or "")
+    status = status_by_question.get(question_id, "unknown")
+    return PlanNode(
+        nodeId=f"node_{question_id or parent_id + '_q_' + str(order)}",
+        nodeType="question",
+        title=str(question.get("intent") or question.get("question") or question.get("title") or question_id),
+        parentId=parent_id,
+        order=order,
+        source="extracted",
+        questionId=question_id,
+        requiredEntities=list(question.get("requiredEntities") or []),
+        components=_components_for_question(question, slot_index, status),
+        readiness=status,
+    )
+
+
+def _section_children(section: dict[str, Any]) -> list[dict[str, Any]]:
+    children: list[dict[str, Any]] = []
+    for key in ("children", "sections", "subtopics", "subsections"):
+        for child in section.get(key) or []:
+            if isinstance(child, dict):
+                children.append(child)
+    return children
+
+
+def _section_node_type(depth: int) -> str:
+    if depth <= 0:
+        return "topic"
+    if depth == 1:
+        return "subtopic"
+    return "subsubtopic"
+
+
+def _section_id(section: dict[str, Any], fallback: str) -> str:
+    return str(
+        section.get("topicId")
+        or section.get("sectionId")
+        or section.get("subtopicId")
+        or section.get("id")
+        or fallback
+    )
+
+
+def _build_section_node(
+    section: dict[str, Any],
+    *,
+    parent_id: str | None,
+    order: int,
+    depth: int,
+    status_by_question: dict[str, str],
+    slot_index: dict[str, list[str]],
+    valid_questions: set[str],
+) -> PlanNode:
+    node_id = _section_id(section, f"section_{depth + 1}_{order}")
+    node = PlanNode(
+        nodeId=node_id,
+        nodeType=_section_node_type(depth),
+        title=str(section.get("title") or section.get("heading") or node_id),
+        parentId=parent_id,
+        order=int(section.get("order") or order),
+        source="extracted",
+        readiness="unknown",
+    )
+
+    child_order = 1
+    for question in section.get("questions") or []:
+        question_id = str(question.get("questionId") or "")
+        if valid_questions and question_id not in valid_questions:
+            continue
+        node.children.append(_question_node(
+            question,
+            parent_id=node_id,
+            order=child_order,
+            status_by_question=status_by_question,
+            slot_index=slot_index,
+        ))
+        child_order += 1
+
+    for child_section in _section_children(section):
+        node.children.append(_build_section_node(
+            child_section,
+            parent_id=node_id,
+            order=child_order,
+            depth=depth + 1,
+            status_by_question=status_by_question,
+            slot_index=slot_index,
+            valid_questions=valid_questions,
+        ))
+        child_order += 1
+    return node
+
+
 def _build_plan_tree(blueprint: dict[str, Any], binding: BindingAST, semantic_slot_graph: dict[str, Any]) -> list[PlanNode]:
     status_by_question = _question_status(binding)
     slot_index = _component_slots(semantic_slot_graph)
     valid_questions = _question_id_set(binding)
     tree: list[PlanNode] = []
 
-    for topic_order, topic in enumerate(blueprint.get("topics") or [], start=1):
-        topic_id = str(topic.get("topicId") or f"topic_{topic_order}")
-        topic_node = PlanNode(
-            nodeId=topic_id,
-            nodeType="topic",
-            title=str(topic.get("title") or topic_id),
-            order=int(topic.get("order") or topic_order),
-            source="extracted",
-            readiness="unknown",
-        )
-        for q_order, question in enumerate(topic.get("questions") or [], start=1):
-            question_id = str(question.get("questionId") or "")
-            if valid_questions and question_id not in valid_questions:
-                continue
-            status = status_by_question.get(question_id, "unknown")
-            question_node = PlanNode(
-                nodeId=f"node_{question_id or topic_id + '_q_' + str(q_order)}",
-                nodeType="question",
-                title=str(question.get("intent") or question.get("question") or question_id),
-                parentId=topic_id,
-                order=q_order,
-                source="extracted",
-                questionId=question_id,
-                requiredEntities=list(question.get("requiredEntities") or []),
-                components=_components_for_question(question, slot_index, status),
-                readiness=status,
-            )
-            topic_node.children.append(question_node)
-        tree.append(topic_node)
+    for topic_order, topic in enumerate(blueprint.get("topics") or blueprint.get("sections") or [], start=1):
+        tree.append(_build_section_node(
+            topic,
+            parent_id=None,
+            order=topic_order,
+            depth=0,
+            status_by_question=status_by_question,
+            slot_index=slot_index,
+            valid_questions=valid_questions,
+        ))
 
     if not tree and blueprint.get("questions"):
         general = PlanNode(nodeId="topic_general", nodeType="topic", title="General", order=1)
         for q_order, question in enumerate(blueprint.get("questions") or [], start=1):
             question_id = str(question.get("questionId") or "")
-            status = status_by_question.get(question_id, "unknown")
-            general.children.append(PlanNode(
-                nodeId=f"node_{question_id or 'question_' + str(q_order)}",
-                nodeType="question",
-                title=str(question.get("intent") or question_id),
-                parentId="topic_general",
+            if valid_questions and question_id not in valid_questions:
+                continue
+            general.children.append(_question_node(
+                question,
+                parent_id="topic_general",
                 order=q_order,
-                questionId=question_id,
-                requiredEntities=list(question.get("requiredEntities") or []),
-                components=_components_for_question(question, slot_index, status),
-                readiness=status,
+                status_by_question=status_by_question,
+                slot_index=slot_index,
             ))
         tree.append(general)
     return tree
@@ -611,6 +689,8 @@ def patch_plan_component(
     analytics_spec: dict[str, Any] | None = None,
     formula_spec: dict[str, Any] | None = None,
 ) -> ReviewedPlan:
+    from report_builder.binding.component_registry import validate_component_payload
+
     node = find_plan_node(plan, node_id)
     if node is None:
         raise KeyError(node_id)
@@ -626,8 +706,17 @@ def patch_plan_component(
         changes["analyticsSpec"] = dict(analytics_spec)
     if formula_spec is not None:
         component.formulaSpec = dict(formula_spec)
-        component.readiness = "draft" if formula_spec else component.readiness
         changes["formulaSpec"] = dict(formula_spec)
+    validation_payload = {
+        "requiredEntities": list(component.requiredEntities),
+        "analyticsSpec": dict(component.analyticsSpec),
+        "formulaSpec": dict(component.formulaSpec),
+    }
+    validation_issues = validate_component_payload(component.componentType, validation_payload, node_type=node.nodeType)
+    component.readiness = "draft" if validation_issues else "ready"
+    changes["readiness"] = component.readiness
+    if validation_issues:
+        changes["validationIssues"] = validation_issues
     plan.auditTrail.append({
         "event": "reviewed_plan_component_patched",
         "nodeId": node_id,

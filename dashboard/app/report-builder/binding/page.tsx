@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, EyeOff, Loader2, Lock, Pencil, Plus, Share2, Sparkles, Upload as UploadIcon, type LucideIcon } from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, Lock, Plus, Share2, Sparkles, Upload as UploadIcon, type LucideIcon } from 'lucide-react';
 
 import PageHeader from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
@@ -11,27 +11,29 @@ import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { BindingStepper } from '@/components/report-builder/binding/BindingStepper';
 import { DatasetProfileCard } from '@/components/report-builder/binding/DatasetProfileCard';
-import { EntityBindingCard } from '@/components/report-builder/binding/EntityBindingCard';
 import { CoveragePanel } from '@/components/report-builder/binding/CoveragePanel';
+import { StructureCanvas } from '@/components/report-builder/binding/StructureCanvas';
+import { EntityMatrixPanel, type EntityDecision } from '@/components/report-builder/binding/EntityMatrixPanel';
 import {
   bindingPhaseApi,
-  reportBuilderApi,
   type BindingAction,
-  type BindingConfirmPayload,
   type BindingExecutionReadyResult,
   type BindingFinalizeResult,
   type BindingRecordResult,
   type BindingStartResult,
+  type BindingTemplatePackage,
+  type BindingWorkspace,
+  type BindingWorkspaceIssue,
   type ComponentDefinition,
   type ExecutionReadyStatus,
   type LearnedEntityRecord,
-  type ReportTemplate,
   type ReviewedPlanComponent,
   type ReviewedPlanNode,
   type ReviewedPlanSummary,
 } from '@/lib/api';
 
-type Decision = Omit<BindingConfirmPayload, 'entity_id'>;
+type Decision = EntityDecision;
+type WorkbenchMode = 'overview' | 'entities' | 'questions' | 'columns' | 'issues' | 'handoff';
 
 const STEPS = [
   { id: 'upload', label: 'Upload dataset', hint: 'CSV + template' },
@@ -101,13 +103,6 @@ function decisionsFromConfirmations(confirmations: Record<string, unknown>): Rec
   return next;
 }
 
-function readinessTone(readiness: string): string {
-  if (readiness === 'executable' || readiness === 'READY') return 'text-success';
-  if (readiness === 'degraded' || readiness === 'DEGRADED') return 'text-warning';
-  if (readiness === 'blocked' || readiness === 'BLOCKED') return 'text-danger';
-  return 'text-text-muted';
-}
-
 function collectPlanContainers(nodes: ReviewedPlanNode[]): ReviewedPlanNode[] {
   return nodes.flatMap((node) => [
     ...(node.nodeType !== 'question' ? [node] : []),
@@ -133,104 +128,27 @@ function parseRequiredEntities(text: string): Array<Record<string, unknown>> {
     .filter((entity) => entity.entityId);
 }
 
-function ReviewedPlanTree({
-  nodes,
-  depth = 0,
-  onRename,
-  onToggle,
-  onEditEntities,
-  onEditFormula,
-  busy,
-}: {
-  nodes: ReviewedPlanNode[];
-  depth?: number;
-  onRename?: (node: ReviewedPlanNode) => void;
-  onToggle?: (node: ReviewedPlanNode) => void;
-  onEditEntities?: (node: ReviewedPlanNode) => void;
-  onEditFormula?: (node: ReviewedPlanNode, component: ReviewedPlanComponent) => void;
-  busy?: boolean;
-}) {
-  return (
-    <div className="space-y-2">
-      {nodes.map((node) => (
-        <div key={node.nodeId} className={`rounded-lg border border-border bg-surface px-3 py-2 ${node.enabled === false ? 'opacity-60' : ''}`} style={{ marginLeft: depth * 12 }}>
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase text-text-muted">{node.nodeType}</p>
-              <p className="mt-0.5 line-clamp-2 text-sm font-semibold text-text">{node.title}</p>
-              {node.questionId && <p className="mt-1 font-mono text-[11px] text-text-muted">{node.questionId}</p>}
-            </div>
-            <span className={`shrink-0 text-xs font-semibold capitalize ${readinessTone(node.readiness)}`}>
-              {node.readiness}
-            </span>
-          </div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {onRename && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => onRename(node)}
-                className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] font-medium text-text-muted hover:bg-surface-card disabled:opacity-50"
-              >
-                <Pencil className="h-3 w-3" /> Rename
-              </button>
-            )}
-            {node.nodeType === 'question' && onToggle && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => onToggle(node)}
-                className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] font-medium text-text-muted hover:bg-surface-card disabled:opacity-50"
-              >
-                <EyeOff className="h-3 w-3" /> {node.enabled === false ? 'Enable' : 'Disable'}
-              </button>
-            )}
-            {node.nodeType === 'question' && onEditEntities && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => onEditEntities(node)}
-                className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] font-medium text-text-muted hover:bg-surface-card disabled:opacity-50"
-              >
-                Entities
-              </button>
-            )}
-          </div>
-          {node.requiredEntities.length > 0 && (
-            <p className="mt-2 line-clamp-2 text-[11px] text-text-muted">
-              Required: {requiredEntitiesToText(node.requiredEntities)}
-            </p>
-          )}
-          {node.components.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {node.components.map((component) => (
-                <span key={component.componentId} className="inline-flex items-center gap-1 rounded-full bg-border px-2 py-0.5 text-[11px] text-text-muted">
-                  {component.componentType}
-                  {component.slotIds.length ? ` · ${component.slotIds.length} slot${component.slotIds.length > 1 ? 's' : ''}` : ''}
-                  {component.formulaSpec && Object.keys(component.formulaSpec).length > 0 ? ' · formula' : ''}
-                  {onEditFormula && (
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => onEditFormula(node, component)}
-                      className="ml-1 font-semibold text-primary hover:underline disabled:opacity-50"
-                    >
-                      Spec
-                    </button>
-                  )}
-                </span>
-              ))}
-            </div>
-          )}
-          {node.children.length > 0 && (
-            <div className="mt-2">
-              <ReviewedPlanTree nodes={node.children} depth={depth + 1} onRename={onRename} onToggle={onToggle} onEditEntities={onEditEntities} onEditFormula={onEditFormula} busy={busy} />
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
+function defaultComponentPayload(node: ReviewedPlanNode | undefined, componentType: string): Record<string, unknown> {
+  const requiredEntities = node?.requiredEntities ?? [];
+  if (componentType === 'chart' || componentType === 'table') {
+    return {
+      requiredEntities,
+      analyticsSpec: {
+        operation: 'group_aggregate',
+        recommendedBy: 'binder_workbench_manual_add',
+      },
+    };
+  }
+  if (componentType === 'formula_metric') {
+    return {
+      requiredEntities,
+      analyticsSpec: {
+        recommendedBy: 'binder_workbench_manual_add',
+      },
+      formulaSpec: { type: 'DIRECT' },
+    };
+  }
+  return requiredEntities.length ? { requiredEntities } : {};
 }
 
 export default function BindingWorkflowPage() {
@@ -238,15 +156,22 @@ export default function BindingWorkflowPage() {
 
   // step 0
   const [templateId, setTemplateId] = useState('tpl_plfs_annual_v1');
-  const [templates, setTemplates] = useState<ReportTemplate[]>([]);
+  const [templatePackages, setTemplatePackages] = useState<BindingTemplatePackage[]>([]);
   const [componentDefinitions, setComponentDefinitions] = useState<ComponentDefinition[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [datasetFile, setDatasetFile] = useState<File | null>(null);
   const [blueprintFile, setBlueprintFile] = useState<File | null>(null);
   const [starting, setStarting] = useState(false);
 
   // session
   const [session, setSession] = useState<BindingStartResult | null>(null);
+  const [workspace, setWorkspace] = useState<BindingWorkspace | null>(null);
+  const [workspaceLoading, setWorkspaceLoading] = useState(false);
+  const [workbenchMode, setWorkbenchMode] = useState<WorkbenchMode>('overview');
+  const [focusedEntityId, setFocusedEntityId] = useState<string | null>(null);
+  const [focusedQuestionId, setFocusedQuestionId] = useState<string | null>(null);
+  const [focusedComponentId, setFocusedComponentId] = useState<string | null>(null);
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
   const [busyEntity, setBusyEntity] = useState<string | null>(null);
   const [addingEntity, setAddingEntity] = useState(false);
@@ -272,14 +197,23 @@ export default function BindingWorkflowPage() {
   const [editTitleValue, setEditTitleValue] = useState('');
   const [editEntitiesNode, setEditEntitiesNode] = useState<ReviewedPlanNode | null>(null);
   const [editEntitiesValue, setEditEntitiesValue] = useState('');
+  const [editComponentEntitiesTarget, setEditComponentEntitiesTarget] = useState<{ node: ReviewedPlanNode; component: ReviewedPlanComponent } | null>(null);
+  const [editComponentEntitiesValue, setEditComponentEntitiesValue] = useState('');
   const [editFormulaTarget, setEditFormulaTarget] = useState<{ node: ReviewedPlanNode; component: ReviewedPlanComponent } | null>(null);
   const [formulaType, setFormulaType] = useState('DIRECT');
   const [formulaNumerator, setFormulaNumerator] = useState('');
   const [formulaDenominator, setFormulaDenominator] = useState('');
+  const [editAnalyticsTarget, setEditAnalyticsTarget] = useState<{ node: ReviewedPlanNode; component: ReviewedPlanComponent } | null>(null);
+  const [analyticsSpecValue, setAnalyticsSpecValue] = useState('');
 
   const [error, setError] = useState<string | null>(null);
 
   const proposals = useMemo(() => session?.proposals ?? [], [session]);
+  const workspaceIssues = workspace?.issues ?? [];
+  const selectedPackage = useMemo(
+    () => templatePackages.find((pkg) => pkg.template_id === templateId) ?? null,
+    [templatePackages, templateId]
+  );
   const ownershipStats = useMemo(() => {
     const entries = Object.values(session?.column_ownership?.columns ?? {});
     return {
@@ -296,19 +230,30 @@ export default function BindingWorkflowPage() {
     () => proposals.filter((p) => !decisions[p.entityId]).length,
     [proposals, decisions]
   );
+  const currentReviewedPlan = result?.reviewed_plan ?? workspace?.reviewed_plan ?? null;
   const planContainers = useMemo(
-    () => collectPlanContainers(result?.reviewed_plan?.planTree ?? []),
-    [result?.reviewed_plan?.planTree]
+    () => collectPlanContainers(currentReviewedPlan?.planTree ?? []),
+    [currentReviewedPlan?.planTree]
   );
   const planNodes = useMemo(
     () => {
       const flatten = (nodes: ReviewedPlanNode[]): ReviewedPlanNode[] => nodes.flatMap((node) => [node, ...flatten(node.children)]);
-      return flatten(result?.reviewed_plan?.planTree ?? []);
+      return flatten(currentReviewedPlan?.planTree ?? []);
     },
-    [result?.reviewed_plan?.planTree]
+    [currentReviewedPlan?.planTree]
   );
 
-  const refreshFromRecord = (record: BindingRecordResult) => {
+  const loadWorkspace = async (template: string, signature: string) => {
+    setWorkspaceLoading(true);
+    try {
+      const next = await bindingPhaseApi.getWorkspace(template, signature);
+      setWorkspace(next);
+    } finally {
+      setWorkspaceLoading(false);
+    }
+  };
+
+  const refreshFromRecord = async (record: BindingRecordResult) => {
     setSession((prev) => prev ? {
       ...prev,
       proposals: record.proposals,
@@ -318,6 +263,7 @@ export default function BindingWorkflowPage() {
     setDecisions(decisionsFromConfirmations(record.confirmations));
     setResult(null);
     setExecutionReady(null);
+    await loadWorkspace(record.template_id, record.signature);
   };
 
   const entityTypeForColumn = (columnName: string): 'dimension' | 'measure' | 'time' | 'filter' | 'metadata' => {
@@ -338,6 +284,8 @@ export default function BindingWorkflowPage() {
       setDecisions(decisionsFromConfirmations(res.confirmations));
       setResult(null);
       setExecutionReady(null);
+      setWorkbenchMode('overview');
+      await loadWorkspace(res.template_id, res.signature);
       setStep(1);
     } catch (err) {
       setError(errMessage(err, 'Could not start the binding session'));
@@ -355,7 +303,7 @@ export default function BindingWorkflowPage() {
         entity_id: entityId,
         ...decision,
       });
-      refreshFromRecord(record);
+      await refreshFromRecord(record);
     } catch (err) {
       setError(errMessage(err, 'Could not record that decision'));
     } finally {
@@ -375,7 +323,7 @@ export default function BindingWorkflowPage() {
           entity_id: p.entityId,
           action: 'confirm',
         });
-        refreshFromRecord(record);
+        await refreshFromRecord(record);
       } catch (err) {
         setError(errMessage(err, 'Could not confirm all bindings'));
         break;
@@ -397,7 +345,7 @@ export default function BindingWorkflowPage() {
         cardinality: 'oneToOne',
         note: 'officer-created entity from binder sidebar',
       });
-      refreshFromRecord(record);
+      await refreshFromRecord(record);
       setNewEntityColumn('');
       setNewEntityName('');
       setNewEntityType('dimension');
@@ -416,6 +364,8 @@ export default function BindingWorkflowPage() {
       const res = await bindingPhaseApi.finalize(session.template_id, session.signature);
       setResult(res);
       setExecutionReady(null);
+      await loadWorkspace(session.template_id, session.signature);
+      setWorkbenchMode('questions');
       setStep(2);
     } catch (err) {
       setError(errMessage(err, 'Could not finalize the bindings'));
@@ -431,8 +381,10 @@ export default function BindingWorkflowPage() {
     try {
       const res = await bindingPhaseApi.executionReady(session.template_id, session.signature);
       setExecutionReady(res);
+      await loadWorkspace(session.template_id, session.signature);
+      setWorkbenchMode('handoff');
     } catch (err) {
-      setError(errMessage(err, 'Could not prepare the S4 execution bundle'));
+      setError(errMessage(err, 'Could not prepare the S3.5 handoff bundle'));
     } finally {
       setCheckingReady(false);
     }
@@ -458,6 +410,7 @@ export default function BindingWorkflowPage() {
         title: editTitleValue.trim(),
       });
       setReviewedPlan(reviewedPlan);
+      await loadWorkspace(session.template_id, session.signature);
       setEditTitleNode(null);
       setEditTitleValue('');
     } catch (err) {
@@ -476,6 +429,7 @@ export default function BindingWorkflowPage() {
         enabled: node.enabled === false,
       });
       setReviewedPlan(reviewedPlan);
+      await loadWorkspace(session.template_id, session.signature);
     } catch (err) {
       setError(errMessage(err, 'Could not update that question'));
     } finally {
@@ -498,10 +452,40 @@ export default function BindingWorkflowPage() {
         required_entities: parseRequiredEntities(editEntitiesValue),
       });
       setReviewedPlan(reviewedPlan);
+      await loadWorkspace(session.template_id, session.signature);
       setEditEntitiesNode(null);
       setEditEntitiesValue('');
     } catch (err) {
       setError(errMessage(err, 'Could not update required entities'));
+    } finally {
+      setPlanSaving(false);
+    }
+  };
+
+  const onEditComponentRequiredEntities = async (node: ReviewedPlanNode, component: ReviewedPlanComponent) => {
+    setEditComponentEntitiesTarget({ node, component });
+    setEditComponentEntitiesValue(requiredEntitiesToText(component.requiredEntities));
+  };
+
+  const submitComponentRequiredEntities = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session || !editComponentEntitiesTarget) return;
+    setPlanSaving(true);
+    setError(null);
+    try {
+      const reviewedPlan = await bindingPhaseApi.patchReviewedPlanComponent(
+        session.template_id,
+        session.signature,
+        editComponentEntitiesTarget.node.nodeId,
+        editComponentEntitiesTarget.component.componentId,
+        { required_entities: parseRequiredEntities(editComponentEntitiesValue) }
+      );
+      setReviewedPlan(reviewedPlan);
+      await loadWorkspace(session.template_id, session.signature);
+      setEditComponentEntitiesTarget(null);
+      setEditComponentEntitiesValue('');
+    } catch (err) {
+      setError(errMessage(err, 'Could not update component entities'));
     } finally {
       setPlanSaving(false);
     }
@@ -512,6 +496,11 @@ export default function BindingWorkflowPage() {
     setFormulaType(String(component.formulaSpec?.type || 'DIRECT'));
     setFormulaNumerator(String(component.formulaSpec?.numeratorColumn || ''));
     setFormulaDenominator(String(component.formulaSpec?.denominatorColumn || ''));
+  };
+
+  const onEditAnalyticsSpec = async (node: ReviewedPlanNode, component: ReviewedPlanComponent) => {
+    setEditAnalyticsTarget({ node, component });
+    setAnalyticsSpecValue(JSON.stringify(component.analyticsSpec || {}, null, 2));
   };
 
   const submitFormulaSpec = async (e: React.FormEvent) => {
@@ -531,9 +520,41 @@ export default function BindingWorkflowPage() {
         { formula_spec: formulaSpec }
       );
       setReviewedPlan(reviewedPlan);
+      await loadWorkspace(session.template_id, session.signature);
       setEditFormulaTarget(null);
     } catch (err) {
       setError(errMessage(err, 'Could not update formula spec'));
+    } finally {
+      setPlanSaving(false);
+    }
+  };
+
+  const submitAnalyticsSpec = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session || !editAnalyticsTarget) return;
+    let analyticsSpec: Record<string, unknown>;
+    try {
+      analyticsSpec = analyticsSpecValue.trim() ? JSON.parse(analyticsSpecValue) : {};
+    } catch {
+      setError('Analytics spec must be valid JSON');
+      return;
+    }
+    setPlanSaving(true);
+    setError(null);
+    try {
+      const reviewedPlan = await bindingPhaseApi.patchReviewedPlanComponent(
+        session.template_id,
+        session.signature,
+        editAnalyticsTarget.node.nodeId,
+        editAnalyticsTarget.component.componentId,
+        { analytics_spec: analyticsSpec }
+      );
+      setReviewedPlan(reviewedPlan);
+      await loadWorkspace(session.template_id, session.signature);
+      setEditAnalyticsTarget(null);
+      setAnalyticsSpecValue('');
+    } catch (err) {
+      setError(errMessage(err, 'Could not update analytics spec'));
     } finally {
       setPlanSaving(false);
     }
@@ -550,6 +571,7 @@ export default function BindingWorkflowPage() {
         title: newPlanQuestionTitle.trim(),
       });
       setReviewedPlan(reviewedPlan);
+      await loadWorkspace(session.template_id, session.signature);
       setNewPlanQuestionTitle('');
     } catch (err) {
       setError(errMessage(err, 'Could not add that question'));
@@ -561,14 +583,16 @@ export default function BindingWorkflowPage() {
   const onAddPlanComponent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session || !newComponentNode || !newComponentType) return;
+    const targetNode = planNodes.find((node) => node.nodeId === newComponentNode);
     setPlanSaving(true);
     setError(null);
     try {
       const reviewedPlan = await bindingPhaseApi.addReviewedPlanComponent(session.template_id, session.signature, newComponentNode, {
         component_type: newComponentType,
-        payload: {},
+        payload: defaultComponentPayload(targetNode, newComponentType),
       });
       setReviewedPlan(reviewedPlan);
+      await loadWorkspace(session.template_id, session.signature);
     } catch (err) {
       setError(errMessage(err, 'Could not add that component'));
     } finally {
@@ -576,13 +600,38 @@ export default function BindingWorkflowPage() {
     }
   };
 
+  const onAddRecommendedComponent = async (nodeId: string, componentType: string, payload: Record<string, unknown> = {}) => {
+    if (!session || !nodeId || !componentType) return;
+    setPlanSaving(true);
+    setError(null);
+    try {
+      const reviewedPlan = await bindingPhaseApi.addReviewedPlanComponent(session.template_id, session.signature, nodeId, {
+        component_type: componentType,
+        payload,
+      });
+      setReviewedPlan(reviewedPlan);
+      setNewComponentNode(nodeId);
+      setNewComponentType(componentType);
+      await loadWorkspace(session.template_id, session.signature);
+    } catch (err) {
+      setError(errMessage(err, 'Could not add that recommended component'));
+    } finally {
+      setPlanSaving(false);
+    }
+  };
+
+  const loadComponentRecommendations = useCallback(async (nodeId: string) => {
+    if (!session) return [];
+    return bindingPhaseApi.listComponentRecommendations(session.template_id, session.signature, nodeId);
+  }, [session]);
+
   const onPromoteReviewedPlan = async () => {
-    if (!session || !result?.reviewed_plan) return;
+    if (!session || !currentReviewedPlan) return;
     setPromotingPlan(true);
     setError(null);
     try {
       const promoted = await bindingPhaseApi.promoteReviewedPlan(session.template_id, session.signature, {
-        name: promotionName.trim() || `${result.reviewed_plan.planId} derived`,
+        name: promotionName.trim() || `${currentReviewedPlan.planId} derived`,
       });
       setPromotionResult({
         derivedTemplateId: promoted.derivedTemplateId,
@@ -607,8 +656,38 @@ export default function BindingWorkflowPage() {
     setDatasetFile(null);
     setBlueprintFile(null);
     setExecutionReady(null);
+    setWorkspace(null);
+    setWorkbenchMode('overview');
+    setFocusedEntityId(null);
+    setFocusedQuestionId(null);
+    setFocusedComponentId(null);
+    setEditComponentEntitiesTarget(null);
+    setEditComponentEntitiesValue('');
     setStep(0);
     setError(null);
+  };
+
+  const focusIssue = (issue: BindingWorkspaceIssue) => {
+    setFocusedEntityId(issue.entityId || null);
+    setFocusedQuestionId(issue.questionId || null);
+    setFocusedComponentId(issue.componentId || null);
+    if (issue.targetMode && ['overview', 'entities', 'questions', 'columns', 'issues', 'handoff'].includes(issue.targetMode)) {
+      setWorkbenchMode(issue.targetMode as WorkbenchMode);
+      return;
+    }
+    if (issue.questionId) {
+      setWorkbenchMode('questions');
+      return;
+    }
+    if (issue.entityId) {
+      setWorkbenchMode('entities');
+      return;
+    }
+    if (issue.column) {
+      setWorkbenchMode('columns');
+      return;
+    }
+    setWorkbenchMode('issues');
   };
 
   const generationHref = executionReady
@@ -618,12 +697,12 @@ export default function BindingWorkflowPage() {
   useEffect(() => {
     let cancelled = false;
     setTemplatesLoading(true);
-    reportBuilderApi.listTemplates()
+    bindingPhaseApi.listTemplatePackages()
       .then((items) => {
-        if (!cancelled) setTemplates(items);
+        if (!cancelled) setTemplatePackages(items);
       })
       .catch(() => {
-        if (!cancelled) setTemplates([]);
+        if (!cancelled) setTemplatePackages([]);
       })
       .finally(() => {
         if (!cancelled) setTemplatesLoading(false);
@@ -646,6 +725,556 @@ export default function BindingWorkflowPage() {
       cancelled = true;
     };
   }, []);
+
+  const phase = workspace?.phase_statuses ?? {};
+  const phaseStatus = (key: string, fallback: 'Ready' | 'Review' | 'Blocked' | 'Open') =>
+    (phase[key]?.status as 'Ready' | 'Review' | 'Blocked' | 'Open' | undefined) ?? fallback;
+  const phaseHint = (key: string, fallback: string) => phase[key]?.message || fallback;
+
+  const handoffStatus: 'Ready' | 'Review' | 'Blocked' | 'Open' = executionReady?.status === 'READY'
+    ? 'Ready'
+    : executionReady?.status === 'DEGRADED'
+      ? 'Review'
+      : phaseStatus('handoff', currentReviewedPlan ? 'Review' : 'Blocked');
+  const handoffHint = executionReady
+    ? `Bundle ${executionReady.status}: ${executionReady.plans.length} plans, ${executionReady.blocked_questions.length} blocked`
+    : phaseHint('handoff', 'Not prepared');
+
+  const workbenchModes: Array<{ id: WorkbenchMode; label: string; hint: string; status: 'Ready' | 'Review' | 'Blocked' | 'Open' }> = [
+    { id: 'overview', label: 'Overview', hint: phaseHint('overview', 'Session health'), status: phaseStatus('overview', 'Open') },
+    { id: 'entities', label: 'Entity matching', hint: phaseHint('entities', `${remaining} pending`), status: phaseStatus('entities', remaining === 0 ? 'Ready' : 'Review') },
+    { id: 'questions', label: 'Question plan', hint: phaseHint('questions', currentReviewedPlan ? `${currentReviewedPlan.questionCount} questions` : 'Finalize first'), status: phaseStatus('questions', currentReviewedPlan ? 'Ready' : allDecided ? 'Review' : 'Blocked') },
+    { id: 'columns', label: 'Dataset columns', hint: phaseHint('columns', `${session?.dataset_ast.columns.length ?? 0} columns`), status: phaseStatus('columns', ownershipStats.conflicts > 0 ? 'Blocked' : 'Ready') },
+    { id: 'issues', label: 'Issues', hint: phaseHint('issues', `${workspaceIssues.length} open`), status: phaseStatus('issues', workspaceIssues.length ? 'Review' : 'Ready') },
+    { id: 'handoff', label: 'S3.5 handoff', hint: handoffHint, status: handoffStatus },
+  ];
+
+  const packageForWorkbench = workspace?.template_package ?? selectedPackage;
+  const datasetForWorkbench = workspace?.dataset_ast ?? session?.dataset_ast;
+
+  const renderPlanEditors = () => (
+    <>
+      {editTitleNode && (
+        <form onSubmit={submitRenamePlanNode} className="grid gap-2 rounded-lg border border-border bg-surface p-3 sm:grid-cols-[1fr_auto_auto]">
+          <input
+            value={editTitleValue}
+            onChange={(e) => setEditTitleValue(e.target.value)}
+            className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
+          />
+          <Button type="submit" size="sm" disabled={planSaving || !editTitleValue.trim()}>Save rename</Button>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setEditTitleNode(null)}>Cancel</Button>
+        </form>
+      )}
+      {editEntitiesNode && (
+        <form onSubmit={submitRequiredEntities} className="grid gap-2 rounded-lg border border-border bg-surface p-3 sm:grid-cols-[1fr_auto_auto]">
+          <input
+            value={editEntitiesValue}
+            onChange={(e) => setEditEntitiesValue(e.target.value)}
+            placeholder="ent_wpr:measure, ent_sector:grouping"
+            className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
+          />
+          <Button type="submit" size="sm" disabled={planSaving}>Save entities</Button>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setEditEntitiesNode(null)}>Cancel</Button>
+        </form>
+      )}
+      {editComponentEntitiesTarget && (
+        <form onSubmit={submitComponentRequiredEntities} className="grid gap-2 rounded-lg border border-border bg-surface p-3 sm:grid-cols-[1fr_auto_auto]">
+          <input
+            value={editComponentEntitiesValue}
+            onChange={(e) => setEditComponentEntitiesValue(e.target.value)}
+            placeholder="ent_wpr:measure, ent_sector:grouping"
+            className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
+          />
+          <Button type="submit" size="sm" disabled={planSaving}>Save component entities</Button>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setEditComponentEntitiesTarget(null)}>Cancel</Button>
+        </form>
+      )}
+      {editFormulaTarget && (
+        <form onSubmit={submitFormulaSpec} className="grid gap-2 rounded-lg border border-border bg-surface p-3 sm:grid-cols-[0.8fr_1fr_1fr_auto_auto]">
+          <select
+            value={formulaType}
+            onChange={(e) => setFormulaType(e.target.value)}
+            className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
+          >
+            <option value="DIRECT">DIRECT</option>
+            <option value="SHARE">SHARE</option>
+            <option value="RATE">RATE</option>
+            <option value="RATIO">RATIO</option>
+            <option value="GROWTH">GROWTH</option>
+            <option value="INDEX">INDEX</option>
+          </select>
+          <input
+            value={formulaNumerator}
+            onChange={(e) => setFormulaNumerator(e.target.value)}
+            placeholder="Numerator/source column"
+            className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
+          />
+          <input
+            value={formulaDenominator}
+            onChange={(e) => setFormulaDenominator(e.target.value)}
+            placeholder="Denominator column"
+            className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
+          />
+          <Button type="submit" size="sm" disabled={planSaving}>Save spec</Button>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setEditFormulaTarget(null)}>Cancel</Button>
+        </form>
+      )}
+      {editAnalyticsTarget && (
+        <form onSubmit={submitAnalyticsSpec} className="grid gap-2 rounded-lg border border-border bg-surface p-3 sm:grid-cols-[1fr_auto_auto]">
+          <textarea
+            value={analyticsSpecValue}
+            onChange={(e) => setAnalyticsSpecValue(e.target.value)}
+            rows={4}
+            className="rounded-md border border-border bg-surface-card px-2.5 py-2 font-mono text-xs text-text outline-none"
+          />
+          <Button type="submit" size="sm" disabled={planSaving}>Save analytics</Button>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setEditAnalyticsTarget(null)}>Cancel</Button>
+        </form>
+      )}
+    </>
+  );
+
+  const renderWorkbenchPanel = () => {
+    if (!session) return null;
+    if (workbenchMode === 'entities') {
+      return (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-text">Entity matching</h2>
+              <p className="text-sm text-text-muted">
+                {remaining > 0 ? `${remaining} of ${proposals.length} entities still need officer review.` : 'All entity bindings have decisions.'}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={confirmAllRemaining} disabled={!!busyEntity || remaining === 0}>
+              <Sparkles className="h-4 w-4" /> Confirm all proposed
+            </Button>
+          </div>
+          <EntityMatrixPanel
+            key={`entity-matrix-${focusedEntityId || 'default'}`}
+            bindings={proposals}
+            columns={session.dataset_ast.columns}
+            columnOwnership={session.column_ownership}
+            decisions={decisions}
+            dependencyGraph={workspace?.dependency_graph}
+            issues={workspaceIssues}
+            initialEntityId={focusedEntityId}
+            busyEntity={busyEntity}
+            onDecide={onDecide}
+            onConfirmAll={confirmAllRemaining}
+          />
+        </div>
+      );
+    }
+
+    if (workbenchMode === 'questions') {
+      return (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-text">Question plan</h2>
+              <p className="text-sm text-text-muted">
+                {currentReviewedPlan ? 'Edit the officer-reviewed plan, required entities, formulas, and components.' : 'Finalize entity matching to build the reviewed plan.'}
+              </p>
+            </div>
+            {!currentReviewedPlan && (
+              <Button onClick={onFinalize} disabled={finalizing || !allDecided}>
+                {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                Build reviewed plan
+              </Button>
+            )}
+          </div>
+          {currentReviewedPlan ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-surface p-3">
+                <div>
+                  <p className="text-xs font-semibold text-text">Derived template promotion</p>
+                  <p className="mt-0.5 text-xs text-text-muted">Save this reviewed plan and learned entities as a reusable sidecar.</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    value={promotionName}
+                    onChange={(e) => setPromotionName(e.target.value)}
+                    placeholder="Derived template name"
+                    className="w-52 rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
+                  />
+                  <Button size="sm" variant="outline" disabled={promotingPlan} onClick={onPromoteReviewedPlan}>
+                    {promotingPlan ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    Promote
+                  </Button>
+                </div>
+              </div>
+              {promotionResult && (
+                <div className="rounded-lg border border-success/30 bg-success/5 px-3 py-2 text-xs text-text-muted">
+                  <p>
+                    Promoted <span className="font-mono text-text">{promotionResult.derivedTemplateId}</span>
+                    {promotionResult.templateId ? <> · DB template <span className="font-mono text-text">{promotionResult.templateId}</span></> : null}
+                    {' '}· {promotionResult.learnedEntityCount} learned entities
+                  </p>
+                  {promotionResult.dbWarning && <p className="mt-1 text-warning">DB promotion warning: {promotionResult.dbWarning}</p>}
+                  {learnedEntities.length > 0 && (
+                    <p className="mt-1">
+                      Learned: {learnedEntities.slice(0, 4).map((entity) => entity.entityName).join(', ')}
+                      {learnedEntities.length > 4 ? ` +${learnedEntities.length - 4}` : ''}
+                    </p>
+                  )}
+                </div>
+              )}
+              <StructureCanvas
+                key={`structure-canvas-${focusedQuestionId || focusedComponentId || 'default'}`}
+                plan={currentReviewedPlan}
+                dependencyGraph={workspace?.dependency_graph}
+                issues={workspaceIssues}
+                componentDefinitions={componentDefinitions}
+                busy={planSaving}
+                initialQuestionId={focusedQuestionId}
+                initialComponentId={focusedComponentId}
+                editorSlot={renderPlanEditors()}
+                addQuestionSlot={(
+                  <form onSubmit={onAddPlanQuestion} className="grid gap-2 rounded-lg border border-border bg-surface p-3 sm:grid-cols-[1fr_1.5fr_auto]">
+                    <select
+                      value={newPlanQuestionTopic}
+                      onChange={(e) => setNewPlanQuestionTopic(e.target.value)}
+                      className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
+                    >
+                      <option value="">Choose topic</option>
+                      {planContainers.map((node) => <option key={node.nodeId} value={node.nodeId}>{node.title}</option>)}
+                    </select>
+                    <input
+                      value={newPlanQuestionTitle}
+                      onChange={(e) => setNewPlanQuestionTitle(e.target.value)}
+                      placeholder="Add manual question"
+                      className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
+                    />
+                    <Button type="submit" size="sm" disabled={planSaving || !newPlanQuestionTopic || !newPlanQuestionTitle.trim()}>
+                      <Plus className="h-4 w-4" /> Add question
+                    </Button>
+                  </form>
+                )}
+                addComponentSlot={(
+                  <form onSubmit={onAddPlanComponent} className="space-y-2 rounded-lg border border-border bg-surface p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Manual component</p>
+                    <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                    <select
+                      value={newComponentNode}
+                      onChange={(e) => setNewComponentNode(e.target.value)}
+                      className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
+                    >
+                      <option value="">Attach to item</option>
+                      {planNodes.map((node) => <option key={node.nodeId} value={node.nodeId}>{node.title}</option>)}
+                    </select>
+                    <select
+                      value={newComponentType}
+                      onChange={(e) => setNewComponentType(e.target.value)}
+                      className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
+                    >
+                      {(componentDefinitions.length ? componentDefinitions : [{ componentType: 'narrative', label: 'Narrative paragraph' } as ComponentDefinition]).map((definition) => (
+                        <option key={definition.componentType} value={definition.componentType}>{definition.label}</option>
+                      ))}
+                    </select>
+                    <Button type="submit" size="sm" disabled={planSaving || !newComponentNode || !newComponentType}>
+                      <Plus className="h-4 w-4" /> Add component
+                    </Button>
+                    </div>
+                    <p className="text-[11px] text-text-muted">Chart, table, and formula components start with the selected question&apos;s entities and a draft analytics spec.</p>
+                  </form>
+                )}
+                onRename={onRenamePlanNode}
+                onToggle={onTogglePlanNode}
+                onEditEntities={onEditRequiredEntities}
+                onEditComponentEntities={onEditComponentRequiredEntities}
+                onEditFormula={onEditFormulaSpec}
+                onEditAnalytics={onEditAnalyticsSpec}
+                loadRecommendations={loadComponentRecommendations}
+                onAddRecommendedComponent={onAddRecommendedComponent}
+              />
+            </div>
+          ) : (
+            <Alert variant="warning">Finish entity decisions first; the question plan is created at the coverage gate.</Alert>
+          )}
+        </div>
+      );
+    }
+
+    if (workbenchMode === 'columns') {
+      const ownershipEntries = Object.entries(session.column_ownership.columns ?? {});
+      return (
+        <div className="grid gap-4 xl:grid-cols-[1fr_1.1fr]">
+          <DatasetProfileCard dataset={session.dataset_ast} />
+          <Card title="Column ownership" description="Which report entities claim each dataset column.">
+            <div className="max-h-[34rem] space-y-2 overflow-auto pr-1">
+              {ownershipEntries.map(([columnName, entry]) => (
+                <div key={columnName} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate font-medium text-text">{columnName}</p>
+                    {entry.locked ? <Badge variant="warning">locked</Badge> : entry.owners.length > 1 ? <Badge variant="muted">shared</Badge> : <Badge variant="muted">open</Badge>}
+                  </div>
+                  <p className="mt-1 text-xs text-text-muted">
+                    {entry.owners.length ? entry.owners.map((owner) => `${owner.entityName || owner.entityId} (${owner.sharePolicy})`).join(', ') : 'No entity has claimed this column yet.'}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      );
+    }
+
+    if (workbenchMode === 'issues') {
+      return (
+        <div className="space-y-4">
+          {result && (
+            <CoveragePanel coverage={result.coverage} questionBindings={result.question_bindings} hasErrors={result.has_errors} />
+          )}
+          <Card title="Workspace issues" description="Open blockers, unresolved entities, and ownership risks.">
+            <div className="space-y-2">
+              {workspaceIssues.length === 0 ? (
+                <div className="rounded-lg border border-success/25 bg-success/5 px-3 py-2 text-sm text-text-muted">No workspace issues are currently reported.</div>
+              ) : workspaceIssues.map((issue: BindingWorkspaceIssue, index) => (
+                <div key={issue.issueId || `${issue.code || 'issue'}-${issue.entityId || issue.column || index}`} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant={issue.severity === 'error' || issue.severity === 'danger' ? 'danger' : issue.severity === 'warn' || issue.severity === 'warning' ? 'warning' : 'muted'}>
+                        {issue.code || issue.severity || 'ISSUE'}
+                      </Badge>
+                      {issue.entityId && <span className="font-mono text-xs text-text-muted">{issue.entityId}</span>}
+                      {issue.questionId && <span className="font-mono text-xs text-text-muted">{issue.questionId}</span>}
+                      {issue.column && <span className="font-mono text-xs text-text-muted">{issue.column}</span>}
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => focusIssue(issue)}>
+                      Go fix
+                    </Button>
+                  </div>
+                  <p className="mt-1 text-text-muted">{issue.message}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      );
+    }
+
+    if (workbenchMode === 'handoff') {
+      const meta = executionReady ? EXECUTION_READY_META[executionReady.status] : null;
+      const Icon = meta?.icon ?? AlertCircle;
+      const readyToOpen = executionReady?.status === 'READY' || executionReady?.status === 'DEGRADED';
+      return (
+        <div className="space-y-4">
+          <Card title="S3.5 handoff" description="Prepare the canonical execution bundle for the downstream runtime team.">
+            {executionReady && meta ? (
+              <div className={`rounded-xl border p-4 ${meta.wrap}`}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex min-w-0 gap-3">
+                    <Icon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold text-text">{meta.label}</p>
+                        <Badge variant={meta.badge}>{executionReady.status}</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-text-muted">
+                        Contract {executionReady.contract_version} · Binding AST <span className="font-mono text-text">{executionReady.binding_ast_id}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-right text-xs">
+                    <div><p className="font-semibold text-text">{executionReady.plans.length}</p><p className="text-text-muted">plans</p></div>
+                    <div><p className="font-semibold text-text">{executionReady.blocked_questions.length}</p><p className="text-text-muted">blocked</p></div>
+                    <div><p className="font-semibold text-text">{Object.keys(executionReady.lineage_index ?? {}).length}</p><p className="text-text-muted">lineage</p></div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border bg-surface p-4 text-sm text-text-muted">No handoff bundle has been prepared for this session yet.</div>
+            )}
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              {!executionReady ? (
+                <Button onClick={onExecutionReady} disabled={checkingReady || !currentReviewedPlan}>
+                  {checkingReady ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                  Prepare S3.5 bundle
+                </Button>
+              ) : readyToOpen ? (
+                <Link href={generationHref}><Button>Open generation workspace <ArrowRight className="h-4 w-4" /></Button></Link>
+              ) : (
+                <Button disabled>Not ready for generation <ArrowRight className="h-4 w-4" /></Button>
+              )}
+            </div>
+          </Card>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <p className="text-[11px] uppercase text-text-muted">Template</p>
+            <p className="mt-1 truncate text-sm font-semibold text-text">{packageForWorkbench?.name ?? session.template_id}</p>
+            <p className="mt-1 text-xs text-text-muted">{packageForWorkbench?.questions_count ?? currentReviewedPlan?.questionCount ?? 0} questions · {packageForWorkbench?.chart_slots_count ?? 0} charts</p>
+          </div>
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <p className="text-[11px] uppercase text-text-muted">Dataset</p>
+            <p className="mt-1 truncate text-sm font-semibold text-text">{session.dataset_id}</p>
+            <p className="mt-1 text-xs text-text-muted">{datasetForWorkbench?.columns.length ?? 0} profiled columns</p>
+          </div>
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <p className="text-[11px] uppercase text-text-muted">Entity decisions</p>
+            <p className="mt-1 text-sm font-semibold text-text">{decidedCount}/{proposals.length}</p>
+            <p className="mt-1 text-xs text-text-muted">{remaining} pending</p>
+          </div>
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <p className="text-[11px] uppercase text-text-muted">Readiness</p>
+            <p className="mt-1 text-sm font-semibold text-text">{executionReady?.status ?? (currentReviewedPlan ? 'Plan ready' : 'Matching')}</p>
+            <p className="mt-1 text-xs text-text-muted">{workspaceIssues.length} workspace issues</p>
+          </div>
+        </div>
+        <Card title="Phase readiness" description="Backend-governed transition state for the current binding session.">
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {workbenchModes.filter((mode) => mode.id !== 'overview').map((mode) => (
+              <button
+                key={mode.id}
+                type="button"
+                onClick={() => setWorkbenchMode(mode.id)}
+                className="rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm hover:border-accent/60"
+              >
+                <span className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-text">{mode.label}</span>
+                  <Badge variant={mode.status === 'Ready' ? 'success' : mode.status === 'Blocked' ? 'danger' : mode.status === 'Review' ? 'warning' : 'muted'}>
+                    {mode.status}
+                  </Badge>
+                </span>
+                <span className="mt-1 block text-xs text-text-muted">{mode.hint}</span>
+              </button>
+            ))}
+          </div>
+        </Card>
+        <div className="grid gap-4 xl:grid-cols-[1fr_20rem]">
+          <Card title="Dependency graph" description="How entities connect to questions, components, and dataset columns.">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+                <p className="text-[11px] uppercase text-text-muted">Entity → Questions</p>
+                <p className="mt-1 font-semibold text-text">{Object.keys(workspace?.dependency_graph.entityToQuestions ?? {}).length}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+                <p className="text-[11px] uppercase text-text-muted">Entity → Components</p>
+                <p className="mt-1 font-semibold text-text">{Object.keys(workspace?.dependency_graph.entityToComponents ?? {}).length}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+                <p className="text-[11px] uppercase text-text-muted">Columns claimed</p>
+                <p className="mt-1 font-semibold text-text">{Object.keys(workspace?.dependency_graph.columnToEntities ?? {}).length}</p>
+              </div>
+            </div>
+          </Card>
+          <Card title="Next action" description="Recommended step from current session state.">
+            {remaining > 0 ? (
+              <Button className="w-full" onClick={() => setWorkbenchMode('entities')}>Review {remaining} entities</Button>
+            ) : !currentReviewedPlan ? (
+              <Button className="w-full" onClick={onFinalize} disabled={finalizing}>Build reviewed plan</Button>
+            ) : !executionReady ? (
+              <Button className="w-full" onClick={() => setWorkbenchMode('handoff')}>Prepare handoff</Button>
+            ) : (
+              <Button className="w-full" onClick={() => setWorkbenchMode('issues')}>Inspect readiness</Button>
+            )}
+          </Card>
+        </div>
+      </div>
+    );
+  };
+
+  const bindingWorkbench = session ? (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-border bg-surface-card p-4 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Binder workbench</p>
+            <h2 className="mt-1 text-xl font-semibold text-text">{packageForWorkbench?.name ?? session.template_id}</h2>
+            <p className="mt-1 text-sm text-text-muted">Dataset {session.dataset_id} · signature {session.signature}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {workspaceLoading && <Badge variant="muted">Refreshing…</Badge>}
+            <Badge variant={remaining === 0 ? 'success' : 'warning'}>{remaining === 0 ? 'Bindings reviewed' : `${remaining} pending`}</Badge>
+            {currentReviewedPlan && <Badge variant="success">Plan ready</Badge>}
+            {executionReady && <Badge variant={EXECUTION_READY_META[executionReady.status].badge}>{executionReady.status}</Badge>}
+          </div>
+        </div>
+        <div className="grid gap-4 pt-4 lg:grid-cols-[13rem_1fr_18rem]">
+          <nav className="space-y-1">
+            {workbenchModes.map((mode) => (
+              <button
+                key={mode.id}
+                type="button"
+                onClick={() => setWorkbenchMode(mode.id)}
+                className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${workbenchMode === mode.id ? 'border-primary bg-primary/5 text-text' : 'border-transparent text-text-muted hover:border-border hover:bg-surface'}`}
+              >
+                <span className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-semibold">{mode.label}</span>
+                  <Badge variant={mode.status === 'Ready' ? 'success' : mode.status === 'Blocked' ? 'danger' : mode.status === 'Review' ? 'warning' : 'muted'} className="px-1.5 py-0 text-[10px]">
+                    {mode.status}
+                  </Badge>
+                </span>
+                <span className="block text-xs">{mode.hint}</span>
+              </button>
+            ))}
+          </nav>
+          <main className="min-w-0">{renderWorkbenchPanel()}</main>
+          <aside className="space-y-4">
+            <Card title="Column allocation" description="Live ownership state.">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="rounded-lg border border-border bg-surface px-3 py-2"><p className="text-[11px] uppercase text-text-muted">Assigned</p><p className="mt-1 font-semibold text-text">{ownershipStats.assigned}</p></div>
+                <div className="rounded-lg border border-border bg-surface px-3 py-2"><p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><Lock className="h-3 w-3" /> Locked</p><p className="mt-1 font-semibold text-text">{ownershipStats.locked}</p></div>
+                <div className="rounded-lg border border-border bg-surface px-3 py-2"><p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><Share2 className="h-3 w-3" /> Shared</p><p className="mt-1 font-semibold text-text">{ownershipStats.shared}</p></div>
+                <div className="rounded-lg border border-border bg-surface px-3 py-2"><p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><AlertTriangle className="h-3 w-3" /> Conflicts</p><p className="mt-1 font-semibold text-text">{ownershipStats.conflicts}</p></div>
+              </div>
+            </Card>
+            <Card title="Add entity" description="Create a missing template entity.">
+              <form onSubmit={onAddEntity} className="space-y-3">
+                <select
+                  value={newEntityColumn}
+                  onChange={(e) => {
+                    const column = e.target.value;
+                    setNewEntityColumn(column);
+                    setNewEntityType(entityTypeForColumn(column));
+                    if (!newEntityName.trim()) setNewEntityName(column.replace(/_/g, ' '));
+                  }}
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+                >
+                  <option value="">Select column</option>
+                  {session.dataset_ast.columns.map((column) => <option key={column.name} value={column.name}>{column.name}</option>)}
+                </select>
+                <input
+                  value={newEntityName}
+                  onChange={(e) => setNewEntityName(e.target.value)}
+                  placeholder="Entity name"
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+                />
+                <select
+                  value={newEntityType}
+                  onChange={(e) => setNewEntityType(e.target.value as typeof newEntityType)}
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+                >
+                  <option value="dimension">Dimension</option>
+                  <option value="measure">Measure</option>
+                  <option value="time">Time</option>
+                  <option value="filter">Filter</option>
+                  <option value="metadata">Metadata</option>
+                </select>
+                <Button type="submit" size="sm" className="w-full" disabled={addingEntity || !newEntityColumn || !newEntityName.trim()}>
+                  {addingEntity ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                  Add and bind
+                </Button>
+              </form>
+            </Card>
+            <div className="flex flex-col gap-2">
+              <Button variant="outline" size="sm" onClick={resetAll}><ArrowLeft className="h-4 w-4" /> Start over</Button>
+              <Button size="sm" onClick={onFinalize} disabled={finalizing || !allDecided}>
+                {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                Coverage gate
+              </Button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <>
@@ -672,85 +1301,148 @@ export default function BindingWorkflowPage() {
         {step === 0 && (
           <div className="mx-auto max-w-2xl">
             <Card
-              title="Upload your dataset"
-              description="We profile every column, then propose how each maps to the template's entities."
+              title="Create binding session"
+              description="Choose a report template package, upload the dataset, then open the review workspace."
             >
-              <form onSubmit={onStart} className="space-y-4">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-text-muted">Extracted template package</label>
-                  <select
-                    value={/^\d+$/.test(templateId) ? templateId : ''}
-                    onChange={(e) => {
-                      if (e.target.value) setTemplateId(e.target.value);
-                    }}
-                    className="mb-3 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
-                  >
-                    <option value="">{templatesLoading ? 'Loading templates…' : 'Use built-in/manual template id'}</option>
-                    {templates.map((template) => (
-                      <option key={template.id} value={template.id}>
-                        {template.name} ({template.block_count} blocks)
-                      </option>
-                    ))}
-                  </select>
-                  <label className="mb-1 block text-xs font-medium text-text-muted">Template ID</label>
-                  <input
-                    type="text"
-                    value={templateId}
-                    onChange={(e) => setTemplateId(e.target.value)}
-                    placeholder="tpl_plfs_annual_v1"
-                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
-                  />
-                  <p className="mt-1 text-xs text-text-muted">
-                    Built-in ids (<span className="font-mono">tpl_plfs_annual_v1</span>, <span className="font-mono">gold</span>) use the
-                    bundled PLFS blueprint. Otherwise attach a blueprint below.
-                  </p>
-                </div>
+              <form onSubmit={onStart} className="space-y-6">
+                <section className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">1. Report template</p>
+                      <p className="mt-1 text-sm text-text-muted">Select the package that contains the blueprint, render skeleton, and slot graph.</p>
+                    </div>
+                    {templatesLoading && <Loader2 className="h-4 w-4 animate-spin text-text-muted" />}
+                  </div>
 
-                <label
-                  htmlFor="binding-dataset"
-                  className="block cursor-pointer rounded-xl border-2 border-dashed border-border p-6 text-center transition-colors hover:border-accent/50"
-                >
-                  <UploadIcon className="mx-auto mb-2 h-6 w-6 text-text-muted" />
-                  <p className="text-sm font-medium text-text">
-                    {datasetFile ? datasetFile.name : 'Click to choose a CSV dataset'}
-                  </p>
-                  <p className="mt-1 text-xs text-text-muted">CSV only.</p>
-                </label>
-                <input
-                  id="binding-dataset"
-                  type="file"
-                  accept=".csv,text/csv"
-                  className="hidden"
-                  onChange={(e) => setDatasetFile(e.target.files?.[0] ?? null)}
-                />
+                  <div className="grid gap-3">
+                    {templatePackages.map((pkg) => {
+                      const selected = pkg.template_id === templateId;
+                      const statusVariant = pkg.status === 'VALID' ? 'success' : pkg.status === 'INVALID' ? 'danger' : pkg.source === 'built_in' ? 'muted' : 'warning';
+                      return (
+                        <button
+                          key={`${pkg.source}-${pkg.template_id}`}
+                          type="button"
+                          onClick={() => setTemplateId(pkg.template_id)}
+                          className={`rounded-xl border p-4 text-left transition-colors ${selected ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-surface hover:border-accent/60'}`}
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-text">{pkg.name}</p>
+                              <p className="mt-1 text-xs text-text-muted">
+                                {pkg.source === 'built_in' ? 'Built-in demo' : `Template ${pkg.template_id}`} · v{pkg.version}
+                              </p>
+                            </div>
+                            <Badge variant={statusVariant}>{pkg.status || (pkg.source === 'built_in' ? 'DEMO' : 'UNKNOWN')}</Badge>
+                          </div>
+                          <div className="mt-3 grid grid-cols-3 gap-2 text-xs sm:grid-cols-6">
+                            <span><strong className="text-text">{pkg.topics_count}</strong> topics</span>
+                            <span><strong className="text-text">{pkg.questions_count}</strong> questions</span>
+                            <span><strong className="text-text">{pkg.entities_count}</strong> entities</span>
+                            <span><strong className="text-text">{pkg.chart_slots_count}</strong> charts</span>
+                            <span><strong className="text-text">{pkg.table_slots_count}</strong> tables</span>
+                            <span><strong className="text-text">{pkg.external_refs_count}</strong> external</span>
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-1.5 text-[11px] text-text-muted">
+                            <span className="rounded bg-border px-2 py-0.5">AST {pkg.ast_available ? 'ready' : 'missing'}</span>
+                            <span className="rounded bg-border px-2 py-0.5">Blueprint {pkg.blueprint_available ? 'ready' : 'missing'}</span>
+                            <span className="rounded bg-border px-2 py-0.5">Slots {pkg.semantic_slot_graph_available ? 'ready' : 'generated on finalize'}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                    {!templatesLoading && templatePackages.length === 0 && (
+                      <div className="rounded-xl border border-border bg-surface p-4 text-sm text-text-muted">
+                        No extracted templates were returned. Use the built-in id or an advanced blueprint override.
+                      </div>
+                    )}
+                  </div>
 
-                <div>
+                  {selectedPackage && (
+                    <div className="rounded-xl border border-success/20 bg-success/5 px-4 py-3 text-sm">
+                      <p className="font-semibold text-text">Selected: {selectedPackage.name}</p>
+                      <p className="mt-1 text-xs text-text-muted">
+                        This package will drive entity matching, question planning, and slot-aware ReviewedPlan generation.
+                      </p>
+                    </div>
+                  )}
+                </section>
+
+                <section className="space-y-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">2. Dataset</p>
+                    <p className="mt-1 text-sm text-text-muted">Upload the CSV that will be profiled into DatasetAST.</p>
+                  </div>
                   <label
-                    htmlFor="binding-blueprint"
-                    className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-surface px-3 py-2 text-sm transition-colors hover:border-accent/50"
+                    htmlFor="binding-dataset"
+                    className="block cursor-pointer rounded-xl border-2 border-dashed border-border p-6 text-center transition-colors hover:border-accent/50"
                   >
-                    <span className="text-text-muted">
-                      {blueprintFile ? blueprintFile.name : 'Optional: attach a blueprint.json'}
-                    </span>
-                    <span className="text-xs font-medium text-primary">Browse</span>
+                    <UploadIcon className="mx-auto mb-2 h-6 w-6 text-text-muted" />
+                    <p className="text-sm font-medium text-text">
+                      {datasetFile ? datasetFile.name : 'Click to choose a CSV dataset'}
+                    </p>
+                    <p className="mt-1 text-xs text-text-muted">The binder will infer measures, dimensions, time columns, samples, and column ownership.</p>
                   </label>
                   <input
-                    id="binding-blueprint"
+                    id="binding-dataset"
                     type="file"
-                    accept="application/json,.json"
+                    accept=".csv,text/csv"
                     className="hidden"
-                    onChange={(e) => setBlueprintFile(e.target.files?.[0] ?? null)}
+                    onChange={(e) => setDatasetFile(e.target.files?.[0] ?? null)}
                   />
-                </div>
+                </section>
 
-                <Button type="submit" disabled={starting || !datasetFile} className="w-full">
+                <section className="rounded-xl border border-border bg-surface p-4">
+                  <button
+                    type="button"
+                    onClick={() => setAdvancedOpen((v) => !v)}
+                    className="flex w-full items-center justify-between text-left text-sm font-semibold text-text"
+                  >
+                    Advanced template controls
+                    <span className="text-xs font-medium text-primary">{advancedOpen ? 'Hide' : 'Show'}</span>
+                  </button>
+                  {advancedOpen && (
+                    <div className="mt-4 space-y-3">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-text-muted">Manual template id</label>
+                        <input
+                          type="text"
+                          value={templateId}
+                          onChange={(e) => setTemplateId(e.target.value)}
+                          placeholder="tpl_plfs_annual_v1"
+                          className="w-full rounded-lg border border-border bg-surface-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
+                        />
+                        <p className="mt-1 text-xs text-text-muted">Use this only for built-in ids, debugging, or a known DB template id.</p>
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="binding-blueprint"
+                          className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-surface-card px-3 py-2 text-sm transition-colors hover:border-accent/50"
+                        >
+                          <span className="text-text-muted">
+                            {blueprintFile ? blueprintFile.name : 'Override blueprint.json'}
+                          </span>
+                          <span className="text-xs font-medium text-primary">Browse</span>
+                        </label>
+                        <input
+                          id="binding-blueprint"
+                          type="file"
+                          accept="application/json,.json"
+                          className="hidden"
+                          onChange={(e) => setBlueprintFile(e.target.files?.[0] ?? null)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </section>
+
+                <Button type="submit" disabled={starting || !datasetFile || !templateId.trim()} className="w-full">
                   {starting ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Profiling &amp; proposing…
+                      <Loader2 className="h-4 w-4 animate-spin" /> Creating binding session…
                     </>
                   ) : (
                     <>
-                      Profile &amp; propose bindings <ArrowRight className="h-4 w-4" />
+                      Create binding session <ArrowRight className="h-4 w-4" />
                     </>
                   )}
                 </Button>
@@ -759,428 +1451,8 @@ export default function BindingWorkflowPage() {
           </div>
         )}
 
-        {/* ──────────────────────── Step 1 — confirm ──────────────────────── */}
-        {step === 1 && session && (
-          <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
-            <div className="order-2 space-y-4 lg:order-1">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-base font-semibold text-text">Confirm each binding</h2>
-                  <p className="text-sm text-text-muted">
-                    {remaining > 0
-                      ? `${remaining} of ${proposals.length} still need a decision.`
-                      : 'All bindings reviewed — finalize to check coverage.'}
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={confirmAllRemaining}
-                  disabled={!!busyEntity || remaining === 0}
-                >
-                  <Sparkles className="h-4 w-4" /> Confirm all proposed
-                </Button>
-              </div>
+        {(step === 1 || step === 2) && session && bindingWorkbench}
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                {proposals.map((b) => (
-                  <EntityBindingCard
-                    key={b.entityId}
-                    binding={b}
-                    columns={session.dataset_ast.columns}
-                    columnOwnership={session.column_ownership}
-                    decided={decisions[b.entityId]}
-                    busy={busyEntity === b.entityId}
-                    onDecide={onDecide}
-                  />
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
-                <Button variant="ghost" size="sm" onClick={resetAll} className="text-text-muted">
-                  <ArrowLeft className="h-4 w-4" /> Start over
-                </Button>
-                <Button onClick={onFinalize} disabled={finalizing || !allDecided}>
-                  {finalizing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Resolving questions…
-                    </>
-                  ) : (
-                    <>
-                      Check coverage <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            <aside className="order-1 space-y-4 lg:order-2 lg:sticky lg:top-6">
-              <Card title="Column allocation" description="Live ownership state from officer decisions.">
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="rounded-lg border border-border bg-surface px-3 py-2">
-                    <p className="text-[11px] uppercase text-text-muted">Assigned</p>
-                    <p className="mt-1 font-semibold text-text">{ownershipStats.assigned}</p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-surface px-3 py-2">
-                    <p className="flex items-center gap-1 text-[11px] uppercase text-text-muted">
-                      <Lock className="h-3 w-3" /> Locked
-                    </p>
-                    <p className="mt-1 font-semibold text-text">{ownershipStats.locked}</p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-surface px-3 py-2">
-                    <p className="flex items-center gap-1 text-[11px] uppercase text-text-muted">
-                      <Share2 className="h-3 w-3" /> Shared
-                    </p>
-                    <p className="mt-1 font-semibold text-text">{ownershipStats.shared}</p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-surface px-3 py-2">
-                    <p className="flex items-center gap-1 text-[11px] uppercase text-text-muted">
-                      <AlertTriangle className="h-3 w-3" /> Conflicts
-                    </p>
-                    <p className="mt-1 font-semibold text-text">{ownershipStats.conflicts}</p>
-                  </div>
-                </div>
-                {ownershipStats.conflicts > 0 && (
-                  <p className="mt-3 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-text-muted">
-                    Resolve duplicate exclusive columns before freezing this binding.
-                  </p>
-                )}
-              </Card>
-              <Card title="Add entity" description="Create a missing template entity from a dataset column.">
-                <form onSubmit={onAddEntity} className="space-y-3">
-                  <div>
-                    <label className="mb-1 block text-[11px] font-medium uppercase text-text-muted">Column</label>
-                    <select
-                      value={newEntityColumn}
-                      onChange={(e) => {
-                        const column = e.target.value;
-                        setNewEntityColumn(column);
-                        setNewEntityType(entityTypeForColumn(column));
-                        if (!newEntityName.trim()) setNewEntityName(column.replace(/_/g, ' '));
-                      }}
-                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
-                    >
-                      <option value="">Select column</option>
-                      {session.dataset_ast.columns.map((column) => (
-                        <option key={column.name} value={column.name}>{column.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-[11px] font-medium uppercase text-text-muted">Entity name</label>
-                    <input
-                      value={newEntityName}
-                      onChange={(e) => setNewEntityName(e.target.value)}
-                      placeholder="e.g. Worker Population Ratio"
-                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-[11px] font-medium uppercase text-text-muted">Entity type</label>
-                    <select
-                      value={newEntityType}
-                      onChange={(e) => setNewEntityType(e.target.value as typeof newEntityType)}
-                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
-                    >
-                      <option value="dimension">Dimension</option>
-                      <option value="measure">Measure</option>
-                      <option value="time">Time</option>
-                      <option value="filter">Filter</option>
-                      <option value="metadata">Metadata</option>
-                    </select>
-                  </div>
-                  <Button type="submit" size="sm" className="w-full" disabled={addingEntity || !newEntityColumn || !newEntityName.trim()}>
-                    {addingEntity ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                    Add and bind entity
-                  </Button>
-                </form>
-              </Card>
-              <DatasetProfileCard dataset={session.dataset_ast} />
-            </aside>
-          </div>
-        )}
-
-        {/* ─────────────────────── Step 2 — coverage ─────────────────────── */}
-        {step === 2 && result && (
-          <div className="mx-auto max-w-3xl space-y-6">
-            <CoveragePanel
-              coverage={result.coverage}
-              questionBindings={result.question_bindings}
-              hasErrors={result.has_errors}
-            />
-            {result.reviewed_plan && (
-              <Card title="Reviewed plan" description="Officer-reviewed planning layer prepared from these bindings.">
-                <div className="grid gap-3 rounded-xl border border-border bg-surface p-4 text-sm sm:grid-cols-4">
-                  <div className="sm:col-span-2">
-                    <p className="text-[11px] uppercase text-text-muted">Plan id</p>
-                    <p className="mt-1 truncate font-mono text-xs font-semibold text-text">{result.reviewed_plan.planId}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] uppercase text-text-muted">Status</p>
-                    <p className="mt-1 font-semibold text-text">{result.reviewed_plan.status}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] uppercase text-text-muted">Tree</p>
-                    <p className="mt-1 font-semibold text-text">
-                      {result.reviewed_plan.topicCount} topics · {result.reviewed_plan.questionCount} questions
-                    </p>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <p className="text-[11px] uppercase text-text-muted">Slots</p>
-                    <p className="mt-1 font-semibold text-text">
-                      {result.reviewed_plan.semanticSlotCount} semantic · {result.reviewed_plan.virtualSlotCount} virtual
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-surface p-3">
-                  <div>
-                    <p className="text-xs font-semibold text-text">Derived template promotion</p>
-                    <p className="mt-0.5 text-xs text-text-muted">Save this reviewed plan and learned entities as a reusable sidecar.</p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <input
-                      value={promotionName}
-                      onChange={(e) => setPromotionName(e.target.value)}
-                      placeholder="Derived template name"
-                      className="w-52 rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
-                    />
-                    <Button size="sm" variant="outline" disabled={promotingPlan} onClick={onPromoteReviewedPlan}>
-                      {promotingPlan ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                      Promote
-                    </Button>
-                  </div>
-                </div>
-                {promotionResult && (
-                  <div className="mt-2 rounded-lg border border-success/30 bg-success/5 px-3 py-2 text-xs text-text-muted">
-                    <p>
-                      Promoted <span className="font-mono text-text">{promotionResult.derivedTemplateId}</span>
-                      {promotionResult.templateId ? <> · DB template <span className="font-mono text-text">{promotionResult.templateId}</span></> : null}
-                      {' '}· {promotionResult.learnedEntityCount} learned entities
-                    </p>
-                    {promotionResult.dbWarning && <p className="mt-1 text-warning">DB promotion warning: {promotionResult.dbWarning}</p>}
-                    {learnedEntities.length > 0 && (
-                      <p className="mt-1">
-                        Learned: {learnedEntities.slice(0, 4).map((entity) => entity.entityName).join(', ')}
-                        {learnedEntities.length > 4 ? ` +${learnedEntities.length - 4}` : ''}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {result.reviewed_plan.virtualSlots?.length > 0 && (
-                  <div className="mt-3 rounded-xl border border-border bg-surface p-3">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Virtual slots</p>
-                    <div className="space-y-1.5">
-                      {result.reviewed_plan.virtualSlots.slice(0, 8).map((slot, index) => (
-                        <p key={`${String(slot.slotId || index)}`} className="truncate font-mono text-[11px] text-text-muted">
-                          {String(slot.slotId || 'slot')} → {String(slot.componentId || 'component')} · {String(slot.layoutIntent || 'layout')}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {result.reviewed_plan.planTree?.length > 0 && (
-                  <div className="mt-4 rounded-xl border border-border bg-surface-card p-4">
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Question plan bundle</p>
-                      <p className="text-xs text-text-muted">
-                        {planSaving ? 'Saving…' : `${result.reviewed_plan.componentCount} components`}
-                      </p>
-                    </div>
-                    {editTitleNode && (
-                      <form onSubmit={submitRenamePlanNode} className="mb-3 grid gap-2 rounded-lg border border-border bg-surface p-3 sm:grid-cols-[1fr_auto_auto]">
-                        <input
-                          value={editTitleValue}
-                          onChange={(e) => setEditTitleValue(e.target.value)}
-                          className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
-                        />
-                        <Button type="submit" size="sm" disabled={planSaving || !editTitleValue.trim()}>Save rename</Button>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => setEditTitleNode(null)}>Cancel</Button>
-                      </form>
-                    )}
-                    {editEntitiesNode && (
-                      <form onSubmit={submitRequiredEntities} className="mb-3 grid gap-2 rounded-lg border border-border bg-surface p-3 sm:grid-cols-[1fr_auto_auto]">
-                        <input
-                          value={editEntitiesValue}
-                          onChange={(e) => setEditEntitiesValue(e.target.value)}
-                          placeholder="ent_wpr:measure, ent_sector:grouping"
-                          className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
-                        />
-                        <Button type="submit" size="sm" disabled={planSaving}>Save entities</Button>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => setEditEntitiesNode(null)}>Cancel</Button>
-                      </form>
-                    )}
-                    {editFormulaTarget && (
-                      <form onSubmit={submitFormulaSpec} className="mb-3 grid gap-2 rounded-lg border border-border bg-surface p-3 sm:grid-cols-[0.8fr_1fr_1fr_auto_auto]">
-                        <select
-                          value={formulaType}
-                          onChange={(e) => setFormulaType(e.target.value)}
-                          className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
-                        >
-                          <option value="DIRECT">DIRECT</option>
-                          <option value="SHARE">SHARE</option>
-                          <option value="RATE">RATE</option>
-                          <option value="RATIO">RATIO</option>
-                          <option value="GROWTH">GROWTH</option>
-                          <option value="INDEX">INDEX</option>
-                        </select>
-                        <input
-                          value={formulaNumerator}
-                          onChange={(e) => setFormulaNumerator(e.target.value)}
-                          placeholder="Numerator/source column"
-                          className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
-                        />
-                        <input
-                          value={formulaDenominator}
-                          onChange={(e) => setFormulaDenominator(e.target.value)}
-                          placeholder="Denominator column"
-                          className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
-                        />
-                        <Button type="submit" size="sm" disabled={planSaving}>Save spec</Button>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => setEditFormulaTarget(null)}>Cancel</Button>
-                      </form>
-                    )}
-                    <ReviewedPlanTree
-                      nodes={result.reviewed_plan.planTree}
-                      onRename={onRenamePlanNode}
-                      onToggle={onTogglePlanNode}
-                      onEditEntities={onEditRequiredEntities}
-                      onEditFormula={onEditFormulaSpec}
-                      busy={planSaving}
-                    />
-                    <form onSubmit={onAddPlanQuestion} className="mt-4 grid gap-2 rounded-lg border border-border bg-surface p-3 sm:grid-cols-[1fr_1.5fr_auto]">
-                      <select
-                        value={newPlanQuestionTopic}
-                        onChange={(e) => setNewPlanQuestionTopic(e.target.value)}
-                        className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
-                      >
-                        <option value="">Choose topic</option>
-                        {planContainers.map((node) => (
-                          <option key={node.nodeId} value={node.nodeId}>{node.title}</option>
-                        ))}
-                      </select>
-                      <input
-                        value={newPlanQuestionTitle}
-                        onChange={(e) => setNewPlanQuestionTitle(e.target.value)}
-                        placeholder="Add manual question"
-                        className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
-                      />
-                      <Button type="submit" size="sm" disabled={planSaving || !newPlanQuestionTopic || !newPlanQuestionTitle.trim()}>
-                        <Plus className="h-4 w-4" /> Add question
-                      </Button>
-                    </form>
-                    <form onSubmit={onAddPlanComponent} className="mt-3 grid gap-2 rounded-lg border border-border bg-surface p-3 sm:grid-cols-[1fr_1fr_auto]">
-                      <select
-                        value={newComponentNode}
-                        onChange={(e) => setNewComponentNode(e.target.value)}
-                        className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
-                      >
-                        <option value="">Attach to item</option>
-                        {planNodes.map((node) => (
-                          <option key={node.nodeId} value={node.nodeId}>{node.title}</option>
-                        ))}
-                      </select>
-                      <select
-                        value={newComponentType}
-                        onChange={(e) => setNewComponentType(e.target.value)}
-                        className="rounded-md border border-border bg-surface-card px-2.5 py-2 text-xs text-text outline-none"
-                      >
-                        {(componentDefinitions.length ? componentDefinitions : [{ componentType: 'narrative', label: 'Narrative paragraph' } as ComponentDefinition]).map((definition) => (
-                          <option key={definition.componentType} value={definition.componentType}>{definition.label}</option>
-                        ))}
-                      </select>
-                      <Button type="submit" size="sm" disabled={planSaving || !newComponentNode || !newComponentType}>
-                        <Plus className="h-4 w-4" /> Add component
-                      </Button>
-                    </form>
-                  </div>
-                )}
-              </Card>
-            )}
-            {executionReady && (() => {
-              const meta = EXECUTION_READY_META[executionReady.status] ?? EXECUTION_READY_META.NOT_READY;
-              const Icon = meta.icon;
-              const readyToOpen = executionReady.status === 'READY' || executionReady.status === 'DEGRADED';
-              return (
-                <Card title="S4 execution handoff" description="Canonical runtime bundle prepared from this reviewed binding.">
-                  <div className={`rounded-xl border p-4 ${meta.wrap}`}>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="flex min-w-0 gap-3">
-                        <Icon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-semibold text-text">{meta.label}</p>
-                            <Badge variant={meta.badge}>{executionReady.status}</Badge>
-                          </div>
-                          <p className="mt-1 text-xs text-text-muted">
-                            Contract {executionReady.contract_version} · Binding AST{' '}
-                            <span className="font-mono text-text">{executionReady.binding_ast_id}</span>
-                          </p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-right text-xs sm:grid-cols-3">
-                        <div>
-                          <p className="font-semibold text-text">{executionReady.plans.length}</p>
-                          <p className="text-text-muted">plans</p>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-text">{executionReady.blocked_questions.length}</p>
-                          <p className="text-text-muted">blocked</p>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-text">{Object.keys(executionReady.lineage_index ?? {}).length}</p>
-                          <p className="text-text-muted">lineage</p>
-                        </div>
-                      </div>
-                    </div>
-                    {executionReady.status === 'NOT_READY' && (
-                      <p className="mt-3 rounded-lg border border-danger/20 bg-surface px-3 py-2 text-xs text-text-muted">
-                        This binding can be saved for review, but S4 should not generate from it until blocked questions and readiness errors are resolved.
-                      </p>
-                    )}
-                    {readyToOpen && (
-                      <p className="mt-3 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-muted">
-                        The execution bundle is prepared. The next screen will receive the template id, dataset signature, binding AST id, and readiness status as handoff parameters.
-                      </p>
-                    )}
-                  </div>
-                </Card>
-              );
-            })()}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-              <Button variant="outline" size="sm" onClick={() => setStep(1)}>
-                <ArrowLeft className="h-4 w-4" /> Back to bindings
-              </Button>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={resetAll} className="text-text-muted">
-                  Bind another dataset
-                </Button>
-                {!executionReady ? (
-                  <Button onClick={onExecutionReady} disabled={checkingReady}>
-                    {checkingReady ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" /> Preparing S4 bundle…
-                      </>
-                    ) : (
-                      <>
-                        Prepare S4 bundle <ArrowRight className="h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                ) : executionReady.status === 'NOT_READY' ? (
-                  <Button disabled>
-                    Not ready for generation <ArrowRight className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Link href={generationHref}>
-                    <Button>
-                      Open generation workspace <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );
