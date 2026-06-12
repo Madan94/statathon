@@ -102,7 +102,7 @@ class ValidationWorkflowService:
         )
         PhaseStatusService(self.db).mark_rule_validation_complete(analysis_id)
         try:
-            PhaseSnapshotService(self.db).snapshot_validation(analysis_id)
+            PhaseSnapshotService(self.db).refresh_downstream(analysis_id, "validation")
         except Exception as exc:
             logger.warning(
                 "validation snapshot skipped for analysis %s: %s",
@@ -157,7 +157,7 @@ class ValidationWorkflowService:
         )
         PhaseStatusService(self.db).mark_rule_validation_complete(analysis_id)
         try:
-            PhaseSnapshotService(self.db).snapshot_validation(analysis_id)
+            PhaseSnapshotService(self.db).refresh_downstream(analysis_id, "validation")
         except Exception as exc:
             logger.warning(
                 "validation snapshot skipped for analysis %s: %s",
@@ -182,7 +182,17 @@ class ValidationWorkflowService:
         user_id: int | None,
     ) -> dict[str, Any]:
         self._load(analysis_id)
-        saved = self._persist_decisions(analysis_id, decisions, user_id=user_id, commit=True)
+        saved = self._persist_decisions(analysis_id, decisions, user_id=user_id, commit=False)
+        try:
+            PhaseSnapshotService(self.db).refresh_downstream(analysis_id, "validation")
+        except Exception as exc:
+            logger.warning(
+                "validation snapshot skipped for analysis %s: %s",
+                analysis_id,
+                exc,
+            )
+        invalidate_analysis_cache(analysis_id)
+        self.db.commit()
         return {"success": True, "analysis_id": analysis_id, "saved": saved}
 
     def _persist_decisions(

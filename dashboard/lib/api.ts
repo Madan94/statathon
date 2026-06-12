@@ -840,6 +840,8 @@ export const analysisApi = {
         columns_before: number;
         columns_after: number;
         columns_removed: number;
+        columns_renamed?: number;
+        columns_excluded?: number;
         missing_values_before: number;
         missing_values_after: number;
         rule_violations_fixed: number;

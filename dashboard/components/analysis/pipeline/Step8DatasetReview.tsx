@@ -178,7 +178,9 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
       { label: 'Rows Removed', value: s.rows_removed },
       { label: 'Columns Before', value: s.columns_before },
       { label: 'Columns After', value: s.columns_after },
+      { label: 'Columns Renamed', value: s.columns_renamed ?? 0 },
       { label: 'Columns Removed', value: s.columns_removed },
+      { label: 'Columns Excluded', value: s.columns_excluded ?? 0 },
       { label: 'Missing Before', value: s.missing_values_before },
       { label: 'Missing After', value: s.missing_values_after },
     ];

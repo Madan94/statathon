@@ -9,10 +9,7 @@ from typing import Any
 import pandas as pd
 from sqlalchemy.orm import Session
 
-from core.ingestion import dataframe_for_uploaded_dataset, infer_schema
-from database.models import Dataset, DatasetLineageSnapshot
-from object_storage.object_store import try_build_default_store
-from services.analysis_query import get_analysis_meta, load_analysis_checkpoint
+from database.models import DatasetLineageSnapshot
 
 STAGE_LABELS: dict[str, str] = {
     "original": "v1_upload",
@@ -23,7 +20,7 @@ STAGE_LABELS: dict[str, str] = {
     "final": "v6_review",
 }
 
-PROCESSED_STAGE_PRIORITY = ("imputed", "anomaly_reviewed", "validated", "normalized", "final")
+WORKING_STAGE = "imputed"
 
 
 class DatasetSnapshotService:
@@ -73,6 +70,8 @@ class DatasetSnapshotService:
             except Exception:
                 pass
         if snap.object_key:
+            from object_storage.object_store import try_build_default_store
+
             store = try_build_default_store()
             if store:
                 try:
@@ -83,55 +82,44 @@ class DatasetSnapshotService:
         return None
 
     def load_original_dataframe(self, analysis_id: int) -> tuple[pd.DataFrame, DatasetLineageSnapshot | None]:
-        """Raw upload — never re-applies pipeline transforms."""
-        original_snap = self._latest_snapshot(analysis_id, "original")
-        if original_snap:
-            df = self._read_snapshot_df(original_snap)
-            if df is not None:
-                return df, original_snap
+        """Immutable upload snapshot — persisted once, never transformed."""
+        from services.normalization_transform_service import ensure_original_snapshot
 
-        an = get_analysis_meta(self.db, analysis_id)
-        if not an:
-            raise ValueError("Analysis not found")
-        ds = self.db.query(Dataset).filter(Dataset.id == an.dataset_id).first()
-        if not ds:
-            raise ValueError("Dataset not found")
-
-        store = try_build_default_store() if ds.object_key else None
-        try:
-            df = dataframe_for_uploaded_dataset(ds.storage_path, ds.object_key, ds.filename, store)
-        except (FileNotFoundError, OSError):
-            if ds.object_key and store:
-                df = dataframe_for_uploaded_dataset(None, ds.object_key, ds.filename, store)
-            else:
-                raise
-        return df, original_snap
-
-    def load_processed_dataframe(self, analysis_id: int) -> tuple[pd.DataFrame, DatasetLineageSnapshot | None]:
-        """Latest processed artifact — materialized from persisted decisions when needed."""
-        from services.apply_service import materialize_processed_dataframe, persist_processed_snapshot
-
-        try:
-            df = materialize_processed_dataframe(self.db, analysis_id)
-            snap = self._latest_snapshot(analysis_id, "imputed")
-            if snap is None or (snap.row_count or 0) != len(df):
-                persist_processed_snapshot(self.db, analysis_id)
-                self.db.flush()
-                snap = self._latest_snapshot(analysis_id, "imputed")
-            return df, snap
-        except Exception:
-            pass
-
-        for stage in PROCESSED_STAGE_PRIORITY:
-            snap = self._latest_snapshot(analysis_id, stage)
-            if not snap:
-                continue
+        snap = self._latest_snapshot(analysis_id, "original")
+        if snap:
             df = self._read_snapshot_df(snap)
             if df is not None:
                 return df, snap
 
-        df, _ = self.load_original_dataframe(analysis_id)
-        return df, None
+        ensure_original_snapshot(self.db, analysis_id)
+        self.db.flush()
+        snap = self._latest_snapshot(analysis_id, "original")
+        if snap:
+            df = self._read_snapshot_df(snap)
+            if df is not None:
+                return df, snap
+
+        raise ValueError("Original dataset snapshot unavailable")
+
+    def load_processed_dataframe(self, analysis_id: int) -> tuple[pd.DataFrame, DatasetLineageSnapshot | None]:
+        """Latest working dataset snapshot (imputed stage) — read parquet, rebuild chain only if missing."""
+        snap = self._latest_snapshot(analysis_id, WORKING_STAGE)
+        if snap:
+            df = self._read_snapshot_df(snap)
+            if df is not None:
+                return df, snap
+
+        from services.phase_snapshot_service import PhaseSnapshotService
+
+        PhaseSnapshotService(self.db).snapshot_imputation(analysis_id)
+        self.db.flush()
+        snap = self._latest_snapshot(analysis_id, WORKING_STAGE)
+        if snap:
+            df = self._read_snapshot_df(snap)
+            if df is not None:
+                return df, snap
+
+        raise ValueError("Working dataset snapshot unavailable — complete missing value review first")
 
     @staticmethod
     def missing_cell_count(df: pd.DataFrame) -> int:
@@ -246,8 +234,8 @@ class DatasetSnapshotService:
         raise ValueError(f"Unsupported export format: {fmt}")
 
     def ensure_review_snapshot(self, analysis_id: int) -> dict[str, Any] | None:
-        """Alias latest processed snapshot as review-ready metadata (no duplicate write)."""
-        snap = self._latest_snapshot(analysis_id, "imputed")
+        """Alias latest working snapshot as review-ready metadata (no duplicate write)."""
+        snap = self._latest_snapshot(analysis_id, WORKING_STAGE)
         if not snap:
             return None
         return {

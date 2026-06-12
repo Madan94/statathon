@@ -1,4 +1,4 @@
-"""Compare original upload vs latest processed snapshot using stored decisions."""
+"""Compare original upload vs latest working snapshot."""
 from __future__ import annotations
 
 from typing import Any
@@ -136,17 +136,40 @@ class DatasetDiffService:
         renamed: list[dict[str, str]] = []
         removed: list[str] = []
         excluded: list[str] = []
+        seen_renames: set[tuple[str, str]] = set()
+        seen_removed: set[str] = set()
+        seen_excluded: set[str] = set()
+
+        def _add_rename(orig: str, norm: str) -> None:
+            if not orig or not norm or orig == norm:
+                return
+            key = (orig, norm)
+            if key in seen_renames:
+                return
+            seen_renames.add(key)
+            renamed.append({"from": orig, "to": norm})
+
+        def _add_removed(name: str) -> None:
+            if name and name not in seen_removed:
+                seen_removed.add(name)
+                removed.append(name)
+
+        def _add_excluded(name: str) -> None:
+            if name and name not in seen_excluded:
+                seen_excluded.add(name)
+                excluded.append(name)
+
         try:
             records = NormalizationService(self.db)._ensure_columns_seeded(analysis_id)
             for col in records:
                 orig = str(col.name)
                 norm = str(col.normalized_name or col.name)
                 if col.is_deleted:
-                    removed.append(orig)
+                    _add_removed(orig)
                 elif col.is_excluded:
-                    excluded.append(orig)
+                    _add_excluded(orig)
                 elif norm != orig:
-                    renamed.append({"from": orig, "to": norm})
+                    _add_rename(orig, norm)
         except Exception:
             pass
 
@@ -162,15 +185,15 @@ class DatasetDiffService:
                 orig = str(row.get("original_name") or row.get("column") or "")
                 norm = str(row.get("normalized_name") or row.get("canonical_name") or row.get("display_name") or orig)
                 if row.get("is_deleted"):
-                    removed.append(orig)
+                    _add_removed(orig)
                 elif row.get("is_excluded"):
-                    excluded.append(orig)
+                    _add_excluded(orig)
                 elif norm and orig and norm != orig:
-                    renamed.append({"from": orig, "to": norm})
+                    _add_rename(orig, norm)
         return {
             "columns_renamed": renamed,
-            "columns_removed": sorted(set(removed)),
-            "columns_excluded": sorted(set(excluded)),
+            "columns_removed": sorted(removed),
+            "columns_excluded": sorted(excluded),
         }
 
     def _validation_changes(self, analysis_id: int) -> dict[str, Any]:
@@ -468,39 +491,29 @@ class DatasetDiffService:
         original_df: pd.DataFrame,
         processed_df: pd.DataFrame,
     ) -> dict[str, Any]:
+        """Compare persisted original vs working snapshots — metrics from dataframes only."""
         norm = self._normalization_changes(analysis_id)
         val = self._validation_changes(analysis_id)
         anomaly = self._anomaly_changes(analysis_id)
         imputation = self._imputation_changes(analysis_id)
 
-        orig_cols = {str(c) for c in original_df.columns}
-        proc_cols = {str(c) for c in processed_df.columns}
-        structural_removed = sorted(orig_cols - proc_cols - set(norm["columns_removed"]))
+        rows_before = len(original_df)
+        rows_after = len(processed_df)
+        rows_removed = max(0, rows_before - rows_after)
 
-        rows_removed = self._merged_rows_removed(val, anomaly)
-        if not rows_removed:
-            rows_removed = self._infer_rows_removed(original_df, processed_df)
-        values_set_missing = self._merged_values_set_missing(val, anomaly)
-        dataframe_rows_removed = max(0, len(original_df) - len(processed_df))
-        if not rows_removed and dataframe_rows_removed > 0:
-            rows_removed = [
-                {
-                    "row_index": None,
-                    "column": None,
-                    "decision": "REMOVED",
-                    "phase": "dataset_diff",
-                    "kind": "inferred_count",
-                    "count": dataframe_rows_removed,
-                }
-            ]
+        columns_removed_list = list(norm["columns_removed"])
+        columns_renamed_list = list(norm["columns_renamed"])
+        columns_excluded_list = list(norm["columns_excluded"])
 
         summary = {
-            "rows_before": len(original_df),
-            "rows_after": len(processed_df),
-            "rows_removed": max(dataframe_rows_removed, len(rows_removed)),
+            "rows_before": rows_before,
+            "rows_after": rows_after,
+            "rows_removed": rows_removed,
             "columns_before": len(original_df.columns),
             "columns_after": len(processed_df.columns),
-            "columns_removed": len(set(norm["columns_removed"]) | set(structural_removed)),
+            "columns_removed": len(columns_removed_list),
+            "columns_renamed": len(columns_renamed_list),
+            "columns_excluded": len(columns_excluded_list),
             "missing_values_before": int(original_df.isna().sum().sum()) if not original_df.empty else 0,
             "missing_values_after": int(processed_df.isna().sum().sum()) if not processed_df.empty else 0,
             "rule_violations_fixed": val["rule_violations_fixed"],
@@ -509,12 +522,12 @@ class DatasetDiffService:
         }
 
         diff_summary = {
-            "rows_removed": rows_removed,
-            "columns_removed": sorted(set(norm["columns_removed"]) | set(structural_removed)),
-            "columns_renamed": norm["columns_renamed"],
-            "columns_excluded": norm["columns_excluded"],
+            "rows_removed": [],
+            "columns_removed": columns_removed_list,
+            "columns_renamed": columns_renamed_list,
+            "columns_excluded": columns_excluded_list,
             "values_changed": val["values_changed"],
-            "values_set_missing": values_set_missing,
+            "values_set_missing": self._merged_values_set_missing(val, anomaly),
             "missing_values_imputed": imputation["missing_values_imputed"],
             "anomalies_handled": anomaly["anomalies_handled"],
             "rules_applied": val["rules_applied"],

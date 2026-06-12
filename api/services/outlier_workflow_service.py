@@ -11,7 +11,7 @@ from core.json_safe import make_json_safe
 from database.models import OutlierDecision, Phase3AnomalyIntel
 from services.analysis_dataframe_service import (
     column_identity_aliases,
-    load_analysis_dataframe,
+    load_phase_dataframe,
     resolve_column_alias,
 )
 from services.analysis_query import get_analysis_meta, load_analysis_checkpoint
@@ -62,8 +62,8 @@ class OutlierWorkflowService:
                 merged[name] = bucket
         return merged
 
-    def _load_df(self, analysis_id: int) -> tuple[pd.DataFrame, dict[str, str]]:
-        return load_analysis_dataframe(self.db, analysis_id)
+    def _load_df(self, analysis_id: int) -> tuple[pd.DataFrame, dict[str, Any]]:
+        return load_phase_dataframe(self.db, analysis_id, "anomaly")
 
     def _column_maps(self, analysis_id: int) -> tuple[dict[str, str], dict[str, str]]:
         """Return (ui_to_physical, physical_to_ui) name maps."""
@@ -379,10 +379,7 @@ class OutlierWorkflowService:
         self._save_phase3(analysis_id, an.dataset_id, phase3)
         PhaseStatusService(self.db).recompute_anomaly_columns(analysis_id)
         try:
-            PhaseSnapshotService(self.db).snapshot_anomaly(analysis_id)
-            from services.apply_service import persist_processed_snapshot
-
-            persist_processed_snapshot(self.db, analysis_id)
+            PhaseSnapshotService(self.db).refresh_downstream(analysis_id, "anomaly")
         except Exception as exc:
             import logging
             logging.getLogger(__name__).warning(
