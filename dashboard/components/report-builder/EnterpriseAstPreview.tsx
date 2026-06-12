@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Alert } from '@/components/ui/Alert';
 import type { EnterpriseDocumentAST } from '@/lib/enterpriseAstTypes';
+import { buildEntityNameMap, resolveEntityLabel } from '@/lib/entityDisplayUtils';
 
 const TABS = [
   'Metadata',
@@ -356,6 +357,7 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
         const bpTopics = Array.isArray(blueprint.topics) ? (blueprint.topics as Array<Record<string, unknown>>) : [];
         const bpEntities = Array.isArray(blueprint.entities) ? (blueprint.entities as Array<Record<string, unknown>>) : [];
         const bpTables = Array.isArray(blueprint.tableStructures || blueprint.tableTemplates) ? (((blueprint.tableStructures || blueprint.tableTemplates) as Array<Record<string, unknown>>)) : [];
+        const entityNameById = buildEntityNameMap(bpEntities, entities);
         return (
           <div className="space-y-4">
             {bpTopics.length === 0 && bpEntities.length === 0 ? (
@@ -397,7 +399,8 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
                                   <div className="flex flex-wrap gap-1 mt-1">
                                     {(q.requiredEntities as Array<Record<string, unknown>>).slice(0, 5).map((re, ri) => (
                                       <span key={ri} className="text-[9px] bg-indigo-50 text-indigo-700 rounded px-1.5 py-0.5">
-                                        {String(re.entityRef || '?')} <span className="opacity-60">({String(re.role || '?')})</span>
+                                        {resolveEntityLabel(re.entityRef || re.entityId, entityNameById)}{' '}
+                                        <span className="opacity-60">({String(re.role || '?')})</span>
                                       </span>
                                     ))}
                                   </div>
@@ -411,24 +414,6 @@ export default function EnterpriseAstPreview({ ast }: { ast: Record<string, unkn
                         </details>
                       );
                     })}
-                  </div>
-                )}
-                {/* Blueprint Entities */}
-                {bpEntities.length > 0 && (
-                  <div>
-                    <h4 className="text-xs font-semibold text-text mb-2">Template Entities ({bpEntities.length})</h4>
-                    <div className="flex flex-wrap gap-1.5">
-                      {bpEntities.slice(0, 40).map((e, ei) => (
-                        <span key={ei} className={`text-[10px] rounded-full px-2 py-0.5 border ${
-                          e.entityType === 'dimension' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                          e.entityType === 'measure' ? 'bg-green-50 text-green-700 border-green-200' :
-                          e.entityType === 'filter' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                          'bg-gray-50 text-gray-600 border-gray-200'
-                        }`}>
-                          {String(e.name || e.canonicalName || e.entityId || '—')}
-                        </span>
-                      ))}
-                    </div>
                   </div>
                 )}
                 {/* Blueprint Table Structures */}
