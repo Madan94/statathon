@@ -6,11 +6,11 @@
     "name": "PLFS Annual Report \u2014 Employment Indicators",
     "domain": "labour_force",
     "locale": "en-IN",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "sourceDocument": "Periodic Labour Force Survey \u2014 Annual Report",
     "valueFree": true,
     "proseFree": true,
-    "description": "Skeleton blueprint extracted from a reference PDF. Reusable across datasets and survey rounds."
+    "description": "Multi-topic, nested-section PLFS blueprint covering WPR, LFPR, UR, gender, sector, state, earnings, and employment structure. Reusable across datasets and survey rounds."
   },
   "glossary": {
     "WPR": "Worker Population Ratio \u2014 percentage of employed persons in the population.",
@@ -127,6 +127,42 @@
       "valueDomain": { "kind": "temporal", "granularity": "annual", "format": "YYYY-YY" },
       "scope": "time",
       "confidence": null
+    },
+    {
+      "entityId": "ent_earnings",
+      "canonicalName": "Average Monthly Earnings",
+      "entityType": "measure",
+      "aliases": ["Average Monthly Earnings", "monthly earnings", "wages", "AME", "earnings"],
+      "unit": "INR",
+      "format": "currency.0",
+      "valueDomain": { "kind": "ratio", "min": 0 },
+      "aggregation": "weighted_mean",
+      "glossaryRef": "AME",
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_hours",
+      "canonicalName": "Average Weekly Hours",
+      "entityType": "measure",
+      "aliases": ["Average Weekly Hours", "weekly hours", "hours worked", "AWH"],
+      "unit": "hours_per_week",
+      "format": "decimal.1",
+      "valueDomain": { "kind": "ratio", "min": 0, "max": 168 },
+      "aggregation": "weighted_mean",
+      "glossaryRef": "AWH",
+      "scope": "indicator",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_employment_status",
+      "canonicalName": "Employment Status",
+      "entityType": "dimension",
+      "aliases": ["Status in employment", "Self-employed", "Regular wage", "Casual labour", "employment type"],
+      "valueDomain": { "kind": "categorical", "members": ["Self-employed", "Regular wage/salaried", "Casual labour"], "allowOther": false },
+      "cardinalityHint": "low",
+      "scope": "classifier",
+      "confidence": null
     }
   ],
   "topics": [
@@ -135,89 +171,430 @@
       "title": "Worker Population Ratio",
       "order": 1,
       "semanticRef": "sec_wpr",
-      "questions": [
+      "subtopics": [
         {
-          "questionId": "q_wpr_01",
-          "intent": "Compare Worker Population Ratio across sector (Rural vs Urban) for the current period.",
-          "questionType": "comparison",
-          "priority": 1,
-          "requiredEntities": [
-            { "entityId": "ent_wpr", "role": "measure", "required": true },
-            { "entityId": "ent_sector", "role": "grouping", "required": true },
-            { "entityId": "ent_age_group", "role": "filter", "required": false, "defaultMember": "15+" },
-            { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
-          ],
-          "analyticsSpec": {
-            "operation": "group_aggregate",
-            "measure": { "entityRef": "ent_wpr", "agg": "weighted_ratio" },
-            "groupBy": [{ "entityRef": "ent_sector" }],
-            "filters": [{ "entityRef": "ent_age_group", "op": "eq", "valueFrom": "defaultMember" }],
-            "sort": { "by": "measure", "order": "desc" },
-            "topN": null,
-            "compare": { "kind": "across_group", "baseline": null }
-          },
-          "answerStructure": {
-            "components": [
-              {
-                "componentId": "q_wpr_01_c1",
-                "kind": "narrative",
-                "order": 1,
-                "outputContract": { "type": "prose", "minWords": 40, "maxWords": 90 },
-                "narrativeTemplate": {
-                  "tone": "formal-analytical",
-                  "mustMention": ["ent_wpr", "ent_sector"],
-                  "pattern": "headline_then_gap",
-                  "maxWords": 90
-                },
-                "refs": { "contentRef": "p_wpr_intro", "analyticsRef": "", "evidenceRef": "" }
+          "sectionId": "sec_wpr_sector",
+          "title": "Sector and Gender Comparison",
+          "questions": [
+            {
+              "questionId": "q_wpr_01",
+              "intent": "Compare Worker Population Ratio across sector (Rural vs Urban) for the current period.",
+              "questionType": "comparison",
+              "priority": 1,
+              "measureEntityId": "ent_wpr",
+              "requiredEntities": [
+                { "entityId": "ent_wpr", "role": "measure", "required": true },
+                { "entityId": "ent_sector", "role": "grouping", "required": true },
+                { "entityId": "ent_age_group", "role": "filter", "required": false, "defaultMember": "15+" },
+                { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": { "entityRef": "ent_wpr", "agg": "weighted_ratio" },
+                "groupBy": [{ "entityRef": "ent_sector" }],
+                "filters": [{ "entityRef": "ent_age_group", "op": "eq", "valueFrom": "defaultMember" }],
+                "sort": { "by": "measure", "order": "desc" }
               },
-              {
-                "componentId": "q_wpr_01_c2",
-                "kind": "chart",
-                "order": 2,
-                "outputContract": { "type": "chart", "chartType": "grouped_bar", "xAxis": "ent_sector", "yAxis": "ent_wpr" },
-                "refs": { "chartRef": "chart_wpr_sector", "figureRef": "fig_wpr_01", "analyticsRef": "", "evidenceRef": "" }
-              },
-              {
-                "componentId": "q_wpr_01_c3",
-                "kind": "table",
-                "order": 3,
-                "outputContract": { "type": "table", "tableTemplateRef": "tt_wpr_state" },
-                "refs": { "tableRef": "table_wpr_state", "analyticsRef": "", "evidenceRef": "" }
+              "answerStructure": {
+                "components": [
+                  { "componentId": "q_wpr_01_c1", "kind": "key_finding", "order": 1,
+                    "outputContract": { "type": "prose", "maxWords": 50 } },
+                  { "componentId": "q_wpr_01_c2", "kind": "chart", "order": 2,
+                    "outputContract": { "type": "chart", "chartType": "grouped_bar", "xAxis": "ent_sector", "yAxis": "ent_wpr" } },
+                  { "componentId": "q_wpr_01_c3", "kind": "narrative", "order": 3,
+                    "outputContract": { "type": "prose", "maxWords": 90 } },
+                  { "componentId": "q_wpr_01_c4", "kind": "source_note", "order": 4 }
+                ]
               }
-            ]
-          }
+            },
+            {
+              "questionId": "q_wpr_02",
+              "intent": "Compare Worker Population Ratio by gender (Male vs Female) across sector.",
+              "questionType": "comparison",
+              "priority": 2,
+              "measureEntityId": "ent_wpr",
+              "requiredEntities": [
+                { "entityId": "ent_wpr", "role": "measure", "required": true },
+                { "entityId": "ent_gender", "role": "grouping", "required": true },
+                { "entityId": "ent_sector", "role": "grouping", "required": true },
+                { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": { "entityRef": "ent_wpr", "agg": "weighted_ratio" },
+                "groupBy": [{ "entityRef": "ent_gender" }, { "entityRef": "ent_sector" }],
+                "sort": { "by": "measure", "order": "desc" }
+              },
+              "answerStructure": {
+                "components": [
+                  { "componentId": "q_wpr_02_c1", "kind": "chart", "order": 1,
+                    "outputContract": { "type": "chart", "chartType": "grouped_bar", "xAxis": "ent_gender", "yAxis": "ent_wpr", "groupBy": "ent_sector" } },
+                  { "componentId": "q_wpr_02_c2", "kind": "narrative", "order": 2,
+                    "outputContract": { "type": "prose", "maxWords": 80 } }
+                ]
+              }
+            }
+          ]
         },
         {
-          "questionId": "q_wpr_02",
-          "intent": "Rank States/UTs by Worker Population Ratio for the current period.",
-          "questionType": "ranking",
-          "priority": 2,
-          "requiredEntities": [
-            { "entityId": "ent_wpr", "role": "measure", "required": true },
-            { "entityId": "ent_state", "role": "grouping", "required": true },
-            { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
-          ],
-          "analyticsSpec": {
-            "operation": "rank",
-            "measure": { "entityRef": "ent_wpr", "agg": "weighted_ratio" },
-            "groupBy": [{ "entityRef": "ent_state" }],
-            "filters": [],
-            "sort": { "by": "measure", "order": "desc" },
-            "topN": 10,
-            "compare": { "kind": "none" }
-          },
-          "answerStructure": {
-            "components": [
-              {
-                "componentId": "q_wpr_02_c1",
-                "kind": "table",
-                "order": 1,
-                "outputContract": { "type": "table", "tableTemplateRef": "tt_wpr_state" },
-                "refs": { "tableRef": "table_wpr_state", "analyticsRef": "", "evidenceRef": "" }
+          "sectionId": "sec_wpr_state",
+          "title": "State and UT Rankings",
+          "questions": [
+            {
+              "questionId": "q_wpr_03",
+              "intent": "Rank States/UTs by Worker Population Ratio for the current period.",
+              "questionType": "ranking",
+              "priority": 3,
+              "measureEntityId": "ent_wpr",
+              "requiredEntities": [
+                { "entityId": "ent_wpr", "role": "measure", "required": true },
+                { "entityId": "ent_state", "role": "grouping", "required": true },
+                { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
+              ],
+              "analyticsSpec": {
+                "operation": "rank",
+                "measure": { "entityRef": "ent_wpr", "agg": "weighted_ratio" },
+                "groupBy": [{ "entityRef": "ent_state" }],
+                "sort": { "by": "measure", "order": "desc" },
+                "topN": 10
+              },
+              "answerStructure": {
+                "components": [
+                  { "componentId": "q_wpr_03_c1", "kind": "table", "order": 1,
+                    "outputContract": { "type": "table", "tableTemplateRef": "tt_wpr_state" } },
+                  { "componentId": "q_wpr_03_c2", "kind": "source_note", "order": 2 }
+                ]
               }
-            ]
-          }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_lfpr",
+      "title": "Labour Force Participation Rate",
+      "order": 2,
+      "semanticRef": "sec_lfpr",
+      "subtopics": [
+        {
+          "sectionId": "sec_lfpr_sector",
+          "title": "Sector and Gender Breakdown",
+          "questions": [
+            {
+              "questionId": "q_lfpr_01",
+              "intent": "Compare Labour Force Participation Rate across Rural and Urban sectors.",
+              "questionType": "comparison",
+              "priority": 1,
+              "measureEntityId": "ent_lfpr",
+              "requiredEntities": [
+                { "entityId": "ent_lfpr", "role": "measure", "required": true },
+                { "entityId": "ent_sector", "role": "grouping", "required": true },
+                { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": { "entityRef": "ent_lfpr", "agg": "weighted_ratio" },
+                "groupBy": [{ "entityRef": "ent_sector" }],
+                "sort": { "by": "measure", "order": "desc" }
+              },
+              "answerStructure": {
+                "components": [
+                  { "componentId": "q_lfpr_01_c1", "kind": "key_finding", "order": 1,
+                    "outputContract": { "type": "prose", "maxWords": 50 } },
+                  { "componentId": "q_lfpr_01_c2", "kind": "chart", "order": 2,
+                    "outputContract": { "type": "chart", "chartType": "grouped_bar", "xAxis": "ent_sector", "yAxis": "ent_lfpr" } },
+                  { "componentId": "q_lfpr_01_c3", "kind": "narrative", "order": 3,
+                    "outputContract": { "type": "prose", "maxWords": 80 } }
+                ]
+              }
+            },
+            {
+              "questionId": "q_lfpr_02",
+              "intent": "Compare Labour Force Participation Rate by gender across sector.",
+              "questionType": "comparison",
+              "priority": 2,
+              "measureEntityId": "ent_lfpr",
+              "requiredEntities": [
+                { "entityId": "ent_lfpr", "role": "measure", "required": true },
+                { "entityId": "ent_gender", "role": "grouping", "required": true },
+                { "entityId": "ent_sector", "role": "grouping", "required": true },
+                { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": { "entityRef": "ent_lfpr", "agg": "weighted_ratio" },
+                "groupBy": [{ "entityRef": "ent_gender" }, { "entityRef": "ent_sector" }],
+                "sort": { "by": "measure", "order": "desc" }
+              },
+              "answerStructure": {
+                "components": [
+                  { "componentId": "q_lfpr_02_c1", "kind": "chart", "order": 1,
+                    "outputContract": { "type": "chart", "chartType": "grouped_bar", "xAxis": "ent_gender", "yAxis": "ent_lfpr", "groupBy": "ent_sector" } },
+                  { "componentId": "q_lfpr_02_c2", "kind": "narrative", "order": 2,
+                    "outputContract": { "type": "prose", "maxWords": 80 } }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec_lfpr_trend",
+          "title": "Time-Series Trend",
+          "questions": [
+            {
+              "questionId": "q_lfpr_03",
+              "intent": "Show trend of Labour Force Participation Rate over multiple survey periods.",
+              "questionType": "trend",
+              "priority": 3,
+              "measureEntityId": "ent_lfpr",
+              "requiredEntities": [
+                { "entityId": "ent_lfpr", "role": "measure", "required": true },
+                { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "series" },
+                { "entityId": "ent_sector", "role": "grouping", "required": false }
+              ],
+              "analyticsSpec": {
+                "operation": "time_series",
+                "measure": { "entityRef": "ent_lfpr", "agg": "weighted_ratio" },
+                "groupBy": [{ "entityRef": "ent_sector" }]
+              },
+              "answerStructure": {
+                "components": [
+                  { "componentId": "q_lfpr_03_c1", "kind": "chart", "order": 1,
+                    "outputContract": { "type": "chart", "chartType": "line", "xAxis": "ent_period", "yAxis": "ent_lfpr", "groupBy": "ent_sector" } },
+                  { "componentId": "q_lfpr_03_c2", "kind": "narrative", "order": 2,
+                    "outputContract": { "type": "prose", "maxWords": 80 } },
+                  { "componentId": "q_lfpr_03_c3", "kind": "methodology_note", "order": 3 }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_ur",
+      "title": "Unemployment Rate",
+      "order": 3,
+      "semanticRef": "sec_ur",
+      "subtopics": [
+        {
+          "sectionId": "sec_ur_sector",
+          "title": "Sector and Gender Breakdown",
+          "questions": [
+            {
+              "questionId": "q_ur_01",
+              "intent": "Compare Unemployment Rate across Rural and Urban sectors by gender.",
+              "questionType": "comparison",
+              "priority": 1,
+              "measureEntityId": "ent_ur",
+              "requiredEntities": [
+                { "entityId": "ent_ur", "role": "measure", "required": true },
+                { "entityId": "ent_sector", "role": "grouping", "required": true },
+                { "entityId": "ent_gender", "role": "grouping", "required": true },
+                { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": { "entityRef": "ent_ur", "agg": "weighted_ratio" },
+                "groupBy": [{ "entityRef": "ent_sector" }, { "entityRef": "ent_gender" }],
+                "sort": { "by": "measure", "order": "desc" }
+              },
+              "answerStructure": {
+                "components": [
+                  { "componentId": "q_ur_01_c1", "kind": "key_finding", "order": 1,
+                    "outputContract": { "type": "prose", "maxWords": 50 } },
+                  { "componentId": "q_ur_01_c2", "kind": "chart", "order": 2,
+                    "outputContract": { "type": "chart", "chartType": "grouped_bar", "xAxis": "ent_sector", "yAxis": "ent_ur", "groupBy": "ent_gender" } },
+                  { "componentId": "q_ur_01_c3", "kind": "narrative", "order": 3,
+                    "outputContract": { "type": "prose", "maxWords": 80 } }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec_ur_age",
+          "title": "Youth and Age-Group Analysis",
+          "questions": [
+            {
+              "questionId": "q_ur_02",
+              "intent": "Compare Unemployment Rate across age groups, focusing on youth (15-29).",
+              "questionType": "comparison",
+              "priority": 2,
+              "measureEntityId": "ent_ur",
+              "requiredEntities": [
+                { "entityId": "ent_ur", "role": "measure", "required": true },
+                { "entityId": "ent_age_group", "role": "grouping", "required": true },
+                { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": { "entityRef": "ent_ur", "agg": "weighted_ratio" },
+                "groupBy": [{ "entityRef": "ent_age_group" }],
+                "sort": { "by": "measure", "order": "desc" }
+              },
+              "answerStructure": {
+                "components": [
+                  { "componentId": "q_ur_02_c1", "kind": "chart", "order": 1,
+                    "outputContract": { "type": "chart", "chartType": "bar", "xAxis": "ent_age_group", "yAxis": "ent_ur" } },
+                  { "componentId": "q_ur_02_c2", "kind": "narrative", "order": 2,
+                    "outputContract": { "type": "prose", "maxWords": 70 } },
+                  { "componentId": "q_ur_02_c3", "kind": "caveat", "order": 3 }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_employment_type",
+      "title": "Employment Structure and Earnings",
+      "order": 4,
+      "semanticRef": "sec_employment_type",
+      "subtopics": [
+        {
+          "sectionId": "sec_emp_distribution",
+          "title": "Distribution by Employment Status",
+          "questions": [
+            {
+              "questionId": "q_emp_01",
+              "intent": "Show distribution of workers by employment status across sector.",
+              "questionType": "distribution",
+              "priority": 1,
+              "measureEntityId": "ent_wpr",
+              "requiredEntities": [
+                { "entityId": "ent_wpr", "role": "measure", "required": true },
+                { "entityId": "ent_employment_status", "role": "grouping", "required": true },
+                { "entityId": "ent_sector", "role": "grouping", "required": true },
+                { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": { "entityRef": "ent_wpr", "agg": "weighted_ratio" },
+                "groupBy": [{ "entityRef": "ent_employment_status" }, { "entityRef": "ent_sector" }],
+                "sort": { "by": "measure", "order": "desc" }
+              },
+              "answerStructure": {
+                "components": [
+                  { "componentId": "q_emp_01_c1", "kind": "chart", "order": 1,
+                    "outputContract": { "type": "chart", "chartType": "stacked_bar", "xAxis": "ent_sector", "yAxis": "ent_wpr", "groupBy": "ent_employment_status" } },
+                  { "componentId": "q_emp_01_c2", "kind": "narrative", "order": 2,
+                    "outputContract": { "type": "prose", "maxWords": 80 } }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "sectionId": "sec_earnings",
+          "title": "Average Monthly Earnings",
+          "questions": [
+            {
+              "questionId": "q_earnings_01",
+              "intent": "Compare Average Monthly Earnings across employment status and sector.",
+              "questionType": "comparison",
+              "priority": 1,
+              "measureEntityId": "ent_earnings",
+              "requiredEntities": [
+                { "entityId": "ent_earnings", "role": "measure", "required": true },
+                { "entityId": "ent_employment_status", "role": "grouping", "required": true },
+                { "entityId": "ent_sector", "role": "grouping", "required": true },
+                { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": { "entityRef": "ent_earnings", "agg": "weighted_mean" },
+                "groupBy": [{ "entityRef": "ent_employment_status" }, { "entityRef": "ent_sector" }],
+                "sort": { "by": "measure", "order": "desc" }
+              },
+              "answerStructure": {
+                "components": [
+                  { "componentId": "q_earnings_01_c1", "kind": "key_finding", "order": 1,
+                    "outputContract": { "type": "prose", "maxWords": 50 } },
+                  { "componentId": "q_earnings_01_c2", "kind": "chart", "order": 2,
+                    "outputContract": { "type": "chart", "chartType": "grouped_bar", "xAxis": "ent_employment_status", "yAxis": "ent_earnings", "groupBy": "ent_sector" } },
+                  { "componentId": "q_earnings_01_c3", "kind": "table", "order": 3,
+                    "outputContract": { "type": "table", "tableTemplateRef": "tt_earnings_status" } },
+                  { "componentId": "q_earnings_01_c4", "kind": "source_note", "order": 4 }
+                ]
+              }
+            },
+            {
+              "questionId": "q_earnings_02",
+              "intent": "Compare Average Monthly Earnings by gender within Regular wage employment.",
+              "questionType": "comparison",
+              "priority": 2,
+              "measureEntityId": "ent_earnings",
+              "requiredEntities": [
+                { "entityId": "ent_earnings", "role": "measure", "required": true },
+                { "entityId": "ent_gender", "role": "grouping", "required": true },
+                { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": { "entityRef": "ent_earnings", "agg": "weighted_mean" },
+                "groupBy": [{ "entityRef": "ent_gender" }],
+                "sort": { "by": "measure", "order": "desc" }
+              },
+              "answerStructure": {
+                "components": [
+                  { "componentId": "q_earnings_02_c1", "kind": "formula_metric", "order": 1,
+                    "formulaSpec": { "type": "RATIO" },
+                    "outputContract": { "type": "metric", "label": "Gender earnings ratio" } },
+                  { "componentId": "q_earnings_02_c2", "kind": "chart", "order": 2,
+                    "outputContract": { "type": "chart", "chartType": "bar", "xAxis": "ent_gender", "yAxis": "ent_earnings" } }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_state_profiles",
+      "title": "State and UT Labour Market Profiles",
+      "order": 5,
+      "semanticRef": "sec_state",
+      "subtopics": [
+        {
+          "sectionId": "sec_state_indicators",
+          "title": "Key Indicator Rankings",
+          "questions": [
+            {
+              "questionId": "q_state_01",
+              "intent": "Show WPR, LFPR and UR side by side for each State/UT.",
+              "questionType": "comparison",
+              "priority": 1,
+              "measureEntityId": "ent_wpr",
+              "requiredEntities": [
+                { "entityId": "ent_wpr", "role": "measure", "required": true },
+                { "entityId": "ent_lfpr", "role": "measure", "required": true },
+                { "entityId": "ent_ur", "role": "measure", "required": true },
+                { "entityId": "ent_state", "role": "grouping", "required": true },
+                { "entityId": "ent_period", "role": "time", "required": true, "periodRole": "current" }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measures": [
+                  { "entityRef": "ent_wpr", "agg": "weighted_ratio" },
+                  { "entityRef": "ent_lfpr", "agg": "weighted_ratio" },
+                  { "entityRef": "ent_ur", "agg": "weighted_ratio" }
+                ],
+                "groupBy": [{ "entityRef": "ent_state" }],
+                "sort": { "by": "ent_wpr", "order": "desc" }
+              },
+              "answerStructure": {
+                "components": [
+                  { "componentId": "q_state_01_c1", "kind": "table", "order": 1,
+                    "outputContract": { "type": "table", "tableTemplateRef": "tt_state_all_indicators" } },
+                  { "componentId": "q_state_01_c2", "kind": "narrative", "order": 2,
+                    "outputContract": { "type": "prose", "maxWords": 80 } },
+                  { "componentId": "q_state_01_c3", "kind": "source_note", "order": 3 }
+                ]
+              }
+            }
+          ]
         }
       ]
     }
@@ -244,6 +621,47 @@
       ],
       "sort": { "by": "col_rural_person", "order": "desc" },
       "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_earnings_status",
+      "title": "Average Monthly Earnings by Employment Status and Sector",
+      "columns": [
+        { "columnId": "col_status", "header": "Employment Status", "role": "dimension", "entityRef": "ent_employment_status", "dtype": "string", "align": "left", "format": null },
+        { "columnId": "col_rural_earn", "header": "Rural (\u20b9)", "role": "measure", "entityRef": "ent_earnings", "filterContext": { "ent_sector": "Rural" }, "dtype": "number", "unit": "INR", "format": "currency.0", "align": "right" },
+        { "columnId": "col_urban_earn", "header": "Urban (\u20b9)", "role": "measure", "entityRef": "ent_earnings", "filterContext": { "ent_sector": "Urban" }, "dtype": "number", "unit": "INR", "format": "currency.0", "align": "right" }
+      ],
+      "dimensions": ["ent_employment_status"],
+      "measures": ["ent_earnings"],
+      "breakdowns": ["ent_sector"],
+      "footnotes": [
+        { "noteId": "fn_earn_source", "marker": "Source", "textTemplate": "Source: {{dataset.title}}, {{period.current}}." }
+      ],
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_state_all_indicators",
+      "title": "WPR, LFPR and UR by State/UT",
+      "columnGroups": [
+        { "groupId": "grp_rural_ind", "label": "Rural", "spanRefs": ["col_rural_wpr", "col_rural_lfpr", "col_rural_ur"] },
+        { "groupId": "grp_urban_ind", "label": "Urban", "spanRefs": ["col_urban_wpr", "col_urban_lfpr", "col_urban_ur"] }
+      ],
+      "columns": [
+        { "columnId": "col_state_all", "header": "State/UT", "role": "dimension", "entityRef": "ent_state", "dtype": "string", "align": "left", "format": null },
+        { "columnId": "col_rural_wpr", "header": "WPR", "role": "measure", "entityRef": "ent_wpr", "group": "grp_rural_ind", "filterContext": { "ent_sector": "Rural" }, "dtype": "number", "unit": "percent", "format": "percent.1", "align": "right" },
+        { "columnId": "col_rural_lfpr", "header": "LFPR", "role": "measure", "entityRef": "ent_lfpr", "group": "grp_rural_ind", "filterContext": { "ent_sector": "Rural" }, "dtype": "number", "unit": "percent", "format": "percent.1", "align": "right" },
+        { "columnId": "col_rural_ur", "header": "UR", "role": "measure", "entityRef": "ent_ur", "group": "grp_rural_ind", "filterContext": { "ent_sector": "Rural" }, "dtype": "number", "unit": "percent", "format": "percent.1", "align": "right" },
+        { "columnId": "col_urban_wpr", "header": "WPR", "role": "measure", "entityRef": "ent_wpr", "group": "grp_urban_ind", "filterContext": { "ent_sector": "Urban" }, "dtype": "number", "unit": "percent", "format": "percent.1", "align": "right" },
+        { "columnId": "col_urban_lfpr", "header": "LFPR", "role": "measure", "entityRef": "ent_lfpr", "group": "grp_urban_ind", "filterContext": { "ent_sector": "Urban" }, "dtype": "number", "unit": "percent", "format": "percent.1", "align": "right" },
+        { "columnId": "col_urban_ur", "header": "UR", "role": "measure", "entityRef": "ent_ur", "group": "grp_urban_ind", "filterContext": { "ent_sector": "Urban" }, "dtype": "number", "unit": "percent", "format": "percent.1", "align": "right" }
+      ],
+      "dimensions": ["ent_state"],
+      "measures": ["ent_wpr", "ent_lfpr", "ent_ur"],
+      "breakdowns": ["ent_sector"],
+      "footnotes": [
+        { "noteId": "fn_state_source", "marker": "Source", "textTemplate": "Source: {{dataset.title}}, {{period.current}}." }
+      ],
+      "sort": { "by": "col_rural_wpr", "order": "desc" },
+      "emptyPolicy": "show_dash"
     }
   ],
   "figureTemplates": [
@@ -252,11 +670,24 @@
       "captionTemplate": "Worker Population Ratio by Sector, {{period.current}}",
       "chartId": "chart_wpr_sector",
       "numbering": "Figure {{topic.order}}.{{seq}}"
+    },
+    {
+      "figureTemplateId": "ft_lfpr_01",
+      "captionTemplate": "Labour Force Participation Rate by Sector, {{period.current}}",
+      "chartId": "chart_lfpr_sector",
+      "numbering": "Figure {{topic.order}}.{{seq}}"
+    },
+    {
+      "figureTemplateId": "ft_ur_01",
+      "captionTemplate": "Unemployment Rate by Sector and Gender, {{period.current}}",
+      "chartId": "chart_ur_sector_gender",
+      "numbering": "Figure {{topic.order}}.{{seq}}"
     }
   ],
   "documentMap": {
-    "order": ["topic_wpr"],
-    "frontMatter": ["title_page", "toc"],
-    "backMatter": ["glossary", "notes"]
+    "order": ["topic_wpr", "topic_lfpr", "topic_ur", "topic_employment_type", "topic_state_profiles"],
+    "frontMatter": ["title_page", "toc", "executive_summary"],
+    "backMatter": ["glossary", "methodology_note", "notes"]
   }
+
 }
