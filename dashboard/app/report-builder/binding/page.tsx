@@ -1755,10 +1755,18 @@ export default function BindingWorkflowPage() {
           <main className="min-w-0 pt-4">{renderWorkbenchPanel()}</main>
           <div className="mt-4 flex flex-wrap justify-end gap-2">
             <Button variant="outline" size="sm" onClick={resetAll}><ArrowLeft className="h-4 w-4" /> Start over</Button>
-            <Button size="sm" onClick={onFinalize} disabled={finalizing || !allColumnsDecided}>
-              {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-              Coverage gate{undecidedColumnCount > 0 ? ` (${undecidedColumnCount} columns pending)` : ''}
-            </Button>
+            {!executionReady ? (
+              <Button size="sm" onClick={onFinalize} disabled={finalizing || !allColumnsDecided}>
+                {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                {currentReviewedPlan ? 'Rebuild plan' : 'Build plan & prepare'}
+              </Button>
+            ) : (
+              <Link href={generationHref}>
+                <Button size="sm">
+                  <ArrowRight className="h-4 w-4" /> Open generation workspace
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
