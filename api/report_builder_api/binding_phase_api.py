@@ -746,6 +746,61 @@ def _load_builtin_gold_package(template_id: str) -> tuple[dict[str, Any], dict[s
     return None
 
 
+def _load_db_template_package(template_id: str) -> tuple[dict[str, Any], dict[str, Any] | None, dict[str, Any] | None, dict[str, Any], str] | None:
+    """Load an extracted DB template package.
+
+    Explicit package columns are authoritative. Embedded ``ast_json`` companion
+    fields remain the compatibility fallback for templates created before the
+    additive migration.
+    """
+    if not str(template_id).isdigit():
+        return None
+    from database.database import SessionLocal
+    from database.models import ReportTemplate
+
+    db = SessionLocal()
+    try:
+        tpl = db.query(ReportTemplate).filter(ReportTemplate.id == int(template_id)).first()
+        if not tpl:
+            return None
+        ast_json = tpl.ast_json if isinstance(tpl.ast_json, dict) else {}
+        blueprint = (
+            tpl.blueprint_json
+            if isinstance(getattr(tpl, "blueprint_json", None), dict)
+            else ast_json.get("blueprint")
+        )
+        if not isinstance(blueprint, dict):
+            return None
+        template_ast = (
+            tpl.ast_json
+            if isinstance(getattr(tpl, "ast_json", None), dict)
+            else ast_json.get("template_ast") or ast_json.get("templateAst")
+        )
+        embedded_template_ast = ast_json.get("template_ast") or ast_json.get("templateAst")
+        if isinstance(embedded_template_ast, dict):
+            template_ast = embedded_template_ast
+        slot_graph = (
+            tpl.semantic_slot_graph_json
+            if isinstance(getattr(tpl, "semantic_slot_graph_json", None), dict)
+            else ast_json.get("semantic_slot_graph") or ast_json.get("semanticSlotGraph")
+        )
+        diagnostics = (
+            tpl.extraction_diagnostics_json
+            if isinstance(getattr(tpl, "extraction_diagnostics_json", None), dict)
+            else ast_json.get("diagnostics") or ast_json.get("template_diagnostics") or {}
+        )
+        name = str(tpl.name or f"Template {template_id}")
+        return (
+            blueprint,
+            template_ast if isinstance(template_ast, dict) else None,
+            slot_graph if isinstance(slot_graph, dict) else None,
+            diagnostics if isinstance(diagnostics, dict) else {},
+            name,
+        )
+    finally:
+        db.close()
+
+
 def _iter_builtin_gold_packages() -> list[TemplatePackageOut]:
     packages: list[TemplatePackageOut] = []
     seen: set[str] = set()
@@ -817,23 +872,12 @@ async def _resolve_blueprint(template_id: str, blueprint_file: Optional[UploadFi
 
     # 2. Try loading from DB if template_id is numeric (extracted template)
     if template_id.isdigit():
-        try:
-            from database.database import SessionLocal
-            from database.models import ReportTemplate
-            db = SessionLocal()
-            try:
-                tpl = db.query(ReportTemplate).filter(ReportTemplate.id == int(template_id)).first()
-                if tpl and tpl.ast_json:
-                    ast_json = tpl.ast_json if isinstance(tpl.ast_json, dict) else {}
-                    # Blueprint lives at ast_json.blueprint
-                    bp = ast_json.get("blueprint")
-                    if bp and isinstance(bp, dict) and bp.get("entities"):
-                        logger.info("[binding-phase] Blueprint auto-loaded from DB template %s", template_id)
-                        return bp
-            finally:
-                db.close()
-        except Exception as exc:
-            logger.warning("[binding-phase] DB blueprint load failed for %s: %s", template_id, exc)
+        package = _load_db_template_package(template_id)
+        if package is not None:
+            db_blueprint, _template_ast, _slot_graph, _diagnostics, _name = package
+            if db_blueprint.get("entities"):
+                logger.info("[binding-phase] Blueprint auto-loaded from DB template %s", template_id)
+                return db_blueprint
 
     # 3. Bundled gold templates
     if template_id in _GOLD_TEMPLATE_IDS:
@@ -869,11 +913,33 @@ def list_template_packages() -> list[TemplatePackageOut]:
             rows = db.query(ReportTemplate).order_by(ReportTemplate.id.desc()).limit(100).all()
             for row in rows:
                 ast_json = row.ast_json if isinstance(row.ast_json, dict) else {}
+                blueprint = (
+                    row.blueprint_json
+                    if isinstance(getattr(row, "blueprint_json", None), dict)
+                    else ast_json.get("blueprint")
+                )
+                slot_graph = (
+                    row.semantic_slot_graph_json
+                    if isinstance(getattr(row, "semantic_slot_graph_json", None), dict)
+                    else ast_json.get("semantic_slot_graph") or ast_json.get("semanticSlotGraph")
+                )
+                diagnostics = (
+                    row.extraction_diagnostics_json
+                    if isinstance(getattr(row, "extraction_diagnostics_json", None), dict)
+                    else ast_json.get("diagnostics") or ast_json.get("template_diagnostics") or {}
+                )
+                template_ast = ast_json.get("template_ast") or ast_json.get("templateAst") or ast_json
                 packages.append(_package_from_ast_json(
                     str(row.id),
                     row.name,
                     "db",
-                    ast_json,
+                    {
+                        **ast_json,
+                        "blueprint": blueprint,
+                        "template_ast": template_ast,
+                        "semantic_slot_graph": slot_graph,
+                        "diagnostics": diagnostics,
+                    },
                     row.description,
                 ))
         finally:
@@ -903,6 +969,7 @@ async def start_binding(
     from report_builder.binding.resolver import resolve_entities
 
     builtin_package = None if blueprint is not None else _load_builtin_gold_package(template_id)
+    db_package = None if blueprint is not None or builtin_package is not None else _load_db_template_package(template_id)
     bp = await _resolve_blueprint(template_id, blueprint)
 
     # ── BlueprintQA gate: validate before binding starts ──
@@ -936,8 +1003,14 @@ async def start_binding(
     )
     binding, record, _deltas = R.open_review(binding, profile)
     R.save_record(record)
-    template_ast = builtin_package[1] if builtin_package is not None else None
-    semantic_slot_graph = builtin_package[2] if builtin_package is not None else None
+    template_ast = None
+    semantic_slot_graph = None
+    if builtin_package is not None:
+        template_ast = builtin_package[1]
+        semantic_slot_graph = builtin_package[2]
+    elif db_package is not None:
+        template_ast = db_package[1]
+        semantic_slot_graph = db_package[2]
     _write_stash(binding.templateId, signature, profile, bp, raw, template_ast, semantic_slot_graph)
 
     logger.info(
@@ -985,17 +1058,16 @@ def post_confirm(template_id: str, signature: str, body: ConfirmIn) -> RecordOut
     elif action in ("confirm", "override", "share"):
         selected_columns = _columns_for_decision(record, body.entity_id, body.columns)
         share_policy = body.share_policy or ("shared" if action == "share" else "exclusive")
-        conflicts = R.find_exclusive_column_conflicts(record, body.entity_id, selected_columns)
-        if conflicts and share_policy == "shared" and not body.share_reason:
+        if share_policy == "shared" and not (body.share_reason or "").strip():
             raise HTTPException(
                 status_code=400,
                 detail={
                     "code": "SHARE_REASON_REQUIRED",
-                    "message": "sharing an already-owned column requires a reason",
-                    "conflicts": conflicts,
+                    "message": "shared column ownership requires a reason",
                     "column_ownership": _ownership(record),
                 },
             )
+        conflicts = R.find_exclusive_column_conflicts(record, body.entity_id, selected_columns)
         if conflicts and share_policy != "shared":
             if body.force_transfer:
                 transfer_from = body.transfer_from_entity_ids or sorted({
@@ -1130,6 +1202,8 @@ def post_manual_entity(template_id: str, signature: str, body: ManualEntityIn) -
             share_policy=body.share_policy or "exclusive",
             share_reason=body.share_reason or "",
         )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except R.ColumnOwnershipConflict as exc:
         raise HTTPException(
             status_code=409,
@@ -1424,6 +1498,21 @@ def get_execution_bundle(template_id: str, signature: str) -> ExecutionReadyOut:
 
     record = _load_or_404(template_id, signature)
     dataset, blueprint, df = _read_stash(template_id, signature)
+
+    # ── BlueprintQA gate: re-validate before the S4 handoff ──
+    # The gate also runs at /start, but the stashed blueprint can change between
+    # start and handoff; never freeze a bundle from a structurally invalid blueprint.
+    from report_builder.binding.blueprint_qa import validate_blueprint_qa
+    blueprint_qa = validate_blueprint_qa(blueprint)
+    if blueprint_qa.status == "INVALID":
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "BLUEPRINT_INVALID_FOR_HANDOFF",
+                "message": "Blueprint is INVALID — cannot build ExecutionBundle",
+                "errors": blueprint_qa.errors,
+            },
+        )
 
     # Resolve dataframe path from stash
     df_path = str(_stash_path(template_id, signature, "data.csv"))

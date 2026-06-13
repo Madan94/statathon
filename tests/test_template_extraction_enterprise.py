@@ -29,8 +29,10 @@ from report_builder.llm_schemas import (
     ENTERPRISE_QUESTION_CONTRACT_SCHEMA,
     ENTITY_EVIDENCE_SCHEMA,
     FORMULA_SPEC_SCHEMA,
+    PAGE_ENTITY_STRUCTURE_SCHEMA,
     PROVENANCE_REQUIREMENTS_SCHEMA,
 )
+from report_builder.binding.blueprint_qa import validate_blueprint_qa
 
 
 def _nested_blueprint():
@@ -88,8 +90,49 @@ def test_recursive_question_traversal_supports_nested_and_legacy_shapes():
 
 def test_iter_components_reads_answer_structure_and_legacy_output_contract():
     assert iter_components({"answerStructure": {"components": [{"componentId": "c1"}]}}) == [{"componentId": "c1"}]
+    assert iter_components({"answerComponents": [{"componentId": "legacy_c1"}]}) == [{"componentId": "legacy_c1"}]
     assert iter_components({"outputContract": {"components": [{"componentId": "c2"}]}}) == [{"componentId": "c2"}]
     assert iter_components({"answerStructure": {"components": [None, {"componentId": "c3"}]}}) == [{"componentId": "c3"}]
+
+
+def test_blueprint_qa_accepts_formula_spec_and_legacy_answer_components():
+    blueprint = {
+        "entities": [
+            {"entityId": "ent_total", "name": "Total workers", "entityType": "measure"},
+            {"entityId": "ent_self", "name": "Self-employed", "entityType": "measure"},
+        ],
+        "topics": [
+            {
+                "topicId": "topic_work",
+                "title": "Workforce",
+                "questions": [
+                    {
+                        "questionId": "q_share",
+                        "intent": "What is the share of self-employed workers?",
+                        "questionType": "composition",
+                        "requiredEntities": [
+                            {"entityId": "ent_self", "role": "numerator"},
+                            {"entityId": "ent_total", "role": "denominator"},
+                        ],
+                        "formulaSpec": {
+                            "type": "SHARE",
+                            "numeratorEntityId": "ent_self",
+                            "denominatorEntityId": "ent_total",
+                            "multiplier": 100,
+                        },
+                        "answerComponents": [
+                            {"componentId": "q_share__metric", "kind": "formula_metric"}
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+
+    qa = validate_blueprint_qa(blueprint)
+
+    assert qa.status == "VALID"
+    assert not [w for w in qa.warnings if w["code"] in {"MISSING_ANALYTICS_SPEC", "MISSING_OUTPUT_CONTRACT"}]
 
 
 def test_energy_blueprint_gets_enterprise_contracts_without_plfs_concepts():
@@ -330,6 +373,8 @@ def test_enterprise_schema_fragments_and_provider_trace_summary():
     assert PROVENANCE_REQUIREMENTS_SCHEMA["properties"]["required"]["type"] == "boolean"
     assert ENTITY_EVIDENCE_SCHEMA["required"] == ["evidenceId", "sourceType", "confidence"]
     assert "formulaSpec" in ENTERPRISE_QUESTION_CONTRACT_SCHEMA["required"]
+    entity_schema = PAGE_ENTITY_STRUCTURE_SCHEMA["properties"]["entities"]["items"]["properties"]
+    assert {"name", "entityType", "sourceType", "headerPath", "confidence"} <= set(entity_schema)
 
     summary = summarize_provider_call_ledger([
         {"status": "success", "task": "entity_binding", "actualProvider": "azure", "schemaRequired": True, "schemaEnforced": False},
@@ -411,3 +456,41 @@ def test_emit_enriched_energy_package_end_to_end(tmp_path):
     assert graph["counts"]["components"] >= 3
     assert graph["slots"]
     assert "BROKEN_FILLFROM" not in issue_codes
+
+
+def test_template_package_payload_embeds_compiler_artifacts(monkeypatch):
+    from api.report_builder_api import routes as rb_routes
+
+    def fake_compile_template_artifacts(**kwargs):
+        return {
+            "template_ast": {"contentAST": {"blocks": []}, "tableAST": {"tables": [{"tableId": "tbl_1"}]}},
+            "template_blueprint": kwargs["blueprint"],
+            "semantic_slot_graph": {"slots": [{"slotId": "slot_1"}]},
+            "template_package_manifest": {"packageSchema": "binding.templatePackage.v1", "sha256": "abc"},
+            "diagnostics": type("D", (), {"to_dict": lambda self: {"status": "VALID", "binderReadinessScore": 0.91}})(),
+        }
+
+    monkeypatch.setattr(
+        "report_builder.template_compiler.compile_template_artifacts",
+        fake_compile_template_artifacts,
+    )
+
+    payload = rb_routes._build_template_package_payload(
+        ast_payload={
+            "contentAST": {"blocks": []},
+            "blueprint": {
+                "templateMeta": {"templateId": "tpl_test"},
+                "entities": [{"entityId": "ent_1", "name": "Measure", "entityType": "measure"}],
+                "topics": [],
+            },
+        },
+        diagnostics={"stages": {"stage": "ok"}},
+    )
+
+    assert payload["schema_version"] == "binding.templatePackage.v1"
+    assert payload["blueprint"]["templateMeta"]["templateId"] == "tpl_test"
+    assert payload["semantic_slot_graph"]["slots"][0]["slotId"] == "slot_1"
+    assert payload["template_manifest"]["packageSchema"] == "binding.templatePackage.v1"
+    assert payload["extraction_diagnostics"]["status"] == "VALID"
+    assert payload["ast_json"]["blueprint"]["templateMeta"]["templateId"] == "tpl_test"
+    assert payload["ast_json"]["template_ast"]["tableAST"]["tables"][0]["tableId"] == "tbl_1"

@@ -1,0 +1,92 @@
+{
+  "status": "INVALID",
+  "contractVersion": "template.extraction.v2",
+  "binderReadinessScore": 0.878,
+  "passScores": {},
+  "categoryScores": {
+    "entityHygiene": 0.833,
+    "entityCompleteness": 0.971,
+    "tableSemantics": 0.789,
+    "unitCoverage": 0.947,
+    "questionCompleteness": 0.964,
+    "crossReferenceIntegrity": 0.779,
+    "valueFreeCompliance": 1.0,
+    "chartSemantics": 1.0
+  },
+  "counts": {
+    "entities": 22,
+    "entitiesDropped": 28,
+    "measureFamilies": 1,
+    "questions": 14,
+    "questionsFromTemplates": 11,
+    "tables": 9,
+    "charts": 5,
+    "figures": 5,
+    "topics": 4,
+    "slotsWired": 39
+  },
+  "blockingErrors": [
+    {
+      "severity": "error",
+      "code": "BROKEN_FILLFROM",
+      "message": "Slot 'table_10_1' has fillFrom='sp02_q01' which doesn't exist",
+      "sourcePhase": "E8"
+    },
+    {
+      "severity": "error",
+      "code": "ENTITY_MISSING_SOURCE_REFS",
+      "message": "1 binder entities lack sourceRefs/evidence",
+      "path": "entities[].sourceRefs",
+      "sourcePhase": "S3.5",
+      "recommendedAction": "Thread LayoutLM/pdfplumber/VLM evidence refs into every binder entity"
+    },
+    {
+      "severity": "error",
+      "code": "LOW_CROSS_REFERENCE_INTEGRITY",
+      "message": "semantic slot graph cross-reference integrity is below the S3.5 threshold",
+      "path": "semantic_slot_graph",
+      "sourcePhase": "S3.5",
+      "recommendedAction": "Repair slot fillFrom/biQuery/component references before binding"
+    }
+  ],
+  "warnings": [
+    {
+      "severity": "warn",
+      "code": "MEASURES_MISSING_UNIT",
+      "message": "1 measure entities have no unit",
+      "sourcePhase": "E0"
+    },
+    {
+      "severity": "warn",
+      "code": "ENTITIES_MISSING_ALIASES",
+      "message": "1 measure/dimension entities have empty aliases",
+      "sourcePhase": "E0"
+    },
+    {
+      "severity": "warn",
+      "code": "UNBOUND_CHART_PANELS",
+      "message": "9 chart panel(s) are renderable but not binder-grouped because no measure entity was resolved",
+      "path": "chartAST.charts[].measureEntityId",
+      "sourcePhase": "S3.5",
+      "recommendedAction": "Bind chart panels to measure entities or keep them as ungrouped render-only panels"
+    },
+    {
+      "severity": "warn",
+      "code": "SCHEMA_NOT_API_ENFORCED",
+      "message": "9 schema-required provider call(s) were prompt-validated but not API-enforced",
+      "sourcePhase": "S3.5"
+    }
+  ],
+  "quarantinedCount": 28,
+  "repairsCount": 47,
+  "binderCompatibility": {
+    "blueprintQAWillPass": false,
+    "expectedResolverConfidence": "high",
+    "expectedIssues": [
+      "S3.5 emission gate blocked template generation"
+    ],
+    "recommendation": "invalid"
+  },
+  "runtime": {},
+  "generatedAt": "2026-06-12T14:08:40.284588+00:00"
+}

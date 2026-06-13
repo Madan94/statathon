@@ -194,6 +194,9 @@ def bind_question(
             roles.measures.extend(c for c in cols if c not in roles.measures)
         elif role == "grouping":
             roles.dimensions.extend(c for c in cols if c not in roles.dimensions)
+        elif role == "denominator":
+            # SHARE/RATE/RATIO denominator — a measure column, NOT a grouping key.
+            roles.denominators.extend(c for c in cols if c not in roles.denominators)
         elif role == "filter":
             fspec = (
                 filter_specs.get(ent_id)
@@ -244,24 +247,17 @@ def bind_question(
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def _iter_section_questions(section: dict[str, Any]) -> list[dict[str, Any]]:
-    """Recursively collect questions from a topic/section and any nested children."""
-    out: list[dict[str, Any]] = list(section.get("questions") or [])
-    for key in ("subtopics", "sections", "children", "subsections"):
-        for child in section.get(key) or []:
-            if isinstance(child, dict):
-                out.extend(_iter_section_questions(child))
-    return out
-
-
 def _iter_questions(blueprint: dict[str, Any]) -> list[dict[str, Any]]:
-    """Flatten topics[].questions[] recursively (or a top-level questions[])."""
-    if blueprint.get("questions"):
-        return list(blueprint["questions"])
-    out: list[dict[str, Any]] = []
-    for topic in (blueprint.get("topics") or blueprint.get("sections") or []):
-        out.extend(_iter_section_questions(topic))
-    return out
+    """Flatten all questions recursively (enterprise + legacy shapes).
+
+    Delegates to the single canonical traversal so binder, diagnostics, QA, and
+    emission stay on one outline contract (enterprise templates nest questions
+    under ``topics[].chapters[].sections[]`` — a private copy here once dropped
+    them all).
+    """
+    from report_builder.template_traversal import iter_questions
+
+    return iter_questions(blueprint)
 
 
 def bind_questions(
@@ -315,14 +311,10 @@ def compile_execution_plans(
         QuestionExecutionPlan,
     )
 
-    # Index questions by ID for lookup
+    # Index questions by ID for lookup (recursive: supports enterprise
+    # topics[].chapters[].sections[].questions[] nesting, not just topics[].questions[]).
     bp_questions: dict[str, dict[str, Any]] = {}
-    for topic in (blueprint.get("topics") or []):
-        for q in (topic.get("questions") or []):
-            qid = q.get("questionId", "")
-            if qid:
-                bp_questions[qid] = q
-    for q in (blueprint.get("questions") or []):
+    for q in _iter_questions(blueprint):
         qid = q.get("questionId", "")
         if qid:
             bp_questions[qid] = q
@@ -415,6 +407,10 @@ def compile_execution_plans(
                 formula.numeratorColumn = qb.resolvedRoles.measures[0]
             else:
                 diagnostics.append("SHARE_MISSING_NUMERATOR: no measure column for share calculation")
+            # Resolve the declared denominator entity (requiredEntities[role=denominator])
+            # to its bound column so the readiness gate can pass and S4 divides at grain.
+            if qb.resolvedRoles.denominators:
+                formula.denominatorColumn = qb.resolvedRoles.denominators[0]
             formula.multiplier = 100.0
             formula.unitConversion = "percent"
 
@@ -423,7 +419,25 @@ def compile_execution_plans(
                 formula.numeratorColumn = qb.resolvedRoles.measures[0]
             else:
                 diagnostics.append("RATE_MISSING_NUMERATOR: no measure column for rate calculation")
+            # Resolve the declared denominator entity (requiredEntities[role=denominator])
+            # to its bound column — same-grain numerator/denominator, then multiply.
+            if qb.resolvedRoles.denominators:
+                formula.denominatorColumn = qb.resolvedRoles.denominators[0]
             formula.multiplier = 1000.0  # per 1000 default for MoSPI
+
+        elif formula_type == "RATIO":
+            if qb.resolvedRoles.measures:
+                formula.numeratorColumn = qb.resolvedRoles.measures[0]
+            else:
+                diagnostics.append("RATIO_MISSING_NUMERATOR: no measure column for ratio calculation")
+            # A second resolved measure can act as the denominator when no explicit
+            # denominator entity is declared; otherwise use the declared denominator.
+            if qb.resolvedRoles.denominators:
+                formula.denominatorColumn = qb.resolvedRoles.denominators[0]
+            elif len(qb.resolvedRoles.measures) >= 2:
+                formula.denominatorColumn = qb.resolvedRoles.measures[1]
+            else:
+                diagnostics.append("RATIO_MISSING_DENOMINATOR: no denominator entity or second measure for ratio")
 
         # ── Determine normalization ──
         norm_plan = _infer_normalization(qb, dataset)

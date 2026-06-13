@@ -41,6 +41,10 @@ interface Props {
   className?: string;
 }
 
+function formatStat(value: number | null | undefined, digits: number): string {
+  return typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : '—';
+}
+
 function MethodCard({
   title,
   icon: Icon,
@@ -110,7 +114,7 @@ function MethodCard({
       <Button
         onClick={onSelect}
         disabled={loading}
-        variant={selected ? 'default' : 'outline'}
+        variant={selected ? 'primary' : 'outline'}
         className="w-full gap-2"
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
@@ -130,7 +134,7 @@ export default function MethodSelectionPanel({
   const [loading, setLoading] = useState<'Z_SCORE' | 'IQR' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const block = resolveAnomalyBlock(column, results);
+  const block = resolveAnomalyBlock(column, results) as ColumnBlock | undefined;
 
   if (!block) {
     return (
@@ -156,7 +160,7 @@ export default function MethodSelectionPanel({
     );
   }
 
-  const gof = block.goodness_of_fit ?? {};
+  const gof = block.goodness_of_fit;
   const recommended = String(block.recommended ?? 'Z_SCORE').toUpperCase();
   const zConf = Number(block.z_score_confidence ?? 0);
   const iqrConf = Number(block.iqr_confidence ?? 0);
@@ -191,12 +195,12 @@ export default function MethodSelectionPanel({
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
           {[
-            { l: 'Mean', v: gof.mean?.toFixed?.(3) ?? '—' },
-            { l: 'Median', v: gof.median?.toFixed?.(3) ?? '—' },
-            { l: 'Std Dev', v: gof.standard_deviation?.toFixed?.(3) ?? '—' },
-            { l: 'Skewness', v: gof.skewness?.toFixed?.(3) ?? '—' },
-            { l: 'Kurtosis', v: gof.kurtosis?.toFixed?.(3) ?? '—' },
-            { l: 'Shapiro p', v: gof.p_value?.toFixed?.(4) ?? '—' },
+            { l: 'Mean', v: formatStat(gof?.mean, 3) },
+            { l: 'Median', v: formatStat(gof?.median, 3) },
+            { l: 'Std Dev', v: formatStat(gof?.standard_deviation, 3) },
+            { l: 'Skewness', v: formatStat(gof?.skewness, 3) },
+            { l: 'Kurtosis', v: formatStat(gof?.kurtosis, 3) },
+            { l: 'Shapiro p', v: formatStat(gof?.p_value, 4) },
           ].map(({ l, v }) => (
             <div key={l} className="rounded-lg border border-border p-2 bg-surface/50">
               <p className="text-text-muted uppercase text-[10px]">{l}</p>

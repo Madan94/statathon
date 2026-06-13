@@ -154,6 +154,9 @@ def iter_components(question: dict[str, Any]) -> list[dict[str, Any]]:
     """Return question answer components from current and legacy shapes."""
     if not isinstance(question, dict):
         return []
+    answer_components = question.get("answerComponents")
+    if isinstance(answer_components, list):
+        return [comp for comp in answer_components if isinstance(comp, dict)]
     ans = question.get("answerStructure") or question.get("outputContract") or {}
     if not isinstance(ans, dict):
         return []

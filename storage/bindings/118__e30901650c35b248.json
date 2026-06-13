@@ -1,0 +1,826 @@
+{
+  "templateId": "118",
+  "datasetSignature": "e30901650c35b248",
+  "datasetId": "blkJ202324",
+  "proposals": [
+    {
+      "entityId": "ent_001",
+      "entityName": "Labour Force Participation Rate",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=measure col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_002",
+      "entityName": "Worker Population Ratio",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=measure col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_003",
+      "entityName": "Unemployment Rate",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=measure col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_004",
+      "entityName": "Worker Share",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=measure col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_005",
+      "entityName": "Average Weekly Hours",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=measure col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_006",
+      "entityName": "Average Monthly Earnings",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=measure col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_007",
+      "entityName": "Formal Education Years",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: dimension entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=dimension col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'dimension' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_008",
+      "entityName": "Gender",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: dimension entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=dimension col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'dimension' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_009",
+      "entityName": "Sector",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: dimension entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=dimension col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'dimension' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_010",
+      "entityName": "Age Group",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: dimension entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=dimension col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'dimension' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_011",
+      "entityName": "Employment Status",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=measure col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_012",
+      "entityName": "Industry",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: dimension entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=dimension col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'dimension' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_013",
+      "entityName": "Survey Period",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: dimension entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=dimension col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'dimension' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_014",
+      "entityName": "Activity Status",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: dimension entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=dimension col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'dimension' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_015",
+      "entityName": "Periodic Labour Force Survey",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: dimension entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=dimension col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'dimension' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_016",
+      "entityName": "MoSPI",
+      "entityType": "metadata",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: metadata entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=metadata col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'metadata' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_021",
+      "entityName": "Report, 2025 [January, 2025 December, 2025]",
+      "entityType": "metadata",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: metadata entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=metadata col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'metadata' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_027",
+      "entityName": "Activity Status - Usual Status",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: dimension entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=dimension col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'dimension' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_028",
+      "entityName": "Principal Activity Status",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: dimension entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=dimension col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'dimension' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_029",
+      "entityName": "Subsidiary Economic Activity Status",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: dimension entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=dimension col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'dimension' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_030",
+      "entityName": "Activity Status - Current Weekly Status",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: dimension entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=dimension col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'dimension' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_040",
+      "entityName": "Sample Size",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: dimension entity landed on measure column 'yr'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'yr'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=dimension col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'dimension' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    }
+  ],
+  "confirmations": {},
+  "updatedAt": 1781244638.844358
+}

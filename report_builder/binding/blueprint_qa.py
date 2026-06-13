@@ -15,38 +15,19 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
+from report_builder.template_traversal import iter_components, iter_questions
+
 logger = logging.getLogger(__name__)
 
 
-def _iter_section_questions(section: dict[str, Any]) -> list[dict[str, Any]]:
-    """Recursively collect questions from a topic/section and nested children.
-
-    Includes ``chapters`` so questions nested under topics[].chapters[].sections[]
-    are not missed (superset of both pre-merge variants).
-    """
-    out: list[dict[str, Any]] = list(section.get("questions") or [])
-    for key in ("chapters", "subtopics", "sections", "children", "subsections"):
-        for child in section.get(key) or []:
-            if isinstance(child, dict):
-                out.extend(_iter_section_questions(child))
-    return out
-
-
 def _iter_blueprint_questions(blueprint: Any) -> list[dict[str, Any]]:
-    """Return all questions from a blueprint regardless of nesting depth."""
-    if isinstance(blueprint, list):
-        acc: list[dict[str, Any]] = []
-        for item in blueprint:
-            if isinstance(item, dict):
-                acc.extend(_iter_blueprint_questions(item))
-        return acc
-    if not isinstance(blueprint, dict):
-        return []
-    out: list[dict[str, Any]] = [q for q in (blueprint.get("questions") or []) if isinstance(q, dict)]
-    for topic in (blueprint.get("topics") or blueprint.get("sections") or blueprint.get("chapters") or []):
-        if isinstance(topic, dict):
-            out.extend(_iter_section_questions(topic))
-    return out
+    """Return all questions from a blueprint regardless of nesting depth.
+
+    Delegates to the single canonical traversal (``template_traversal``) so QA,
+    binder, diagnostics, and emission share one outline contract and cannot drift
+    on which nesting keys (chapters/sections/subtopics/...) are walked.
+    """
+    return iter_questions(blueprint)
 
 
 @dataclass
@@ -137,14 +118,18 @@ def validate_blueprint_qa(blueprint: dict[str, Any]) -> BlueprintQAResult:
                 if ref_id.lower() not in entity_names and ref_id not in entity_ids:
                     result.missingEntities.append(f"{qid}→{ref_id}")
 
-        # Check analyticsSpec
+        # Check analyticsSpec. Enterprise/legacy demo packages may express the
+        # analytic contract as formulaSpec + requiredEntities instead of a
+        # full analyticsSpec; treat that as binder-usable instead of producing
+        # a false warning.
         q_type = q.get("questionType", "")
-        if q_type not in ("describe",) and not q.get("analyticsSpec"):
+        has_formula_contract = bool(q.get("formulaSpec") and q.get("requiredEntities"))
+        if q_type not in ("describe",) and not q.get("analyticsSpec") and not has_formula_contract:
             result.missingAnalyticsSpec.append(qid)
 
-        # Check outputContract / answerStructure
+        # Check outputContract / answerStructure / legacy answerComponents
         ans = q.get("answerStructure") or q.get("outputContract")
-        if not ans:
+        if not ans and not iter_components(q):
             result.missingOutputContract.append(qid)
 
     # ── Determine final status ──

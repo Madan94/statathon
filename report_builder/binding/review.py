@@ -59,6 +59,8 @@ class Confirmation:
     status: str                       # confirmed | overridden | rejected
     columns: list[str] | None = None  # override columns (overridden only)
     note: str = ""
+    sharePolicy: str = "exclusive"    # exclusive | shared
+    shareReason: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {"entityId": self.entityId, "status": self.status}
@@ -66,6 +68,10 @@ class Confirmation:
             out["columns"] = list(self.columns)
         if self.note:
             out["note"] = self.note
+        if self.sharePolicy != "exclusive":
+            out["sharePolicy"] = self.sharePolicy
+        if self.shareReason:
+            out["shareReason"] = self.shareReason
         return out
 
     @classmethod
@@ -76,7 +82,18 @@ class Confirmation:
             status=str(d.get("status") or "confirmed"),
             columns=list(cols) if cols is not None else None,
             note=str(d.get("note") or ""),
+            sharePolicy=str(d.get("sharePolicy") or d.get("share_policy") or "exclusive"),
+            shareReason=str(d.get("shareReason") or d.get("share_reason") or ""),
         )
+
+
+class ColumnOwnershipConflict(Exception):
+    """Raised when an exclusive column assignment would steal another owner."""
+
+    def __init__(self, conflicts: list[dict[str, Any]]) -> None:
+        self.conflicts = conflicts
+        cols = ", ".join(str(c.get("column") or "") for c in conflicts)
+        super().__init__(f"column ownership conflict: {cols}")
 
 
 @dataclass
@@ -186,6 +203,217 @@ def apply_confirmations(binding: BindingAST, record: ReviewRecord) -> BindingAST
     return binding
 
 
+def _proposal_by_id(record: ReviewRecord, entity_id: str) -> dict[str, Any]:
+    return next((p for p in record.proposals if str(p.get("entityId") or "") == entity_id), {})
+
+
+def _proposal_columns(prop: dict[str, Any]) -> list[str]:
+    out: list[str] = []
+    for col in prop.get("columns") or []:
+        name = str(col.get("column") or "") if isinstance(col, dict) else str(col or "")
+        if name and name not in out:
+            out.append(name)
+    return out
+
+
+def _decision_columns(record: ReviewRecord, entity_id: str) -> list[str]:
+    decision = record.confirmations.get(entity_id)
+    if decision and decision.columns is not None:
+        return [c for c in decision.columns if c]
+    return _proposal_columns(_proposal_by_id(record, entity_id))
+
+
+def _owner_for(record: ReviewRecord, entity_id: str, columns: list[str]) -> dict[str, Any] | None:
+    prop = _proposal_by_id(record, entity_id)
+    decision = record.confirmations.get(entity_id)
+    status = decision.status if decision is not None else str(prop.get("status") or "")
+    if status == "rejected" or not columns:
+        return None
+    return {
+        "entityId": entity_id,
+        "entityName": str(prop.get("entityName") or entity_id),
+        "entityType": str(prop.get("entityType") or "dimension"),
+        "cardinality": str(prop.get("cardinality") or "oneToOne"),
+        "status": status or "proposed",
+        "sharePolicy": decision.sharePolicy if decision is not None else "exclusive",
+        "shareReason": decision.shareReason if decision is not None else "",
+    }
+
+
+def compute_column_ownership(record: ReviewRecord) -> dict[str, Any]:
+    """Return live column ownership for the binder UI and conflict gate.
+
+    Proposed S1 claims are visible, but only reviewed exclusive decisions
+    (confirmed/overridden) lock a column or create blocking conflicts.
+    """
+    columns: dict[str, dict[str, Any]] = {}
+    entity_ids = [str(p.get("entityId") or "") for p in record.proposals if p.get("entityId")]
+    for entity_id in entity_ids:
+        selected = _decision_columns(record, entity_id)
+        owner = _owner_for(record, entity_id, selected)
+        if owner is None:
+            continue
+        for column in selected:
+            entry = columns.setdefault(column, {"column": column, "owners": [], "locked": False})
+            entry["owners"].append(dict(owner))
+
+    conflicts: list[dict[str, Any]] = []
+    for column, entry in columns.items():
+        exclusive = [
+            o for o in entry["owners"]
+            if o.get("sharePolicy") != "shared" and o.get("status") in ("confirmed", "overridden")
+        ]
+        entry["locked"] = bool(exclusive)
+        if len(exclusive) > 1:
+            conflicts.append({
+                "column": column,
+                "severity": "error",
+                "code": "COLUMN_OWNERSHIP_CONFLICT",
+                "message": f"Column '{column}' has multiple exclusive owners.",
+                "owners": exclusive,
+            })
+    return {"columns": columns, "conflicts": conflicts}
+
+
+def find_exclusive_column_conflicts(
+    record: ReviewRecord,
+    entity_id: str,
+    columns: list[str],
+) -> list[dict[str, Any]]:
+    """Find existing exclusive owners for selected columns, excluding entity_id."""
+    selected = {c for c in columns if c}
+    if not selected:
+        return []
+    ownership = compute_column_ownership(record)
+    conflicts: list[dict[str, Any]] = []
+    for column in sorted(selected):
+        owners = [
+            o for o in (ownership.get("columns", {}).get(column, {}).get("owners") or [])
+            if o.get("entityId") != entity_id and o.get("sharePolicy") != "shared"
+            and o.get("status") in ("confirmed", "overridden")
+        ]
+        if owners:
+            conflicts.append({
+                "column": column,
+                "severity": "error",
+                "code": "COLUMN_ALREADY_OWNED",
+                "message": f"Column '{column}' is already assigned to another exclusive entity.",
+                "owners": owners,
+            })
+    return conflicts
+
+
+def move_columns_from_entities(
+    record: ReviewRecord,
+    *,
+    columns: list[str],
+    from_entity_ids: list[str],
+    note: str = "",
+) -> ReviewRecord:
+    """Remove columns from prior owners before a forced transfer."""
+    selected = {c for c in columns if c}
+    for entity_id in from_entity_ids:
+        if not entity_id:
+            continue
+        current = _decision_columns(record, entity_id)
+        remaining = [c for c in current if c not in selected]
+        if remaining:
+            record.confirmations[entity_id] = Confirmation(
+                entityId=entity_id,
+                status="overridden",
+                columns=remaining,
+                note=note,
+            )
+        else:
+            record.confirmations[entity_id] = Confirmation(
+                entityId=entity_id,
+                status="rejected",
+                columns=[],
+                note=note,
+            )
+    return record
+
+
+def _manual_entity_id(record: ReviewRecord, entity_name: str) -> str:
+    base = "manual_" + hashlib.sha1(entity_name.strip().lower().encode("utf-8")).hexdigest()[:10]
+    existing = {str(p.get("entityId") or "") for p in record.proposals}
+    if base not in existing:
+        return base
+    i = 2
+    while f"{base}_{i}" in existing:
+        i += 1
+    return f"{base}_{i}"
+
+
+def add_manual_entity(
+    record: ReviewRecord,
+    *,
+    entity_name: str,
+    entity_type: str = "dimension",
+    columns: list[str],
+    cardinality: str = "oneToOne",
+    note: str = "",
+    share_policy: str = "exclusive",
+    share_reason: str = "",
+) -> ReviewRecord:
+    """Add an officer-created entity and immediately record its reviewed mapping."""
+    selected = [c for c in dict.fromkeys(columns) if c]
+    if not selected:
+        raise ValueError("manual entity requires at least one column")
+    policy = share_policy if share_policy in ("exclusive", "shared") else "exclusive"
+    if policy == "shared" and not share_reason.strip():
+        raise ValueError("shared manual entity requires a share reason")
+    if policy != "shared":
+        conflicts = []
+        for column in selected:
+            owners = [
+                o for o in (compute_column_ownership(record).get("columns", {}).get(column, {}).get("owners") or [])
+                if o.get("sharePolicy") != "shared"
+                and o.get("status") in ("confirmed", "overridden")
+            ]
+            if owners:
+                conflicts.append({
+                    "column": column,
+                    "severity": "error",
+                    "code": "COLUMN_ALREADY_OWNED",
+                    "message": f"Column '{column}' is already assigned to another exclusive entity.",
+                    "owners": owners,
+                })
+        if conflicts:
+            raise ColumnOwnershipConflict(conflicts)
+
+    entity_id = _manual_entity_id(record, entity_name)
+    record.proposals.append({
+        "entityId": entity_id,
+        "entityName": entity_name,
+        "entityType": entity_type,
+        "cardinality": cardinality,
+        "columns": [{"column": c, "confidence": 1.0, "method": "manual"} for c in selected],
+        "combine": "none",
+        "confidence": 1.0,
+        "method": "manual",
+        "status": "overridden",
+        "alternatives": [],
+        "notes": [note] if note else [],
+        "evidence": [{
+            "signal": "manual",
+            "score": 1.0,
+            "detail": "Officer-created entity mapping",
+            "columns": list(selected),
+        }],
+        "risks": [],
+    })
+    record.confirmations[entity_id] = Confirmation(
+        entityId=entity_id,
+        status="overridden",
+        columns=selected,
+        note=note,
+        sharePolicy=policy,
+        shareReason=share_reason,
+    )
+    return record
+
+
 def accept_all_proposed(binding: BindingAST, record: ReviewRecord) -> BindingAST:
     """Headless confirm (``--accept-proposed``): every *proposed* → *confirmed*.
 
@@ -202,12 +430,31 @@ def accept_all_proposed(binding: BindingAST, record: ReviewRecord) -> BindingAST
 
 
 def confirm(
-    record: ReviewRecord, entity_id: str, *, columns: list[str] | None = None, note: str = ""
+    record: ReviewRecord,
+    entity_id: str,
+    *,
+    columns: list[str] | None = None,
+    note: str = "",
+    share_policy: str = "exclusive",
+    share_reason: str = "",
 ) -> ReviewRecord:
     """Record a single human decision (used by the REST POST handler)."""
+    selected = columns if columns is not None else _decision_columns(record, entity_id)
+    policy = share_policy if share_policy in ("exclusive", "shared") else "exclusive"
+    if policy == "shared" and not share_reason.strip():
+        raise ValueError("shared ownership requires a share reason")
+    if policy != "shared":
+        conflicts = find_exclusive_column_conflicts(record, entity_id, selected)
+        if conflicts:
+            raise ColumnOwnershipConflict(conflicts)
     status = "overridden" if columns else "confirmed"
     record.confirmations[entity_id] = Confirmation(
-        entityId=entity_id, status=status, columns=columns, note=note
+        entityId=entity_id,
+        status=status,
+        columns=columns,
+        note=note,
+        sharePolicy=policy,
+        shareReason=share_reason,
     )
     return record
 
@@ -216,6 +463,12 @@ def reject(record: ReviewRecord, entity_id: str, *, note: str = "") -> ReviewRec
     record.confirmations[entity_id] = Confirmation(
         entityId=entity_id, status="rejected", note=note
     )
+    return record
+
+
+def reopen(record: ReviewRecord, entity_id: str) -> ReviewRecord:
+    """Clear a prior human decision so the entity returns to proposal state."""
+    record.confirmations.pop(entity_id, None)
     return record
 
 

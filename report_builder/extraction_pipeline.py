@@ -70,6 +70,7 @@ from report_builder.llm_router import llm_text_call, llm_vision_call, is_provide
 from report_builder.llm_schemas import (
     ENTITY_BINDING_SCHEMA,
     ENTITY_CLASSIFICATION_SCHEMA,
+    PAGE_ENTITY_STRUCTURE_SCHEMA,
     QUESTION_LIST_SCHEMA,
 )
 
@@ -1221,14 +1222,30 @@ def pass0_rasterize(pdf_path: Path) -> tuple[list[bytes], list[dict[str, Any]]]:
     t0 = time.monotonic()
 
     # Rasterize pages to PNG
+    # Try PyMuPDF first (bundled C libs — no Poppler/system install needed),
+    # fall back to pdf2image only if PyMuPDF is unavailable.
+    _pdf_dpi = int(os.getenv("PDF_DPI", "150"))
+    images: list = []
     try:
-        import pdf2image
-        poppler_path = os.getenv("POPPLER_PATH") or None
-        _pdf_dpi = int(os.getenv("PDF_DPI", "150"))
-        images = pdf2image.convert_from_path(str(pdf_path), dpi=_pdf_dpi, fmt="png", poppler_path=poppler_path)
+        import fitz  # PyMuPDF — bundled C libs, no system install required
+        from PIL import Image
+        doc = fitz.open(str(pdf_path))
+        for page in doc:
+            mat = fitz.Matrix(_pdf_dpi / 72, _pdf_dpi / 72)
+            pix = page.get_pixmap(matrix=mat)
+            pil_img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            images.append(pil_img)
+        doc.close()
+        logger.info("[pass0] PyMuPDF rasterized %d pages", len(images))
     except Exception as exc:
-        logger.error("[pass0] pdf2image failed: %s — trying Pillow fallback", exc)
-        images = []
+        logger.warning("[pass0] PyMuPDF failed (%s), trying pdf2image", exc)
+        try:
+            import pdf2image
+            poppler_path = os.getenv("POPPLER_PATH") or None
+            images = pdf2image.convert_from_path(str(pdf_path), dpi=_pdf_dpi, fmt="png", poppler_path=poppler_path)
+        except Exception as exc2:
+            logger.error("[pass0] pdf2image also failed: %s — vision pass skipped", exc2)
+            images = []
 
     # Resize images to fit within max dimension to reduce VLM token count
     _max_dim = int(os.getenv("VLM_MAX_IMAGE_DIM", "800"))
@@ -1460,12 +1477,14 @@ def pass2_entity_structure_extraction(
                     prompt = (
                         f"Page {i + 1}/{total_pages} of \"{doc_title}\" (PIB Press Release).\n"
                         f"Layout: {region_types}{image_hint}\n\n"
-                        "This is a government press release. Extract ONLY:\n"
-                        "entities: Statistical indicator names and dimension names ONLY. "
+                        "This is a government press release. Extract ONLY value-free template signals:\n"
+                        "entities: objects for statistical indicator names and dimension names ONLY. "
                         "Examples: 'LFPR', 'WPR', 'Unemployment Rate', 'Gender', 'Rural', 'Urban', "
                         "'Age Group', 'Self-employed', 'Regular wage'. "
                         "DO NOT include: website text, dates, percentages, full sentences, "
                         "figure references, or nav-bar fragments.\n"
+                        "For each entity object include name, entityType, sourceType, confidence, "
+                        "and headerPath when visible. Do not include observed numeric values.\n"
                         "section_heading: The numbered section title if visible (e.g. '1. Stable LFPR...'). "
                         "Empty string otherwise.\n"
                         "chart_types: list each DISTINCT chart actually visible, once each "
@@ -1474,7 +1493,7 @@ def pass2_entity_structure_extraction(
                         "structure_type: narrative (most pages), chart_page (if chart dominates), "
                         "title_page (cover), appendix (endnote).\n"
                         "Output ONLY this JSON:\n"
-                        '{"entities":["LFPR","WPR","Gender","Rural","Urban"],'
+                        '{"entities":[{"name":"LFPR","entityType":"measure","sourceType":"text_label","confidence":0.85}],'
                         '"structure_type":"narrative|chart_page|title_page|appendix|mixed",'
                         '"description":"one-line summary",'
                         '"table_title":"",'
@@ -1489,12 +1508,14 @@ def pass2_entity_structure_extraction(
                         f"Page {i + 1}/{total_pages} of \"{doc_title}\".\n"
                         f"Detected layout regions: {region_types}{image_hint}\n\n"
                         "Examine this page carefully. Your tasks:\n"
-                        "1. List ONLY entities that appear VERBATIM as column headers, section titles, "
+                        "1. List ONLY value-free entity objects that appear VERBATIM as column headers, section titles, "
                         "or metric names visible on the page. Do NOT invent anything not explicitly "
                         "printed. Examples: 'LFPR', 'State/UT', 'Rural', 'Urban', "
                         "'Labour Force Participation Rate', 'Unemployment Rate', 'MPCE'. "
                         "Exclude articles ('the','a'), prepositions ('of','in'), "
                         "figure references ('Table 1','Figure 2.3'), pure numbers.\n"
+                        "Each entity object must include name, entityType, sourceType, confidence, "
+                        "and headerPath for multi-row table headers when visible. Never include observed values.\n"
                         "2. If a table is present, extract its exact visible title or statement number "
                         "(e.g. 'Statement 5.1', 'Table 3.2 — LFPR by State'). Use empty string if none.\n"
                         "3. If a section/chapter heading is visible, extract it exactly. "
@@ -1504,7 +1525,7 @@ def pass2_entity_structure_extraction(
                         "5. Provide visible chart titles if any.\n"
                         "6. Classify the dominant page structure.\n"
                         "Output ONLY this JSON (no prose, no markdown):\n"
-                        '{"entities":["ExactColumnHeader","MetricName"],'
+                        '{"entities":[{"name":"ExactColumnHeader","entityType":"measure","sourceType":"column_header","headerPath":["Top band","ExactColumnHeader"],"confidence":0.85}],'
                         '"structure_type":"data_table|chart_page|narrative|title_page|appendix|mixed",'
                         '"description":"one-line summary",'
                         '"table_title":"Statement X.Y or table title if present else empty",'
@@ -1521,6 +1542,7 @@ def pass2_entity_structure_extraction(
                     task="entity_extraction",
                     max_tokens=_tok("entity_extraction")[0],
                     temperature=_tok("entity_extraction")[1],
+                    schema=PAGE_ENTITY_STRUCTURE_SCHEMA,
                 )
                 if raw:
                     vlm_result = _extract_json_from_response(raw)
@@ -1541,20 +1563,16 @@ def pass2_entity_structure_extraction(
         pdfplumber_entities = _entities_from_pdfplumber(page_text, i)
 
         if vlm_result:
-            vlm_entities = vlm_result.get("entities") or []
-            # Normalize and validate: VLM returns list of strings; filter noise/stopwords
-            vlm_entity_names = [
-                str(e).strip() for e in vlm_entities
-                if isinstance(e, str) and _is_valid_entity_name(str(e).strip())
-            ]
+            vlm_entities = _normalize_vlm_entity_records(vlm_result.get("entities") or [], i)
             # Merge: VLM + pdfplumber, dedup by lowered name
             seen_lower: set[str] = set()
             merged_entities: list[dict[str, Any]] = []
-            for name in vlm_entity_names:
+            for ent in vlm_entities:
+                name = str(ent.get("name") or "").strip()
                 key = name.lower().strip()
                 if key not in seen_lower:
                     seen_lower.add(key)
-                    merged_entities.append({"name": name, "source": "vlm", "page": i})
+                    merged_entities.append(ent)
             for ent in pdfplumber_entities:
                 key = ent["name"].lower().strip()
                 if key not in seen_lower:
@@ -1618,6 +1636,56 @@ def pass2_entity_structure_extraction(
     return results
 
 
+def _normalize_vlm_entity_records(raw_entities: list[Any], page_index: int) -> list[dict[str, Any]]:
+    """Normalize VLM entity output while preserving evidence hooks.
+
+    Older prompts returned ``["LFPR", ...]``. Enterprise prompts return objects
+    with sourceType/headerPath/confidence. Support both so cached checkpoints and
+    older providers stay usable.
+    """
+    entities: list[dict[str, Any]] = []
+    for raw in raw_entities:
+        if isinstance(raw, str):
+            name = raw.strip()
+            if not _is_valid_entity_name(name):
+                continue
+            entities.append({
+                "name": name,
+                "source": "vlm",
+                "page": page_index,
+                "sourceRefs": [{
+                    "sourceType": "vlm_label",
+                    "page": page_index,
+                    "confidence": 0.65,
+                }],
+            })
+            continue
+        if not isinstance(raw, dict):
+            continue
+        name = str(raw.get("name") or raw.get("canonicalName") or "").strip()
+        if not _is_valid_entity_name(name):
+            continue
+        source_type = str(raw.get("sourceType") or raw.get("source") or "vlm_label").strip() or "vlm_label"
+        confidence = raw.get("confidence", 0.7)
+        ref = {
+            "sourceType": source_type,
+            "page": page_index,
+            "confidence": confidence,
+        }
+        header_path = raw.get("headerPath")
+        if isinstance(header_path, list) and header_path:
+            ref["headerPath"] = [str(part) for part in header_path if str(part).strip()]
+        entities.append({
+            "name": name,
+            "source": "vlm",
+            "page": page_index,
+            "entityType_hint": raw.get("entityType"),
+            "confidence": confidence,
+            "sourceRefs": [ref],
+        })
+    return entities
+
+
 def _entities_from_pdfplumber(page_text: dict[str, Any], page_index: int) -> list[dict[str, Any]]:
     """Extract entity candidates from pdfplumber data (table headers + headings).
 
@@ -1628,11 +1696,24 @@ def _entities_from_pdfplumber(page_text: dict[str, Any], page_index: int) -> lis
     entities: list[dict[str, Any]] = []
     seen: set[str] = set()
 
-    def _add(name: str, source: str):
+    def _add(name: str, source: str, header_path: list[str] | None = None):
         key = name.lower().strip()
         if key and key not in seen and _is_valid_entity_name(name) and len(name) < 100:
             seen.add(key)
-            entities.append({"name": name.strip(), "source": source, "page": page_index})
+            ref: dict[str, Any] = {
+                "sourceType": source,
+                "page": page_index,
+                "confidence": 0.9 if source == "table_header" else 0.75,
+            }
+            if header_path:
+                ref["headerPath"] = header_path
+                ref["physicalColumn"] = header_path[-1]
+            entities.append({
+                "name": name.strip(),
+                "source": source,
+                "page": page_index,
+                "sourceRefs": [ref],
+            })
 
     # Priority 1: Table headers — use multi-row merge to handle MoSPI spanning headers
     for table in (page_text.get("tables") or []):
@@ -1640,7 +1721,7 @@ def _entities_from_pdfplumber(page_text: dict[str, Any], page_index: int) -> lis
             headers, _ = _merge_multirow_headers(table)
             for h in headers:
                 if h:
-                    _add(h, "table_header")
+                    _add(h, "table_header", header_path=[str(h).strip()])
 
     # Priority 2: Headings (section/chapter titles from font analysis)
     for h in (page_text.get("headings") or []):
@@ -2061,10 +2142,41 @@ def pass2_5_document_knowledge_graph(
 
     _entity_id_seq = [len(_PLFS_CORE_ENTITIES) + 1]  # start after pre-seeded IDs
 
-    def _register_entity(name: str, source: str, page: int, priority: int):
+    def _default_source_ref(source: str, page: int, confidence: Any = None) -> dict[str, Any]:
+        return {
+            "sourceType": source,
+            "page": page,
+            "confidence": confidence if confidence is not None else (0.9 if source == "table_header" else 0.75),
+        }
+
+    def _ref_key(ref: dict[str, Any]) -> tuple[Any, ...]:
+        return (
+            ref.get("sourceType"),
+            ref.get("page"),
+            ref.get("tableId"),
+            ref.get("figureId"),
+            ref.get("regionRef"),
+            tuple(ref.get("headerPath") or []),
+            ref.get("physicalColumn"),
+            tuple(ref.get("bbox") or []),
+        )
+
+    def _register_entity(
+        name: str,
+        source: str,
+        page: int,
+        priority: int,
+        *,
+        source_refs: list[dict[str, Any]] | None = None,
+        entity_type_hint: str | None = None,
+        confidence: Any = None,
+    ):
         key = name.lower().strip()
         if not key:
             return
+        refs = [dict(ref) for ref in (source_refs or []) if isinstance(ref, dict)]
+        if not refs:
+            refs = [_default_source_ref(source, page, confidence)]
         # Reject stopwords, noise, figure refs, web chrome — quarantine with reason (Q7), don't drop
         reason = _classify_entity_name(name) if len(name) < 100 else "too_long"
         if reason is not None:
@@ -2080,6 +2192,15 @@ def pass2_5_document_knowledge_graph(
             ent = entity_index[key]
             if page not in ent["pages"]:
                 ent["pages"].append(page)
+            seen_refs = {_ref_key(ref) for ref in ent.setdefault("sourceRefs", []) if isinstance(ref, dict)}
+            for ref in refs:
+                if _ref_key(ref) not in seen_refs:
+                    ent["sourceRefs"].append(ref)
+                    seen_refs.add(_ref_key(ref))
+            if entity_type_hint and not ent.get("entityType_hint"):
+                ent["entityType_hint"] = entity_type_hint
+            if confidence is not None and ent.get("confidence") is None:
+                ent["confidence"] = confidence
             # Upgrade source if higher priority
             if priority < ent["_priority"]:
                 ent["source"] = source
@@ -2092,6 +2213,9 @@ def pass2_5_document_knowledge_graph(
                 "name": name.strip(),
                 "source": source,
                 "pages": [page],
+                "sourceRefs": refs,
+                "entityType_hint": entity_type_hint,
+                "confidence": confidence,
                 "_priority": priority,
             }
 
@@ -2134,7 +2258,17 @@ def pass2_5_document_knowledge_graph(
         for ent in (ep.get("entities") or []):
             name = ent.get("name", "") if isinstance(ent, dict) else str(ent)
             if name.strip():
-                _register_entity(name, "vlm", page_idx, 2)
+                source_refs = ent.get("sourceRefs") if isinstance(ent, dict) else None
+                source = str(ent.get("source") or "vlm") if isinstance(ent, dict) else "vlm"
+                _register_entity(
+                    name,
+                    source,
+                    page_idx,
+                    2,
+                    source_refs=source_refs if isinstance(source_refs, list) else None,
+                    entity_type_hint=ent.get("entityType_hint") if isinstance(ent, dict) else None,
+                    confidence=ent.get("confidence") if isinstance(ent, dict) else None,
+                )
 
         # Source 3b (priority 1): VLM table_title and section_heading from Pass 2
         table_title = ep.get("table_title") or ""
@@ -2986,17 +3120,25 @@ def pass3_two_loop_ast_building(
             f"Typed entities: {typed_entity_context}\n"
             f"Table structures:\n{table_context}\n"
             f"Content preview:\n{section_summary}\n\n"
-            f"Generate 1-3 analytical questions SPECIFICALLY about '{sec_title}'.\n"
+            f"Generate 1-3 enterprise binder questions SPECIFICALLY about '{sec_title}'.\n"
             "CRITICAL RULES:\n"
             f"(1) Questions MUST be about {_topic_hint} — do NOT ask about other sections.\n"
             "(2) Reference the exact entity names listed above.\n"
             "(3) Questions must be quantitative and comparative — MoSPI report style.\n"
+            "(4) Prefer questions that can bind to measure + dimension + optional time entities.\n"
+            "(5) Every question must be value-free: no observed numbers, no prose conclusions.\n"
             "BAD: 'What does this section show?' or generic LFPR questions for a WPR section.\n"
             f"GOOD example for this section: A question specifically asking about {_topic_hint} by gender or Rural/Urban.\n"
-            "Output a JSON array. Each item has keys: questionId, intent, questionType, sourceHeading.\n"
+            "Output a JSON array. Each item has keys: questionId, intent, questionText, questionType, "
+            "sourceHeading, outlinePath, requiredEntityHints, formulaIntent, answerComponentHints.\n"
             "  - intent: a complete, quantitative question ending in '?' that names real entities.\n"
+            "  - questionText: same as intent unless a clearer officer-facing wording is needed.\n"
             "  - questionType: EXACTLY ONE of comparison, trend, ranking, distribution, composition, correlation, describe.\n"
             "  - sourceHeading: the exact section title.\n"
+            "  - outlinePath: [chapter/section headings from this context].\n"
+            "  - requiredEntityHints: exact visible entity names needed to answer the question.\n"
+            "  - formulaIntent: DIRECT, SHARE, RATE, RATIO, GROWTH, INDEX, REPORTED_VALUE, or DESCRIPTIVE.\n"
+            "  - answerComponentHints: include narrative and provenance; add formula_metric, chart, or table when useful.\n"
             "Do NOT copy these instructions or any placeholder text into the output.\n"
             "List 1-3 questions. JSON only."
         )
@@ -3026,8 +3168,10 @@ def pass3_two_loop_ast_building(
                         # CRITICAL: globally unique IDs — Qwen always returns q1/q2/q3
                         # Duplicate IDs cause topic assignment to skip all but chapter 1
                         q["questionId"] = f"sp{sp_idx + 1:02d}_q{q_i + 1:02d}"
+                        q.setdefault("questionText", q.get("intent", ""))
                         q["page"] = page_range[0]
                         q["sectionId"] = sp.get("sectionId", "")
+                        q.setdefault("outlinePath", [sec_title])
                         q["sectionPattern"] = pattern
                     raw_questions.extend(questions)
                     consecutive_failures = 0
@@ -3111,12 +3255,14 @@ def pass3_two_loop_ast_building(
             f"Available entities: {entity_summary}\n"
             f"{table_hint}\n"
             f"Section pattern: {q_pattern}\n\n"
-            "Which entities does this question need and what role does each play? "
-            "What components should the answer have?\n"
+            "Build an enterprise binder contract for this question. Choose only real entities from the list. "
+            "Use roles: measure, grouping/dimension, filter, time. Include a provenance component. "
+            "Use chart/table components only when the table context supports them. Never include observed values.\n"
             "Output JSON:\n"
             '{"requiredEntities":[{"entityRef":"entity_name","role":"groupBy|measure|filter|breakdown"}],'
             '"answerStructure":{"layoutType":"single|split|multi-panel",'
-            '"components":[{"type":"narrative_paragraph|data_table|grouped_bar_chart|line_chart|pie_chart|metric_card","renderOrder":1}]},'
+            '"components":[{"type":"narrative_paragraph|data_table|grouped_bar_chart|line_chart|pie_chart|metric_card|provenance","renderOrder":1}]},'
+            '"formulaIntent":{"type":"DIRECT|SHARE|RATE|RATIO|GROWTH|INDEX|REPORTED_VALUE|DESCRIPTIVE"},'
             '"confidence":0.8}\n'
             "JSON only."
         )
@@ -3135,6 +3281,7 @@ def pass3_two_loop_ast_building(
                     q.update({
                         "requiredEntities": binding.get("requiredEntities") or [],
                         "answerStructure": binding.get("answerStructure") or {},
+                        "formulaIntent": binding.get("formulaIntent") or q.get("formulaIntent"),
                         "inferenceConfidence": float(binding.get("confidence", 0.5)),
                     })
                     enriched_questions.append(q)

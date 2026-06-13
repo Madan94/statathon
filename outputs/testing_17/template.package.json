@@ -1,0 +1,51 @@
+{
+  "$schema": "bharatstat/template-package/v1",
+  "templateId": "tpl_testing_17_v1",
+  "version": "3.0",
+  "name": "Energy Statistics India — Energy Reserves and Potential",
+  "status": "INVALID",
+  "artifacts": {
+    "templateAst": {
+      "path": "template.ast.json",
+      "hash": "7d0d12a579577428"
+    },
+    "templateBlueprint": {
+      "path": "template.blueprint.json",
+      "hash": "9e275cb04e48ba67"
+    },
+    "semanticSlotGraph": {
+      "path": "semantic_slot_graph.json",
+      "hash": "52558afb588a7d73"
+    },
+    "diagnostics": {
+      "path": "template.diagnostics.json",
+      "hash": "2b5ee12bb118170f"
+    }
+  },
+  "metadata": {
+    "domain": "energy",
+    "locale": "en-IN",
+    "valueFree": true,
+    "runtimeTrace": {
+      "totalCalls": 20,
+      "statusCounts": {
+        "success": 20
+      },
+      "taskCounts": {
+        "entity_extraction": 10,
+        "entity_classification": 1,
+        "question_generation": 2,
+        "entity_binding": 6,
+        "fact_extraction": 1
+      },
+      "providerCounts": {
+        "azure": 20
+      },
+      "fallbackCalls": 0,
+      "schemaRequiredCalls": 9,
+      "schemaEnforcedCalls": 0
+    }
+  },
+  "extractionScore": 0.878,
+  "sourceDocument": "Document"
+}

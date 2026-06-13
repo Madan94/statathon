@@ -179,6 +179,8 @@ export default function BindingWorkflowPage() {
   const [newEntityColumn, setNewEntityColumn] = useState('');
   const [newEntityName, setNewEntityName] = useState('');
   const [newEntityType, setNewEntityType] = useState<'dimension' | 'measure' | 'time' | 'filter' | 'metadata'>('dimension');
+  const [newEntitySharePolicy, setNewEntitySharePolicy] = useState<'exclusive' | 'shared'>('exclusive');
+  const [newEntityShareReason, setNewEntityShareReason] = useState('');
 
   // step 2
   const [finalizing, setFinalizing] = useState(false);
@@ -344,12 +346,16 @@ export default function BindingWorkflowPage() {
         entity_type: newEntityType,
         columns: [newEntityColumn],
         cardinality: 'oneToOne',
-        note: 'officer-created entity from binder sidebar',
+        note: newEntityShareReason.trim() || 'officer-created entity from binder sidebar',
+        share_policy: newEntitySharePolicy,
+        share_reason: newEntitySharePolicy === 'shared' ? newEntityShareReason.trim() : undefined,
       });
       await refreshFromRecord(record);
       setNewEntityColumn('');
       setNewEntityName('');
       setNewEntityType('dimension');
+      setNewEntitySharePolicy('exclusive');
+      setNewEntityShareReason('');
     } catch (err) {
       setError(errMessage(err, 'Could not add that entity'));
     } finally {
@@ -999,6 +1005,17 @@ export default function BindingWorkflowPage() {
 
     if (workbenchMode === 'columns') {
       const ownershipEntries = Object.entries(session.column_ownership.columns ?? {});
+      const ownershipBadge = (entry: (typeof ownershipEntries)[number][1]) => {
+        const reviewedShared = entry.owners.some((owner) => owner.sharePolicy === 'shared');
+        const reviewedExclusive = entry.owners.filter(
+          (owner) => owner.sharePolicy !== 'shared' && (owner.status === 'confirmed' || owner.status === 'overridden')
+        );
+        if (reviewedExclusive.length > 1) return <Badge variant="danger">conflict</Badge>;
+        if (reviewedExclusive.length === 1) return <Badge variant="warning">locked</Badge>;
+        if (reviewedShared) return <Badge variant="muted">shared</Badge>;
+        if (entry.owners.length > 1) return <Badge variant="muted">claims</Badge>;
+        return <Badge variant="muted">open</Badge>;
+      };
       return (
         <div className="grid gap-4 xl:grid-cols-[1fr_1.1fr]">
           <DatasetProfileCard dataset={session.dataset_ast} />
@@ -1008,10 +1025,12 @@ export default function BindingWorkflowPage() {
                 <div key={columnName} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate font-medium text-text">{columnName}</p>
-                    {entry.locked ? <Badge variant="warning">locked</Badge> : entry.owners.length > 1 ? <Badge variant="muted">shared</Badge> : <Badge variant="muted">open</Badge>}
+                    {ownershipBadge(entry)}
                   </div>
                   <p className="mt-1 text-xs text-text-muted">
-                    {entry.owners.length ? entry.owners.map((owner) => `${owner.entityName || owner.entityId} (${owner.sharePolicy})`).join(', ') : 'No entity has claimed this column yet.'}
+                    {entry.owners.length
+                      ? entry.owners.map((owner) => `${owner.entityName || owner.entityId} (${owner.status}/${owner.sharePolicy})${owner.shareReason ? ` - ${owner.shareReason}` : ''}`).join(', ')
+                      : 'No entity has claimed this column yet.'}
                   </p>
                 </div>
               ))}
@@ -1241,6 +1260,15 @@ export default function BindingWorkflowPage() {
                   <option value="">Select column</option>
                   {session.dataset_ast.columns.map((column) => <option key={column.name} value={column.name}>{column.name}</option>)}
                 </select>
+                {newEntityColumn && (
+                  <div className="rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-muted">
+                    {(session.column_ownership.columns[newEntityColumn]?.owners?.length ?? 0) > 0
+                      ? session.column_ownership.columns[newEntityColumn].owners
+                          .map((owner) => `${owner.entityName || owner.entityId} (${owner.status}/${owner.sharePolicy})`)
+                          .join(', ')
+                      : 'No existing claims for this column.'}
+                  </div>
+                )}
                 <input
                   value={newEntityName}
                   onChange={(e) => setNewEntityName(e.target.value)}
@@ -1258,7 +1286,34 @@ export default function BindingWorkflowPage() {
                   <option value="filter">Filter</option>
                   <option value="metadata">Metadata</option>
                 </select>
-                <Button type="submit" size="sm" className="w-full" disabled={addingEntity || !newEntityColumn || !newEntityName.trim()}>
+                <select
+                  value={newEntitySharePolicy}
+                  onChange={(e) => setNewEntitySharePolicy(e.target.value as typeof newEntitySharePolicy)}
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+                >
+                  <option value="exclusive">Exclusive owner</option>
+                  <option value="shared">Shared with existing owner</option>
+                </select>
+                {newEntitySharePolicy === 'shared' && (
+                  <textarea
+                    value={newEntityShareReason}
+                    onChange={(e) => setNewEntityShareReason(e.target.value)}
+                    rows={2}
+                    placeholder="Required reason for shared ownership"
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+                  />
+                )}
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="w-full"
+                  disabled={
+                    addingEntity ||
+                    !newEntityColumn ||
+                    !newEntityName.trim() ||
+                    (newEntitySharePolicy === 'shared' && !newEntityShareReason.trim())
+                  }
+                >
                   {addingEntity ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                   Add and bind
                 </Button>

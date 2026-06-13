@@ -353,22 +353,28 @@ class ResolvedRoles:
 
     measures: list[str] = field(default_factory=list)
     dimensions: list[str] = field(default_factory=list)
+    denominators: list[str] = field(default_factory=list)
     filters: list[ResolvedFilter] = field(default_factory=list)
     time: ResolvedTime = field(default_factory=ResolvedTime)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out: dict[str, Any] = {
             "measures": list(self.measures),
             "dimensions": list(self.dimensions),
             "filters": [f.to_dict() for f in self.filters],
             "time": self.time.to_dict(),
         }
+        # Only surface denominators when present so existing snapshots are unaffected.
+        if self.denominators:
+            out["denominators"] = list(self.denominators)
+        return out
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "ResolvedRoles":
         return cls(
             measures=list(d.get("measures") or []),
             dimensions=list(d.get("dimensions") or []),
+            denominators=list(d.get("denominators") or []),
             filters=[ResolvedFilter.from_dict(f) for f in (d.get("filters") or [])],
             time=ResolvedTime.from_dict(d.get("time") or {}),
         )

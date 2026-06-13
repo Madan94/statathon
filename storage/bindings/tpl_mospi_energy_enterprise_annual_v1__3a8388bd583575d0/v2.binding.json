@@ -1,0 +1,929 @@
+{
+  "templateId": "tpl_mospi_energy_enterprise_annual_v1",
+  "datasetId": "energy_synth",
+  "datasetSignature": "3a8388bd583575d0",
+  "entityBindings": [
+    {
+      "entityId": "ent_coal_reserves",
+      "entityName": "Coal Reserves",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Coal"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Coal Reserves matched dataset column 'Coal'",
+          "column": "Coal"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'State/UT'",
+          "column": "State/UT"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Region'",
+          "column": "Region"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_lignite_reserves",
+      "entityName": "Lignite Reserves",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "measure entity 'Lignite Reserves' matched dimension column 'State/UT'",
+          "column": "State/UT"
+        }
+      ],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: measure entity landed on dimension column 'State/UT'"
+      ]
+    },
+    {
+      "entityId": "ent_proved_reserves",
+      "entityName": "Proved Reserves",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Proved"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "confirmed",
+      "alternatives": [
+        {
+          "column": "Reserve Category",
+          "confidence": 0.06,
+          "method": "synonym"
+        }
+      ],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Proved Reserves matched dataset column 'Proved'",
+          "column": "Proved"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.06,
+          "detail": "alternative candidate column 'Reserve Category'",
+          "column": "Reserve Category"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'State/UT'",
+          "column": "State/UT"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_indicated_reserves",
+      "entityName": "Indicated Reserves",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.042,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "measure entity 'Indicated Reserves' matched dimension column 'Reserve Category'",
+          "column": "Reserve Category"
+        }
+      ],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: measure entity landed on dimension column 'Reserve Category'"
+      ]
+    },
+    {
+      "entityId": "ent_inferred_reserves",
+      "entityName": "Inferred Reserves",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.042,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "measure entity 'Inferred Reserves' matched dimension column 'Reserve Category'",
+          "column": "Reserve Category"
+        }
+      ],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: measure entity landed on dimension column 'Reserve Category'"
+      ]
+    },
+    {
+      "entityId": "ent_total_reserves",
+      "entityName": "Total Reserves",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Total"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "confirmed",
+      "alternatives": [
+        {
+          "column": "Total Renewable",
+          "confidence": 0.88,
+          "method": "alias"
+        }
+      ],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Total Reserves matched dataset column 'Total'",
+          "column": "Total"
+        },
+        {
+          "signal": "candidate_alias",
+          "score": 0.88,
+          "detail": "alternative candidate column 'Total Renewable'",
+          "column": "Total Renewable"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'State/UT'",
+          "column": "State/UT"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_crude_oil_reserves",
+      "entityName": "Crude Oil Reserves",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Crude Oil"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Crude Oil Reserves matched dataset column 'Crude Oil'",
+          "column": "Crude Oil"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'State/UT'",
+          "column": "State/UT"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Region'",
+          "column": "Region"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_natural_gas_reserves",
+      "entityName": "Natural Gas Reserves",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Natural Gas"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Natural Gas Reserves matched dataset column 'Natural Gas'",
+          "column": "Natural Gas"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'State/UT'",
+          "column": "State/UT"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Region'",
+          "column": "Region"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_reserve_distribution_pct",
+      "entityName": "Reserve Distribution Share",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0315,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "measure entity 'Reserve Distribution Share' matched dimension column 'Reserve Category'",
+          "column": "Reserve Category"
+        }
+      ],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: measure entity landed on dimension column 'Reserve Category'"
+      ]
+    },
+    {
+      "entityId": "ent_wind_power",
+      "entityName": "Wind Power Potential",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Wind"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "confirmed",
+      "alternatives": [
+        {
+          "column": "Energy Source",
+          "confidence": 0.06,
+          "method": "synonym"
+        }
+      ],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Wind Power Potential matched dataset column 'Wind'",
+          "column": "Wind"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.06,
+          "detail": "alternative candidate column 'Energy Source'",
+          "column": "Energy Source"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'State/UT'",
+          "column": "State/UT"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_solar_energy",
+      "entityName": "Solar Energy Potential",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Solar"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "confirmed",
+      "alternatives": [
+        {
+          "column": "Energy Source",
+          "confidence": 0.045,
+          "method": "synonym"
+        }
+      ],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Solar Energy Potential matched dataset column 'Solar'",
+          "column": "Solar"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.045,
+          "detail": "alternative candidate column 'Energy Source'",
+          "column": "Energy Source"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'State/UT'",
+          "column": "State/UT"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_small_hydro_power",
+      "entityName": "Small Hydro Power Potential",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "measure entity 'Small Hydro Power Potential' matched dimension column 'State/UT'",
+          "column": "State/UT"
+        }
+      ],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: measure entity landed on dimension column 'State/UT'"
+      ]
+    },
+    {
+      "entityId": "ent_biomass_power",
+      "entityName": "Biomass Power Potential",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "measure entity 'Biomass Power Potential' matched dimension column 'State/UT'",
+          "column": "State/UT"
+        }
+      ],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: measure entity landed on dimension column 'State/UT'"
+      ]
+    },
+    {
+      "entityId": "ent_cogeneration_bagasse",
+      "entityName": "Cogeneration-Bagasse Potential",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "measure entity 'Cogeneration-Bagasse Potential' matched dimension column 'State/UT'",
+          "column": "State/UT"
+        }
+      ],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: measure entity landed on dimension column 'State/UT'"
+      ]
+    },
+    {
+      "entityId": "ent_large_hydro",
+      "entityName": "Large Hydro Potential",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "measure entity 'Large Hydro Potential' matched dimension column 'State/UT'",
+          "column": "State/UT"
+        }
+      ],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: measure entity landed on dimension column 'State/UT'"
+      ]
+    },
+    {
+      "entityId": "ent_total_renewable_potential",
+      "entityName": "Total Renewable Potential",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Total Renewable"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "confirmed",
+      "alternatives": [
+        {
+          "column": "Total",
+          "confidence": 0.88,
+          "method": "alias"
+        }
+      ],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Total Renewable Potential matched dataset column 'Total Renewable'",
+          "column": "Total Renewable"
+        },
+        {
+          "signal": "candidate_alias",
+          "score": 0.88,
+          "detail": "alternative candidate column 'Total'",
+          "column": "Total"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'State/UT'",
+          "column": "State/UT"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_renewable_share_pct",
+      "entityName": "Renewable Source Share",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.042,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [
+        {
+          "column": "Total Renewable",
+          "confidence": 0.06,
+          "method": "synonym"
+        }
+      ],
+      "evidence": [],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "measure entity 'Renewable Source Share' matched dimension column 'Energy Source'",
+          "column": "Energy Source"
+        }
+      ],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: measure entity landed on dimension column 'Energy Source'"
+      ]
+    },
+    {
+      "entityId": "ent_state_ut",
+      "entityName": "State/UT",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "State/UT"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "confirmed",
+      "alternatives": [
+        {
+          "column": "Region",
+          "confidence": 0.98,
+          "method": "exact"
+        }
+      ],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "State/UT matched dataset column 'State/UT'",
+          "column": "State/UT"
+        },
+        {
+          "signal": "candidate_exact",
+          "score": 0.98,
+          "detail": "alternative candidate column 'Region'",
+          "column": "Region"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Reserve Category'",
+          "column": "Reserve Category"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_region",
+      "entityName": "Region",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Region"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Region matched dataset column 'Region'",
+          "column": "Region"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'State/UT'",
+          "column": "State/UT"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Reserve Category'",
+          "column": "Reserve Category"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_reserve_category",
+      "entityName": "Reserve Category",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Reserve Category"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Reserve Category matched dataset column 'Reserve Category'",
+          "column": "Reserve Category"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'State/UT'",
+          "column": "State/UT"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Region'",
+          "column": "Region"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_energy_source",
+      "entityName": "Energy Source",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Energy Source"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "confirmed",
+      "alternatives": [
+        {
+          "column": "Total Renewable",
+          "confidence": 0.06,
+          "method": "synonym"
+        }
+      ],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Energy Source matched dataset column 'Energy Source'",
+          "column": "Energy Source"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.06,
+          "detail": "alternative candidate column 'Total Renewable'",
+          "column": "Total Renewable"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'State/UT'",
+          "column": "State/UT"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_period",
+      "entityName": "Reference Period",
+      "entityType": "time",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Period"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Reference Period matched dataset column 'Period'",
+          "column": "Period"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'State/UT'",
+          "column": "State/UT"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Region'",
+          "column": "Region"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_estimate_status",
+      "entityName": "Estimate Status",
+      "entityType": "metadata",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [],
+      "risks": []
+    },
+    {
+      "entityId": "ent_source_table",
+      "entityName": "Source Table",
+      "entityType": "metadata",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.06,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [],
+      "risks": []
+    },
+    {
+      "entityId": "ent_note",
+      "entityName": "Source Note",
+      "entityType": "metadata",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.06,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [],
+      "risks": []
+    }
+  ],
+  "questionBindings": [],
+  "coverage": {
+    "entities": {
+      "bound": 13,
+      "pending": 0,
+      "unresolved": 12
+    },
+    "questions": {
+      "executable": 0,
+      "blocked": 0,
+      "degraded": 0
+    },
+    "issues": [
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Lignite Reserves' (measure) is unresolved but not required by any question.",
+        "entityId": "ent_lignite_reserves"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Indicated Reserves' (measure) is unresolved but not required by any question.",
+        "entityId": "ent_indicated_reserves"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Inferred Reserves' (measure) is unresolved but not required by any question.",
+        "entityId": "ent_inferred_reserves"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Reserve Distribution Share' (measure) is unresolved but not required by any question.",
+        "entityId": "ent_reserve_distribution_pct"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Small Hydro Power Potential' (measure) is unresolved but not required by any question.",
+        "entityId": "ent_small_hydro_power"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Biomass Power Potential' (measure) is unresolved but not required by any question.",
+        "entityId": "ent_biomass_power"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Cogeneration-Bagasse Potential' (measure) is unresolved but not required by any question.",
+        "entityId": "ent_cogeneration_bagasse"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Large Hydro Potential' (measure) is unresolved but not required by any question.",
+        "entityId": "ent_large_hydro"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Renewable Source Share' (measure) is unresolved but not required by any question.",
+        "entityId": "ent_renewable_share_pct"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Estimate Status' (metadata) is unresolved but not required by any question.",
+        "entityId": "ent_estimate_status"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Source Table' (metadata) is unresolved but not required by any question.",
+        "entityId": "ent_source_table"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Source Note' (metadata) is unresolved but not required by any question.",
+        "entityId": "ent_note"
+      }
+    ]
+  }
+}

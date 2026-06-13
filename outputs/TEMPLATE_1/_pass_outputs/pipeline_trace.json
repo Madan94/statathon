@@ -1,0 +1,68 @@
+{
+  "passes": {
+    "pass0_rasterize": {
+      "elapsed_s": 9.0,
+      "images": 0,
+      "text_pages": 11
+    },
+    "pass1_layout": {
+      "elapsed_s": 21.1,
+      "layoutlm_used": false,
+      "pages_with_regions": 11,
+      "total_regions": 43,
+      "toc_entries": 44,
+      "toc_l1_chapters": 7
+    },
+    "pass2_entities": {
+      "elapsed_s": 0.0,
+      "pages_total": 11,
+      "vlm_success": 0,
+      "vlm_success_rate": 0,
+      "total_entities": 10,
+      "chart_pages_detected": 0,
+      "total_chart_types": 0
+    },
+    "pass2_5_kg": {
+      "elapsed_s": 0.3,
+      "entities": 21,
+      "table_structures": 0,
+      "chapters": 8,
+      "section_patterns": 15
+    },
+    "pass2_6_classification": {
+      "elapsed_s": 0.0,
+      "measures": 6,
+      "dimensions": 10,
+      "filters": 0,
+      "metadata": 5
+    },
+    "pass2_7_enrichment": {
+      "elapsed_s": 0.1,
+      "ok": true,
+      "with_unit": 4,
+      "with_value_domain": 10,
+      "glossary_terms": 1
+    },
+    "pass3_questions": {
+      "elapsed_s": 0.2,
+      "questions": 21,
+      "topics": 8
+    },
+    "pass4_assembly": {
+      "elapsed_s": 0.0,
+      "paragraphs": 0,
+      "tables": 0,
+      "figures": 2,
+      "charts_detected": 0,
+      "chart_pages": 0,
+      "blueprint_topics": 8,
+      "blueprint_entities": 21
+    },
+    "pass5_gemini": {
+      "elapsed_s": 0.4,
+      "status": "success"
+    }
+  },
+  "total_elapsed": 48.4,
+  "doc_type": "pib_press_release"
+}

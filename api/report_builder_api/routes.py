@@ -21,9 +21,10 @@ import logging
 import os
 import hashlib
 import time
+import copy
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 from uuid import uuid4
 
 from fastapi import (
@@ -129,6 +130,13 @@ def _extract_job_to_out(row: ReportTemplateExtractionJob) -> TemplateExtractionJ
         vault_object_key=row.vault_object_key,
         extraction_method=row.extraction_method,
         stage_diagnostics=row.stage_diagnostics if isinstance(row.stage_diagnostics, dict) else None,
+        template_manifest=row.template_manifest_json if isinstance(row.template_manifest_json, dict) else None,
+        extraction_diagnostics=(
+            row.extraction_diagnostics_json
+            if isinstance(row.extraction_diagnostics_json, dict)
+            else None
+        ),
+        schema_version=row.schema_version,
         error_message=row.error_message,
         created_template_id=row.created_template_id,
         created_at=isoformat_utc(row.created_at),
@@ -159,6 +167,111 @@ def _update_extract_job(
     if error_message is not None:
         row.error_message = error_message
     db.commit()
+
+
+def _jsonable_dict(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if hasattr(value, "to_dict"):
+        converted = value.to_dict()
+        return converted if isinstance(converted, dict) else {}
+    if hasattr(value, "model_dump"):
+        converted = value.model_dump()
+        return converted if isinstance(converted, dict) else {}
+    return {}
+
+
+def _build_template_package_payload(
+    *,
+    ast_payload: dict[str, Any],
+    diagnostics: dict[str, Any],
+    runtime_trace: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Compile and embed first-class binder artifacts for DB/API persistence."""
+    existing = diagnostics.get("compiled_template_package")
+    if not isinstance(existing, dict):
+        existing = diagnostics.get("template_package") if isinstance(diagnostics.get("template_package"), dict) else {}
+
+    raw_ast = (
+        ast_payload.get("template_ast")
+        or ast_payload.get("templateAst")
+        or existing.get("template_ast")
+        or ast_payload
+    )
+    blueprint = (
+        ast_payload.get("blueprint")
+        or ast_payload.get("template_blueprint")
+        or ast_payload.get("templateBlueprint")
+        or existing.get("template_blueprint")
+        or diagnostics.get("template_blueprint")
+        or diagnostics.get("blueprint")
+    )
+    if not isinstance(blueprint, dict) and isinstance(ast_payload, dict) and (
+        ast_payload.get("entities") or ast_payload.get("topics")
+    ):
+        blueprint = ast_payload
+    if not isinstance(raw_ast, dict):
+        raw_ast = ast_payload
+
+    compiled: dict[str, Any] = {}
+    if isinstance(blueprint, dict) and blueprint:
+        from report_builder.template_compiler import compile_template_artifacts
+
+        compiled = compile_template_artifacts(
+            raw_ast=raw_ast,
+            blueprint=blueprint,
+            runtime_trace=runtime_trace,
+        )
+
+    template_ast = compiled.get("template_ast") or raw_ast
+    template_blueprint = compiled.get("template_blueprint") or blueprint or {}
+    semantic_slot_graph = (
+        compiled.get("semantic_slot_graph")
+        or ast_payload.get("semantic_slot_graph")
+        or ast_payload.get("semanticSlotGraph")
+        or existing.get("semantic_slot_graph")
+        or {}
+    )
+    template_manifest = (
+        compiled.get("template_package_manifest")
+        or ast_payload.get("template_package_manifest")
+        or ast_payload.get("templatePackageManifest")
+        or existing.get("template_package_manifest")
+        or {}
+    )
+    extraction_diagnostics = _jsonable_dict(compiled.get("diagnostics")) or (
+        ast_payload.get("diagnostics") if isinstance(ast_payload.get("diagnostics"), dict) else {}
+    )
+    if not extraction_diagnostics:
+        extraction_diagnostics = {
+            k: v
+            for k, v in diagnostics.items()
+            if k not in {"blueprint_payload", "compiled_template_package", "template_package"}
+        }
+
+    embedded_ast = copy.deepcopy(template_ast) if isinstance(template_ast, dict) else {}
+    embedded_ast["schema_version"] = str(
+        embedded_ast.get("schema_version")
+        or embedded_ast.get("schemaVersion")
+        or "binding.templatePackage.v1"
+    )
+    embedded_ast["template_ast"] = copy.deepcopy(template_ast) if isinstance(template_ast, dict) else {}
+    embedded_ast["blueprint"] = copy.deepcopy(template_blueprint) if isinstance(template_blueprint, dict) else {}
+    embedded_ast["semantic_slot_graph"] = copy.deepcopy(semantic_slot_graph) if isinstance(semantic_slot_graph, dict) else {}
+    embedded_ast["diagnostics"] = copy.deepcopy(extraction_diagnostics)
+    embedded_ast["template_package_manifest"] = copy.deepcopy(template_manifest) if isinstance(template_manifest, dict) else {}
+    embedded_ast["templatePackageManifest"] = embedded_ast["template_package_manifest"]
+    embedded_ast["semanticSlotGraph"] = embedded_ast["semantic_slot_graph"]
+    embedded_ast["templateBlueprint"] = embedded_ast["blueprint"]
+    return {
+        "ast_json": embedded_ast,
+        "template_ast": template_ast if isinstance(template_ast, dict) else {},
+        "blueprint": template_blueprint if isinstance(template_blueprint, dict) else {},
+        "semantic_slot_graph": semantic_slot_graph if isinstance(semantic_slot_graph, dict) else {},
+        "template_manifest": template_manifest if isinstance(template_manifest, dict) else {},
+        "extraction_diagnostics": extraction_diagnostics,
+        "schema_version": embedded_ast["schema_version"],
+    }
 
 
 # ---------------- Ready analyses (wizard data source) ----------------
@@ -273,11 +386,27 @@ def _run_template_extraction_job(extract_job_id: int, resume_from: str = "") -> 
             _update_extract_job(db, row, stage=stage, progress_pct=pct, diagnostics=dict(payload))
 
         ast, diagnostics = bp.compile_template_production(src_path, row.template_name, progress=_progress, resume_from=resume_from)
+        diagnostics = diagnostics if isinstance(diagnostics, dict) else {}
         ast_payload = diagnostics.get("blueprint_payload") if isinstance(diagnostics, dict) else None
         if not isinstance(ast_payload, dict):
             ast_payload = ast.to_dict()
-            ast_payload["doc_id"] = diagnostics.get("doc_id") if isinstance(diagnostics, dict) else "MOSPI_TPL_01"
-        ast_payload["production_stages"] = diagnostics.get("stages") if isinstance(diagnostics, dict) else {}
+            ast_payload["doc_id"] = diagnostics.get("doc_id") or "MOSPI_TPL_01"
+        ast_payload["production_stages"] = diagnostics.get("stages") or {}
+        _progress(
+            "stage5_enterprise_package_compile",
+            92,
+            {"status": "started", "artifact_contract": "binding.templatePackage.v1"},
+        )
+        package_payload = _build_template_package_payload(
+            ast_payload=ast_payload,
+            diagnostics=diagnostics,
+            runtime_trace={
+                "extraction_method": ast.extraction_method,
+                "page_count": ast.page_count,
+                "source_hash": ast.source_hash,
+            },
+        )
+        package_payload["ast_json"]["production_stages"] = ast_payload.get("production_stages") or {}
 
         template = ReportTemplate(
             user_id=row.user_id,
@@ -286,7 +415,12 @@ def _run_template_extraction_job(extract_job_id: int, resume_from: str = "") -> 
             source_filename=row.source_filename,
             source_storage_path=row.source_storage_path,
             source_hash=ast.source_hash,
-            ast_json=ast_payload,
+            ast_json=package_payload["ast_json"],
+            blueprint_json=package_payload["blueprint"],
+            semantic_slot_graph_json=package_payload["semantic_slot_graph"],
+            template_manifest_json=package_payload["template_manifest"],
+            extraction_diagnostics_json=package_payload["extraction_diagnostics"],
+            schema_version=package_payload["schema_version"],
             extraction_method=ast.extraction_method,
             page_count=ast.page_count,
         )
@@ -296,6 +430,12 @@ def _run_template_extraction_job(extract_job_id: int, resume_from: str = "") -> 
 
         row.created_template_id = template.id
         row.extraction_method = ast.extraction_method
+        row.template_ast_json = package_payload["template_ast"]
+        row.blueprint_json = package_payload["blueprint"]
+        row.semantic_slot_graph_json = package_payload["semantic_slot_graph"]
+        row.template_manifest_json = package_payload["template_manifest"]
+        row.extraction_diagnostics_json = package_payload["extraction_diagnostics"]
+        row.schema_version = package_payload["schema_version"]
         elapsed_total = time.monotonic() - t_job_start
         logger.info(
             "[job %d] ✓ COMPLETED     template_id=%d   method=%s   pages=%d   blocks=%d   elapsed=%.1fs",

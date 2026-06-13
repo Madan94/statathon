@@ -17,15 +17,76 @@ QUESTION_LIST_SCHEMA: dict[str, Any] = {
         "properties": {
             "questionId": {"type": "string"},
             "intent": {"type": "string", "minLength": 12},
+            "questionText": {"type": "string", "minLength": 12},
             "questionType": {
                 "type": "string",
                 "enum": ["comparison", "trend", "ranking", "distribution",
                          "composition", "correlation", "describe"],
             },
             "sourceHeading": {"type": "string"},
+            "outlinePath": {"type": "array", "items": {"type": "string"}},
+            "requiredEntityHints": {"type": "array", "items": {"type": "string"}},
+            "formulaIntent": {
+                "type": "string",
+                "enum": [
+                    "DIRECT",
+                    "SHARE",
+                    "RATE",
+                    "RATIO",
+                    "GROWTH",
+                    "INDEX",
+                    "REPORTED_VALUE",
+                    "DESCRIPTIVE",
+                ],
+            },
+            "answerComponentHints": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": ["narrative", "formula_metric", "metric_card", "chart", "table", "provenance"],
+                },
+            },
         },
         "required": ["intent", "questionType"],
     },
+}
+
+# Page-level entity + structure extraction (Pass 2). Value-free: this requests
+# evidence hooks and semantic roles without asking the model for observed values.
+PAGE_ENTITY_STRUCTURE_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "entities": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "entityType": {
+                        "type": "string",
+                        "enum": ["dimension", "measure", "time", "filter", "metadata"],
+                    },
+                    "sourceType": {
+                        "type": "string",
+                        "enum": ["column_header", "table_title", "section_heading", "figure_title", "text_label"],
+                    },
+                    "headerPath": {"type": "array", "items": {"type": "string"}},
+                    "confidence": {"type": "number"},
+                },
+                "required": ["name"],
+            },
+        },
+        "structure_type": {
+            "type": "string",
+            "enum": ["data_table", "chart_page", "narrative", "title_page", "appendix", "mixed"],
+        },
+        "description": {"type": "string"},
+        "table_title": {"type": "string"},
+        "section_heading": {"type": "string"},
+        "chart_types": {"type": "array", "items": {"type": "string"}},
+        "chart_titles": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["entities", "structure_type"],
 }
 
 # Entity binding (Pass 3, Loop 2): roles + answer structure for one question.
@@ -50,7 +111,7 @@ ENTITY_BINDING_SCHEMA: dict[str, Any] = {
         "answerStructure": {
             "type": "object",
             "properties": {
-                "layoutType": {"type": "string", "enum": ["single", "split"]},
+                "layoutType": {"type": "string", "enum": ["single", "split", "multi-panel"]},
                 "components": {
                     "type": "array",
                     "items": {
@@ -59,16 +120,23 @@ ENTITY_BINDING_SCHEMA: dict[str, Any] = {
                             "type": {
                                 "type": "string",
                                 "enum": ["narrative_paragraph", "data_table",
-                                         "grouped_bar_chart", "line_chart",
-                                         "pie_chart", "metric_card"],
+                                 "grouped_bar_chart", "line_chart",
+                                         "pie_chart", "metric_card", "provenance"],
                             },
+                            "kind": {
+                                "type": "string",
+                                "enum": ["narrative", "formula_metric", "metric_card", "chart", "table", "provenance"],
+                            },
+                            "componentId": {"type": "string"},
                             "renderOrder": {"type": "integer"},
+                            "order": {"type": "integer"},
                         },
-                        "required": ["type"],
+                        "required": [],
                     },
                 },
             },
         },
+        "formulaIntent": {"type": "object"},
         "confidence": {"type": "number"},
     },
 }

@@ -1062,6 +1062,7 @@ export interface ReportTemplate {
 
 export interface ReportTemplateWithAst extends ReportTemplate {
   ast: Record<string, unknown>;
+  filter_config?: DataFilterSpec | null;
 }
 
 export interface TemplateExtractionJob {

@@ -813,7 +813,7 @@ function BlueprintPanel({
   topics: Array<Record<string, unknown>>;
   tableTemplates: Array<Record<string, unknown>>;
   entityCount: number;
-  entityNameById: Map<string, string>;
+  entityNameById: Record<string, string>;
 }) {
   if (topics.length === 0) {
     return (

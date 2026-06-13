@@ -52,6 +52,9 @@ class TemplateExtractionJobOut(BaseModel):
     vault_object_key: Optional[str] = None
     extraction_method: Optional[str] = None
     stage_diagnostics: Optional[dict[str, Any]] = None
+    template_manifest: Optional[dict[str, Any]] = None
+    extraction_diagnostics: Optional[dict[str, Any]] = None
+    schema_version: Optional[str] = None
     error_message: Optional[str] = None
     created_template_id: Optional[int] = None
     created_at: Optional[str] = None

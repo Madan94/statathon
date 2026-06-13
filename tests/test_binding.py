@@ -7,10 +7,12 @@ second-archetype smoke test proving the binder is domain-agnostic.
 from __future__ import annotations
 
 import json
+import asyncio
 from pathlib import Path
 
 import pandas as pd
 import pytest
+from starlette.datastructures import UploadFile
 
 from report_builder.binding.profiler import profile_csv, profile_dataframe
 from report_builder.binding.resolver import resolve_entities
@@ -18,9 +20,16 @@ from report_builder.binding.value_resolver import resolve_filter_value
 from report_builder.binding.question_binder import bind_questions
 from report_builder.binding.review import (
     accept_all_proposed,
+    add_manual_entity,
+    ColumnOwnershipConflict,
+    compute_column_ownership,
+    confirm,
     dataset_signature,
+    find_exclusive_column_conflicts,
     finalize_review,
+    move_columns_from_entities,
     open_review,
+    reopen,
     ReviewRecord,
 )
 from report_builder.binding.report import build_coverage, to_markdown
@@ -30,6 +39,7 @@ _REPO = Path(__file__).resolve().parent.parent
 GOLD_BP = _REPO / "report_builder" / "gold_standard" / "template.blueprint.json"
 PLFS_CSV = _REPO / "test_data" / "synthetic_plfs_dataset.csv"
 ENERGY_CSV = _REPO / "test_data" / "unified_energy_reserves_dataset.csv"
+SHORT_DEMO_CSV = _REPO / "report_builder" / "gold_standard" / "mospi_short_enterprise_demo.gold_dataset.csv"
 
 
 # ── Fixtures ────────────────────────────────────────────────────────────────
@@ -236,6 +246,99 @@ def test_review_caches_confirmations(plfs_df: pd.DataFrame, blueprint: dict, tmp
     b2, _rec2, deltas2 = open_review(b2, d, storage_dir=tmp_path)
     assert b2.binding_for("ent_wpr").status == "confirmed"
     assert "ent_wpr" not in {e.entityId for e in deltas2}
+
+
+def test_review_column_ownership_conflict_share_transfer_and_reopen():
+    rec = ReviewRecord(
+        templateId="t",
+        datasetSignature="sig",
+        datasetId="ds",
+        proposals=[
+            {
+                "entityId": "ent_a", "entityName": "A", "entityType": "measure",
+                "cardinality": "oneToOne", "columns": [{"column": "value"}],
+                "status": "proposed",
+            },
+            {
+                "entityId": "ent_b", "entityName": "B", "entityType": "measure",
+                "cardinality": "oneToOne", "columns": [{"column": "value"}],
+                "status": "proposed",
+            },
+        ],
+    )
+
+    confirm(rec, "ent_a")
+    ownership = compute_column_ownership(rec)
+    assert ownership["columns"]["value"]["locked"] is True
+    assert find_exclusive_column_conflicts(rec, "ent_b", ["value"])[0]["column"] == "value"
+
+    with pytest.raises(ColumnOwnershipConflict):
+        confirm(rec, "ent_b")
+
+    with pytest.raises(ValueError, match="share reason"):
+        confirm(rec, "ent_b", share_policy="shared")
+
+    confirm(rec, "ent_b", share_policy="shared", share_reason="same source note")
+    shared = compute_column_ownership(rec)["columns"]["value"]["owners"]
+    assert any(o["entityId"] == "ent_b" and o["sharePolicy"] == "shared" for o in shared)
+
+    move_columns_from_entities(rec, columns=["value"], from_entity_ids=["ent_a"], note="transfer")
+    assert rec.confirmations["ent_a"].status == "rejected"
+    reopen(rec, "ent_a")
+    assert "ent_a" not in rec.confirmations
+
+
+def test_review_add_manual_entity_respects_ownership():
+    rec = ReviewRecord(
+        templateId="t",
+        datasetSignature="sig",
+        proposals=[{
+            "entityId": "ent_a", "entityName": "A", "entityType": "dimension",
+            "cardinality": "oneToOne", "columns": [{"column": "state"}],
+            "status": "proposed",
+        }],
+    )
+    confirm(rec, "ent_a")
+    with pytest.raises(ColumnOwnershipConflict):
+        add_manual_entity(rec, entity_name="Manual State", entity_type="dimension", columns=["state"])
+    with pytest.raises(ValueError, match="share reason"):
+        add_manual_entity(
+            rec,
+            entity_name="Manual State Shared",
+            entity_type="dimension",
+            columns=["state"],
+            share_policy="shared",
+        )
+
+    add_manual_entity(
+        rec,
+        entity_name="Manual State Shared",
+        entity_type="dimension",
+        columns=["state"],
+        share_policy="shared",
+        share_reason="intentional reuse",
+    )
+    owners = compute_column_ownership(rec)["columns"]["state"]["owners"]
+    assert any(o["entityName"] == "Manual State Shared" and o["sharePolicy"] == "shared" for o in owners)
+
+
+def test_binding_start_returns_column_ownership_for_builtin_demo(tmp_path: Path, monkeypatch):
+    from report_builder.binding import review as R
+    from api.report_builder_api.binding_phase_api import start_binding
+
+    monkeypatch.setattr(R, "_DEFAULT_STORE", tmp_path / "bindings")
+    with SHORT_DEMO_CSV.open("rb") as handle:
+        upload = UploadFile(file=handle, filename="demo.csv")
+        out = asyncio.run(start_binding(
+            template_id="tpl_mospi_short_enterprise_demo_v1",
+            dataset=upload,
+            blueprint=None,
+        ))
+
+    assert out.template_id == "tpl_mospi_short_enterprise_demo_v1"
+    assert out.column_ownership["columns"]
+    assert out.column_ownership["conflicts"] == []
+    assert len(out.proposals) > 0
 
 
 # ── B6: coverage report ─────────────────────────────────────────────────────

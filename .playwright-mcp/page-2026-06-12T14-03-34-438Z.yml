@@ -1,0 +1,3032 @@
+- generic [ref=e1]:
+  - region "Notifications alt+T"
+  - generic [ref=e2]:
+    - complementary "Main navigation" [ref=e3]:
+      - link "BharatStat Visual Report Generation Tool" [ref=e5] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e6]: BharatStat
+        - paragraph [ref=e7]: Visual Report Generation Tool
+      - navigation [ref=e8]:
+        - link "Home" [ref=e9] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e10]
+          - text: Home
+        - link "Upload" [ref=e13] [cursor=pointer]:
+          - /url: /upload
+          - img [ref=e14]
+          - text: Upload
+        - link "Report Builder" [ref=e17] [cursor=pointer]:
+          - /url: /report-builder
+          - img [ref=e18]
+          - text: Report Builder
+        - link "All Activity" [ref=e21] [cursor=pointer]:
+          - /url: /activity
+          - img [ref=e22]
+          - text: All Activity
+        - link "Profile" [ref=e26] [cursor=pointer]:
+          - /url: /profile
+          - img [ref=e27]
+          - text: Profile
+    - generic [ref=e30]:
+      - banner [ref=e31]:
+        - generic [ref=e33]:
+          - generic "officer@example.com" [ref=e52]:
+            - img [ref=e53]
+            - text: Dev Test Officer
+          - button "Log out" [ref=e34]:
+            - img [ref=e35]
+            - generic [ref=e38]: Logout
+      - main [ref=e39]:
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - heading "Bind dataset to template" [level=1] [ref=e58]
+            - paragraph [ref=e59]: Map your dataset's columns to the report's expected entities — one confirmation at a time — then check the coverage gate before generating.
+          - link "Report Builder" [ref=e61] [cursor=pointer]:
+            - /url: /report-builder
+            - button "Report Builder" [ref=e62]:
+              - img [ref=e63]
+              - text: Report Builder
+        - list "Binding progress" [ref=e66]:
+          - listitem [ref=e67]:
+            - generic [ref=e69]: "1"
+            - generic [ref=e71]:
+              - paragraph [ref=e72]: Upload dataset
+              - paragraph [ref=e73]: CSV + template
+          - listitem [ref=e74]:
+            - generic [ref=e77]: "2"
+            - generic [ref=e79]:
+              - paragraph [ref=e80]: Confirm bindings
+              - paragraph [ref=e81]: Review every match
+          - listitem [ref=e82]:
+            - generic [ref=e85]: "3"
+            - generic [ref=e86]:
+              - paragraph [ref=e87]: Coverage gate
+              - paragraph [ref=e88]: Ready to generate
+        - generic [ref=e91]:
+          - generic [ref=e92]:
+            - heading "Create binding session" [level=2] [ref=e93]
+            - paragraph [ref=e94]: Choose a report template package, upload the dataset, then open the review workspace.
+          - generic [ref=e95]:
+            - generic [ref=e96]:
+              - generic [ref=e98]:
+                - paragraph [ref=e99]: 1. Report template
+                - paragraph [ref=e100]: Select the package that contains the blueprint, render skeleton, and slot graph.
+              - generic [ref=e116]:
+                - button "Built-in PLFS demo Built-in demo · v1.0.0 VALID 1 topics 2 questions 8 entities 0 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e117]:
+                  - generic [ref=e118]:
+                    - generic [ref=e119]:
+                      - paragraph [ref=e120]: Built-in PLFS demo
+                      - paragraph [ref=e121]: Built-in demo · v1.0.0
+                    - generic [ref=e122]: VALID
+                  - generic [ref=e123]:
+                    - generic [ref=e124]:
+                      - strong [ref=e125]: "1"
+                      - text: topics
+                    - generic [ref=e126]:
+                      - strong [ref=e127]: "2"
+                      - text: questions
+                    - generic [ref=e128]:
+                      - strong [ref=e129]: "8"
+                      - text: entities
+                    - generic [ref=e130]:
+                      - strong [ref=e131]: "0"
+                      - text: charts
+                    - generic [ref=e132]:
+                      - strong [ref=e133]: "0"
+                      - text: tables
+                    - generic [ref=e134]:
+                      - strong [ref=e135]: "0"
+                      - text: external
+                  - generic [ref=e136]:
+                    - generic [ref=e137]: AST ready
+                    - generic [ref=e138]: Blueprint ready
+                    - generic [ref=e139]: Slots generated on finalize
+                - button "Integration Test Template Template 121 · v1.0.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e140]:
+                  - generic [ref=e141]:
+                    - generic [ref=e142]:
+                      - paragraph [ref=e143]: Integration Test Template
+                      - paragraph [ref=e144]: Template 121 · v1.0.0
+                    - generic [ref=e145]: VALID
+                  - generic [ref=e146]:
+                    - generic [ref=e147]:
+                      - strong [ref=e148]: "0"
+                      - text: topics
+                    - generic [ref=e149]:
+                      - strong [ref=e150]: "0"
+                      - text: questions
+                    - generic [ref=e151]:
+                      - strong [ref=e152]: "0"
+                      - text: entities
+                    - generic [ref=e153]:
+                      - strong [ref=e154]: "0"
+                      - text: charts
+                    - generic [ref=e155]:
+                      - strong [ref=e156]: "0"
+                      - text: tables
+                    - generic [ref=e157]:
+                      - strong [ref=e158]: "0"
+                      - text: external
+                  - generic [ref=e159]:
+                    - generic [ref=e160]: AST ready
+                    - generic [ref=e161]: Blueprint missing
+                    - generic [ref=e162]: Slots generated on finalize
+                - button "sanjay testing Template 120 · v3.0 VALID 7 topics 24 questions 24 entities 27 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [active] [ref=e163]:
+                  - generic [ref=e164]:
+                    - generic [ref=e165]:
+                      - paragraph [ref=e166]: sanjay testing
+                      - paragraph [ref=e167]: Template 120 · v3.0
+                    - generic [ref=e168]: VALID
+                  - generic [ref=e169]:
+                    - generic [ref=e170]:
+                      - strong [ref=e171]: "7"
+                      - text: topics
+                    - generic [ref=e172]:
+                      - strong [ref=e173]: "24"
+                      - text: questions
+                    - generic [ref=e174]:
+                      - strong [ref=e175]: "24"
+                      - text: entities
+                    - generic [ref=e176]:
+                      - strong [ref=e177]: "27"
+                      - text: charts
+                    - generic [ref=e178]:
+                      - strong [ref=e179]: "0"
+                      - text: tables
+                    - generic [ref=e180]:
+                      - strong [ref=e181]: "0"
+                      - text: external
+                  - generic [ref=e182]:
+                    - generic [ref=e183]: AST ready
+                    - generic [ref=e184]: Blueprint ready
+                    - generic [ref=e185]: Slots generated on finalize
+                - button "Arun Test 25 Template 119 · v3.0 VALID 2 topics 12 questions 68 entities 1 charts 8 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e186]:
+                  - generic [ref=e187]:
+                    - generic [ref=e188]:
+                      - paragraph [ref=e189]: Arun Test 25
+                      - paragraph [ref=e190]: Template 119 · v3.0
+                    - generic [ref=e191]: VALID
+                  - generic [ref=e192]:
+                    - generic [ref=e193]:
+                      - strong [ref=e194]: "2"
+                      - text: topics
+                    - generic [ref=e195]:
+                      - strong [ref=e196]: "12"
+                      - text: questions
+                    - generic [ref=e197]:
+                      - strong [ref=e198]: "68"
+                      - text: entities
+                    - generic [ref=e199]:
+                      - strong [ref=e200]: "1"
+                      - text: charts
+                    - generic [ref=e201]:
+                      - strong [ref=e202]: "8"
+                      - text: tables
+                    - generic [ref=e203]:
+                      - strong [ref=e204]: "0"
+                      - text: external
+                  - generic [ref=e205]:
+                    - generic [ref=e206]: AST ready
+                    - generic [ref=e207]: Blueprint ready
+                    - generic [ref=e208]: Slots generated on finalize
+                - button "cts kaasu 2 Template 118 · v3.0 VALID 7 topics 24 questions 22 entities 22 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e209]:
+                  - generic [ref=e210]:
+                    - generic [ref=e211]:
+                      - paragraph [ref=e212]: cts kaasu 2
+                      - paragraph [ref=e213]: Template 118 · v3.0
+                    - generic [ref=e214]: VALID
+                  - generic [ref=e215]:
+                    - generic [ref=e216]:
+                      - strong [ref=e217]: "7"
+                      - text: topics
+                    - generic [ref=e218]:
+                      - strong [ref=e219]: "24"
+                      - text: questions
+                    - generic [ref=e220]:
+                      - strong [ref=e221]: "22"
+                      - text: entities
+                    - generic [ref=e222]:
+                      - strong [ref=e223]: "22"
+                      - text: charts
+                    - generic [ref=e224]:
+                      - strong [ref=e225]: "0"
+                      - text: tables
+                    - generic [ref=e226]:
+                      - strong [ref=e227]: "0"
+                      - text: external
+                  - generic [ref=e228]:
+                    - generic [ref=e229]: AST ready
+                    - generic [ref=e230]: Blueprint ready
+                    - generic [ref=e231]: Slots generated on finalize
+                - button "cts kaasu Template 117 · v3.0 VALID 8 topics 12 questions 18 entities 2 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e232]:
+                  - generic [ref=e233]:
+                    - generic [ref=e234]:
+                      - paragraph [ref=e235]: cts kaasu
+                      - paragraph [ref=e236]: Template 117 · v3.0
+                    - generic [ref=e237]: VALID
+                  - generic [ref=e238]:
+                    - generic [ref=e239]:
+                      - strong [ref=e240]: "8"
+                      - text: topics
+                    - generic [ref=e241]:
+                      - strong [ref=e242]: "12"
+                      - text: questions
+                    - generic [ref=e243]:
+                      - strong [ref=e244]: "18"
+                      - text: entities
+                    - generic [ref=e245]:
+                      - strong [ref=e246]: "2"
+                      - text: charts
+                    - generic [ref=e247]:
+                      - strong [ref=e248]: "0"
+                      - text: tables
+                    - generic [ref=e249]:
+                      - strong [ref=e250]: "0"
+                      - text: external
+                  - generic [ref=e251]:
+                    - generic [ref=e252]: AST ready
+                    - generic [ref=e253]: Blueprint ready
+                    - generic [ref=e254]: Slots generated on finalize
+                - button "test madhan money model Template 116 · v3.0 VALID 7 topics 22 questions 23 entities 22 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e255]:
+                  - generic [ref=e256]:
+                    - generic [ref=e257]:
+                      - paragraph [ref=e258]: test madhan money model
+                      - paragraph [ref=e259]: Template 116 · v3.0
+                    - generic [ref=e260]: VALID
+                  - generic [ref=e261]:
+                    - generic [ref=e262]:
+                      - strong [ref=e263]: "7"
+                      - text: topics
+                    - generic [ref=e264]:
+                      - strong [ref=e265]: "22"
+                      - text: questions
+                    - generic [ref=e266]:
+                      - strong [ref=e267]: "23"
+                      - text: entities
+                    - generic [ref=e268]:
+                      - strong [ref=e269]: "22"
+                      - text: charts
+                    - generic [ref=e270]:
+                      - strong [ref=e271]: "0"
+                      - text: tables
+                    - generic [ref=e272]:
+                      - strong [ref=e273]: "0"
+                      - text: external
+                  - generic [ref=e274]:
+                    - generic [ref=e275]: AST ready
+                    - generic [ref=e276]: Blueprint ready
+                    - generic [ref=e277]: Slots generated on finalize
+                - button "testing final Template 115 · v3.0 VALID 2 topics 6 questions 20 entities 11 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e278]:
+                  - generic [ref=e279]:
+                    - generic [ref=e280]:
+                      - paragraph [ref=e281]: testing final
+                      - paragraph [ref=e282]: Template 115 · v3.0
+                    - generic [ref=e283]: VALID
+                  - generic [ref=e284]:
+                    - generic [ref=e285]:
+                      - strong [ref=e286]: "2"
+                      - text: topics
+                    - generic [ref=e287]:
+                      - strong [ref=e288]: "6"
+                      - text: questions
+                    - generic [ref=e289]:
+                      - strong [ref=e290]: "20"
+                      - text: entities
+                    - generic [ref=e291]:
+                      - strong [ref=e292]: "11"
+                      - text: charts
+                    - generic [ref=e293]:
+                      - strong [ref=e294]: "0"
+                      - text: tables
+                    - generic [ref=e295]:
+                      - strong [ref=e296]: "0"
+                      - text: external
+                  - generic [ref=e297]:
+                    - generic [ref=e298]: AST ready
+                    - generic [ref=e299]: Blueprint ready
+                    - generic [ref=e300]: Slots generated on finalize
+                - button "Arun Test 24 Template 114 · v3.0 VALID 2 topics 6 questions 55 entities 0 charts 9 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e301]:
+                  - generic [ref=e302]:
+                    - generic [ref=e303]:
+                      - paragraph [ref=e304]: Arun Test 24
+                      - paragraph [ref=e305]: Template 114 · v3.0
+                    - generic [ref=e306]: VALID
+                  - generic [ref=e307]:
+                    - generic [ref=e308]:
+                      - strong [ref=e309]: "2"
+                      - text: topics
+                    - generic [ref=e310]:
+                      - strong [ref=e311]: "6"
+                      - text: questions
+                    - generic [ref=e312]:
+                      - strong [ref=e313]: "55"
+                      - text: entities
+                    - generic [ref=e314]:
+                      - strong [ref=e315]: "0"
+                      - text: charts
+                    - generic [ref=e316]:
+                      - strong [ref=e317]: "9"
+                      - text: tables
+                    - generic [ref=e318]:
+                      - strong [ref=e319]: "0"
+                      - text: external
+                  - generic [ref=e320]:
+                    - generic [ref=e321]: AST ready
+                    - generic [ref=e322]: Blueprint ready
+                    - generic [ref=e323]: Slots generated on finalize
+                - button "Arun Test 23 Template 113 · v3.0 VALID 2 topics 6 questions 55 entities 0 charts 9 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e324]:
+                  - generic [ref=e325]:
+                    - generic [ref=e326]:
+                      - paragraph [ref=e327]: Arun Test 23
+                      - paragraph [ref=e328]: Template 113 · v3.0
+                    - generic [ref=e329]: VALID
+                  - generic [ref=e330]:
+                    - generic [ref=e331]:
+                      - strong [ref=e332]: "2"
+                      - text: topics
+                    - generic [ref=e333]:
+                      - strong [ref=e334]: "6"
+                      - text: questions
+                    - generic [ref=e335]:
+                      - strong [ref=e336]: "55"
+                      - text: entities
+                    - generic [ref=e337]:
+                      - strong [ref=e338]: "0"
+                      - text: charts
+                    - generic [ref=e339]:
+                      - strong [ref=e340]: "9"
+                      - text: tables
+                    - generic [ref=e341]:
+                      - strong [ref=e342]: "0"
+                      - text: external
+                  - generic [ref=e343]:
+                    - generic [ref=e344]: AST ready
+                    - generic [ref=e345]: Blueprint ready
+                    - generic [ref=e346]: Slots generated on finalize
+                - button "Arun Test 22 Template 112 · v3.0 VALID 2 topics 6 questions 54 entities 0 charts 9 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e347]:
+                  - generic [ref=e348]:
+                    - generic [ref=e349]:
+                      - paragraph [ref=e350]: Arun Test 22
+                      - paragraph [ref=e351]: Template 112 · v3.0
+                    - generic [ref=e352]: VALID
+                  - generic [ref=e353]:
+                    - generic [ref=e354]:
+                      - strong [ref=e355]: "2"
+                      - text: topics
+                    - generic [ref=e356]:
+                      - strong [ref=e357]: "6"
+                      - text: questions
+                    - generic [ref=e358]:
+                      - strong [ref=e359]: "54"
+                      - text: entities
+                    - generic [ref=e360]:
+                      - strong [ref=e361]: "0"
+                      - text: charts
+                    - generic [ref=e362]:
+                      - strong [ref=e363]: "9"
+                      - text: tables
+                    - generic [ref=e364]:
+                      - strong [ref=e365]: "0"
+                      - text: external
+                  - generic [ref=e366]:
+                    - generic [ref=e367]: AST ready
+                    - generic [ref=e368]: Blueprint ready
+                    - generic [ref=e369]: Slots generated on finalize
+                - button "sanjay-syl-chuchu Template 111 · v3.0 VALID 2 topics 24 questions 32 entities 25 charts 9 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e370]:
+                  - generic [ref=e371]:
+                    - generic [ref=e372]:
+                      - paragraph [ref=e373]: sanjay-syl-chuchu
+                      - paragraph [ref=e374]: Template 111 · v3.0
+                    - generic [ref=e375]: VALID
+                  - generic [ref=e376]:
+                    - generic [ref=e377]:
+                      - strong [ref=e378]: "2"
+                      - text: topics
+                    - generic [ref=e379]:
+                      - strong [ref=e380]: "24"
+                      - text: questions
+                    - generic [ref=e381]:
+                      - strong [ref=e382]: "32"
+                      - text: entities
+                    - generic [ref=e383]:
+                      - strong [ref=e384]: "25"
+                      - text: charts
+                    - generic [ref=e385]:
+                      - strong [ref=e386]: "9"
+                      - text: tables
+                    - generic [ref=e387]:
+                      - strong [ref=e388]: "0"
+                      - text: external
+                  - generic [ref=e389]:
+                    - generic [ref=e390]: AST ready
+                    - generic [ref=e391]: Blueprint ready
+                    - generic [ref=e392]: Slots generated on finalize
+                - button "Arun Test 21 Template 110 · v3.0 VALID 2 topics 6 questions 55 entities 0 charts 9 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e393]:
+                  - generic [ref=e394]:
+                    - generic [ref=e395]:
+                      - paragraph [ref=e396]: Arun Test 21
+                      - paragraph [ref=e397]: Template 110 · v3.0
+                    - generic [ref=e398]: VALID
+                  - generic [ref=e399]:
+                    - generic [ref=e400]:
+                      - strong [ref=e401]: "2"
+                      - text: topics
+                    - generic [ref=e402]:
+                      - strong [ref=e403]: "6"
+                      - text: questions
+                    - generic [ref=e404]:
+                      - strong [ref=e405]: "55"
+                      - text: entities
+                    - generic [ref=e406]:
+                      - strong [ref=e407]: "0"
+                      - text: charts
+                    - generic [ref=e408]:
+                      - strong [ref=e409]: "9"
+                      - text: tables
+                    - generic [ref=e410]:
+                      - strong [ref=e411]: "0"
+                      - text: external
+                  - generic [ref=e412]:
+                    - generic [ref=e413]: AST ready
+                    - generic [ref=e414]: Blueprint ready
+                    - generic [ref=e415]: Slots generated on finalize
+                - button "Arun Test 20 Template 109 · v3.0 VALID 2 topics 6 questions 54 entities 0 charts 9 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e416]:
+                  - generic [ref=e417]:
+                    - generic [ref=e418]:
+                      - paragraph [ref=e419]: Arun Test 20
+                      - paragraph [ref=e420]: Template 109 · v3.0
+                    - generic [ref=e421]: VALID
+                  - generic [ref=e422]:
+                    - generic [ref=e423]:
+                      - strong [ref=e424]: "2"
+                      - text: topics
+                    - generic [ref=e425]:
+                      - strong [ref=e426]: "6"
+                      - text: questions
+                    - generic [ref=e427]:
+                      - strong [ref=e428]: "54"
+                      - text: entities
+                    - generic [ref=e429]:
+                      - strong [ref=e430]: "0"
+                      - text: charts
+                    - generic [ref=e431]:
+                      - strong [ref=e432]: "9"
+                      - text: tables
+                    - generic [ref=e433]:
+                      - strong [ref=e434]: "0"
+                      - text: external
+                  - generic [ref=e435]:
+                    - generic [ref=e436]: AST ready
+                    - generic [ref=e437]: Blueprint ready
+                    - generic [ref=e438]: Slots generated on finalize
+                - button "Arun Test 19 Template 108 · v3.0 VALID 2 topics 6 questions 33 entities 0 charts 9 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e439]:
+                  - generic [ref=e440]:
+                    - generic [ref=e441]:
+                      - paragraph [ref=e442]: Arun Test 19
+                      - paragraph [ref=e443]: Template 108 · v3.0
+                    - generic [ref=e444]: VALID
+                  - generic [ref=e445]:
+                    - generic [ref=e446]:
+                      - strong [ref=e447]: "2"
+                      - text: topics
+                    - generic [ref=e448]:
+                      - strong [ref=e449]: "6"
+                      - text: questions
+                    - generic [ref=e450]:
+                      - strong [ref=e451]: "33"
+                      - text: entities
+                    - generic [ref=e452]:
+                      - strong [ref=e453]: "0"
+                      - text: charts
+                    - generic [ref=e454]:
+                      - strong [ref=e455]: "9"
+                      - text: tables
+                    - generic [ref=e456]:
+                      - strong [ref=e457]: "0"
+                      - text: external
+                  - generic [ref=e458]:
+                    - generic [ref=e459]: AST ready
+                    - generic [ref=e460]: Blueprint ready
+                    - generic [ref=e461]: Slots generated on finalize
+                - button "akassh Template 107 · v3.0 VALID 6 topics 21 questions 18 entities 16 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e462]:
+                  - generic [ref=e463]:
+                    - generic [ref=e464]:
+                      - paragraph [ref=e465]: akassh
+                      - paragraph [ref=e466]: Template 107 · v3.0
+                    - generic [ref=e467]: VALID
+                  - generic [ref=e468]:
+                    - generic [ref=e469]:
+                      - strong [ref=e470]: "6"
+                      - text: topics
+                    - generic [ref=e471]:
+                      - strong [ref=e472]: "21"
+                      - text: questions
+                    - generic [ref=e473]:
+                      - strong [ref=e474]: "18"
+                      - text: entities
+                    - generic [ref=e475]:
+                      - strong [ref=e476]: "16"
+                      - text: charts
+                    - generic [ref=e477]:
+                      - strong [ref=e478]: "0"
+                      - text: tables
+                    - generic [ref=e479]:
+                      - strong [ref=e480]: "0"
+                      - text: external
+                  - generic [ref=e481]:
+                    - generic [ref=e482]: AST ready
+                    - generic [ref=e483]: Blueprint ready
+                    - generic [ref=e484]: Slots generated on finalize
+                - button "mzgho Template 106 · v3.0 VALID 6 topics 21 questions 12 entities 14 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e485]:
+                  - generic [ref=e486]:
+                    - generic [ref=e487]:
+                      - paragraph [ref=e488]: mzgho
+                      - paragraph [ref=e489]: Template 106 · v3.0
+                    - generic [ref=e490]: VALID
+                  - generic [ref=e491]:
+                    - generic [ref=e492]:
+                      - strong [ref=e493]: "6"
+                      - text: topics
+                    - generic [ref=e494]:
+                      - strong [ref=e495]: "21"
+                      - text: questions
+                    - generic [ref=e496]:
+                      - strong [ref=e497]: "12"
+                      - text: entities
+                    - generic [ref=e498]:
+                      - strong [ref=e499]: "14"
+                      - text: charts
+                    - generic [ref=e500]:
+                      - strong [ref=e501]: "0"
+                      - text: tables
+                    - generic [ref=e502]:
+                      - strong [ref=e503]: "0"
+                      - text: external
+                  - generic [ref=e504]:
+                    - generic [ref=e505]: AST ready
+                    - generic [ref=e506]: Blueprint ready
+                    - generic [ref=e507]: Slots generated on finalize
+                - button "test 2 aura Template 105 · v3.0 VALID 2 topics 24 questions 80 entities 26 charts 9 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e508]:
+                  - generic [ref=e509]:
+                    - generic [ref=e510]:
+                      - paragraph [ref=e511]: test 2 aura
+                      - paragraph [ref=e512]: Template 105 · v3.0
+                    - generic [ref=e513]: VALID
+                  - generic [ref=e514]:
+                    - generic [ref=e515]:
+                      - strong [ref=e516]: "2"
+                      - text: topics
+                    - generic [ref=e517]:
+                      - strong [ref=e518]: "24"
+                      - text: questions
+                    - generic [ref=e519]:
+                      - strong [ref=e520]: "80"
+                      - text: entities
+                    - generic [ref=e521]:
+                      - strong [ref=e522]: "26"
+                      - text: charts
+                    - generic [ref=e523]:
+                      - strong [ref=e524]: "9"
+                      - text: tables
+                    - generic [ref=e525]:
+                      - strong [ref=e526]: "0"
+                      - text: external
+                  - generic [ref=e527]:
+                    - generic [ref=e528]: AST ready
+                    - generic [ref=e529]: Blueprint ready
+                    - generic [ref=e530]: Slots generated on finalize
+                - button "aura Template 104 · v3.0 VALID 8 topics 8 questions 12 entities 1 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e531]:
+                  - generic [ref=e532]:
+                    - generic [ref=e533]:
+                      - paragraph [ref=e534]: aura
+                      - paragraph [ref=e535]: Template 104 · v3.0
+                    - generic [ref=e536]: VALID
+                  - generic [ref=e537]:
+                    - generic [ref=e538]:
+                      - strong [ref=e539]: "8"
+                      - text: topics
+                    - generic [ref=e540]:
+                      - strong [ref=e541]: "8"
+                      - text: questions
+                    - generic [ref=e542]:
+                      - strong [ref=e543]: "12"
+                      - text: entities
+                    - generic [ref=e544]:
+                      - strong [ref=e545]: "1"
+                      - text: charts
+                    - generic [ref=e546]:
+                      - strong [ref=e547]: "0"
+                      - text: tables
+                    - generic [ref=e548]:
+                      - strong [ref=e549]: "0"
+                      - text: external
+                  - generic [ref=e550]:
+                    - generic [ref=e551]: AST ready
+                    - generic [ref=e552]: Blueprint ready
+                    - generic [ref=e553]: Slots generated on finalize
+                - button "ufoool Template 103 · v3.0 VALID 8 topics 12 questions 19 entities 8 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e554]:
+                  - generic [ref=e555]:
+                    - generic [ref=e556]:
+                      - paragraph [ref=e557]: ufoool
+                      - paragraph [ref=e558]: Template 103 · v3.0
+                    - generic [ref=e559]: VALID
+                  - generic [ref=e560]:
+                    - generic [ref=e561]:
+                      - strong [ref=e562]: "8"
+                      - text: topics
+                    - generic [ref=e563]:
+                      - strong [ref=e564]: "12"
+                      - text: questions
+                    - generic [ref=e565]:
+                      - strong [ref=e566]: "19"
+                      - text: entities
+                    - generic [ref=e567]:
+                      - strong [ref=e568]: "8"
+                      - text: charts
+                    - generic [ref=e569]:
+                      - strong [ref=e570]: "0"
+                      - text: tables
+                    - generic [ref=e571]:
+                      - strong [ref=e572]: "0"
+                      - text: external
+                  - generic [ref=e573]:
+                    - generic [ref=e574]: AST ready
+                    - generic [ref=e575]: Blueprint ready
+                    - generic [ref=e576]: Slots generated on finalize
+                - button "testwithkey Template 102 · v3.0 VALID 8 topics 12 questions 19 entities 8 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e577]:
+                  - generic [ref=e578]:
+                    - generic [ref=e579]:
+                      - paragraph [ref=e580]: testwithkey
+                      - paragraph [ref=e581]: Template 102 · v3.0
+                    - generic [ref=e582]: VALID
+                  - generic [ref=e583]:
+                    - generic [ref=e584]:
+                      - strong [ref=e585]: "8"
+                      - text: topics
+                    - generic [ref=e586]:
+                      - strong [ref=e587]: "12"
+                      - text: questions
+                    - generic [ref=e588]:
+                      - strong [ref=e589]: "19"
+                      - text: entities
+                    - generic [ref=e590]:
+                      - strong [ref=e591]: "8"
+                      - text: charts
+                    - generic [ref=e592]:
+                      - strong [ref=e593]: "0"
+                      - text: tables
+                    - generic [ref=e594]:
+                      - strong [ref=e595]: "0"
+                      - text: external
+                  - generic [ref=e596]:
+                    - generic [ref=e597]: AST ready
+                    - generic [ref=e598]: Blueprint ready
+                    - generic [ref=e599]: Slots generated on finalize
+                - button "Arun Test 18.2 Template 101 · v3.0 VALID 3 topics 15 questions 37 entities 2 charts 8 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e600]:
+                  - generic [ref=e601]:
+                    - generic [ref=e602]:
+                      - paragraph [ref=e603]: Arun Test 18.2
+                      - paragraph [ref=e604]: Template 101 · v3.0
+                    - generic [ref=e605]: VALID
+                  - generic [ref=e606]:
+                    - generic [ref=e607]:
+                      - strong [ref=e608]: "3"
+                      - text: topics
+                    - generic [ref=e609]:
+                      - strong [ref=e610]: "15"
+                      - text: questions
+                    - generic [ref=e611]:
+                      - strong [ref=e612]: "37"
+                      - text: entities
+                    - generic [ref=e613]:
+                      - strong [ref=e614]: "2"
+                      - text: charts
+                    - generic [ref=e615]:
+                      - strong [ref=e616]: "8"
+                      - text: tables
+                    - generic [ref=e617]:
+                      - strong [ref=e618]: "0"
+                      - text: external
+                  - generic [ref=e619]:
+                    - generic [ref=e620]: AST ready
+                    - generic [ref=e621]: Blueprint ready
+                    - generic [ref=e622]: Slots generated on finalize
+                - button "Arun Test 18 Template 100 · v3.0 VALID 4 topics 6 questions 66 entities 0 charts 9 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e623]:
+                  - generic [ref=e624]:
+                    - generic [ref=e625]:
+                      - paragraph [ref=e626]: Arun Test 18
+                      - paragraph [ref=e627]: Template 100 · v3.0
+                    - generic [ref=e628]: VALID
+                  - generic [ref=e629]:
+                    - generic [ref=e630]:
+                      - strong [ref=e631]: "4"
+                      - text: topics
+                    - generic [ref=e632]:
+                      - strong [ref=e633]: "6"
+                      - text: questions
+                    - generic [ref=e634]:
+                      - strong [ref=e635]: "66"
+                      - text: entities
+                    - generic [ref=e636]:
+                      - strong [ref=e637]: "0"
+                      - text: charts
+                    - generic [ref=e638]:
+                      - strong [ref=e639]: "9"
+                      - text: tables
+                    - generic [ref=e640]:
+                      - strong [ref=e641]: "0"
+                      - text: external
+                  - generic [ref=e642]:
+                    - generic [ref=e643]: AST ready
+                    - generic [ref=e644]: Blueprint ready
+                    - generic [ref=e645]: Slots generated on finalize
+                - button "Arun Test 17 Template 99 · v3.0 VALID 1 topics 18 questions 80 entities 17 charts 8 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e646]:
+                  - generic [ref=e647]:
+                    - generic [ref=e648]:
+                      - paragraph [ref=e649]: Arun Test 17
+                      - paragraph [ref=e650]: Template 99 · v3.0
+                    - generic [ref=e651]: VALID
+                  - generic [ref=e652]:
+                    - generic [ref=e653]:
+                      - strong [ref=e654]: "1"
+                      - text: topics
+                    - generic [ref=e655]:
+                      - strong [ref=e656]: "18"
+                      - text: questions
+                    - generic [ref=e657]:
+                      - strong [ref=e658]: "80"
+                      - text: entities
+                    - generic [ref=e659]:
+                      - strong [ref=e660]: "17"
+                      - text: charts
+                    - generic [ref=e661]:
+                      - strong [ref=e662]: "8"
+                      - text: tables
+                    - generic [ref=e663]:
+                      - strong [ref=e664]: "0"
+                      - text: external
+                  - generic [ref=e665]:
+                    - generic [ref=e666]: AST ready
+                    - generic [ref=e667]: Blueprint ready
+                    - generic [ref=e668]: Slots generated on finalize
+                - button "hhhooo Template 98 · v3.0 VALID 7 topics 24 questions 17 entities 7 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e669]:
+                  - generic [ref=e670]:
+                    - generic [ref=e671]:
+                      - paragraph [ref=e672]: hhhooo
+                      - paragraph [ref=e673]: Template 98 · v3.0
+                    - generic [ref=e674]: VALID
+                  - generic [ref=e675]:
+                    - generic [ref=e676]:
+                      - strong [ref=e677]: "7"
+                      - text: topics
+                    - generic [ref=e678]:
+                      - strong [ref=e679]: "24"
+                      - text: questions
+                    - generic [ref=e680]:
+                      - strong [ref=e681]: "17"
+                      - text: entities
+                    - generic [ref=e682]:
+                      - strong [ref=e683]: "7"
+                      - text: charts
+                    - generic [ref=e684]:
+                      - strong [ref=e685]: "0"
+                      - text: tables
+                    - generic [ref=e686]:
+                      - strong [ref=e687]: "0"
+                      - text: external
+                  - generic [ref=e688]:
+                    - generic [ref=e689]: AST ready
+                    - generic [ref=e690]: Blueprint ready
+                    - generic [ref=e691]: Slots generated on finalize
+                - button "hhhiii Template 97 · v3.0 VALID 1 topics 3 questions 62 entities 8 charts 9 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e692]:
+                  - generic [ref=e693]:
+                    - generic [ref=e694]:
+                      - paragraph [ref=e695]: hhhiii
+                      - paragraph [ref=e696]: Template 97 · v3.0
+                    - generic [ref=e697]: VALID
+                  - generic [ref=e698]:
+                    - generic [ref=e699]:
+                      - strong [ref=e700]: "1"
+                      - text: topics
+                    - generic [ref=e701]:
+                      - strong [ref=e702]: "3"
+                      - text: questions
+                    - generic [ref=e703]:
+                      - strong [ref=e704]: "62"
+                      - text: entities
+                    - generic [ref=e705]:
+                      - strong [ref=e706]: "8"
+                      - text: charts
+                    - generic [ref=e707]:
+                      - strong [ref=e708]: "9"
+                      - text: tables
+                    - generic [ref=e709]:
+                      - strong [ref=e710]: "0"
+                      - text: external
+                  - generic [ref=e711]:
+                    - generic [ref=e712]: AST ready
+                    - generic [ref=e713]: Blueprint ready
+                    - generic [ref=e714]: Slots generated on finalize
+                - button "syl_payaluga Template 96 · v3.0 VALID 2 topics 9 questions 61 entities 5 charts 9 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e715]:
+                  - generic [ref=e716]:
+                    - generic [ref=e717]:
+                      - paragraph [ref=e718]: syl_payaluga
+                      - paragraph [ref=e719]: Template 96 · v3.0
+                    - generic [ref=e720]: VALID
+                  - generic [ref=e721]:
+                    - generic [ref=e722]:
+                      - strong [ref=e723]: "2"
+                      - text: topics
+                    - generic [ref=e724]:
+                      - strong [ref=e725]: "9"
+                      - text: questions
+                    - generic [ref=e726]:
+                      - strong [ref=e727]: "61"
+                      - text: entities
+                    - generic [ref=e728]:
+                      - strong [ref=e729]: "5"
+                      - text: charts
+                    - generic [ref=e730]:
+                      - strong [ref=e731]: "9"
+                      - text: tables
+                    - generic [ref=e732]:
+                      - strong [ref=e733]: "0"
+                      - text: external
+                  - generic [ref=e734]:
+                    - generic [ref=e735]: AST ready
+                    - generic [ref=e736]: Blueprint ready
+                    - generic [ref=e737]: Slots generated on finalize
+                - button "harish payaluga Template 95 · v3.0 VALID 2 topics 9 questions 61 entities 7 charts 9 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e738]:
+                  - generic [ref=e739]:
+                    - generic [ref=e740]:
+                      - paragraph [ref=e741]: harish payaluga
+                      - paragraph [ref=e742]: Template 95 · v3.0
+                    - generic [ref=e743]: VALID
+                  - generic [ref=e744]:
+                    - generic [ref=e745]:
+                      - strong [ref=e746]: "2"
+                      - text: topics
+                    - generic [ref=e747]:
+                      - strong [ref=e748]: "9"
+                      - text: questions
+                    - generic [ref=e749]:
+                      - strong [ref=e750]: "61"
+                      - text: entities
+                    - generic [ref=e751]:
+                      - strong [ref=e752]: "7"
+                      - text: charts
+                    - generic [ref=e753]:
+                      - strong [ref=e754]: "9"
+                      - text: tables
+                    - generic [ref=e755]:
+                      - strong [ref=e756]: "0"
+                      - text: external
+                  - generic [ref=e757]:
+                    - generic [ref=e758]: AST ready
+                    - generic [ref=e759]: Blueprint ready
+                    - generic [ref=e760]: Slots generated on finalize
+                - button "test 18 vk Template 94 · v3.0 VALID 7 topics 24 questions 16 entities 8 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e761]:
+                  - generic [ref=e762]:
+                    - generic [ref=e763]:
+                      - paragraph [ref=e764]: test 18 vk
+                      - paragraph [ref=e765]: Template 94 · v3.0
+                    - generic [ref=e766]: VALID
+                  - generic [ref=e767]:
+                    - generic [ref=e768]:
+                      - strong [ref=e769]: "7"
+                      - text: topics
+                    - generic [ref=e770]:
+                      - strong [ref=e771]: "24"
+                      - text: questions
+                    - generic [ref=e772]:
+                      - strong [ref=e773]: "16"
+                      - text: entities
+                    - generic [ref=e774]:
+                      - strong [ref=e775]: "8"
+                      - text: charts
+                    - generic [ref=e776]:
+                      - strong [ref=e777]: "0"
+                      - text: tables
+                    - generic [ref=e778]:
+                      - strong [ref=e779]: "0"
+                      - text: external
+                  - generic [ref=e780]:
+                    - generic [ref=e781]: AST ready
+                    - generic [ref=e782]: Blueprint ready
+                    - generic [ref=e783]: Slots generated on finalize
+                - button "test 100 Template 93 · v3.0 VALID 7 topics 24 questions 25 entities 8 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e784]:
+                  - generic [ref=e785]:
+                    - generic [ref=e786]:
+                      - paragraph [ref=e787]: test 100
+                      - paragraph [ref=e788]: Template 93 · v3.0
+                    - generic [ref=e789]: VALID
+                  - generic [ref=e790]:
+                    - generic [ref=e791]:
+                      - strong [ref=e792]: "7"
+                      - text: topics
+                    - generic [ref=e793]:
+                      - strong [ref=e794]: "24"
+                      - text: questions
+                    - generic [ref=e795]:
+                      - strong [ref=e796]: "25"
+                      - text: entities
+                    - generic [ref=e797]:
+                      - strong [ref=e798]: "8"
+                      - text: charts
+                    - generic [ref=e799]:
+                      - strong [ref=e800]: "0"
+                      - text: tables
+                    - generic [ref=e801]:
+                      - strong [ref=e802]: "0"
+                      - text: external
+                  - generic [ref=e803]:
+                    - generic [ref=e804]: AST ready
+                    - generic [ref=e805]: Blueprint ready
+                    - generic [ref=e806]: Slots generated on finalize
+                - button "test 13 Template 92 · v3.0 VALID 2 topics 9 questions 42 entities 3 charts 9 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e807]:
+                  - generic [ref=e808]:
+                    - generic [ref=e809]:
+                      - paragraph [ref=e810]: test 13
+                      - paragraph [ref=e811]: Template 92 · v3.0
+                    - generic [ref=e812]: VALID
+                  - generic [ref=e813]:
+                    - generic [ref=e814]:
+                      - strong [ref=e815]: "2"
+                      - text: topics
+                    - generic [ref=e816]:
+                      - strong [ref=e817]: "9"
+                      - text: questions
+                    - generic [ref=e818]:
+                      - strong [ref=e819]: "42"
+                      - text: entities
+                    - generic [ref=e820]:
+                      - strong [ref=e821]: "3"
+                      - text: charts
+                    - generic [ref=e822]:
+                      - strong [ref=e823]: "9"
+                      - text: tables
+                    - generic [ref=e824]:
+                      - strong [ref=e825]: "0"
+                      - text: external
+                  - generic [ref=e826]:
+                    - generic [ref=e827]: AST ready
+                    - generic [ref=e828]: Blueprint ready
+                    - generic [ref=e829]: Slots generated on finalize
+                - button "Arun Test 16 Template 91 · v3.0 VALID 1 topics 18 questions 80 entities 17 charts 8 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e830]:
+                  - generic [ref=e831]:
+                    - generic [ref=e832]:
+                      - paragraph [ref=e833]: Arun Test 16
+                      - paragraph [ref=e834]: Template 91 · v3.0
+                    - generic [ref=e835]: VALID
+                  - generic [ref=e836]:
+                    - generic [ref=e837]:
+                      - strong [ref=e838]: "1"
+                      - text: topics
+                    - generic [ref=e839]:
+                      - strong [ref=e840]: "18"
+                      - text: questions
+                    - generic [ref=e841]:
+                      - strong [ref=e842]: "80"
+                      - text: entities
+                    - generic [ref=e843]:
+                      - strong [ref=e844]: "17"
+                      - text: charts
+                    - generic [ref=e845]:
+                      - strong [ref=e846]: "8"
+                      - text: tables
+                    - generic [ref=e847]:
+                      - strong [ref=e848]: "0"
+                      - text: external
+                  - generic [ref=e849]:
+                    - generic [ref=e850]: AST ready
+                    - generic [ref=e851]: Blueprint ready
+                    - generic [ref=e852]: Slots generated on finalize
+                - button "Arun Test 15 Template 90 · v3.0 VALID 1 topics 18 questions 80 entities 17 charts 8 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e853]:
+                  - generic [ref=e854]:
+                    - generic [ref=e855]:
+                      - paragraph [ref=e856]: Arun Test 15
+                      - paragraph [ref=e857]: Template 90 · v3.0
+                    - generic [ref=e858]: VALID
+                  - generic [ref=e859]:
+                    - generic [ref=e860]:
+                      - strong [ref=e861]: "1"
+                      - text: topics
+                    - generic [ref=e862]:
+                      - strong [ref=e863]: "18"
+                      - text: questions
+                    - generic [ref=e864]:
+                      - strong [ref=e865]: "80"
+                      - text: entities
+                    - generic [ref=e866]:
+                      - strong [ref=e867]: "17"
+                      - text: charts
+                    - generic [ref=e868]:
+                      - strong [ref=e869]: "8"
+                      - text: tables
+                    - generic [ref=e870]:
+                      - strong [ref=e871]: "0"
+                      - text: external
+                  - generic [ref=e872]:
+                    - generic [ref=e873]: AST ready
+                    - generic [ref=e874]: Blueprint ready
+                    - generic [ref=e875]: Slots generated on finalize
+                - button "Arun Test 14 Template 89 · v3.0 VALID 2 topics 19 questions 80 entities 17 charts 8 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e876]:
+                  - generic [ref=e877]:
+                    - generic [ref=e878]:
+                      - paragraph [ref=e879]: Arun Test 14
+                      - paragraph [ref=e880]: Template 89 · v3.0
+                    - generic [ref=e881]: VALID
+                  - generic [ref=e882]:
+                    - generic [ref=e883]:
+                      - strong [ref=e884]: "2"
+                      - text: topics
+                    - generic [ref=e885]:
+                      - strong [ref=e886]: "19"
+                      - text: questions
+                    - generic [ref=e887]:
+                      - strong [ref=e888]: "80"
+                      - text: entities
+                    - generic [ref=e889]:
+                      - strong [ref=e890]: "17"
+                      - text: charts
+                    - generic [ref=e891]:
+                      - strong [ref=e892]: "8"
+                      - text: tables
+                    - generic [ref=e893]:
+                      - strong [ref=e894]: "0"
+                      - text: external
+                  - generic [ref=e895]:
+                    - generic [ref=e896]: AST ready
+                    - generic [ref=e897]: Blueprint ready
+                    - generic [ref=e898]: Slots generated on finalize
+                - button "Plfs Template 88 · v3.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e899]:
+                  - generic [ref=e900]:
+                    - generic [ref=e901]:
+                      - paragraph [ref=e902]: Plfs
+                      - paragraph [ref=e903]: Template 88 · v3.0
+                    - generic [ref=e904]: VALID
+                  - generic [ref=e905]:
+                    - generic [ref=e906]:
+                      - strong [ref=e907]: "0"
+                      - text: topics
+                    - generic [ref=e908]:
+                      - strong [ref=e909]: "0"
+                      - text: questions
+                    - generic [ref=e910]:
+                      - strong [ref=e911]: "0"
+                      - text: entities
+                    - generic [ref=e912]:
+                      - strong [ref=e913]: "0"
+                      - text: charts
+                    - generic [ref=e914]:
+                      - strong [ref=e915]: "0"
+                      - text: tables
+                    - generic [ref=e916]:
+                      - strong [ref=e917]: "0"
+                      - text: external
+                  - generic [ref=e918]:
+                    - generic [ref=e919]: AST ready
+                    - generic [ref=e920]: Blueprint missing
+                    - generic [ref=e921]: Slots generated on finalize
+                - button "Plfs Report Template Template 87 · v3.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e922]:
+                  - generic [ref=e923]:
+                    - generic [ref=e924]:
+                      - paragraph [ref=e925]: Plfs Report Template
+                      - paragraph [ref=e926]: Template 87 · v3.0
+                    - generic [ref=e927]: VALID
+                  - generic [ref=e928]:
+                    - generic [ref=e929]:
+                      - strong [ref=e930]: "0"
+                      - text: topics
+                    - generic [ref=e931]:
+                      - strong [ref=e932]: "0"
+                      - text: questions
+                    - generic [ref=e933]:
+                      - strong [ref=e934]: "0"
+                      - text: entities
+                    - generic [ref=e935]:
+                      - strong [ref=e936]: "0"
+                      - text: charts
+                    - generic [ref=e937]:
+                      - strong [ref=e938]: "0"
+                      - text: tables
+                    - generic [ref=e939]:
+                      - strong [ref=e940]: "0"
+                      - text: external
+                  - generic [ref=e941]:
+                    - generic [ref=e942]: AST ready
+                    - generic [ref=e943]: Blueprint missing
+                    - generic [ref=e944]: Slots generated on finalize
+                - button "Plfs Report Template Template 86 · v3.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e945]:
+                  - generic [ref=e946]:
+                    - generic [ref=e947]:
+                      - paragraph [ref=e948]: Plfs Report Template
+                      - paragraph [ref=e949]: Template 86 · v3.0
+                    - generic [ref=e950]: VALID
+                  - generic [ref=e951]:
+                    - generic [ref=e952]:
+                      - strong [ref=e953]: "0"
+                      - text: topics
+                    - generic [ref=e954]:
+                      - strong [ref=e955]: "0"
+                      - text: questions
+                    - generic [ref=e956]:
+                      - strong [ref=e957]: "0"
+                      - text: entities
+                    - generic [ref=e958]:
+                      - strong [ref=e959]: "0"
+                      - text: charts
+                    - generic [ref=e960]:
+                      - strong [ref=e961]: "0"
+                      - text: tables
+                    - generic [ref=e962]:
+                      - strong [ref=e963]: "0"
+                      - text: external
+                  - generic [ref=e964]:
+                    - generic [ref=e965]: AST ready
+                    - generic [ref=e966]: Blueprint missing
+                    - generic [ref=e967]: Slots generated on finalize
+                - button "Plfs Template Report 1 Template 85 · v3.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e968]:
+                  - generic [ref=e969]:
+                    - generic [ref=e970]:
+                      - paragraph [ref=e971]: Plfs Template Report 1
+                      - paragraph [ref=e972]: Template 85 · v3.0
+                    - generic [ref=e973]: VALID
+                  - generic [ref=e974]:
+                    - generic [ref=e975]:
+                      - strong [ref=e976]: "0"
+                      - text: topics
+                    - generic [ref=e977]:
+                      - strong [ref=e978]: "0"
+                      - text: questions
+                    - generic [ref=e979]:
+                      - strong [ref=e980]: "0"
+                      - text: entities
+                    - generic [ref=e981]:
+                      - strong [ref=e982]: "0"
+                      - text: charts
+                    - generic [ref=e983]:
+                      - strong [ref=e984]: "0"
+                      - text: tables
+                    - generic [ref=e985]:
+                      - strong [ref=e986]: "0"
+                      - text: external
+                  - generic [ref=e987]:
+                    - generic [ref=e988]: AST ready
+                    - generic [ref=e989]: Blueprint missing
+                    - generic [ref=e990]: Slots generated on finalize
+                - button "Plfs Template Report Template 84 · v3.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e991]:
+                  - generic [ref=e992]:
+                    - generic [ref=e993]:
+                      - paragraph [ref=e994]: Plfs Template Report
+                      - paragraph [ref=e995]: Template 84 · v3.0
+                    - generic [ref=e996]: VALID
+                  - generic [ref=e997]:
+                    - generic [ref=e998]:
+                      - strong [ref=e999]: "0"
+                      - text: topics
+                    - generic [ref=e1000]:
+                      - strong [ref=e1001]: "0"
+                      - text: questions
+                    - generic [ref=e1002]:
+                      - strong [ref=e1003]: "0"
+                      - text: entities
+                    - generic [ref=e1004]:
+                      - strong [ref=e1005]: "0"
+                      - text: charts
+                    - generic [ref=e1006]:
+                      - strong [ref=e1007]: "0"
+                      - text: tables
+                    - generic [ref=e1008]:
+                      - strong [ref=e1009]: "0"
+                      - text: external
+                  - generic [ref=e1010]:
+                    - generic [ref=e1011]: AST ready
+                    - generic [ref=e1012]: Blueprint missing
+                    - generic [ref=e1013]: Slots generated on finalize
+                - button "Arun Test 13 Template 83 · v3.0 VALID 1 topics 18 questions 80 entities 17 charts 8 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e1014]:
+                  - generic [ref=e1015]:
+                    - generic [ref=e1016]:
+                      - paragraph [ref=e1017]: Arun Test 13
+                      - paragraph [ref=e1018]: Template 83 · v3.0
+                    - generic [ref=e1019]: VALID
+                  - generic [ref=e1020]:
+                    - generic [ref=e1021]:
+                      - strong [ref=e1022]: "1"
+                      - text: topics
+                    - generic [ref=e1023]:
+                      - strong [ref=e1024]: "18"
+                      - text: questions
+                    - generic [ref=e1025]:
+                      - strong [ref=e1026]: "80"
+                      - text: entities
+                    - generic [ref=e1027]:
+                      - strong [ref=e1028]: "17"
+                      - text: charts
+                    - generic [ref=e1029]:
+                      - strong [ref=e1030]: "8"
+                      - text: tables
+                    - generic [ref=e1031]:
+                      - strong [ref=e1032]: "0"
+                      - text: external
+                  - generic [ref=e1033]:
+                    - generic [ref=e1034]: AST ready
+                    - generic [ref=e1035]: Blueprint ready
+                    - generic [ref=e1036]: Slots generated on finalize
+                - button "Arun Test 12 Template 82 · v3.0 VALID 4 topics 6 questions 39 entities 0 charts 13 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e1037]:
+                  - generic [ref=e1038]:
+                    - generic [ref=e1039]:
+                      - paragraph [ref=e1040]: Arun Test 12
+                      - paragraph [ref=e1041]: Template 82 · v3.0
+                    - generic [ref=e1042]: VALID
+                  - generic [ref=e1043]:
+                    - generic [ref=e1044]:
+                      - strong [ref=e1045]: "4"
+                      - text: topics
+                    - generic [ref=e1046]:
+                      - strong [ref=e1047]: "6"
+                      - text: questions
+                    - generic [ref=e1048]:
+                      - strong [ref=e1049]: "39"
+                      - text: entities
+                    - generic [ref=e1050]:
+                      - strong [ref=e1051]: "0"
+                      - text: charts
+                    - generic [ref=e1052]:
+                      - strong [ref=e1053]: "13"
+                      - text: tables
+                    - generic [ref=e1054]:
+                      - strong [ref=e1055]: "0"
+                      - text: external
+                  - generic [ref=e1056]:
+                    - generic [ref=e1057]: AST ready
+                    - generic [ref=e1058]: Blueprint ready
+                    - generic [ref=e1059]: Slots generated on finalize
+                - button "Arun Test 11 Template 81 · v3.0 VALID 1 topics 1 questions 15 entities 0 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e1060]:
+                  - generic [ref=e1061]:
+                    - generic [ref=e1062]:
+                      - paragraph [ref=e1063]: Arun Test 11
+                      - paragraph [ref=e1064]: Template 81 · v3.0
+                    - generic [ref=e1065]: VALID
+                  - generic [ref=e1066]:
+                    - generic [ref=e1067]:
+                      - strong [ref=e1068]: "1"
+                      - text: topics
+                    - generic [ref=e1069]:
+                      - strong [ref=e1070]: "1"
+                      - text: questions
+                    - generic [ref=e1071]:
+                      - strong [ref=e1072]: "15"
+                      - text: entities
+                    - generic [ref=e1073]:
+                      - strong [ref=e1074]: "0"
+                      - text: charts
+                    - generic [ref=e1075]:
+                      - strong [ref=e1076]: "0"
+                      - text: tables
+                    - generic [ref=e1077]:
+                      - strong [ref=e1078]: "0"
+                      - text: external
+                  - generic [ref=e1079]:
+                    - generic [ref=e1080]: AST ready
+                    - generic [ref=e1081]: Blueprint ready
+                    - generic [ref=e1082]: Slots generated on finalize
+                - button "Arun Test 11 Template 80 · v3.0 VALID 1 topics 1 questions 15 entities 0 charts 0 tables 0 external AST ready Blueprint ready Slots generated on finalize" [ref=e1083]:
+                  - generic [ref=e1084]:
+                    - generic [ref=e1085]:
+                      - paragraph [ref=e1086]: Arun Test 11
+                      - paragraph [ref=e1087]: Template 80 · v3.0
+                    - generic [ref=e1088]: VALID
+                  - generic [ref=e1089]:
+                    - generic [ref=e1090]:
+                      - strong [ref=e1091]: "1"
+                      - text: topics
+                    - generic [ref=e1092]:
+                      - strong [ref=e1093]: "1"
+                      - text: questions
+                    - generic [ref=e1094]:
+                      - strong [ref=e1095]: "15"
+                      - text: entities
+                    - generic [ref=e1096]:
+                      - strong [ref=e1097]: "0"
+                      - text: charts
+                    - generic [ref=e1098]:
+                      - strong [ref=e1099]: "0"
+                      - text: tables
+                    - generic [ref=e1100]:
+                      - strong [ref=e1101]: "0"
+                      - text: external
+                  - generic [ref=e1102]:
+                    - generic [ref=e1103]: AST ready
+                    - generic [ref=e1104]: Blueprint ready
+                    - generic [ref=e1105]: Slots generated on finalize
+                - button "Arun Test 11 Template 79 · v3.0 VALID 1 topics 1 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1106]:
+                  - generic [ref=e1107]:
+                    - generic [ref=e1108]:
+                      - paragraph [ref=e1109]: Arun Test 11
+                      - paragraph [ref=e1110]: Template 79 · v3.0
+                    - generic [ref=e1111]: VALID
+                  - generic [ref=e1112]:
+                    - generic [ref=e1113]:
+                      - strong [ref=e1114]: "1"
+                      - text: topics
+                    - generic [ref=e1115]:
+                      - strong [ref=e1116]: "1"
+                      - text: questions
+                    - generic [ref=e1117]:
+                      - strong [ref=e1118]: "0"
+                      - text: entities
+                    - generic [ref=e1119]:
+                      - strong [ref=e1120]: "0"
+                      - text: charts
+                    - generic [ref=e1121]:
+                      - strong [ref=e1122]: "0"
+                      - text: tables
+                    - generic [ref=e1123]:
+                      - strong [ref=e1124]: "0"
+                      - text: external
+                  - generic [ref=e1125]:
+                    - generic [ref=e1126]: AST ready
+                    - generic [ref=e1127]: Blueprint missing
+                    - generic [ref=e1128]: Slots generated on finalize
+                - button "Arun Test 11 Template 78 · v3.0 VALID 1 topics 1 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1129]:
+                  - generic [ref=e1130]:
+                    - generic [ref=e1131]:
+                      - paragraph [ref=e1132]: Arun Test 11
+                      - paragraph [ref=e1133]: Template 78 · v3.0
+                    - generic [ref=e1134]: VALID
+                  - generic [ref=e1135]:
+                    - generic [ref=e1136]:
+                      - strong [ref=e1137]: "1"
+                      - text: topics
+                    - generic [ref=e1138]:
+                      - strong [ref=e1139]: "1"
+                      - text: questions
+                    - generic [ref=e1140]:
+                      - strong [ref=e1141]: "0"
+                      - text: entities
+                    - generic [ref=e1142]:
+                      - strong [ref=e1143]: "0"
+                      - text: charts
+                    - generic [ref=e1144]:
+                      - strong [ref=e1145]: "0"
+                      - text: tables
+                    - generic [ref=e1146]:
+                      - strong [ref=e1147]: "0"
+                      - text: external
+                  - generic [ref=e1148]:
+                    - generic [ref=e1149]: AST ready
+                    - generic [ref=e1150]: Blueprint missing
+                    - generic [ref=e1151]: Slots generated on finalize
+                - button "Arun Test 11 Template 77 · v3.0 VALID 1 topics 1 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1152]:
+                  - generic [ref=e1153]:
+                    - generic [ref=e1154]:
+                      - paragraph [ref=e1155]: Arun Test 11
+                      - paragraph [ref=e1156]: Template 77 · v3.0
+                    - generic [ref=e1157]: VALID
+                  - generic [ref=e1158]:
+                    - generic [ref=e1159]:
+                      - strong [ref=e1160]: "1"
+                      - text: topics
+                    - generic [ref=e1161]:
+                      - strong [ref=e1162]: "1"
+                      - text: questions
+                    - generic [ref=e1163]:
+                      - strong [ref=e1164]: "0"
+                      - text: entities
+                    - generic [ref=e1165]:
+                      - strong [ref=e1166]: "0"
+                      - text: charts
+                    - generic [ref=e1167]:
+                      - strong [ref=e1168]: "0"
+                      - text: tables
+                    - generic [ref=e1169]:
+                      - strong [ref=e1170]: "0"
+                      - text: external
+                  - generic [ref=e1171]:
+                    - generic [ref=e1172]: AST ready
+                    - generic [ref=e1173]: Blueprint missing
+                    - generic [ref=e1174]: Slots generated on finalize
+                - button "test 9 Template 76 · v1.0.0 VALID 0 topics 13 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1175]:
+                  - generic [ref=e1176]:
+                    - generic [ref=e1177]:
+                      - paragraph [ref=e1178]: test 9
+                      - paragraph [ref=e1179]: Template 76 · v1.0.0
+                    - generic [ref=e1180]: VALID
+                  - generic [ref=e1181]:
+                    - generic [ref=e1182]:
+                      - strong [ref=e1183]: "0"
+                      - text: topics
+                    - generic [ref=e1184]:
+                      - strong [ref=e1185]: "13"
+                      - text: questions
+                    - generic [ref=e1186]:
+                      - strong [ref=e1187]: "0"
+                      - text: entities
+                    - generic [ref=e1188]:
+                      - strong [ref=e1189]: "0"
+                      - text: charts
+                    - generic [ref=e1190]:
+                      - strong [ref=e1191]: "0"
+                      - text: tables
+                    - generic [ref=e1192]:
+                      - strong [ref=e1193]: "0"
+                      - text: external
+                  - generic [ref=e1194]:
+                    - generic [ref=e1195]: AST ready
+                    - generic [ref=e1196]: Blueprint missing
+                    - generic [ref=e1197]: Slots generated on finalize
+                - button "test 9 Template 75 · v1.0.0 VALID 0 topics 6 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1198]:
+                  - generic [ref=e1199]:
+                    - generic [ref=e1200]:
+                      - paragraph [ref=e1201]: test 9
+                      - paragraph [ref=e1202]: Template 75 · v1.0.0
+                    - generic [ref=e1203]: VALID
+                  - generic [ref=e1204]:
+                    - generic [ref=e1205]:
+                      - strong [ref=e1206]: "0"
+                      - text: topics
+                    - generic [ref=e1207]:
+                      - strong [ref=e1208]: "6"
+                      - text: questions
+                    - generic [ref=e1209]:
+                      - strong [ref=e1210]: "0"
+                      - text: entities
+                    - generic [ref=e1211]:
+                      - strong [ref=e1212]: "0"
+                      - text: charts
+                    - generic [ref=e1213]:
+                      - strong [ref=e1214]: "0"
+                      - text: tables
+                    - generic [ref=e1215]:
+                      - strong [ref=e1216]: "0"
+                      - text: external
+                  - generic [ref=e1217]:
+                    - generic [ref=e1218]: AST ready
+                    - generic [ref=e1219]: Blueprint missing
+                    - generic [ref=e1220]: Slots generated on finalize
+                - button "test 9 Template 74 · v1.0.0 VALID 0 topics 12 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1221]:
+                  - generic [ref=e1222]:
+                    - generic [ref=e1223]:
+                      - paragraph [ref=e1224]: test 9
+                      - paragraph [ref=e1225]: Template 74 · v1.0.0
+                    - generic [ref=e1226]: VALID
+                  - generic [ref=e1227]:
+                    - generic [ref=e1228]:
+                      - strong [ref=e1229]: "0"
+                      - text: topics
+                    - generic [ref=e1230]:
+                      - strong [ref=e1231]: "12"
+                      - text: questions
+                    - generic [ref=e1232]:
+                      - strong [ref=e1233]: "0"
+                      - text: entities
+                    - generic [ref=e1234]:
+                      - strong [ref=e1235]: "0"
+                      - text: charts
+                    - generic [ref=e1236]:
+                      - strong [ref=e1237]: "0"
+                      - text: tables
+                    - generic [ref=e1238]:
+                      - strong [ref=e1239]: "0"
+                      - text: external
+                  - generic [ref=e1240]:
+                    - generic [ref=e1241]: AST ready
+                    - generic [ref=e1242]: Blueprint missing
+                    - generic [ref=e1243]: Slots generated on finalize
+                - button "test 8 Template 73 · v1.0.0 VALID 0 topics 21 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1244]:
+                  - generic [ref=e1245]:
+                    - generic [ref=e1246]:
+                      - paragraph [ref=e1247]: test 8
+                      - paragraph [ref=e1248]: Template 73 · v1.0.0
+                    - generic [ref=e1249]: VALID
+                  - generic [ref=e1250]:
+                    - generic [ref=e1251]:
+                      - strong [ref=e1252]: "0"
+                      - text: topics
+                    - generic [ref=e1253]:
+                      - strong [ref=e1254]: "21"
+                      - text: questions
+                    - generic [ref=e1255]:
+                      - strong [ref=e1256]: "0"
+                      - text: entities
+                    - generic [ref=e1257]:
+                      - strong [ref=e1258]: "0"
+                      - text: charts
+                    - generic [ref=e1259]:
+                      - strong [ref=e1260]: "0"
+                      - text: tables
+                    - generic [ref=e1261]:
+                      - strong [ref=e1262]: "0"
+                      - text: external
+                  - generic [ref=e1263]:
+                    - generic [ref=e1264]: AST ready
+                    - generic [ref=e1265]: Blueprint missing
+                    - generic [ref=e1266]: Slots generated on finalize
+                - button "test 7 Template 72 · v1.0.0 VALID 0 topics 24 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1267]:
+                  - generic [ref=e1268]:
+                    - generic [ref=e1269]:
+                      - paragraph [ref=e1270]: test 7
+                      - paragraph [ref=e1271]: Template 72 · v1.0.0
+                    - generic [ref=e1272]: VALID
+                  - generic [ref=e1273]:
+                    - generic [ref=e1274]:
+                      - strong [ref=e1275]: "0"
+                      - text: topics
+                    - generic [ref=e1276]:
+                      - strong [ref=e1277]: "24"
+                      - text: questions
+                    - generic [ref=e1278]:
+                      - strong [ref=e1279]: "0"
+                      - text: entities
+                    - generic [ref=e1280]:
+                      - strong [ref=e1281]: "0"
+                      - text: charts
+                    - generic [ref=e1282]:
+                      - strong [ref=e1283]: "0"
+                      - text: tables
+                    - generic [ref=e1284]:
+                      - strong [ref=e1285]: "0"
+                      - text: external
+                  - generic [ref=e1286]:
+                    - generic [ref=e1287]: AST ready
+                    - generic [ref=e1288]: Blueprint missing
+                    - generic [ref=e1289]: Slots generated on finalize
+                - button "Plfs Template 2 Template 71 · v1.0.0 VALID 0 topics 1 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1290]:
+                  - generic [ref=e1291]:
+                    - generic [ref=e1292]:
+                      - paragraph [ref=e1293]: Plfs Template 2
+                      - paragraph [ref=e1294]: Template 71 · v1.0.0
+                    - generic [ref=e1295]: VALID
+                  - generic [ref=e1296]:
+                    - generic [ref=e1297]:
+                      - strong [ref=e1298]: "0"
+                      - text: topics
+                    - generic [ref=e1299]:
+                      - strong [ref=e1300]: "1"
+                      - text: questions
+                    - generic [ref=e1301]:
+                      - strong [ref=e1302]: "0"
+                      - text: entities
+                    - generic [ref=e1303]:
+                      - strong [ref=e1304]: "0"
+                      - text: charts
+                    - generic [ref=e1305]:
+                      - strong [ref=e1306]: "0"
+                      - text: tables
+                    - generic [ref=e1307]:
+                      - strong [ref=e1308]: "0"
+                      - text: external
+                  - generic [ref=e1309]:
+                    - generic [ref=e1310]: AST ready
+                    - generic [ref=e1311]: Blueprint missing
+                    - generic [ref=e1312]: Slots generated on finalize
+                - button "Plfs Template 4 Template 70 · v1.0.0 VALID 0 topics 1 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1313]:
+                  - generic [ref=e1314]:
+                    - generic [ref=e1315]:
+                      - paragraph [ref=e1316]: Plfs Template 4
+                      - paragraph [ref=e1317]: Template 70 · v1.0.0
+                    - generic [ref=e1318]: VALID
+                  - generic [ref=e1319]:
+                    - generic [ref=e1320]:
+                      - strong [ref=e1321]: "0"
+                      - text: topics
+                    - generic [ref=e1322]:
+                      - strong [ref=e1323]: "1"
+                      - text: questions
+                    - generic [ref=e1324]:
+                      - strong [ref=e1325]: "0"
+                      - text: entities
+                    - generic [ref=e1326]:
+                      - strong [ref=e1327]: "0"
+                      - text: charts
+                    - generic [ref=e1328]:
+                      - strong [ref=e1329]: "0"
+                      - text: tables
+                    - generic [ref=e1330]:
+                      - strong [ref=e1331]: "0"
+                      - text: external
+                  - generic [ref=e1332]:
+                    - generic [ref=e1333]: AST ready
+                    - generic [ref=e1334]: Blueprint missing
+                    - generic [ref=e1335]: Slots generated on finalize
+                - button "Plfs Template 1 Template 69 · v1.0.0 VALID 0 topics 1 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1336]:
+                  - generic [ref=e1337]:
+                    - generic [ref=e1338]:
+                      - paragraph [ref=e1339]: Plfs Template 1
+                      - paragraph [ref=e1340]: Template 69 · v1.0.0
+                    - generic [ref=e1341]: VALID
+                  - generic [ref=e1342]:
+                    - generic [ref=e1343]:
+                      - strong [ref=e1344]: "0"
+                      - text: topics
+                    - generic [ref=e1345]:
+                      - strong [ref=e1346]: "1"
+                      - text: questions
+                    - generic [ref=e1347]:
+                      - strong [ref=e1348]: "0"
+                      - text: entities
+                    - generic [ref=e1349]:
+                      - strong [ref=e1350]: "0"
+                      - text: charts
+                    - generic [ref=e1351]:
+                      - strong [ref=e1352]: "0"
+                      - text: tables
+                    - generic [ref=e1353]:
+                      - strong [ref=e1354]: "0"
+                      - text: external
+                  - generic [ref=e1355]:
+                    - generic [ref=e1356]: AST ready
+                    - generic [ref=e1357]: Blueprint missing
+                    - generic [ref=e1358]: Slots generated on finalize
+                - button "Plfs Template Template 68 · v1.0.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1359]:
+                  - generic [ref=e1360]:
+                    - generic [ref=e1361]:
+                      - paragraph [ref=e1362]: Plfs Template
+                      - paragraph [ref=e1363]: Template 68 · v1.0.0
+                    - generic [ref=e1364]: VALID
+                  - generic [ref=e1365]:
+                    - generic [ref=e1366]:
+                      - strong [ref=e1367]: "0"
+                      - text: topics
+                    - generic [ref=e1368]:
+                      - strong [ref=e1369]: "0"
+                      - text: questions
+                    - generic [ref=e1370]:
+                      - strong [ref=e1371]: "0"
+                      - text: entities
+                    - generic [ref=e1372]:
+                      - strong [ref=e1373]: "0"
+                      - text: charts
+                    - generic [ref=e1374]:
+                      - strong [ref=e1375]: "0"
+                      - text: tables
+                    - generic [ref=e1376]:
+                      - strong [ref=e1377]: "0"
+                      - text: external
+                  - generic [ref=e1378]:
+                    - generic [ref=e1379]: AST ready
+                    - generic [ref=e1380]: Blueprint missing
+                    - generic [ref=e1381]: Slots generated on finalize
+                - button "Arun Test 10 Template 67 · v1.0.0 VALID 0 topics 3 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1382]:
+                  - generic [ref=e1383]:
+                    - generic [ref=e1384]:
+                      - paragraph [ref=e1385]: Arun Test 10
+                      - paragraph [ref=e1386]: Template 67 · v1.0.0
+                    - generic [ref=e1387]: VALID
+                  - generic [ref=e1388]:
+                    - generic [ref=e1389]:
+                      - strong [ref=e1390]: "0"
+                      - text: topics
+                    - generic [ref=e1391]:
+                      - strong [ref=e1392]: "3"
+                      - text: questions
+                    - generic [ref=e1393]:
+                      - strong [ref=e1394]: "0"
+                      - text: entities
+                    - generic [ref=e1395]:
+                      - strong [ref=e1396]: "0"
+                      - text: charts
+                    - generic [ref=e1397]:
+                      - strong [ref=e1398]: "0"
+                      - text: tables
+                    - generic [ref=e1399]:
+                      - strong [ref=e1400]: "0"
+                      - text: external
+                  - generic [ref=e1401]:
+                    - generic [ref=e1402]: AST ready
+                    - generic [ref=e1403]: Blueprint missing
+                    - generic [ref=e1404]: Slots generated on finalize
+                - button "Arun Test 10 Template 66 · v1.0.0 VALID 0 topics 20 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1405]:
+                  - generic [ref=e1406]:
+                    - generic [ref=e1407]:
+                      - paragraph [ref=e1408]: Arun Test 10
+                      - paragraph [ref=e1409]: Template 66 · v1.0.0
+                    - generic [ref=e1410]: VALID
+                  - generic [ref=e1411]:
+                    - generic [ref=e1412]:
+                      - strong [ref=e1413]: "0"
+                      - text: topics
+                    - generic [ref=e1414]:
+                      - strong [ref=e1415]: "20"
+                      - text: questions
+                    - generic [ref=e1416]:
+                      - strong [ref=e1417]: "0"
+                      - text: entities
+                    - generic [ref=e1418]:
+                      - strong [ref=e1419]: "0"
+                      - text: charts
+                    - generic [ref=e1420]:
+                      - strong [ref=e1421]: "0"
+                      - text: tables
+                    - generic [ref=e1422]:
+                      - strong [ref=e1423]: "0"
+                      - text: external
+                  - generic [ref=e1424]:
+                    - generic [ref=e1425]: AST ready
+                    - generic [ref=e1426]: Blueprint missing
+                    - generic [ref=e1427]: Slots generated on finalize
+                - button "test 6 Template 65 · v1.0.0 VALID 0 topics 24 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1428]:
+                  - generic [ref=e1429]:
+                    - generic [ref=e1430]:
+                      - paragraph [ref=e1431]: test 6
+                      - paragraph [ref=e1432]: Template 65 · v1.0.0
+                    - generic [ref=e1433]: VALID
+                  - generic [ref=e1434]:
+                    - generic [ref=e1435]:
+                      - strong [ref=e1436]: "0"
+                      - text: topics
+                    - generic [ref=e1437]:
+                      - strong [ref=e1438]: "24"
+                      - text: questions
+                    - generic [ref=e1439]:
+                      - strong [ref=e1440]: "0"
+                      - text: entities
+                    - generic [ref=e1441]:
+                      - strong [ref=e1442]: "0"
+                      - text: charts
+                    - generic [ref=e1443]:
+                      - strong [ref=e1444]: "0"
+                      - text: tables
+                    - generic [ref=e1445]:
+                      - strong [ref=e1446]: "0"
+                      - text: external
+                  - generic [ref=e1447]:
+                    - generic [ref=e1448]: AST ready
+                    - generic [ref=e1449]: Blueprint missing
+                    - generic [ref=e1450]: Slots generated on finalize
+                - button "Arun Test 9 Template 64 · v1.0.0 VALID 0 topics 10 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1451]:
+                  - generic [ref=e1452]:
+                    - generic [ref=e1453]:
+                      - paragraph [ref=e1454]: Arun Test 9
+                      - paragraph [ref=e1455]: Template 64 · v1.0.0
+                    - generic [ref=e1456]: VALID
+                  - generic [ref=e1457]:
+                    - generic [ref=e1458]:
+                      - strong [ref=e1459]: "0"
+                      - text: topics
+                    - generic [ref=e1460]:
+                      - strong [ref=e1461]: "10"
+                      - text: questions
+                    - generic [ref=e1462]:
+                      - strong [ref=e1463]: "0"
+                      - text: entities
+                    - generic [ref=e1464]:
+                      - strong [ref=e1465]: "0"
+                      - text: charts
+                    - generic [ref=e1466]:
+                      - strong [ref=e1467]: "0"
+                      - text: tables
+                    - generic [ref=e1468]:
+                      - strong [ref=e1469]: "0"
+                      - text: external
+                  - generic [ref=e1470]:
+                    - generic [ref=e1471]: AST ready
+                    - generic [ref=e1472]: Blueprint missing
+                    - generic [ref=e1473]: Slots generated on finalize
+                - button "test5 Template 63 · v1.0.0 VALID 0 topics 23 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1474]:
+                  - generic [ref=e1475]:
+                    - generic [ref=e1476]:
+                      - paragraph [ref=e1477]: test5
+                      - paragraph [ref=e1478]: Template 63 · v1.0.0
+                    - generic [ref=e1479]: VALID
+                  - generic [ref=e1480]:
+                    - generic [ref=e1481]:
+                      - strong [ref=e1482]: "0"
+                      - text: topics
+                    - generic [ref=e1483]:
+                      - strong [ref=e1484]: "23"
+                      - text: questions
+                    - generic [ref=e1485]:
+                      - strong [ref=e1486]: "0"
+                      - text: entities
+                    - generic [ref=e1487]:
+                      - strong [ref=e1488]: "0"
+                      - text: charts
+                    - generic [ref=e1489]:
+                      - strong [ref=e1490]: "0"
+                      - text: tables
+                    - generic [ref=e1491]:
+                      - strong [ref=e1492]: "0"
+                      - text: external
+                  - generic [ref=e1493]:
+                    - generic [ref=e1494]: AST ready
+                    - generic [ref=e1495]: Blueprint missing
+                    - generic [ref=e1496]: Slots generated on finalize
+                - button "bubu Template 62 · v1.0.0 VALID 0 topics 23 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1497]:
+                  - generic [ref=e1498]:
+                    - generic [ref=e1499]:
+                      - paragraph [ref=e1500]: bubu
+                      - paragraph [ref=e1501]: Template 62 · v1.0.0
+                    - generic [ref=e1502]: VALID
+                  - generic [ref=e1503]:
+                    - generic [ref=e1504]:
+                      - strong [ref=e1505]: "0"
+                      - text: topics
+                    - generic [ref=e1506]:
+                      - strong [ref=e1507]: "23"
+                      - text: questions
+                    - generic [ref=e1508]:
+                      - strong [ref=e1509]: "0"
+                      - text: entities
+                    - generic [ref=e1510]:
+                      - strong [ref=e1511]: "0"
+                      - text: charts
+                    - generic [ref=e1512]:
+                      - strong [ref=e1513]: "0"
+                      - text: tables
+                    - generic [ref=e1514]:
+                      - strong [ref=e1515]: "0"
+                      - text: external
+                  - generic [ref=e1516]:
+                    - generic [ref=e1517]: AST ready
+                    - generic [ref=e1518]: Blueprint missing
+                    - generic [ref=e1519]: Slots generated on finalize
+                - button "Arun Test 8 Template 61 · v1.0.0 VALID 0 topics 14 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1520]:
+                  - generic [ref=e1521]:
+                    - generic [ref=e1522]:
+                      - paragraph [ref=e1523]: Arun Test 8
+                      - paragraph [ref=e1524]: Template 61 · v1.0.0
+                    - generic [ref=e1525]: VALID
+                  - generic [ref=e1526]:
+                    - generic [ref=e1527]:
+                      - strong [ref=e1528]: "0"
+                      - text: topics
+                    - generic [ref=e1529]:
+                      - strong [ref=e1530]: "14"
+                      - text: questions
+                    - generic [ref=e1531]:
+                      - strong [ref=e1532]: "0"
+                      - text: entities
+                    - generic [ref=e1533]:
+                      - strong [ref=e1534]: "0"
+                      - text: charts
+                    - generic [ref=e1535]:
+                      - strong [ref=e1536]: "0"
+                      - text: tables
+                    - generic [ref=e1537]:
+                      - strong [ref=e1538]: "0"
+                      - text: external
+                  - generic [ref=e1539]:
+                    - generic [ref=e1540]: AST ready
+                    - generic [ref=e1541]: Blueprint missing
+                    - generic [ref=e1542]: Slots generated on finalize
+                - button "Arun Test 7 Template 60 · v1.0.0 VALID 0 topics 1 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1543]:
+                  - generic [ref=e1544]:
+                    - generic [ref=e1545]:
+                      - paragraph [ref=e1546]: Arun Test 7
+                      - paragraph [ref=e1547]: Template 60 · v1.0.0
+                    - generic [ref=e1548]: VALID
+                  - generic [ref=e1549]:
+                    - generic [ref=e1550]:
+                      - strong [ref=e1551]: "0"
+                      - text: topics
+                    - generic [ref=e1552]:
+                      - strong [ref=e1553]: "1"
+                      - text: questions
+                    - generic [ref=e1554]:
+                      - strong [ref=e1555]: "0"
+                      - text: entities
+                    - generic [ref=e1556]:
+                      - strong [ref=e1557]: "0"
+                      - text: charts
+                    - generic [ref=e1558]:
+                      - strong [ref=e1559]: "0"
+                      - text: tables
+                    - generic [ref=e1560]:
+                      - strong [ref=e1561]: "0"
+                      - text: external
+                  - generic [ref=e1562]:
+                    - generic [ref=e1563]: AST ready
+                    - generic [ref=e1564]: Blueprint missing
+                    - generic [ref=e1565]: Slots generated on finalize
+                - button "Arun Test 6 Template 59 · v1.0.0 VALID 0 topics 13 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1566]:
+                  - generic [ref=e1567]:
+                    - generic [ref=e1568]:
+                      - paragraph [ref=e1569]: Arun Test 6
+                      - paragraph [ref=e1570]: Template 59 · v1.0.0
+                    - generic [ref=e1571]: VALID
+                  - generic [ref=e1572]:
+                    - generic [ref=e1573]:
+                      - strong [ref=e1574]: "0"
+                      - text: topics
+                    - generic [ref=e1575]:
+                      - strong [ref=e1576]: "13"
+                      - text: questions
+                    - generic [ref=e1577]:
+                      - strong [ref=e1578]: "0"
+                      - text: entities
+                    - generic [ref=e1579]:
+                      - strong [ref=e1580]: "0"
+                      - text: charts
+                    - generic [ref=e1581]:
+                      - strong [ref=e1582]: "0"
+                      - text: tables
+                    - generic [ref=e1583]:
+                      - strong [ref=e1584]: "0"
+                      - text: external
+                  - generic [ref=e1585]:
+                    - generic [ref=e1586]: AST ready
+                    - generic [ref=e1587]: Blueprint missing
+                    - generic [ref=e1588]: Slots generated on finalize
+                - button "m_test Template 58 · v1.0.0 VALID 0 topics 1 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1589]:
+                  - generic [ref=e1590]:
+                    - generic [ref=e1591]:
+                      - paragraph [ref=e1592]: m_test
+                      - paragraph [ref=e1593]: Template 58 · v1.0.0
+                    - generic [ref=e1594]: VALID
+                  - generic [ref=e1595]:
+                    - generic [ref=e1596]:
+                      - strong [ref=e1597]: "0"
+                      - text: topics
+                    - generic [ref=e1598]:
+                      - strong [ref=e1599]: "1"
+                      - text: questions
+                    - generic [ref=e1600]:
+                      - strong [ref=e1601]: "0"
+                      - text: entities
+                    - generic [ref=e1602]:
+                      - strong [ref=e1603]: "0"
+                      - text: charts
+                    - generic [ref=e1604]:
+                      - strong [ref=e1605]: "0"
+                      - text: tables
+                    - generic [ref=e1606]:
+                      - strong [ref=e1607]: "0"
+                      - text: external
+                  - generic [ref=e1608]:
+                    - generic [ref=e1609]: AST ready
+                    - generic [ref=e1610]: Blueprint missing
+                    - generic [ref=e1611]: Slots generated on finalize
+                - button "know Template 57 · v1.0.0 VALID 0 topics 54 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1612]:
+                  - generic [ref=e1613]:
+                    - generic [ref=e1614]:
+                      - paragraph [ref=e1615]: know
+                      - paragraph [ref=e1616]: Template 57 · v1.0.0
+                    - generic [ref=e1617]: VALID
+                  - generic [ref=e1618]:
+                    - generic [ref=e1619]:
+                      - strong [ref=e1620]: "0"
+                      - text: topics
+                    - generic [ref=e1621]:
+                      - strong [ref=e1622]: "54"
+                      - text: questions
+                    - generic [ref=e1623]:
+                      - strong [ref=e1624]: "0"
+                      - text: entities
+                    - generic [ref=e1625]:
+                      - strong [ref=e1626]: "0"
+                      - text: charts
+                    - generic [ref=e1627]:
+                      - strong [ref=e1628]: "0"
+                      - text: tables
+                    - generic [ref=e1629]:
+                      - strong [ref=e1630]: "0"
+                      - text: external
+                  - generic [ref=e1631]:
+                    - generic [ref=e1632]: AST ready
+                    - generic [ref=e1633]: Blueprint missing
+                    - generic [ref=e1634]: Slots generated on finalize
+                - button "ahhh Template 56 · v1.0.0 VALID 0 topics 54 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1635]:
+                  - generic [ref=e1636]:
+                    - generic [ref=e1637]:
+                      - paragraph [ref=e1638]: ahhh
+                      - paragraph [ref=e1639]: Template 56 · v1.0.0
+                    - generic [ref=e1640]: VALID
+                  - generic [ref=e1641]:
+                    - generic [ref=e1642]:
+                      - strong [ref=e1643]: "0"
+                      - text: topics
+                    - generic [ref=e1644]:
+                      - strong [ref=e1645]: "54"
+                      - text: questions
+                    - generic [ref=e1646]:
+                      - strong [ref=e1647]: "0"
+                      - text: entities
+                    - generic [ref=e1648]:
+                      - strong [ref=e1649]: "0"
+                      - text: charts
+                    - generic [ref=e1650]:
+                      - strong [ref=e1651]: "0"
+                      - text: tables
+                    - generic [ref=e1652]:
+                      - strong [ref=e1653]: "0"
+                      - text: external
+                  - generic [ref=e1654]:
+                    - generic [ref=e1655]: AST ready
+                    - generic [ref=e1656]: Blueprint missing
+                    - generic [ref=e1657]: Slots generated on finalize
+                - button "mudiyala Template 55 · v1.0.0 VALID 0 topics 11 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1658]:
+                  - generic [ref=e1659]:
+                    - generic [ref=e1660]:
+                      - paragraph [ref=e1661]: mudiyala
+                      - paragraph [ref=e1662]: Template 55 · v1.0.0
+                    - generic [ref=e1663]: VALID
+                  - generic [ref=e1664]:
+                    - generic [ref=e1665]:
+                      - strong [ref=e1666]: "0"
+                      - text: topics
+                    - generic [ref=e1667]:
+                      - strong [ref=e1668]: "11"
+                      - text: questions
+                    - generic [ref=e1669]:
+                      - strong [ref=e1670]: "0"
+                      - text: entities
+                    - generic [ref=e1671]:
+                      - strong [ref=e1672]: "0"
+                      - text: charts
+                    - generic [ref=e1673]:
+                      - strong [ref=e1674]: "0"
+                      - text: tables
+                    - generic [ref=e1675]:
+                      - strong [ref=e1676]: "0"
+                      - text: external
+                  - generic [ref=e1677]:
+                    - generic [ref=e1678]: AST ready
+                    - generic [ref=e1679]: Blueprint missing
+                    - generic [ref=e1680]: Slots generated on finalize
+                - button "pongada Template 54 · v1.0.0 VALID 0 topics 22 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1681]:
+                  - generic [ref=e1682]:
+                    - generic [ref=e1683]:
+                      - paragraph [ref=e1684]: pongada
+                      - paragraph [ref=e1685]: Template 54 · v1.0.0
+                    - generic [ref=e1686]: VALID
+                  - generic [ref=e1687]:
+                    - generic [ref=e1688]:
+                      - strong [ref=e1689]: "0"
+                      - text: topics
+                    - generic [ref=e1690]:
+                      - strong [ref=e1691]: "22"
+                      - text: questions
+                    - generic [ref=e1692]:
+                      - strong [ref=e1693]: "0"
+                      - text: entities
+                    - generic [ref=e1694]:
+                      - strong [ref=e1695]: "0"
+                      - text: charts
+                    - generic [ref=e1696]:
+                      - strong [ref=e1697]: "0"
+                      - text: tables
+                    - generic [ref=e1698]:
+                      - strong [ref=e1699]: "0"
+                      - text: external
+                  - generic [ref=e1700]:
+                    - generic [ref=e1701]: AST ready
+                    - generic [ref=e1702]: Blueprint missing
+                    - generic [ref=e1703]: Slots generated on finalize
+                - button "madhan_oliga Template 53 · v1.0.0 VALID 0 topics 24 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1704]:
+                  - generic [ref=e1705]:
+                    - generic [ref=e1706]:
+                      - paragraph [ref=e1707]: madhan_oliga
+                      - paragraph [ref=e1708]: Template 53 · v1.0.0
+                    - generic [ref=e1709]: VALID
+                  - generic [ref=e1710]:
+                    - generic [ref=e1711]:
+                      - strong [ref=e1712]: "0"
+                      - text: topics
+                    - generic [ref=e1713]:
+                      - strong [ref=e1714]: "24"
+                      - text: questions
+                    - generic [ref=e1715]:
+                      - strong [ref=e1716]: "0"
+                      - text: entities
+                    - generic [ref=e1717]:
+                      - strong [ref=e1718]: "0"
+                      - text: charts
+                    - generic [ref=e1719]:
+                      - strong [ref=e1720]: "0"
+                      - text: tables
+                    - generic [ref=e1721]:
+                      - strong [ref=e1722]: "0"
+                      - text: external
+                  - generic [ref=e1723]:
+                    - generic [ref=e1724]: AST ready
+                    - generic [ref=e1725]: Blueprint missing
+                    - generic [ref=e1726]: Slots generated on finalize
+                - button "machi_valga Template 52 · v1.0.0 VALID 0 topics 56 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1727]:
+                  - generic [ref=e1728]:
+                    - generic [ref=e1729]:
+                      - paragraph [ref=e1730]: machi_valga
+                      - paragraph [ref=e1731]: Template 52 · v1.0.0
+                    - generic [ref=e1732]: VALID
+                  - generic [ref=e1733]:
+                    - generic [ref=e1734]:
+                      - strong [ref=e1735]: "0"
+                      - text: topics
+                    - generic [ref=e1736]:
+                      - strong [ref=e1737]: "56"
+                      - text: questions
+                    - generic [ref=e1738]:
+                      - strong [ref=e1739]: "0"
+                      - text: entities
+                    - generic [ref=e1740]:
+                      - strong [ref=e1741]: "0"
+                      - text: charts
+                    - generic [ref=e1742]:
+                      - strong [ref=e1743]: "0"
+                      - text: tables
+                    - generic [ref=e1744]:
+                      - strong [ref=e1745]: "0"
+                      - text: external
+                  - generic [ref=e1746]:
+                    - generic [ref=e1747]: AST ready
+                    - generic [ref=e1748]: Blueprint missing
+                    - generic [ref=e1749]: Slots generated on finalize
+                - button "test Template 51 · v1.0.0 VALID 0 topics 56 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1750]:
+                  - generic [ref=e1751]:
+                    - generic [ref=e1752]:
+                      - paragraph [ref=e1753]: test
+                      - paragraph [ref=e1754]: Template 51 · v1.0.0
+                    - generic [ref=e1755]: VALID
+                  - generic [ref=e1756]:
+                    - generic [ref=e1757]:
+                      - strong [ref=e1758]: "0"
+                      - text: topics
+                    - generic [ref=e1759]:
+                      - strong [ref=e1760]: "56"
+                      - text: questions
+                    - generic [ref=e1761]:
+                      - strong [ref=e1762]: "0"
+                      - text: entities
+                    - generic [ref=e1763]:
+                      - strong [ref=e1764]: "0"
+                      - text: charts
+                    - generic [ref=e1765]:
+                      - strong [ref=e1766]: "0"
+                      - text: tables
+                    - generic [ref=e1767]:
+                      - strong [ref=e1768]: "0"
+                      - text: external
+                  - generic [ref=e1769]:
+                    - generic [ref=e1770]: AST ready
+                    - generic [ref=e1771]: Blueprint missing
+                    - generic [ref=e1772]: Slots generated on finalize
+                - button "Arun Test 6 Template 50 · v1.0.0 VALID 0 topics 14 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1773]:
+                  - generic [ref=e1774]:
+                    - generic [ref=e1775]:
+                      - paragraph [ref=e1776]: Arun Test 6
+                      - paragraph [ref=e1777]: Template 50 · v1.0.0
+                    - generic [ref=e1778]: VALID
+                  - generic [ref=e1779]:
+                    - generic [ref=e1780]:
+                      - strong [ref=e1781]: "0"
+                      - text: topics
+                    - generic [ref=e1782]:
+                      - strong [ref=e1783]: "14"
+                      - text: questions
+                    - generic [ref=e1784]:
+                      - strong [ref=e1785]: "0"
+                      - text: entities
+                    - generic [ref=e1786]:
+                      - strong [ref=e1787]: "0"
+                      - text: charts
+                    - generic [ref=e1788]:
+                      - strong [ref=e1789]: "0"
+                      - text: tables
+                    - generic [ref=e1790]:
+                      - strong [ref=e1791]: "0"
+                      - text: external
+                  - generic [ref=e1792]:
+                    - generic [ref=e1793]: AST ready
+                    - generic [ref=e1794]: Blueprint missing
+                    - generic [ref=e1795]: Slots generated on finalize
+                - button "hema Template 49 · v1.0.0 VALID 0 topics 56 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1796]:
+                  - generic [ref=e1797]:
+                    - generic [ref=e1798]:
+                      - paragraph [ref=e1799]: hema
+                      - paragraph [ref=e1800]: Template 49 · v1.0.0
+                    - generic [ref=e1801]: VALID
+                  - generic [ref=e1802]:
+                    - generic [ref=e1803]:
+                      - strong [ref=e1804]: "0"
+                      - text: topics
+                    - generic [ref=e1805]:
+                      - strong [ref=e1806]: "56"
+                      - text: questions
+                    - generic [ref=e1807]:
+                      - strong [ref=e1808]: "0"
+                      - text: entities
+                    - generic [ref=e1809]:
+                      - strong [ref=e1810]: "0"
+                      - text: charts
+                    - generic [ref=e1811]:
+                      - strong [ref=e1812]: "0"
+                      - text: tables
+                    - generic [ref=e1813]:
+                      - strong [ref=e1814]: "0"
+                      - text: external
+                  - generic [ref=e1815]:
+                    - generic [ref=e1816]: AST ready
+                    - generic [ref=e1817]: Blueprint missing
+                    - generic [ref=e1818]: Slots generated on finalize
+                - button "Arun Test 5 Template 48 · v1.0.0 VALID 0 topics 1 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1819]:
+                  - generic [ref=e1820]:
+                    - generic [ref=e1821]:
+                      - paragraph [ref=e1822]: Arun Test 5
+                      - paragraph [ref=e1823]: Template 48 · v1.0.0
+                    - generic [ref=e1824]: VALID
+                  - generic [ref=e1825]:
+                    - generic [ref=e1826]:
+                      - strong [ref=e1827]: "0"
+                      - text: topics
+                    - generic [ref=e1828]:
+                      - strong [ref=e1829]: "1"
+                      - text: questions
+                    - generic [ref=e1830]:
+                      - strong [ref=e1831]: "0"
+                      - text: entities
+                    - generic [ref=e1832]:
+                      - strong [ref=e1833]: "0"
+                      - text: charts
+                    - generic [ref=e1834]:
+                      - strong [ref=e1835]: "0"
+                      - text: tables
+                    - generic [ref=e1836]:
+                      - strong [ref=e1837]: "0"
+                      - text: external
+                  - generic [ref=e1838]:
+                    - generic [ref=e1839]: AST ready
+                    - generic [ref=e1840]: Blueprint missing
+                    - generic [ref=e1841]: Slots generated on finalize
+                - button "sanjay Template 47 · v1.0.0 VALID 0 topics 56 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1842]:
+                  - generic [ref=e1843]:
+                    - generic [ref=e1844]:
+                      - paragraph [ref=e1845]: sanjay
+                      - paragraph [ref=e1846]: Template 47 · v1.0.0
+                    - generic [ref=e1847]: VALID
+                  - generic [ref=e1848]:
+                    - generic [ref=e1849]:
+                      - strong [ref=e1850]: "0"
+                      - text: topics
+                    - generic [ref=e1851]:
+                      - strong [ref=e1852]: "56"
+                      - text: questions
+                    - generic [ref=e1853]:
+                      - strong [ref=e1854]: "0"
+                      - text: entities
+                    - generic [ref=e1855]:
+                      - strong [ref=e1856]: "0"
+                      - text: charts
+                    - generic [ref=e1857]:
+                      - strong [ref=e1858]: "0"
+                      - text: tables
+                    - generic [ref=e1859]:
+                      - strong [ref=e1860]: "0"
+                      - text: external
+                  - generic [ref=e1861]:
+                    - generic [ref=e1862]: AST ready
+                    - generic [ref=e1863]: Blueprint missing
+                    - generic [ref=e1864]: Slots generated on finalize
+                - button "Arun Test 4 Template 46 · v1.0.0 VALID 0 topics 1 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1865]:
+                  - generic [ref=e1866]:
+                    - generic [ref=e1867]:
+                      - paragraph [ref=e1868]: Arun Test 4
+                      - paragraph [ref=e1869]: Template 46 · v1.0.0
+                    - generic [ref=e1870]: VALID
+                  - generic [ref=e1871]:
+                    - generic [ref=e1872]:
+                      - strong [ref=e1873]: "0"
+                      - text: topics
+                    - generic [ref=e1874]:
+                      - strong [ref=e1875]: "1"
+                      - text: questions
+                    - generic [ref=e1876]:
+                      - strong [ref=e1877]: "0"
+                      - text: entities
+                    - generic [ref=e1878]:
+                      - strong [ref=e1879]: "0"
+                      - text: charts
+                    - generic [ref=e1880]:
+                      - strong [ref=e1881]: "0"
+                      - text: tables
+                    - generic [ref=e1882]:
+                      - strong [ref=e1883]: "0"
+                      - text: external
+                  - generic [ref=e1884]:
+                    - generic [ref=e1885]: AST ready
+                    - generic [ref=e1886]: Blueprint missing
+                    - generic [ref=e1887]: Slots generated on finalize
+                - button "Arun Test 3 Template 45 · v1.0.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1888]:
+                  - generic [ref=e1889]:
+                    - generic [ref=e1890]:
+                      - paragraph [ref=e1891]: Arun Test 3
+                      - paragraph [ref=e1892]: Template 45 · v1.0.0
+                    - generic [ref=e1893]: VALID
+                  - generic [ref=e1894]:
+                    - generic [ref=e1895]:
+                      - strong [ref=e1896]: "0"
+                      - text: topics
+                    - generic [ref=e1897]:
+                      - strong [ref=e1898]: "0"
+                      - text: questions
+                    - generic [ref=e1899]:
+                      - strong [ref=e1900]: "0"
+                      - text: entities
+                    - generic [ref=e1901]:
+                      - strong [ref=e1902]: "0"
+                      - text: charts
+                    - generic [ref=e1903]:
+                      - strong [ref=e1904]: "0"
+                      - text: tables
+                    - generic [ref=e1905]:
+                      - strong [ref=e1906]: "0"
+                      - text: external
+                  - generic [ref=e1907]:
+                    - generic [ref=e1908]: AST ready
+                    - generic [ref=e1909]: Blueprint missing
+                    - generic [ref=e1910]: Slots generated on finalize
+                - button "Arun Test 2 Template 44 · v1.0.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1911]:
+                  - generic [ref=e1912]:
+                    - generic [ref=e1913]:
+                      - paragraph [ref=e1914]: Arun Test 2
+                      - paragraph [ref=e1915]: Template 44 · v1.0.0
+                    - generic [ref=e1916]: VALID
+                  - generic [ref=e1917]:
+                    - generic [ref=e1918]:
+                      - strong [ref=e1919]: "0"
+                      - text: topics
+                    - generic [ref=e1920]:
+                      - strong [ref=e1921]: "0"
+                      - text: questions
+                    - generic [ref=e1922]:
+                      - strong [ref=e1923]: "0"
+                      - text: entities
+                    - generic [ref=e1924]:
+                      - strong [ref=e1925]: "0"
+                      - text: charts
+                    - generic [ref=e1926]:
+                      - strong [ref=e1927]: "0"
+                      - text: tables
+                    - generic [ref=e1928]:
+                      - strong [ref=e1929]: "0"
+                      - text: external
+                  - generic [ref=e1930]:
+                    - generic [ref=e1931]: AST ready
+                    - generic [ref=e1932]: Blueprint missing
+                    - generic [ref=e1933]: Slots generated on finalize
+                - button "syl Template 43 · v1.0.0 VALID 0 topics 154 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1934]:
+                  - generic [ref=e1935]:
+                    - generic [ref=e1936]:
+                      - paragraph [ref=e1937]: syl
+                      - paragraph [ref=e1938]: Template 43 · v1.0.0
+                    - generic [ref=e1939]: VALID
+                  - generic [ref=e1940]:
+                    - generic [ref=e1941]:
+                      - strong [ref=e1942]: "0"
+                      - text: topics
+                    - generic [ref=e1943]:
+                      - strong [ref=e1944]: "154"
+                      - text: questions
+                    - generic [ref=e1945]:
+                      - strong [ref=e1946]: "0"
+                      - text: entities
+                    - generic [ref=e1947]:
+                      - strong [ref=e1948]: "0"
+                      - text: charts
+                    - generic [ref=e1949]:
+                      - strong [ref=e1950]: "0"
+                      - text: tables
+                    - generic [ref=e1951]:
+                      - strong [ref=e1952]: "0"
+                      - text: external
+                  - generic [ref=e1953]:
+                    - generic [ref=e1954]: AST ready
+                    - generic [ref=e1955]: Blueprint missing
+                    - generic [ref=e1956]: Slots generated on finalize
+                - button "Arun Test 2 Template 42 · v1.0.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1957]:
+                  - generic [ref=e1958]:
+                    - generic [ref=e1959]:
+                      - paragraph [ref=e1960]: Arun Test 2
+                      - paragraph [ref=e1961]: Template 42 · v1.0.0
+                    - generic [ref=e1962]: VALID
+                  - generic [ref=e1963]:
+                    - generic [ref=e1964]:
+                      - strong [ref=e1965]: "0"
+                      - text: topics
+                    - generic [ref=e1966]:
+                      - strong [ref=e1967]: "0"
+                      - text: questions
+                    - generic [ref=e1968]:
+                      - strong [ref=e1969]: "0"
+                      - text: entities
+                    - generic [ref=e1970]:
+                      - strong [ref=e1971]: "0"
+                      - text: charts
+                    - generic [ref=e1972]:
+                      - strong [ref=e1973]: "0"
+                      - text: tables
+                    - generic [ref=e1974]:
+                      - strong [ref=e1975]: "0"
+                      - text: external
+                  - generic [ref=e1976]:
+                    - generic [ref=e1977]: AST ready
+                    - generic [ref=e1978]: Blueprint missing
+                    - generic [ref=e1979]: Slots generated on finalize
+                - button "Arun Test 1 Template 41 · v1.0.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e1980]:
+                  - generic [ref=e1981]:
+                    - generic [ref=e1982]:
+                      - paragraph [ref=e1983]: Arun Test 1
+                      - paragraph [ref=e1984]: Template 41 · v1.0.0
+                    - generic [ref=e1985]: VALID
+                  - generic [ref=e1986]:
+                    - generic [ref=e1987]:
+                      - strong [ref=e1988]: "0"
+                      - text: topics
+                    - generic [ref=e1989]:
+                      - strong [ref=e1990]: "0"
+                      - text: questions
+                    - generic [ref=e1991]:
+                      - strong [ref=e1992]: "0"
+                      - text: entities
+                    - generic [ref=e1993]:
+                      - strong [ref=e1994]: "0"
+                      - text: charts
+                    - generic [ref=e1995]:
+                      - strong [ref=e1996]: "0"
+                      - text: tables
+                    - generic [ref=e1997]:
+                      - strong [ref=e1998]: "0"
+                      - text: external
+                  - generic [ref=e1999]:
+                    - generic [ref=e2000]: AST ready
+                    - generic [ref=e2001]: Blueprint missing
+                    - generic [ref=e2002]: Slots generated on finalize
+                - button "meghoo Template 40 · v1.0.0 VALID 0 topics 6 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2003]:
+                  - generic [ref=e2004]:
+                    - generic [ref=e2005]:
+                      - paragraph [ref=e2006]: meghoo
+                      - paragraph [ref=e2007]: Template 40 · v1.0.0
+                    - generic [ref=e2008]: VALID
+                  - generic [ref=e2009]:
+                    - generic [ref=e2010]:
+                      - strong [ref=e2011]: "0"
+                      - text: topics
+                    - generic [ref=e2012]:
+                      - strong [ref=e2013]: "6"
+                      - text: questions
+                    - generic [ref=e2014]:
+                      - strong [ref=e2015]: "0"
+                      - text: entities
+                    - generic [ref=e2016]:
+                      - strong [ref=e2017]: "0"
+                      - text: charts
+                    - generic [ref=e2018]:
+                      - strong [ref=e2019]: "0"
+                      - text: tables
+                    - generic [ref=e2020]:
+                      - strong [ref=e2021]: "0"
+                      - text: external
+                  - generic [ref=e2022]:
+                    - generic [ref=e2023]: AST ready
+                    - generic [ref=e2024]: Blueprint missing
+                    - generic [ref=e2025]: Slots generated on finalize
+                - button "machi Template 39 · v1.0.0 VALID 0 topics 28 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2026]:
+                  - generic [ref=e2027]:
+                    - generic [ref=e2028]:
+                      - paragraph [ref=e2029]: machi
+                      - paragraph [ref=e2030]: Template 39 · v1.0.0
+                    - generic [ref=e2031]: VALID
+                  - generic [ref=e2032]:
+                    - generic [ref=e2033]:
+                      - strong [ref=e2034]: "0"
+                      - text: topics
+                    - generic [ref=e2035]:
+                      - strong [ref=e2036]: "28"
+                      - text: questions
+                    - generic [ref=e2037]:
+                      - strong [ref=e2038]: "0"
+                      - text: entities
+                    - generic [ref=e2039]:
+                      - strong [ref=e2040]: "0"
+                      - text: charts
+                    - generic [ref=e2041]:
+                      - strong [ref=e2042]: "0"
+                      - text: tables
+                    - generic [ref=e2043]:
+                      - strong [ref=e2044]: "0"
+                      - text: external
+                  - generic [ref=e2045]:
+                    - generic [ref=e2046]: AST ready
+                    - generic [ref=e2047]: Blueprint missing
+                    - generic [ref=e2048]: Slots generated on finalize
+                - button "syl Template 38 · v1.0.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2049]:
+                  - generic [ref=e2050]:
+                    - generic [ref=e2051]:
+                      - paragraph [ref=e2052]: syl
+                      - paragraph [ref=e2053]: Template 38 · v1.0.0
+                    - generic [ref=e2054]: VALID
+                  - generic [ref=e2055]:
+                    - generic [ref=e2056]:
+                      - strong [ref=e2057]: "0"
+                      - text: topics
+                    - generic [ref=e2058]:
+                      - strong [ref=e2059]: "0"
+                      - text: questions
+                    - generic [ref=e2060]:
+                      - strong [ref=e2061]: "0"
+                      - text: entities
+                    - generic [ref=e2062]:
+                      - strong [ref=e2063]: "0"
+                      - text: charts
+                    - generic [ref=e2064]:
+                      - strong [ref=e2065]: "0"
+                      - text: tables
+                    - generic [ref=e2066]:
+                      - strong [ref=e2067]: "0"
+                      - text: external
+                  - generic [ref=e2068]:
+                    - generic [ref=e2069]: AST ready
+                    - generic [ref=e2070]: Blueprint missing
+                    - generic [ref=e2071]: Slots generated on finalize
+                - button "aura kutty Template 37 · v1.0.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2072]:
+                  - generic [ref=e2073]:
+                    - generic [ref=e2074]:
+                      - paragraph [ref=e2075]: aura kutty
+                      - paragraph [ref=e2076]: Template 37 · v1.0.0
+                    - generic [ref=e2077]: VALID
+                  - generic [ref=e2078]:
+                    - generic [ref=e2079]:
+                      - strong [ref=e2080]: "0"
+                      - text: topics
+                    - generic [ref=e2081]:
+                      - strong [ref=e2082]: "0"
+                      - text: questions
+                    - generic [ref=e2083]:
+                      - strong [ref=e2084]: "0"
+                      - text: entities
+                    - generic [ref=e2085]:
+                      - strong [ref=e2086]: "0"
+                      - text: charts
+                    - generic [ref=e2087]:
+                      - strong [ref=e2088]: "0"
+                      - text: tables
+                    - generic [ref=e2089]:
+                      - strong [ref=e2090]: "0"
+                      - text: external
+                  - generic [ref=e2091]:
+                    - generic [ref=e2092]: AST ready
+                    - generic [ref=e2093]: Blueprint missing
+                    - generic [ref=e2094]: Slots generated on finalize
+                - button "aura Template 36 · v1.0.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2095]:
+                  - generic [ref=e2096]:
+                    - generic [ref=e2097]:
+                      - paragraph [ref=e2098]: aura
+                      - paragraph [ref=e2099]: Template 36 · v1.0.0
+                    - generic [ref=e2100]: VALID
+                  - generic [ref=e2101]:
+                    - generic [ref=e2102]:
+                      - strong [ref=e2103]: "0"
+                      - text: topics
+                    - generic [ref=e2104]:
+                      - strong [ref=e2105]: "0"
+                      - text: questions
+                    - generic [ref=e2106]:
+                      - strong [ref=e2107]: "0"
+                      - text: entities
+                    - generic [ref=e2108]:
+                      - strong [ref=e2109]: "0"
+                      - text: charts
+                    - generic [ref=e2110]:
+                      - strong [ref=e2111]: "0"
+                      - text: tables
+                    - generic [ref=e2112]:
+                      - strong [ref=e2113]: "0"
+                      - text: external
+                  - generic [ref=e2114]:
+                    - generic [ref=e2115]: AST ready
+                    - generic [ref=e2116]: Blueprint missing
+                    - generic [ref=e2117]: Slots generated on finalize
+                - button "aura Template 35 · v1.0.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2118]:
+                  - generic [ref=e2119]:
+                    - generic [ref=e2120]:
+                      - paragraph [ref=e2121]: aura
+                      - paragraph [ref=e2122]: Template 35 · v1.0.0
+                    - generic [ref=e2123]: VALID
+                  - generic [ref=e2124]:
+                    - generic [ref=e2125]:
+                      - strong [ref=e2126]: "0"
+                      - text: topics
+                    - generic [ref=e2127]:
+                      - strong [ref=e2128]: "0"
+                      - text: questions
+                    - generic [ref=e2129]:
+                      - strong [ref=e2130]: "0"
+                      - text: entities
+                    - generic [ref=e2131]:
+                      - strong [ref=e2132]: "0"
+                      - text: charts
+                    - generic [ref=e2133]:
+                      - strong [ref=e2134]: "0"
+                      - text: tables
+                    - generic [ref=e2135]:
+                      - strong [ref=e2136]: "0"
+                      - text: external
+                  - generic [ref=e2137]:
+                    - generic [ref=e2138]: AST ready
+                    - generic [ref=e2139]: Blueprint missing
+                    - generic [ref=e2140]: Slots generated on finalize
+                - button "bubu Template 34 · v1.0.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2141]:
+                  - generic [ref=e2142]:
+                    - generic [ref=e2143]:
+                      - paragraph [ref=e2144]: bubu
+                      - paragraph [ref=e2145]: Template 34 · v1.0.0
+                    - generic [ref=e2146]: VALID
+                  - generic [ref=e2147]:
+                    - generic [ref=e2148]:
+                      - strong [ref=e2149]: "0"
+                      - text: topics
+                    - generic [ref=e2150]:
+                      - strong [ref=e2151]: "0"
+                      - text: questions
+                    - generic [ref=e2152]:
+                      - strong [ref=e2153]: "0"
+                      - text: entities
+                    - generic [ref=e2154]:
+                      - strong [ref=e2155]: "0"
+                      - text: charts
+                    - generic [ref=e2156]:
+                      - strong [ref=e2157]: "0"
+                      - text: tables
+                    - generic [ref=e2158]:
+                      - strong [ref=e2159]: "0"
+                      - text: external
+                  - generic [ref=e2160]:
+                    - generic [ref=e2161]: AST ready
+                    - generic [ref=e2162]: Blueprint missing
+                    - generic [ref=e2163]: Slots generated on finalize
+                - button "dudu Template 33 · v1.0.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2164]:
+                  - generic [ref=e2165]:
+                    - generic [ref=e2166]:
+                      - paragraph [ref=e2167]: dudu
+                      - paragraph [ref=e2168]: Template 33 · v1.0.0
+                    - generic [ref=e2169]: VALID
+                  - generic [ref=e2170]:
+                    - generic [ref=e2171]:
+                      - strong [ref=e2172]: "0"
+                      - text: topics
+                    - generic [ref=e2173]:
+                      - strong [ref=e2174]: "0"
+                      - text: questions
+                    - generic [ref=e2175]:
+                      - strong [ref=e2176]: "0"
+                      - text: entities
+                    - generic [ref=e2177]:
+                      - strong [ref=e2178]: "0"
+                      - text: charts
+                    - generic [ref=e2179]:
+                      - strong [ref=e2180]: "0"
+                      - text: tables
+                    - generic [ref=e2181]:
+                      - strong [ref=e2182]: "0"
+                      - text: external
+                  - generic [ref=e2183]:
+                    - generic [ref=e2184]: AST ready
+                    - generic [ref=e2185]: Blueprint missing
+                    - generic [ref=e2186]: Slots generated on finalize
+                - button "luv Template 32 · v1.0.0 VALID 0 topics 0 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2187]:
+                  - generic [ref=e2188]:
+                    - generic [ref=e2189]:
+                      - paragraph [ref=e2190]: luv
+                      - paragraph [ref=e2191]: Template 32 · v1.0.0
+                    - generic [ref=e2192]: VALID
+                  - generic [ref=e2193]:
+                    - generic [ref=e2194]:
+                      - strong [ref=e2195]: "0"
+                      - text: topics
+                    - generic [ref=e2196]:
+                      - strong [ref=e2197]: "0"
+                      - text: questions
+                    - generic [ref=e2198]:
+                      - strong [ref=e2199]: "0"
+                      - text: entities
+                    - generic [ref=e2200]:
+                      - strong [ref=e2201]: "0"
+                      - text: charts
+                    - generic [ref=e2202]:
+                      - strong [ref=e2203]: "0"
+                      - text: tables
+                    - generic [ref=e2204]:
+                      - strong [ref=e2205]: "0"
+                      - text: external
+                  - generic [ref=e2206]:
+                    - generic [ref=e2207]: AST ready
+                    - generic [ref=e2208]: Blueprint missing
+                    - generic [ref=e2209]: Slots generated on finalize
+                - button "aura Template 31 · v1.0.0 VALID 0 topics 8 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2210]:
+                  - generic [ref=e2211]:
+                    - generic [ref=e2212]:
+                      - paragraph [ref=e2213]: aura
+                      - paragraph [ref=e2214]: Template 31 · v1.0.0
+                    - generic [ref=e2215]: VALID
+                  - generic [ref=e2216]:
+                    - generic [ref=e2217]:
+                      - strong [ref=e2218]: "0"
+                      - text: topics
+                    - generic [ref=e2219]:
+                      - strong [ref=e2220]: "8"
+                      - text: questions
+                    - generic [ref=e2221]:
+                      - strong [ref=e2222]: "0"
+                      - text: entities
+                    - generic [ref=e2223]:
+                      - strong [ref=e2224]: "0"
+                      - text: charts
+                    - generic [ref=e2225]:
+                      - strong [ref=e2226]: "0"
+                      - text: tables
+                    - generic [ref=e2227]:
+                      - strong [ref=e2228]: "0"
+                      - text: external
+                  - generic [ref=e2229]:
+                    - generic [ref=e2230]: AST ready
+                    - generic [ref=e2231]: Blueprint missing
+                    - generic [ref=e2232]: Slots generated on finalize
+                - button "hema Template 30 · v1.0.0 VALID 0 topics 6 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2233]:
+                  - generic [ref=e2234]:
+                    - generic [ref=e2235]:
+                      - paragraph [ref=e2236]: hema
+                      - paragraph [ref=e2237]: Template 30 · v1.0.0
+                    - generic [ref=e2238]: VALID
+                  - generic [ref=e2239]:
+                    - generic [ref=e2240]:
+                      - strong [ref=e2241]: "0"
+                      - text: topics
+                    - generic [ref=e2242]:
+                      - strong [ref=e2243]: "6"
+                      - text: questions
+                    - generic [ref=e2244]:
+                      - strong [ref=e2245]: "0"
+                      - text: entities
+                    - generic [ref=e2246]:
+                      - strong [ref=e2247]: "0"
+                      - text: charts
+                    - generic [ref=e2248]:
+                      - strong [ref=e2249]: "0"
+                      - text: tables
+                    - generic [ref=e2250]:
+                      - strong [ref=e2251]: "0"
+                      - text: external
+                  - generic [ref=e2252]:
+                    - generic [ref=e2253]: AST ready
+                    - generic [ref=e2254]: Blueprint missing
+                    - generic [ref=e2255]: Slots generated on finalize
+                - button "arun Template 29 · v1.0.0 VALID 0 topics 9 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2256]:
+                  - generic [ref=e2257]:
+                    - generic [ref=e2258]:
+                      - paragraph [ref=e2259]: arun
+                      - paragraph [ref=e2260]: Template 29 · v1.0.0
+                    - generic [ref=e2261]: VALID
+                  - generic [ref=e2262]:
+                    - generic [ref=e2263]:
+                      - strong [ref=e2264]: "0"
+                      - text: topics
+                    - generic [ref=e2265]:
+                      - strong [ref=e2266]: "9"
+                      - text: questions
+                    - generic [ref=e2267]:
+                      - strong [ref=e2268]: "0"
+                      - text: entities
+                    - generic [ref=e2269]:
+                      - strong [ref=e2270]: "0"
+                      - text: charts
+                    - generic [ref=e2271]:
+                      - strong [ref=e2272]: "0"
+                      - text: tables
+                    - generic [ref=e2273]:
+                      - strong [ref=e2274]: "0"
+                      - text: external
+                  - generic [ref=e2275]:
+                    - generic [ref=e2276]: AST ready
+                    - generic [ref=e2277]: Blueprint missing
+                    - generic [ref=e2278]: Slots generated on finalize
+                - button "madhan Template 28 · v1.0.0 VALID 0 topics 5 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2279]:
+                  - generic [ref=e2280]:
+                    - generic [ref=e2281]:
+                      - paragraph [ref=e2282]: madhan
+                      - paragraph [ref=e2283]: Template 28 · v1.0.0
+                    - generic [ref=e2284]: VALID
+                  - generic [ref=e2285]:
+                    - generic [ref=e2286]:
+                      - strong [ref=e2287]: "0"
+                      - text: topics
+                    - generic [ref=e2288]:
+                      - strong [ref=e2289]: "5"
+                      - text: questions
+                    - generic [ref=e2290]:
+                      - strong [ref=e2291]: "0"
+                      - text: entities
+                    - generic [ref=e2292]:
+                      - strong [ref=e2293]: "0"
+                      - text: charts
+                    - generic [ref=e2294]:
+                      - strong [ref=e2295]: "0"
+                      - text: tables
+                    - generic [ref=e2296]:
+                      - strong [ref=e2297]: "0"
+                      - text: external
+                  - generic [ref=e2298]:
+                    - generic [ref=e2299]: AST ready
+                    - generic [ref=e2300]: Blueprint missing
+                    - generic [ref=e2301]: Slots generated on finalize
+                - button "hii Template 27 · v1.0.0 VALID 0 topics 9 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2302]:
+                  - generic [ref=e2303]:
+                    - generic [ref=e2304]:
+                      - paragraph [ref=e2305]: hii
+                      - paragraph [ref=e2306]: Template 27 · v1.0.0
+                    - generic [ref=e2307]: VALID
+                  - generic [ref=e2308]:
+                    - generic [ref=e2309]:
+                      - strong [ref=e2310]: "0"
+                      - text: topics
+                    - generic [ref=e2311]:
+                      - strong [ref=e2312]: "9"
+                      - text: questions
+                    - generic [ref=e2313]:
+                      - strong [ref=e2314]: "0"
+                      - text: entities
+                    - generic [ref=e2315]:
+                      - strong [ref=e2316]: "0"
+                      - text: charts
+                    - generic [ref=e2317]:
+                      - strong [ref=e2318]: "0"
+                      - text: tables
+                    - generic [ref=e2319]:
+                      - strong [ref=e2320]: "0"
+                      - text: external
+                  - generic [ref=e2321]:
+                    - generic [ref=e2322]: AST ready
+                    - generic [ref=e2323]: Blueprint missing
+                    - generic [ref=e2324]: Slots generated on finalize
+                - button "dudu Template 26 · v1.0.0 VALID 0 topics 10 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2325]:
+                  - generic [ref=e2326]:
+                    - generic [ref=e2327]:
+                      - paragraph [ref=e2328]: dudu
+                      - paragraph [ref=e2329]: Template 26 · v1.0.0
+                    - generic [ref=e2330]: VALID
+                  - generic [ref=e2331]:
+                    - generic [ref=e2332]:
+                      - strong [ref=e2333]: "0"
+                      - text: topics
+                    - generic [ref=e2334]:
+                      - strong [ref=e2335]: "10"
+                      - text: questions
+                    - generic [ref=e2336]:
+                      - strong [ref=e2337]: "0"
+                      - text: entities
+                    - generic [ref=e2338]:
+                      - strong [ref=e2339]: "0"
+                      - text: charts
+                    - generic [ref=e2340]:
+                      - strong [ref=e2341]: "0"
+                      - text: tables
+                    - generic [ref=e2342]:
+                      - strong [ref=e2343]: "0"
+                      - text: external
+                  - generic [ref=e2344]:
+                    - generic [ref=e2345]: AST ready
+                    - generic [ref=e2346]: Blueprint missing
+                    - generic [ref=e2347]: Slots generated on finalize
+                - button "dudu2 Template 25 · v1.0.0 VALID 0 topics 6 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2348]:
+                  - generic [ref=e2349]:
+                    - generic [ref=e2350]:
+                      - paragraph [ref=e2351]: dudu2
+                      - paragraph [ref=e2352]: Template 25 · v1.0.0
+                    - generic [ref=e2353]: VALID
+                  - generic [ref=e2354]:
+                    - generic [ref=e2355]:
+                      - strong [ref=e2356]: "0"
+                      - text: topics
+                    - generic [ref=e2357]:
+                      - strong [ref=e2358]: "6"
+                      - text: questions
+                    - generic [ref=e2359]:
+                      - strong [ref=e2360]: "0"
+                      - text: entities
+                    - generic [ref=e2361]:
+                      - strong [ref=e2362]: "0"
+                      - text: charts
+                    - generic [ref=e2363]:
+                      - strong [ref=e2364]: "0"
+                      - text: tables
+                    - generic [ref=e2365]:
+                      - strong [ref=e2366]: "0"
+                      - text: external
+                  - generic [ref=e2367]:
+                    - generic [ref=e2368]: AST ready
+                    - generic [ref=e2369]: Blueprint missing
+                    - generic [ref=e2370]: Slots generated on finalize
+                - button "bubu2 Template 24 · v1.0.0 VALID 0 topics 8 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2371]:
+                  - generic [ref=e2372]:
+                    - generic [ref=e2373]:
+                      - paragraph [ref=e2374]: bubu2
+                      - paragraph [ref=e2375]: Template 24 · v1.0.0
+                    - generic [ref=e2376]: VALID
+                  - generic [ref=e2377]:
+                    - generic [ref=e2378]:
+                      - strong [ref=e2379]: "0"
+                      - text: topics
+                    - generic [ref=e2380]:
+                      - strong [ref=e2381]: "8"
+                      - text: questions
+                    - generic [ref=e2382]:
+                      - strong [ref=e2383]: "0"
+                      - text: entities
+                    - generic [ref=e2384]:
+                      - strong [ref=e2385]: "0"
+                      - text: charts
+                    - generic [ref=e2386]:
+                      - strong [ref=e2387]: "0"
+                      - text: tables
+                    - generic [ref=e2388]:
+                      - strong [ref=e2389]: "0"
+                      - text: external
+                  - generic [ref=e2390]:
+                    - generic [ref=e2391]: AST ready
+                    - generic [ref=e2392]: Blueprint missing
+                    - generic [ref=e2393]: Slots generated on finalize
+                - button "bubu Template 23 · v1.0.0 VALID 0 topics 9 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2394]:
+                  - generic [ref=e2395]:
+                    - generic [ref=e2396]:
+                      - paragraph [ref=e2397]: bubu
+                      - paragraph [ref=e2398]: Template 23 · v1.0.0
+                    - generic [ref=e2399]: VALID
+                  - generic [ref=e2400]:
+                    - generic [ref=e2401]:
+                      - strong [ref=e2402]: "0"
+                      - text: topics
+                    - generic [ref=e2403]:
+                      - strong [ref=e2404]: "9"
+                      - text: questions
+                    - generic [ref=e2405]:
+                      - strong [ref=e2406]: "0"
+                      - text: entities
+                    - generic [ref=e2407]:
+                      - strong [ref=e2408]: "0"
+                      - text: charts
+                    - generic [ref=e2409]:
+                      - strong [ref=e2410]: "0"
+                      - text: tables
+                    - generic [ref=e2411]:
+                      - strong [ref=e2412]: "0"
+                      - text: external
+                  - generic [ref=e2413]:
+                    - generic [ref=e2414]: AST ready
+                    - generic [ref=e2415]: Blueprint missing
+                    - generic [ref=e2416]: Slots generated on finalize
+                - button "dudu Template 22 · v1.0.0 VALID 0 topics 10 questions 0 entities 0 charts 0 tables 0 external AST ready Blueprint missing Slots generated on finalize" [ref=e2417]:
+                  - generic [ref=e2418]:
+                    - generic [ref=e2419]:
+                      - paragraph [ref=e2420]: dudu
+                      - paragraph [ref=e2421]: Template 22 · v1.0.0
+                    - generic [ref=e2422]: VALID
+                  - generic [ref=e2423]:
+                    - generic [ref=e2424]:
+                      - strong [ref=e2425]: "0"
+                      - text: topics
+                    - generic [ref=e2426]:
+                      - strong [ref=e2427]: "10"
+                      - text: questions
+                    - generic [ref=e2428]:
+                      - strong [ref=e2429]: "0"
+                      - text: entities
+                    - generic [ref=e2430]:
+                      - strong [ref=e2431]: "0"
+                      - text: charts
+                    - generic [ref=e2432]:
+                      - strong [ref=e2433]: "0"
+                      - text: tables
+                    - generic [ref=e2434]:
+                      - strong [ref=e2435]: "0"
+                      - text: external
+                  - generic [ref=e2436]:
+                    - generic [ref=e2437]: AST ready
+                    - generic [ref=e2438]: Blueprint missing
+                    - generic [ref=e2439]: Slots generated on finalize
+              - generic [ref=e2440]:
+                - paragraph [ref=e2441]: "Selected: sanjay testing"
+                - paragraph [ref=e2442]: This package will drive entity matching, question planning, and slot-aware ReviewedPlan generation.
+            - generic [ref=e103]:
+              - generic [ref=e104]:
+                - paragraph [ref=e105]: 2. Dataset
+                - paragraph [ref=e106]: Upload the CSV that will be profiled into DatasetAST.
+              - generic [ref=e107] [cursor=pointer]:
+                - img [ref=e108]
+                - paragraph [ref=e111]: Click to choose a CSV dataset
+                - paragraph [ref=e112]: The binder will infer measures, dimensions, time columns, samples, and column ownership.
+            - generic [ref=e113]:
+              - button "Advanced template controls Hide" [ref=e2443]:
+                - text: Advanced template controls
+                - generic [ref=e115]: Hide
+              - generic [ref=e2444]:
+                - generic [ref=e2445]:
+                  - generic [ref=e2446]: Manual template id
+                  - textbox "tpl_plfs_annual_v1" [ref=e2447]: "120"
+                  - paragraph [ref=e2448]: Use this only for built-in ids, debugging, or a known DB template id.
+                - generic [ref=e2450] [cursor=pointer]:
+                  - generic [ref=e2451]: Override blueprint.json
+                  - generic [ref=e2452]: Browse
+            - button "Create binding session" [disabled]:
+              - text: Create binding session
+              - img
+  - button "Open Next.js Dev Tools" [ref=e47] [cursor=pointer]:
+    - img [ref=e48]
+  - alert [ref=e51]

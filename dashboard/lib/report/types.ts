@@ -122,12 +122,66 @@ export interface EvidenceItem {
   rowIds?: string[];
 }
 
+export interface VerificationCheck {
+  code: string;
+  severity: 'fail' | 'warn' | 'info' | string;
+  message: string;
+  [k: string]: unknown;
+}
+
+export interface VerificationQuality {
+  finalScore?: number;
+  provenanceCoverage?: number;
+  formulaCoverage?: number;
+  failCount?: number;
+  warnCount?: number;
+  [k: string]: unknown;
+}
+
+export interface VerificationSummary {
+  verdict?: string;
+  quality?: VerificationQuality;
+  checks?: VerificationCheck[];
+  [k: string]: unknown;
+}
+
+export interface PublishGate {
+  publishable?: boolean;
+  reason?: string;
+  [k: string]: unknown;
+}
+
+export interface Insight {
+  insightId: string;
+  text: string;
+  severity?: 'finding' | 'caveat' | 'warning' | string;
+  [k: string]: unknown;
+}
+
+export interface AuditProvenance {
+  contentHash?: string;
+  [k: string]: unknown;
+}
+
+export interface AuditAST {
+  verification?: VerificationSummary;
+  gate?: PublishGate;
+  insights?: Insight[];
+  provenance?: AuditProvenance;
+  publishable?: boolean;
+  [k: string]: unknown;
+}
+
 export interface ReportAST {
   metadata?: {
     reportId?: string;
     title?: string;
     status?: string;
     version?: number;
+    publishStatus?: string;
+    publishedAt?: string;
+    publishedBy?: string;
+    dataContentHash?: string;
     period?: { current?: string };
     [k: string]: unknown;
   };
@@ -137,6 +191,7 @@ export interface ReportAST {
   chartAST?: { charts?: Chart[] };
   tableAST?: { tables?: Table[] };
   provenanceAST?: { evidence?: EvidenceItem[] };
+  auditAST?: AuditAST;
 }
 
 export interface EditTarget {

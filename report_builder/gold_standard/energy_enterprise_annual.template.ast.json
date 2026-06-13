@@ -1,0 +1,1306 @@
+{
+  "$schema": "bharatstat/template-ast/v1",
+  "_doc": "VALUE-FREE render skeleton for the MoSPI Energy Statistics enterprise built-in package. All content, rows, series, captions, and officer text fields are empty placeholders.",
+  "metadata": {
+    "templateId": "tpl_mospi_energy_enterprise_annual_v1",
+    "blueprintRef": "tpl_mospi_energy_enterprise_annual_v1",
+    "name": "MoSPI Energy Statistics Enterprise Report",
+    "locale": "en-IN",
+    "version": "1.0.0",
+    "valueFree": true,
+    "generatedFrom": "enterprise_built_in_energy_generator",
+    "targetPageRange": "6-9",
+    "standardPageCount": 8,
+    "hardPageCap": 9,
+    "officerReady": true,
+    "auditRequired": true
+  },
+  "styleAST": {
+    "styles": [
+      {
+        "styleId": "s_h1",
+        "role": "heading1",
+        "font": "Noto Sans",
+        "sizePt": 18,
+        "bold": true,
+        "color": "#0B5394"
+      },
+      {
+        "styleId": "s_h2",
+        "role": "heading2",
+        "font": "Noto Sans",
+        "sizePt": 15,
+        "bold": true,
+        "color": "#1155CC"
+      },
+      {
+        "styleId": "s_h3",
+        "role": "heading3",
+        "font": "Noto Sans",
+        "sizePt": 13,
+        "bold": true,
+        "color": "#1C4587"
+      },
+      {
+        "styleId": "s_body",
+        "role": "body",
+        "font": "Noto Sans",
+        "sizePt": 11,
+        "bold": false,
+        "color": "#222222"
+      },
+      {
+        "styleId": "s_metric",
+        "role": "metric",
+        "font": "Noto Sans",
+        "sizePt": 16,
+        "bold": true,
+        "color": "#0B5394"
+      },
+      {
+        "styleId": "s_table",
+        "role": "tableCell",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "align": "right"
+      },
+      {
+        "styleId": "s_caption",
+        "role": "caption",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "italic": true,
+        "color": "#555555"
+      },
+      {
+        "styleId": "s_note",
+        "role": "sourceNote",
+        "font": "Noto Sans",
+        "sizePt": 8,
+        "color": "#666666"
+      }
+    ]
+  },
+  "customizationAST": {
+    "controls": [
+      {
+        "controlId": "page_budget",
+        "label": "Page budget",
+        "type": "single_select",
+        "default": "standard_8_pages",
+        "options": [
+          {
+            "value": "brief_6_pages",
+            "label": "Brief 5-6 pages",
+            "targetPages": [
+              5,
+              6
+            ]
+          },
+          {
+            "value": "standard_8_pages",
+            "label": "Standard 7-8 pages",
+            "targetPages": [
+              7,
+              8
+            ]
+          },
+          {
+            "value": "full_9_pages",
+            "label": "Full 9 pages",
+            "targetPages": [
+              9,
+              9
+            ]
+          }
+        ]
+      },
+      {
+        "controlId": "geography_depth",
+        "label": "Geography depth",
+        "type": "single_select",
+        "default": "state_ut",
+        "options": [
+          "national",
+          "region",
+          "state_ut",
+          "region_state_ut"
+        ]
+      },
+      {
+        "controlId": "energy_lens",
+        "label": "Energy lens",
+        "type": "multi_select",
+        "default": [
+          "coal",
+          "renewables"
+        ],
+        "options": [
+          "coal",
+          "lignite",
+          "hydrocarbons",
+          "renewables",
+          "reserve_category",
+          "source_mix"
+        ]
+      },
+      {
+        "controlId": "output_channels",
+        "label": "Outputs",
+        "type": "multi_select",
+        "default": [
+          "html",
+          "pdf"
+        ],
+        "options": [
+          "html",
+          "pdf",
+          "docx_ready_ast",
+          "annexure_tables",
+          "provenance_log"
+        ]
+      },
+      {
+        "controlId": "narrative_style",
+        "label": "Narrative style",
+        "type": "single_select",
+        "default": "formal_statistical",
+        "options": [
+          "formal_statistical",
+          "policy_brief",
+          "technical_annexure"
+        ]
+      },
+      {
+        "controlId": "visual_density",
+        "label": "Visual density",
+        "type": "single_select",
+        "default": "balanced",
+        "options": [
+          "table_heavy",
+          "balanced",
+          "chart_heavy"
+        ]
+      }
+    ],
+    "documentControls": [
+      {
+        "controlId": "cover_title",
+        "slotId": "slot_doc_cover_title",
+        "required": true
+      },
+      {
+        "controlId": "executive_summary",
+        "slotId": "slot_doc_executive_summary",
+        "required": false
+      },
+      {
+        "controlId": "methodology_notes",
+        "slotId": "slot_doc_methodology_notes",
+        "required": false
+      }
+    ],
+    "lockedStatisticalFields": [
+      "entity.aggregationPolicy",
+      "question.requiredEntities.required",
+      "question.analyticsSpec.readiness",
+      "formulaSpec.type",
+      "slot.lineage"
+    ]
+  },
+  "publicationAST": {
+    "pageModes": {
+      "minimum": 6,
+      "standard": 8,
+      "maximum": 9
+    },
+    "frontMatterPages": 3,
+    "analyticalPages": 3,
+    "backMatterPages": 2,
+    "minimumCompletePages": 6,
+    "standardCompletePages": 8,
+    "hardPageCap": 9
+  },
+  "officerGuideAST": {
+    "reviewOrder": [
+      "data contract",
+      "entity bindings",
+      "question readiness",
+      "component slots",
+      "publication controls"
+    ],
+    "mustResolveBeforePublish": [
+      "blocked required questions",
+      "missing SHARE denominator",
+      "missing source lineage",
+      "invalid aggregation"
+    ],
+    "safeCustomizations": [
+      "cover.title",
+      "cover.subtitle",
+      "publication.status",
+      "reporting.period",
+      "topic.enabled",
+      "chapter.enabled",
+      "section.enabled",
+      "question.priority",
+      "component.visibility",
+      "chart.type",
+      "table.sort",
+      "annexure.include",
+      "source_note.override"
+    ]
+  },
+  "semanticAST": {
+    "sections": [
+      {
+        "sectionId": "section_doc_cover_title",
+        "title": "Cover and report identity",
+        "level": 0,
+        "order": 1,
+        "styleRef": "s_h1",
+        "children": [
+          "doc_cover_title"
+        ],
+        "documentRole": "front_matter_cover"
+      },
+      {
+        "sectionId": "section_doc_executive_summary",
+        "title": "Executive summary",
+        "level": 0,
+        "order": 2,
+        "styleRef": "s_body",
+        "children": [
+          "doc_executive_summary"
+        ],
+        "documentRole": "front_matter_summary"
+      },
+      {
+        "sectionId": "section_doc_contents",
+        "title": "Table of contents",
+        "level": 0,
+        "order": 3,
+        "styleRef": "s_body",
+        "children": [
+          "doc_contents"
+        ],
+        "documentRole": "front_matter_contents"
+      },
+      {
+        "sectionId": "topic_conventional_reserves",
+        "title": "Conventional Energy Reserves",
+        "level": 1,
+        "order": 4,
+        "styleRef": "s_h1",
+        "topicRef": "topic_conventional_reserves",
+        "children": []
+      },
+      {
+        "sectionId": "chapter_coal_lignite",
+        "title": "Coal and Lignite Reserves",
+        "level": 2,
+        "order": 5,
+        "styleRef": "s_h2",
+        "topicRef": "topic_conventional_reserves",
+        "children": []
+      },
+      {
+        "sectionId": "section_coal_state",
+        "title": "Coal reserves by State/UT",
+        "level": 3,
+        "order": 6,
+        "styleRef": "s_h3",
+        "topicRef": "topic_conventional_reserves",
+        "chapterRef": "chapter_coal_lignite",
+        "children": [
+          "p_q_coal_state_01_narrative",
+          "m_q_coal_state_01_metric",
+          "fig_q_coal_state_01",
+          "table_q_coal_state_01",
+          "p_q_coal_state_01_provenance"
+        ]
+      },
+      {
+        "sectionId": "section_reserve_category",
+        "title": "Reserve distribution by category",
+        "level": 3,
+        "order": 7,
+        "styleRef": "s_h3",
+        "topicRef": "topic_conventional_reserves",
+        "chapterRef": "chapter_coal_lignite",
+        "children": [
+          "p_q_reserve_category_01_narrative",
+          "m_q_reserve_category_01_metric",
+          "fig_q_reserve_category_01",
+          "table_q_reserve_category_01",
+          "p_q_reserve_category_01_provenance"
+        ]
+      },
+      {
+        "sectionId": "chapter_hydrocarbons",
+        "title": "Hydrocarbon Reserves",
+        "level": 2,
+        "order": 8,
+        "styleRef": "s_h2",
+        "topicRef": "topic_conventional_reserves",
+        "children": []
+      },
+      {
+        "sectionId": "section_hydrocarbon_state",
+        "title": "Crude oil reserves by State/UT",
+        "level": 3,
+        "order": 9,
+        "styleRef": "s_h3",
+        "topicRef": "topic_conventional_reserves",
+        "chapterRef": "chapter_hydrocarbons",
+        "children": [
+          "p_q_hydrocarbon_state_01_narrative",
+          "m_q_hydrocarbon_state_01_metric",
+          "fig_q_hydrocarbon_state_01",
+          "table_q_hydrocarbon_state_01",
+          "p_q_hydrocarbon_state_01_provenance"
+        ]
+      },
+      {
+        "sectionId": "topic_renewable_potential",
+        "title": "Renewable Energy Potential",
+        "level": 1,
+        "order": 10,
+        "styleRef": "s_h1",
+        "topicRef": "topic_renewable_potential",
+        "children": []
+      },
+      {
+        "sectionId": "chapter_re_capacity",
+        "title": "Renewable Capacity Potential",
+        "level": 2,
+        "order": 11,
+        "styleRef": "s_h2",
+        "topicRef": "topic_renewable_potential",
+        "children": []
+      },
+      {
+        "sectionId": "section_renewable_source",
+        "title": "Potential by renewable source",
+        "level": 3,
+        "order": 12,
+        "styleRef": "s_h3",
+        "topicRef": "topic_renewable_potential",
+        "chapterRef": "chapter_re_capacity",
+        "children": [
+          "p_q_renewable_source_01_narrative",
+          "m_q_renewable_source_01_metric",
+          "fig_q_renewable_source_01",
+          "table_q_renewable_source_01",
+          "p_q_renewable_source_01_provenance"
+        ]
+      },
+      {
+        "sectionId": "section_renewable_state",
+        "title": "Renewable potential by State/UT",
+        "level": 3,
+        "order": 13,
+        "styleRef": "s_h3",
+        "topicRef": "topic_renewable_potential",
+        "chapterRef": "chapter_re_capacity",
+        "children": [
+          "p_q_renewable_state_01_narrative",
+          "m_q_renewable_state_01_metric",
+          "fig_q_renewable_state_01",
+          "table_q_renewable_state_01",
+          "p_q_renewable_state_01_provenance"
+        ]
+      },
+      {
+        "sectionId": "chapter_re_mix",
+        "title": "Renewable Source Mix",
+        "level": 2,
+        "order": 14,
+        "styleRef": "s_h2",
+        "topicRef": "topic_renewable_potential",
+        "children": []
+      },
+      {
+        "sectionId": "section_renewable_share",
+        "title": "Source share of total renewable potential",
+        "level": 3,
+        "order": 15,
+        "styleRef": "s_h3",
+        "topicRef": "topic_renewable_potential",
+        "chapterRef": "chapter_re_mix",
+        "children": [
+          "p_q_renewable_share_01_narrative",
+          "m_q_renewable_share_01_metric",
+          "fig_q_renewable_share_01",
+          "table_q_renewable_share_01",
+          "p_q_renewable_share_01_provenance"
+        ]
+      },
+      {
+        "sectionId": "section_doc_methodology_notes",
+        "title": "Methodology and definitions",
+        "level": 0,
+        "order": 16,
+        "styleRef": "s_note",
+        "children": [
+          "doc_methodology_notes"
+        ],
+        "documentRole": "back_matter_methodology"
+      },
+      {
+        "sectionId": "section_doc_provenance_log",
+        "title": "Provenance and audit log",
+        "level": 0,
+        "order": 17,
+        "styleRef": "s_note",
+        "children": [
+          "doc_provenance_log"
+        ],
+        "documentRole": "back_matter_provenance"
+      }
+    ]
+  },
+  "contentAST": {
+    "blocks": [
+      {
+        "blockId": "doc_cover_title",
+        "kind": "cover_title",
+        "styleRef": "s_h1",
+        "content": "",
+        "slot": {
+          "fillFrom": "component_doc_cover_title",
+          "status": "empty"
+        },
+        "officerEditable": true
+      },
+      {
+        "blockId": "doc_executive_summary",
+        "kind": "executive_summary",
+        "styleRef": "s_body",
+        "content": "",
+        "slot": {
+          "fillFrom": "component_doc_executive_summary",
+          "status": "empty"
+        },
+        "officerEditable": true
+      },
+      {
+        "blockId": "doc_contents",
+        "kind": "toc",
+        "styleRef": "s_body",
+        "content": "",
+        "slot": {
+          "fillFrom": "component_doc_contents",
+          "status": "empty"
+        },
+        "officerEditable": true
+      },
+      {
+        "blockId": "p_q_coal_state_01_narrative",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_coal_state_01",
+        "templateQuestion": "Rank States/UTs by Coal Reserves for coal reserves by state/ut.",
+        "slot": {
+          "fillFrom": "q_coal_state_01_narrative",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "m_q_coal_state_01_metric",
+        "kind": "metric",
+        "styleRef": "s_metric",
+        "content": "",
+        "biQuery": "q_coal_state_01",
+        "templateQuestion": "Rank States/UTs by Coal Reserves for coal reserves by state/ut.",
+        "slot": {
+          "fillFrom": "q_coal_state_01_metric",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_coal_state_01_provenance",
+        "kind": "source_note",
+        "styleRef": "s_note",
+        "content": "",
+        "biQuery": "q_coal_state_01",
+        "templateQuestion": "Rank States/UTs by Coal Reserves for coal reserves by state/ut.",
+        "slot": {
+          "fillFrom": "q_coal_state_01_provenance",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_reserve_category_01_narrative",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_reserve_category_01",
+        "templateQuestion": "Decompose the share of Proved Reserves within total reserve distribution by category by Reserve Category.",
+        "slot": {
+          "fillFrom": "q_reserve_category_01_narrative",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "m_q_reserve_category_01_metric",
+        "kind": "metric",
+        "styleRef": "s_metric",
+        "content": "",
+        "biQuery": "q_reserve_category_01",
+        "templateQuestion": "Decompose the share of Proved Reserves within total reserve distribution by category by Reserve Category.",
+        "slot": {
+          "fillFrom": "q_reserve_category_01_metric",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_reserve_category_01_provenance",
+        "kind": "source_note",
+        "styleRef": "s_note",
+        "content": "",
+        "biQuery": "q_reserve_category_01",
+        "templateQuestion": "Decompose the share of Proved Reserves within total reserve distribution by category by Reserve Category.",
+        "slot": {
+          "fillFrom": "q_reserve_category_01_provenance",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_hydrocarbon_state_01_narrative",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_hydrocarbon_state_01",
+        "templateQuestion": "Rank States/UTs by Crude Oil Reserves for crude oil reserves by state/ut.",
+        "slot": {
+          "fillFrom": "q_hydrocarbon_state_01_narrative",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "m_q_hydrocarbon_state_01_metric",
+        "kind": "metric",
+        "styleRef": "s_metric",
+        "content": "",
+        "biQuery": "q_hydrocarbon_state_01",
+        "templateQuestion": "Rank States/UTs by Crude Oil Reserves for crude oil reserves by state/ut.",
+        "slot": {
+          "fillFrom": "q_hydrocarbon_state_01_metric",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_hydrocarbon_state_01_provenance",
+        "kind": "source_note",
+        "styleRef": "s_note",
+        "content": "",
+        "biQuery": "q_hydrocarbon_state_01",
+        "templateQuestion": "Rank States/UTs by Crude Oil Reserves for crude oil reserves by state/ut.",
+        "slot": {
+          "fillFrom": "q_hydrocarbon_state_01_provenance",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_renewable_source_01_narrative",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_renewable_source_01",
+        "templateQuestion": "Compare Wind Power Potential by Energy Source and Region for potential by renewable source.",
+        "slot": {
+          "fillFrom": "q_renewable_source_01_narrative",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "m_q_renewable_source_01_metric",
+        "kind": "metric",
+        "styleRef": "s_metric",
+        "content": "",
+        "biQuery": "q_renewable_source_01",
+        "templateQuestion": "Compare Wind Power Potential by Energy Source and Region for potential by renewable source.",
+        "slot": {
+          "fillFrom": "q_renewable_source_01_metric",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_renewable_source_01_provenance",
+        "kind": "source_note",
+        "styleRef": "s_note",
+        "content": "",
+        "biQuery": "q_renewable_source_01",
+        "templateQuestion": "Compare Wind Power Potential by Energy Source and Region for potential by renewable source.",
+        "slot": {
+          "fillFrom": "q_renewable_source_01_provenance",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_renewable_state_01_narrative",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_renewable_state_01",
+        "templateQuestion": "Rank States/UTs by Solar Energy Potential for renewable potential by state/ut.",
+        "slot": {
+          "fillFrom": "q_renewable_state_01_narrative",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "m_q_renewable_state_01_metric",
+        "kind": "metric",
+        "styleRef": "s_metric",
+        "content": "",
+        "biQuery": "q_renewable_state_01",
+        "templateQuestion": "Rank States/UTs by Solar Energy Potential for renewable potential by state/ut.",
+        "slot": {
+          "fillFrom": "q_renewable_state_01_metric",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_renewable_state_01_provenance",
+        "kind": "source_note",
+        "styleRef": "s_note",
+        "content": "",
+        "biQuery": "q_renewable_state_01",
+        "templateQuestion": "Rank States/UTs by Solar Energy Potential for renewable potential by state/ut.",
+        "slot": {
+          "fillFrom": "q_renewable_state_01_provenance",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_renewable_share_01_narrative",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_renewable_share_01",
+        "templateQuestion": "Decompose the share of Wind Power Potential within total source share of total renewable potential by Energy Source.",
+        "slot": {
+          "fillFrom": "q_renewable_share_01_narrative",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "m_q_renewable_share_01_metric",
+        "kind": "metric",
+        "styleRef": "s_metric",
+        "content": "",
+        "biQuery": "q_renewable_share_01",
+        "templateQuestion": "Decompose the share of Wind Power Potential within total source share of total renewable potential by Energy Source.",
+        "slot": {
+          "fillFrom": "q_renewable_share_01_metric",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_renewable_share_01_provenance",
+        "kind": "source_note",
+        "styleRef": "s_note",
+        "content": "",
+        "biQuery": "q_renewable_share_01",
+        "templateQuestion": "Decompose the share of Wind Power Potential within total source share of total renewable potential by Energy Source.",
+        "slot": {
+          "fillFrom": "q_renewable_share_01_provenance",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "doc_methodology_notes",
+        "kind": "methodology_note",
+        "styleRef": "s_note",
+        "content": "",
+        "slot": {
+          "fillFrom": "component_doc_methodology_notes",
+          "status": "empty"
+        },
+        "officerEditable": true
+      },
+      {
+        "blockId": "doc_provenance_log",
+        "kind": "provenance_log",
+        "styleRef": "s_note",
+        "content": "",
+        "slot": {
+          "fillFrom": "component_doc_provenance_log",
+          "status": "empty"
+        },
+        "officerEditable": true
+      }
+    ]
+  },
+  "tableAST": {
+    "tables": [
+      {
+        "tableId": "table_q_coal_state_01",
+        "templateRef": "tt_q_coal_state_01",
+        "biQuery": "q_coal_state_01",
+        "title": "Rank States/UTs by Coal Reserves for coal reserves by state/ut.",
+        "columns": [
+          {
+            "columnId": "col_q_coal_state_01_group",
+            "header": "State/UT",
+            "role": "dimension",
+            "entityRef": "ent_state_ut",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_q_coal_state_01_measure",
+            "header": "Coal Reserves",
+            "role": "measure",
+            "entityRef": "ent_coal_reserves",
+            "unit": "million_tonnes",
+            "format": "number.2",
+            "align": "right"
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_q_coal_state_01_source",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "q_coal_state_01_table",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_q_reserve_category_01",
+        "templateRef": "tt_q_reserve_category_01",
+        "biQuery": "q_reserve_category_01",
+        "title": "Decompose the share of Proved Reserves within total reserve distribution by category by Reserve Category.",
+        "columns": [
+          {
+            "columnId": "col_q_reserve_category_01_group",
+            "header": "Reserve Category",
+            "role": "dimension",
+            "entityRef": "ent_reserve_category",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_q_reserve_category_01_measure",
+            "header": "Proved Reserves",
+            "role": "measure",
+            "entityRef": "ent_proved_reserves",
+            "unit": "million_tonnes",
+            "format": "number.2",
+            "align": "right"
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_q_reserve_category_01_source",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "q_reserve_category_01_table",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_q_hydrocarbon_state_01",
+        "templateRef": "tt_q_hydrocarbon_state_01",
+        "biQuery": "q_hydrocarbon_state_01",
+        "title": "Rank States/UTs by Crude Oil Reserves for crude oil reserves by state/ut.",
+        "columns": [
+          {
+            "columnId": "col_q_hydrocarbon_state_01_group",
+            "header": "State/UT",
+            "role": "dimension",
+            "entityRef": "ent_state_ut",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_q_hydrocarbon_state_01_measure",
+            "header": "Crude Oil Reserves",
+            "role": "measure",
+            "entityRef": "ent_crude_oil_reserves",
+            "unit": "million_tonnes",
+            "format": "number.2",
+            "align": "right"
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_q_hydrocarbon_state_01_source",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "q_hydrocarbon_state_01_table",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_q_renewable_source_01",
+        "templateRef": "tt_q_renewable_source_01",
+        "biQuery": "q_renewable_source_01",
+        "title": "Compare Wind Power Potential by Energy Source and Region for potential by renewable source.",
+        "columns": [
+          {
+            "columnId": "col_q_renewable_source_01_group",
+            "header": "Energy Source",
+            "role": "dimension",
+            "entityRef": "ent_energy_source",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_q_renewable_source_01_measure",
+            "header": "Wind Power Potential",
+            "role": "measure",
+            "entityRef": "ent_wind_power",
+            "unit": "MW",
+            "format": "number.0",
+            "align": "right"
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_q_renewable_source_01_source",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "q_renewable_source_01_table",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_q_renewable_state_01",
+        "templateRef": "tt_q_renewable_state_01",
+        "biQuery": "q_renewable_state_01",
+        "title": "Rank States/UTs by Solar Energy Potential for renewable potential by state/ut.",
+        "columns": [
+          {
+            "columnId": "col_q_renewable_state_01_group",
+            "header": "State/UT",
+            "role": "dimension",
+            "entityRef": "ent_state_ut",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_q_renewable_state_01_measure",
+            "header": "Solar Energy Potential",
+            "role": "measure",
+            "entityRef": "ent_solar_energy",
+            "unit": "MW",
+            "format": "number.0",
+            "align": "right"
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_q_renewable_state_01_source",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "q_renewable_state_01_table",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_q_renewable_share_01",
+        "templateRef": "tt_q_renewable_share_01",
+        "biQuery": "q_renewable_share_01",
+        "title": "Decompose the share of Wind Power Potential within total source share of total renewable potential by Energy Source.",
+        "columns": [
+          {
+            "columnId": "col_q_renewable_share_01_group",
+            "header": "Energy Source",
+            "role": "dimension",
+            "entityRef": "ent_energy_source",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_q_renewable_share_01_measure",
+            "header": "Wind Power Potential",
+            "role": "measure",
+            "entityRef": "ent_wind_power",
+            "unit": "MW",
+            "format": "number.0",
+            "align": "right"
+          }
+        ],
+        "rows": [],
+        "footnotes": [
+          {
+            "noteId": "fn_q_renewable_share_01_source",
+            "text": "",
+            "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+          }
+        ],
+        "slot": {
+          "fillFrom": "q_renewable_share_01_table",
+          "status": "empty"
+        }
+      }
+    ]
+  },
+  "chartAST": {
+    "charts": [
+      {
+        "chartId": "chart_q_coal_state_01",
+        "biQuery": "q_coal_state_01",
+        "chartType": "horizontal_bar",
+        "title": "Rank States/UTs by Coal Reserves for coal reserves by state/ut.",
+        "xAxis": {
+          "entityRef": "ent_state_ut",
+          "label": "State/UT"
+        },
+        "yAxis": {
+          "entityRef": "ent_coal_reserves",
+          "label": "Coal Reserves",
+          "unit": "million_tonnes"
+        },
+        "paletteRef": "pal_mospi_energy",
+        "series": [],
+        "slot": {
+          "fillFrom": "q_coal_state_01_chart",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_q_reserve_category_01",
+        "biQuery": "q_reserve_category_01",
+        "chartType": "grouped_bar",
+        "title": "Decompose the share of Proved Reserves within total reserve distribution by category by Reserve Category.",
+        "xAxis": {
+          "entityRef": "ent_reserve_category",
+          "label": "Reserve Category"
+        },
+        "yAxis": {
+          "entityRef": "ent_proved_reserves",
+          "label": "Proved Reserves",
+          "unit": "million_tonnes"
+        },
+        "paletteRef": "pal_mospi_energy",
+        "series": [],
+        "slot": {
+          "fillFrom": "q_reserve_category_01_chart",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_q_hydrocarbon_state_01",
+        "biQuery": "q_hydrocarbon_state_01",
+        "chartType": "horizontal_bar",
+        "title": "Rank States/UTs by Crude Oil Reserves for crude oil reserves by state/ut.",
+        "xAxis": {
+          "entityRef": "ent_state_ut",
+          "label": "State/UT"
+        },
+        "yAxis": {
+          "entityRef": "ent_crude_oil_reserves",
+          "label": "Crude Oil Reserves",
+          "unit": "million_tonnes"
+        },
+        "paletteRef": "pal_mospi_energy",
+        "series": [],
+        "slot": {
+          "fillFrom": "q_hydrocarbon_state_01_chart",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_q_renewable_source_01",
+        "biQuery": "q_renewable_source_01",
+        "chartType": "grouped_bar",
+        "title": "Compare Wind Power Potential by Energy Source and Region for potential by renewable source.",
+        "xAxis": {
+          "entityRef": "ent_energy_source",
+          "label": "Energy Source"
+        },
+        "yAxis": {
+          "entityRef": "ent_wind_power",
+          "label": "Wind Power Potential",
+          "unit": "MW"
+        },
+        "paletteRef": "pal_mospi_energy",
+        "series": [],
+        "slot": {
+          "fillFrom": "q_renewable_source_01_chart",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_q_renewable_state_01",
+        "biQuery": "q_renewable_state_01",
+        "chartType": "horizontal_bar",
+        "title": "Rank States/UTs by Solar Energy Potential for renewable potential by state/ut.",
+        "xAxis": {
+          "entityRef": "ent_state_ut",
+          "label": "State/UT"
+        },
+        "yAxis": {
+          "entityRef": "ent_solar_energy",
+          "label": "Solar Energy Potential",
+          "unit": "MW"
+        },
+        "paletteRef": "pal_mospi_energy",
+        "series": [],
+        "slot": {
+          "fillFrom": "q_renewable_state_01_chart",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_q_renewable_share_01",
+        "biQuery": "q_renewable_share_01",
+        "chartType": "grouped_bar",
+        "title": "Decompose the share of Wind Power Potential within total source share of total renewable potential by Energy Source.",
+        "xAxis": {
+          "entityRef": "ent_energy_source",
+          "label": "Energy Source"
+        },
+        "yAxis": {
+          "entityRef": "ent_wind_power",
+          "label": "Wind Power Potential",
+          "unit": "MW"
+        },
+        "paletteRef": "pal_mospi_energy",
+        "series": [],
+        "slot": {
+          "fillFrom": "q_renewable_share_01_chart",
+          "status": "empty"
+        }
+      }
+    ]
+  },
+  "figureAST": {
+    "figures": [
+      {
+        "figureId": "fig_q_coal_state_01",
+        "templateRef": "ft_q_coal_state_01",
+        "caption": "",
+        "captionTemplate": "Coal Reserves by State/UT, {{period.current}}",
+        "chartRef": "chart_q_coal_state_01",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_reserve_category_01",
+        "templateRef": "ft_q_reserve_category_01",
+        "caption": "",
+        "captionTemplate": "Proved Reserves by Reserve Category, {{period.current}}",
+        "chartRef": "chart_q_reserve_category_01",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_hydrocarbon_state_01",
+        "templateRef": "ft_q_hydrocarbon_state_01",
+        "caption": "",
+        "captionTemplate": "Crude Oil Reserves by State/UT, {{period.current}}",
+        "chartRef": "chart_q_hydrocarbon_state_01",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_renewable_source_01",
+        "templateRef": "ft_q_renewable_source_01",
+        "caption": "",
+        "captionTemplate": "Wind Power Potential by Energy Source, {{period.current}}",
+        "chartRef": "chart_q_renewable_source_01",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_renewable_state_01",
+        "templateRef": "ft_q_renewable_state_01",
+        "caption": "",
+        "captionTemplate": "Solar Energy Potential by State/UT, {{period.current}}",
+        "chartRef": "chart_q_renewable_state_01",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_q_renewable_share_01",
+        "templateRef": "ft_q_renewable_share_01",
+        "caption": "",
+        "captionTemplate": "Wind Power Potential by Energy Source, {{period.current}}",
+        "chartRef": "chart_q_renewable_share_01",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      }
+    ]
+  },
+  "layoutAST": {
+    "pages": [
+      {
+        "pageId": "pg_001",
+        "size": "A4",
+        "role": "front_matter_cover",
+        "regions": [
+          {
+            "regionId": "rg_doc_cover_title",
+            "role": "front_matter_cover",
+            "bindsTo": "section_doc_cover_title",
+            "bbox": null
+          }
+        ]
+      },
+      {
+        "pageId": "pg_002",
+        "size": "A4",
+        "role": "front_matter_summary",
+        "regions": [
+          {
+            "regionId": "rg_doc_executive_summary",
+            "role": "front_matter_summary",
+            "bindsTo": "section_doc_executive_summary",
+            "bbox": null
+          }
+        ]
+      },
+      {
+        "pageId": "pg_003",
+        "size": "A4",
+        "role": "front_matter_contents",
+        "regions": [
+          {
+            "regionId": "rg_doc_contents",
+            "role": "front_matter_contents",
+            "bindsTo": "section_doc_contents",
+            "bbox": null
+          }
+        ]
+      },
+      {
+        "pageId": "pg_004",
+        "size": "A4",
+        "role": "section_flow",
+        "regions": [
+          {
+            "regionId": "rg_section_coal_state",
+            "role": "section_flow",
+            "bindsTo": "section_section_coal_state",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_section_reserve_category",
+            "role": "section_flow",
+            "bindsTo": "section_section_reserve_category",
+            "bbox": null
+          }
+        ]
+      },
+      {
+        "pageId": "pg_005",
+        "size": "A4",
+        "role": "section_flow",
+        "regions": [
+          {
+            "regionId": "rg_section_hydrocarbon_state",
+            "role": "section_flow",
+            "bindsTo": "section_section_hydrocarbon_state",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_section_renewable_source",
+            "role": "section_flow",
+            "bindsTo": "section_section_renewable_source",
+            "bbox": null
+          }
+        ]
+      },
+      {
+        "pageId": "pg_006",
+        "size": "A4",
+        "role": "section_flow",
+        "regions": [
+          {
+            "regionId": "rg_section_renewable_state",
+            "role": "section_flow",
+            "bindsTo": "section_section_renewable_state",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_section_renewable_share",
+            "role": "section_flow",
+            "bindsTo": "section_section_renewable_share",
+            "bbox": null
+          }
+        ]
+      },
+      {
+        "pageId": "pg_007",
+        "size": "A4",
+        "role": "back_matter_methodology",
+        "regions": [
+          {
+            "regionId": "rg_doc_methodology_notes",
+            "role": "back_matter_methodology",
+            "bindsTo": "section_doc_methodology_notes",
+            "bbox": null
+          }
+        ]
+      },
+      {
+        "pageId": "pg_008",
+        "size": "A4",
+        "role": "back_matter_provenance",
+        "regions": [
+          {
+            "regionId": "rg_doc_provenance_log",
+            "role": "back_matter_provenance",
+            "bindsTo": "section_doc_provenance_log",
+            "bbox": null
+          }
+        ]
+      }
+    ]
+  },
+  "geometryAST": {
+    "_doc": "Relative flow only. Absolute bounding boxes are computed by the layout engine.",
+    "flow": [
+      "rg_doc_cover_title",
+      "rg_doc_executive_summary",
+      "rg_doc_contents",
+      "rg_section_coal_state",
+      "rg_section_reserve_category",
+      "rg_section_hydrocarbon_state",
+      "rg_section_renewable_source",
+      "rg_section_renewable_state",
+      "rg_section_renewable_share",
+      "rg_doc_methodology_notes",
+      "rg_doc_provenance_log"
+    ]
+  }
+}

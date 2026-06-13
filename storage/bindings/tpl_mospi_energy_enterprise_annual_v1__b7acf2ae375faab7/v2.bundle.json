@@ -1,0 +1,3560 @@
+{
+  "contractVersion": "binding.executionBundle.v1",
+  "templateId": "tpl_mospi_energy_enterprise_annual_v1",
+  "datasetId": "e",
+  "bindingAstId": "bind_tpl_mospi_energy_enterprise_annual_v1_0791cdb3652c",
+  "status": "READY",
+  "datasetAst": {
+    "datasetId": "dataset",
+    "sourceFile": "",
+    "rowCount": 18,
+    "archetype": "energy",
+    "columns": [
+      {
+        "name": "State/UT",
+        "dtype": "string",
+        "role": "dimension",
+        "cardinality": 18,
+        "sampleValues": [
+          "Jharkhand",
+          "Odisha",
+          "Chhattisgarh",
+          "West Bengal",
+          "Madhya Pradesh"
+        ],
+        "nullPct": 0.0
+      },
+      {
+        "name": "Region",
+        "dtype": "string",
+        "role": "dimension",
+        "cardinality": 6,
+        "sampleValues": [
+          "East",
+          "Central",
+          "South",
+          "West",
+          "North"
+        ],
+        "nullPct": 0.0
+      },
+      {
+        "name": "Reserve Category",
+        "dtype": "string",
+        "role": "dimension",
+        "cardinality": 3,
+        "sampleValues": [
+          "Proved",
+          "Indicated",
+          "Inferred"
+        ],
+        "nullPct": 0.333333
+      },
+      {
+        "name": "Energy Source",
+        "dtype": "string",
+        "role": "dimension",
+        "cardinality": 6,
+        "sampleValues": [
+          "Solar",
+          "Wind",
+          "Large Hydro",
+          "Small Hydro",
+          "Cogeneration-Bagasse"
+        ],
+        "nullPct": 0.0
+      },
+      {
+        "name": "Period",
+        "dtype": "int",
+        "role": "time",
+        "cardinality": 1,
+        "sampleValues": [
+          "2025"
+        ],
+        "nullPct": 0.0
+      },
+      {
+        "name": "Coal",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 9,
+        "sampleValues": [
+          83152.0,
+          84500.0,
+          76400.0,
+          33150.0,
+          28200.0
+        ],
+        "nullPct": 0.5,
+        "minValue": 350.0,
+        "maxValue": 84500.0
+      },
+      {
+        "name": "Lignite",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 3,
+        "sampleValues": [
+          35800.0,
+          6000.0,
+          2700.0
+        ],
+        "nullPct": 0.833333,
+        "minValue": 2700.0,
+        "maxValue": 35800.0
+      },
+      {
+        "name": "Proved",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 11,
+        "sampleValues": [
+          53000.0,
+          42000.0,
+          46000.0,
+          14000.0,
+          11000.0
+        ],
+        "nullPct": 0.333333,
+        "minValue": 200.0,
+        "maxValue": 53000.0
+      },
+      {
+        "name": "Indicated",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 11,
+        "sampleValues": [
+          24000.0,
+          33000.0,
+          12000.0,
+          10000.0,
+          8000.0
+        ],
+        "nullPct": 0.333333,
+        "minValue": 100.0,
+        "maxValue": 33000.0
+      },
+      {
+        "name": "Inferred",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 11,
+        "sampleValues": [
+          6152.0,
+          9500.0,
+          6400.0,
+          7150.0,
+          4200.0
+        ],
+        "nullPct": 0.333333,
+        "minValue": 50.0,
+        "maxValue": 9500.0
+      },
+      {
+        "name": "Total",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 12,
+        "sampleValues": [
+          83152.0,
+          84500.0,
+          76400.0,
+          33150.0,
+          28200.0
+        ],
+        "nullPct": 0.333333,
+        "minValue": 350.0,
+        "maxValue": 84500.0
+      },
+      {
+        "name": "Crude Oil",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 4,
+        "sampleValues": [
+          8.0,
+          25.0,
+          118.0,
+          160.0
+        ],
+        "nullPct": 0.777778,
+        "minValue": 8.0,
+        "maxValue": 160.0
+      },
+      {
+        "name": "Natural Gas",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 4,
+        "sampleValues": [
+          12.0,
+          34.0,
+          62.0,
+          156.0
+        ],
+        "nullPct": 0.777778,
+        "minValue": 12.0,
+        "maxValue": 156.0
+      },
+      {
+        "name": "Wind",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 14,
+        "sampleValues": [
+          "120",
+          "910",
+          "314",
+          "20",
+          "10484"
+        ],
+        "nullPct": 0.0,
+        "minValue": 0.0,
+        "maxValue": 55857.0
+      },
+      {
+        "name": "Solar",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 18,
+        "sampleValues": [
+          "18180",
+          "25780",
+          "18270",
+          "6260",
+          "61660"
+        ],
+        "nullPct": 0.0,
+        "minValue": 6260.0,
+        "maxValue": 142310.0
+      },
+      {
+        "name": "Small Hydro",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 18,
+        "sampleValues": [
+          "209",
+          "295",
+          "1107",
+          "396",
+          "820"
+        ],
+        "nullPct": 0.0,
+        "minValue": 52.0,
+        "maxValue": 4141.0
+      },
+      {
+        "name": "Biomass",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 16,
+        "sampleValues": [
+          "900",
+          "500",
+          "236",
+          "400",
+          "1200"
+        ],
+        "nullPct": 0.0,
+        "minValue": 0.0,
+        "maxValue": 2000.0
+      },
+      {
+        "name": "Cogeneration-Bagasse",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 8,
+        "sampleValues": [
+          "0",
+          "300",
+          "200",
+          "3500",
+          "1500"
+        ],
+        "nullPct": 0.0,
+        "unit": "percent",
+        "minValue": 0.0,
+        "maxValue": 3500.0
+      },
+      {
+        "name": "Large Hydro",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 11,
+        "sampleValues": [
+          "300",
+          "2000",
+          "600",
+          "150",
+          "500"
+        ],
+        "nullPct": 0.0,
+        "minValue": 100.0,
+        "maxValue": 50000.0
+      },
+      {
+        "name": "Total Renewable",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 18,
+        "sampleValues": [
+          "19709",
+          "29485",
+          "20527",
+          "7526",
+          "74664"
+        ],
+        "nullPct": 0.0,
+        "minValue": 7526.0,
+        "maxValue": 162632.0
+      }
+    ],
+    "columnGroups": [
+      {
+        "stem": "hydro",
+        "kind": "measureGroup",
+        "members": [
+          "Small Hydro",
+          "Large Hydro"
+        ]
+      }
+    ],
+    "reshape": [
+      {
+        "groupStem": "hydro",
+        "kind": "melt",
+        "idVars": [
+          "State/UT",
+          "Region",
+          "Reserve Category",
+          "Energy Source",
+          "Period",
+          "Coal",
+          "Lignite",
+          "Proved",
+          "Indicated",
+          "Inferred",
+          "Total",
+          "Crude Oil",
+          "Natural Gas",
+          "Wind",
+          "Solar",
+          "Biomass",
+          "Cogeneration-Bagasse",
+          "Total Renewable"
+        ],
+        "valueVar": "value",
+        "memberVar": "hydro_type"
+      }
+    ]
+  },
+  "bindingAst": {
+    "templateId": "tpl_mospi_energy_enterprise_annual_v1",
+    "datasetId": "e",
+    "datasetSignature": "b7acf2ae375faab7",
+    "entityBindings": [
+      {
+        "entityId": "ent_coal_reserves",
+        "entityName": "Coal Reserves",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Coal"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Coal Reserves matched dataset column 'Coal'",
+            "column": "Coal"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'Region'",
+            "column": "Region"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_lignite_reserves",
+        "entityName": "Lignite Reserves",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Lignite"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Lignite Reserves matched dataset column 'Lignite'",
+            "column": "Lignite"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'Region'",
+            "column": "Region"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_proved_reserves",
+        "entityName": "Proved Reserves",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Proved"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [
+          {
+            "column": "Reserve Category",
+            "confidence": 0.06,
+            "method": "synonym"
+          }
+        ],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Proved Reserves matched dataset column 'Proved'",
+            "column": "Proved"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.06,
+            "detail": "alternative candidate column 'Reserve Category'",
+            "column": "Reserve Category"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_indicated_reserves",
+        "entityName": "Indicated Reserves",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Indicated"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [
+          {
+            "column": "Reserve Category",
+            "confidence": 0.06,
+            "method": "synonym"
+          }
+        ],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Indicated Reserves matched dataset column 'Indicated'",
+            "column": "Indicated"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.06,
+            "detail": "alternative candidate column 'Reserve Category'",
+            "column": "Reserve Category"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_inferred_reserves",
+        "entityName": "Inferred Reserves",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Inferred"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [
+          {
+            "column": "Reserve Category",
+            "confidence": 0.06,
+            "method": "synonym"
+          }
+        ],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Inferred Reserves matched dataset column 'Inferred'",
+            "column": "Inferred"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.06,
+            "detail": "alternative candidate column 'Reserve Category'",
+            "column": "Reserve Category"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_total_reserves",
+        "entityName": "Total Reserves",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Total"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [
+          {
+            "column": "Total Renewable",
+            "confidence": 0.88,
+            "method": "alias"
+          }
+        ],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Total Reserves matched dataset column 'Total'",
+            "column": "Total"
+          },
+          {
+            "signal": "candidate_alias",
+            "score": 0.88,
+            "detail": "alternative candidate column 'Total Renewable'",
+            "column": "Total Renewable"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_crude_oil_reserves",
+        "entityName": "Crude Oil Reserves",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Crude Oil"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Crude Oil Reserves matched dataset column 'Crude Oil'",
+            "column": "Crude Oil"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'Region'",
+            "column": "Region"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_natural_gas_reserves",
+        "entityName": "Natural Gas Reserves",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Natural Gas"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Natural Gas Reserves matched dataset column 'Natural Gas'",
+            "column": "Natural Gas"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'Region'",
+            "column": "Region"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_reserve_distribution_pct",
+        "entityName": "Reserve Distribution Share",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [],
+        "combine": "none",
+        "confidence": 0.0315,
+        "method": "synonym",
+        "status": "unresolved",
+        "alternatives": [],
+        "evidence": [],
+        "risks": [
+          {
+            "code": "TYPE_MISMATCH",
+            "severity": "warn",
+            "message": "measure entity 'Reserve Distribution Share' matched dimension column 'Reserve Category'",
+            "column": "Reserve Category"
+          }
+        ],
+        "typeMismatch": true,
+        "notes": [
+          "type mismatch: measure entity landed on dimension column 'Reserve Category'"
+        ]
+      },
+      {
+        "entityId": "ent_wind_power",
+        "entityName": "Wind Power Potential",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Wind"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [
+          {
+            "column": "Energy Source",
+            "confidence": 0.06,
+            "method": "synonym"
+          }
+        ],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Wind Power Potential matched dataset column 'Wind'",
+            "column": "Wind"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.06,
+            "detail": "alternative candidate column 'Energy Source'",
+            "column": "Energy Source"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_solar_energy",
+        "entityName": "Solar Energy Potential",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Solar"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [
+          {
+            "column": "Energy Source",
+            "confidence": 0.045,
+            "method": "synonym"
+          }
+        ],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Solar Energy Potential matched dataset column 'Solar'",
+            "column": "Solar"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.045,
+            "detail": "alternative candidate column 'Energy Source'",
+            "column": "Energy Source"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_small_hydro_power",
+        "entityName": "Small Hydro Power Potential",
+        "entityType": "measure",
+        "cardinality": "composite",
+        "columns": [
+          {
+            "column": "Small Hydro"
+          },
+          {
+            "column": "Large Hydro"
+          }
+        ],
+        "combine": "sum",
+        "confidence": 0.98,
+        "method": "alias",
+        "status": "confirmed",
+        "alternatives": [
+          {
+            "column": "Large Hydro",
+            "confidence": 0.06,
+            "method": "synonym"
+          }
+        ],
+        "evidence": [
+          {
+            "signal": "alias",
+            "score": 0.98,
+            "detail": "Small Hydro Power Potential matched dataset column 'Small Hydro'",
+            "column": "Small Hydro"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.06,
+            "detail": "alternative candidate column 'Large Hydro'",
+            "column": "Large Hydro"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          },
+          {
+            "signal": "wide_group",
+            "score": 0.98,
+            "detail": "2 columns participate in the binding",
+            "columns": [
+              "Small Hydro",
+              "Large Hydro"
+            ]
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "no explicit total; summing 2 member parts of group 'hydro'",
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_biomass_power",
+        "entityName": "Biomass Power Potential",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Biomass"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Biomass Power Potential matched dataset column 'Biomass'",
+            "column": "Biomass"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'Region'",
+            "column": "Region"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_cogeneration_bagasse",
+        "entityName": "Cogeneration-Bagasse Potential",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Cogeneration-Bagasse"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.88,
+        "method": "alias",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "alias",
+            "score": 0.88,
+            "detail": "Cogeneration-Bagasse Potential matched dataset column 'Cogeneration-Bagasse'",
+            "column": "Cogeneration-Bagasse"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'Region'",
+            "column": "Region"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_large_hydro",
+        "entityName": "Large Hydro Potential",
+        "entityType": "measure",
+        "cardinality": "composite",
+        "columns": [
+          {
+            "column": "Small Hydro"
+          },
+          {
+            "column": "Large Hydro"
+          }
+        ],
+        "combine": "sum",
+        "confidence": 0.98,
+        "method": "alias",
+        "status": "confirmed",
+        "alternatives": [
+          {
+            "column": "Small Hydro",
+            "confidence": 0.06,
+            "method": "synonym"
+          }
+        ],
+        "evidence": [
+          {
+            "signal": "alias",
+            "score": 0.98,
+            "detail": "Large Hydro Potential matched dataset column 'Small Hydro'",
+            "column": "Small Hydro"
+          },
+          {
+            "signal": "candidate_exact",
+            "score": 0.98,
+            "detail": "alternative candidate column 'Large Hydro'",
+            "column": "Large Hydro"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          },
+          {
+            "signal": "wide_group",
+            "score": 0.98,
+            "detail": "2 columns participate in the binding",
+            "columns": [
+              "Small Hydro",
+              "Large Hydro"
+            ]
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "no explicit total; summing 2 member parts of group 'hydro'",
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_total_renewable_potential",
+        "entityName": "Total Renewable Potential",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Total Renewable"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [
+          {
+            "column": "Total",
+            "confidence": 0.88,
+            "method": "alias"
+          }
+        ],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Total Renewable Potential matched dataset column 'Total Renewable'",
+            "column": "Total Renewable"
+          },
+          {
+            "signal": "candidate_alias",
+            "score": 0.88,
+            "detail": "alternative candidate column 'Total'",
+            "column": "Total"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_renewable_share_pct",
+        "entityName": "Renewable Source Share",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [],
+        "combine": "none",
+        "confidence": 0.042,
+        "method": "synonym",
+        "status": "unresolved",
+        "alternatives": [
+          {
+            "column": "Total Renewable",
+            "confidence": 0.06,
+            "method": "synonym"
+          }
+        ],
+        "evidence": [],
+        "risks": [
+          {
+            "code": "TYPE_MISMATCH",
+            "severity": "warn",
+            "message": "measure entity 'Renewable Source Share' matched dimension column 'Energy Source'",
+            "column": "Energy Source"
+          }
+        ],
+        "typeMismatch": true,
+        "notes": [
+          "type mismatch: measure entity landed on dimension column 'Energy Source'"
+        ]
+      },
+      {
+        "entityId": "ent_state_ut",
+        "entityName": "State/UT",
+        "entityType": "dimension",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "State/UT"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [
+          {
+            "column": "Region",
+            "confidence": 0.98,
+            "method": "exact"
+          }
+        ],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "State/UT matched dataset column 'State/UT'",
+            "column": "State/UT"
+          },
+          {
+            "signal": "candidate_exact",
+            "score": 0.98,
+            "detail": "alternative candidate column 'Region'",
+            "column": "Region"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'Reserve Category'",
+            "column": "Reserve Category"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_region",
+        "entityName": "Region",
+        "entityType": "dimension",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Region"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Region matched dataset column 'Region'",
+            "column": "Region"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'Reserve Category'",
+            "column": "Reserve Category"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_reserve_category",
+        "entityName": "Reserve Category",
+        "entityType": "dimension",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Reserve Category"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Reserve Category matched dataset column 'Reserve Category'",
+            "column": "Reserve Category"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'Region'",
+            "column": "Region"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_energy_source",
+        "entityName": "Energy Source",
+        "entityType": "dimension",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Energy Source"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [
+          {
+            "column": "Total Renewable",
+            "confidence": 0.06,
+            "method": "synonym"
+          }
+        ],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Energy Source matched dataset column 'Energy Source'",
+            "column": "Energy Source"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.06,
+            "detail": "alternative candidate column 'Total Renewable'",
+            "column": "Total Renewable"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_period",
+        "entityName": "Reference Period",
+        "entityType": "time",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Period"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.98,
+        "method": "exact",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "exact_name",
+            "score": 0.98,
+            "detail": "Reference Period matched dataset column 'Period'",
+            "column": "Period"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'State/UT'",
+            "column": "State/UT"
+          },
+          {
+            "signal": "candidate_synonym",
+            "score": 0.0,
+            "detail": "alternative candidate column 'Region'",
+            "column": "Region"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_estimate_status",
+        "entityName": "Estimate Status",
+        "entityType": "metadata",
+        "cardinality": "oneToOne",
+        "columns": [],
+        "combine": "none",
+        "confidence": 0.0,
+        "method": "synonym",
+        "status": "unresolved",
+        "alternatives": [],
+        "evidence": [],
+        "risks": []
+      },
+      {
+        "entityId": "ent_source_table",
+        "entityName": "Source Table",
+        "entityType": "metadata",
+        "cardinality": "oneToOne",
+        "columns": [],
+        "combine": "none",
+        "confidence": 0.06,
+        "method": "synonym",
+        "status": "unresolved",
+        "alternatives": [],
+        "evidence": [],
+        "risks": []
+      },
+      {
+        "entityId": "ent_note",
+        "entityName": "Source Note",
+        "entityType": "metadata",
+        "cardinality": "oneToOne",
+        "columns": [],
+        "combine": "none",
+        "confidence": 0.06,
+        "method": "synonym",
+        "status": "unresolved",
+        "alternatives": [],
+        "evidence": [],
+        "risks": []
+      }
+    ],
+    "questionBindings": [
+      {
+        "questionId": "q_coal_state_01",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Coal"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Reserve Category"
+          ],
+          "filters": [],
+          "time": {
+            "column": "Period",
+            "periods": {
+              "current": "2025"
+            },
+            "timeResolved": true
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": [
+          "time periods proposed from 'Period' (confirm in review)"
+        ]
+      },
+      {
+        "questionId": "q_reserve_category_01",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Proved"
+          ],
+          "dimensions": [
+            "Reserve Category",
+            "State/UT"
+          ],
+          "filters": [],
+          "time": {
+            "column": "Period",
+            "periods": {
+              "current": "2025"
+            },
+            "timeResolved": true
+          },
+          "denominators": [
+            "Total"
+          ]
+        },
+        "unresolvedEntities": [],
+        "notes": [
+          "time periods proposed from 'Period' (confirm in review)"
+        ]
+      },
+      {
+        "questionId": "q_hydrocarbon_state_01",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Crude Oil"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": "Period",
+            "periods": {
+              "current": "2025"
+            },
+            "timeResolved": true
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": [
+          "time periods proposed from 'Period' (confirm in review)"
+        ]
+      },
+      {
+        "questionId": "q_renewable_source_01",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Wind"
+          ],
+          "dimensions": [
+            "Energy Source",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": "Period",
+            "periods": {
+              "current": "2025"
+            },
+            "timeResolved": true
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": [
+          "time periods proposed from 'Period' (confirm in review)"
+        ]
+      },
+      {
+        "questionId": "q_renewable_state_01",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Solar"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Energy Source"
+          ],
+          "filters": [],
+          "time": {
+            "column": "Period",
+            "periods": {
+              "current": "2025"
+            },
+            "timeResolved": true
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": [
+          "time periods proposed from 'Period' (confirm in review)"
+        ]
+      },
+      {
+        "questionId": "q_renewable_share_01",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Wind"
+          ],
+          "dimensions": [
+            "Energy Source",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": "Period",
+            "periods": {
+              "current": "2025"
+            },
+            "timeResolved": true
+          },
+          "denominators": [
+            "Total Renewable"
+          ]
+        },
+        "unresolvedEntities": [],
+        "notes": [
+          "time periods proposed from 'Period' (confirm in review)"
+        ]
+      }
+    ],
+    "coverage": {
+      "entities": {
+        "bound": 20,
+        "pending": 0,
+        "unresolved": 5
+      },
+      "questions": {
+        "executable": 6,
+        "blocked": 0,
+        "degraded": 0
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "ENTITY_UNRESOLVED",
+          "message": "'Reserve Distribution Share' (measure) is unresolved but not required by any question.",
+          "entityId": "ent_reserve_distribution_pct"
+        },
+        {
+          "severity": "warn",
+          "code": "COMPOSITE_SUMMED",
+          "message": "'Small Hydro Power Potential' summed from 2 parts (no explicit total) \u2014 verify the total.",
+          "entityId": "ent_small_hydro_power"
+        },
+        {
+          "severity": "warn",
+          "code": "COMPOSITE_SUMMED",
+          "message": "'Large Hydro Potential' summed from 2 parts (no explicit total) \u2014 verify the total.",
+          "entityId": "ent_large_hydro"
+        },
+        {
+          "severity": "info",
+          "code": "ENTITY_UNRESOLVED",
+          "message": "'Renewable Source Share' (measure) is unresolved but not required by any question.",
+          "entityId": "ent_renewable_share_pct"
+        },
+        {
+          "severity": "info",
+          "code": "ENTITY_UNRESOLVED",
+          "message": "'Estimate Status' (metadata) is unresolved but not required by any question.",
+          "entityId": "ent_estimate_status"
+        },
+        {
+          "severity": "info",
+          "code": "ENTITY_UNRESOLVED",
+          "message": "'Source Table' (metadata) is unresolved but not required by any question.",
+          "entityId": "ent_source_table"
+        },
+        {
+          "severity": "info",
+          "code": "ENTITY_UNRESOLVED",
+          "message": "'Source Note' (metadata) is unresolved but not required by any question.",
+          "entityId": "ent_note"
+        }
+      ]
+    }
+  },
+  "statisticalContext": {
+    "geographyLevel": "state_ut",
+    "unitRegistry": {
+      "Cogeneration-Bagasse": "percent"
+    },
+    "sourceNotes": [
+      "Energy Statistics India",
+      "MoSPI Energy Statistics Enterprise Report"
+    ]
+  },
+  "plans": [
+    {
+      "planId": "plan_q_coal_state_01",
+      "questionId": "q_coal_state_01",
+      "questionText": "Rank States/UTs by Coal Reserves for coal reserves by state/ut.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Coal",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Reserve Category"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 10,
+        "time": {
+          "column": "Period",
+          "periods": {
+            "current": "2025"
+          }
+        }
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "entityRef": "ent_coal_reserves",
+          "agg": "sum",
+          "unit": "million_tonnes"
+        },
+        "groupBy": [
+          {
+            "entityRef": "ent_state_ut"
+          },
+          {
+            "entityRef": "ent_reserve_category"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 10,
+        "time": {
+          "entityRef": "ent_period",
+          "periodRole": "current"
+        },
+        "grain": {
+          "required": [
+            "measure",
+            "groupBy",
+            "time"
+          ],
+          "sameGrainBeforeFormula": true,
+          "notes": "Every statistic is computed after grouping to the declared question grain; row-ratio averaging is prohibited."
+        },
+        "weighting": {
+          "weightEntityRef": null,
+          "required": false,
+          "policy": "physical_reserves_are_self_weighting"
+        },
+        "readiness": {
+          "missingRequiredEntity": "BLOCKED",
+          "missingOptionalEntity": "DEGRADED",
+          "missingTime": "DEGRADED_SNAPSHOT",
+          "missingDenominator": "BLOCKED",
+          "missingComparisonPeriod": "BLOCKED",
+          "invalidAggregation": "BLOCKED"
+        },
+        "audit": {
+          "requiresLineage": true,
+          "requiresAggregationTrace": true,
+          "requiresFilterTrace": true
+        },
+        "formula": {
+          "type": "DIRECT",
+          "measureEntityRef": "ent_coal_reserves"
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Coal"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Reserve Category"
+        ],
+        "filters": [],
+        "time": {
+          "column": "Period",
+          "periods": {
+            "current": "2025"
+          },
+          "timeResolved": true
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_coal_state_01_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 50,
+              "maxWords": 95,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_coal_reserves",
+                "ent_state_ut"
+              ],
+              "maxWords": 95
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "tone",
+                "length",
+                "include_caveat",
+                "include_policy_signal"
+              ],
+              "locked": [
+                "mustMention",
+                "evidenceRef"
+              ]
+            },
+            "refs": {
+              "contentRef": "p_q_coal_state_01_narrative",
+              "analyticsRef": "q_coal_state_01",
+              "evidenceRef": "ev_q_coal_state_01"
+            }
+          },
+          {
+            "componentId": "q_coal_state_01_metric",
+            "kind": "formula_metric",
+            "order": 2,
+            "outputContract": {
+              "type": "metric",
+              "metricEntityRef": "ent_coal_reserves",
+              "format": "number.2",
+              "requiresUnit": true,
+              "requiresLineage": true
+            },
+            "formulaSpec": {
+              "type": "DIRECT",
+              "measureEntityRef": "ent_coal_reserves"
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "show_delta",
+                "show_rank",
+                "display_precision"
+              ],
+              "locked": [
+                "formulaSpec.type",
+                "metricEntityRef"
+              ]
+            },
+            "refs": {
+              "contentRef": "m_q_coal_state_01_metric",
+              "analyticsRef": "q_coal_state_01",
+              "evidenceRef": "ev_q_coal_state_01"
+            }
+          },
+          {
+            "componentId": "q_coal_state_01_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "chart",
+              "chartType": "horizontal_bar",
+              "xAxis": "ent_state_ut",
+              "yAxis": "ent_coal_reserves",
+              "requiresAltText": true,
+              "requiresSourceNote": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "chartType",
+                "topN",
+                "sortOrder",
+                "colorTheme",
+                "showDataLabels"
+              ],
+              "allowedChartTypes": [
+                "grouped_bar",
+                "horizontal_bar",
+                "stacked_bar",
+                "line"
+              ],
+              "locked": [
+                "xAxis.entityRef",
+                "yAxis.entityRef",
+                "analyticsRef"
+              ]
+            },
+            "refs": {
+              "chartRef": "chart_q_coal_state_01",
+              "figureRef": "fig_q_coal_state_01",
+              "analyticsRef": "q_coal_state_01",
+              "evidenceRef": "ev_q_coal_state_01"
+            }
+          },
+          {
+            "componentId": "q_coal_state_01_table",
+            "kind": "table",
+            "order": 4,
+            "outputContract": {
+              "type": "table",
+              "tableTemplateRef": "tt_q_coal_state_01",
+              "requiresHeaderUnits": true,
+              "requiresFootnotes": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "topN",
+                "sortOrder",
+                "includeTotalRow",
+                "decimalPlaces"
+              ],
+              "locked": [
+                "entity columns",
+                "source footnote"
+              ]
+            },
+            "refs": {
+              "tableRef": "table_q_coal_state_01",
+              "analyticsRef": "q_coal_state_01",
+              "evidenceRef": "ev_q_coal_state_01"
+            }
+          },
+          {
+            "componentId": "q_coal_state_01_provenance",
+            "kind": "provenance",
+            "order": 5,
+            "outputContract": {
+              "type": "source_note",
+              "requiresLineage": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "source_note_text",
+                "include_table_number",
+                "include_extraction_confidence"
+              ],
+              "locked": [
+                "lineageRef",
+                "datasetSignature"
+              ]
+            },
+            "refs": {
+              "contentRef": "p_q_coal_state_01_provenance",
+              "analyticsRef": "q_coal_state_01",
+              "evidenceRef": "ev_q_coal_state_01"
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_coal_state_01",
+        "sourceEntityIds": [
+          "ent_coal_reserves",
+          "ent_state_ut",
+          "ent_reserve_category",
+          "ent_period"
+        ],
+        "sourceColumnIds": [
+          "Coal",
+          "State/UT",
+          "Reserve Category",
+          "Period"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_reserve_category_01",
+      "questionId": "q_reserve_category_01",
+      "questionText": "Decompose the share of Proved Reserves within total reserve distribution by category by Reserve Category.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "share",
+        "measure": {
+          "column": "Proved",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "Reserve Category"
+          },
+          {
+            "column": "State/UT"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "time": {
+          "column": "Period",
+          "periods": {
+            "current": "2025"
+          }
+        }
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "share",
+        "measure": {
+          "entityRef": "ent_proved_reserves",
+          "agg": "sum",
+          "unit": "million_tonnes"
+        },
+        "groupBy": [
+          {
+            "entityRef": "ent_reserve_category"
+          },
+          {
+            "entityRef": "ent_state_ut"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "time": {
+          "entityRef": "ent_period",
+          "periodRole": "current"
+        },
+        "grain": {
+          "required": [
+            "measure",
+            "groupBy",
+            "time"
+          ],
+          "sameGrainBeforeFormula": true,
+          "notes": "Every statistic is computed after grouping to the declared question grain; row-ratio averaging is prohibited."
+        },
+        "weighting": {
+          "weightEntityRef": null,
+          "required": false,
+          "policy": "physical_reserves_are_self_weighting"
+        },
+        "readiness": {
+          "missingRequiredEntity": "BLOCKED",
+          "missingOptionalEntity": "DEGRADED",
+          "missingTime": "DEGRADED_SNAPSHOT",
+          "missingDenominator": "BLOCKED",
+          "missingComparisonPeriod": "BLOCKED",
+          "invalidAggregation": "BLOCKED"
+        },
+        "audit": {
+          "requiresLineage": true,
+          "requiresAggregationTrace": true,
+          "requiresFilterTrace": true
+        },
+        "formula": {
+          "type": "SHARE",
+          "numeratorEntityRef": "ent_proved_reserves",
+          "denominatorEntityRef": "ent_total_reserves",
+          "multiplier": 100,
+          "sameGrain": true,
+          "policy": "Aggregate numerator and denominator at the same grain, then divide."
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Proved"
+        ],
+        "dimensions": [
+          "Reserve Category",
+          "State/UT"
+        ],
+        "filters": [],
+        "time": {
+          "column": "Period",
+          "periods": {
+            "current": "2025"
+          },
+          "timeResolved": true
+        },
+        "denominators": [
+          "Total"
+        ]
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "SHARE",
+        "numeratorColumn": "Proved",
+        "denominatorColumn": "Total",
+        "multiplier": 100.0,
+        "unitConversion": "percent"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_reserve_category_01_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 50,
+              "maxWords": 95,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_proved_reserves",
+                "ent_reserve_category"
+              ],
+              "maxWords": 95
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "tone",
+                "length",
+                "include_caveat",
+                "include_policy_signal"
+              ],
+              "locked": [
+                "mustMention",
+                "evidenceRef"
+              ]
+            },
+            "refs": {
+              "contentRef": "p_q_reserve_category_01_narrative",
+              "analyticsRef": "q_reserve_category_01",
+              "evidenceRef": "ev_q_reserve_category_01"
+            }
+          },
+          {
+            "componentId": "q_reserve_category_01_metric",
+            "kind": "formula_metric",
+            "order": 2,
+            "outputContract": {
+              "type": "metric",
+              "metricEntityRef": "ent_proved_reserves",
+              "format": "number.2",
+              "requiresUnit": true,
+              "requiresLineage": true
+            },
+            "formulaSpec": {
+              "type": "SHARE",
+              "numeratorEntityRef": "ent_proved_reserves",
+              "denominatorEntityRef": "ent_total_reserves",
+              "multiplier": 100,
+              "sameGrain": true,
+              "blockedWhenMissing": [
+                "denominatorEntityRef",
+                "sameGrainGrouping"
+              ]
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "show_delta",
+                "show_rank",
+                "display_precision"
+              ],
+              "locked": [
+                "formulaSpec.type",
+                "metricEntityRef"
+              ]
+            },
+            "refs": {
+              "contentRef": "m_q_reserve_category_01_metric",
+              "analyticsRef": "q_reserve_category_01",
+              "evidenceRef": "ev_q_reserve_category_01"
+            }
+          },
+          {
+            "componentId": "q_reserve_category_01_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "chart",
+              "chartType": "grouped_bar",
+              "xAxis": "ent_reserve_category",
+              "yAxis": "ent_proved_reserves",
+              "requiresAltText": true,
+              "requiresSourceNote": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "chartType",
+                "topN",
+                "sortOrder",
+                "colorTheme",
+                "showDataLabels"
+              ],
+              "allowedChartTypes": [
+                "grouped_bar",
+                "horizontal_bar",
+                "stacked_bar",
+                "line"
+              ],
+              "locked": [
+                "xAxis.entityRef",
+                "yAxis.entityRef",
+                "analyticsRef"
+              ]
+            },
+            "refs": {
+              "chartRef": "chart_q_reserve_category_01",
+              "figureRef": "fig_q_reserve_category_01",
+              "analyticsRef": "q_reserve_category_01",
+              "evidenceRef": "ev_q_reserve_category_01"
+            }
+          },
+          {
+            "componentId": "q_reserve_category_01_table",
+            "kind": "table",
+            "order": 4,
+            "outputContract": {
+              "type": "table",
+              "tableTemplateRef": "tt_q_reserve_category_01",
+              "requiresHeaderUnits": true,
+              "requiresFootnotes": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "topN",
+                "sortOrder",
+                "includeTotalRow",
+                "decimalPlaces"
+              ],
+              "locked": [
+                "entity columns",
+                "source footnote"
+              ]
+            },
+            "refs": {
+              "tableRef": "table_q_reserve_category_01",
+              "analyticsRef": "q_reserve_category_01",
+              "evidenceRef": "ev_q_reserve_category_01"
+            }
+          },
+          {
+            "componentId": "q_reserve_category_01_provenance",
+            "kind": "provenance",
+            "order": 5,
+            "outputContract": {
+              "type": "source_note",
+              "requiresLineage": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "source_note_text",
+                "include_table_number",
+                "include_extraction_confidence"
+              ],
+              "locked": [
+                "lineageRef",
+                "datasetSignature"
+              ]
+            },
+            "refs": {
+              "contentRef": "p_q_reserve_category_01_provenance",
+              "analyticsRef": "q_reserve_category_01",
+              "evidenceRef": "ev_q_reserve_category_01"
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_reserve_category_01",
+        "sourceEntityIds": [
+          "ent_proved_reserves",
+          "ent_reserve_category",
+          "ent_state_ut",
+          "ent_period",
+          "ent_total_reserves"
+        ],
+        "sourceColumnIds": [
+          "Proved",
+          "Reserve Category",
+          "State/UT",
+          "Period"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_hydrocarbon_state_01",
+      "questionId": "q_hydrocarbon_state_01",
+      "questionText": "Rank States/UTs by Crude Oil Reserves for crude oil reserves by state/ut.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Crude Oil",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 10,
+        "time": {
+          "column": "Period",
+          "periods": {
+            "current": "2025"
+          }
+        }
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "entityRef": "ent_crude_oil_reserves",
+          "agg": "sum",
+          "unit": "million_tonnes"
+        },
+        "groupBy": [
+          {
+            "entityRef": "ent_state_ut"
+          },
+          {
+            "entityRef": "ent_region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 10,
+        "time": {
+          "entityRef": "ent_period",
+          "periodRole": "current"
+        },
+        "grain": {
+          "required": [
+            "measure",
+            "groupBy",
+            "time"
+          ],
+          "sameGrainBeforeFormula": true,
+          "notes": "Every statistic is computed after grouping to the declared question grain; row-ratio averaging is prohibited."
+        },
+        "weighting": {
+          "weightEntityRef": null,
+          "required": false,
+          "policy": "physical_reserves_are_self_weighting"
+        },
+        "readiness": {
+          "missingRequiredEntity": "BLOCKED",
+          "missingOptionalEntity": "DEGRADED",
+          "missingTime": "DEGRADED_SNAPSHOT",
+          "missingDenominator": "BLOCKED",
+          "missingComparisonPeriod": "BLOCKED",
+          "invalidAggregation": "BLOCKED"
+        },
+        "audit": {
+          "requiresLineage": true,
+          "requiresAggregationTrace": true,
+          "requiresFilterTrace": true
+        },
+        "formula": {
+          "type": "DIRECT",
+          "measureEntityRef": "ent_crude_oil_reserves"
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Crude Oil"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": "Period",
+          "periods": {
+            "current": "2025"
+          },
+          "timeResolved": true
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_hydrocarbon_state_01_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 50,
+              "maxWords": 95,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_crude_oil_reserves",
+                "ent_state_ut"
+              ],
+              "maxWords": 95
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "tone",
+                "length",
+                "include_caveat",
+                "include_policy_signal"
+              ],
+              "locked": [
+                "mustMention",
+                "evidenceRef"
+              ]
+            },
+            "refs": {
+              "contentRef": "p_q_hydrocarbon_state_01_narrative",
+              "analyticsRef": "q_hydrocarbon_state_01",
+              "evidenceRef": "ev_q_hydrocarbon_state_01"
+            }
+          },
+          {
+            "componentId": "q_hydrocarbon_state_01_metric",
+            "kind": "formula_metric",
+            "order": 2,
+            "outputContract": {
+              "type": "metric",
+              "metricEntityRef": "ent_crude_oil_reserves",
+              "format": "number.2",
+              "requiresUnit": true,
+              "requiresLineage": true
+            },
+            "formulaSpec": {
+              "type": "DIRECT",
+              "measureEntityRef": "ent_crude_oil_reserves"
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "show_delta",
+                "show_rank",
+                "display_precision"
+              ],
+              "locked": [
+                "formulaSpec.type",
+                "metricEntityRef"
+              ]
+            },
+            "refs": {
+              "contentRef": "m_q_hydrocarbon_state_01_metric",
+              "analyticsRef": "q_hydrocarbon_state_01",
+              "evidenceRef": "ev_q_hydrocarbon_state_01"
+            }
+          },
+          {
+            "componentId": "q_hydrocarbon_state_01_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "chart",
+              "chartType": "horizontal_bar",
+              "xAxis": "ent_state_ut",
+              "yAxis": "ent_crude_oil_reserves",
+              "requiresAltText": true,
+              "requiresSourceNote": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "chartType",
+                "topN",
+                "sortOrder",
+                "colorTheme",
+                "showDataLabels"
+              ],
+              "allowedChartTypes": [
+                "grouped_bar",
+                "horizontal_bar",
+                "stacked_bar",
+                "line"
+              ],
+              "locked": [
+                "xAxis.entityRef",
+                "yAxis.entityRef",
+                "analyticsRef"
+              ]
+            },
+            "refs": {
+              "chartRef": "chart_q_hydrocarbon_state_01",
+              "figureRef": "fig_q_hydrocarbon_state_01",
+              "analyticsRef": "q_hydrocarbon_state_01",
+              "evidenceRef": "ev_q_hydrocarbon_state_01"
+            }
+          },
+          {
+            "componentId": "q_hydrocarbon_state_01_table",
+            "kind": "table",
+            "order": 4,
+            "outputContract": {
+              "type": "table",
+              "tableTemplateRef": "tt_q_hydrocarbon_state_01",
+              "requiresHeaderUnits": true,
+              "requiresFootnotes": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "topN",
+                "sortOrder",
+                "includeTotalRow",
+                "decimalPlaces"
+              ],
+              "locked": [
+                "entity columns",
+                "source footnote"
+              ]
+            },
+            "refs": {
+              "tableRef": "table_q_hydrocarbon_state_01",
+              "analyticsRef": "q_hydrocarbon_state_01",
+              "evidenceRef": "ev_q_hydrocarbon_state_01"
+            }
+          },
+          {
+            "componentId": "q_hydrocarbon_state_01_provenance",
+            "kind": "provenance",
+            "order": 5,
+            "outputContract": {
+              "type": "source_note",
+              "requiresLineage": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "source_note_text",
+                "include_table_number",
+                "include_extraction_confidence"
+              ],
+              "locked": [
+                "lineageRef",
+                "datasetSignature"
+              ]
+            },
+            "refs": {
+              "contentRef": "p_q_hydrocarbon_state_01_provenance",
+              "analyticsRef": "q_hydrocarbon_state_01",
+              "evidenceRef": "ev_q_hydrocarbon_state_01"
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_hydrocarbon_state_01",
+        "sourceEntityIds": [
+          "ent_crude_oil_reserves",
+          "ent_state_ut",
+          "ent_region",
+          "ent_period"
+        ],
+        "sourceColumnIds": [
+          "Crude Oil",
+          "State/UT",
+          "Region",
+          "Period"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_renewable_source_01",
+      "questionId": "q_renewable_source_01",
+      "questionText": "Compare Wind Power Potential by Energy Source and Region for potential by renewable source.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "column": "Wind",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "Energy Source"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "time": {
+          "column": "Period",
+          "periods": {
+            "current": "2025"
+          }
+        }
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "ent_wind_power",
+          "agg": "sum",
+          "unit": "MW"
+        },
+        "groupBy": [
+          {
+            "entityRef": "ent_energy_source"
+          },
+          {
+            "entityRef": "ent_region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "time": {
+          "entityRef": "ent_period",
+          "periodRole": "current"
+        },
+        "grain": {
+          "required": [
+            "measure",
+            "groupBy",
+            "time"
+          ],
+          "sameGrainBeforeFormula": true,
+          "notes": "Every statistic is computed after grouping to the declared question grain; row-ratio averaging is prohibited."
+        },
+        "weighting": {
+          "weightEntityRef": null,
+          "required": false,
+          "policy": "physical_reserves_are_self_weighting"
+        },
+        "readiness": {
+          "missingRequiredEntity": "BLOCKED",
+          "missingOptionalEntity": "DEGRADED",
+          "missingTime": "DEGRADED_SNAPSHOT",
+          "missingDenominator": "BLOCKED",
+          "missingComparisonPeriod": "BLOCKED",
+          "invalidAggregation": "BLOCKED"
+        },
+        "audit": {
+          "requiresLineage": true,
+          "requiresAggregationTrace": true,
+          "requiresFilterTrace": true
+        },
+        "formula": {
+          "type": "DIRECT",
+          "measureEntityRef": "ent_wind_power"
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Wind"
+        ],
+        "dimensions": [
+          "Energy Source",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": "Period",
+          "periods": {
+            "current": "2025"
+          },
+          "timeResolved": true
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_renewable_source_01_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 50,
+              "maxWords": 95,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_wind_power",
+                "ent_energy_source"
+              ],
+              "maxWords": 95
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "tone",
+                "length",
+                "include_caveat",
+                "include_policy_signal"
+              ],
+              "locked": [
+                "mustMention",
+                "evidenceRef"
+              ]
+            },
+            "refs": {
+              "contentRef": "p_q_renewable_source_01_narrative",
+              "analyticsRef": "q_renewable_source_01",
+              "evidenceRef": "ev_q_renewable_source_01"
+            }
+          },
+          {
+            "componentId": "q_renewable_source_01_metric",
+            "kind": "formula_metric",
+            "order": 2,
+            "outputContract": {
+              "type": "metric",
+              "metricEntityRef": "ent_wind_power",
+              "format": "number.0",
+              "requiresUnit": true,
+              "requiresLineage": true
+            },
+            "formulaSpec": {
+              "type": "DIRECT",
+              "measureEntityRef": "ent_wind_power"
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "show_delta",
+                "show_rank",
+                "display_precision"
+              ],
+              "locked": [
+                "formulaSpec.type",
+                "metricEntityRef"
+              ]
+            },
+            "refs": {
+              "contentRef": "m_q_renewable_source_01_metric",
+              "analyticsRef": "q_renewable_source_01",
+              "evidenceRef": "ev_q_renewable_source_01"
+            }
+          },
+          {
+            "componentId": "q_renewable_source_01_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "chart",
+              "chartType": "grouped_bar",
+              "xAxis": "ent_energy_source",
+              "yAxis": "ent_wind_power",
+              "requiresAltText": true,
+              "requiresSourceNote": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "chartType",
+                "topN",
+                "sortOrder",
+                "colorTheme",
+                "showDataLabels"
+              ],
+              "allowedChartTypes": [
+                "grouped_bar",
+                "horizontal_bar",
+                "stacked_bar",
+                "line"
+              ],
+              "locked": [
+                "xAxis.entityRef",
+                "yAxis.entityRef",
+                "analyticsRef"
+              ]
+            },
+            "refs": {
+              "chartRef": "chart_q_renewable_source_01",
+              "figureRef": "fig_q_renewable_source_01",
+              "analyticsRef": "q_renewable_source_01",
+              "evidenceRef": "ev_q_renewable_source_01"
+            }
+          },
+          {
+            "componentId": "q_renewable_source_01_table",
+            "kind": "table",
+            "order": 4,
+            "outputContract": {
+              "type": "table",
+              "tableTemplateRef": "tt_q_renewable_source_01",
+              "requiresHeaderUnits": true,
+              "requiresFootnotes": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "topN",
+                "sortOrder",
+                "includeTotalRow",
+                "decimalPlaces"
+              ],
+              "locked": [
+                "entity columns",
+                "source footnote"
+              ]
+            },
+            "refs": {
+              "tableRef": "table_q_renewable_source_01",
+              "analyticsRef": "q_renewable_source_01",
+              "evidenceRef": "ev_q_renewable_source_01"
+            }
+          },
+          {
+            "componentId": "q_renewable_source_01_provenance",
+            "kind": "provenance",
+            "order": 5,
+            "outputContract": {
+              "type": "source_note",
+              "requiresLineage": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "source_note_text",
+                "include_table_number",
+                "include_extraction_confidence"
+              ],
+              "locked": [
+                "lineageRef",
+                "datasetSignature"
+              ]
+            },
+            "refs": {
+              "contentRef": "p_q_renewable_source_01_provenance",
+              "analyticsRef": "q_renewable_source_01",
+              "evidenceRef": "ev_q_renewable_source_01"
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_renewable_source_01",
+        "sourceEntityIds": [
+          "ent_wind_power",
+          "ent_energy_source",
+          "ent_region",
+          "ent_period"
+        ],
+        "sourceColumnIds": [
+          "Wind",
+          "Energy Source",
+          "Region",
+          "Period"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_renewable_state_01",
+      "questionId": "q_renewable_state_01",
+      "questionText": "Rank States/UTs by Solar Energy Potential for renewable potential by state/ut.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Solar",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Energy Source"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 10,
+        "time": {
+          "column": "Period",
+          "periods": {
+            "current": "2025"
+          }
+        }
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "entityRef": "ent_solar_energy",
+          "agg": "sum",
+          "unit": "MW"
+        },
+        "groupBy": [
+          {
+            "entityRef": "ent_state_ut"
+          },
+          {
+            "entityRef": "ent_energy_source"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 10,
+        "time": {
+          "entityRef": "ent_period",
+          "periodRole": "current"
+        },
+        "grain": {
+          "required": [
+            "measure",
+            "groupBy",
+            "time"
+          ],
+          "sameGrainBeforeFormula": true,
+          "notes": "Every statistic is computed after grouping to the declared question grain; row-ratio averaging is prohibited."
+        },
+        "weighting": {
+          "weightEntityRef": null,
+          "required": false,
+          "policy": "physical_reserves_are_self_weighting"
+        },
+        "readiness": {
+          "missingRequiredEntity": "BLOCKED",
+          "missingOptionalEntity": "DEGRADED",
+          "missingTime": "DEGRADED_SNAPSHOT",
+          "missingDenominator": "BLOCKED",
+          "missingComparisonPeriod": "BLOCKED",
+          "invalidAggregation": "BLOCKED"
+        },
+        "audit": {
+          "requiresLineage": true,
+          "requiresAggregationTrace": true,
+          "requiresFilterTrace": true
+        },
+        "formula": {
+          "type": "DIRECT",
+          "measureEntityRef": "ent_solar_energy"
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Solar"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Energy Source"
+        ],
+        "filters": [],
+        "time": {
+          "column": "Period",
+          "periods": {
+            "current": "2025"
+          },
+          "timeResolved": true
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_renewable_state_01_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 50,
+              "maxWords": 95,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_solar_energy",
+                "ent_state_ut"
+              ],
+              "maxWords": 95
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "tone",
+                "length",
+                "include_caveat",
+                "include_policy_signal"
+              ],
+              "locked": [
+                "mustMention",
+                "evidenceRef"
+              ]
+            },
+            "refs": {
+              "contentRef": "p_q_renewable_state_01_narrative",
+              "analyticsRef": "q_renewable_state_01",
+              "evidenceRef": "ev_q_renewable_state_01"
+            }
+          },
+          {
+            "componentId": "q_renewable_state_01_metric",
+            "kind": "formula_metric",
+            "order": 2,
+            "outputContract": {
+              "type": "metric",
+              "metricEntityRef": "ent_solar_energy",
+              "format": "number.0",
+              "requiresUnit": true,
+              "requiresLineage": true
+            },
+            "formulaSpec": {
+              "type": "DIRECT",
+              "measureEntityRef": "ent_solar_energy"
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "show_delta",
+                "show_rank",
+                "display_precision"
+              ],
+              "locked": [
+                "formulaSpec.type",
+                "metricEntityRef"
+              ]
+            },
+            "refs": {
+              "contentRef": "m_q_renewable_state_01_metric",
+              "analyticsRef": "q_renewable_state_01",
+              "evidenceRef": "ev_q_renewable_state_01"
+            }
+          },
+          {
+            "componentId": "q_renewable_state_01_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "chart",
+              "chartType": "horizontal_bar",
+              "xAxis": "ent_state_ut",
+              "yAxis": "ent_solar_energy",
+              "requiresAltText": true,
+              "requiresSourceNote": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "chartType",
+                "topN",
+                "sortOrder",
+                "colorTheme",
+                "showDataLabels"
+              ],
+              "allowedChartTypes": [
+                "grouped_bar",
+                "horizontal_bar",
+                "stacked_bar",
+                "line"
+              ],
+              "locked": [
+                "xAxis.entityRef",
+                "yAxis.entityRef",
+                "analyticsRef"
+              ]
+            },
+            "refs": {
+              "chartRef": "chart_q_renewable_state_01",
+              "figureRef": "fig_q_renewable_state_01",
+              "analyticsRef": "q_renewable_state_01",
+              "evidenceRef": "ev_q_renewable_state_01"
+            }
+          },
+          {
+            "componentId": "q_renewable_state_01_table",
+            "kind": "table",
+            "order": 4,
+            "outputContract": {
+              "type": "table",
+              "tableTemplateRef": "tt_q_renewable_state_01",
+              "requiresHeaderUnits": true,
+              "requiresFootnotes": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "topN",
+                "sortOrder",
+                "includeTotalRow",
+                "decimalPlaces"
+              ],
+              "locked": [
+                "entity columns",
+                "source footnote"
+              ]
+            },
+            "refs": {
+              "tableRef": "table_q_renewable_state_01",
+              "analyticsRef": "q_renewable_state_01",
+              "evidenceRef": "ev_q_renewable_state_01"
+            }
+          },
+          {
+            "componentId": "q_renewable_state_01_provenance",
+            "kind": "provenance",
+            "order": 5,
+            "outputContract": {
+              "type": "source_note",
+              "requiresLineage": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "source_note_text",
+                "include_table_number",
+                "include_extraction_confidence"
+              ],
+              "locked": [
+                "lineageRef",
+                "datasetSignature"
+              ]
+            },
+            "refs": {
+              "contentRef": "p_q_renewable_state_01_provenance",
+              "analyticsRef": "q_renewable_state_01",
+              "evidenceRef": "ev_q_renewable_state_01"
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_renewable_state_01",
+        "sourceEntityIds": [
+          "ent_solar_energy",
+          "ent_state_ut",
+          "ent_energy_source",
+          "ent_period"
+        ],
+        "sourceColumnIds": [
+          "Solar",
+          "State/UT",
+          "Energy Source",
+          "Period"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_renewable_share_01",
+      "questionId": "q_renewable_share_01",
+      "questionText": "Decompose the share of Wind Power Potential within total source share of total renewable potential by Energy Source.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "share",
+        "measure": {
+          "column": "Wind",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "Energy Source"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "time": {
+          "column": "Period",
+          "periods": {
+            "current": "2025"
+          }
+        }
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "share",
+        "measure": {
+          "entityRef": "ent_wind_power",
+          "agg": "sum",
+          "unit": "MW"
+        },
+        "groupBy": [
+          {
+            "entityRef": "ent_energy_source"
+          },
+          {
+            "entityRef": "ent_region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "time": {
+          "entityRef": "ent_period",
+          "periodRole": "current"
+        },
+        "grain": {
+          "required": [
+            "measure",
+            "groupBy",
+            "time"
+          ],
+          "sameGrainBeforeFormula": true,
+          "notes": "Every statistic is computed after grouping to the declared question grain; row-ratio averaging is prohibited."
+        },
+        "weighting": {
+          "weightEntityRef": null,
+          "required": false,
+          "policy": "physical_reserves_are_self_weighting"
+        },
+        "readiness": {
+          "missingRequiredEntity": "BLOCKED",
+          "missingOptionalEntity": "DEGRADED",
+          "missingTime": "DEGRADED_SNAPSHOT",
+          "missingDenominator": "BLOCKED",
+          "missingComparisonPeriod": "BLOCKED",
+          "invalidAggregation": "BLOCKED"
+        },
+        "audit": {
+          "requiresLineage": true,
+          "requiresAggregationTrace": true,
+          "requiresFilterTrace": true
+        },
+        "formula": {
+          "type": "SHARE",
+          "numeratorEntityRef": "ent_wind_power",
+          "denominatorEntityRef": "ent_total_renewable_potential",
+          "multiplier": 100,
+          "sameGrain": true,
+          "policy": "Aggregate numerator and denominator at the same grain, then divide."
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Wind"
+        ],
+        "dimensions": [
+          "Energy Source",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": "Period",
+          "periods": {
+            "current": "2025"
+          },
+          "timeResolved": true
+        },
+        "denominators": [
+          "Total Renewable"
+        ]
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "SHARE",
+        "numeratorColumn": "Wind",
+        "denominatorColumn": "Total Renewable",
+        "multiplier": 100.0,
+        "unitConversion": "percent"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_renewable_share_01_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 50,
+              "maxWords": 95,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_wind_power",
+                "ent_energy_source"
+              ],
+              "maxWords": 95
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "tone",
+                "length",
+                "include_caveat",
+                "include_policy_signal"
+              ],
+              "locked": [
+                "mustMention",
+                "evidenceRef"
+              ]
+            },
+            "refs": {
+              "contentRef": "p_q_renewable_share_01_narrative",
+              "analyticsRef": "q_renewable_share_01",
+              "evidenceRef": "ev_q_renewable_share_01"
+            }
+          },
+          {
+            "componentId": "q_renewable_share_01_metric",
+            "kind": "formula_metric",
+            "order": 2,
+            "outputContract": {
+              "type": "metric",
+              "metricEntityRef": "ent_wind_power",
+              "format": "number.0",
+              "requiresUnit": true,
+              "requiresLineage": true
+            },
+            "formulaSpec": {
+              "type": "SHARE",
+              "numeratorEntityRef": "ent_wind_power",
+              "denominatorEntityRef": "ent_total_renewable_potential",
+              "multiplier": 100,
+              "sameGrain": true,
+              "blockedWhenMissing": [
+                "denominatorEntityRef",
+                "sameGrainGrouping"
+              ]
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "show_delta",
+                "show_rank",
+                "display_precision"
+              ],
+              "locked": [
+                "formulaSpec.type",
+                "metricEntityRef"
+              ]
+            },
+            "refs": {
+              "contentRef": "m_q_renewable_share_01_metric",
+              "analyticsRef": "q_renewable_share_01",
+              "evidenceRef": "ev_q_renewable_share_01"
+            }
+          },
+          {
+            "componentId": "q_renewable_share_01_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "chart",
+              "chartType": "grouped_bar",
+              "xAxis": "ent_energy_source",
+              "yAxis": "ent_wind_power",
+              "requiresAltText": true,
+              "requiresSourceNote": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "chartType",
+                "topN",
+                "sortOrder",
+                "colorTheme",
+                "showDataLabels"
+              ],
+              "allowedChartTypes": [
+                "grouped_bar",
+                "horizontal_bar",
+                "stacked_bar",
+                "line"
+              ],
+              "locked": [
+                "xAxis.entityRef",
+                "yAxis.entityRef",
+                "analyticsRef"
+              ]
+            },
+            "refs": {
+              "chartRef": "chart_q_renewable_share_01",
+              "figureRef": "fig_q_renewable_share_01",
+              "analyticsRef": "q_renewable_share_01",
+              "evidenceRef": "ev_q_renewable_share_01"
+            }
+          },
+          {
+            "componentId": "q_renewable_share_01_table",
+            "kind": "table",
+            "order": 4,
+            "outputContract": {
+              "type": "table",
+              "tableTemplateRef": "tt_q_renewable_share_01",
+              "requiresHeaderUnits": true,
+              "requiresFootnotes": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "topN",
+                "sortOrder",
+                "includeTotalRow",
+                "decimalPlaces"
+              ],
+              "locked": [
+                "entity columns",
+                "source footnote"
+              ]
+            },
+            "refs": {
+              "tableRef": "table_q_renewable_share_01",
+              "analyticsRef": "q_renewable_share_01",
+              "evidenceRef": "ev_q_renewable_share_01"
+            }
+          },
+          {
+            "componentId": "q_renewable_share_01_provenance",
+            "kind": "provenance",
+            "order": 5,
+            "outputContract": {
+              "type": "source_note",
+              "requiresLineage": true
+            },
+            "customization": {
+              "officerEditable": true,
+              "controls": [
+                "source_note_text",
+                "include_table_number",
+                "include_extraction_confidence"
+              ],
+              "locked": [
+                "lineageRef",
+                "datasetSignature"
+              ]
+            },
+            "refs": {
+              "contentRef": "p_q_renewable_share_01_provenance",
+              "analyticsRef": "q_renewable_share_01",
+              "evidenceRef": "ev_q_renewable_share_01"
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_renewable_share_01",
+        "sourceEntityIds": [
+          "ent_wind_power",
+          "ent_energy_source",
+          "ent_region",
+          "ent_period",
+          "ent_total_renewable_potential"
+        ],
+        "sourceColumnIds": [
+          "Wind",
+          "Energy Source",
+          "Region",
+          "Period"
+        ]
+      },
+      "diagnostics": []
+    }
+  ],
+  "blockedQuestions": [],
+  "readinessReport": {
+    "executableCount": 6,
+    "degradedCount": 0,
+    "blockedCount": 0,
+    "checks": [],
+    "warnings": [],
+    "errors": [],
+    "status": "READY"
+  },
+  "dataframeRef": {
+    "type": "csv",
+    "path": "C:\\Users\\2504861\\AppData\\Local\\Temp\\e.csv"
+  },
+  "lineageIndex": {
+    "q_coal_state_01": {
+      "sourceQuestionId": "q_coal_state_01",
+      "sourceEntityIds": [
+        "ent_coal_reserves",
+        "ent_state_ut",
+        "ent_reserve_category",
+        "ent_period"
+      ],
+      "sourceColumnIds": [
+        "Coal",
+        "State/UT",
+        "Reserve Category",
+        "Period"
+      ]
+    },
+    "q_reserve_category_01": {
+      "sourceQuestionId": "q_reserve_category_01",
+      "sourceEntityIds": [
+        "ent_proved_reserves",
+        "ent_reserve_category",
+        "ent_state_ut",
+        "ent_period",
+        "ent_total_reserves"
+      ],
+      "sourceColumnIds": [
+        "Proved",
+        "Reserve Category",
+        "State/UT",
+        "Period"
+      ]
+    },
+    "q_hydrocarbon_state_01": {
+      "sourceQuestionId": "q_hydrocarbon_state_01",
+      "sourceEntityIds": [
+        "ent_crude_oil_reserves",
+        "ent_state_ut",
+        "ent_region",
+        "ent_period"
+      ],
+      "sourceColumnIds": [
+        "Crude Oil",
+        "State/UT",
+        "Region",
+        "Period"
+      ]
+    },
+    "q_renewable_source_01": {
+      "sourceQuestionId": "q_renewable_source_01",
+      "sourceEntityIds": [
+        "ent_wind_power",
+        "ent_energy_source",
+        "ent_region",
+        "ent_period"
+      ],
+      "sourceColumnIds": [
+        "Wind",
+        "Energy Source",
+        "Region",
+        "Period"
+      ]
+    },
+    "q_renewable_state_01": {
+      "sourceQuestionId": "q_renewable_state_01",
+      "sourceEntityIds": [
+        "ent_solar_energy",
+        "ent_state_ut",
+        "ent_energy_source",
+        "ent_period"
+      ],
+      "sourceColumnIds": [
+        "Solar",
+        "State/UT",
+        "Energy Source",
+        "Period"
+      ]
+    },
+    "q_renewable_share_01": {
+      "sourceQuestionId": "q_renewable_share_01",
+      "sourceEntityIds": [
+        "ent_wind_power",
+        "ent_energy_source",
+        "ent_region",
+        "ent_period",
+        "ent_total_renewable_potential"
+      ],
+      "sourceColumnIds": [
+        "Wind",
+        "Energy Source",
+        "Region",
+        "Period"
+      ]
+    }
+  },
+  "frozenAt": "2026-06-13T05:35:55.177768+00:00"
+}

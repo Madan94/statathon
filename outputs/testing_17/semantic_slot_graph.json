@@ -1,0 +1,486 @@
+{
+  "$schema": "bharatstat/semantic-slot-graph/v1",
+  "templateId": "tpl_testing_17_v1",
+  "slots": [
+    {
+      "slotId": "slot_sp01_q01_c1",
+      "astBlockId": "p_sp01_q01",
+      "astKind": "content",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_01",
+      "questionId": "sp01_q01",
+      "componentId": "sp01_q01_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_sp02_q01_c1",
+      "astBlockId": "p_sp02_q01",
+      "astKind": "content",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_01",
+      "questionId": "sp02_q01",
+      "componentId": "sp02_q01_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_sp02_q02_c1",
+      "astBlockId": "p_sp02_q02",
+      "astKind": "content",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_01",
+      "questionId": "sp02_q02",
+      "componentId": "sp02_q02_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_table_1_3_statewise_estimated_reser_c1",
+      "astBlockId": "p_q_table_1_3_statewise_estimated_reser_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_table_1_3_statewise_estimated_reser",
+      "componentId": "q_table_1_3_statewise_estimated_reser_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_composition_energy_source_category_c1",
+      "astBlockId": "p_q_composition_energy_source_category_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_composition_energy_source_category",
+      "componentId": "q_composition_energy_source_category_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_top_table_1_3_statewise_estimated_r_c1",
+      "astBlockId": "p_q_top_table_1_3_statewise_estimated_r_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_top_table_1_3_statewise_estimated_r",
+      "componentId": "q_top_table_1_3_statewise_estimated_r_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_year_over_year_change_table_1_3_sta_c1",
+      "astBlockId": "p_q_year_over_year_change_table_1_3_sta_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_year_over_year_change_table_1_3_sta",
+      "componentId": "q_year_over_year_change_table_1_3_sta_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_indicated_energy_reserves_c1",
+      "astBlockId": "p_q_indicated_energy_reserves_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_indicated_energy_reserves",
+      "componentId": "q_indicated_energy_reserves_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_estimated_reserves_coal_india_as_on_c1",
+      "astBlockId": "p_q_estimated_reserves_coal_india_as_on_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_estimated_reserves_coal_india_as_on",
+      "componentId": "q_estimated_reserves_coal_india_as_on_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_source_wise_estimated_potential_ren_c1",
+      "astBlockId": "p_q_source_wise_estimated_potential_ren_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_source_wise_estimated_potential_ren",
+      "componentId": "q_source_wise_estimated_potential_ren_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_statewise_estimated_potential_renew_c1",
+      "astBlockId": "p_q_statewise_estimated_potential_renew_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_statewise_estimated_potential_renew",
+      "componentId": "q_statewise_estimated_potential_renew_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_energy_energy_coal_rank_c1",
+      "astBlockId": "p_q_energy_energy_coal_rank_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_energy_energy_coal_rank",
+      "componentId": "q_energy_energy_coal_rank_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_energy_energy_coal_compare_c1",
+      "astBlockId": "p_q_energy_energy_coal_compare_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_energy_energy_coal_compare",
+      "componentId": "q_energy_energy_coal_compare_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_energy_energy_oil_gas_compare_c1",
+      "astBlockId": "p_q_energy_energy_oil_gas_compare_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_energy_energy_oil_gas_compare",
+      "componentId": "q_energy_energy_oil_gas_compare_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_energy_energy_coal_yoy_c1",
+      "astBlockId": "p_q_energy_energy_coal_yoy_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_energy_energy_coal_yoy",
+      "componentId": "q_energy_energy_coal_yoy_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_energy_energy_lignite_compare_c1",
+      "astBlockId": "p_q_energy_energy_lignite_compare_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_energy_energy_lignite_compare",
+      "componentId": "q_energy_energy_lignite_compare_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_sp01_q01_c2",
+      "astBlockId": "table_5_1",
+      "astKind": "table",
+      "source": "stale_fillfrom_repair",
+      "confidence": 0.9,
+      "topicId": "topic_01",
+      "questionId": "sp01_q01",
+      "componentId": "sp01_q01_c2",
+      "componentKind": "table"
+    },
+    {
+      "slotId": "slot_sp02_q01",
+      "astBlockId": "table_10_1",
+      "astKind": "table",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_01",
+      "questionId": "sp02_q01"
+    },
+    {
+      "slotId": "slot_sp02_q02_c2",
+      "astBlockId": "table_sp02_q02_c2",
+      "astKind": "table",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "sp02_q02",
+      "componentId": "sp02_q02_c2",
+      "componentKind": "table"
+    },
+    {
+      "slotId": "slot_q_table_1_3_statewise_estimated_reser_c2",
+      "astBlockId": "table_q_table_1_3_statewise_estimated_reser_c2",
+      "astKind": "table",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_table_1_3_statewise_estimated_reser",
+      "componentId": "q_table_1_3_statewise_estimated_reser_c2",
+      "componentKind": "table"
+    },
+    {
+      "slotId": "slot_q_composition_energy_source_category_c2",
+      "astBlockId": "table_q_composition_energy_source_category_c2",
+      "astKind": "table",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_composition_energy_source_category",
+      "componentId": "q_composition_energy_source_category_c2",
+      "componentKind": "table"
+    },
+    {
+      "slotId": "slot_q_top_table_1_3_statewise_estimated_r_c2",
+      "astBlockId": "table_q_top_table_1_3_statewise_estimated_r_c2",
+      "astKind": "table",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_top_table_1_3_statewise_estimated_r",
+      "componentId": "q_top_table_1_3_statewise_estimated_r_c2",
+      "componentKind": "table"
+    },
+    {
+      "slotId": "slot_q_year_over_year_change_table_1_3_sta_c2",
+      "astBlockId": "table_q_year_over_year_change_table_1_3_sta_c2",
+      "astKind": "table",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_year_over_year_change_table_1_3_sta",
+      "componentId": "q_year_over_year_change_table_1_3_sta_c2",
+      "componentKind": "table"
+    },
+    {
+      "slotId": "slot_q_energy_energy_coal_rank_c3",
+      "astBlockId": "table_q_energy_energy_coal_rank_c3",
+      "astKind": "table",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_energy_energy_coal_rank",
+      "componentId": "q_energy_energy_coal_rank_c3",
+      "componentKind": "table"
+    },
+    {
+      "slotId": "slot_q_energy_energy_coal_compare_c3",
+      "astBlockId": "table_q_energy_energy_coal_compare_c3",
+      "astKind": "table",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_energy_energy_coal_compare",
+      "componentId": "q_energy_energy_coal_compare_c3",
+      "componentKind": "table"
+    },
+    {
+      "slotId": "slot_q_energy_energy_oil_gas_compare_c3",
+      "astBlockId": "table_q_energy_energy_oil_gas_compare_c3",
+      "astKind": "table",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_energy_energy_oil_gas_compare",
+      "componentId": "q_energy_energy_oil_gas_compare_c3",
+      "componentKind": "table"
+    },
+    {
+      "slotId": "slot_q_energy_energy_lignite_compare_c3",
+      "astBlockId": "table_q_energy_energy_lignite_compare_c3",
+      "astKind": "table",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_energy_energy_lignite_compare",
+      "componentId": "q_energy_energy_lignite_compare_c3",
+      "componentKind": "table"
+    },
+    {
+      "slotId": "slot_q_indicated_energy_reserves_c2",
+      "astBlockId": "chart_sp01_q03",
+      "astKind": "chart",
+      "source": "stale_fillfrom_repair",
+      "confidence": 0.9,
+      "topicId": "topic_01",
+      "questionId": "q_indicated_energy_reserves",
+      "componentId": "q_indicated_energy_reserves_c2",
+      "componentKind": "chart"
+    },
+    {
+      "slotId": "slot_q_estimated_reserves_coal_india_as_on_c2",
+      "astBlockId": "chart_vlm_4_1",
+      "astKind": "chart",
+      "source": "existing_semantic_match",
+      "confidence": 0.85,
+      "topicId": "topic_01",
+      "questionId": "q_estimated_reserves_coal_india_as_on",
+      "componentId": "q_estimated_reserves_coal_india_as_on_c2",
+      "componentKind": "chart"
+    },
+    {
+      "slotId": "slot_q_table_1_3_statewise_estimated_reser_c3",
+      "astBlockId": "chart_vlm_5_1",
+      "astKind": "chart",
+      "source": "existing_semantic_match",
+      "confidence": 0.85,
+      "topicId": "topic_01",
+      "questionId": "q_table_1_3_statewise_estimated_reser",
+      "componentId": "q_table_1_3_statewise_estimated_reser_c3",
+      "componentKind": "chart"
+    },
+    {
+      "slotId": "slot_q_source_wise_estimated_potential_ren_c2",
+      "astBlockId": "chart_vlm_6_1",
+      "astKind": "chart",
+      "source": "existing_semantic_match",
+      "confidence": 0.85,
+      "topicId": "topic_01",
+      "questionId": "q_source_wise_estimated_potential_ren",
+      "componentId": "q_source_wise_estimated_potential_ren_c2",
+      "componentKind": "chart"
+    },
+    {
+      "slotId": "slot_q_statewise_estimated_potential_renew_c2",
+      "astBlockId": "chart_vlm_7_1",
+      "astKind": "chart",
+      "source": "existing_semantic_match",
+      "confidence": 0.85,
+      "topicId": "topic_01",
+      "questionId": "q_statewise_estimated_potential_renew",
+      "componentId": "q_statewise_estimated_potential_renew_c2",
+      "componentKind": "chart"
+    },
+    {
+      "slotId": "slot_q_composition_energy_source_category_c3",
+      "astBlockId": "chart_q_composition_energy_source_category_c3",
+      "astKind": "chart",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_composition_energy_source_category",
+      "componentId": "q_composition_energy_source_category_c3",
+      "componentKind": "chart"
+    },
+    {
+      "slotId": "slot_q_top_table_1_3_statewise_estimated_r_c3",
+      "astBlockId": "chart_q_top_table_1_3_statewise_estimated_r_c3",
+      "astKind": "chart",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_top_table_1_3_statewise_estimated_r",
+      "componentId": "q_top_table_1_3_statewise_estimated_r_c3",
+      "componentKind": "chart"
+    },
+    {
+      "slotId": "slot_q_year_over_year_change_table_1_3_sta_c3",
+      "astBlockId": "chart_q_year_over_year_change_table_1_3_sta_c3",
+      "astKind": "chart",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_year_over_year_change_table_1_3_sta",
+      "componentId": "q_year_over_year_change_table_1_3_sta_c3",
+      "componentKind": "chart"
+    },
+    {
+      "slotId": "slot_q_energy_energy_coal_rank_c2",
+      "astBlockId": "chart_q_energy_energy_coal_rank_c2",
+      "astKind": "chart",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_energy_energy_coal_rank",
+      "componentId": "q_energy_energy_coal_rank_c2",
+      "componentKind": "chart"
+    },
+    {
+      "slotId": "slot_q_energy_energy_coal_compare_c2",
+      "astBlockId": "chart_q_energy_energy_coal_compare_c2",
+      "astKind": "chart",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_energy_energy_coal_compare",
+      "componentId": "q_energy_energy_coal_compare_c2",
+      "componentKind": "chart"
+    },
+    {
+      "slotId": "slot_q_energy_energy_oil_gas_compare_c2",
+      "astBlockId": "chart_q_energy_energy_oil_gas_compare_c2",
+      "astKind": "chart",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_energy_energy_oil_gas_compare",
+      "componentId": "q_energy_energy_oil_gas_compare_c2",
+      "componentKind": "chart"
+    },
+    {
+      "slotId": "slot_q_energy_energy_coal_yoy_c2",
+      "astBlockId": "chart_q_energy_energy_coal_yoy_c2",
+      "astKind": "chart",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_energy_energy_coal_yoy",
+      "componentId": "q_energy_energy_coal_yoy_c2",
+      "componentKind": "chart"
+    },
+    {
+      "slotId": "slot_q_energy_energy_lignite_compare_c2",
+      "astBlockId": "chart_q_energy_energy_lignite_compare_c2",
+      "astKind": "chart",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_01",
+      "questionId": "q_energy_energy_lignite_compare",
+      "componentId": "q_energy_energy_lignite_compare_c2",
+      "componentKind": "chart"
+    }
+  ],
+  "issues": [
+    {
+      "severity": "error",
+      "code": "BROKEN_FILLFROM",
+      "message": "Slot 'table_10_1' has fillFrom='sp02_q01' which doesn't exist",
+      "slotId": "table_10_1"
+    },
+    {
+      "severity": "warn",
+      "code": "DUPLICATE_COMPONENT_ID",
+      "message": "Duplicate componentId: q_composition_energy_source_category_c1",
+      "componentId": "q_composition_energy_source_category_c1"
+    },
+    {
+      "severity": "warn",
+      "code": "DUPLICATE_COMPONENT_ID",
+      "message": "Duplicate componentId: q_composition_energy_source_category_c2",
+      "componentId": "q_composition_energy_source_category_c2"
+    },
+    {
+      "severity": "warn",
+      "code": "DUPLICATE_COMPONENT_ID",
+      "message": "Duplicate componentId: q_composition_energy_source_category_c3",
+      "componentId": "q_composition_energy_source_category_c3"
+    },
+    {
+      "severity": "warn",
+      "code": "DUPLICATE_QUESTION_ID",
+      "message": "Duplicate questionId: q_composition_energy_source_category",
+      "questionId": "q_composition_energy_source_category"
+    }
+  ],
+  "counts": {
+    "questions": 17,
+    "components": 42,
+    "slotsCreated": 47,
+    "issuesBefore": 36,
+    "issuesAfter": 5,
+    "crosswalkQuestions": 16,
+    "crosswalkComponents": 39,
+    "semanticSlots": 40
+  }
+}

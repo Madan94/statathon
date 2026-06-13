@@ -1,0 +1,667 @@
+{
+  "$schema": "bharatstat/semantic-slot-graph/v1",
+  "templateId": "tpl_mospi_energy_enterprise_annual_v1",
+  "slots": [
+    {
+      "slotId": "slot_doc_cover_title",
+      "astBlockId": "doc_cover_title",
+      "astKind": "content",
+      "source": "enterprise_built_in_document_control",
+      "confidence": 1.0,
+      "questionId": null,
+      "componentId": "component_doc_cover_title",
+      "componentKind": "cover_title",
+      "documentRole": "front_matter_cover",
+      "lineageRequired": false,
+      "officerEditable": true,
+      "lockedFields": []
+    },
+    {
+      "slotId": "slot_doc_executive_summary",
+      "astBlockId": "doc_executive_summary",
+      "astKind": "content",
+      "source": "enterprise_built_in_document_control",
+      "confidence": 1.0,
+      "questionId": null,
+      "componentId": "component_doc_executive_summary",
+      "componentKind": "executive_summary",
+      "documentRole": "front_matter_summary",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": []
+    },
+    {
+      "slotId": "slot_doc_contents",
+      "astBlockId": "doc_contents",
+      "astKind": "content",
+      "source": "enterprise_built_in_document_control",
+      "confidence": 1.0,
+      "questionId": null,
+      "componentId": "component_doc_contents",
+      "componentKind": "toc",
+      "documentRole": "front_matter_contents",
+      "lineageRequired": false,
+      "officerEditable": true,
+      "lockedFields": []
+    },
+    {
+      "slotId": "slot_q_coal_state_01_narrative",
+      "astBlockId": "p_q_coal_state_01_narrative",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_coal_lignite",
+      "sectionId": "section_coal_state",
+      "questionId": "q_coal_state_01",
+      "componentId": "q_coal_state_01_narrative",
+      "componentKind": "narrative",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "mustMention",
+        "evidenceRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_coal_state_01_metric",
+      "astBlockId": "m_q_coal_state_01_metric",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_coal_lignite",
+      "sectionId": "section_coal_state",
+      "questionId": "q_coal_state_01",
+      "componentId": "q_coal_state_01_metric",
+      "componentKind": "formula_metric",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "formulaSpec.type",
+        "metricEntityRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_coal_state_01_chart",
+      "astBlockId": "chart_q_coal_state_01",
+      "astKind": "chart",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_coal_lignite",
+      "sectionId": "section_coal_state",
+      "questionId": "q_coal_state_01",
+      "componentId": "q_coal_state_01_chart",
+      "componentKind": "chart",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "xAxis.entityRef",
+        "yAxis.entityRef",
+        "analyticsRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_coal_state_01_table",
+      "astBlockId": "table_q_coal_state_01",
+      "astKind": "table",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_coal_lignite",
+      "sectionId": "section_coal_state",
+      "questionId": "q_coal_state_01",
+      "componentId": "q_coal_state_01_table",
+      "componentKind": "table",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "entity columns",
+        "source footnote"
+      ]
+    },
+    {
+      "slotId": "slot_q_coal_state_01_provenance",
+      "astBlockId": "p_q_coal_state_01_provenance",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_coal_lignite",
+      "sectionId": "section_coal_state",
+      "questionId": "q_coal_state_01",
+      "componentId": "q_coal_state_01_provenance",
+      "componentKind": "provenance",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "lineageRef",
+        "datasetSignature"
+      ]
+    },
+    {
+      "slotId": "slot_q_reserve_category_01_narrative",
+      "astBlockId": "p_q_reserve_category_01_narrative",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_coal_lignite",
+      "sectionId": "section_reserve_category",
+      "questionId": "q_reserve_category_01",
+      "componentId": "q_reserve_category_01_narrative",
+      "componentKind": "narrative",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "mustMention",
+        "evidenceRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_reserve_category_01_metric",
+      "astBlockId": "m_q_reserve_category_01_metric",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_coal_lignite",
+      "sectionId": "section_reserve_category",
+      "questionId": "q_reserve_category_01",
+      "componentId": "q_reserve_category_01_metric",
+      "componentKind": "formula_metric",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "formulaSpec.type",
+        "metricEntityRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_reserve_category_01_chart",
+      "astBlockId": "chart_q_reserve_category_01",
+      "astKind": "chart",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_coal_lignite",
+      "sectionId": "section_reserve_category",
+      "questionId": "q_reserve_category_01",
+      "componentId": "q_reserve_category_01_chart",
+      "componentKind": "chart",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "xAxis.entityRef",
+        "yAxis.entityRef",
+        "analyticsRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_reserve_category_01_table",
+      "astBlockId": "table_q_reserve_category_01",
+      "astKind": "table",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_coal_lignite",
+      "sectionId": "section_reserve_category",
+      "questionId": "q_reserve_category_01",
+      "componentId": "q_reserve_category_01_table",
+      "componentKind": "table",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "entity columns",
+        "source footnote"
+      ]
+    },
+    {
+      "slotId": "slot_q_reserve_category_01_provenance",
+      "astBlockId": "p_q_reserve_category_01_provenance",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_coal_lignite",
+      "sectionId": "section_reserve_category",
+      "questionId": "q_reserve_category_01",
+      "componentId": "q_reserve_category_01_provenance",
+      "componentKind": "provenance",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "lineageRef",
+        "datasetSignature"
+      ]
+    },
+    {
+      "slotId": "slot_q_hydrocarbon_state_01_narrative",
+      "astBlockId": "p_q_hydrocarbon_state_01_narrative",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_hydrocarbons",
+      "sectionId": "section_hydrocarbon_state",
+      "questionId": "q_hydrocarbon_state_01",
+      "componentId": "q_hydrocarbon_state_01_narrative",
+      "componentKind": "narrative",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "mustMention",
+        "evidenceRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_hydrocarbon_state_01_metric",
+      "astBlockId": "m_q_hydrocarbon_state_01_metric",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_hydrocarbons",
+      "sectionId": "section_hydrocarbon_state",
+      "questionId": "q_hydrocarbon_state_01",
+      "componentId": "q_hydrocarbon_state_01_metric",
+      "componentKind": "formula_metric",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "formulaSpec.type",
+        "metricEntityRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_hydrocarbon_state_01_chart",
+      "astBlockId": "chart_q_hydrocarbon_state_01",
+      "astKind": "chart",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_hydrocarbons",
+      "sectionId": "section_hydrocarbon_state",
+      "questionId": "q_hydrocarbon_state_01",
+      "componentId": "q_hydrocarbon_state_01_chart",
+      "componentKind": "chart",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "xAxis.entityRef",
+        "yAxis.entityRef",
+        "analyticsRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_hydrocarbon_state_01_table",
+      "astBlockId": "table_q_hydrocarbon_state_01",
+      "astKind": "table",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_hydrocarbons",
+      "sectionId": "section_hydrocarbon_state",
+      "questionId": "q_hydrocarbon_state_01",
+      "componentId": "q_hydrocarbon_state_01_table",
+      "componentKind": "table",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "entity columns",
+        "source footnote"
+      ]
+    },
+    {
+      "slotId": "slot_q_hydrocarbon_state_01_provenance",
+      "astBlockId": "p_q_hydrocarbon_state_01_provenance",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_conventional_reserves",
+      "chapterId": "chapter_hydrocarbons",
+      "sectionId": "section_hydrocarbon_state",
+      "questionId": "q_hydrocarbon_state_01",
+      "componentId": "q_hydrocarbon_state_01_provenance",
+      "componentKind": "provenance",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "lineageRef",
+        "datasetSignature"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_source_01_narrative",
+      "astBlockId": "p_q_renewable_source_01_narrative",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_capacity",
+      "sectionId": "section_renewable_source",
+      "questionId": "q_renewable_source_01",
+      "componentId": "q_renewable_source_01_narrative",
+      "componentKind": "narrative",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "mustMention",
+        "evidenceRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_source_01_metric",
+      "astBlockId": "m_q_renewable_source_01_metric",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_capacity",
+      "sectionId": "section_renewable_source",
+      "questionId": "q_renewable_source_01",
+      "componentId": "q_renewable_source_01_metric",
+      "componentKind": "formula_metric",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "formulaSpec.type",
+        "metricEntityRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_source_01_chart",
+      "astBlockId": "chart_q_renewable_source_01",
+      "astKind": "chart",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_capacity",
+      "sectionId": "section_renewable_source",
+      "questionId": "q_renewable_source_01",
+      "componentId": "q_renewable_source_01_chart",
+      "componentKind": "chart",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "xAxis.entityRef",
+        "yAxis.entityRef",
+        "analyticsRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_source_01_table",
+      "astBlockId": "table_q_renewable_source_01",
+      "astKind": "table",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_capacity",
+      "sectionId": "section_renewable_source",
+      "questionId": "q_renewable_source_01",
+      "componentId": "q_renewable_source_01_table",
+      "componentKind": "table",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "entity columns",
+        "source footnote"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_source_01_provenance",
+      "astBlockId": "p_q_renewable_source_01_provenance",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_capacity",
+      "sectionId": "section_renewable_source",
+      "questionId": "q_renewable_source_01",
+      "componentId": "q_renewable_source_01_provenance",
+      "componentKind": "provenance",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "lineageRef",
+        "datasetSignature"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_state_01_narrative",
+      "astBlockId": "p_q_renewable_state_01_narrative",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_capacity",
+      "sectionId": "section_renewable_state",
+      "questionId": "q_renewable_state_01",
+      "componentId": "q_renewable_state_01_narrative",
+      "componentKind": "narrative",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "mustMention",
+        "evidenceRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_state_01_metric",
+      "astBlockId": "m_q_renewable_state_01_metric",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_capacity",
+      "sectionId": "section_renewable_state",
+      "questionId": "q_renewable_state_01",
+      "componentId": "q_renewable_state_01_metric",
+      "componentKind": "formula_metric",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "formulaSpec.type",
+        "metricEntityRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_state_01_chart",
+      "astBlockId": "chart_q_renewable_state_01",
+      "astKind": "chart",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_capacity",
+      "sectionId": "section_renewable_state",
+      "questionId": "q_renewable_state_01",
+      "componentId": "q_renewable_state_01_chart",
+      "componentKind": "chart",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "xAxis.entityRef",
+        "yAxis.entityRef",
+        "analyticsRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_state_01_table",
+      "astBlockId": "table_q_renewable_state_01",
+      "astKind": "table",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_capacity",
+      "sectionId": "section_renewable_state",
+      "questionId": "q_renewable_state_01",
+      "componentId": "q_renewable_state_01_table",
+      "componentKind": "table",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "entity columns",
+        "source footnote"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_state_01_provenance",
+      "astBlockId": "p_q_renewable_state_01_provenance",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_capacity",
+      "sectionId": "section_renewable_state",
+      "questionId": "q_renewable_state_01",
+      "componentId": "q_renewable_state_01_provenance",
+      "componentKind": "provenance",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "lineageRef",
+        "datasetSignature"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_share_01_narrative",
+      "astBlockId": "p_q_renewable_share_01_narrative",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_mix",
+      "sectionId": "section_renewable_share",
+      "questionId": "q_renewable_share_01",
+      "componentId": "q_renewable_share_01_narrative",
+      "componentKind": "narrative",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "mustMention",
+        "evidenceRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_share_01_metric",
+      "astBlockId": "m_q_renewable_share_01_metric",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_mix",
+      "sectionId": "section_renewable_share",
+      "questionId": "q_renewable_share_01",
+      "componentId": "q_renewable_share_01_metric",
+      "componentKind": "formula_metric",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "formulaSpec.type",
+        "metricEntityRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_share_01_chart",
+      "astBlockId": "chart_q_renewable_share_01",
+      "astKind": "chart",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_mix",
+      "sectionId": "section_renewable_share",
+      "questionId": "q_renewable_share_01",
+      "componentId": "q_renewable_share_01_chart",
+      "componentKind": "chart",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "xAxis.entityRef",
+        "yAxis.entityRef",
+        "analyticsRef"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_share_01_table",
+      "astBlockId": "table_q_renewable_share_01",
+      "astKind": "table",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_mix",
+      "sectionId": "section_renewable_share",
+      "questionId": "q_renewable_share_01",
+      "componentId": "q_renewable_share_01_table",
+      "componentKind": "table",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "entity columns",
+        "source footnote"
+      ]
+    },
+    {
+      "slotId": "slot_q_renewable_share_01_provenance",
+      "astBlockId": "p_q_renewable_share_01_provenance",
+      "astKind": "content",
+      "source": "enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_renewable_potential",
+      "chapterId": "chapter_re_mix",
+      "sectionId": "section_renewable_share",
+      "questionId": "q_renewable_share_01",
+      "componentId": "q_renewable_share_01_provenance",
+      "componentKind": "provenance",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "lineageRef",
+        "datasetSignature"
+      ]
+    },
+    {
+      "slotId": "slot_doc_methodology_notes",
+      "astBlockId": "doc_methodology_notes",
+      "astKind": "content",
+      "source": "enterprise_built_in_document_control",
+      "confidence": 1.0,
+      "questionId": null,
+      "componentId": "component_doc_methodology_notes",
+      "componentKind": "methodology_note",
+      "documentRole": "back_matter_methodology",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": []
+    },
+    {
+      "slotId": "slot_doc_provenance_log",
+      "astBlockId": "doc_provenance_log",
+      "astKind": "content",
+      "source": "enterprise_built_in_document_control",
+      "confidence": 1.0,
+      "questionId": null,
+      "componentId": "component_doc_provenance_log",
+      "componentKind": "provenance_log",
+      "documentRole": "back_matter_provenance",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "datasetSignature"
+      ]
+    }
+  ],
+  "issues": [],
+  "counts": {
+    "questions": 6,
+    "components": 30,
+    "documentSlots": 5,
+    "slotsCreated": 35,
+    "semanticSlots": 35
+  },
+  "slotPolicies": {
+    "questionSlots": "filled by S4-S6 analytics, visuals, narrative, and provenance",
+    "documentControlSlots": "filled by officer profile, publication controls, or deterministic defaults",
+    "missingLineage": "publish_blocking_for_question_slots"
+  }
+}

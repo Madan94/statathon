@@ -1,0 +1,262 @@
+{
+  "$schema": "bharatstat/semantic-slot-graph/v1",
+  "templateId": "tpl_template_1_v1",
+  "slots": [
+    {
+      "slotId": "slot_q_001_c1",
+      "astBlockId": "p_q_001",
+      "astKind": "content",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_01",
+      "questionId": "q_001",
+      "componentId": "q_001_c1",
+      "componentKind": "narrative",
+      "fillFrom": "q_001_c1",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "slotPolicies": {
+        "fillFromMustReference": "componentId",
+        "requiresEvidence": true,
+        "allowOfficerRelink": true
+      }
+    },
+    {
+      "slotId": "slot_q_002_c1",
+      "astBlockId": "p_q_002",
+      "astKind": "content",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_02",
+      "questionId": "q_002",
+      "componentId": "q_002_c1",
+      "componentKind": "narrative",
+      "fillFrom": "q_002_c1",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "slotPolicies": {
+        "fillFromMustReference": "componentId",
+        "requiresEvidence": true,
+        "allowOfficerRelink": true
+      }
+    },
+    {
+      "slotId": "slot_q_003_c1",
+      "astBlockId": "p_q_003",
+      "astKind": "content",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_03",
+      "questionId": "q_003",
+      "componentId": "q_003_c1",
+      "componentKind": "narrative",
+      "fillFrom": "q_003_c1",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "slotPolicies": {
+        "fillFromMustReference": "componentId",
+        "requiresEvidence": true,
+        "allowOfficerRelink": true
+      }
+    },
+    {
+      "slotId": "slot_q_004_c1",
+      "astBlockId": "p_q_004",
+      "astKind": "content",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_04",
+      "questionId": "q_004",
+      "componentId": "q_004_c1",
+      "componentKind": "narrative",
+      "fillFrom": "q_004_c1",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "slotPolicies": {
+        "fillFromMustReference": "componentId",
+        "requiresEvidence": true,
+        "allowOfficerRelink": true
+      }
+    },
+    {
+      "slotId": "slot_q_005_c1",
+      "astBlockId": "p_q_005",
+      "astKind": "content",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_05",
+      "questionId": "q_005",
+      "componentId": "q_005_c1",
+      "componentKind": "narrative",
+      "fillFrom": "q_005_c1",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "slotPolicies": {
+        "fillFromMustReference": "componentId",
+        "requiresEvidence": true,
+        "allowOfficerRelink": true
+      }
+    },
+    {
+      "slotId": "slot_q_006_c1",
+      "astBlockId": "p_q_006",
+      "astKind": "content",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_07",
+      "questionId": "q_006",
+      "componentId": "q_006_c1",
+      "componentKind": "narrative",
+      "fillFrom": "q_006_c1",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "slotPolicies": {
+        "fillFromMustReference": "componentId",
+        "requiresEvidence": true,
+        "allowOfficerRelink": true
+      }
+    },
+    {
+      "slotId": "slot_q_007_c1",
+      "astBlockId": "p_q_007",
+      "astKind": "content",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_07",
+      "questionId": "q_007",
+      "componentId": "q_007_c1",
+      "componentKind": "narrative",
+      "fillFrom": "q_007_c1",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "slotPolicies": {
+        "fillFromMustReference": "componentId",
+        "requiresEvidence": true,
+        "allowOfficerRelink": true
+      }
+    },
+    {
+      "slotId": "slot_q_008_c1",
+      "astBlockId": "p_q_008",
+      "astKind": "content",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_08",
+      "questionId": "q_008",
+      "componentId": "q_008_c1",
+      "componentKind": "narrative",
+      "fillFrom": "q_008_c1",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "slotPolicies": {
+        "fillFromMustReference": "componentId",
+        "requiresEvidence": true,
+        "allowOfficerRelink": true
+      }
+    },
+    {
+      "slotId": "slot_q_005_c2",
+      "astBlockId": "chart_q_005",
+      "astKind": "chart",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_05",
+      "questionId": "q_005",
+      "componentId": "q_005_c2",
+      "componentKind": "chart",
+      "fillFrom": "q_005_c2",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "slotPolicies": {
+        "fillFromMustReference": "componentId",
+        "requiresEvidence": true,
+        "allowOfficerRelink": true
+      }
+    },
+    {
+      "slotId": "slot_q_007_c2",
+      "astBlockId": "chart_q_007_c2",
+      "astKind": "chart",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_07",
+      "questionId": "q_007",
+      "componentId": "q_007_c2",
+      "componentKind": "chart",
+      "fillFrom": "q_007_c2",
+      "lineageRequired": true,
+      "officerEditable": true,
+      "slotPolicies": {
+        "fillFromMustReference": "componentId",
+        "requiresEvidence": true,
+        "allowOfficerRelink": true
+      }
+    }
+  ],
+  "issues": [
+    {
+      "severity": "error",
+      "code": "DUPLICATE_COMPONENT_ID",
+      "message": "Duplicate componentId: q_006_c1",
+      "componentId": "q_006_c1"
+    },
+    {
+      "severity": "error",
+      "code": "DUPLICATE_COMPONENT_ID",
+      "message": "Duplicate componentId: q_006_c2",
+      "componentId": "q_006_c2"
+    },
+    {
+      "severity": "error",
+      "code": "DUPLICATE_COMPONENT_ID",
+      "message": "Duplicate componentId: q_006__provenance",
+      "componentId": "q_006__provenance"
+    },
+    {
+      "severity": "error",
+      "code": "DUPLICATE_COMPONENT_ID",
+      "message": "Duplicate componentId: q_007_c1",
+      "componentId": "q_007_c1"
+    },
+    {
+      "severity": "error",
+      "code": "DUPLICATE_COMPONENT_ID",
+      "message": "Duplicate componentId: q_007__formula_metric",
+      "componentId": "q_007__formula_metric"
+    },
+    {
+      "severity": "error",
+      "code": "DUPLICATE_COMPONENT_ID",
+      "message": "Duplicate componentId: q_007_c2",
+      "componentId": "q_007_c2"
+    },
+    {
+      "severity": "error",
+      "code": "DUPLICATE_COMPONENT_ID",
+      "message": "Duplicate componentId: q_007__provenance",
+      "componentId": "q_007__provenance"
+    },
+    {
+      "severity": "error",
+      "code": "DUPLICATE_QUESTION_ID",
+      "message": "Duplicate questionId: q_006",
+      "questionId": "q_006"
+    },
+    {
+      "severity": "error",
+      "code": "DUPLICATE_QUESTION_ID",
+      "message": "Duplicate questionId: q_007",
+      "questionId": "q_007"
+    }
+  ],
+  "counts": {
+    "questions": 10,
+    "components": 33,
+    "slotsCreated": 23,
+    "issuesBefore": 9,
+    "issuesAfter": 9,
+    "crosswalkQuestions": 8,
+    "crosswalkComponents": 10,
+    "semanticSlots": 10
+  }
+}

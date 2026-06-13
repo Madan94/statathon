@@ -27,7 +27,7 @@ export interface ParsedTemplateAst {
   bpTopics: Array<Record<string, unknown>>;
   bpEntities: Array<Record<string, unknown>>;
   bpTableTemplates: Array<Record<string, unknown>>;
-  entityNameById: Map<string, string>;
+  entityNameById: Record<string, string>;
   pipelineTrace: Record<string, unknown>;
   passes: Record<string, Record<string, unknown>>;
   hasContent: boolean;
