@@ -1085,8 +1085,9 @@ async def start_binding(
     _write_stash(binding.templateId, signature, profile, bp, raw, template_ast, semantic_slot_graph)
 
     logger.info(
-        "[binding-phase] start %s__%s — %d entities proposed (%d pending)",
+        "[binding-phase] start %s__%s — %d entities proposed (%d pending), first proposal columns: %s",
         binding.templateId, signature, len(entity_bindings), len(_pending_ids(record)),
+        record.proposals[0].get("columns", "MISSING") if record.proposals else "NO_PROPOSALS",
     )
     return StartOut(
         template_id=binding.templateId,
@@ -1107,6 +1108,9 @@ async def start_binding(
 def get_proposals(template_id: str, signature: str) -> ProposalsOut:
     """Return the S1 proposals plus any confirmations recorded so far."""
     record = _load_or_404(template_id, signature)
+    # Debug: verify proposals have columns
+    for i, p in enumerate(record.proposals[:2]):
+        logger.info("[binding-phase] proposals[%d] entityId=%s columns=%s", i, p.get("entityId"), p.get("columns"))
     return ProposalsOut(
         template_id=record.templateId,
         signature=record.datasetSignature,
