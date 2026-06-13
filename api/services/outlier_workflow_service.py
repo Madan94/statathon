@@ -11,7 +11,7 @@ from core.json_safe import make_json_safe
 from database.models import OutlierDecision, Phase3AnomalyIntel
 from services.analysis_dataframe_service import (
     column_identity_aliases,
-    load_analysis_dataframe,
+    load_phase_dataframe,
     resolve_column_alias,
 )
 from services.analysis_query import get_analysis_meta, load_analysis_checkpoint
@@ -20,7 +20,7 @@ from services.analysis_query import build_phase3_from_relational, merge_checkpoi
 from services.analysis_payload_cache import invalidate_analysis_cache
 from services.normalization_service import NormalizationService
 from services.phase_audit_service import PhaseAuditService
-from services.phase_snapshot_service import PhaseSnapshotService
+from services.phase_snapshot_service import refresh_downstream_with_status
 from services.phase_status_service import PhaseStatusService
 
 MethodChoice = Literal["Z_SCORE", "IQR"]
@@ -62,8 +62,8 @@ class OutlierWorkflowService:
                 merged[name] = bucket
         return merged
 
-    def _load_df(self, analysis_id: int) -> tuple[pd.DataFrame, dict[str, str]]:
-        return load_analysis_dataframe(self.db, analysis_id)
+    def _load_df(self, analysis_id: int) -> tuple[pd.DataFrame, dict[str, Any]]:
+        return load_phase_dataframe(self.db, analysis_id, "anomaly")
 
     def _column_maps(self, analysis_id: int) -> tuple[dict[str, str], dict[str, str]]:
         """Return (ui_to_physical, physical_to_ui) name maps."""
@@ -378,19 +378,24 @@ class OutlierWorkflowService:
             phase3["converted_to_missing"] = handoff
         self._save_phase3(analysis_id, an.dataset_id, phase3)
         PhaseStatusService(self.db).recompute_anomaly_columns(analysis_id)
-        try:
-            PhaseSnapshotService(self.db).snapshot_anomaly(analysis_id)
-            from services.apply_service import persist_processed_snapshot
-
-            persist_processed_snapshot(self.db, analysis_id)
-        except Exception as exc:
+        snapshot, snapshot_error = refresh_downstream_with_status(
+            self.db, analysis_id, "anomaly"
+        )
+        if snapshot_error:
             import logging
             logging.getLogger(__name__).warning(
-                "anomaly/processed snapshot skipped for analysis %s: %s", analysis_id, exc
+                "anomaly snapshot failed for analysis %s: %s", analysis_id, snapshot_error
             )
         invalidate_analysis_cache(analysis_id)
         self.db.commit()
-        return {"success": True, "analysis_id": analysis_id, "column": column, "saved": len(rows)}
+        return {
+            "success": True,
+            "analysis_id": analysis_id,
+            "column": column,
+            "saved": len(rows),
+            "snapshot": snapshot,
+            "snapshot_error": snapshot_error,
+        }
 
     def review_progress(self, analysis_id: int) -> dict[str, Any]:
         self._load_analysis(analysis_id)

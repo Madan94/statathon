@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { analysisApi, AnalysisResult } from '@/lib/api';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { analysisApi, AnalysisResult, AnalysisSummaryPayload } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import WorkflowStepper from '@/components/layout/WorkflowStepper';
 import AnalysisStepper from '@/components/analysis/AnalysisStepper';
@@ -12,12 +12,14 @@ import Step2Normalize from '@/components/analysis/pipeline/Step2Normalize';
 import Step3Semantic from '@/components/analysis/pipeline/Step3Semantic';
 import Step4Cluster from '@/components/analysis/pipeline/Step4Cluster';
 import Step5SchemaKG from '@/components/analysis/pipeline/Step5SchemaKG';
-import Step6RuleValidation from '@/components/analysis/pipeline/Step6RuleValidation';
-import ColumnAnalysisLayout from '@/components/analysis/ColumnAnalysisLayout';
-import Step8DatasetReview from '@/components/analysis/pipeline/Step8DatasetReview';
 import { SkeletonCard } from '@/components/ui/Skeleton';
 import { Alert } from '@/components/ui/Alert';
 import type { ColumnDecision } from '@/components/analysis/pipeline/Step2Normalize';
+import {
+  analysisRoutes,
+  loadHubStep,
+  saveHubStep,
+} from '@/lib/analysisPipeline';
 
 const STEP_HEADERS: Record<number, { title: string; description: string }> = {
   1: {
@@ -39,14 +41,9 @@ const STEP_HEADERS: Record<number, { title: string; description: string }> = {
       'Columns grouped by embedding similarity into domain clusters. Verify groupings before reviewing the schema.',
   },
   5: {
-    title: 'Schema & knowledge graph',
+    title: 'Schema graph',
     description:
-      'Full relational schema graph and knowledge-graph output. Download or verify before rule validation.',
-  },
-  6: {
-    title: 'Rule validation',
-    description:
-      'Single- and multi-column rule violations from domains, statistics, and the knowledge graph. Review before anomaly detection.',
+      'Relational schema graph from semantic analysis. Verify before rule validation.',
   },
 };
 
@@ -73,9 +70,37 @@ function decisionsFromSaved(
   return out;
 }
 
+function mergeSummaryIntoResults(
+  results: AnalysisResult,
+  summary: AnalysisSummaryPayload
+): AnalysisResult {
+  const prof = summary.profiling_summary ?? {};
+  const healthFromSummary = prof.health;
+  const schemaFromSummary = prof.schema;
+  return {
+    ...results,
+    health: {
+      ...(typeof results.health === 'object' && results.health ? results.health : {}),
+      ...(healthFromSummary ?? {}),
+    },
+    schema: {
+      ...(results.schema ?? {}),
+      ...(schemaFromSummary ?? {}),
+    },
+    dataset_context: {
+      ...(results.dataset_context ?? {}),
+      ...(summary.dataset_context ?? {}),
+    },
+    dataset_profile: summary.dataset_profile ?? results.dataset_profile,
+  };
+}
+
 export default function AnalysisPage() {
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const analysisId = Number(params.id);
+  const routes = analysisRoutes(analysisId);
 
   const [step, setStep] = useState(1);
   const [results, setResults] = useState<AnalysisResult | null>(null);
@@ -87,13 +112,30 @@ export default function AnalysisPage() {
   const [semanticOverrides, setSemanticOverrides] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    const fromUrl = searchParams.get('step');
+    const parsed = fromUrl ? parseInt(fromUrl, 10) : NaN;
+    if (parsed >= 1 && parsed <= 5) {
+      setStep(parsed);
+    } else {
+      setStep(loadHubStep(analysisId));
+    }
+  }, [analysisId, searchParams]);
+
+  useEffect(() => {
+    saveHubStep(analysisId, step);
+  }, [analysisId, step]);
+
+  useEffect(() => {
     Promise.all([
       analysisApi.getResults(analysisId, { includePhase3: false }),
+      analysisApi.getSummary(analysisId),
       analysisApi.getNormalization(analysisId),
     ])
-      .then(([res, norm]) => {
-        setResults(res);
+      .then(([res, summary, norm]) => {
+        setResults(mergeSummaryIntoResults(res, summary));
         if (norm.normalization_version && norm.columns.length > 0) {
+          setColumnDecisions(decisionsFromSaved(norm.columns));
+        } else if (norm.columns.length > 0) {
           setColumnDecisions(decisionsFromSaved(norm.columns));
         }
       })
@@ -103,30 +145,10 @@ export default function AnalysisPage() {
       .finally(() => setLoading(false));
   }, [analysisId]);
 
-  const [phase3Loading, setPhase3Loading] = useState(false);
-  const [phase3Error, setPhase3Error] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (step < 6) return;
-    setPhase3Loading(true);
-    setPhase3Error(null);
-    analysisApi
-      .getResults(analysisId, { includePhase3: true })
-      .then(setResults)
-      .catch(() => setPhase3Error('Failed to load rule validation results'))
-      .finally(() => setPhase3Loading(false));
-  }, [step, analysisId]);
-
-  const handleProceedToAnomaly = async () => {
-    setPhase3Loading(true);
-    try {
-      const refreshed = await analysisApi.getResults(analysisId, { includePhase3: true });
-      setResults(refreshed);
-      setStep(7);
-    } catch {
-      toast.error('Failed to refresh analysis state before anomaly review');
-    } finally {
-      setPhase3Loading(false);
+  const goToStep = (next: number) => {
+    setStep(next);
+    if (next >= 1 && next <= 5) {
+      router.replace(routes.hubStep(next));
     }
   };
 
@@ -140,11 +162,18 @@ export default function AnalysisPage() {
         is_excluded: !c.included && !c.isDeleted,
       }));
       await analysisApi.saveNormalization(analysisId, columns);
-      const refreshed = await analysisApi.getResults(analysisId, { includePhase3: false });
+      const [refreshed, norm] = await Promise.all([
+        analysisApi.getResults(analysisId, { includePhase3: false }),
+        analysisApi.getNormalization(analysisId),
+      ]);
       setResults(refreshed);
-      setColumnDecisions(decisions);
+      if (norm.columns.length > 0) {
+        setColumnDecisions(decisionsFromSaved(norm.columns));
+      } else {
+        setColumnDecisions(decisions);
+      }
       toast.success('Normalisation saved — semantic mapping uses approved schema');
-      setStep(3);
+      goToStep(3);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to save normalisation';
       toast.error(msg);
@@ -170,61 +199,24 @@ export default function AnalysisPage() {
     );
   }
 
-  if (step === 8) {
-    return (
-      <Step8DatasetReview
-        analysisId={analysisId}
-        onBack={() => setStep(7)}
-      />
-    );
-  }
-
-  if (step === 7) {
-    return (
-      <ColumnAnalysisLayout
-        results={results}
-        analysisId={analysisId}
-        onBack={() => setStep(6)}
-        onProceedToDatasetReview={() => setStep(8)}
-      />
-    );
-  }
-
-  if (step === 6) {
-    return (
-      <div className="pb-12">
-        <WorkflowStepper currentStep={3} className="mb-5" />
-        <AnalysisStepper currentStep={6} className="mb-8" />
-        <PageHeader title={STEP_HEADERS[6].title} description={STEP_HEADERS[6].description} />
-        <Step6RuleValidation
-          results={results}
-          analysisId={analysisId}
-          loadState={phase3Loading ? 'loading' : phase3Error ? 'error' : 'loaded'}
-          loadError={phase3Error}
-          onProceed={handleProceedToAnomaly}
-          onBack={() => setStep(5)}
-        />
-      </div>
-    );
-  }
-
   const header = STEP_HEADERS[step];
 
   return (
     <div className="pb-12">
       <WorkflowStepper currentStep={3} className="mb-5" />
-      <AnalysisStepper currentStep={step} className="mb-8" />
+      <AnalysisStepper analysisId={analysisId} currentStep={step} className="mb-8" />
 
       <PageHeader title={header.title} description={header.description} />
 
-      {step === 1 && <Step1Summary results={results} onProceed={() => setStep(2)} />}
+      {step === 1 && <Step1Summary results={results} onProceed={() => goToStep(2)} />}
 
       {step === 2 && (
         <Step2Normalize
           results={results}
+          analysisId={analysisId}
           decisions={columnDecisions}
           onProceed={handleSaveNormalization}
-          onBack={() => setStep(1)}
+          onBack={() => goToStep(1)}
           saving={savingNormalization}
         />
       )}
@@ -238,9 +230,9 @@ export default function AnalysisPage() {
           normalizationVersion={results.normalization_version}
           onProceed={(o) => {
             setSemanticOverrides(o);
-            setStep(4);
+            goToStep(4);
           }}
-          onBack={() => setStep(2)}
+          onBack={() => goToStep(2)}
         />
       )}
 
@@ -248,8 +240,8 @@ export default function AnalysisPage() {
         <Step4Cluster
           results={results}
           analysisId={analysisId}
-          onProceed={() => setStep(5)}
-          onBack={() => setStep(3)}
+          onProceed={() => goToStep(5)}
+          onBack={() => goToStep(3)}
         />
       )}
 
@@ -257,8 +249,8 @@ export default function AnalysisPage() {
         <Step5SchemaKG
           results={results}
           analysisId={analysisId}
-          onProceed={() => setStep(6)}
-          onBack={() => setStep(4)}
+          onProceed={() => router.push(routes.validation)}
+          onBack={() => goToStep(4)}
         />
       )}
     </div>

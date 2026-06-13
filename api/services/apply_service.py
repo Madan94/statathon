@@ -123,6 +123,26 @@ def _phase3_overlay(db: Session, analysis_id: int, checkpoint: dict[str, Any]) -
     return merged
 
 
+def _snapshot_exists(db: Session, analysis_id: int, stage: str) -> bool:
+    """True if a lineage row exists in DB or is pending insert in this session."""
+    for obj in db.new:
+        if (
+            isinstance(obj, DatasetLineageSnapshot)
+            and obj.analysis_id == analysis_id
+            and obj.stage == stage
+        ):
+            return True
+    row = (
+        db.query(DatasetLineageSnapshot.id)
+        .filter(
+            DatasetLineageSnapshot.analysis_id == analysis_id,
+            DatasetLineageSnapshot.stage == stage,
+        )
+        .first()
+    )
+    return row is not None
+
+
 def _next_version(db: Session, analysis_id: int, stage: str) -> int:
     latest = (
         db.query(DatasetLineageSnapshot)
@@ -133,7 +153,18 @@ def _next_version(db: Session, analysis_id: int, stage: str) -> int:
         .order_by(DatasetLineageSnapshot.version.desc())
         .first()
     )
-    return (latest.version + 1) if latest else 1
+    pending_versions = [
+        obj.version
+        for obj in db.new
+        if isinstance(obj, DatasetLineageSnapshot)
+        and obj.analysis_id == analysis_id
+        and obj.stage == stage
+        and obj.version is not None
+    ]
+    max_version = latest.version if latest else 0
+    if pending_versions:
+        max_version = max(max_version, max(pending_versions))
+    return max_version + 1
 
 
 def _persist_snapshot(
@@ -392,25 +423,10 @@ def materialize_processed_dataframe(db: Session, analysis_id: int) -> pd.DataFra
 
 
 def persist_processed_snapshot(db: Session, analysis_id: int) -> dict[str, Any]:
-    """Materialize from DB decisions and persist as the latest imputed snapshot."""
-    an = db.query(Analysis).filter(Analysis.id == analysis_id).first()
-    if not an:
-        raise ValueError("Analysis not found")
-    ds = db.query(Dataset).filter(Dataset.id == an.dataset_id).first()
-    if not ds:
-        raise ValueError("Dataset not found")
+    """Refresh the working dataset snapshot via the phase chain (validated → anomaly → imputed)."""
+    from services.phase_snapshot_service import PhaseSnapshotService
 
-    df = materialize_processed_dataframe(db, analysis_id)
-    store = try_build_default_store() if ds.object_key else None
-    return _persist_snapshot(
-        db,
-        analysis_id=analysis_id,
-        dataset_id=ds.id,
-        stage="imputed",
-        df=df,
-        store=store,
-        meta={"phase": "v5_missing_value", "materialized": True},
-    )
+    return PhaseSnapshotService(db).snapshot_imputation(analysis_id)
 
 
 def apply_analysis_decisions(

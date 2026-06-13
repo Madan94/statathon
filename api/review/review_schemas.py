@@ -40,6 +40,8 @@ class ReviewSummaryBlock(BaseModel):
     columns_before: int = 0
     columns_after: int = 0
     columns_removed: int = 0
+    columns_renamed: int = 0
+    columns_excluded: int = 0
     missing_values_before: int = 0
     missing_values_after: int = 0
     rule_violations_fixed: int = 0

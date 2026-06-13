@@ -1,6 +1,7 @@
 """Create versioned dataset snapshots after each review phase completes."""
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import pandas as pd
@@ -12,7 +13,7 @@ from database.models import Dataset, ImputationRowDecision, OutlierDecision, Val
 from object_storage.object_store import try_build_default_store
 from pipelines.validation_gate import apply_user_decisions
 from services.analysis_dataframe_service import load_snapshot_dataframe
-from services.analysis_query import get_analysis_meta, load_analysis_checkpoint
+from services.analysis_query import get_analysis_meta, load_analysis_checkpoint, load_checkpoint_phase3_overlay
 from services.apply_service import (
     _apply_imputation,
     _apply_outlier_decisions,
@@ -29,6 +30,24 @@ from services.normalization_transform_service import (
 
 STAGE_PRIORITY = ("imputed", "anomaly_reviewed", "validated", "normalized", "original")
 
+logger = logging.getLogger(__name__)
+
+
+def refresh_downstream_with_status(
+    db: Session, analysis_id: int, from_phase: str
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Rebuild snapshots; return (snapshot_meta, error_message)."""
+    try:
+        result = PhaseSnapshotService(db).refresh_downstream(analysis_id, from_phase)
+        return result, None
+    except Exception as exc:
+        logger.exception(
+            "Snapshot refresh failed for analysis %s from %s",
+            analysis_id,
+            from_phase,
+        )
+        return None, str(exc)
+
 
 def latest_snapshot_stage(db: Session, analysis_id: int) -> str | None:
     for stage in STAGE_PRIORITY:
@@ -41,6 +60,36 @@ def latest_snapshot_stage(db: Session, analysis_id: int) -> str | None:
 class PhaseSnapshotService:
     def __init__(self, db: Session):
         self.db = db
+
+    def _outlier_decision_rows(self, analysis_id: int) -> list[OutlierDecision]:
+        rows = (
+            self.db.query(OutlierDecision).filter(OutlierDecision.analysis_id == analysis_id).all()
+        )
+        if rows:
+            return rows
+
+        phase3 = load_checkpoint_phase3_overlay(self.db, analysis_id)
+        raw = phase3.get("outlier_row_decisions") or {}
+        pseudo: list[OutlierDecision] = []
+        if isinstance(raw, dict):
+            for column, decisions in raw.items():
+                if not isinstance(decisions, list):
+                    continue
+                for d in decisions:
+                    if not isinstance(d, dict) or d.get("row_index") is None:
+                        continue
+                    pseudo.append(
+                        OutlierDecision(
+                            analysis_id=analysis_id,
+                            column_name=str(column),
+                            row_index=int(d["row_index"]),
+                            decision=str(d.get("decision") or "KEEP"),
+                            method=str(d.get("method") or d.get("methodology") or "") or None,
+                            old_value=str(d.get("old_value")) if d.get("old_value") is not None else None,
+                            new_value=str(d.get("new_value")) if d.get("new_value") is not None else None,
+                        )
+                    )
+        return pseudo
 
     def _base_df(self, analysis_id: int) -> tuple[pd.DataFrame, Any, Dataset, dict[str, str]]:
         an = get_analysis_meta(self.db, analysis_id)
@@ -124,9 +173,7 @@ class PhaseSnapshotService:
             df = validated
             ui_to_physical, _ = _column_maps(self.db, analysis_id)
 
-        decisions = (
-            self.db.query(OutlierDecision).filter(OutlierDecision.analysis_id == analysis_id).all()
-        )
+        decisions = self._outlier_decision_rows(analysis_id)
         out, stats = _apply_outlier_decisions(df, decisions, ui_to_physical)
         return _persist_snapshot(
             self.db,
@@ -153,7 +200,11 @@ class PhaseSnapshotService:
             ui_to_physical, _ = _column_maps(self.db, analysis_id)
 
         checkpoint = load_analysis_checkpoint(self.db, analysis_id) or {}
-        phase3 = checkpoint.get("phase3") if isinstance(checkpoint.get("phase3"), dict) else {}
+        phase3_checkpoint = (
+            checkpoint.get("phase3") if isinstance(checkpoint.get("phase3"), dict) else {}
+        )
+        phase3_overlay = load_checkpoint_phase3_overlay(self.db, analysis_id)
+        phase3 = {**phase3_checkpoint, **phase3_overlay}
         imputation_rows = (
             self.db.query(ImputationRowDecision)
             .filter(ImputationRowDecision.analysis_id == analysis_id)
@@ -169,3 +220,18 @@ class PhaseSnapshotService:
             store=store,
             meta={"imputation": applied, "phase": "v5_missing_value"},
         )
+
+    def refresh_downstream(self, analysis_id: int, from_phase: str) -> dict[str, Any]:
+        """Rebuild working snapshots from a phase forward (validation → anomaly → imputed)."""
+        last: dict[str, Any] = {}
+        phase = from_phase.lower()
+        if phase in ("validation", "validated", "normalization"):
+            last = self.snapshot_validation(analysis_id)
+            last = self.snapshot_anomaly(analysis_id)
+            last = self.snapshot_imputation(analysis_id)
+        elif phase in ("anomaly", "anomaly_reviewed"):
+            last = self.snapshot_anomaly(analysis_id)
+            last = self.snapshot_imputation(analysis_id)
+        elif phase in ("imputation", "imputed", "missing_values"):
+            last = self.snapshot_imputation(analysis_id)
+        return last

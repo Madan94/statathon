@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AnalysisResult, ValidationCandidate } from '@/lib/api';
 import { analysisApi } from '@/lib/api';
+import ValidationRulesInventory, {
+  type RulesInventoryRow,
+} from '@/components/analysis/ValidationRulesInventory';
 import ValidationTable, {
   type ValidationLoadState,
   type ValidationTableHandle,
@@ -11,7 +14,7 @@ import Card from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
-import { Shield, ShieldAlert, ShieldCheck, ArrowRight, AlertTriangle, Loader2, CheckCircle2 } from 'lucide-react';
+import { Shield, ShieldAlert, ShieldCheck, ArrowRight, AlertTriangle, Loader2, CheckCircle2, Database } from 'lucide-react';
 import { toast } from '@/lib/toast';
 
 interface Props {
@@ -24,6 +27,7 @@ interface Props {
 }
 
 type ProceedPhase = 'idle' | 'saving' | 'saved' | 'moving' | 'error';
+type ApplyPhase = 'idle' | 'applying' | 'done' | 'error';
 
 function countBySeverity(candidates: ValidationCandidate[]) {
   const counts: Record<string, number> = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
@@ -48,7 +52,10 @@ export default function Step6RuleValidation({
     Boolean((results.phase3 as { validation_acknowledged?: boolean } | undefined)?.validation_acknowledged),
   );
   const [proceedPhase, setProceedPhase] = useState<ProceedPhase>('idle');
+  const [applyPhase, setApplyPhase] = useState<ApplyPhase>('idle');
+  const [applyMessage, setApplyMessage] = useState<string | null>(null);
   const [savedDecisionCount, setSavedDecisionCount] = useState(0);
+  const [emptyReviewAck, setEmptyReviewAck] = useState(false);
   const [validationProgress, setValidationProgress] = useState({
     reviewed: 0,
     total: 0,
@@ -70,10 +77,12 @@ export default function Step6RuleValidation({
 
   const validationResults = (phase3.validation_results as {
     summary?: { gate?: Record<string, unknown> };
+    rules_inventory?: RulesInventoryRow[];
     single_column?: unknown[];
     multi_column?: unknown[];
   } | undefined) ?? {};
   const gateSummary = (validationResults.summary?.gate ?? validationResults.summary ?? {}) as Record<string, unknown>;
+  const rulesInventory = validationResults.rules_inventory ?? [];
 
   const domainByColumn = useMemo(() => {
     const map: Record<string, string> = {};
@@ -88,14 +97,53 @@ export default function Step6RuleValidation({
 
   const severity = countBySeverity(candidates);
   const criticalCount = severity.CRITICAL;
-  const singleCount = candidates.filter((c) => (c.kind ?? '').includes('single')).length;
-  const multiCount = candidates.filter((c) => !(c.kind ?? '').includes('single')).length;
   const rulesDiscovered = Number(gateSummary.rules_discovered ?? 0);
   const rulesFired = Number(gateSummary.rules_fired ?? candidates.length);
+  const singleCount = Number(
+    gateSummary.rules_matched_columns
+      ?? candidates.filter((c) => (c.kind ?? '').includes('single')).length,
+  );
+  const multiCount = (validationResults.multi_column ?? []).length;
   const approved = gateSummary.approved !== false && criticalCount === 0;
+  const needsEmptyReviewAck = candidates.length === 0;
 
-  const canProceed = (approved || acknowledged) && proceedPhase !== 'saving' && proceedPhase !== 'moving';
+  const canProceed =
+    (approved || acknowledged) &&
+    (validationProgress.complete || candidates.length === 0) &&
+    (!needsEmptyReviewAck || emptyReviewAck) &&
+    proceedPhase !== 'saving' &&
+    proceedPhase !== 'moving';
+  const canApply =
+    applyPhase !== 'applying' &&
+    (savedDecisionCount > 0 || validationProgress.complete || Boolean(phase3.validation_acknowledged));
   const isLoading = loadState === 'loading' || loadState === 'idle';
+
+  const handleApplyToDataset = async () => {
+    setApplyPhase('applying');
+    setApplyMessage(null);
+    try {
+      const res = await analysisApi.applyLineage(analysisId);
+      const applied = (res as { applied?: Record<string, unknown> })?.applied;
+      const snapshotError = (res as { snapshot_error?: string })?.snapshot_error;
+      if (snapshotError) {
+        toast.info(`Apply completed with warnings: ${snapshotError}`);
+      } else {
+        toast.success('Validation decisions applied to working dataset snapshots.');
+      }
+      setApplyMessage(
+        applied
+          ? `Applied: ${JSON.stringify(applied).slice(0, 120)}…`
+          : 'Dataset snapshots rebuilt from saved decisions.'
+      );
+      setApplyPhase('done');
+    } catch (err: unknown) {
+      setApplyPhase('error');
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+        ?? (err instanceof Error ? err.message : 'Apply failed');
+      toast.error(String(msg));
+    }
+  };
 
   const handleProceed = async () => {
     setProceedPhase('saving');
@@ -193,6 +241,35 @@ export default function Step6RuleValidation({
         </Alert>
       )}
 
+      {!isLoading && (
+        <ValidationRulesInventory
+          inventory={rulesInventory}
+          rulesDiscovered={rulesDiscovered}
+          className="mb-2"
+        />
+      )}
+
+      {!isLoading && needsEmptyReviewAck && (
+        <Alert variant="warning" title="No violation rows — confirm before proceeding">
+          <p className="text-sm">
+            The table below has no cells to review
+            {rulesInventory.length === 0
+              ? ' because no rules matched your column names.'
+              : ` — ${rulesInventory.filter((r) => r.status === 'passed').length} rule check(s) passed cleanly.`}
+            {' '}You must still review the rules inventory and apply decisions before column analysis.
+          </p>
+          <label className="flex items-center gap-2 mt-3 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={emptyReviewAck}
+              onChange={(e) => setEmptyReviewAck(e.target.checked)}
+              className="rounded border-border"
+            />
+            I reviewed the rules inventory and confirm there are no open validation issues
+          </label>
+        </Alert>
+      )}
+
       <ValidationTable
         ref={tableRef}
         candidates={candidates}
@@ -207,6 +284,9 @@ export default function Step6RuleValidation({
               total: p.total,
               complete: p.complete,
             });
+            if (p.reviewed > 0) {
+              setSavedDecisionCount(p.reviewed);
+            }
           });
         }}
       />
@@ -257,13 +337,28 @@ export default function Step6RuleValidation({
 
       <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border">
         <Button variant="ghost" onClick={onBack} disabled={proceedPhase === 'saving' || proceedPhase === 'moving'}>
-          ← Back to Schema & KG
+          ← Back to schema graph
         </Button>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleApplyToDataset}
+            disabled={!canApply || isLoading}
+            className="gap-2"
+          >
+            {applyPhase === 'applying' ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Database className="h-4 w-4" />
+            )}
+            Apply to dataset
+          </Button>
           {!canProceed && !isLoading && (
             <span className="text-xs text-text-muted flex items-center gap-1">
               <AlertTriangle className="h-3.5 w-3.5" />
-              Acknowledge critical issues to proceed
+              {needsEmptyReviewAck && !emptyReviewAck
+                ? 'Confirm rules inventory review above'
+                : 'Review all violations or acknowledge critical issues'}
             </span>
           )}
           <Button
@@ -272,11 +367,14 @@ export default function Step6RuleValidation({
             className="gap-2"
           >
             <Shield className="h-4 w-4" />
-            Proceed to Anomaly Detection
+            Proceed to column analysis
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
+      {applyMessage && applyPhase === 'done' && (
+        <p className="text-xs text-success">{applyMessage}</p>
+      )}
     </div>
   );
 }

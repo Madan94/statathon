@@ -72,6 +72,22 @@ def resolve_column_alias(
     return None
 
 
+WORKING_STAGE_BY_PHASE: dict[str, str] = {
+    "normalization": "original",
+    "validation": "normalized",
+    "anomaly": "validated",
+    "imputation": "anomaly_reviewed",
+    "review": "imputed",
+}
+
+_STAGE_FALLBACKS: dict[str, tuple[str, ...]] = {
+    "normalized": ("original",),
+    "validated": ("normalized", "original"),
+    "anomaly_reviewed": ("validated", "normalized", "original"),
+    "imputed": ("anomaly_reviewed", "validated", "normalized", "original"),
+}
+
+
 def load_snapshot_dataframe(db: Session, analysis_id: int, stage: str | None = None) -> pd.DataFrame | None:
     """Load the latest parquet snapshot for an analysis stage."""
     from database.models import DatasetLineageSnapshot
@@ -105,14 +121,27 @@ def load_snapshot_dataframe(db: Session, analysis_id: int, stage: str | None = N
     return None
 
 
-def load_analysis_dataframe(db: Session, analysis_id: int) -> tuple[pd.DataFrame, dict[str, str]]:
-    snap_df = load_snapshot_dataframe(db, analysis_id)
-    if snap_df is not None:
-        schema = infer_schema(snap_df)
-        return normalize_schema(snap_df, schema), schema
+def load_phase_dataframe(
+    db: Session,
+    analysis_id: int,
+    phase: str,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Load the working dataset input for a pipeline phase (never a later stage)."""
+    stage = WORKING_STAGE_BY_PHASE.get(phase, "imputed")
+    snap_df = load_snapshot_dataframe(db, analysis_id, stage)
+    if snap_df is None:
+        for fallback in _STAGE_FALLBACKS.get(stage, ()):
+            snap_df = load_snapshot_dataframe(db, analysis_id, fallback)
+            if snap_df is not None:
+                break
+    if snap_df is None:
+        from services.normalization_transform_service import load_working_dataframe as build_working
 
-    from services.normalization_transform_service import load_working_dataframe
+        snap_df, _, _ = build_working(db, analysis_id, apply_user_norm=True)
+    schema = infer_schema(snap_df)
+    return normalize_schema(snap_df, schema), schema
 
-    df, _, _ = load_working_dataframe(db, analysis_id, apply_user_norm=True)
-    schema = infer_schema(df)
-    return normalize_schema(df, schema), schema
+
+def load_analysis_dataframe(db: Session, analysis_id: int) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Load the latest approved working dataset for reporting (imputed stage)."""
+    return load_phase_dataframe(db, analysis_id, "review")

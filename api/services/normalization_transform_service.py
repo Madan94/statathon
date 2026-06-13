@@ -146,6 +146,15 @@ def load_working_dataframe(
     return df, ui_to_physical, physical_to_ui
 
 
+def ensure_original_snapshot(db: Session, analysis_id: int) -> dict[str, Any] | None:
+    """Persist immutable upload snapshot once; return metadata if newly written."""
+    from services.apply_service import _snapshot_exists
+
+    if _snapshot_exists(db, analysis_id, "original"):
+        return None
+    return persist_original_snapshot(db, analysis_id)
+
+
 def persist_original_snapshot(db: Session, analysis_id: int) -> dict[str, Any]:
     from services.apply_service import _persist_snapshot
 
@@ -163,9 +172,22 @@ def persist_original_snapshot(db: Session, analysis_id: int) -> dict[str, Any]:
 
 def persist_normalized_snapshot(db: Session, analysis_id: int) -> dict[str, Any]:
     from services.apply_service import _persist_snapshot
+    from services.analysis_dataframe_service import load_snapshot_dataframe
     from services.normalization_service import NormalizationService
 
-    df, ds, store = load_raw_upload_dataframe(db, analysis_id)
+    ensure_original_snapshot(db, analysis_id)
+    df = load_snapshot_dataframe(db, analysis_id, "original")
+    if df is not None:
+        an = get_analysis_meta(db, analysis_id)
+        if not an:
+            raise ValueError("Analysis not found")
+        ds = db.query(Dataset).filter(Dataset.id == an.dataset_id).first()
+        if not ds:
+            raise ValueError("Dataset not found")
+        store = try_build_default_store() if ds.object_key else None
+    else:
+        df, ds, store = load_raw_upload_dataframe(db, analysis_id)
+
     checkpoint = load_analysis_checkpoint(db, analysis_id) or {}
     df = apply_pipeline_column_rename(df, checkpoint)
     records = NormalizationService(db)._ensure_columns_seeded(analysis_id)

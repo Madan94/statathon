@@ -35,8 +35,10 @@ from sqlalchemy.orm import Session
 from database.database import Base, engine, SessionLocal, is_transient_db_error, pool_stats
 import database.models  # noqa: F401 — register metadata for semantic tables
 from pipelines.model_path import ensure_huggingface_hub_cache
+from pipelines.storage_paths import normalize_storage_env
 
 ensure_huggingface_hub_cache(_REPO_ROOT)
+normalize_storage_env()
 
 # Configure rich logging BEFORE importing routers (so their module-level
 # loggers inherit the new handler instead of basicConfig defaults).
