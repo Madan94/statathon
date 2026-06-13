@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, Lock, Plus, Share2, Sparkles, Upload as UploadIcon, type LucideIcon } from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Info, Loader2, Lock, Plus, Share2, Sparkles, Upload as UploadIcon, X, type LucideIcon } from 'lucide-react';
 
 import PageHeader from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
@@ -170,7 +170,6 @@ export default function BindingWorkflowPage() {
   const [workspace, setWorkspace] = useState<BindingWorkspace | null>(null);
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [workbenchMode, setWorkbenchMode] = useState<WorkbenchMode>('overview');
-  const [focusedEntityId, setFocusedEntityId] = useState<string | null>(null);
   const [focusedQuestionId, setFocusedQuestionId] = useState<string | null>(null);
   const [focusedComponentId, setFocusedComponentId] = useState<string | null>(null);
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
@@ -181,6 +180,7 @@ export default function BindingWorkflowPage() {
   const [newEntityType, setNewEntityType] = useState<'dimension' | 'measure' | 'time' | 'filter' | 'metadata'>('dimension');
   const [newEntitySharePolicy, setNewEntitySharePolicy] = useState<'exclusive' | 'shared'>('exclusive');
   const [newEntityShareReason, setNewEntityShareReason] = useState('');
+  const [addEntityOpen, setAddEntityOpen] = useState(false);
 
   // step 2
   const [finalizing, setFinalizing] = useState(false);
@@ -262,6 +262,7 @@ export default function BindingWorkflowPage() {
       proposals: record.proposals,
       confirmations: record.confirmations,
       column_ownership: record.column_ownership,
+      column_decisions: record.column_decisions ?? {},
     } : prev);
     setDecisions(decisionsFromConfirmations(record.confirmations));
     setResult(null);
@@ -356,10 +357,22 @@ export default function BindingWorkflowPage() {
       setNewEntityType('dimension');
       setNewEntitySharePolicy('exclusive');
       setNewEntityShareReason('');
+      setAddEntityOpen(false);
     } catch (err) {
       setError(errMessage(err, 'Could not add that entity'));
     } finally {
       setAddingEntity(false);
+    }
+  };
+
+  const onColumnDecide = async (decision: { column: string; status: import('@/lib/api').ColumnDecisionStatus; entity_id?: string; note?: string }) => {
+    if (!session) return;
+    setError(null);
+    try {
+      const record = await bindingPhaseApi.decideColumn(session.template_id, session.signature, decision);
+      await refreshFromRecord(record);
+    } catch (err) {
+      setError(errMessage(err, 'Could not save that column decision'));
     }
   };
 
@@ -665,7 +678,6 @@ export default function BindingWorkflowPage() {
     setExecutionReady(null);
     setWorkspace(null);
     setWorkbenchMode('overview');
-    setFocusedEntityId(null);
     setFocusedQuestionId(null);
     setFocusedComponentId(null);
     setEditComponentEntitiesTarget(null);
@@ -675,7 +687,6 @@ export default function BindingWorkflowPage() {
   };
 
   const focusIssue = (issue: BindingWorkspaceIssue) => {
-    setFocusedEntityId(issue.entityId || null);
     setFocusedQuestionId(issue.questionId || null);
     setFocusedComponentId(issue.componentId || null);
     if (issue.targetMode && ['overview', 'entities', 'questions', 'columns', 'issues', 'handoff'].includes(issue.targetMode)) {
@@ -841,34 +852,222 @@ export default function BindingWorkflowPage() {
     </>
   );
 
+  const renderWorkbenchNav = () => (
+    <nav className="flex gap-2 overflow-x-auto pb-1">
+      {workbenchModes.map((mode) => (
+        <button
+          key={mode.id}
+          type="button"
+          onClick={() => setWorkbenchMode(mode.id)}
+          className={`min-w-[10.5rem] rounded-xl border px-3 py-2 text-left transition-colors ${workbenchMode === mode.id ? 'border-primary bg-primary/5 text-text shadow-sm' : 'border-transparent text-text-muted hover:border-border hover:bg-surface'}`}
+        >
+          <span className="flex items-center justify-between gap-2">
+            <span className="text-sm font-semibold">{mode.label}</span>
+            <Badge variant={mode.status === 'Ready' ? 'success' : mode.status === 'Blocked' ? 'danger' : mode.status === 'Review' ? 'warning' : 'muted'} className="px-1.5 py-0 text-[10px]">
+              {mode.status}
+            </Badge>
+          </span>
+          <span className="mt-0.5 block truncate text-xs">{mode.hint}</span>
+        </button>
+      ))}
+    </nav>
+  );
+
+  const renderColumnAllocationPanel = () => (
+    <div className="space-y-3">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Column allocation</p>
+        <p className="mt-1 text-xs text-text-muted">Live ownership state for this dataset. Use it to avoid accidental double-claims.</p>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="rounded-lg border border-border bg-surface px-3 py-2">
+          <p className="text-[11px] uppercase text-text-muted">Assigned</p>
+          <p className="mt-1 font-semibold text-text">{ownershipStats.assigned}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface px-3 py-2">
+          <p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><Lock className="h-3 w-3" /> Locked</p>
+          <p className="mt-1 font-semibold text-text">{ownershipStats.locked}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface px-3 py-2">
+          <p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><Share2 className="h-3 w-3" /> Shared</p>
+          <p className="mt-1 font-semibold text-text">{ownershipStats.shared}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface px-3 py-2">
+          <p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><AlertTriangle className="h-3 w-3" /> Conflicts</p>
+          <p className="mt-1 font-semibold text-text">{ownershipStats.conflicts}</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAddEntityForm = () => {
+    if (!session) return null;
+    return (
+      <form onSubmit={onAddEntity} className="space-y-3">
+        <select
+          value={newEntityColumn}
+          onChange={(e) => {
+            const column = e.target.value;
+            setNewEntityColumn(column);
+            setNewEntityType(entityTypeForColumn(column));
+            if (!newEntityName.trim()) setNewEntityName(column.replace(/_/g, ' '));
+          }}
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+        >
+          <option value="">Select column</option>
+          {session.dataset_ast.columns.map((column) => <option key={column.name} value={column.name}>{column.name}</option>)}
+        </select>
+        {newEntityColumn && (
+          <div className="rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-muted">
+            {(session.column_ownership.columns[newEntityColumn]?.owners?.length ?? 0) > 0
+              ? session.column_ownership.columns[newEntityColumn].owners
+                  .map((owner) => `${owner.entityName || owner.entityId} (${owner.status}/${owner.sharePolicy})`)
+                  .join(', ')
+              : 'No existing claims for this column.'}
+          </div>
+        )}
+        <input
+          value={newEntityName}
+          onChange={(e) => setNewEntityName(e.target.value)}
+          placeholder="Entity name"
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+        />
+        <select
+          value={newEntityType}
+          onChange={(e) => setNewEntityType(e.target.value as typeof newEntityType)}
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+        >
+          <option value="dimension">Dimension</option>
+          <option value="measure">Measure</option>
+          <option value="time">Time</option>
+          <option value="filter">Filter</option>
+          <option value="metadata">Metadata</option>
+        </select>
+        <select
+          value={newEntitySharePolicy}
+          onChange={(e) => setNewEntitySharePolicy(e.target.value as typeof newEntitySharePolicy)}
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+        >
+          <option value="exclusive">Exclusive owner</option>
+          <option value="shared">Shared with existing owner</option>
+        </select>
+        {newEntitySharePolicy === 'shared' && (
+          <textarea
+            value={newEntityShareReason}
+            onChange={(e) => setNewEntityShareReason(e.target.value)}
+            rows={2}
+            placeholder="Required reason for shared ownership"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+          />
+        )}
+        <Button
+          type="submit"
+          size="sm"
+          className="w-full"
+          disabled={
+            addingEntity ||
+            !newEntityColumn ||
+            !newEntityName.trim() ||
+            (newEntitySharePolicy === 'shared' && !newEntityShareReason.trim())
+          }
+        >
+          {addingEntity ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          Add and bind
+        </Button>
+      </form>
+    );
+  };
+
   const renderWorkbenchPanel = () => {
     if (!session) return null;
     if (workbenchMode === 'entities') {
       return (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-base font-semibold text-text">Entity matching</h2>
-              <p className="text-sm text-text-muted">
-                {remaining > 0 ? `${remaining} of ${proposals.length} entities still need officer review.` : 'All entity bindings have decisions.'}
-              </p>
+          <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/5 via-surface-card to-surface-card p-4 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Entity matching</p>
+                <h2 className="mt-1 text-lg font-semibold text-text">Review template entities against dataset columns</h2>
+                <p className="mt-1 max-w-3xl text-sm text-text-muted">
+                  {remaining > 0
+                    ? `${remaining} of ${proposals.length} entities still need officer review. Confirm confident matches, override weak ones, and add missing entities without leaving the matrix.`
+                    : 'All entity bindings have decisions. You can still reopen any match before the coverage gate.'}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Badge variant={remaining === 0 ? 'success' : 'warning'}>{decidedCount}/{proposals.length} reviewed</Badge>
+                  <Badge variant="muted">{session.dataset_ast.columns.length} profiled columns</Badge>
+                  <Badge variant={ownershipStats.conflicts > 0 ? 'danger' : 'success'}>
+                    {ownershipStats.conflicts > 0 ? `${ownershipStats.conflicts} allocation conflicts` : 'Allocation calm'}
+                  </Badge>
+                </div>
+              </div>
+              <div className="relative flex shrink-0 items-center gap-2">
+                <Button variant="outline" size="sm" onClick={confirmAllRemaining} disabled={!!busyEntity || remaining === 0}>
+                  <Sparkles className="h-4 w-4" /> Confirm all proposed
+                </Button>
+                <div className="relative">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-9 px-0"
+                    aria-label="Add missing entity"
+                    onClick={() => setAddEntityOpen((open) => !open)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  {addEntityOpen && (
+                    <div className="absolute right-0 top-11 z-40 w-[min(92vw,28rem)] rounded-2xl border border-border bg-surface-card p-4 shadow-2xl">
+                      <div className="mb-3 flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-text">Add missing entity</p>
+                          <p className="mt-0.5 text-xs text-text-muted">Create an audited mapping from a dataset column.</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAddEntityOpen(false)}
+                          className="rounded-md p-1 text-text-muted hover:bg-border/60 hover:text-text"
+                          aria-label="Close add entity panel"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      {renderAddEntityForm()}
+                    </div>
+                  )}
+                </div>
+                <div className="group relative">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 w-9 border border-border bg-surface-card px-0 text-text-muted hover:text-text"
+                    aria-label="Column allocation details"
+                  >
+                    <Info className="h-4 w-4" />
+                  </Button>
+                  <div className="pointer-events-none absolute right-0 top-11 z-30 w-[min(92vw,22rem)] translate-y-1 opacity-0 transition duration-150 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                    <div className="rounded-2xl border border-border bg-surface-card p-4 shadow-2xl">
+                      {renderColumnAllocationPanel()}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <Button variant="outline" size="sm" onClick={confirmAllRemaining} disabled={!!busyEntity || remaining === 0}>
-              <Sparkles className="h-4 w-4" /> Confirm all proposed
-            </Button>
           </div>
           <EntityMatrixPanel
-            key={`entity-matrix-${focusedEntityId || 'default'}`}
+            key="entity-matrix"
             bindings={proposals}
             columns={session.dataset_ast.columns}
             columnOwnership={session.column_ownership}
+            columnDecisions={session.column_decisions ?? {}}
             decisions={decisions}
             dependencyGraph={workspace?.dependency_graph}
             issues={workspaceIssues}
-            initialEntityId={focusedEntityId}
             busyEntity={busyEntity}
             onDecide={onDecide}
             onConfirmAll={confirmAllRemaining}
+            onColumnDecide={onColumnDecide}
           />
         </div>
       );
@@ -1004,38 +1203,135 @@ export default function BindingWorkflowPage() {
     }
 
     if (workbenchMode === 'columns') {
-      const ownershipEntries = Object.entries(session.column_ownership.columns ?? {});
-      const ownershipBadge = (entry: (typeof ownershipEntries)[number][1]) => {
-        const reviewedShared = entry.owners.some((owner) => owner.sharePolicy === 'shared');
-        const reviewedExclusive = entry.owners.filter(
-          (owner) => owner.sharePolicy !== 'shared' && (owner.status === 'confirmed' || owner.status === 'overridden')
-        );
-        if (reviewedExclusive.length > 1) return <Badge variant="danger">conflict</Badge>;
-        if (reviewedExclusive.length === 1) return <Badge variant="warning">locked</Badge>;
-        if (reviewedShared) return <Badge variant="muted">shared</Badge>;
-        if (entry.owners.length > 1) return <Badge variant="muted">claims</Badge>;
-        return <Badge variant="muted">open</Badge>;
+      const columnDecisionsMap = session.column_decisions ?? {};
+      const undecidedColumns = session.dataset_ast.columns.filter((col) => !columnDecisionsMap[col.name]);
+      const decidedColumns = session.dataset_ast.columns.filter((col) => columnDecisionsMap[col.name]);
+      const conflictColumns = (session.column_ownership.conflicts ?? []).map((c) => c.column);
+      const LIFECYCLE_LABELS: Record<string, string> = {
+        matched: 'Matched',
+        added_as_entity: 'Added as entity',
+        ignored_metadata: 'Ignored (metadata)',
+        ignored_duplicate: 'Ignored (duplicate)',
+        ignored_out_of_scope: 'Ignored (scope)',
+        needs_question: 'Needs question',
       };
       return (
-        <div className="grid gap-4 xl:grid-cols-[1fr_1.1fr]">
-          <DatasetProfileCard dataset={session.dataset_ast} />
-          <Card title="Column ownership" description="Which report entities claim each dataset column.">
-            <div className="max-h-[34rem] space-y-2 overflow-auto pr-1">
-              {ownershipEntries.map(([columnName, entry]) => (
-                <div key={columnName} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate font-medium text-text">{columnName}</p>
-                    {ownershipBadge(entry)}
-                  </div>
-                  <p className="mt-1 text-xs text-text-muted">
-                    {entry.owners.length
-                      ? entry.owners.map((owner) => `${owner.entityName || owner.entityId} (${owner.status}/${owner.sharePolicy})${owner.shareReason ? ` - ${owner.shareReason}` : ''}`).join(', ')
-                      : 'No entity has claimed this column yet.'}
-                  </p>
-                </div>
-              ))}
+        <div className="space-y-5">
+          {/* Summary bar */}
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="rounded-xl border border-border bg-surface p-3 text-sm">
+              <p className="text-[11px] uppercase text-text-muted">Total columns</p>
+              <p className="mt-1 font-semibold text-text">{session.dataset_ast.columns.length}</p>
             </div>
-          </Card>
+            <div className="rounded-xl border border-success/25 bg-success/5 p-3 text-sm">
+              <p className="text-[11px] uppercase text-text-muted">Reviewed</p>
+              <p className="mt-1 font-semibold text-text">{decidedColumns.length}</p>
+            </div>
+            <div className="rounded-xl border border-warning/25 bg-warning/5 p-3 text-sm">
+              <p className="text-[11px] uppercase text-text-muted">Undecided</p>
+              <p className="mt-1 font-semibold text-text">{undecidedColumns.length}</p>
+            </div>
+            <div className={`rounded-xl border p-3 text-sm ${conflictColumns.length > 0 ? 'border-danger/25 bg-danger/5' : 'border-border bg-surface'}`}>
+              <p className="text-[11px] uppercase text-text-muted">Ownership conflicts</p>
+              <p className="mt-1 font-semibold text-text">{conflictColumns.length}</p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-[1.3fr_1fr]">
+            {/* Column lifecycle table */}
+            <Card title="Column lifecycle decisions" description="Every dataset column must have a decision before the coverage gate.">
+              <div className="max-h-[34rem] space-y-2 overflow-auto pr-1">
+                {undecidedColumns.length > 0 && (
+                  <div className="mb-3">
+                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Undecided</p>
+                    {undecidedColumns.map((col) => {
+                      const ownership = session.column_ownership.columns?.[col.name];
+                      const hasOwner = (ownership?.owners?.length ?? 0) > 0;
+                      const hasConflict = conflictColumns.includes(col.name);
+                      return (
+                        <div key={col.name} className={`mb-2 rounded-lg border px-3 py-2 text-sm ${hasConflict ? 'border-danger/30 bg-danger/5' : 'border-border bg-surface'}`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-text">{col.name}</span>
+                              <span className="text-[10px] text-text-muted">{col.role} · {col.dtype}</span>
+                              {hasConflict && <Badge variant="danger" className="text-[10px]">Conflict</Badge>}
+                              {hasOwner && !hasConflict && <Badge variant="warning" className="text-[10px]">Claimed</Badge>}
+                            </div>
+                            <div className="flex gap-1">
+                              {(['ignored_metadata', 'ignored_out_of_scope', 'needs_question'] as const).map((s) => (
+                                <Button
+                                  key={s}
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 px-1.5 text-[10px] text-text-muted"
+                                  onClick={() => onColumnDecide({ column: col.name, status: s })}
+                                >
+                                  {LIFECYCLE_LABELS[s]}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                          {(col.sampleValues?.length ?? 0) > 0 && (
+                            <p className="mt-1 text-[10px] text-text-muted">
+                              e.g. {col.sampleValues.slice(0, 4).map(String).join(', ')}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {decidedColumns.length > 0 && (
+                  <div>
+                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Decided</p>
+                    {decidedColumns.map((col) => {
+                      const dec = columnDecisionsMap[col.name];
+                      return (
+                        <div key={col.name} className="mb-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-text">{col.name}</span>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={dec.status === 'matched' || dec.status === 'added_as_entity' ? 'success' : dec.status === 'needs_question' ? 'warning' : 'muted'} className="text-[10px]">
+                                {LIFECYCLE_LABELS[dec.status] ?? dec.status}
+                              </Badge>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                className="h-5 px-1 text-[10px] text-text-muted"
+                                onClick={() => onColumnDecide({ column: col.name, status: 'matched' })}
+                              >
+                                Change
+                              </Button>
+                            </div>
+                          </div>
+                          {dec.note && <p className="mt-0.5 text-[10px] text-text-muted">{dec.note}</p>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Ownership panel */}
+            <div className="space-y-3">
+              <DatasetProfileCard dataset={session.dataset_ast} />
+              {conflictColumns.length > 0 && (
+                <Card title="Ownership conflicts" description="These columns have multiple exclusive owners — resolve in Entity matching.">
+                  <div className="space-y-2">
+                    {(session.column_ownership.conflicts ?? []).map((conflict) => (
+                      <div key={conflict.column} className="rounded-lg border border-danger/25 bg-danger/5 px-3 py-2 text-xs">
+                        <p className="font-semibold text-text">{conflict.column}</p>
+                        <p className="text-text-muted">{conflict.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </div>
+          </div>
         </div>
       );
     }
@@ -1216,117 +1512,18 @@ export default function BindingWorkflowPage() {
             {executionReady && <Badge variant={EXECUTION_READY_META[executionReady.status].badge}>{executionReady.status}</Badge>}
           </div>
         </div>
-        <div className="grid gap-4 pt-4 lg:grid-cols-[13rem_1fr_18rem]">
-          <nav className="space-y-1">
-            {workbenchModes.map((mode) => (
-              <button
-                key={mode.id}
-                type="button"
-                onClick={() => setWorkbenchMode(mode.id)}
-                className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${workbenchMode === mode.id ? 'border-primary bg-primary/5 text-text' : 'border-transparent text-text-muted hover:border-border hover:bg-surface'}`}
-              >
-                <span className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-semibold">{mode.label}</span>
-                  <Badge variant={mode.status === 'Ready' ? 'success' : mode.status === 'Blocked' ? 'danger' : mode.status === 'Review' ? 'warning' : 'muted'} className="px-1.5 py-0 text-[10px]">
-                    {mode.status}
-                  </Badge>
-                </span>
-                <span className="block text-xs">{mode.hint}</span>
-              </button>
-            ))}
-          </nav>
-          <main className="min-w-0">{renderWorkbenchPanel()}</main>
-          <aside className="space-y-4">
-            <Card title="Column allocation" description="Live ownership state.">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="rounded-lg border border-border bg-surface px-3 py-2"><p className="text-[11px] uppercase text-text-muted">Assigned</p><p className="mt-1 font-semibold text-text">{ownershipStats.assigned}</p></div>
-                <div className="rounded-lg border border-border bg-surface px-3 py-2"><p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><Lock className="h-3 w-3" /> Locked</p><p className="mt-1 font-semibold text-text">{ownershipStats.locked}</p></div>
-                <div className="rounded-lg border border-border bg-surface px-3 py-2"><p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><Share2 className="h-3 w-3" /> Shared</p><p className="mt-1 font-semibold text-text">{ownershipStats.shared}</p></div>
-                <div className="rounded-lg border border-border bg-surface px-3 py-2"><p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><AlertTriangle className="h-3 w-3" /> Conflicts</p><p className="mt-1 font-semibold text-text">{ownershipStats.conflicts}</p></div>
-              </div>
-            </Card>
-            <Card title="Add entity" description="Create a missing template entity.">
-              <form onSubmit={onAddEntity} className="space-y-3">
-                <select
-                  value={newEntityColumn}
-                  onChange={(e) => {
-                    const column = e.target.value;
-                    setNewEntityColumn(column);
-                    setNewEntityType(entityTypeForColumn(column));
-                    if (!newEntityName.trim()) setNewEntityName(column.replace(/_/g, ' '));
-                  }}
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
-                >
-                  <option value="">Select column</option>
-                  {session.dataset_ast.columns.map((column) => <option key={column.name} value={column.name}>{column.name}</option>)}
-                </select>
-                {newEntityColumn && (
-                  <div className="rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-muted">
-                    {(session.column_ownership.columns[newEntityColumn]?.owners?.length ?? 0) > 0
-                      ? session.column_ownership.columns[newEntityColumn].owners
-                          .map((owner) => `${owner.entityName || owner.entityId} (${owner.status}/${owner.sharePolicy})`)
-                          .join(', ')
-                      : 'No existing claims for this column.'}
-                  </div>
-                )}
-                <input
-                  value={newEntityName}
-                  onChange={(e) => setNewEntityName(e.target.value)}
-                  placeholder="Entity name"
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
-                />
-                <select
-                  value={newEntityType}
-                  onChange={(e) => setNewEntityType(e.target.value as typeof newEntityType)}
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
-                >
-                  <option value="dimension">Dimension</option>
-                  <option value="measure">Measure</option>
-                  <option value="time">Time</option>
-                  <option value="filter">Filter</option>
-                  <option value="metadata">Metadata</option>
-                </select>
-                <select
-                  value={newEntitySharePolicy}
-                  onChange={(e) => setNewEntitySharePolicy(e.target.value as typeof newEntitySharePolicy)}
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
-                >
-                  <option value="exclusive">Exclusive owner</option>
-                  <option value="shared">Shared with existing owner</option>
-                </select>
-                {newEntitySharePolicy === 'shared' && (
-                  <textarea
-                    value={newEntityShareReason}
-                    onChange={(e) => setNewEntityShareReason(e.target.value)}
-                    rows={2}
-                    placeholder="Required reason for shared ownership"
-                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
-                  />
-                )}
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="w-full"
-                  disabled={
-                    addingEntity ||
-                    !newEntityColumn ||
-                    !newEntityName.trim() ||
-                    (newEntitySharePolicy === 'shared' && !newEntityShareReason.trim())
-                  }
-                >
-                  {addingEntity ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                  Add and bind
-                </Button>
-              </form>
-            </Card>
-            <div className="flex flex-col gap-2">
-              <Button variant="outline" size="sm" onClick={resetAll}><ArrowLeft className="h-4 w-4" /> Start over</Button>
-              <Button size="sm" onClick={onFinalize} disabled={finalizing || !allDecided}>
-                {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-                Coverage gate
-              </Button>
-            </div>
-          </aside>
+        <div className="pt-4">
+          <div className="sticky top-3 z-20 rounded-2xl border border-border bg-surface-card/95 p-2 shadow-sm backdrop-blur">
+            {renderWorkbenchNav()}
+          </div>
+          <main className="min-w-0 pt-4">{renderWorkbenchPanel()}</main>
+          <div className="mt-4 flex flex-wrap justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={resetAll}><ArrowLeft className="h-4 w-4" /> Start over</Button>
+            <Button size="sm" onClick={onFinalize} disabled={finalizing || !allDecided}>
+              {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+              Coverage gate
+            </Button>
+          </div>
         </div>
       </div>
     </div>
