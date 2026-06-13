@@ -345,8 +345,12 @@ def _default_llm_caller() -> LlmCaller | None:
     if llm_disabled():
         return None
 
+    import os
+    max_tokens = int(os.getenv("NARRATOR_MAX_TOKENS", "512"))
+    temperature = float(os.getenv("NARRATOR_TEMPERATURE", "0.25"))
+
     def _call(prompt: str) -> str | None:
-        return llm_text_call(prompt, task="report_narrative", max_tokens=320, temperature=0.2)
+        return llm_text_call(prompt, task="report_narrative", max_tokens=max_tokens, temperature=temperature)
 
     return _call
 

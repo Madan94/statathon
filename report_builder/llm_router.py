@@ -272,6 +272,7 @@ _TASK_TO_ENV: dict[str, str] = {
     "gap_fill":            "PROVIDER_GAP_FILL",
     "fact_extraction":     "PROVIDER_FACT_EXTRACTION",
     "semantic_fallback":   "PROVIDER_SEMANTIC_FALLBACK",
+    "report_narrative":    "PROVIDER_REPORT_NARRATIVE",
 }
 
 _VISION_TASKS = frozenset({"entity_extraction", "question_generation"})
@@ -290,6 +291,7 @@ _TASK_MODEL_ENVS: dict[str, str] = {
     "semantic_fallback":    "TASK_SEMANTIC_FALLBACK_MODEL",
     "semantic_enrichment":  "TASK_SEMANTIC_ENRICHMENT_MODEL",
     "question_repair":      "TASK_QUESTION_REPAIR_MODEL",
+    "report_narrative":     "TASK_REPORT_NARRATIVE_MODEL",
 }
 
 
