@@ -2077,7 +2077,7 @@ export const generatePhaseApi = {
   generate: async (
     templateId: string,
     signature: string,
-    body: { period?: string; report_id?: string; use_llm?: boolean } = {}
+    body: { period?: string; report_id?: string; use_llm?: boolean; publish_mode?: string; [k: string]: unknown } = {}
   ): Promise<GenerateResult> => {
     const { data } = await api.post(
       `/report-builder/generate-phase/${templateId}/${signature}/generate`,

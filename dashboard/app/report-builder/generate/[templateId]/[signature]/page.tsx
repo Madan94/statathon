@@ -200,7 +200,7 @@ export default function GenerationWorkspacePage() {
     const t1 = setTimeout(() => setState((s) => ({ ...s, stage: 'assembling', progress: 42, message: 'Filling slots & narrating...' })), 2500);
     const t2 = setTimeout(() => setState((s) => ({ ...s, stage: 'rendering', progress: 75, message: 'Rendering layout...' })), 5000);
     try {
-      await generatePhaseApi.generate(templateId, signature, { use_llm: false });
+      await generatePhaseApi.generate(templateId, signature, { use_llm: false, publish_mode: 'draft' });
       const report = await generatePhaseApi.getReport(templateId, signature) as ReportAST;
       clearInterval(timer); clearTimeout(t1); clearTimeout(t2);
       setState({ stage: 'complete', progress: 100, startedAt: t0, completedAt: Date.now(), error: null, report, message: `Done in ${elapsed(t0)}` });
