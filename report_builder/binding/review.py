@@ -596,6 +596,8 @@ def open_review(
         # Always update proposals from fresh resolution (resolver may have improved)
         record.proposals = [eb.to_dict() for eb in binding.entityBindings]
         apply_confirmations(binding, record)
+        # Re-serialize proposals with confirmed/rejected statuses applied
+        record.proposals = [eb.to_dict() for eb in binding.entityBindings]
         logger.info(
             "[review] resumed cache %s__%s (%d prior confirmations)",
             binding.templateId, signature, len(record.confirmations),
