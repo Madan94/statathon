@@ -195,6 +195,31 @@ function TreeNode({
   const nodeIssues = issues.filter((i) => issueMatchesNode(i, node, dependencyGraph));
   const isDragOver = dragOverId === node.nodeId;
 
+  // Count issues from ALL descendants (for hierarchy propagation)
+  const descendantIssueCount = useMemo(() => {
+    let count = nodeIssues.length;
+    const walkChildren = (children: ReviewedPlanNode[]) => {
+      for (const child of children) {
+        count += issues.filter((i) => issueMatchesNode(i, child, dependencyGraph)).length;
+        walkChildren(child.children);
+      }
+    };
+    walkChildren(node.children);
+    return count;
+  }, [node, issues, dependencyGraph, nodeIssues.length]);
+
+  // Check if any descendant is blocked
+  const hasBlockedDescendant = useMemo(() => {
+    const checkBlocked = (n: ReviewedPlanNode): boolean => {
+      if (n.readiness === 'BLOCKED' || n.readiness === 'blocked') return true;
+      return n.children.some(checkBlocked);
+    };
+    return checkBlocked(node);
+  }, [node]);
+
+  // Node's own readiness or inherited danger
+  const effectiveReadiness = node.readiness === 'unknown' && hasBlockedDescendant ? 'blocked' : node.readiness;
+
   return (
     <div>
       <div
@@ -211,11 +236,12 @@ function TreeNode({
             {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           </button>
         ) : <span className="h-4 w-4 shrink-0" />}
-        <span className={`h-2 w-2 shrink-0 rounded-full ${node.nodeType === 'topic' ? 'bg-primary' : isChapterType(node.nodeType) ? 'bg-accent' : node.nodeType === 'question' ? 'bg-success' : 'bg-border'}`} />
+        <span className={`h-2 w-2 shrink-0 rounded-full ${node.nodeType === 'topic' ? 'bg-primary' : isChapterType(node.nodeType) ? 'bg-accent' : node.nodeType === 'question' ? (effectiveReadiness === 'blocked' ? 'bg-danger' : 'bg-success') : 'bg-border'}`} />
         <span className="min-w-0 flex-1 truncate font-medium">{node.title}</span>
         <span className="flex shrink-0 items-center gap-1">
           {node.enabled === false && <Badge variant="muted" className="px-1 py-0 text-[8px]">off</Badge>}
-          {nodeIssues.length > 0 && <Badge variant="warning" className="px-1 py-0 text-[8px]">{nodeIssues.length}</Badge>}
+          {hasBlockedDescendant && node.nodeType !== 'question' && <Badge variant="danger" className="px-1 py-0 text-[8px]">!</Badge>}
+          {descendantIssueCount > 0 && <Badge variant="warning" className="px-1 py-0 text-[8px]">{descendantIssueCount}</Badge>}
           {node.nodeType !== 'question' && counts.questions > 0 && <span className="text-[9px] tabular-nums text-text-muted">{counts.questions}Q</span>}
           {counts.charts > 0 && <BarChart3 className="h-2.5 w-2.5 text-text-muted" />}
           {counts.tables > 0 && <Table2 className="h-2.5 w-2.5 text-text-muted" />}
