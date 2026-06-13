@@ -13,7 +13,7 @@ from imputation.executors import impute
 from missing_values.row_context_builder import build_missing_rows_payload
 from services.analysis_dataframe_service import (
     column_identity_aliases,
-    load_analysis_dataframe,
+    load_phase_dataframe,
     resolve_column_alias,
 )
 from services.analysis_query import (
@@ -25,7 +25,7 @@ from services.analysis_query import (
 )
 from services.analysis_payload_cache import invalidate_analysis_cache
 from services.phase_audit_service import PhaseAuditService
-from services.phase_snapshot_service import PhaseSnapshotService
+from services.phase_snapshot_service import refresh_downstream_with_status
 from services.phase_status_service import PhaseStatusService
 
 logger = logging.getLogger(__name__)
@@ -118,7 +118,7 @@ class ImputationWorkflowService:
         use_method = (method or selections.get(column) or "median").lower()
         confidence, reason = self._method_meta(analysis_id, column, use_method)
 
-        df, _schema = load_analysis_dataframe(self.db, analysis_id)
+        df, _schema = load_phase_dataframe(self.db, analysis_id, "imputation")
         df_col = self._resolve_df_column(analysis_id, column, df)
         if not df_col:
             return {"total_missing": 0, "rows": [], "column": column, "method": use_method}
@@ -213,20 +213,13 @@ class ImputationWorkflowService:
                 "imputation_user_decisions": user_decisions,
             },
         )
-        try:
-            PhaseSnapshotService(self.db).snapshot_imputation(analysis_id)
-        except Exception as exc:
-            logger.warning("imputation snapshot skipped for analysis %s: %s", analysis_id, exc)
-            try:
-                from services.apply_service import persist_processed_snapshot
-
-                persist_processed_snapshot(self.db, analysis_id)
-            except Exception as retry_exc:
-                logger.warning(
-                    "processed snapshot materialize failed for analysis %s: %s",
-                    analysis_id,
-                    retry_exc,
-                )
+        snapshot, snapshot_error = refresh_downstream_with_status(
+            self.db, analysis_id, "imputation"
+        )
+        if snapshot_error:
+            logger.warning(
+                "imputation snapshot failed for analysis %s: %s", analysis_id, snapshot_error
+            )
         progress = PhaseStatusService(self.db).recompute_imputation_columns(analysis_id)
         invalidate_analysis_cache(analysis_id)
         self.db.commit()
@@ -237,6 +230,8 @@ class ImputationWorkflowService:
             "method": method.lower(),
             "saved": len(rows),
             "complete": progress["complete"],
+            "snapshot": snapshot,
+            "snapshot_error": snapshot_error,
         }
 
     def review_progress(self, analysis_id: int) -> dict[str, Any]:

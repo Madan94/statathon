@@ -8,6 +8,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pipelines.storage_paths import resolve_dataset_storage_path
 
 _ROOT_ENV = Path(__file__).resolve().parents[1] / ".env"
 if _ROOT_ENV.is_file():
@@ -82,7 +83,10 @@ def dataframe_for_uploaded_dataset(
         raw = object_store.download_object_body(dataset_object_key)
         return load_dataframe_from_object_bytes(filename, raw)
     if dataset_storage_path:
-        return load_file(dataset_storage_path)
+        resolved = resolve_dataset_storage_path(dataset_storage_path)
+        if resolved is None:
+            raise ValueError("Dataset storage_path is empty")
+        return load_file(resolved)
     raise ValueError("Dataset has neither storage_path nor object_key")
 
 

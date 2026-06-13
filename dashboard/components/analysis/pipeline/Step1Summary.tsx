@@ -74,14 +74,34 @@ export default function Step1Summary({ results, onProceed }: Props) {
   const totalRows = health?.rows ?? 0;
   const totalCols = health?.columns ?? allColumns.length;
 
+  function missingCount(col: string): number {
+    const fromHealth = missingPerCol[col];
+    if (fromHealth != null && fromHealth > 0) return fromHealth;
+    const profile = columnProfiles?.[col];
+    if (profile?.missing_ratio != null && totalRows > 0) {
+      return Math.round(Number(profile.missing_ratio) * totalRows);
+    }
+    return fromHealth ?? 0;
+  }
+
+  function columnType(col: string): string {
+    return (
+      schema[col] ??
+      columnProfiles?.[col]?.datatype ??
+      (health?.dtypes as Record<string, string> | undefined)?.[col] ??
+      '—'
+    );
+  }
+
   const overallMissingPct =
     totalRows > 0 && allColumns.length > 0
-      ? (Object.values(missingPerCol).reduce((a, b) => a + b, 0) /
+      ? (allColumns.reduce((sum, c) => sum + missingCount(c), 0) /
           (allColumns.length * totalRows)) *
         100
       : 0;
+
   const highMissingCols = allColumns.filter(
-    (c) => (missingPerCol[c] ?? 0) / Math.max(totalRows, 1) > 0.2
+    (c) => missingCount(c) / Math.max(totalRows, 1) > 0.2
   );
   const numericCols = allColumns.filter(
     (c) =>
@@ -90,7 +110,12 @@ export default function Step1Summary({ results, onProceed }: Props) {
       columnProfiles?.[c]?.datatype?.includes('float')
   );
   const datasetType =
-    (results.dataset_context as { dataset_type?: string } | undefined)?.dataset_type ?? '—';
+    (results.dataset_context as { dataset_type?: string; usecase?: string } | undefined)
+      ?.dataset_type ||
+    (results.dataset_context as { usecase?: string } | undefined)?.usecase ||
+    '—';
+  const ontologyHint = (results.dataset_context as { ontology_macro_type_best_hint?: string } | undefined)
+    ?.ontology_macro_type_best_hint;
 
   const summaryBlob = {
     dataset_type: datasetType,
@@ -147,11 +172,29 @@ export default function Step1Summary({ results, onProceed }: Props) {
           <div>
             <p className="text-xs text-text-muted uppercase tracking-wide">Archetype</p>
             <p className="mt-1 font-semibold text-text">{datasetType}</p>
+            <p className="mt-1 text-[11px] text-text-muted max-w-xs">
+              Semantic pipeline usecase / survey family (embedding or usecase detector).
+            </p>
           </div>
+          {ontologyHint && (
+            <div>
+              <p className="text-xs text-text-muted uppercase tracking-wide">Ontology macro hint</p>
+              <p className="mt-1 font-medium text-text">{ontologyHint}</p>
+              <p className="mt-1 text-[11px] text-text-muted max-w-xs">
+                From column-name token match against static MoSPI ontology (profiling).
+              </p>
+            </div>
+          )}
           {results.dataset_context &&
             Object.entries(results.dataset_context as Record<string, unknown>)
-              .filter(([k, v]) => k !== 'dataset_type' && typeof v !== 'object' && v != null)
-              .slice(0, 6)
+              .filter(
+                ([k, v]) =>
+                  k !== 'dataset_type' &&
+                  k !== 'ontology_macro_type_best_hint' &&
+                  typeof v !== 'object' &&
+                  v != null
+              )
+              .slice(0, 4)
               .map(([k, v]) => (
                 <div key={k}>
                   <p className="text-xs text-text-muted uppercase tracking-wide">
@@ -185,10 +228,10 @@ export default function Step1Summary({ results, onProceed }: Props) {
             <tbody>
               {allColumns.map((col) => {
                 const profile = columnProfiles?.[col];
-                const missing = missingPerCol[col] ?? 0;
+                const missing = missingCount(col);
                 const ratio =
                   totalRows > 0 ? missing / totalRows : profile?.missing_ratio ?? 0;
-                const colType = schema[col] ?? profile?.datatype ?? '—';
+                const colType = columnType(col);
 
                 // Human-readable stats
                 let sampleStr = '—';

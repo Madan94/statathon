@@ -60,6 +60,59 @@ def _effective_schema(db: Session, analysis_id: int) -> dict[str, Any] | list[st
     return load_checkpoint_json_key(db, analysis_id, "effective_schema")
 
 
+_UNIVERSAL_DOMAIN_DEFAULTS = [
+    "identifier",
+    "survey_metadata",
+    "geography",
+    "demographic",
+    "household",
+    "uncorrelated_metadata",
+]
+
+
+def _coerce_domain_registry_for_ui(raw: dict[str, Any], archetype: str) -> dict[str, Any]:
+    """Normalize V2 unified ``domains`` map or legacy registry into step-3 UI shape."""
+    if raw.get("static_ontology") or raw.get("dynamic_domains") is not None:
+        if not raw.get("active_archetype"):
+            raw = {**raw, "active_archetype": archetype}
+        return raw
+
+    static_names: list[str] = []
+    dynamic_domains: dict[str, Any] = {}
+    universal: list[str] = []
+
+    for name, meta in raw.items():
+        if not isinstance(meta, dict):
+            continue
+        domain_type = str(meta.get("domain_type") or "static").lower()
+        if domain_type == "dynamic":
+            dynamic_domains[name] = {
+                "members": meta.get("members") or meta.get("columns") or [],
+                "cohesion": meta.get("cohesion"),
+                "description": meta.get("description") or meta.get("definition") or "",
+            }
+        elif domain_type == "universal":
+            universal.append(name)
+        else:
+            static_names.append(name)
+
+    if not static_names and not dynamic_domains and not universal:
+        return {}
+
+    return {
+        "active_archetype": archetype,
+        "universal_domains": universal or list(_UNIVERSAL_DOMAIN_DEFAULTS),
+        "static_ontology": {
+            archetype: {
+                "label": archetype.replace("_", " ").title(),
+                "domains": static_names,
+                "keywords_sample": {},
+            }
+        },
+        "dynamic_domains": dynamic_domains,
+    }
+
+
 def build_domains_response(db: Session, analysis_id: int) -> dict[str, Any]:
     ctx = _context_row(db, analysis_id)
     summary = _semantic_summary(ctx)
@@ -76,8 +129,12 @@ def build_domains_response(db: Session, analysis_id: int) -> dict[str, Any]:
     if not isinstance(domain_registry, dict):
         domain_registry = {}
 
+    coerced = _coerce_domain_registry_for_ui(domain_registry, archetype)
+    if coerced:
+        domain_registry = coerced
+
     static_domains = summary.get("static_domains") or {}
-    if not domain_registry and static_domains:
+    if not domain_registry.get("static_ontology") and static_domains:
         archetype_entry = static_domains.get(archetype) or static_domains.get("dataset_types", {}).get(
             archetype, {}
         )

@@ -29,6 +29,7 @@ et_xmlfile==2.0.0
 exceptiongroup==1.3.1
 fastapi==0.115.0
 filelock==3.29.0
+pywin32>=306,<313  # Win32Locker backend for filelock on Windows
 fsspec==2025.3.0
 greenlet==3.5.0
 h11==0.16.0
@@ -74,6 +75,7 @@ python-jose==3.3.0
 python-multipart==0.0.9
 pytz==2026.2
 PyYAML==6.0.3
+qdrant-client>=1.12.0,<2
 redis==7.4.0
 regex==2026.4.4
 reportlab==4.5.0

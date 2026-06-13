@@ -178,7 +178,9 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
       { label: 'Rows Removed', value: s.rows_removed },
       { label: 'Columns Before', value: s.columns_before },
       { label: 'Columns After', value: s.columns_after },
+      { label: 'Columns Renamed', value: s.columns_renamed ?? 0 },
       { label: 'Columns Removed', value: s.columns_removed },
+      { label: 'Columns Excluded', value: s.columns_excluded ?? 0 },
       { label: 'Missing Before', value: s.missing_values_before },
       { label: 'Missing After', value: s.missing_values_after },
     ];
@@ -234,7 +236,7 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
     return (
       <div className="pb-24">
         <WorkflowStepper currentStep={3} className="mb-5" />
-        <AnalysisStepper currentStep={8} className="mb-8" />
+        <AnalysisStepper analysisId={analysisId} currentStep={8} className="mb-8" />
         <p className="text-sm text-text-muted flex items-center gap-2">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading dataset review…
         </p>
@@ -246,7 +248,7 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
     return (
       <div className="pb-24">
         <WorkflowStepper currentStep={3} className="mb-5" />
-        <AnalysisStepper currentStep={8} className="mb-8" />
+        <AnalysisStepper analysisId={analysisId} currentStep={8} className="mb-8" />
         <Alert variant="error" title="Dataset review unavailable">{error ?? 'Unknown error'}</Alert>
         <Button variant="ghost" className="mt-4" onClick={onBack}>← Back to column analysis</Button>
       </div>
@@ -260,7 +262,7 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
   return (
     <div className="pb-28">
       <WorkflowStepper currentStep={3} className="mb-5" />
-      <AnalysisStepper currentStep={8} className="mb-8" />
+      <AnalysisStepper analysisId={analysisId} currentStep={8} className="mb-8" />
       <PageHeader
         title="Dataset review & approval"
         description="Inspect the final transformed dataset after all review phases before entering Report."
@@ -273,7 +275,7 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
       )}
 
       {review.dataset_review_completed && (
-        <Alert variant="success" title="Dataset approved" className="mb-6">
+        <Alert variant="info" title="Dataset approved" className="mb-6">
           This dataset has been approved. You may proceed to the Report phase.
         </Alert>
       )}

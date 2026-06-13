@@ -62,6 +62,47 @@ def _matches_column(pattern: str, column: str) -> bool:
         return pattern == column
 
 
+def _build_column_alias_map(
+    columns: list[str],
+    column_normalization: list[dict[str, Any]] | None = None,
+) -> dict[str, list[str]]:
+    """Map canonical df column -> aliases (canonical + raw original names)."""
+    alias_map: dict[str, list[str]] = {col: [col] for col in columns}
+    for row in column_normalization or []:
+        if not isinstance(row, dict):
+            continue
+        original = str(row.get("original_name") or "").strip()
+        canonical = str(
+            row.get("canonical_name") or row.get("normalized_name") or ""
+        ).strip()
+        if not canonical or canonical not in alias_map:
+            continue
+        aliases = alias_map[canonical]
+        if original and original not in aliases:
+            aliases.append(original)
+    return alias_map
+
+
+def _pattern_matches_column(
+    pattern: str,
+    column: str,
+    alias_map: dict[str, list[str]],
+) -> tuple[bool, str | None]:
+    """Return (matched, matched_via) checking canonical and original names."""
+    for alias in alias_map.get(column, [column]):
+        if _matches_column(pattern, alias):
+            matched_via = "original" if alias != column else "canonical"
+            return True, matched_via
+    return False, None
+
+
+def _original_name_for(column: str, alias_map: dict[str, list[str]]) -> str:
+    for alias in alias_map.get(column, [column]):
+        if alias != column:
+            return alias
+    return column
+
+
 def execute_single_column_rule(
     df: pd.DataFrame,
     rule: DiscoveredRule,
@@ -310,6 +351,7 @@ def run_context_aware_validation(
     unified_domains: list[dict[str, Any]] | None = None,
     archetypes: list[dict[str, Any]] | None = None,
     library_path: Any = None,
+    column_normalization: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Execute the validation gate.
 
@@ -328,6 +370,7 @@ def run_context_aware_validation(
       }
     """
     columns = list(df.columns)
+    alias_map = _build_column_alias_map(columns, column_normalization)
     rules = discover_all_rules(
         columns=columns,
         columns_meta=columns_meta,
@@ -341,6 +384,7 @@ def run_context_aware_validation(
 
     single_results: list[dict[str, Any]] = []
     multi_results: list[dict[str, Any]] = []
+    rules_inventory: list[dict[str, Any]] = []
 
     for rule in rules:
         if rule.kind == "single_column":
@@ -349,37 +393,83 @@ def run_context_aware_validation(
             target = rule.columns[0] if rule.columns else None
             if target and target in df.columns:
                 hit = execute_single_column_rule(df, rule, target_column=target)
+                inv = _inventory_row(
+                    rule, target, alias_map, hit, matched_via="canonical"
+                )
+                rules_inventory.append(inv)
                 if hit:
                     single_results.append(_finalize(hit, rule, columns_meta))
             elif target:
-                # Treat as regex pattern — match every column that fits
+                # Treat as regex pattern — match canonical or original names
                 for col in columns:
-                    if _matches_column(target, col):
-                        hit = execute_single_column_rule(df, rule, target_column=col)
-                        if hit:
-                            single_results.append(_finalize(hit, rule, columns_meta))
+                    matched, matched_via = _pattern_matches_column(target, col, alias_map)
+                    if not matched:
+                        continue
+                    hit = execute_single_column_rule(df, rule, target_column=col)
+                    rules_inventory.append(
+                        _inventory_row(rule, col, alias_map, hit, matched_via=matched_via)
+                    )
+                    if hit:
+                        single_results.append(_finalize(hit, rule, columns_meta))
         else:
             hit = execute_multi_column_rule(df, rule)
             if hit:
                 multi_results.append(_finalize(hit, rule, columns_meta))
+                rules_inventory.append({
+                    "rule_id": rule.rule_id,
+                    "rule_type": rule.rule_type,
+                    "source": rule.source,
+                    "kind": rule.kind,
+                    "status": "violation",
+                    "violation_count": len(hit.get("violations") or []),
+                    "columns": hit.get("columns") or rule.columns,
+                })
 
     candidates = _build_review_candidates(single_results + multi_results)
     sev_counts = severity_summary(candidates)
     approved = sev_counts["CRITICAL"] == 0
+    matched_count = len(rules_inventory)
+    passed_count = sum(1 for r in rules_inventory if r.get("status") == "passed")
 
     return {
         "rules_discovered": len(rules),
         "single_column": single_results,
         "multi_column": multi_results,
+        "rules_inventory": rules_inventory,
         "summary": {
             "rules_discovered": len(rules),
             "rules_fired": len(single_results) + len(multi_results),
+            "rules_matched_columns": matched_count,
+            "rules_passed_clean": passed_count,
             "severity_breakdown": sev_counts,
             "candidate_count": len(candidates),
             "approved": approved,
             "source_breakdown": _source_counts(rules),
         },
         "validation_candidates": candidates,
+    }
+
+
+def _inventory_row(
+    rule: DiscoveredRule,
+    column: str,
+    alias_map: dict[str, list[str]],
+    hit: dict[str, Any] | None,
+    *,
+    matched_via: str | None,
+) -> dict[str, Any]:
+    violation_count = len(hit.get("violations") or []) if hit else 0
+    return {
+        "column": column,
+        "original_name": _original_name_for(column, alias_map),
+        "rule_id": rule.rule_id,
+        "rule_type": rule.rule_type,
+        "source": rule.source,
+        "kind": rule.kind,
+        "status": "violation" if violation_count else "passed",
+        "violation_count": violation_count,
+        "matched_via": matched_via,
+        "explanation": rule.explanation,
     }
 
 

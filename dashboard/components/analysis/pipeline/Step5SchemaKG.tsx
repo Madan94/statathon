@@ -7,12 +7,11 @@ import { Button } from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
 import GraphCanvas, { GraphNode, GraphEdge as GEdge } from '@/components/ui/GraphCanvas';
 import { cn } from '@/lib/cn';
 import {
-  ChevronLeft, ArrowRight, Download, GitBranch, Network,
-  CheckCircle2, Table2, Layers, BookOpen,
+  ChevronLeft, ArrowRight, Download, Network,
+  CheckCircle2, Table2, Layers,
 } from 'lucide-react';
 
 interface Props {
@@ -67,44 +66,6 @@ function buildDomainMap(results: AnalysisResult): Map<string, string> {
     if (row.column && row.domain) m.set(String(row.column), String(row.domain));
   }
   return m;
-}
-
-function toGraphNodes(edges: GraphEdge[], domainMap: Map<string, string>): GraphNode[] {
-  const ids = new Set<string>();
-  for (const e of edges) { ids.add(e.source); ids.add(e.target); }
-  return [...ids].map((id) => ({ id, domain: domainMap.get(id) }));
-}
-
-function kgToGraph(kgData: Record<string, unknown>): { nodes: GraphNode[]; edges: GEdge[] } {
-  const rawNodes = (kgData.nodes ?? kgData.entities ?? []) as unknown[];
-  const rawEdges = (kgData.edges ?? kgData.relationships ?? kgData.links ?? []) as unknown[];
-  const nodes: GraphNode[] = [];
-  const edges: GEdge[] = [];
-  if (Array.isArray(rawNodes) && rawNodes.length) {
-    for (const n of rawNodes) {
-      if (typeof n === 'string') nodes.push({ id: n });
-      else if (n && typeof n === 'object') {
-        const o = n as Record<string, unknown>;
-        const id = String(o.id ?? o.name ?? o.column ?? '');
-        if (id) nodes.push({ id, domain: String(o.domain ?? o.type ?? o.label ?? '') || undefined });
-      }
-    }
-  }
-  if (Array.isArray(rawEdges) && rawEdges.length) {
-    for (const e of rawEdges) {
-      if (e && typeof e === 'object') {
-        const o = e as Record<string, unknown>;
-        const src = String(o.source ?? o.from ?? o.start ?? '');
-        const tgt = String(o.target ?? o.to ?? o.end ?? '');
-        if (src && tgt) edges.push({ source: src, target: tgt, weight: Number(o.weight ?? 0.5), relationship_type: String(o.type ?? o.relationship_type ?? ''), semantic_reason: String(o.reason ?? '') });
-      }
-    }
-  }
-  if (!nodes.length && edges.length) {
-    const ids = new Set([...edges.map(e => e.source), ...edges.map(e => e.target)]);
-    ids.forEach(id => nodes.push({ id }));
-  }
-  return { nodes, edges };
 }
 
 // ── Blueprint grouped schema table ────────────────────────────────────────────
@@ -180,27 +141,23 @@ function BlueprintTable({ edges, domainMap }: { edges: GraphEdge[]; domainMap: M
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Step5SchemaKG({ results, analysisId, onProceed, onBack }: Props) {
   const [graphPayload, setGraphPayload] = useState<GraphPayload | null>(null);
-  const [kgPayload, setKgPayload] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [schemaView, setSchemaView] = useState<'graph' | 'blueprint' | 'table'>('graph');
-  const [kgView, setKgView] = useState<'graph' | 'raw'>('graph');
 
   useEffect(() => {
     const hasGraph = (results.schema_graph?.edges?.length ?? 0) > 0;
-    const hasKg = results.knowledge_graph && Object.keys(results.knowledge_graph).length > 0;
-    if (hasGraph && hasKg) {
+    if (hasGraph) {
       setLoading(false);
       return;
     }
-    Promise.all([
-      hasGraph ? Promise.resolve(null) : analysisApi.getGraph(analysisId).catch(() => null),
-      hasKg ? Promise.resolve(null) : analysisApi.getKnowledgeGraph(analysisId).catch(() => null),
-    ]).then(([g, kg]) => {
-      if (g) setGraphPayload(g);
-      if (kg) setKgPayload((kg as { knowledge_graph?: Record<string, unknown> }).knowledge_graph ?? (kg as Record<string, unknown>));
-      setLoading(false);
-    });
-  }, [analysisId, results.schema_graph, results.knowledge_graph]);
+    analysisApi
+      .getGraph(analysisId)
+      .then((g) => {
+        if (g) setGraphPayload(g);
+      })
+      .catch(() => null)
+      .finally(() => setLoading(false));
+  }, [analysisId, results.schema_graph]);
 
   const edges: GraphEdge[] =
     (graphPayload?.edges as GraphEdge[] | undefined) ??
@@ -216,43 +173,18 @@ export default function Step5SchemaKG({ results, analysisId, onProceed, onBack }
     source: e.source, target: e.target, weight: e.weight, relationship_type: e.owl_type ?? e.relationship_type, semantic_reason: e.semantic_reason,
   }));
 
-  const kgData = kgPayload ?? {};
-  const { nodes: kgNodes, edges: kgEdges } = kgToGraph(kgData);
-
   const owlTypeCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const e of edges) { const k = e.owl_type ?? 'unknown'; counts[k] = (counts[k] ?? 0) + 1; }
     return counts;
   }, [edges]);
 
-  const ViewBtn = ({ v, label, icon }: { v: 'graph' | 'blueprint' | 'table' | 'raw'; label: string; icon: React.ReactNode }) => (
-    <button
-      onClick={() => v === 'raw' ? setKgView('raw') : v === 'graph' && label === 'Graph' && schemaView !== 'graph' ? setSchemaView('graph') : setSchemaView(v as 'graph' | 'blueprint' | 'table')}
-      className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border',
-        (schemaView === v || kgView === v)
-          ? 'bg-accent text-white border-accent'
-          : 'border-border text-text-muted hover:bg-border/50')}
-    >{icon}{label}</button>
-  );
-
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="schema">
-        <TabsList>
-          <TabsTrigger value="schema">
-            <GitBranch className="h-3.5 w-3.5 mr-1.5" />Schema graph
-          </TabsTrigger>
-          <TabsTrigger value="kg">
-            <Network className="h-3.5 w-3.5 mr-1.5" />Knowledge graph
-          </TabsTrigger>
-        </TabsList>
-
-        {/* ── Schema graph ── */}
-        <TabsContent value="schema">
-          <Card
-            title={`Schema graph — ${schemaNodes.length} nodes, ${edges.length} edges`}
-            description="Column relationships inferred during semantic analysis — typed with OWL/RDF ontology terms."
-          >
+      <Card
+        title={`Schema graph — ${schemaNodes.length} nodes, ${edges.length} edges`}
+        description="Column relationships inferred during semantic analysis — typed with OWL/RDF ontology terms."
+      >
             {loading ? <Skeleton className="h-[520px]" /> : edges.length === 0 ? (
               <p className="text-sm text-text-muted">No graph edges available.</p>
             ) : (
@@ -318,84 +250,35 @@ export default function Step5SchemaKG({ results, analysisId, onProceed, onBack }
                 </div>
               </>
             )}
-          </Card>
+      </Card>
 
-          {/* OWL ontology legend */}
-          {!loading && edges.length > 0 && (
-            <Card title="OWL / RDF relationship ontology" className="mt-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {Object.entries(OWL_META).map(([k, m]) => (
-                  <div key={k} className="flex items-start gap-3 p-3 rounded-lg bg-surface border border-border">
-                    <div className="w-3 h-3 rounded-full mt-0.5 shrink-0" style={{ backgroundColor: m.color }} />
-                    <div>
-                      <p className="font-mono text-xs font-semibold text-text">{m.label}</p>
-                      <p className="text-[11px] text-text-muted mt-0.5">{m.description}</p>
-                    </div>
-                    <span className="ml-auto text-[11px] font-mono text-text-muted shrink-0">×{owlTypeCounts[k] ?? 0}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* ── Knowledge graph ── */}
-        <TabsContent value="kg">
-          <Card title="Knowledge graph" description="Ontology-enriched entity relationships using OWL/RDF type system.">
-            {loading ? <Skeleton className="h-[480px]" /> : kgNodes.length === 0 && Object.keys(kgData).length === 0 ? (
-              <p className="text-sm text-text-muted">No knowledge graph data. Neo4j sync may not be configured.</p>
-            ) : (
-              <>
-                {kgNodes.length > 0 ? (
-                  <>
-                    <div className="flex gap-2 mb-4">
-                      <button onClick={() => setKgView('graph')} className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border', kgView === 'graph' ? 'bg-accent text-white border-accent' : 'border-border text-text-muted hover:bg-border/50')}>
-                        <Network className="h-3.5 w-3.5" /> Graph
-                      </button>
-                      <button onClick={() => setKgView('raw')} className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border', kgView === 'raw' ? 'bg-accent text-white border-accent' : 'border-border text-text-muted hover:bg-border/50')}>
-                        <BookOpen className="h-3.5 w-3.5" /> Raw
-                      </button>
-                    </div>
-                    {kgView === 'graph'
-                      ? <GraphCanvas nodes={kgNodes} edges={kgEdges} height={480} />
-                      : <pre className="max-h-80 overflow-auto rounded-lg bg-[#0d1117] border border-border p-3 text-xs font-mono text-slate-300">{JSON.stringify(kgData, null, 2)}</pre>
-                    }
-                  </>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                      {Object.entries(kgData).filter(([, v]) => typeof v !== 'object' || v === null).slice(0, 8).map(([k, v]) => (
-                        <div key={k} className="rounded-lg border border-border p-3 bg-surface">
-                          <p className="text-[10px] uppercase tracking-wide text-text-muted">{k.replace(/_/g, ' ')}</p>
-                          <p className="mt-1 font-semibold text-text text-sm">{String(v)}</p>
-                        </div>
-                      ))}
-                    </div>
-                    <pre className="max-h-64 overflow-auto rounded-lg bg-[#0d1117] border border-border p-3 text-xs font-mono text-slate-300">{JSON.stringify(kgData, null, 2)}</pre>
-                  </>
-                )}
-                <div className="mt-4 pt-4 border-t border-border flex justify-end">
-                  <Button variant="outline" onClick={() => downloadJSON(kgData, 'knowledge_graph.json')} className="flex items-center gap-1.5 text-sm">
-                    <Download className="h-4 w-4" /> Export KG
-                  </Button>
+      {!loading && edges.length > 0 && (
+        <Card title="OWL / RDF relationship ontology" className="mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {Object.entries(OWL_META).map(([k, m]) => (
+              <div key={k} className="flex items-start gap-3 p-3 rounded-lg bg-surface border border-border">
+                <div className="w-3 h-3 rounded-full mt-0.5 shrink-0" style={{ backgroundColor: m.color }} />
+                <div>
+                  <p className="font-mono text-xs font-semibold text-text">{m.label}</p>
+                  <p className="text-[11px] text-text-muted mt-0.5">{m.description}</p>
                 </div>
-              </>
-            )}
-          </Card>
-        </TabsContent>
-      </Tabs>
+                <span className="ml-auto text-[11px] font-mono text-text-muted shrink-0">×{owlTypeCounts[k] ?? 0}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
-      {/* Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border">
         <Button variant="ghost" onClick={onBack} className="flex items-center gap-1">
           <ChevronLeft className="h-4 w-4" /> Back
         </Button>
         <div className="flex items-center gap-3">
           <CheckCircle2 className="h-5 w-5 text-success" />
-          <span className="text-sm text-text-muted">Schema & KG verified</span>
+          <span className="text-sm text-text-muted">Schema graph verified</span>
           <Button onClick={onProceed} size="lg" className="gap-2">
             <Network className="h-4 w-4" />
-            Proceed to Column Analysis →
+            Proceed to rule validation →
           </Button>
         </div>
       </div>

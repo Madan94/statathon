@@ -39,13 +39,18 @@ function ReportNavDropdown({
   pathname: string;
   onNavigate?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const reportSectionActive =
+    isReportSectionActive(pathname) || isReportAstSectionActive(pathname);
+  const [open, setOpen] = useState(reportSectionActive);
   const rootRef = useRef<HTMLDivElement>(null);
-  const parentActive =
-    isNavItemActive(pathname, item) ||
-    isReportSectionActive(pathname) ||
-    isReportAstSectionActive(pathname);
+  const parentActive = isNavItemActive(pathname, item) || reportSectionActive;
   const Icon = item.icon;
+
+  useEffect(() => {
+    if (reportSectionActive) {
+      setOpen(true);
+    }
+  }, [reportSectionActive]);
 
   useEffect(() => {
     if (!open) return;
@@ -69,7 +74,7 @@ function ReportNavDropdown({
       >
         <span className="inline-flex items-center gap-3">
           <Icon className="h-4 w-4 shrink-0" aria-hidden />
-          {item.label}
+          <span className="whitespace-nowrap">{item.label}</span>
         </span>
         <ChevronDown
           className={cn('h-4 w-4 shrink-0 transition-transform', open && 'rotate-180')}
@@ -92,11 +97,10 @@ function ReportNavDropdown({
                 href={child.href}
                 role="menuitem"
                 onClick={() => {
-                  setOpen(false);
                   onNavigate?.();
                 }}
                 className={cn(
-                  'block rounded-md px-3 py-2 text-sm transition-colors',
+                  'block rounded-md px-3 py-2 text-sm transition-colors whitespace-nowrap',
                   childActive
                     ? 'bg-[#f5c518] text-[#0a0a0a] font-medium'
                     : 'text-white/85 hover:bg-white/10 hover:text-white'
@@ -140,7 +144,7 @@ export default function PlatformNavLinks({
             className={linkClassName ? linkClassName(active) : navLinkClasses(active)}
           >
             <Icon className="h-4 w-4 shrink-0" aria-hidden />
-            {item.label}
+            <span className="whitespace-nowrap">{item.label}</span>
           </Link>
         );
       })}

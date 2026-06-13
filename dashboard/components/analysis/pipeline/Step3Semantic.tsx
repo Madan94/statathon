@@ -222,39 +222,51 @@ export default function Step3Semantic({
   const [showScores, setShowScores] = useState(false);
 
   useEffect(() => {
-    if (results.domain_registry) {
-      setDomainsLoading(false);
-      return;
-    }
-    analysisApi.getDomains(analysisId).then(setDomainsPayload).finally(() => setDomainsLoading(false));
-  }, [analysisId, results.domain_registry]);
+    setDomainsLoading(true);
+    analysisApi
+      .getDomains(analysisId)
+      .then(setDomainsPayload)
+      .finally(() => setDomainsLoading(false));
+  }, [analysisId]);
 
   const mappingRows: SemanticMappingRow[] = results.semantic_mapping ?? [];
 
-  // Prefer domain_registry from: 1) enriched results, 2) domains API response
-  const registry: DomainRegistry =
-    results.domain_registry ??
-    domainsPayload?.domain_registry ??
-    (() => {
-      // Fallback: build minimal registry from whatever is available
-      const archetype =
-        domainsPayload?.ontology_macro_type_best_hint ??
-        (results.dataset_context as { dataset_type?: string } | undefined)?.dataset_type ??
-        'unknown';
-      const staticDomainKeys = Object.keys(domainsPayload?.static_domains_taxonomy ?? {});
-      const universals = ['identifier', 'survey_metadata', 'geography', 'demographic', 'household', 'uncorrelated_metadata'];
-      return {
-        active_archetype: archetype,
-        universal_domains: universals,
-        static_ontology: staticDomainKeys.length ? {
-          [archetype]: {
-            label: archetype,
-            domains: staticDomainKeys.filter(d => !universals.includes(d)),
+  const registry: DomainRegistry = (() => {
+    if (domainsPayload?.domain_registry) {
+      return domainsPayload.domain_registry;
+    }
+    if (results.domain_registry) {
+      return results.domain_registry;
+    }
+    const archetype =
+      domainsPayload?.ontology_macro_type_best_hint ??
+      (results.dataset_context as { dataset_type?: string; usecase?: string } | undefined)
+        ?.dataset_type ??
+      (results.dataset_context as { usecase?: string } | undefined)?.usecase ??
+      'unknown';
+    const staticDomainKeys = Object.keys(domainsPayload?.static_domains_taxonomy ?? {});
+    const universals = [
+      'identifier',
+      'survey_metadata',
+      'geography',
+      'demographic',
+      'household',
+      'uncorrelated_metadata',
+    ];
+    return {
+      active_archetype: archetype,
+      universal_domains: universals,
+      static_ontology: staticDomainKeys.length
+        ? {
+            [archetype]: {
+              label: archetype,
+              domains: staticDomainKeys.filter((d) => !universals.includes(d)),
+            },
           }
-        } : {},
-        dynamic_domains: {},
-      } as DomainRegistry;
-    })();
+        : {},
+      dynamic_domains: {},
+    } as DomainRegistry;
+  })();
 
   // Flat domain name list for the Override dropdown
   const allDomainNames = [
@@ -295,7 +307,7 @@ export default function Step3Semantic({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Domain registry */}
         <Card title="Domain taxonomy" description="All available statistical domains — static ontology + dynamic clusters generated this run." className="lg:col-span-1 h-fit">
-          {domainsLoading && !results.domain_registry ? (
+          {domainsLoading ? (
             <div className="space-y-2">{[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-8" />)}</div>
           ) : (
             <DomainRegistryPanel
@@ -336,7 +348,7 @@ export default function Step3Semantic({
             <table className="w-full text-sm min-w-[640px]">
               <thead>
                 <tr className="border-b border-border">
-                  {['Column', 'Domain', 'Routing path', 'Confidence', 'Override'].map((h) => (
+                  {['Column', 'Domain', 'Type', 'Routing path', 'Confidence', 'Override'].map((h) => (
                     <th key={h} className="px-4 pb-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">{h}</th>
                   ))}
                 </tr>
@@ -349,6 +361,10 @@ export default function Step3Semantic({
                   const conf = row.confidence ?? 0;
                   const clusterSupport = row.cluster_support ?? 0;
                   const graphConsistency = row.graph_consistency ?? 0;
+                  const domainType = String(
+                    (row as { domain_type?: string }).domain_type ??
+                      (row.source === 'llm' ? 'dynamic' : row.source === 'embedding' ? 'static' : 'static')
+                  ).toLowerCase();
                   return (
                     <tr key={`mapping-${rowIdx}-${row.column}`} className={cn('border-b border-border/30 hover:bg-surface/60 transition-colors align-top', isOverridden && 'bg-warning/5')}>
                       <td className="px-4 py-3">
@@ -364,6 +380,11 @@ export default function Step3Semantic({
                         {isOverridden && (
                           <div className="text-[10px] text-text-muted mt-0.5">was: {row.domain}</div>
                         )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant={domainType === 'dynamic' ? 'warning' : 'default'} className="text-[10px]">
+                          {domainType}
+                        </Badge>
                       </td>
                       <td className="px-4 py-3">
                         <Badge variant={info.variant} className="flex items-center gap-1 w-fit text-[10px]">
@@ -435,7 +456,7 @@ export default function Step3Semantic({
 
           <div className="mt-3 flex items-start gap-2 text-xs text-text-muted">
             <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-            <span>{mappingRows.length} columns mapped · {overrideCount} manually overridden. All changes are audit-logged as human-reviewed decisions.</span>
+            <span>{mappingRows.length} columns mapped · {overrideCount} session override{overrideCount !== 1 ? 's' : ''} (not persisted to server).</span>
           </div>
         </Card>
       </div>

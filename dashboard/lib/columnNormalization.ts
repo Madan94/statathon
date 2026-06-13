@@ -1,14 +1,22 @@
-import type { AnalysisResult, ColumnNormalizationRow } from '@/lib/api';
+import type { AnalysisResult, ColumnNormalizationRow, ColumnProfile } from '@/lib/api';
 
 export interface NormalizationPlanRow {
   originalName: string;
   normalizedName: string;
+  /** Key used in schema / column_profiles / health after pipeline rename */
+  profileKey: string;
   displayName: string;
   domain?: string;
   matchMethod: string;
   matchConfidence?: number;
   matchingReason?: string;
   semanticHints?: string[];
+}
+
+export interface ColumnProfileStats {
+  type: string;
+  missingCount: number;
+  missingRatio: number;
 }
 
 const MATCH_METHOD_LABELS: Record<string, string> = {
@@ -24,11 +32,93 @@ export function formatMatchMethod(method?: string): string {
   return MATCH_METHOD_LABELS[method] ?? method.replace(/_/g, ' ');
 }
 
+function profileLookupKeys(originalName: string, normalizedName: string, results: AnalysisResult): string[] {
+  const keys = new Set<string>();
+  keys.add(normalizedName);
+  keys.add(originalName);
+  for (const row of results.column_normalization ?? []) {
+    if (row.original_name !== originalName && row.normalized_name !== normalizedName) continue;
+    keys.add(row.normalized_name);
+    keys.add(row.original_name);
+    const canonical = row.canonical_name as string | undefined;
+    if (canonical) keys.add(canonical);
+  }
+  return [...keys];
+}
+
+/** Resolve type and missing stats when profiles/schema use canonical column names. */
+export function resolveColumnProfileStats(
+  originalName: string,
+  profileKey: string,
+  results: AnalysisResult,
+): ColumnProfileStats {
+  const health = results.health as {
+    rows?: number;
+    missing_per_column?: Record<string, number>;
+    dtypes?: Record<string, string>;
+  } | undefined;
+  const schema = results.schema ?? {};
+  const columnProfiles = results.column_profiles as Record<string, ColumnProfile> | undefined;
+  const totalRows = health?.rows ?? 0;
+  const keys = profileLookupKeys(originalName, profileKey, results);
+
+  let profile: ColumnProfile | undefined;
+  let missingFromHealth: number | undefined;
+  let typeFromSchema: string | undefined;
+  let typeFromDtypes: string | undefined;
+
+  for (const key of keys) {
+    if (!profile && columnProfiles?.[key]) profile = columnProfiles[key];
+    if (missingFromHealth == null && health?.missing_per_column?.[key] != null) {
+      missingFromHealth = Number(health.missing_per_column[key]);
+    }
+    if (!typeFromSchema && schema[key]) typeFromSchema = schema[key];
+    if (!typeFromDtypes && health?.dtypes?.[key]) typeFromDtypes = health.dtypes[key];
+  }
+
+  const mapRow = results.semantic_mapping?.find(
+    (r) =>
+      keys.includes(r.column)
+      || (r as { original_name?: string }).original_name === originalName,
+  );
+  const typeFromMapping = (mapRow as { dtype?: string } | undefined)?.dtype;
+
+  const missingCount =
+    missingFromHealth != null
+      ? missingFromHealth
+      : profile?.missing_count != null
+        ? Number(profile.missing_count)
+        : profile?.missing_ratio != null && totalRows > 0
+          ? Math.round(Number(profile.missing_ratio) * totalRows)
+          : 0;
+
+  const missingRatio =
+    totalRows > 0
+      ? missingCount / totalRows
+      : profile?.missing_ratio != null
+        ? Number(profile.missing_ratio)
+        : 0;
+
+  const type =
+    typeFromSchema
+    ?? profile?.datatype
+    ?? typeFromDtypes
+    ?? typeFromMapping
+    ?? '—';
+
+  return { type, missingCount, missingRatio };
+}
+
 function mapApiRow(row: ColumnNormalizationRow): NormalizationPlanRow {
+  const profileKey =
+    (row.canonical_name as string | undefined)
+    || row.normalized_name
+    || row.original_name;
   return {
     originalName: row.original_name,
     // Step 2 shows plain expanded name, no domain prefix
     normalizedName: row.normalized_name,
+    profileKey,
     displayName: (row.display_name as string) || row.normalized_name,
     domain: row.domain,
     matchMethod: formatMatchMethod(row.match_method),
@@ -70,6 +160,7 @@ export function buildNormalizationPlan(results: AnalysisResult): NormalizationPl
     return {
       originalName,
       normalizedName,
+      profileKey: normalizedName,
       displayName,
       domain,
       matchMethod: 'Legacy analysis (re-run for dynamic names)',
