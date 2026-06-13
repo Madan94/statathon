@@ -3,8 +3,8 @@
   "_doc": "Semantic slot wiring for India Energy Resources Enterprise Report v2. Maps each slot to its source question, component contract, required entities, and formula references for S4 execution.",
   "templateId": "tpl_energy_enterprise_v2",
   "version": "2.0.0",
-  "totalSlots": 25,
-  "semanticSlots": 25,
+  "totalSlots": 27,
+  "semanticSlots": 27,
   "virtualSlots": 0,
   "slots": [
     {
@@ -353,6 +353,32 @@
       "generationMethod": "DIRECT",
       "outputContract": {"type": "attribution"},
       "lineageChain": []
+    },
+    {
+      "slotId": "slot_method_glossary",
+      "slotType": "glossary",
+      "questionRef": "q_methodology",
+      "componentRef": "q_method_glossary",
+      "sectionRef": "sec_data_notes",
+      "chapterRef": "ch_methodology",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [],
+      "generationMethod": "DIRECT",
+      "outputContract": {"type": "definitions"},
+      "lineageChain": []
+    },
+    {
+      "slotId": "slot_method_caveat",
+      "slotType": "caveat",
+      "questionRef": "q_methodology",
+      "componentRef": "q_method_caveat",
+      "sectionRef": "sec_data_notes",
+      "chapterRef": "ch_methodology",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [],
+      "generationMethod": "DIRECT",
+      "outputContract": {"type": "caveat"},
+      "lineageChain": []
     }
   ],
   "slotDependencies": [
@@ -369,6 +395,6 @@
     "slot_hydrobio_chart", "slot_hydrobio_caveat", "slot_hydrobio_narrative",
     "slot_sourcemix_chart", "slot_sourcemix_formula_solar", "slot_sourcemix_formula_wind", "slot_sourcemix_narrative",
     "slot_regional_table", "slot_regional_chart", "slot_regional_formula", "slot_regional_narrative",
-    "slot_method_note", "slot_method_source"
+    "slot_method_note", "slot_method_source", "slot_method_glossary", "slot_method_caveat"
   ]
 }
