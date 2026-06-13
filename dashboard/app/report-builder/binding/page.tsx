@@ -881,7 +881,7 @@ export default function BindingWorkflowPage() {
   };
 
   const generationHref = executionReady
-    ? `/report/report-builder?template_id=${encodeURIComponent(executionReady.template_id)}&signature=${encodeURIComponent(session?.signature ?? '')}&binding_ast_id=${encodeURIComponent(executionReady.binding_ast_id)}&execution_status=${encodeURIComponent(executionReady.status)}`
+    ? `/report-builder/generate/${encodeURIComponent(executionReady.template_id)}/${encodeURIComponent(session?.signature ?? '')}`
     : '/report-builder/binding';
 
   useEffect(() => {
