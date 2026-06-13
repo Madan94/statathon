@@ -77,10 +77,18 @@ function issueMatchesNode(issue: BindingWorkspaceIssue, node: ReviewedPlanNode, 
 
 function nodeTypeLabel(nodeType: string): string {
   if (nodeType === 'topic') return 'Topic';
-  if (nodeType === 'subtopic') return 'Chapter';
-  if (nodeType === 'subsubtopic') return 'Section';
+  if (nodeType === 'subtopic' || nodeType === 'chapter') return 'Chapter';
+  if (nodeType === 'subsubtopic' || nodeType === 'section') return 'Section';
   if (nodeType === 'question') return 'Question';
   return nodeType;
+}
+
+function isChapterType(nodeType: string): boolean {
+  return nodeType === 'subtopic' || nodeType === 'chapter';
+}
+
+function isSectionType(nodeType: string): boolean {
+  return nodeType === 'subsubtopic' || nodeType === 'section';
 }
 
 function countDescendants(node: ReviewedPlanNode): { questions: number; components: number; charts: number; tables: number; narratives: number } {
@@ -160,7 +168,7 @@ function TreeNode({
         ) : (
           <span className="h-4 w-4 shrink-0" />
         )}
-        <span className={`h-2 w-2 shrink-0 rounded-full ${node.nodeType === 'topic' ? 'bg-primary' : node.nodeType === 'subtopic' ? 'bg-accent' : node.nodeType === 'question' ? 'bg-success' : 'bg-border'}`} />
+        <span className={`h-2 w-2 shrink-0 rounded-full ${node.nodeType === 'topic' ? 'bg-primary' : isChapterType(node.nodeType) ? 'bg-accent' : node.nodeType === 'question' ? 'bg-success' : 'bg-border'}`} />
         <span className="min-w-0 flex-1 truncate font-medium">{node.title}</span>
         <span className="flex shrink-0 items-center gap-1">
           {node.enabled === false && <Badge variant="muted" className="px-1 py-0 text-[8px]">off</Badge>}
@@ -602,10 +610,10 @@ export function StructureCanvas({
   const renderDetail = () => {
     if (!selectedNode) return <p className="py-8 text-center text-sm text-text-muted">Select an item from the tree.</p>;
     if (selectedNode.nodeType === 'topic') return renderTopicDetail();
-    // Chapter (subtopic) → show section cards with questions inside
-    if (selectedNode.nodeType === 'subtopic') return renderChapterDetail();
-    // Section (subsubtopic) OR a question-container → show questions inline
-    if (selectedNode.nodeType === 'subsubtopic') return renderSectionDetail();
+    // Chapter (subtopic/chapter) → show section cards with questions inside
+    if (isChapterType(selectedNode.nodeType)) return renderChapterDetail();
+    // Section (subsubtopic/section) → show questions inline
+    if (isSectionType(selectedNode.nodeType)) return renderSectionDetail();
     return renderQuestionDetail();
   };
 
@@ -737,7 +745,7 @@ export function StructureCanvas({
                       <span className="mt-0.5 block text-text-muted">Add a sub-section under this topic</span>
                     </button>
                   )}
-                  {(selectedNode.nodeType === 'subtopic' || selectedNode.nodeType === 'subsubtopic') && (
+                  {(isChapterType(selectedNode.nodeType) || isSectionType(selectedNode.nodeType)) && (
                     <button type="button" className="rounded-lg border border-border bg-surface px-3 py-2 text-left text-xs hover:border-accent/60" onClick={() => setShowAddPopup(false)}>
                       <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-border" /><span className="font-semibold text-text">New Section</span></span>
                       <span className="mt-0.5 block text-text-muted">Add a section with questions</span>
