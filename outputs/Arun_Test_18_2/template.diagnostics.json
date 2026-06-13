@@ -1,0 +1,58 @@
+{
+  "status": "VALID_WITH_WARNINGS",
+  "contractVersion": "template.extraction.v2",
+  "binderReadinessScore": 0.528,
+  "passScores": {},
+  "categoryScores": {
+    "entityHygiene": 0.419,
+    "entityCompleteness": 0.933,
+    "tableSemantics": 0.562,
+    "unitCoverage": 0.833,
+    "questionCompleteness": 0.0,
+    "crossReferenceIntegrity": 0.75,
+    "valueFreeCompliance": 1.0,
+    "chartSemantics": 0.3
+  },
+  "counts": {
+    "entities": 7,
+    "entitiesDropped": 21,
+    "tables": 8,
+    "charts": 3,
+    "figures": 3,
+    "topics": 4,
+    "slotsWired": 6
+  },
+  "blockingErrors": [],
+  "warnings": [
+    {
+      "severity": "warn",
+      "code": "GENERIC_TEMPLATE_NAME",
+      "message": "templateMeta.name is generic — should identify the report",
+      "sourcePhase": "E0"
+    },
+    {
+      "severity": "warn",
+      "code": "GENERIC_DOMAIN",
+      "message": "templateMeta.domain is 'general' — should be specific (energy, labour_force, etc.)",
+      "sourcePhase": "E0"
+    },
+    {
+      "severity": "warn",
+      "code": "MEASURES_MISSING_UNIT",
+      "message": "1 measure entities have no unit",
+      "sourcePhase": "E0"
+    }
+  ],
+  "quarantinedCount": 21,
+  "repairsCount": 0,
+  "binderCompatibility": {
+    "blueprintQAWillPass": true,
+    "expectedResolverConfidence": "high",
+    "expectedIssues": [
+      "Questions need analyticsSpec/answerStructure"
+    ],
+    "recommendation": "fix_questions"
+  },
+  "runtime": {},
+  "generatedAt": "2026-06-10T18:24:27.424125+00:00"
+}

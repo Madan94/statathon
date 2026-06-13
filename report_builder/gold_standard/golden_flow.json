@@ -1,0 +1,376 @@
+{
+  "_meta": {
+    "name": "Golden Flow Reference",
+    "description": "Expected pipeline output at each pass for any MoSPI statistical report. Use this to validate each pass produces correct intermediate data before the next pass consumes it.",
+    "version": "1.0",
+    "reference_pdf": "Energy Statistics India 2025 - Chapter 1 (test2.pdf)"
+  },
+
+  "pass0_text_extraction": {
+    "_expect": "Clean text per page. Ghost tables filtered. Real tables preserved with proper cell structure.",
+    "signals_of_success": [
+      "Ghost tables (>30 cols, <20% fill) = 0 per page",
+      "Real tables have proper headers (not col_0, col_1...)",
+      "Headings detected from bold/large font words",
+      "Total chars > 0 for text pages (not scanned)"
+    ],
+    "example_page": {
+      "page": 3,
+      "chars": 1789,
+      "word_count": 299,
+      "tables": 0,
+      "headings": ["1.1 Coal Reserves", "1.2 Lignite Reserves"],
+      "embedded_figures": 0,
+      "note": "Ghost table (128x88, 4% filled) was filtered. Page has vector pie charts but pdfplumber can't see them — LayoutLM + VLM handle this."
+    },
+    "example_table_page": {
+      "page": 7,
+      "tables_after_ghost_filter": 2,
+      "table_1_shape": "7x11 (65% filled)",
+      "table_1_title_detected": "Table 1.1: Statewise Estimated Reserves of Coal (As on 1st April 2025)",
+      "table_1_headers": ["States/ UTs", "Proved 2024", "Proved 2025", "Indicated 2024", "Indicated 2025", "Inferred 2024", "Inferred 2025", "Total 2024", "Total 2025", "Distribution (%) 2024", "Distribution (%) 2025"],
+      "table_1_column_groups": [
+        {"label": "Proved", "span": 2},
+        {"label": "Indicated", "span": 2},
+        {"label": "Inferred", "span": 2},
+        {"label": "Total", "span": 2},
+        {"label": "Distribution (%)", "span": 2}
+      ]
+    }
+  },
+
+  "pass1_layout_detection": {
+    "_expect": "LayoutLM identifies region types (heading, text, table, figure) from rasterized page image. DocLayNet 11-class model.",
+    "signals_of_success": [
+      "Figure regions detected on pages with vector charts (pages 3-6)",
+      "Table regions detected on pages 7-9",
+      "Heading regions at top of narrative pages",
+      "Confidence > 0.55 for all kept regions"
+    ],
+    "expected_regions_per_page": {
+      "page_3": [
+        {"type": "heading", "text_contains": "Chapter 1"},
+        {"type": "heading", "text_contains": "Coal Reserves"},
+        {"type": "text", "note": "narrative paragraph"},
+        {"type": "figure", "note": "pie chart - Coal reserves distribution"},
+        {"type": "text", "note": "more narrative"},
+        {"type": "figure", "note": "pie chart - Lignite reserves"},
+        {"type": "caption", "text_contains": "Fig 1.1"},
+        {"type": "caption", "text_contains": "Fig 1.2"}
+      ],
+      "page_7": [
+        {"type": "heading", "text_contains": "Chapter 1"},
+        {"type": "table", "note": "Table 1.1 - Coal reserves by state"},
+        {"type": "table", "note": "Table 1.2 - Lignite reserves by state"}
+      ]
+    },
+    "toc_expected": [
+      {"title": "CHAPTER 1", "page": 2, "level": 1},
+      {"title": "Energy Reserves and Potential", "page": 2, "level": 1},
+      {"title": "1.1 Coal Reserves", "page": 3, "level": 2},
+      {"title": "1.2 Lignite Reserves", "page": 3, "level": 2},
+      {"title": "1.3 Crude Oil Reserves", "page": 4, "level": 2},
+      {"title": "1.4 Natural Gas Reserves", "page": 4, "level": 2},
+      {"title": "1.5 Renewable Energy Potential in India", "page": 5, "level": 2},
+      {"title": "Geographical Distribution of Renewable Energy Potential", "page": 6, "level": 2}
+    ]
+  },
+
+  "pass2_vlm_entities": {
+    "_expect": "VLM (Qwen/Gemini) sees page images and extracts entity names + chart types. This is the ONLY source for chart detection on vector-drawn PDFs.",
+    "signals_of_success": [
+      "chart_types detected on pages 3-6 (pie_chart)",
+      "structure_type = mixed for pages with text + charts",
+      "structure_type = data_table for pages 7-9",
+      "Entities are real column headers / indicator names, NOT section headings"
+    ],
+    "example_page_3": {
+      "page_index": 3,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": ["Coal Reserves", "Proved", "Indicated", "Inferred", "Odisha", "Jharkhand", "Chhattisgarh"],
+      "chart_types": ["pie_chart", "pie_chart"],
+      "chart_titles": ["Estimated Reserves of Coal in India", "Estimated Reserves of Lignite in India"],
+      "section_heading": "1.1 Coal Reserves",
+      "table_title": ""
+    },
+    "example_page_7": {
+      "page_index": 7,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": ["States/ UTs", "Proved", "Indicated", "Inferred", "Total", "Distribution"],
+      "chart_types": [],
+      "chart_titles": [],
+      "section_heading": "",
+      "table_title": "Table 1.1: Statewise Estimated Reserves of Coal"
+    }
+  },
+
+  "pass2_5_knowledge_graph": {
+    "_expect": "Programmatic assembly of entities from 4 sources (table headers priority 0 > headings > VLM > regex). Table structures with proper dims/measures.",
+    "signals_of_success": [
+      "Table headers registered as priority-0 entities",
+      "Real measures: Proved, Indicated, Inferred, Total, Distribution (%)",
+      "Real dimensions: States/UTs, Energy Source",
+      "Chapter headings NOT registered as entities (filtered by hygiene)",
+      "Table structures have dimensions AND measures (not all col_N)"
+    ],
+    "expected_entities": [
+      {"name": "States/ UTs", "source": "table_header", "entityType_hint": "dimension"},
+      {"name": "Proved", "source": "table_header", "entityType_hint": "measure"},
+      {"name": "Indicated", "source": "table_header", "entityType_hint": "measure"},
+      {"name": "Inferred", "source": "table_header", "entityType_hint": "measure"},
+      {"name": "Total", "source": "table_header", "entityType_hint": "measure"},
+      {"name": "Distribution (%)", "source": "table_header", "entityType_hint": "measure"},
+      {"name": "Coal Reserves", "source": "heading", "entityType_hint": "measure"},
+      {"name": "Lignite Reserves", "source": "heading", "entityType_hint": "measure"},
+      {"name": "Crude Oil", "source": "heading", "entityType_hint": "measure"},
+      {"name": "Natural Gas", "source": "heading", "entityType_hint": "measure"},
+      {"name": "Renewable Energy Potential", "source": "heading", "entityType_hint": "measure"},
+      {"name": "Wind Power", "source": "table_header", "entityType_hint": "measure"},
+      {"name": "Solar Energy", "source": "table_header", "entityType_hint": "measure"},
+      {"name": "Small Hydro Power", "source": "table_header", "entityType_hint": "measure"},
+      {"name": "Biomass Power", "source": "table_header", "entityType_hint": "measure"},
+      {"name": "Large Hydro", "source": "table_header", "entityType_hint": "measure"}
+    ],
+    "expected_table_structures": [
+      {
+        "tableId": "tbl_8_2",
+        "page": 7,
+        "tableTitle": "Table 1.1: Statewise Estimated Reserves of Coal",
+        "dimensions": ["States/ UTs"],
+        "measures": ["Proved 2024", "Proved 2025", "Indicated 2024", "Indicated 2025", "Inferred 2024", "Inferred 2025", "Total 2024", "Total 2025", "Distribution (%) 2024", "Distribution (%) 2025"],
+        "columnGroups": [{"label": "Proved", "span": 2}, {"label": "Indicated", "span": 2}, {"label": "Inferred", "span": 2}],
+        "layout": "cross_tabulation"
+      },
+      {
+        "tableId": "tbl_9_2",
+        "page": 8,
+        "tableTitle": "Table 1.3: Statewise Estimated Reserves of Crude Oil and Natural Gas",
+        "dimensions": ["States/ UTs/ Region"],
+        "measures": ["Crude Oil Estimated Reserves", "Crude Oil Distribution (%)", "Natural Gas Estimated Reserves", "Natural Gas Distribution (%)"],
+        "columnGroups": [{"label": "Crude Oil (Million Tonnes)", "span": 4}, {"label": "Natural Gas (Billion Cubic Metres)", "span": 4}],
+        "layout": "cross_tabulation"
+      },
+      {
+        "tableId": "tbl_10_2",
+        "page": 9,
+        "tableTitle": "Table 1.4: Sourcewise and Statewise Estimated Potential of Renewable Power",
+        "dimensions": ["Sl. No.", "States/ UTs"],
+        "measures": ["Wind Power", "Small Hydro Power", "Biomass Power", "Cogeneration-bagasse", "Solar Energy", "Large Hydro", "Total", "Distribution (%)"],
+        "layout": "simple"
+      }
+    ],
+    "expected_chapters": [
+      {"title": "Energy Reserves and Potential", "pageRange": [2, 9]}
+    ]
+  },
+
+  "pass2_6_entity_classification": {
+    "_expect": "Each entity gets entityType_hint (measure/dimension/filter/metadata). LLM batch-classifies ambiguous ones.",
+    "signals_of_success": [
+      "Table header measures (Proved, Indicated, Total) → measure",
+      "First column of tables (States/UTs) → dimension",
+      "Entities with 'reserves', 'potential', 'distribution' → measure",
+      "State names (if individual) → dimension",
+      "No heading-phrases as entities (filtered earlier)"
+    ]
+  },
+
+  "pass3_questions_topics": {
+    "_expect": "LLM generates domain-specific analytical questions from clean entity context. Each question has requiredEntities + analyticsSpec + answerStructure.",
+    "signals_of_success": [
+      "Questions reference REAL entity names (Proved, States/UTs) not col_0",
+      "questionType is specific (comparison, ranking, trend) not generic describe",
+      "requiredEntities have proper roles (measure, groupBy, filter)",
+      "answerStructure has chart + table + narrative components",
+      "inferenceMethod = LLM (not programmatic_chapter fallback)"
+    ],
+    "expected_questions": [
+      {
+        "questionId": "sp01_q01",
+        "intent": "What is the statewise distribution of coal reserves across States/UTs for 2025?",
+        "questionType": "comparison",
+        "requiredEntities": [
+          {"entityRef": "Proved", "role": "measure"},
+          {"entityRef": "States/ UTs", "role": "groupBy"}
+        ],
+        "answerStructure": {
+          "components": [
+            {"type": "narrative_paragraph", "renderOrder": 1},
+            {"type": "data_table", "renderOrder": 2},
+            {"type": "grouped_bar_chart", "renderOrder": 3}
+          ]
+        }
+      },
+      {
+        "questionId": "sp01_q02",
+        "intent": "Which States have the highest total coal reserves and what is their share in national reserves?",
+        "questionType": "ranking",
+        "requiredEntities": [
+          {"entityRef": "Total", "role": "measure"},
+          {"entityRef": "States/ UTs", "role": "groupBy"},
+          {"entityRef": "Distribution (%)", "role": "measure"}
+        ]
+      },
+      {
+        "questionId": "sp01_q03",
+        "intent": "What is the composition of coal reserves by reserve category (Proved, Indicated, Inferred)?",
+        "questionType": "composition",
+        "requiredEntities": [
+          {"entityRef": "Proved", "role": "measure"},
+          {"entityRef": "Indicated", "role": "measure"},
+          {"entityRef": "Inferred", "role": "measure"}
+        ],
+        "answerStructure": {
+          "components": [
+            {"type": "narrative_paragraph", "renderOrder": 1},
+            {"type": "pie_chart", "renderOrder": 2}
+          ]
+        }
+      }
+    ],
+    "expected_topics": [
+      {
+        "topicId": "topic_01",
+        "title": "Energy Reserves and Potential",
+        "questionIds": ["sp01_q01", "sp01_q02", "sp01_q03"],
+        "pageRange": [2, 9]
+      }
+    ]
+  },
+
+  "pass4_final_assembly": {
+    "_expect": "Gold-standard AST + Blueprint. Every ID cross-references. Entities have proper entityType/unit/format. Tables have columnGroups. Charts wired to questions.",
+    "blueprint_entities_expected": [
+      {
+        "entityId": "ent_001",
+        "canonicalName": "Coal Reserves",
+        "entityType": "measure",
+        "aliases": ["Coal", "Coal Reserves"],
+        "unit": "million_tonnes",
+        "format": "number",
+        "valueDomain": {"kind": "ratio", "min": 0, "max": null},
+        "aggregation": "sum",
+        "scope": "indicator"
+      },
+      {
+        "entityId": "ent_002",
+        "canonicalName": "States/ UTs",
+        "entityType": "dimension",
+        "aliases": ["State", "State/UT"],
+        "valueDomain": {"kind": "categorical", "members": "open", "expectedCardinality": 36},
+        "cardinalityHint": "high",
+        "scope": "classifier"
+      },
+      {
+        "entityId": "ent_003",
+        "canonicalName": "Reserve Category",
+        "entityType": "dimension",
+        "aliases": ["Proved", "Indicated", "Inferred"],
+        "valueDomain": {"kind": "categorical", "members": ["Proved", "Indicated", "Inferred"]},
+        "cardinalityHint": "low",
+        "scope": "classifier"
+      },
+      {
+        "entityId": "ent_004",
+        "canonicalName": "Survey Period",
+        "entityType": "time",
+        "aliases": ["Year", "2024", "2025"],
+        "valueDomain": {"kind": "temporal", "granularity": "annual", "format": "YYYY"},
+        "scope": "time"
+      }
+    ],
+    "ast_sections_expected": [
+      {
+        "sectionId": "sec_01",
+        "title": "Energy Reserves and Potential",
+        "level": 1,
+        "topicRef": "topic_01",
+        "children": ["p_sp01_q01", "fig_chart_sp01_q03", "table_8_2"]
+      }
+    ],
+    "ast_tables_expected": [
+      {
+        "tableId": "table_8_2",
+        "title": "Table 1.1: Statewise Estimated Reserves of Coal",
+        "columns_shape": "1 dimension + 10 measures",
+        "biQuery": "sp01_q01",
+        "columnGroups": ["Proved", "Indicated", "Inferred", "Total", "Distribution (%)"]
+      }
+    ],
+    "ast_charts_expected": [
+      {
+        "chartId": "chart_sp01_q03",
+        "chartType": "pie",
+        "title": "Coal Reserves by Category",
+        "xAxis": {"entityRef": "ent_003", "label": "Reserve Category"},
+        "yAxis": {"entityRef": "ent_001", "label": "Reserves (Million Tonnes)"},
+        "biQuery": "sp01_q03"
+      }
+    ]
+  },
+
+  "common_failure_modes": {
+    "ghost_tables": {
+      "symptom": "89-column tables with col_0..col_88 headers in output",
+      "cause": "pdfplumber detects PDF drawing objects (borders/gridlines) as table cells",
+      "fix": "_is_ghost_table() filter: >30 cols AND <20% fill rate → reject"
+    },
+    "generic_questions": {
+      "symptom": "Questions say 'What are the key findings in section X?'",
+      "cause": "Entity list has no measures (all dimension) → chapter-fallback produces generic questions",
+      "fix": "Ghost table filter + proper header merge → clean measures reach entity list → LLM generates specific questions"
+    },
+    "no_charts_detected": {
+      "symptom": "chartAST.charts = 0 even though PDF has pie charts",
+      "cause": "Vector-drawn charts (curves, not images) invisible to pdfplumber. LayoutLM not running. VLM provider failing.",
+      "fix": "Start LayoutLM service (detects figure regions) + ensure VLM provider responds (identifies chart_types from image)"
+    },
+    "heading_as_entity": {
+      "symptom": "Entities like 'CHAPTER 1 Energy Reserves and Potential Introduction'",
+      "cause": "Entity hygiene not rejecting long heading phrases",
+      "fix": "_classify_entity_name rejects: chapter_heading pattern + >40 chars with 5+ words"
+    },
+    "table_title_as_header": {
+      "symptom": "First column header is 'Table 1.1: Statewise Estimated...' (full title text)",
+      "cause": "Row 0 is a title row spanning all columns, not a header",
+      "fix": "_analyze_table_header detects title rows (single non-null cell matching Table/Statement pattern) and skips them"
+    },
+    "year_row_as_data": {
+      "symptom": "Headers show only top-level labels (Proved, Indicated) without year qualifiers",
+      "cause": "Year sub-header row (2024, 2025) classified as data by _looks_like_data_row",
+      "fix": "Year-like values (20XX) in mostly-empty rows treated as header qualifiers, not data"
+    }
+  },
+
+  "provider_requirements": {
+    "layoutlm": {
+      "port": 8001,
+      "model": "Kwan0/layoutlmv3-base-finetune-DocLayNet-100k",
+      "role": "Visual region detection (heading, text, table, figure, caption)",
+      "critical_for": "Chart/figure detection on vector-drawn PDFs",
+      "fallback_when_down": "pdfplumber-derived layout (no figure detection)"
+    },
+    "vlm_qwen": {
+      "port": 8002,
+      "model": "Qwen-VL 3B AWQ via SGLang",
+      "role": "Entity extraction + chart type identification from page images",
+      "critical_for": "chart_types, chart_titles, structure_type per page",
+      "max_tokens": 256,
+      "fallback_when_down": "pdfplumber headings + table headers only (no chart detection)"
+    },
+    "groq": {
+      "api": "GROQ_API_KEY",
+      "role": "Question generation (pass3 loop1) + entity binding (pass3 loop2) + entity classification (pass2.6)",
+      "critical_for": "Domain-specific analytical questions with proper analyticsSpec",
+      "fallback_when_down": "Programmatic fallback (archetype templates + chapter-based generic questions)"
+    },
+    "gemini": {
+      "api": "GOOGLE_API_KEY",
+      "role": "ToC extraction (L3 fallback) + gap fill + fact extraction + pass5 enrichment",
+      "critical_for": "Semantic hierarchy nodes + glossary + missing question coverage",
+      "fallback_when_down": "Pipeline still produces valid output; just less rich"
+    }
+  }
+}

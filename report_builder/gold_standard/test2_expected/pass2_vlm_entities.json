@@ -1,0 +1,108 @@
+{
+  "_meta": "Simulated ideal VLM output — what Qwen/Gemini SHOULD extract per page from test2.pdf images",
+  "vlm_success_count": 10,
+  "total_entities": 48,
+  "chart_pages": 4,
+  "pages": [
+    {
+      "page_index": 0,
+      "vlm_used": true,
+      "structure_type": "title_page",
+      "entities": [],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page_index": 1,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": ["Table of Contents", "Energy Reserves", "Coal", "Lignite", "Crude Oil", "Natural Gas", "Renewable Energy"],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "Table of Contents"
+    },
+    {
+      "page_index": 2,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": ["Energy Reserves", "SEEA", "System of Environmental Economic Accounting"],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "CHAPTER 1 Energy Reserves and Potential"
+    },
+    {
+      "page_index": 3,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": ["Coal Reserves", "Proved", "Indicated", "Inferred", "Odisha", "Jharkhand", "Chhattisgarh", "Lignite Reserves", "Tamil Nadu"],
+      "chart_types": ["pie_chart", "pie_chart"],
+      "chart_titles": ["Estimated Reserves of Coal in India as on 01.04.2025", "Estimated Reserves of Lignite in India as on 01.04.2025"],
+      "table_title": "",
+      "section_heading": "1.1 Coal Reserves"
+    },
+    {
+      "page_index": 4,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": ["Crude Oil Reserves", "Natural Gas Reserves", "Western Offshore", "Eastern Offshore", "Assam", "Gujarat", "Rajasthan"],
+      "chart_types": ["pie_chart", "pie_chart"],
+      "chart_titles": ["Estimated Reserves of Crude Oil in India as on 01.04.2025", "Estimated Reserves of Natural Gas in India as on 01.04.2025"],
+      "table_title": "",
+      "section_heading": "1.3 Crude Oil Reserves"
+    },
+    {
+      "page_index": 5,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": ["Renewable Energy", "Solar Energy", "Wind Power", "Biomass", "Small Hydro", "Large Hydro", "Cogeneration"],
+      "chart_types": ["pie_chart"],
+      "chart_titles": ["Source wise Estimated Potential of Renewable Power in India"],
+      "table_title": "",
+      "section_heading": "1.5 Renewable Energy Potential in India"
+    },
+    {
+      "page_index": 6,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": ["Rajasthan", "Gujarat", "Karnataka", "Tamil Nadu", "Maharashtra", "Andhra Pradesh", "Telangana"],
+      "chart_types": ["bar_chart"],
+      "chart_titles": ["Statewise Estimated Potential of Renewable Power"],
+      "table_title": "",
+      "section_heading": "Geographical Distribution of Renewable Energy Potential"
+    },
+    {
+      "page_index": 7,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": ["States/ UTs", "Proved", "Indicated", "Inferred", "Total", "Distribution"],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "Table 1.1: Statewise Estimated Reserves of Coal",
+      "section_heading": ""
+    },
+    {
+      "page_index": 8,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": ["States/ UTs/ Region", "Crude Oil", "Natural Gas", "Estimated Reserves", "Distribution"],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "Table 1.3: Statewise Estimated Reserves of Crude Oil and Natural Gas",
+      "section_heading": ""
+    },
+    {
+      "page_index": 9,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": ["States/ UTs", "Wind Power", "Small Hydro Power", "Biomass Power", "Cogeneration", "Solar Energy", "Large Hydro", "Total", "Distribution"],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "Table 1.4: Sourcewise and Statewise Estimated Potential of Renewable Power in India",
+      "section_heading": ""
+    }
+  ]
+}

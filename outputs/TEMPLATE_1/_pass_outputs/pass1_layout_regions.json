@@ -1,0 +1,498 @@
+{
+  "layoutlm_used": false,
+  "total_regions": 43,
+  "toc_entries": [
+    {
+      "title": "Periodic Labour Force Survey (PLFS) Annual",
+      "page": 0,
+      "level": 2
+    },
+    {
+      "title": "Report, 2025 [January, 2025 December, 2025]",
+      "page": 0,
+      "level": 2
+    },
+    {
+      "title": "Key findings",
+      "page": 0,
+      "level": 2
+    },
+    {
+      "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "page": 1,
+      "level": 1
+    },
+    {
+      "title": "Key Highligts of PLFS, Annual Report 2025",
+      "page": 1,
+      "level": 2
+    },
+    {
+      "title": "1. Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "page": 1,
+      "level": 2
+    },
+    {
+      "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "page": 2,
+      "level": 1
+    },
+    {
+      "title": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "page": 2,
+      "level": 2
+    },
+    {
+      "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "page": 3,
+      "level": 1
+    },
+    {
+      "title": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "page": 3,
+      "level": 2
+    },
+    {
+      "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+      "page": 4,
+      "level": 1
+    },
+    {
+      "title": "4. Increase in proportion of workers with regular wage/ salary employment",
+      "page": 4,
+      "level": 2
+    },
+    {
+      "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "page": 5,
+      "level": 1
+    },
+    {
+      "title": "6 Earnings of female workers have seen a notable shift",
+      "page": 5,
+      "level": 1
+    },
+    {
+      "title": "5. Manufacturing and service sectors witnessed enhanced worker participation",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "6. Earnings of female workers have seen notable shift",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "7 Average number of years in formal education",
+      "page": 6,
+      "level": 1
+    },
+    {
+      "title": "7. Average number of years in formal education",
+      "page": 6,
+      "level": 2
+    },
+    {
+      "title": "Endnote: brief about the objective, sample size, changes in sample design, conceptual",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "framework and comparability of results of the Periodic Labour Force Survey (PLFS):",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "A. Introduction",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "B. Sample Size",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "A Introduction",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "B Sample Size",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "Sample Size for First Visit during January 2025 December 2025 in rural and urban areas for",
+      "page": 8,
+      "level": 2
+    },
+    {
+      "title": "the Annual Report:",
+      "page": 8,
+      "level": 2
+    },
+    {
+      "title": "C. Changes in Sample Design of PLFS",
+      "page": 8,
+      "level": 2
+    },
+    {
+      "title": "PLFS: Changes in 2025",
+      "page": 8,
+      "level": 2
+    },
+    {
+      "title": "D. Conceptual Framework of Key Indicators",
+      "page": 8,
+      "level": 2
+    },
+    {
+      "title": "Labour Force Participation Rate (LFPR):",
+      "page": 8,
+      "level": 2
+    },
+    {
+      "title": "C Changes in Sample Design of PLFS",
+      "page": 8,
+      "level": 2
+    },
+    {
+      "title": "D Conceptual Framework of Key Indicators",
+      "page": 8,
+      "level": 2
+    },
+    {
+      "title": "Worker Population Ratio (WPR):",
+      "page": 9,
+      "level": 2
+    },
+    {
+      "title": "Unemployment Rate (UR):",
+      "page": 9,
+      "level": 2
+    },
+    {
+      "title": "Activity Status Usual Status:",
+      "page": 9,
+      "level": 2
+    },
+    {
+      "title": "Principal activity status (ps):",
+      "page": 9,
+      "level": 2
+    },
+    {
+      "title": "Subsidiary economic activity status (ss):",
+      "page": 9,
+      "level": 2
+    },
+    {
+      "title": "Activity Status Current Weekly Status (CWS):",
+      "page": 9,
+      "level": 2
+    },
+    {
+      "title": "E. Compatibility of PLFS 2025 results",
+      "page": 9,
+      "level": 2
+    },
+    {
+      "title": "E. Detailed tables included in the Annual Report",
+      "page": 9,
+      "level": 2
+    },
+    {
+      "title": "Scan the QR code below to access MoSPI",
+      "page": 9,
+      "level": 2
+    },
+    {
+      "title": "Publications/ Reports",
+      "page": 9,
+      "level": 2
+    },
+    {
+      "title": "E Compatibility of PLFS 2025 results",
+      "page": 9,
+      "level": 2
+    },
+    {
+      "title": "E Detailed tables included in the Annual Report",
+      "page": 9,
+      "level": 2
+    }
+  ],
+  "pages": [
+    {
+      "page": 0,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Periodic Labour Force Survey (PLFS) Annual"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Report, 2025 [January, 2025 December, 2025]"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Key findings"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau\nMinistry of Statistics & Programme Imp"
+        }
+      ]
+    },
+    {
+      "page": 1,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Key Highligts of PLFS, Annual Report 2025"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "1. Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau\nUrban self-employed male worked about "
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau\n2. Worker Population Ratio (WPR) for p"
+        }
+      ]
+    },
+    {
+      "page": 3,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau\n3. Unemployment Rates (UR) reflect sta"
+        }
+      ]
+    },
+    {
+      "page": 4,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "4. Increase in proportion of workers with regular wage/ salary employment"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau\n4. Increase in proportion of workers w"
+        }
+      ]
+    },
+    {
+      "page": 5,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "5. Manufacturing and service sectors witnessed enhanced worker participation"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "6. Earnings of female workers have seen notable shift"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau\n5. Manufacturing and service sectors w"
+        }
+      ]
+    },
+    {
+      "page": 6,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "7. Average number of years in formal education"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau\nIn self-employment, male earnings incr"
+        }
+      ]
+    },
+    {
+      "page": 7,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Endnote: brief about the objective, sample size, changes in sample design, conceptual"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "framework and comparability of results of the Periodic Labour Force Survey (PLFS):"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "A. Introduction"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "B. Sample Size"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau\nEndnote: A brief about the objective, "
+        }
+      ]
+    },
+    {
+      "page": 8,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Sample Size for First Visit during January 2025 December 2025 in rural and urban areas for"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "the Annual Report:"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "C. Changes in Sample Design of PLFS"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "PLFS: Changes in 2025"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "D. Conceptual Framework of Key Indicators"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Labour Force Participation Rate (LFPR):"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau\nSample Size for First Visit during Jan"
+        }
+      ]
+    },
+    {
+      "page": 9,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Worker Population Ratio (WPR):"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Unemployment Rate (UR):"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Activity Status Usual Status:"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Principal activity status (ps):"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Subsidiary economic activity status (ss):"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Activity Status Current Weekly Status (CWS):"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "E. Compatibility of PLFS 2025 results"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "E. Detailed tables included in the Annual Report"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Scan the QR code below to access MoSPI"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Publications/ Reports"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau\nb. Worker Population Ratio (WPR): WPR "
+        }
+      ]
+    },
+    {
+      "page": 10,
+      "regions": [
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "6/6/26, 9:49 AM Press Release Page | Press Information Bureau\n***\nSamrat\n(Release ID: 2246009) Visit"
+        },
+        {
+          "type": "table",
+          "confidence": 0.7,
+          "text": "Table with 4 rows"
+        }
+      ]
+    }
+  ]
+}

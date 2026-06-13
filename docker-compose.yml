@@ -1,4 +1,7 @@
 services:
+  # ─────────────────────────────────────────────────────────────────────────
+  # FastAPI Backend (CPU) — port 8000
+  # ─────────────────────────────────────────────────────────────────────────
   api:
     build:
       context: .
@@ -7,7 +10,19 @@ services:
       - "8000:8000"
     environment:
       - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=mospi_secure_password
+      - NEO4J_ENABLED=${NEO4J_ENABLED:-true}
+      - REDIS_URL=redis://redis:6379/0
+      - CHECKPOINT_ENABLED=true
+      - EXTRACTION_PIPELINE=v2
+      - LAYOUTLM_ENDPOINT=http://layoutlm:8001
+      - SGLANG_ENDPOINT=http://sglang:8002
+      - SGLANG_MODEL=Qwen/Qwen2.5-VL-3B-Instruct-AWQ
+      - SGLANG_TIMEOUT=120
+      - VLM_MAX_IMAGE_DIM=800
+      - VLM_MAX_CONSECUTIVE_FAIL=3
+      - POPPLER_PATH=
     env_file: .env
     volumes:
       - ./storage:/app/storage
@@ -15,6 +30,90 @@ services:
       - ./model/weights:/app/model/weights
       - ./tests:/app/tests
       - ./test_data:/app/test_data
+    depends_on:
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # LayoutLMv3 Layout Detection (CPU) — port 8001
+  # Uses ./model/cache on host so models are shared & never re-downloaded
+  # ─────────────────────────────────────────────────────────────────────────
+  layoutlm:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.layoutlm
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./model/cache:/cache
+    environment:
+      - MODEL_ID=${LAYOUTLM_MODEL_ID:-Kwan0/layoutlmv3-base-finetune-DocLayNet-100k}
+      - LAYOUTLM_PORT=8001
+      - HF_HOME=/cache
+      - LAYOUTLM_DPI=300
+      - LAYOUTLM_OCR_LANG=eng+hin
+      - LAYOUTLM_MIN_CONFIDENCE=0.55
+    restart: unless-stopped
+    profiles:
+      - gpu
+      - full
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # vLLM / Qwen-VL Vision Model (GPU) — port 8002
+  # Uses ./model/cache on host — shares cache with layoutlm & api
+  # RTX 4050 (6GB) → Qwen2.5-VL-3B-Instruct-AWQ  (default)
+  # RTX 4070+ (8GB+) → set VLLM_MODEL=Qwen/Qwen2.5-VL-7B-Instruct-AWQ
+  # ─────────────────────────────────────────────────────────────────────────
+  sglang:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.sglang
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./model/cache:/cache
+    environment:
+      - VLLM_MODEL=${VLLM_MODEL:-Qwen/Qwen2.5-VL-3B-Instruct-AWQ}
+      - VLLM_PORT=8002
+      - HF_HOME=/cache
+    shm_size: "4gb"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    profiles:
+      - gpu
+      - full
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Next.js Dashboard — port 3000
+  # ─────────────────────────────────────────────────────────────────────────
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dashboard
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    environment:
+      - API_INTERNAL_URL=http://api:8000
+      - SMTP_DEV_LOG_OTP=true
+    depends_on:
+      - api
+    restart: unless-stopped
+    profiles:
+      - full
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Neo4j Knowledge Graph — ports 7474 (browser) + 7687 (bolt)
+  # Always started with default compose; skip with NEO4J_ENABLED=false
+  # ─────────────────────────────────────────────────────────────────────────
   neo4j:
     image: neo4j:5
     environment:
@@ -22,7 +121,32 @@ services:
     ports:
       - "7474:7474"
       - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Redis — port 6379 (checkpoint cache + session store)
+  # ─────────────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save 60 100
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  neo4j_data:

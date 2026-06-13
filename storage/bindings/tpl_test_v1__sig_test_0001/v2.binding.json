@@ -1,0 +1,81 @@
+{
+  "templateId": "tpl_test_v1",
+  "datasetId": "ds_test",
+  "datasetSignature": "sig_test_0001",
+  "entityBindings": [
+    {
+      "entityId": "ent_sal",
+      "entityName": "Average Salary",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "sal"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [],
+      "risks": []
+    },
+    {
+      "entityId": "ent_sector",
+      "entityName": "Sector",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "sector"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [],
+      "risks": []
+    }
+  ],
+  "questionBindings": [
+    {
+      "questionId": "q_sal_01",
+      "status": "executable",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": []
+    }
+  ],
+  "coverage": {
+    "entities": {
+      "bound": 2,
+      "pending": 0,
+      "unresolved": 0
+    },
+    "questions": {
+      "executable": 1,
+      "blocked": 0,
+      "degraded": 0
+    },
+    "issues": [
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'q_sal_01' has no time column \u2014 single-period snapshot.",
+        "questionId": "q_sal_01"
+      }
+    ]
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "vlm_success_count": 0,
+  "total_entities": 10,
+  "chart_pages": 0,
+  "pages": [
+    {
+      "page": 0,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [
+        "Key findings"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 1,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 2,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 3,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 4,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 5,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 6,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 7,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [
+        "A. Introduction",
+        "B. Sample Size"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 8,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [
+        "C. Changes in Sample Design of PLFS",
+        "PLFS: Changes in 2025",
+        "Labour Force Participation Rate (LFPR):"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 9,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [
+        "E. Compatibility of PLFS 2025 results",
+        "Scan the QR code below to access MoSPI",
+        "Publications/ Reports"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 10,
+      "vlm_used": false,
+      "structure_type": "data_table",
+      "entities": [
+        "Samrat (Release I"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    }
+  ]
+}

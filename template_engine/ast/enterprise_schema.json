@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EnterpriseDocumentAST",
+  "description": "BharatStat enterprise template AST v2.0",
+  "type": "object",
+  "required": [
+    "metadata",
+    "layoutAST",
+    "semanticAST",
+    "contentAST",
+    "tableAST",
+    "figureAST",
+    "chartAST",
+    "styleAST",
+    "geometryAST",
+    "assetAST",
+    "annotationAST",
+    "entityGraph",
+    "relationshipGraph",
+    "knowledgeGraph",
+    "factGraph",
+    "analyticsAST",
+    "citationAST",
+    "retrievalAST",
+    "agentAST"
+  ],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["documentId", "version", "checksum"],
+      "properties": {
+        "documentId": { "type": "string" },
+        "version": { "const": "2.0" },
+        "language": { "type": "string" },
+        "checksum": { "type": "string" }
+      }
+    },
+    "layoutAST": { "type": "object" },
+    "semanticAST": { "type": "object" },
+    "contentAST": { "type": "object" },
+    "tableAST": { "type": "object" },
+    "figureAST": { "type": "object" },
+    "chartAST": { "type": "object" },
+    "styleAST": { "type": "object" },
+    "geometryAST": { "type": "object" },
+    "assetAST": { "type": "object" },
+    "annotationAST": { "type": "object" },
+    "entityGraph": { "type": "object" },
+    "relationshipGraph": { "type": "object" },
+    "knowledgeGraph": { "type": "object" },
+    "factGraph": { "type": "object" },
+    "analyticsAST": { "type": "object" },
+    "citationAST": { "type": "object" },
+    "retrievalAST": { "type": "object" },
+    "agentAST": { "type": "object" },
+    "blocks": { "type": "array" },
+    "quality_report": { "type": "object" }
+  }
+}

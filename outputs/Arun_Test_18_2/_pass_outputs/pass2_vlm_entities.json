@@ -1,0 +1,177 @@
+{
+  "vlm_success_count": 0,
+  "total_entities": 49,
+  "chart_pages": 0,
+  "pages": [
+    {
+      "page": 0,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [
+        "Government of India",
+        "Ministry of Statistics Programme Implementation",
+        "Khurshid Lal Bhawan, Janpath",
+        "Annual Report"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 1,
+      "vlm_used": false,
+      "structure_type": "data_table",
+      "entities": [
+        "Sl.No. 1",
+        "CHAPTERS Introduction",
+        "Page No. 1-9",
+        "Introduction 1-9",
+        "National Sample Survey (NSS) 41-62",
+        "Data Informatics Innovation 79-91",
+        "Administrative Statistics 92-93",
+        "India in United Nations 94-95",
+        "Research and Analysis 96-97",
+        "Support for Statistical Strengthening 98-101",
+        "Eastern Region",
+        "Services as on 1st January 2025",
+        "TABLE OF CONTENTS"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 2,
+      "vlm_used": false,
+      "structure_type": "data_table",
+      "entities": [
+        "Statistics an n 15th Octo me Impleme",
+        "(MoSPI) ca e Departm dal agency",
+        "Annual Report 2025-26",
+        "Ministry is at Annexure IIA and IIB.",
+        "Implementation is placed at Annexure"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 3,
+      "vlm_used": false,
+      "structure_type": "data_table",
+      "entities": [
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 4,
+      "vlm_used": false,
+      "structure_type": "data_table",
+      "entities": [
+        "-12 is f IIP h trial ou",
+        "September 2024 for the same.",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 5,
+      "vlm_used": false,
+      "structure_type": "data_table",
+      "entities": [
+        "Domestic Product",
+        "Expenditure Components",
+        "Share in GDP(%)",
+        "National Product",
+        "Percentage Change",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 6,
+      "vlm_used": false,
+      "structure_type": "data_table",
+      "entities": [
+        "Percentage Change\nOver Previous\n2024-25 2025-26",
+        "Domestic Product",
+        "Expenditure Components",
+        "Share in GDP(%)",
+        "National Product",
+        "Item Sl. No. Over Previous",
+        "Percentage Change",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 7,
+      "vlm_used": false,
+      "structure_type": "data_table",
+      "entities": [
+        "Industry",
+        "Percentage Change Over\nPrevious Year 2024-25",
+        "Percentage Change Over\nPrevious Year 2025-26",
+        "Percentage Change Over",
+        "Previous Year Industry",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 8,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 9,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 10,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    }
+  ]
+}

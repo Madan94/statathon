@@ -1,0 +1,38 @@
+- generic [active] [ref=e1]:
+  - region "Notifications alt+T":
+    - list:
+      - listitem [ref=e86]:
+        - button "Close toast" [ref=e87] [cursor=pointer]:
+          - img [ref=e88]
+        - img [ref=e92]
+        - generic [ref=e95]: Signed in
+  - button "Open Next.js Dev Tools" [ref=e9] [cursor=pointer]:
+    - img [ref=e10]
+  - alert [ref=e13]
+  - generic [ref=e14]:
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - link "BharatStat" [ref=e19] [cursor=pointer]:
+          - /url: /
+        - paragraph [ref=e20]: Step 2 of 2
+      - generic [ref=e21]:
+        - heading "Verify sign-in" [level=1] [ref=e73]
+        - paragraph [ref=e26]: Enter the code sent to officer@example.com
+        - generic [ref=e74]:
+          - group "Verification code" [ref=e75]:
+            - textbox "Digit 1" [disabled] [ref=e76]: "1"
+            - textbox "Digit 2" [disabled] [ref=e77]: "2"
+            - textbox "Digit 3" [disabled] [ref=e78]: "3"
+            - textbox "Digit 4" [disabled] [ref=e79]: "4"
+            - textbox "Digit 5" [disabled] [ref=e80]: "5"
+            - textbox "Digit 6" [disabled] [ref=e81]: "6"
+          - paragraph [ref=e82]:
+            - text: Dev test OTP is always
+            - code [ref=e83]: "123456"
+          - button "Verifying…" [disabled]
+          - button "Resend code in 28s" [disabled]
+          - button "← Back" [ref=e85]
+    - generic [ref=e53]:
+      - img [ref=e54]
+      - blockquote [ref=e71]: “Your survey data, ready to tell its story.”
+      - paragraph [ref=e72]: BharatStat — survey intelligence for India

@@ -31,6 +31,114 @@ logger = logging.getLogger(__name__)
 
 MAX_RETRIES = 3
 
+# Adaptive retry budget based on priority
+_PRIORITY_RETRY_MAP = {
+    "high": 4,
+    "medium": 3,
+    "low": 2,
+}
+
+
+# ---------------------------------------------------------------------------
+# Failure Classification
+# ---------------------------------------------------------------------------
+
+class FailureType:
+    """Failure type classification for targeted repair."""
+    ROUNDING = "rounding"          # numeric claims off by rounding
+    HALLUCINATION = "hallucination"  # claimed number has no data source
+    STALE_DATA = "stale_data"      # data exists but from wrong period
+    LOGIC = "logic"                # incorrect comparison/trend direction
+
+
+def _classify_failure(verdict: VerifierVerdict) -> dict[str, list]:
+    """Classify each failed claim into failure categories.
+
+    Returns dict mapping FailureType → list of failed claims.
+    """
+    classified: dict[str, list] = {
+        FailureType.ROUNDING: [],
+        FailureType.HALLUCINATION: [],
+        FailureType.STALE_DATA: [],
+        FailureType.LOGIC: [],
+    }
+
+    for c in verdict.checks:
+        if c.status not in ("fail", "unverified"):
+            continue
+
+        if c.status == "fail" and c.computed_value is not None:
+            # Has computed value — check if it's a rounding issue
+            if c.claimed_value is not None:
+                try:
+                    claimed = float(c.claimed_value)
+                    computed = float(c.computed_value)
+                    # Within 0.5% → rounding error
+                    if abs(claimed - computed) / max(abs(computed), 0.001) < 0.005:
+                        classified[FailureType.ROUNDING].append(c)
+                    else:
+                        classified[FailureType.LOGIC].append(c)
+                except (ValueError, TypeError):
+                    classified[FailureType.LOGIC].append(c)
+            else:
+                classified[FailureType.LOGIC].append(c)
+        elif c.status == "unverified":
+            # No data source — hallucination
+            classified[FailureType.HALLUCINATION].append(c)
+        else:
+            classified[FailureType.LOGIC].append(c)
+
+    return classified
+
+
+def _build_classified_repair(verdict: VerifierVerdict) -> str:
+    """Build a repair prompt with failure-classified instructions."""
+    classified = _classify_failure(verdict)
+    lines: list[str] = ["CORRECTION REQUIRED — failures classified by type:"]
+
+    if classified[FailureType.ROUNDING]:
+        lines.append("\n[ROUNDING ERRORS] — Use exact computed values:")
+        for c in classified[FailureType.ROUNDING]:
+            lines.append(
+                f"  • '{c.raw}' → Use {c.computed_value:.3f} "
+                f"(was {c.claimed_value}, off by rounding)"
+            )
+
+    if classified[FailureType.HALLUCINATION]:
+        lines.append("\n[HALLUCINATED DATA] — Remove claims without data source:")
+        for c in classified[FailureType.HALLUCINATION]:
+            lines.append(
+                f"  • '{c.raw}' ({c.claimed_value}) has no supporting data. "
+                "Remove or replace with '(data unavailable)'."
+            )
+
+    if classified[FailureType.STALE_DATA]:
+        lines.append("\n[STALE DATA] — Update to current period:")
+        for c in classified[FailureType.STALE_DATA]:
+            lines.append(f"  • '{c.raw}' uses outdated data. Refresh from latest.")
+
+    if classified[FailureType.LOGIC]:
+        lines.append("\n[LOGIC ERRORS] — Correct the reasoning/comparison:")
+        for c in classified[FailureType.LOGIC]:
+            if c.computed_value is not None:
+                lines.append(
+                    f"  • '{c.raw}' claimed {c.claimed_value} but actual is "
+                    f"{c.computed_value:.3f}. Correct the statement."
+                )
+            else:
+                lines.append(f"  • '{c.raw}' — logic error, please fix.")
+
+    return "\n".join(lines)
+
+
+def _repair_context(verdict: VerifierVerdict) -> str:
+    """Build a repair note for failed/unverified claims.
+
+    Uses failure classification for targeted repair instructions.
+    """
+    # Use classified repair for better targeted fixes
+    return _build_classified_repair(verdict)
+
 
 @dataclass
 class ConsensuResult:
@@ -40,27 +148,7 @@ class ConsensuResult:
     attempts: int
     accepted: bool
     fallback_used: bool = False
-
-
-def _repair_context(verdict: VerifierVerdict) -> str:
-    """Build a repair note for failed/unverified claims."""
-    lines: list[str] = [
-        "CORRECTION REQUIRED — the following numeric claims were incorrect or unverified:"
-    ]
-    for c in verdict.checks:
-        if c.status in ("fail", "unverified"):
-            if c.status == "fail" and c.computed_value is not None:
-                lines.append(
-                    f"  • Claimed: '{c.raw}' ({c.claimed_value}) "
-                    f"— Actual: {c.computed_value:.3f}. "
-                    f"Use {c.computed_value:.3f} or remove this claim."
-                )
-            else:
-                lines.append(
-                    f"  • '{c.raw}' ({c.claimed_value}) has no data source. "
-                    "Remove this number or replace with '(data unavailable)'."
-                )
-    return "\n".join(lines)
+    failure_classification: dict[str, list] | None = None
 
 
 class ConsensusEngine:
@@ -85,10 +173,16 @@ class ConsensusEngine:
         reflections: list[dict[str, Any]] | None = None,
         df: pd.DataFrame | None = None,
         dataset_type: str = "unknown",
+        priority: str = "medium",
     ) -> ConsensuResult:
-        """Generate + verify narrative, retrying on failure."""
+        """Generate + verify narrative, retrying on failure.
+
+        Args:
+            priority: "high" | "medium" | "low" — controls retry budget.
+        """
         _reflections = list(reflections or [])
         max_words = int(hints.get("max_words", 250))
+        max_retries = _PRIORITY_RETRY_MAP.get(priority, MAX_RETRIES)
         attempts = 0
 
         # Merge section-specific facts (e.g. energy section computed facts) into
@@ -105,7 +199,7 @@ class ConsensusEngine:
                         if isinstance(sv, (int, float)):
                             verify_facts[f"_sec_{k}_{sk}"] = sv
 
-        while attempts < MAX_RETRIES:
+        while attempts < max_retries:
             attempts += 1
 
             narrative = self._scribe.generate(
@@ -159,7 +253,7 @@ class ConsensusEngine:
             })
 
         # Exhausted retries: deterministic fallback
-        logger.warning("[%s] consensus exhausted %s retries; using fallback", block_id, MAX_RETRIES)
+        logger.warning("[%s] consensus exhausted %s retries; using fallback", block_id, max_retries)
         fallback = _deterministic_narrative(
             block_title=block_title,
             block_section=block_section,
@@ -181,6 +275,8 @@ class ConsensusEngine:
             attempts=attempts,
             accepted=True,
             fallback_used=True,
+            failure_classification=_classify_failure(fallback_verdict)
+                if fallback_verdict.overall_status == "fail" else None,
         )
 
 

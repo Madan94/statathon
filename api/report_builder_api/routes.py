@@ -20,13 +20,15 @@ from __future__ import annotations
 import logging
 import os
 import hashlib
+import time
+import copy
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 from uuid import uuid4
 
 from fastapi import (
-    APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile,
+    APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile,
     WebSocket, WebSocketDisconnect,
 )
 from fastapi.responses import FileResponse
@@ -128,6 +130,13 @@ def _extract_job_to_out(row: ReportTemplateExtractionJob) -> TemplateExtractionJ
         vault_object_key=row.vault_object_key,
         extraction_method=row.extraction_method,
         stage_diagnostics=row.stage_diagnostics if isinstance(row.stage_diagnostics, dict) else None,
+        template_manifest=row.template_manifest_json if isinstance(row.template_manifest_json, dict) else None,
+        extraction_diagnostics=(
+            row.extraction_diagnostics_json
+            if isinstance(row.extraction_diagnostics_json, dict)
+            else None
+        ),
+        schema_version=row.schema_version,
         error_message=row.error_message,
         created_template_id=row.created_template_id,
         created_at=isoformat_utc(row.created_at),
@@ -158,6 +167,111 @@ def _update_extract_job(
     if error_message is not None:
         row.error_message = error_message
     db.commit()
+
+
+def _jsonable_dict(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if hasattr(value, "to_dict"):
+        converted = value.to_dict()
+        return converted if isinstance(converted, dict) else {}
+    if hasattr(value, "model_dump"):
+        converted = value.model_dump()
+        return converted if isinstance(converted, dict) else {}
+    return {}
+
+
+def _build_template_package_payload(
+    *,
+    ast_payload: dict[str, Any],
+    diagnostics: dict[str, Any],
+    runtime_trace: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Compile and embed first-class binder artifacts for DB/API persistence."""
+    existing = diagnostics.get("compiled_template_package")
+    if not isinstance(existing, dict):
+        existing = diagnostics.get("template_package") if isinstance(diagnostics.get("template_package"), dict) else {}
+
+    raw_ast = (
+        ast_payload.get("template_ast")
+        or ast_payload.get("templateAst")
+        or existing.get("template_ast")
+        or ast_payload
+    )
+    blueprint = (
+        ast_payload.get("blueprint")
+        or ast_payload.get("template_blueprint")
+        or ast_payload.get("templateBlueprint")
+        or existing.get("template_blueprint")
+        or diagnostics.get("template_blueprint")
+        or diagnostics.get("blueprint")
+    )
+    if not isinstance(blueprint, dict) and isinstance(ast_payload, dict) and (
+        ast_payload.get("entities") or ast_payload.get("topics")
+    ):
+        blueprint = ast_payload
+    if not isinstance(raw_ast, dict):
+        raw_ast = ast_payload
+
+    compiled: dict[str, Any] = {}
+    if isinstance(blueprint, dict) and blueprint:
+        from report_builder.template_compiler import compile_template_artifacts
+
+        compiled = compile_template_artifacts(
+            raw_ast=raw_ast,
+            blueprint=blueprint,
+            runtime_trace=runtime_trace,
+        )
+
+    template_ast = compiled.get("template_ast") or raw_ast
+    template_blueprint = compiled.get("template_blueprint") or blueprint or {}
+    semantic_slot_graph = (
+        compiled.get("semantic_slot_graph")
+        or ast_payload.get("semantic_slot_graph")
+        or ast_payload.get("semanticSlotGraph")
+        or existing.get("semantic_slot_graph")
+        or {}
+    )
+    template_manifest = (
+        compiled.get("template_package_manifest")
+        or ast_payload.get("template_package_manifest")
+        or ast_payload.get("templatePackageManifest")
+        or existing.get("template_package_manifest")
+        or {}
+    )
+    extraction_diagnostics = _jsonable_dict(compiled.get("diagnostics")) or (
+        ast_payload.get("diagnostics") if isinstance(ast_payload.get("diagnostics"), dict) else {}
+    )
+    if not extraction_diagnostics:
+        extraction_diagnostics = {
+            k: v
+            for k, v in diagnostics.items()
+            if k not in {"blueprint_payload", "compiled_template_package", "template_package"}
+        }
+
+    embedded_ast = copy.deepcopy(template_ast) if isinstance(template_ast, dict) else {}
+    embedded_ast["schema_version"] = str(
+        embedded_ast.get("schema_version")
+        or embedded_ast.get("schemaVersion")
+        or "binding.templatePackage.v1"
+    )
+    embedded_ast["template_ast"] = copy.deepcopy(template_ast) if isinstance(template_ast, dict) else {}
+    embedded_ast["blueprint"] = copy.deepcopy(template_blueprint) if isinstance(template_blueprint, dict) else {}
+    embedded_ast["semantic_slot_graph"] = copy.deepcopy(semantic_slot_graph) if isinstance(semantic_slot_graph, dict) else {}
+    embedded_ast["diagnostics"] = copy.deepcopy(extraction_diagnostics)
+    embedded_ast["template_package_manifest"] = copy.deepcopy(template_manifest) if isinstance(template_manifest, dict) else {}
+    embedded_ast["templatePackageManifest"] = embedded_ast["template_package_manifest"]
+    embedded_ast["semanticSlotGraph"] = embedded_ast["semantic_slot_graph"]
+    embedded_ast["templateBlueprint"] = embedded_ast["blueprint"]
+    return {
+        "ast_json": embedded_ast,
+        "template_ast": template_ast if isinstance(template_ast, dict) else {},
+        "blueprint": template_blueprint if isinstance(template_blueprint, dict) else {},
+        "semantic_slot_graph": semantic_slot_graph if isinstance(semantic_slot_graph, dict) else {},
+        "template_manifest": template_manifest if isinstance(template_manifest, dict) else {},
+        "extraction_diagnostics": extraction_diagnostics,
+        "schema_version": embedded_ast["schema_version"],
+    }
 
 
 # ---------------- Ready analyses (wizard data source) ----------------
@@ -204,7 +318,8 @@ def list_ready_analyses(
 # ---------------- Templates ----------------
 
 
-def _run_template_extraction_job(extract_job_id: int) -> None:
+def _run_template_extraction_job(extract_job_id: int, resume_from: str = "") -> None:
+    t_job_start = time.monotonic()
     db = SessionLocal()
     try:
         row = db.query(ReportTemplateExtractionJob).filter(
@@ -212,13 +327,21 @@ def _run_template_extraction_job(extract_job_id: int) -> None:
         ).first()
         if not row:
             return
+
+        src_path = Path(row.source_storage_path or "")
+        file_size_kb = src_path.stat().st_size / 1024 if src_path.is_file() else 0
+        logger.info(
+            "[job %d] 📥 START         template=%r   file=%s   size=%.1f KB",
+            extract_job_id, row.template_name, row.source_filename, file_size_kb,
+        )
+
         _update_extract_job(
             db,
             row,
             status="running",
             stage="stage1_immutable_ingestion_vaulting",
             progress_pct=5,
-            diagnostics={"status": "started"},
+            diagnostics={"status": "started", "file_size_kb": round(file_size_kb, 1)},
         )
 
         src_path = Path(row.source_storage_path or "")
@@ -251,14 +374,39 @@ def _run_template_extraction_job(extract_job_id: int) -> None:
         )
 
         def _progress(stage: str, pct: int, payload: dict[str, object]):
+            elapsed = round(time.monotonic() - t_job_start, 1)
+            method = payload.get("extraction_method", "")
+            method_tag = f"   method={method}" if method else ""
+            # Pad stage name so the bar/pct column lines up vertically
+            stage_label = stage.ljust(44)
+            logger.info(
+                "[job %d] · %s  %3d%%   t=%5.1fs%s",
+                extract_job_id, stage_label, pct, elapsed, method_tag,
+            )
             _update_extract_job(db, row, stage=stage, progress_pct=pct, diagnostics=dict(payload))
 
-        ast, diagnostics = bp.compile_template_production(src_path, row.template_name, progress=_progress)
+        ast, diagnostics = bp.compile_template_production(src_path, row.template_name, progress=_progress, resume_from=resume_from)
+        diagnostics = diagnostics if isinstance(diagnostics, dict) else {}
         ast_payload = diagnostics.get("blueprint_payload") if isinstance(diagnostics, dict) else None
         if not isinstance(ast_payload, dict):
             ast_payload = ast.to_dict()
-            ast_payload["doc_id"] = diagnostics.get("doc_id") if isinstance(diagnostics, dict) else "MOSPI_TPL_01"
-        ast_payload["production_stages"] = diagnostics.get("stages") if isinstance(diagnostics, dict) else {}
+            ast_payload["doc_id"] = diagnostics.get("doc_id") or "MOSPI_TPL_01"
+        ast_payload["production_stages"] = diagnostics.get("stages") or {}
+        _progress(
+            "stage5_enterprise_package_compile",
+            92,
+            {"status": "started", "artifact_contract": "binding.templatePackage.v1"},
+        )
+        package_payload = _build_template_package_payload(
+            ast_payload=ast_payload,
+            diagnostics=diagnostics,
+            runtime_trace={
+                "extraction_method": ast.extraction_method,
+                "page_count": ast.page_count,
+                "source_hash": ast.source_hash,
+            },
+        )
+        package_payload["ast_json"]["production_stages"] = ast_payload.get("production_stages") or {}
 
         template = ReportTemplate(
             user_id=row.user_id,
@@ -267,7 +415,12 @@ def _run_template_extraction_job(extract_job_id: int) -> None:
             source_filename=row.source_filename,
             source_storage_path=row.source_storage_path,
             source_hash=ast.source_hash,
-            ast_json=ast_payload,
+            ast_json=package_payload["ast_json"],
+            blueprint_json=package_payload["blueprint"],
+            semantic_slot_graph_json=package_payload["semantic_slot_graph"],
+            template_manifest_json=package_payload["template_manifest"],
+            extraction_diagnostics_json=package_payload["extraction_diagnostics"],
+            schema_version=package_payload["schema_version"],
             extraction_method=ast.extraction_method,
             page_count=ast.page_count,
         )
@@ -277,16 +430,33 @@ def _run_template_extraction_job(extract_job_id: int) -> None:
 
         row.created_template_id = template.id
         row.extraction_method = ast.extraction_method
+        row.template_ast_json = package_payload["template_ast"]
+        row.blueprint_json = package_payload["blueprint"]
+        row.semantic_slot_graph_json = package_payload["semantic_slot_graph"]
+        row.template_manifest_json = package_payload["template_manifest"]
+        row.extraction_diagnostics_json = package_payload["extraction_diagnostics"]
+        row.schema_version = package_payload["schema_version"]
+        elapsed_total = time.monotonic() - t_job_start
+        logger.info(
+            "[job %d] ✓ COMPLETED     template_id=%d   method=%s   pages=%d   blocks=%d   elapsed=%.1fs",
+            extract_job_id, template.id, ast.extraction_method,
+            ast.page_count, len(ast.blocks), elapsed_total,
+        )
         _update_extract_job(
             db,
             row,
             status="completed",
             stage="stage6_final_ast_json_layout",
             progress_pct=100,
-            diagnostics={"status": "completed", "created_template_id": template.id},
+            diagnostics={"status": "completed", "created_template_id": template.id,
+                         "elapsed_s": round(elapsed_total, 1)},
         )
     except Exception as exc:
-        logger.exception("Template extraction job %s failed", extract_job_id)
+        elapsed_total = time.monotonic() - t_job_start
+        logger.exception(
+            "[job %d] ✗ FAILED        elapsed=%.1fs",
+            extract_job_id, elapsed_total,
+        )
         row = db.query(ReportTemplateExtractionJob).filter(
             ReportTemplateExtractionJob.id == extract_job_id
         ).first()
@@ -362,6 +532,81 @@ def get_template_extract_job(
     if not row:
         raise HTTPException(404, "Extraction job not found")
     return _extract_job_to_out(row)
+
+
+@router.post("/templates/extract-jobs/{job_id}/resume")
+async def resume_extraction_job(
+    job_id: int,
+    background: BackgroundTasks,
+    resume_from: str = Query("", description="Pass to re-run from: pass2, pass3, pass4, pass5. Empty=full retry."),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Resume/retry a failed extraction job from a specific pass.
+    
+    Cached results from earlier passes are reused. Only the specified pass
+    and everything after it are re-computed.
+    
+    Valid resume_from values:
+        pass0 - Full re-run (no cache)
+        pass1 - Re-run layout detection onwards
+        pass2 - Re-run entity extraction onwards  
+        pass3 - Re-run question generation onwards
+        pass4 - Re-run AST assembly only (fastest — no LLM calls)
+        pass5 - Re-run Gemini enrichment only
+    """
+    row = db.query(ReportTemplateExtractionJob).filter(
+        ReportTemplateExtractionJob.id == job_id,
+        ReportTemplateExtractionJob.user_id == user_id,
+    ).first()
+    if not row:
+        raise HTTPException(404, "Extraction job not found")
+    if row.status == "running":
+        raise HTTPException(409, "Job is already running")
+
+    # Reset job status
+    row.status = "pending"
+    row.stage = f"resuming_from_{resume_from or 'start'}"
+    row.progress_pct = 0
+    row.error_message = None
+    db.commit()
+
+    background.add_task(_run_template_extraction_job, row.id, resume_from=resume_from)
+    return {"status": "resumed", "job_id": job_id, "resume_from": resume_from or "start"}
+
+
+@router.get("/templates/extract-jobs/{job_id}/checkpoints")
+def get_job_checkpoints(
+    job_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Get which passes are cached for this job's PDF (helps UI show resume options)."""
+    row = db.query(ReportTemplateExtractionJob).filter(
+        ReportTemplateExtractionJob.id == job_id,
+        ReportTemplateExtractionJob.user_id == user_id,
+    ).first()
+    if not row:
+        raise HTTPException(404, "Extraction job not found")
+
+    src_path = Path(row.source_storage_path or "")
+    source_hash = ""
+    if src_path.is_file():
+        source_hash = hashlib.sha256(src_path.read_bytes()).hexdigest()
+
+    from report_builder.checkpoint_store import CheckpointStore
+    ckpt = CheckpointStore(source_hash)
+
+    passes = [
+        {"id": "pass0", "name": "PDF Rasterization", "cached": False},  # always runs
+        {"id": "pass1", "name": "Layout Detection (LayoutLM)", "cached": False},  # always runs
+        {"id": "pass2_entities", "name": "Entity Extraction (Qwen VLM)", "cached": ckpt.exists("pass2_entities")},
+        {"id": "pass2_5", "name": "Knowledge Graph (programmatic)", "cached": False},  # fast, always runs
+        {"id": "pass3_questions", "name": "Question Generation (Gemini)", "cached": ckpt.exists("pass3_questions")},
+        {"id": "pass4", "name": "AST Assembly (deterministic)", "cached": False},  # fast, always runs
+        {"id": "pass5", "name": "Gemini Enrichment (optional)", "cached": False},
+    ]
+    return {"job_id": job_id, "source_hash": source_hash[:12], "passes": passes}
 
 
 @router.post("/templates/upload", response_model=TemplateCreateOut)
@@ -539,8 +784,16 @@ def delete_template(
 
 def _run_job(job_id: int):
     """Background runner — opens its own DB session."""
+    from api.report_builder_api.progress_sse import get_progress_bus, ProgressEvent
+
+    bus = get_progress_bus()
+
+    def _emit(stage: str, pct: int, message: str):
+        bus.publish(job_id, ProgressEvent(stage=stage, pct=pct, message=message))
+
     db = SessionLocal()
     try:
+        _emit("init", 5, "Loading job context...")
         job = db.query(ReportJob).filter(ReportJob.id == job_id).first()
         if not job:
             return
@@ -582,6 +835,8 @@ def _run_job(job_id: int):
             if tpl and isinstance(tpl.filter_config, dict):
                 fc = tpl.filter_config
 
+        _emit("binding", 20, "Resolving entity bindings...")
+
         generate_report(
             db=db,
             job_id=job.id,
@@ -593,9 +848,15 @@ def _run_job(job_id: int):
             dataset_filename=dataset.filename,
             filter_config=fc,
         )
+
+        _emit("complete", 100, "Report generation complete")
+        bus.publish(job_id, ProgressEvent(event_type="complete", stage="done", pct=100, message="Done"))
     except Exception as exc:
         logger.exception("Report builder job %s failed", job_id)
         try:
+            bus.publish(job_id, ProgressEvent(
+                event_type="error", stage="error", pct=-1, message=str(exc)[:500],
+            ))
             job = db.query(ReportJob).filter(ReportJob.id == job_id).first()
             if job:
                 job.status = "failed"
@@ -837,6 +1098,88 @@ def download_job_pdf(
         media_type="application/pdf",
         filename=f"statathon-report-{job_id}.pdf",
     )
+
+
+@router.get("/jobs/{job_id}/preview")
+def preview_job_html(
+    job_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Return HTML preview of the generated report (rendered from canvas blocks)."""
+    from fastapi.responses import HTMLResponse
+
+    row = require_job_access(db, job_id, user_id)
+    if not row.blocks_json:
+        raise HTTPException(409, "Report not yet generated")
+
+    blocks = row.blocks_json if isinstance(row.blocks_json, list) else []
+
+    # Build simple HTML from canvas blocks
+    parts = [
+        "<!DOCTYPE html><html><head><meta charset='utf-8'>",
+        "<style>body{font-family:system-ui;max-width:800px;margin:40px auto;padding:0 20px;line-height:1.6}",
+        "table{border-collapse:collapse;width:100%;margin:16px 0}",
+        "th,td{border:1px solid #ddd;padding:8px;text-align:left}",
+        "th{background:#f4f4f4}.kpi{text-align:center;font-size:2em;font-weight:bold;padding:20px}",
+        ".section{margin-top:32px}.citation{color:#666;font-size:0.85em}</style>",
+        f"<title>Report #{job_id} Preview</title></head><body>",
+    ]
+
+    for block in blocks:
+        btype = block.get("type", "narrative")
+        section = block.get("section", "")
+        title = block.get("title", "")
+        content = block.get("content", "")
+
+        if title:
+            parts.append(f"<div class='section'><h2>{_escape_html(title)}</h2>")
+        if btype == "narrative":
+            parts.append(f"<p>{_escape_html(content)}</p>")
+        elif btype == "data_table":
+            parts.append(_render_html_table(block.get("table_data", {})))
+        elif btype == "kpi_card":
+            val = block.get("value", content)
+            parts.append(f"<div class='kpi'>{_escape_html(str(val))}</div>")
+        elif btype == "chart":
+            parts.append(f"<p><em>[Chart: {_escape_html(title or 'Visualization')}]</em></p>")
+        else:
+            parts.append(f"<p>{_escape_html(content)}</p>")
+        if title:
+            parts.append("</div>")
+
+    parts.append("</body></html>")
+    return HTMLResponse(content="".join(parts))
+
+
+def _escape_html(text: str) -> str:
+    """Basic HTML escaping."""
+    return (
+        text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
+
+
+def _render_html_table(table_data: dict) -> str:
+    """Render a simple HTML table from table_data dict."""
+    headers = table_data.get("headers", [])
+    rows = table_data.get("rows", [])
+    if not headers and not rows:
+        return "<p><em>[Empty table]</em></p>"
+    parts = ["<table><thead><tr>"]
+    for h in headers:
+        parts.append(f"<th>{_escape_html(str(h))}</th>")
+    parts.append("</tr></thead><tbody>")
+    for row in rows[:50]:  # Limit to 50 rows in preview
+        parts.append("<tr>")
+        cells = row if isinstance(row, list) else [row]
+        for cell in cells:
+            parts.append(f"<td>{_escape_html(str(cell))}</td>")
+        parts.append("</tr>")
+    parts.append("</tbody></table>")
+    return "".join(parts)
 
 
 # ---------------- Block-level ops ----------------

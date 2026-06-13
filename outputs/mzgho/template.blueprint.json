@@ -1,0 +1,779 @@
+{
+  "$schema": "bharatstat/template-blueprint/v1",
+  "_doc": "VALUE-FREE + PROSE-FREE analytic brain. Defines WHAT to compute and HOW to render. Contains NO numbers, NO sentences, NO dataset. Pairs 1:1 with template.ast.json by shared IDs.",
+  "templateMeta": {
+    "templateId": "tpl_mzgho_v1",
+    "name": "Document",
+    "domain": "general",
+    "locale": "en-IN",
+    "version": "3.0",
+    "valueFree": true,
+    "proseFree": true,
+    "sourceDocument": "Document"
+  },
+  "entities": [
+    {
+      "entityId": "ent_lfpr",
+      "canonicalName": "Labour Force Participation Rate",
+      "entityType": "measure",
+      "aliases": [
+        "LFPR",
+        "Labour",
+        "Labour_Force_Participation_Rate"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0
+      },
+      "aggregation": null,
+      "scope": "indicator",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_ur",
+      "canonicalName": "Unemployment Rate",
+      "entityType": "measure",
+      "aliases": [
+        "UR",
+        "Unemployment",
+        "Unemployment_Rate"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0
+      },
+      "aggregation": null,
+      "scope": "indicator",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_gender",
+      "canonicalName": "Gender",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "valueDomain": {
+        "kind": "categorical",
+        "members": [
+          "Male",
+          "Female",
+          "Transgender"
+        ]
+      },
+      "aggregation": null,
+      "scope": "classifier",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_rural_urban_sector",
+      "canonicalName": "Rural/Urban Sector",
+      "entityType": "dimension",
+      "aliases": [
+        "Rural/Urban",
+        "Rural",
+        "Urban Sector",
+        "Rural_Urban_Sector"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "categorical",
+        "members": [
+          "Rural",
+          "Urban"
+        ]
+      },
+      "aggregation": null,
+      "scope": "classifier",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_age_group",
+      "canonicalName": "Age Group",
+      "entityType": "dimension",
+      "aliases": [
+        "Age_Group"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "categorical",
+        "members": "open"
+      },
+      "aggregation": null,
+      "scope": "classifier",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_status_in_employment",
+      "canonicalName": "Status in Employment",
+      "entityType": "measure",
+      "aliases": [
+        "Status_in_Employment"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0
+      },
+      "aggregation": null,
+      "scope": "indicator",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_usual_status",
+      "canonicalName": "Usual Status",
+      "entityType": "dimension",
+      "aliases": [
+        "Usual",
+        "Usual_Status"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "categorical",
+        "members": "open"
+      },
+      "aggregation": null,
+      "scope": "classifier",
+      "confidence": 0.85
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 - December, 2025]",
+      "order": 1,
+      "semanticRef": "sec_01",
+      "questions": [
+        {
+          "questionId": "sp02_q03",
+          "intent": "What is the LFPR for persons aged 15-29 years compared to those aged 15-59 years?",
+          "questionType": "composition",
+          "priority": 3,
+          "requiredEntities": [
+            {
+              "entityId": "ent_lfpr",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_age_group",
+              "role": "breakdown",
+              "required": false
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "share",
+            "measure": {
+              "entityRef": "ent_lfpr",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp02_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_007"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp02_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "sp02_q03_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              {
+                "componentId": "sp02_q03_c3",
+                "kind": "chart",
+                "order": 3,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "",
+                  "yAxis": "ent_001"
+                },
+                "refs": {
+                  "chartRef": "chart_sp02_q03",
+                  "figureRef": "fig_sp02_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp06_q02",
+          "intent": "How did the unemployment rate for female workers in manufacturing and service sectors change from 2024 to 2025?",
+          "questionType": "trend",
+          "priority": 2,
+          "requiredEntities": [],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp06_q02_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp06_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp08_q02",
+          "intent": "How many more years did males in urban areas spend in formal education compared to rural areas?",
+          "questionType": "trend",
+          "priority": 2,
+          "requiredEntities": [],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp08_q02_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp08_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp08_q03",
+          "intent": "What is the difference in the average number of years spent in formal education between males and females in urban areas?",
+          "questionType": "comparison",
+          "priority": 3,
+          "requiredEntities": [
+            {
+              "entityId": "ent_gender",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_rural_urban_sector",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_gender"
+              }
+            ],
+            "filters": [
+              {
+                "entityRef": "ent_rural_urban_sector",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp08_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_004",
+                    "ent_005"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp08_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "sp08_q03_c2",
+                "kind": "metric",
+                "order": 2,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "metric_card"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "topicId": "topic_02",
+      "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "order": 2,
+      "semanticRef": "sec_02",
+      "questions": []
+    },
+    {
+      "topicId": "topic_03",
+      "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "order": 3,
+      "semanticRef": "sec_03",
+      "questions": []
+    },
+    {
+      "topicId": "topic_05",
+      "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+      "order": 4,
+      "semanticRef": "sec_05",
+      "questions": []
+    },
+    {
+      "topicId": "topic_06",
+      "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "order": 5,
+      "semanticRef": "sec_06",
+      "questions": []
+    },
+    {
+      "topicId": "topic_08",
+      "title": "7 Average number of years in formal education",
+      "order": 6,
+      "semanticRef": "sec_08",
+      "questions": []
+    }
+  ],
+  "tableTemplates": [],
+  "documentMap": {
+    "order": [
+      "topic_01",
+      "topic_02",
+      "topic_03",
+      "topic_05",
+      "topic_06",
+      "topic_08"
+    ],
+    "frontMatter": [
+      "title_page",
+      "toc"
+    ],
+    "backMatter": [
+      "glossary",
+      "notes"
+    ]
+  },
+  "glossary": {
+    "LFPR": "Labour Force Participation Rate - percentage of the population in the labour force (working or seeking work).",
+    "WPR": "Worker Population Ratio - percentage of employed persons in the population of age 15 years and above.",
+    "UR": "Unemployment Rate - percentage of the labour force that is unemployed.",
+    "PLFS": "Periodic Labour Force Survey - annual household survey conducted by NSO for employment/unemployment indicators.",
+    "MoSPI": "Ministry of Statistics and Programme Implementation - responsible for official statistics in India.",
+    "Status in Employment": "Status in Employment - statistical indicator extracted from the source document."
+  },
+  "palette": {
+    "paletteId": "pal_mospi_default",
+    "sequential": [
+      "#0B5394",
+      "#3D85C6",
+      "#6FA8DC",
+      "#9FC5E8",
+      "#CFE2F3"
+    ],
+    "categorical": {
+      "Rural": "#1F7A1F",
+      "Urban": "#0B5394",
+      "Male": "#0B5394",
+      "Female": "#CC4125",
+      "Total": "#666666"
+    },
+    "semantic": {
+      "positive": "#1F7A1F",
+      "negative": "#CC0000",
+      "neutral": "#666666"
+    }
+  },
+  "renderProfile": {
+    "numberFormat": {
+      "locale": "en-IN",
+      "grouping": "lakh-crore",
+      "decimalSeparator": "."
+    },
+    "percentFormat": {
+      "decimals": 1,
+      "suffix": "%"
+    },
+    "currencyFormat": {
+      "symbol": "₹",
+      "grouping": "lakh-crore",
+      "decimals": 0
+    },
+    "fontFamily": "Noto Sans",
+    "pageSize": "A4"
+  },
+  "figureTemplates": [
+    {
+      "figureTemplateId": "ft_ft_sp01_q01",
+      "chartType": "unknown",
+      "chartSubject": "Unemployment Rate, {{period.current}}",
+      "captionTemplate": "Unemployment Rate, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.5,
+      "measureRefs": [
+        "ent_ur"
+      ]
+    },
+    {
+      "figureTemplateId": "ft_ft_sp01_q02",
+      "chartType": "unknown",
+      "chartSubject": "Unemployment Rate by Survey Year, {{period.current}}",
+      "captionTemplate": "Unemployment Rate by Survey Year, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.5,
+      "measureRefs": [
+        "ent_ur"
+      ]
+    },
+    {
+      "figureTemplateId": "ft_ft_sp01_q03",
+      "chartType": "unknown",
+      "chartSubject": "Unemployment Rate by Age Group, {{period.current}}",
+      "captionTemplate": "Unemployment Rate by Age Group, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_age_group"
+    },
+    {
+      "figureTemplateId": "ft_ft_sp02_q01",
+      "chartType": "unknown",
+      "chartSubject": "Labour Force Participation Rate, {{period.current}}",
+      "captionTemplate": "Labour Force Participation Rate, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_lfpr",
+        "ent_ur"
+      ]
+    },
+    {
+      "figureTemplateId": "ft_ft_sp02_q02",
+      "chartType": "unknown",
+      "chartSubject": "Labour Force Participation Rate by Survey Year, {{period.current}}",
+      "captionTemplate": "Labour Force Participation Rate by Survey Year, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_lfpr",
+        "ent_ur"
+      ]
+    },
+    {
+      "figureTemplateId": "ft_ft_sp02_q03",
+      "chartType": "unknown",
+      "chartSubject": "Labour Force Participation Rate, {{period.current}}",
+      "captionTemplate": "Labour Force Participation Rate, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_lfpr",
+        "ent_ur"
+      ]
+    },
+    {
+      "figureTemplateId": "ft_ft_sp03_q01",
+      "chartType": "unknown",
+      "chartSubject": "Worker Population Ratio, {{period.current}}",
+      "captionTemplate": "Worker Population Ratio, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.5,
+      "measureRefs": [
+        "ent_ur"
+      ]
+    },
+    {
+      "figureTemplateId": "ft_ft_sp03_q02",
+      "chartType": "unknown",
+      "chartSubject": "Worker Population Ratio, {{period.current}}",
+      "captionTemplate": "Worker Population Ratio, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.5,
+      "measureRefs": [
+        "ent_ur"
+      ]
+    },
+    {
+      "figureTemplateId": "ft_ft_sp03_q03",
+      "chartType": "unknown",
+      "chartSubject": "Worker Population Ratio, {{period.current}}",
+      "captionTemplate": "Worker Population Ratio, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.5,
+      "measureRefs": [
+        "ent_ur"
+      ]
+    },
+    {
+      "figureTemplateId": "ft_ft_sp05_q01",
+      "chartType": "unknown",
+      "chartSubject": "Worker Population Ratio, {{period.current}}",
+      "captionTemplate": "Worker Population Ratio, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.5,
+      "measureRefs": [
+        "ent_ur"
+      ]
+    },
+    {
+      "figureTemplateId": "ft_ft_sp05_q03",
+      "chartType": "unknown",
+      "chartSubject": "Value by Category, {{period.current}}",
+      "captionTemplate": "Value by Category, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.5,
+      "measureRefs": [
+        "ent_ur"
+      ]
+    },
+    {
+      "figureTemplateId": "ft_ft_sp06_q03",
+      "chartType": "unknown",
+      "chartSubject": "Unemployment Rate, {{period.current}}",
+      "captionTemplate": "Unemployment Rate, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.5,
+      "measureRefs": [
+        "ent_ur"
+      ]
+    },
+    {
+      "figureTemplateId": "ft_ft_sp07_q01",
+      "chartType": "unknown",
+      "chartSubject": "Value by Survey Year, {{period.current}}",
+      "captionTemplate": "Value by Survey Year, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.5,
+      "measureRefs": [
+        "ent_ur"
+      ]
+    },
+    {
+      "figureTemplateId": "ft_ft_sp08_q01",
+      "chartType": "unknown",
+      "chartSubject": "Value by Gender, {{period.current}}",
+      "captionTemplate": "Value by Gender, {{period.current}}",
+      "detectionMethod": "caption_analysis",
+      "confidence": 0.7,
+      "measureRefs": [
+        "ent_ur"
+      ],
+      "dimensionRef": "ent_gender"
+    },
+    {
+      "figureTemplateId": "ft_fig_sp01_q01",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp01_q02",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp01_q03",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp02_q01",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp02_q02",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp03_q01",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp05_q03",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp07_q01",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    },
+    {
+      "figureTemplateId": "ft_fig_sp08_q01",
+      "chartType": "unknown",
+      "chartSubject": "Unknown chart subject",
+      "captionTemplate": "Unknown chart subject",
+      "detectionMethod": "heuristic",
+      "confidence": 0.3
+    }
+  ],
+  "statisticalContext": {
+    "sourceDocument": "Document",
+    "domain": "general"
+  }
+}

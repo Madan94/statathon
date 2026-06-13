@@ -1,0 +1,172 @@
+# Docker Compose: 6GB VRAM GPU Sequential Pipeline
+# LayoutLMv3 (CPU) + Qwen2.5-VL-7B-AWQ (GPU) — Enterprise Document AST
+#
+# ── Build (one-time, cached after success):
+#   docker compose -f docker-compose.gpu.yml --profile gpu build
+#
+# ── V2 Pipeline (LayoutLM + Qwen-VL multi-pass extraction):
+#   docker compose -f docker-compose.gpu.yml --profile gpu up layoutlm sglang
+#   docker compose -f docker-compose.gpu.yml --profile gpu run --rm pipeline
+#
+# ── API + Dashboard only (no GPU needed):
+#   docker compose -f docker-compose.gpu.yml up api dashboard neo4j redis
+
+services:
+  # ── LayoutLMv3 — CPU document layout detection ─────────────────────────────
+  layoutlm:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.layoutlm
+    environment:
+      - MODEL_ID=${LAYOUTLM_MODEL_ID:-${LAYOUTLM_MODEL:-microsoft/layoutlmv3-large}}
+      - LAYOUTLM_PORT=8001
+      - MAX_PAGES=100
+    volumes:
+      - ./model/cache:/cache
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8001/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 4
+      start_period: 45s
+    profiles:
+      - gpu
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    restart: unless-stopped
+
+  # ── vLLM (Qwen2.5-VL-7B-AWQ) — GPU vision + text model ───────────────────
+  sglang:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.sglang
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - VLLM_MODEL=${SGLANG_MODEL:-Qwen/Qwen2.5-VL-3B-Instruct-AWQ}
+      - VLLM_PORT=8002
+      - HF_TOKEN=${HF_TOKEN:-}
+      - HF_HOME=/cache
+    volumes:
+      - ./model/cache:/cache
+    ports:
+      - "8002:8002"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8002/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 180s
+    profiles:
+      - gpu
+    restart: unless-stopped
+
+  # ── Pipeline runner (uses LayoutLM + Qwen-VL for extraction) ───────────────
+  pipeline:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    depends_on:
+      layoutlm:
+        condition: service_healthy
+      sglang:
+        condition: service_healthy
+    environment:
+      - EXTRACTION_PIPELINE=v2
+      - LAYOUTLM_ENDPOINT=http://layoutlm:8001
+      - SGLANG_ENDPOINT=http://sglang:8002
+      - PIPELINE_GPU_MODE=sequential
+      - CHECKPOINT_ENABLED=true
+      - CHECKPOINT_DIR=/app/checkpoints
+      - DATABASE_URL=${DATABASE_URL:-}
+      - PDF_INPUT_PATH=${PDF_INPUT_PATH:-/app/data/input.pdf}
+      - TEMPLATE_NAME=${TEMPLATE_NAME:-Enterprise Template}
+      - OUTPUT_DIR=/app/outputs
+    env_file: .env
+    volumes:
+      - ./checkpoints:/app/checkpoints
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+      - ./model/cache:/app/model/cache
+    command: ["python", "/app/scripts/run_pipeline.py"]
+    profiles:
+      - gpu
+
+  # ── API Server ──────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-mospi_secure_password}
+      - TRACING_ENABLED=${TRACING_ENABLED:-0}
+      - REDIS_URL=redis://redis:6379/0
+      - LAYOUTLM_ENDPOINT=http://layoutlm:8001
+      - SGLANG_ENDPOINT=http://sglang:8002
+      - EXTRACTION_PIPELINE=${EXTRACTION_PIPELINE:-v2}
+      - CHECKPOINT_ENABLED=true
+    env_file: .env
+    depends_on:
+      neo4j:
+        condition: service_started
+      redis:
+        condition: service_started
+    volumes:
+      - ./storage:/app/storage
+      - ./model/cache:/app/model/cache
+      - ./outputs:/app/outputs
+      - ./checkpoints:/app/checkpoints
+    restart: unless-stopped
+
+  # ── Dashboard (Next.js) ─────────────────────────────────────────────────────
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dashboard
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    environment:
+      - API_INTERNAL_URL=http://api:8000
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # ── Neo4j ──────────────────────────────────────────────────────────────────
+  neo4j:
+    image: neo4j:5
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-mospi_secure_password}
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+    restart: unless-stopped
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:
+  redis_data:

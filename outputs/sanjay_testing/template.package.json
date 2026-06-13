@@ -1,0 +1,32 @@
+{
+  "$schema": "bharatstat/template-package/v1",
+  "templateId": "tpl_sanjay_testing_v1",
+  "version": "3.0",
+  "name": "PLFS Annual Report Press Release",
+  "status": "VALID",
+  "artifacts": {
+    "templateAst": {
+      "path": "template.ast.json",
+      "hash": "bd5c5920958e374d"
+    },
+    "templateBlueprint": {
+      "path": "template.blueprint.json",
+      "hash": "615f4f8b9d44ecc5"
+    },
+    "semanticSlotGraph": {
+      "path": "semantic_slot_graph.json",
+      "hash": "71ad4f574fab29c0"
+    },
+    "diagnostics": {
+      "path": "template.diagnostics.json",
+      "hash": "2329b9ce3962ba90"
+    }
+  },
+  "metadata": {
+    "domain": "labour_force",
+    "locale": "en-IN",
+    "valueFree": true
+  },
+  "extractionScore": 0.751,
+  "sourceDocument": "Document"
+}

@@ -1,0 +1,196 @@
+{
+  "vlm_success_count": 11,
+  "total_entities": 56,
+  "chart_pages": 6,
+  "pages": [
+    {
+      "page": 0,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban",
+        "Unemployment Rate",
+        "Self-employed",
+        "Regular wage",
+        "Manufacturing sector",
+        "Agriculture sector",
+        "Report, 2025 [January, 2025 December, 2025]"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 1,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban",
+        "Unemployment Rate",
+        "Self-employed",
+        "Regular wage"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "1. Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above"
+    },
+    {
+      "page": 2,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained"
+    },
+    {
+      "page": 3,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": [
+        "Gender",
+        "Rural",
+        "Urban",
+        "Unemployment Rate"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and above"
+    },
+    {
+      "page": 4,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": [
+        "Unemployment Rate",
+        "Gender",
+        "Rural",
+        "Urban",
+        "Self-employed",
+        "Regular wage",
+        "Casual labour"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "4. Increase in proportion of workers with regular wage/ salary employment"
+    },
+    {
+      "page": 5,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Self-employed",
+        "Regular wage",
+        "Casual labour",
+        "Industry",
+        "Gender"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "5. Manufacturing and service sectors witnessed enhanced worker participation"
+    },
+    {
+      "page": 6,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": [
+        "Gender",
+        "Rural",
+        "Urban",
+        "Self-employed",
+        "Regular wage"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "7. Average number of years in formal education"
+    },
+    {
+      "page": 7,
+      "vlm_used": true,
+      "structure_type": "mixed",
+      "entities": [
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "7 Average number of years in formal education"
+    },
+    {
+      "page": 8,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "Changes in Sample Design of PLFS"
+    },
+    {
+      "page": 9,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Unemployment Rate",
+        "Activity Status - Usual Status",
+        "Principal Activity Status",
+        "Subsidiary Economic Activity Status",
+        "Activity Status - Current Weekly Status"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 10,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Gender",
+        "Sector"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "7 Average number of years in formal education"
+    }
+  ]
+}

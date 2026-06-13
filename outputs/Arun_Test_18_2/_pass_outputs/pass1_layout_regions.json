@@ -1,0 +1,933 @@
+{
+  "layoutlm_used": false,
+  "total_regions": 100,
+  "toc_entries": [
+    {
+      "title": "Government of India",
+      "page": 0,
+      "level": 2
+    },
+    {
+      "title": "Ministry of Statistics Programme Implementation",
+      "page": 0,
+      "level": 2
+    },
+    {
+      "title": "Khurshid Lal Bhawan, Janpath",
+      "page": 0,
+      "level": 2
+    },
+    {
+      "title": "New Delhi-110001",
+      "page": 0,
+      "level": 2
+    },
+    {
+      "title": "Annual Report",
+      "page": 0,
+      "level": 2
+    },
+    {
+      "title": "TABLE OF CONTENTS",
+      "page": 1,
+      "level": 1
+    },
+    {
+      "title": "Sl.No. CHAPTERS Page No.",
+      "page": 1,
+      "level": 2
+    },
+    {
+      "title": "Introduction 1-9",
+      "page": 1,
+      "level": 2
+    },
+    {
+      "title": "National Sample Survey (NSS) 41-62",
+      "page": 1,
+      "level": 2
+    },
+    {
+      "title": "Data Informatics Innovation 79-91",
+      "page": 1,
+      "level": 2
+    },
+    {
+      "title": "Administrative Statistics 92-93",
+      "page": 1,
+      "level": 2
+    },
+    {
+      "title": "India in United Nations 94-95",
+      "page": 1,
+      "level": 2
+    },
+    {
+      "title": "Research and Analysis 96-97",
+      "page": 1,
+      "level": 2
+    },
+    {
+      "title": "Support for Statistical Strengthening 98-101",
+      "page": 1,
+      "level": 2
+    },
+    {
+      "title": "10 Media and Publicity 102-105",
+      "page": 1,
+      "level": 2
+    },
+    {
+      "title": "Members of Parliament Local Area Development Scheme( MPLADS)",
+      "page": 1,
+      "level": 2
+    },
+    {
+      "title": "1.4 The Statistics Wing, called National Statistics Office (NSO), coordinates the statistical activities in",
+      "page": 2,
+      "level": 2
+    },
+    {
+      "title": "the country and is responsible for evolving and laying, down statistical standards. India is subscriber to the",
+      "page": 2,
+      "level": 2
+    },
+    {
+      "title": "International Monetary Fund’s (IMF) Special Data Dissemination Standards (SDDS) and is currently",
+      "page": 2,
+      "level": 2
+    },
+    {
+      "title": "fulfilling the Standards. The Ministry maintains an ‘Advance Release Calendar’ for its data categories",
+      "page": 2,
+      "level": 2
+    },
+    {
+      "title": "covered under the SDDS, which is disseminated on the Ministry’s website as well as on the Dissemination",
+      "page": 2,
+      "level": 2
+    },
+    {
+      "title": "Standards Bulletin Board (DSBB) of the IMF. The Ministry releases the datasets covered under the Real",
+      "page": 2,
+      "level": 2
+    },
+    {
+      "title": "Sector of SDDS through press notes and its website simultaneously. India has strong system of official",
+      "page": 2,
+      "level": 2
+    },
+    {
+      "title": "statistics and is among the leading countries in the area of official statistics. The Ministry’s officials have been",
+      "page": 2,
+      "level": 2
+    },
+    {
+      "title": "associated with international agencies on the development of methodologies, particularly in the areas of",
+      "page": 2,
+      "level": 2
+    },
+    {
+      "title": "statistics and classifications, statistical compilations and international practices. The contribution of the",
+      "page": 3,
+      "level": 2
+    },
+    {
+      "title": "Ministry’s officials in international meetings on these subjects has been highly appreciated.",
+      "page": 3,
+      "level": 2
+    },
+    {
+      "title": "1.8 International Comparison Programme (ICP) is the largest statistical initiative in the world under the",
+      "page": 3,
+      "level": 2
+    },
+    {
+      "title": "aegis of United Nations Statistics Division (UNSD). The World Bank is implementing this programme at",
+      "page": 3,
+      "level": 2
+    },
+    {
+      "title": "global level and Asian Development Bank (ADB) is the nodal implementing agency at Asia and the Pacific",
+      "page": 3,
+      "level": 2
+    },
+    {
+      "title": "Region. The main objectives of ICP are to produce Purchasing Power Parities (PPPs) and Price Level Indices",
+      "page": 3,
+      "level": 2
+    },
+    {
+      "title": "and to convert volume and per capita measures of GDP into common currencies using PPPs. The World Bank",
+      "page": 3,
+      "level": 2
+    },
+    {
+      "title": "released the report of ICP 2021 cycle in August, 2025, which included data for India. According to these",
+      "page": 3,
+      "level": 2
+    },
+    {
+      "title": "results, India ranks as the third-largest economy globally.",
+      "page": 3,
+      "level": 2
+    },
+    {
+      "title": "1.5 The NSO, MoSPI is responsible for preparation of national accounts, which include the estimates of",
+      "page": 3,
+      "level": 2
+    },
+    {
+      "title": "In its endeavour to enhance the user experience and responsiveness, various new sections like",
+      "page": 4,
+      "level": 2
+    },
+    {
+      "title": "1.10 The Index of Industrial Production (IIP) with base year 2011-12 is compiled and published by the",
+      "page": 4,
+      "level": 2
+    },
+    {
+      "title": "Economic Statistics Division (ESD) of MoSPI. The release timeline of IIP has been improved by reducing it",
+      "page": 4,
+      "level": 2
+    },
+    {
+      "title": "from six weeks to four weeks, ensuring timelier availability of industrial output data. It is published on the",
+      "page": 4,
+      "level": 2
+    },
+    {
+      "title": "28th of every month (or the next working day if 28th is holiday) with time lag of four weeks from the",
+      "page": 4,
+      "level": 2
+    },
+    {
+      "title": "reference month. The IIP covers three sectors namely Mining, Manufacturing and Electricity. The IIP for",
+      "page": 4,
+      "level": 2
+    },
+    {
+      "title": "2024-25 stands at 152.6, registering growth of 4%. The base year revision exercise of IIP is in progress and",
+      "page": 4,
+      "level": 2
+    },
+    {
+      "title": "Technical Advisory Committee (TAC) for the base year revision of IIP has been constituted on 27th",
+      "page": 4,
+      "level": 2
+    },
+    {
+      "title": "September 2024 for the same.",
+      "page": 4,
+      "level": 2
+    },
+    {
+      "title": "1.11 The Ministry is entrusted with the development of indicator framework for Sustainable Development",
+      "page": 4,
+      "level": 2
+    },
+    {
+      "title": "Till 31st December, 2025, 38 meetings of ACNAS and its Sub -committees have been held. New series’",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "release by MoSPI will be done on 27th February, 2026.",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "Industry wise estimates of GVA at both Current and Constant Prices along with expenditure side 2.9",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "estimates as per First Advance Estimates (FAE) of GDP for FY 2025-26 released on 7th January, 2026 and",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "Provisional Estimates of GDP for FY 2024-25 released on 30th May, 2025 are given in the following",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "statements and graphs:",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "2024-25 2025-26",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "Domestic Product",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "Expenditure Components",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "Share in GDP(%)",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "National Product",
+      "page": 6,
+      "level": 2
+    },
+    {
+      "title": "Per Capita Income, National Product and Final Consumption",
+      "page": 6,
+      "level": 2
+    },
+    {
+      "title": "Item Sl. No. Over Previous",
+      "page": 6,
+      "level": 2
+    },
+    {
+      "title": "(PE) (FAE) (FRE)",
+      "page": 6,
+      "level": 2
+    },
+    {
+      "title": "Statement 2: First Advance Estimates of Annual GDP for FY 2025-26 and its Expenditure Components",
+      "page": 6,
+      "level": 2
+    },
+    {
+      "title": "1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7",
+      "page": 7,
+      "level": 1
+    },
+    {
+      "title": "2 Secondary Sector 46,46,499 49,31,228 52,57,858 6.1 6.6",
+      "page": 7,
+      "level": 1
+    },
+    {
+      "title": "3 Tertiary Sector 88,07,683 94,40,529 1,03,01,349 7.2 9.1",
+      "page": 7,
+      "level": 1
+    },
+    {
+      "title": "1. Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "2. Secondary Sector 46,46,499 49,31,228 52,57,858 6.1 6.6",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "3. Tertiary Sector 88,07,683 94,40,529 1,03,01,349 7.2 9.1",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "GVA at Basic Prices 1,61,51,477 1,71,87,446 1,84,49,828 6.4 7.3",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "Percentage Change Over",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "Previous Year",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "Statement 3: First Advance Estimates of GVA at Basic Prices by Economic Activity (at 2011- 12 Prices)",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "(FRE) (PE) (FAE)",
+      "page": 7,
+      "level": 2
+    },
+    {
+      "title": "Fig. 1: Annual GDP and GVA Estimates along with Y-o-Y Growth Rates at Constant",
+      "page": 8,
+      "level": 2
+    },
+    {
+      "title": "Fig. 2: Sectoral Composition and Growth Rates of Annual GVA",
+      "page": 9,
+      "level": 2
+    },
+    {
+      "title": "Fig. 3: Composition and Growth Rates of Annual GVA in Broad Sectors",
+      "page": 10,
+      "level": 2
+    }
+  ],
+  "pages": [
+    {
+      "page": 0,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Government of India"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Ministry of Statistics Programme Implementation"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Khurshid Lal Bhawan, Janpath"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "New Delhi-110001"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Annual Report"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "Annual Report\n2025-26\nGovernment of India\nMinistry of Statistics & Programme Implementation\nKhurshid"
+        }
+      ]
+    },
+    {
+      "page": 1,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Sl.No. CHAPTERS Page No."
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Introduction 1-9"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "National Sample Survey (NSS) 41-62"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Data Informatics Innovation 79-91"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Administrative Statistics 92-93"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "India in United Nations 94-95"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Research and Analysis 96-97"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Support for Statistical Strengthening 98-101"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "10 Media and Publicity 102-105"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Members of Parliament Local Area Development Scheme( MPLADS)"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "TABLE OF CONTENTS\nSl.No. CHAPTERS Page No.\n1 Introduction 1-9\n2 10-40\n3 National Sample Survey (NSS)"
+        },
+        {
+          "type": "table",
+          "confidence": 0.7,
+          "text": "Table with 30 rows"
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Annual Report 2025-26"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "1.4 The Statistics Wing, called National Statistics Office (NSO), coordinates the statistical activi"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "the country and is responsible for evolving and laying, down statistical standards. India is subscri"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "International Monetary Fund’s (IMF) Special Data Dissemination Standards (SDDS) and is currently"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "fulfilling the Standards. The Ministry maintains an ‘Advance Release Calendar’ for its data categori"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "covered under the SDDS, which is disseminated on the Ministry’s website as well as on the Disseminat"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Standards Bulletin Board (DSBB) of the IMF. The Ministry releases the datasets covered under the Rea"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Sector of SDDS through press notes and its website simultaneously. India has strong system of offici"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "statistics and is among the leading countries in the area of official statistics. The Ministry’s off"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "associated with international agencies on the development of methodologies, particularly in the area"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "Annual Report 2025-26\nChapter 1\nIntroduction\n1.1 The Ministry of Statistics and Programme Implementa"
+        },
+        {
+          "type": "table",
+          "confidence": 0.7,
+          "text": "Table with 41 rows"
+        }
+      ]
+    },
+    {
+      "page": 3,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "statistics and classifications, statistical compilations and international practices. The contributi"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Ministry’s officials in international meetings on these subjects has been highly appreciated."
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "1.8 International Comparison Programme (ICP) is the largest statistical initiative in the world unde"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "aegis of United Nations Statistics Division (UNSD). The World Bank is implementing this programme at"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "global level and Asian Development Bank (ADB) is the nodal implementing agency at Asia and the Pacif"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Region. The main objectives of ICP are to produce Purchasing Power Parities (PPPs) and Price Level I"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "and to convert volume and per capita measures of GDP into common currencies using PPPs. The World Ba"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "released the report of ICP 2021 cycle in August, 2025, which included data for India. According to t"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "results, India ranks as the third-largest economy globally."
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "1.5 The NSO, MoSPI is responsible for preparation of national accounts, which include the estimates "
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "Annual Report 2025-26\nstatistics and classifications, statistical compilations and international pra"
+        },
+        {
+          "type": "table",
+          "confidence": 0.7,
+          "text": "Table with 45 rows"
+        }
+      ]
+    },
+    {
+      "page": 4,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "In its endeavour to enhance the user experience and responsiveness, various new sections like"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "1.10 The Index of Industrial Production (IIP) with base year 2011-12 is compiled and published by th"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Economic Statistics Division (ESD) of MoSPI. The release timeline of IIP has been improved by reduci"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "from six weeks to four weeks, ensuring timelier availability of industrial output data. It is publis"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "28th of every month (or the next working day if 28th is holiday) with time lag of four weeks from th"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "reference month. The IIP covers three sectors namely Mining, Manufacturing and Electricity. The IIP "
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "2024-25 stands at 152.6, registering growth of 4%. The base year revision exercise of IIP is in prog"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Technical Advisory Committee (TAC) for the base year revision of IIP has been constituted on 27th"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "September 2024 for the same."
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "1.11 The Ministry is entrusted with the development of indicator framework for Sustainable Developme"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "Annual Report 2025-26\n1.10 The Index of Industrial Production (IIP) with base year 2011-12 is compil"
+        },
+        {
+          "type": "table",
+          "confidence": 0.7,
+          "text": "Table with 47 rows"
+        }
+      ]
+    },
+    {
+      "page": 5,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Till 31st December, 2025, 38 meetings of ACNAS and its Sub -committees have been held. New series’"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "release by MoSPI will be done on 27th February, 2026."
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Industry wise estimates of GVA at both Current and Constant Prices along with expenditure side 2.9"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "estimates as per First Advance Estimates (FAE) of GDP for FY 2025-26 released on 7th January, 2026 a"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Provisional Estimates of GDP for FY 2024-25 released on 30th May, 2025 are given in the following"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "statements and graphs:"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "2024-25 2025-26"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Domestic Product"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Expenditure Components"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Share in GDP(%)"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "Annual Report 2025-26\nTill 31st December, 2025, 38 meetings of ACNAS and its Sub -committees have be"
+        },
+        {
+          "type": "table",
+          "confidence": 0.7,
+          "text": "Table with 11 rows"
+        }
+      ]
+    },
+    {
+      "page": 6,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "2024-25 2025-26"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Domestic Product"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Expenditure Components"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Share in GDP(%)"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "National Product"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Per Capita Income, National Product and Final Consumption"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Item Sl. No. Over Previous"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "2024-25 2025-26 2023-24"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "(PE) (FAE) (FRE)"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Statement 2: First Advance Estimates of Annual GDP for FY 2025-26 and its Expenditure Components"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "Annual Report 2025-26\nStatement 2: First Advance Estimates of Annual GDP for FY 2025-26 and its Expe"
+        },
+        {
+          "type": "table",
+          "confidence": 0.7,
+          "text": "Table with 11 rows"
+        }
+      ]
+    },
+    {
+      "page": 7,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "2024-25 2025-26"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "1. Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "2. Secondary Sector 46,46,499 49,31,228 52,57,858 6.1 6.6"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "3. Tertiary Sector 88,07,683 94,40,529 1,03,01,349 7.2 9.1"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "GVA at Basic Prices 1,61,51,477 1,71,87,446 1,84,49,828 6.4 7.3"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Percentage Change Over"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Previous Year"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Statement 3: First Advance Estimates of GVA at Basic Prices by Economic Activity (at 2011- 12 Prices"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "2023-24 2024-25 2025-26"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "(FRE) (PE) (FAE)"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "Annual Report 2025-26\nStatement 3: First Advance Estimates of GVA at Basic Prices by Economic Activi"
+        },
+        {
+          "type": "table",
+          "confidence": 0.7,
+          "text": "Table with 4 rows"
+        },
+        {
+          "type": "table",
+          "confidence": 0.7,
+          "text": "Table with 4 rows"
+        }
+      ]
+    },
+    {
+      "page": 8,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Fig. 1: Annual GDP and GVA Estimates along with Y-o-Y Growth Rates at Constant"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Annual Report 2025-26"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "Annual Report 2025-26\nFig. 1: Annual GDP and GVA Estimates along with Y-o-Y Growth Rates at Constant"
+        }
+      ]
+    },
+    {
+      "page": 9,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Fig. 2: Sectoral Composition and Growth Rates of Annual GVA"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Annual Report 2025-26"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "Annual Report 2025-26\nFig. 2: Sectoral Composition and Growth Rates of Annual GVA\n16"
+        }
+      ]
+    },
+    {
+      "page": 10,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Fig. 3: Composition and Growth Rates of Annual GVA in Broad Sectors"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.6,
+          "text": "Annual Report 2025-26"
+        },
+        {
+          "type": "text",
+          "confidence": 0.5,
+          "text": "Annual Report 2025-26\nFig. 3: Composition and Growth Rates of Annual GVA in Broad Sectors\n17"
+        }
+      ]
+    }
+  ]
+}

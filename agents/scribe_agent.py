@@ -350,14 +350,28 @@ def _deterministic_narrative(
 # ---------------------------------------------------------------------------
 
 def _gemini_model():
-    try:
-        from core.gemini_client import get_generative_model
-    except Exception:
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
         return None
-    if not os.getenv("GEMINI_API_KEY"):
-        return None
+    # Prefer current google-genai SDK; fall back to legacy google-generativeai
     try:
-        return get_generative_model()
+        import google.genai as _g  # type: ignore
+        client = _g.Client(api_key=api_key)
+        model_name = os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash")
+        # Return a thin wrapper that exposes .generate_content(prompt)
+        class _NewSDKModel:
+            def generate_content(self, prompt: str):
+                resp = client.models.generate_content(model=model_name, contents=prompt)
+                class _R:
+                    text = resp.text
+                return _R()
+        return _NewSDKModel()
+    except ImportError:
+        pass
+    try:
+        import google.generativeai as g  # type: ignore  # noqa: F401
+        g.configure(api_key=api_key)
+        return g.GenerativeModel(os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash"))
     except Exception as exc:
         logger.warning("Gemini init: %s", exc)
         return None
@@ -435,6 +449,43 @@ class ScribeAgent:
 
     def __init__(self):
         self._model = _gemini_model()
+        self._ltm = None
+
+    def _get_ltm(self):
+        """Lazily load LTM store."""
+        if self._ltm is None:
+            try:
+                from template_engine.storage.ltm_store import get_ltm_store
+                self._ltm = get_ltm_store()
+            except Exception:
+                self._ltm = False  # Disabled sentinel
+        return self._ltm if self._ltm is not False else None
+
+    def _query_ltm_context(self, block_section: str, facts: dict[str, Any]) -> dict[str, Any]:
+        """Query LTM for relevant corrections and styles before generating."""
+        ltm = self._get_ltm()
+        if not ltm or not ltm.is_available:
+            return {}
+
+        context_text = f"{block_section}: {', '.join(str(k) for k in list(facts.keys())[:10])}"
+        corrections = ltm.query_corrections(context_text, limit=3)
+        styles = ltm.query_styles(context_text, limit=3)
+
+        result: dict[str, Any] = {}
+        if corrections:
+            result["ltm_corrections"] = [
+                {"original": c["original"], "corrected": c["corrected"]}
+                for c in corrections
+            ]
+        if styles:
+            result["ltm_styles"] = [s["pattern"] for s in styles]
+        return result
+
+    def store_correction(self, original: str, corrected: str, context: str = "") -> None:
+        """Store a user correction for future learning."""
+        ltm = self._get_ltm()
+        if ltm and ltm.is_available:
+            ltm.store_correction(original, corrected, context)
 
     def generate(
         self,
@@ -450,6 +501,18 @@ class ScribeAgent:
         """Generate a grounded narrative paragraph."""
         max_words = int(hints.get("max_words", 250))
         _reflections = reflections or []
+
+        # Query LTM for relevant corrections and styles
+        ltm_context = self._query_ltm_context(block_section, facts)
+        if ltm_context:
+            _reflections = list(_reflections)
+            if ltm_context.get("ltm_corrections"):
+                _reflections.append({
+                    "type": "ltm_corrections",
+                    "items": ltm_context["ltm_corrections"],
+                })
+            if ltm_context.get("ltm_styles"):
+                hints = {**hints, "style_patterns": ltm_context["ltm_styles"]}
 
         if self._model is not None:
             text = _gemini_narrative(

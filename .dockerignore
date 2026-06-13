@@ -1,26 +1,40 @@
-# Exclude local python virtualenv and cache
+# ─── Python virtualenv & bytecode ─────────────────────────────────────────
 data/Lib/
 data/Include/
 data/Scripts/
 data/pyvenv.cfg
-
-# Exclude large model caches
-model/cache/
-
-# Python bytecode
+.venv/
+venv/
 __pycache__/
 *.pyc
 *.pyo
 
-# Editor and VCS
+# ─── Large caches & outputs (not needed in image) ────────────────────────
+model/cache/
+outputs/
+checkpoints/
+sample_reports/
+test_data/
+*.pdf
+
+# ─── Node.js (dashboard builds from its own context) ─────────────────────
+dashboard/node_modules/
+dashboard/.next/
+
+# ─── Editor, VCS, CI ─────────────────────────────────────────────────────
 .vscode/
 .idea/
 .git/
+.github/
 
-# Build metadata
-*.egg-info
-*.dist-info
+# ─── Build metadata ──────────────────────────────────────────────────────
+*.egg-info/
+*.dist-info/
+dist/
+build/
 
-# Misc
+# ─── Secrets & misc ──────────────────────────────────────────────────────
 .env
+.env.*
+*.log
 .DS_Store

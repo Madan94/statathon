@@ -43,8 +43,25 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 def _load_template(template_ast: dict[str, Any] | None):
-    """Returns a TemplateAST-compatible object."""
+    """Returns a TemplateAST-compatible object.
+
+    Priority:
+      1. Deep blueprint (TemplateBlueprintAST) → convert via shim
+      2. template_engine serializer (legacy TemplateAST)
+      3. blueprint.template_from_ast_json fallback
+      4. DEFAULT_MOSPI_TEMPLATE
+    """
     if template_ast:
+        # Try deep blueprint format first (has 'topics' key)
+        if "topics" in template_ast and "templateId" in template_ast:
+            try:
+                from ast_core.schema import TemplateBlueprintAST
+                from report_builder.blueprint import template_from_deep_blueprint
+                deep = TemplateBlueprintAST.from_dict(template_ast)
+                return template_from_deep_blueprint(deep)
+            except Exception as exc:
+                logger.warning("Deep blueprint load failed: %s; trying legacy", exc)
+
         try:
             from template_engine.ast.template_serializer import deserialize_template
             return deserialize_template(template_ast)

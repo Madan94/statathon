@@ -1,0 +1,1323 @@
+{
+  "$schema": "bharatstat/template-ast/v1",
+  "_doc": "VALUE-FREE render skeleton. Keeps every structural label (headings, column headers, roles, units, formats, palette refs, slot wiring) but NO data: content=\"\", rows=[], series=[], caption=\"\". Pairs 1:1 with template.blueprint.json by shared IDs. The binder clones this, fills the slots from a dataset, and emits report.output.ast.json.",
+  "metadata": {
+    "templateId": "tpl_document",
+    "blueprintRef": "tpl_document",
+    "name": "Document",
+    "locale": "en-IN",
+    "version": "3.0",
+    "valueFree": true,
+    "generatedFrom": "Document"
+  },
+  "styleAST": {
+    "styles": [
+      {
+        "styleId": "s_h1",
+        "role": "heading1",
+        "font": "Noto Sans",
+        "sizePt": 18,
+        "bold": true,
+        "color": "#0B5394"
+      },
+      {
+        "styleId": "s_h2",
+        "role": "heading2",
+        "font": "Noto Sans",
+        "sizePt": 14,
+        "bold": true,
+        "color": "#1155CC"
+      },
+      {
+        "styleId": "s_body",
+        "role": "body",
+        "font": "Noto Sans",
+        "sizePt": 11,
+        "bold": false,
+        "color": "#222222"
+      },
+      {
+        "styleId": "s_table",
+        "role": "tableCell",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "align": "right"
+      },
+      {
+        "styleId": "s_caption",
+        "role": "caption",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "italic": true,
+        "color": "#555555"
+      }
+    ]
+  },
+  "semanticAST": {
+    "sections": [
+      {
+        "sectionId": "sec_01",
+        "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 - December, 2025]",
+        "level": 1,
+        "order": 1,
+        "styleRef": "s_h1",
+        "topicRef": "topic_01",
+        "children": [
+          "p_sp01_q01",
+          "p_sp01_q02",
+          "p_sp01_q03",
+          "fig_sp01_q03"
+        ]
+      },
+      {
+        "sectionId": "sec_02",
+        "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+        "level": 1,
+        "order": 2,
+        "styleRef": "s_h1",
+        "topicRef": "topic_02",
+        "children": [
+          "p_sp02_q01",
+          "fig_sp02_q01",
+          "p_sp02_q02",
+          "fig_sp02_q02",
+          "p_sp02_q03",
+          "fig_sp02_q03"
+        ]
+      },
+      {
+        "sectionId": "sec_03",
+        "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+        "level": 1,
+        "order": 3,
+        "styleRef": "s_h1",
+        "topicRef": "topic_03",
+        "children": [
+          "p_sp03_q01",
+          "fig_sp03_q01",
+          "p_sp03_q02",
+          "fig_sp03_q02",
+          "p_sp03_q03",
+          "fig_sp03_q03"
+        ]
+      },
+      {
+        "sectionId": "sec_04",
+        "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+        "level": 1,
+        "order": 4,
+        "styleRef": "s_h1",
+        "topicRef": "topic_04",
+        "children": [
+          "p_sp04_q01",
+          "fig_sp04_q01",
+          "p_sp04_q02",
+          "fig_sp04_q02",
+          "p_sp04_q03",
+          "fig_sp04_q03"
+        ]
+      },
+      {
+        "sectionId": "sec_05",
+        "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+        "level": 1,
+        "order": 5,
+        "styleRef": "s_h1",
+        "topicRef": "topic_05",
+        "children": [
+          "p_sp05_q01",
+          "fig_sp05_q01",
+          "p_sp05_q02",
+          "fig_sp05_q02",
+          "p_sp05_q03",
+          "fig_sp05_q03"
+        ]
+      },
+      {
+        "sectionId": "sec_06",
+        "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+        "level": 1,
+        "order": 6,
+        "styleRef": "s_h1",
+        "topicRef": "topic_06",
+        "children": [
+          "p_sp06_q01",
+          "fig_sp06_q01",
+          "p_sp06_q02",
+          "fig_sp06_q02",
+          "p_sp06_q03",
+          "fig_sp06_q03",
+          "p_sp07_q01",
+          "p_sp07_q02",
+          "fig_sp07_q02",
+          "p_sp07_q03",
+          "fig_sp07_q03"
+        ]
+      },
+      {
+        "sectionId": "sec_08",
+        "title": "7 Average number of years in formal education",
+        "level": 1,
+        "order": 7,
+        "styleRef": "s_h1",
+        "topicRef": "topic_08",
+        "children": [
+          "p_sp08_q01",
+          "fig_sp08_q01",
+          "p_sp08_q02",
+          "fig_sp08_q02",
+          "p_sp08_q03",
+          "fig_sp08_q03"
+        ]
+      }
+    ],
+    "entities": [
+      {
+        "entityId": "ent_001",
+        "name": "Labour Force Participation Rate",
+        "type": "measure",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_002",
+        "name": "Worker Population Ratio",
+        "type": "measure",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_003",
+        "name": "Unemployment Rate",
+        "type": "measure",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_004",
+        "name": "Worker Share",
+        "type": "measure",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_005",
+        "name": "Average Weekly Hours",
+        "type": "measure",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_006",
+        "name": "Average Monthly Earnings",
+        "type": "measure",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_007",
+        "name": "Formal Education Years",
+        "type": "dimension",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_008",
+        "name": "Gender",
+        "type": "dimension",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_009",
+        "name": "Sector",
+        "type": "dimension",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_010",
+        "name": "Age Group",
+        "type": "dimension",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_011",
+        "name": "Employment Status",
+        "type": "measure",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_012",
+        "name": "Industry",
+        "type": "dimension",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_013",
+        "name": "Survey Period",
+        "type": "dimension",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_014",
+        "name": "Activity Status",
+        "type": "dimension",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_015",
+        "name": "Periodic Labour Force Survey",
+        "type": "dimension",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_016",
+        "name": "MoSPI",
+        "type": "metadata",
+        "confidence": 0.8
+      },
+      {
+        "entityId": "ent_024",
+        "name": "Manufacturing sector",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_025",
+        "name": "Agriculture sector",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_029",
+        "name": "Changes in Sample Design of PLFS",
+        "type": "metadata",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_030",
+        "name": "Activity Status - Usual Status",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_033",
+        "name": "Activity Status - Current Weekly Status",
+        "type": "dimension",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_043",
+        "name": "Sample Size",
+        "type": "dimension",
+        "confidence": 0.6
+      },
+      {
+        "entityId": "ent_026",
+        "name": "Report, 2025 [January, 2025 December, 2025]",
+        "type": "metadata",
+        "confidence": 0.45
+      },
+      {
+        "entityId": "ent_031",
+        "name": "Principal Activity Status",
+        "type": "dimension",
+        "confidence": 0.45
+      }
+    ],
+    "topics": [
+      {
+        "topicId": "topic_01",
+        "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 - December, 2025]"
+      },
+      {
+        "topicId": "topic_02",
+        "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above"
+      },
+      {
+        "topicId": "topic_03",
+        "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained"
+      },
+      {
+        "topicId": "topic_04",
+        "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and"
+      },
+      {
+        "topicId": "topic_05",
+        "title": "4 Increase in proportion of workers with regular wage/ salary employment"
+      },
+      {
+        "topicId": "topic_06",
+        "title": "5 Manufacturing and service sectors witnessed enhanced worker participation"
+      },
+      {
+        "topicId": "topic_08",
+        "title": "7 Average number of years in formal education"
+      }
+    ]
+  },
+  "contentAST": {
+    "blocks": [
+      {
+        "blockId": "p_q_pib_plfs_lfpr_comparison_c1",
+        "kind": "paragraph",
+        "content": "",
+        "biQuery": "q_pib_plfs_lfpr_comparison",
+        "slot": {
+          "fillFrom": "q_pib_plfs_lfpr_comparison_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_q_pib_plfs_ur_comparison_c1",
+        "kind": "paragraph",
+        "content": "",
+        "biQuery": "q_pib_plfs_ur_comparison",
+        "slot": {
+          "fillFrom": "q_pib_plfs_ur_comparison_c1",
+          "status": "empty"
+        }
+      }
+    ],
+    "lists": [],
+    "quotes": []
+  },
+  "tableAST": {
+    "tables": []
+  },
+  "chartAST": {
+    "charts": [
+      {
+        "chartId": "chart_sp03_q01",
+        "biQuery": "q_worker_population_ratio_gender",
+        "chartType": "grouped_bar",
+        "title": "Worker Population Ratio by Gender",
+        "xAxis": {
+          "entityRef": "ent_008",
+          "label": "Gender"
+        },
+        "yAxis": {
+          "entityRef": "ent_002",
+          "label": "Worker Population Ratio (percent)",
+          "unit": "percent"
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp03_q01_c2",
+          "status": "empty"
+        },
+        "entityRefs": [
+          "ent_gender"
+        ],
+        "dimensionEntityId": "ent_gender",
+        "chartSubject": "Worker Population Ratio by Gender",
+        "semanticConfidence": 0.5
+      },
+      {
+        "chartId": "chart_sp03_q03",
+        "biQuery": "q_worker_population_ratio_sector",
+        "chartType": "grouped_bar",
+        "title": "Worker Population Ratio by Sector",
+        "xAxis": {
+          "entityRef": "ent_009",
+          "label": "Sector"
+        },
+        "yAxis": {
+          "entityRef": "ent_002",
+          "label": "Worker Population Ratio (percent)",
+          "unit": "percent"
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp03_q03_c2",
+          "status": "empty"
+        },
+        "entityRefs": [
+          "ent_sector"
+        ],
+        "dimensionEntityId": "ent_sector",
+        "chartSubject": "Worker Population Ratio by Sector",
+        "semanticConfidence": 0.5
+      },
+      {
+        "chartId": "chart_vlm_3_1",
+        "biQuery": "",
+        "chartType": "bar_chart",
+        "title": "Chart p.3",
+        "xAxis": {
+          "entityRef": "",
+          "label": ""
+        },
+        "yAxis": {
+          "entityRef": "",
+          "label": "",
+          "unit": null
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        },
+        "chartSubject": "Chart p.3",
+        "semanticConfidence": 0.35
+      },
+      {
+        "chartId": "chart_vlm_4_1",
+        "biQuery": "",
+        "chartType": "bar_chart",
+        "title": "Chart p.4",
+        "xAxis": {
+          "entityRef": "",
+          "label": ""
+        },
+        "yAxis": {
+          "entityRef": "",
+          "label": "",
+          "unit": null
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        },
+        "chartSubject": "Chart p.4",
+        "semanticConfidence": 0.35
+      },
+      {
+        "chartId": "chart_vlm_5_1",
+        "biQuery": "",
+        "chartType": "bar_chart",
+        "title": "Chart p.5",
+        "xAxis": {
+          "entityRef": "",
+          "label": ""
+        },
+        "yAxis": {
+          "entityRef": "",
+          "label": "",
+          "unit": null
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        },
+        "chartSubject": "Chart p.5",
+        "semanticConfidence": 0.35
+      },
+      {
+        "chartId": "chart_vlm_6_1",
+        "biQuery": "",
+        "chartType": "bar_chart",
+        "title": "Chart p.6",
+        "xAxis": {
+          "entityRef": "",
+          "label": ""
+        },
+        "yAxis": {
+          "entityRef": "",
+          "label": "",
+          "unit": null
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        },
+        "chartSubject": "Chart p.6",
+        "semanticConfidence": 0.35
+      },
+      {
+        "chartId": "chart_vlm_7_1",
+        "biQuery": "",
+        "chartType": "bar_chart",
+        "title": "Chart p.7",
+        "xAxis": {
+          "entityRef": "",
+          "label": ""
+        },
+        "yAxis": {
+          "entityRef": "",
+          "label": "",
+          "unit": null
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        },
+        "chartSubject": "Chart p.7",
+        "semanticConfidence": 0.35
+      },
+      {
+        "chartId": "chart_vlm_8_1",
+        "biQuery": "",
+        "chartType": "bar_chart",
+        "title": "Chart p.8",
+        "xAxis": {
+          "entityRef": "",
+          "label": ""
+        },
+        "yAxis": {
+          "entityRef": "",
+          "label": "",
+          "unit": null
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        },
+        "chartSubject": "Chart p.8",
+        "semanticConfidence": 0.35
+      },
+      {
+        "chartId": "chart_q_pib_plfs_lfpr_comparison_c2",
+        "biQuery": "q_pib_plfs_lfpr_comparison",
+        "chartType": "grouped_bar",
+        "series": [],
+        "slot": {
+          "fillFrom": "q_pib_plfs_lfpr_comparison_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_q_pib_plfs_ur_comparison_c2",
+        "biQuery": "q_pib_plfs_ur_comparison",
+        "chartType": "grouped_bar",
+        "series": [],
+        "slot": {
+          "fillFrom": "q_pib_plfs_ur_comparison_c2",
+          "status": "empty"
+        }
+      }
+    ]
+  },
+  "figureAST": {
+    "figures": [
+      {
+        "figureId": "fig_sp01_q03",
+        "templateRef": "ft_sp01_q03",
+        "type": "chart",
+        "title": "Unemployment Rate by Survey Period",
+        "caption": "",
+        "captionTemplate": "Unemployment Rate by Survey Period, {{period.current}}",
+        "chartRef": "chart_sp01_q03",
+        "chartType": "line",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        },
+        "chartTypes": [
+          "line"
+        ]
+      },
+      {
+        "figureId": "fig_sp02_q01",
+        "templateRef": "ft_sp02_q01",
+        "type": "chart",
+        "title": "Labour Force Participation Rate by Sector",
+        "caption": "",
+        "captionTemplate": "Labour Force Participation Rate by Sector, {{period.current}}",
+        "chartRef": "chart_sp02_q01",
+        "chartType": "grouped_bar",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp02_q02",
+        "templateRef": "ft_sp02_q02",
+        "type": "chart",
+        "title": "Labour Force Participation Rate by Survey Period",
+        "caption": "",
+        "captionTemplate": "Labour Force Participation Rate by Survey Period, {{period.current}}",
+        "chartRef": "chart_sp02_q02",
+        "chartType": "line",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp02_q03",
+        "templateRef": "ft_sp02_q03",
+        "type": "chart",
+        "title": "Labour Force Participation Rate by Gender",
+        "caption": "",
+        "captionTemplate": "Labour Force Participation Rate by Gender, {{period.current}}",
+        "chartRef": "chart_sp02_q03",
+        "chartType": "grouped_bar",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp03_q01",
+        "templateRef": "ft_sp03_q01",
+        "type": "chart",
+        "title": "Worker Population Ratio by Gender",
+        "caption": "",
+        "captionTemplate": "Worker Population Ratio by Gender, {{period.current}}",
+        "chartRef": "chart_sp03_q01",
+        "chartType": "grouped_bar",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp03_q02",
+        "templateRef": "ft_sp03_q02",
+        "type": "chart",
+        "title": "Worker Population Ratio by Survey Period",
+        "caption": "",
+        "captionTemplate": "Worker Population Ratio by Survey Period, {{period.current}}",
+        "chartRef": "chart_sp03_q02",
+        "chartType": "line",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp03_q03",
+        "templateRef": "ft_sp03_q03",
+        "type": "chart",
+        "title": "Worker Population Ratio by Sector",
+        "caption": "",
+        "captionTemplate": "Worker Population Ratio by Sector, {{period.current}}",
+        "chartRef": "chart_sp03_q03",
+        "chartType": "grouped_bar",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp04_q02",
+        "templateRef": "ft_sp04_q02",
+        "type": "chart",
+        "title": "Unemployment Rate by Sector",
+        "caption": "",
+        "captionTemplate": "Unemployment Rate by Sector, {{period.current}}",
+        "chartRef": "chart_sp04_q02",
+        "chartType": "grouped_bar",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        },
+        "chartTypes": [
+          "grouped_bar"
+        ]
+      },
+      {
+        "figureId": "fig_sp04_q03",
+        "templateRef": "ft_sp04_q03",
+        "type": "chart",
+        "title": "Unemployment Rate by Gender",
+        "caption": "",
+        "captionTemplate": "Unemployment Rate by Gender, {{period.current}}",
+        "chartRef": "chart_sp04_q03",
+        "chartType": "grouped_bar",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp05_q02",
+        "templateRef": "ft_sp05_q02",
+        "type": "chart",
+        "title": "Worker Share by Gender",
+        "caption": "",
+        "captionTemplate": "Worker Share by Gender, {{period.current}}",
+        "chartRef": "chart_sp05_q02",
+        "chartType": "grouped_bar",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        },
+        "chartTypes": [
+          "grouped_bar"
+        ]
+      },
+      {
+        "figureId": "fig_sp06_q01",
+        "templateRef": "ft_sp06_q01",
+        "type": "chart",
+        "title": "Unemployment Rate",
+        "caption": "",
+        "captionTemplate": "Unemployment Rate, {{period.current}}",
+        "chartRef": "chart_sp06_q01",
+        "chartType": "line",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp06_q03",
+        "templateRef": "ft_sp06_q03",
+        "type": "chart",
+        "title": "Unemployment Rate by Industry",
+        "caption": "",
+        "captionTemplate": "Unemployment Rate by Industry, {{period.current}}",
+        "chartRef": "chart_sp06_q03",
+        "chartType": "grouped_bar",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp07_q02",
+        "templateRef": "ft_sp07_q02",
+        "type": "chart",
+        "title": "Average Monthly Earnings by Gender",
+        "caption": "",
+        "captionTemplate": "Average Monthly Earnings by Gender, {{period.current}}",
+        "chartRef": "chart_sp07_q02",
+        "chartType": "grouped_bar",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        },
+        "chartTypes": [
+          "grouped_bar"
+        ]
+      },
+      {
+        "figureId": "fig_sp08_q01",
+        "templateRef": "ft_sp08_q01",
+        "type": "chart",
+        "title": "Formal Education Years by Gender",
+        "caption": "",
+        "captionTemplate": "Formal Education Years by Gender, {{period.current}}",
+        "chartRef": "chart_sp08_q01",
+        "chartType": "grouped_bar",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp08_q02",
+        "templateRef": "ft_sp08_q02",
+        "type": "chart",
+        "title": "Formal Education Years by Sector",
+        "caption": "",
+        "captionTemplate": "Formal Education Years by Sector, {{period.current}}",
+        "chartRef": "chart_sp08_q02",
+        "chartType": "grouped_bar",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        },
+        "chartTypes": [
+          "grouped_bar"
+        ]
+      },
+      {
+        "figureId": "fig_vlm_3_1",
+        "templateRef": "ft_vlm_3_1",
+        "type": "chart",
+        "title": "Chart p.3",
+        "caption": "",
+        "captionTemplate": "Chart p.3, {{period.current}}",
+        "chartRef": "chart_vlm_3_1",
+        "chartType": "bar_chart",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_vlm_4_1",
+        "templateRef": "ft_vlm_4_1",
+        "type": "chart",
+        "title": "Chart p.4",
+        "caption": "",
+        "captionTemplate": "Chart p.4, {{period.current}}",
+        "chartRef": "chart_vlm_4_1",
+        "chartType": "bar_chart",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_vlm_5_1",
+        "templateRef": "ft_vlm_5_1",
+        "type": "chart",
+        "title": "Chart p.5",
+        "caption": "",
+        "captionTemplate": "Chart p.5, {{period.current}}",
+        "chartRef": "chart_vlm_5_1",
+        "chartType": "bar_chart",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_vlm_6_1",
+        "templateRef": "ft_vlm_6_1",
+        "type": "chart",
+        "title": "Chart p.6",
+        "caption": "",
+        "captionTemplate": "Chart p.6, {{period.current}}",
+        "chartRef": "chart_vlm_6_1",
+        "chartType": "bar_chart",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_vlm_7_1",
+        "templateRef": "ft_vlm_7_1",
+        "type": "chart",
+        "title": "Chart p.7",
+        "caption": "",
+        "captionTemplate": "Chart p.7, {{period.current}}",
+        "chartRef": "chart_vlm_7_1",
+        "chartType": "bar_chart",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_vlm_8_1",
+        "templateRef": "ft_vlm_8_1",
+        "type": "chart",
+        "title": "Chart p.8",
+        "caption": "",
+        "captionTemplate": "Chart p.8, {{period.current}}",
+        "chartRef": "chart_vlm_8_1",
+        "chartType": "bar_chart",
+        "page": null,
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_chart_sp03_q01",
+        "templateRef": "ft_chart_sp03_q01",
+        "chartRef": "chart_ft_chart_sp03_q01",
+        "caption": "",
+        "captionTemplate": "Worker Population Ratio by Gender",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_chart_sp03_q03",
+        "templateRef": "ft_chart_sp03_q03",
+        "chartRef": "chart_ft_chart_sp03_q03",
+        "caption": "",
+        "captionTemplate": "Worker Population Ratio by Sector",
+        "slot": {
+          "status": "empty"
+        }
+      }
+    ]
+  },
+  "layoutAST": {
+    "pages": [
+      {
+        "pageId": "pg_1",
+        "size": "A4",
+        "regions": [
+          {
+            "regionId": "rg_sec_01",
+            "role": "heading",
+            "bindsTo": "sec_01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_sec_02",
+            "role": "heading",
+            "bindsTo": "sec_02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_sec_03",
+            "role": "heading",
+            "bindsTo": "sec_03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_sec_04",
+            "role": "heading",
+            "bindsTo": "sec_04",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_sec_05",
+            "role": "heading",
+            "bindsTo": "sec_05",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_sec_06",
+            "role": "heading",
+            "bindsTo": "sec_06",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_sec_08",
+            "role": "heading",
+            "bindsTo": "sec_08",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp01_q01",
+            "role": "body",
+            "bindsTo": "p_sp01_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp01_q02",
+            "role": "body",
+            "bindsTo": "p_sp01_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp01_q03",
+            "role": "body",
+            "bindsTo": "p_sp01_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp02_q01",
+            "role": "body",
+            "bindsTo": "p_sp02_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp02_q02",
+            "role": "body",
+            "bindsTo": "p_sp02_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp02_q03",
+            "role": "body",
+            "bindsTo": "p_sp02_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp03_q01",
+            "role": "body",
+            "bindsTo": "p_sp03_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp03_q02",
+            "role": "body",
+            "bindsTo": "p_sp03_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp03_q03",
+            "role": "body",
+            "bindsTo": "p_sp03_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp04_q01",
+            "role": "body",
+            "bindsTo": "p_sp04_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp04_q02",
+            "role": "body",
+            "bindsTo": "p_sp04_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp04_q03",
+            "role": "body",
+            "bindsTo": "p_sp04_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp05_q01",
+            "role": "body",
+            "bindsTo": "p_sp05_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp05_q02",
+            "role": "body",
+            "bindsTo": "p_sp05_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp05_q03",
+            "role": "body",
+            "bindsTo": "p_sp05_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp06_q01",
+            "role": "body",
+            "bindsTo": "p_sp06_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp06_q02",
+            "role": "body",
+            "bindsTo": "p_sp06_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp06_q03",
+            "role": "body",
+            "bindsTo": "p_sp06_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp07_q01",
+            "role": "body",
+            "bindsTo": "p_sp07_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp07_q02",
+            "role": "body",
+            "bindsTo": "p_sp07_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp07_q03",
+            "role": "body",
+            "bindsTo": "p_sp07_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp08_q01",
+            "role": "body",
+            "bindsTo": "p_sp08_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp08_q02",
+            "role": "body",
+            "bindsTo": "p_sp08_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_p_sp08_q03",
+            "role": "body",
+            "bindsTo": "p_sp08_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp01_q03",
+            "role": "figure",
+            "bindsTo": "fig_sp01_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp02_q01",
+            "role": "figure",
+            "bindsTo": "fig_sp02_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp02_q02",
+            "role": "figure",
+            "bindsTo": "fig_sp02_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp02_q03",
+            "role": "figure",
+            "bindsTo": "fig_sp02_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp03_q01",
+            "role": "figure",
+            "bindsTo": "fig_sp03_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp03_q02",
+            "role": "figure",
+            "bindsTo": "fig_sp03_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp03_q03",
+            "role": "figure",
+            "bindsTo": "fig_sp03_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp04_q02",
+            "role": "figure",
+            "bindsTo": "fig_sp04_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp04_q03",
+            "role": "figure",
+            "bindsTo": "fig_sp04_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp05_q02",
+            "role": "figure",
+            "bindsTo": "fig_sp05_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp06_q01",
+            "role": "figure",
+            "bindsTo": "fig_sp06_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp06_q03",
+            "role": "figure",
+            "bindsTo": "fig_sp06_q03",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp07_q02",
+            "role": "figure",
+            "bindsTo": "fig_sp07_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp08_q01",
+            "role": "figure",
+            "bindsTo": "fig_sp08_q01",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_sp08_q02",
+            "role": "figure",
+            "bindsTo": "fig_sp08_q02",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_vlm_3_1",
+            "role": "figure",
+            "bindsTo": "fig_vlm_3_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_vlm_4_1",
+            "role": "figure",
+            "bindsTo": "fig_vlm_4_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_vlm_5_1",
+            "role": "figure",
+            "bindsTo": "fig_vlm_5_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_vlm_6_1",
+            "role": "figure",
+            "bindsTo": "fig_vlm_6_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_vlm_7_1",
+            "role": "figure",
+            "bindsTo": "fig_vlm_7_1",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_fig_vlm_8_1",
+            "role": "figure",
+            "bindsTo": "fig_vlm_8_1",
+            "bbox": null
+          }
+        ]
+      }
+    ]
+  },
+  "geometryAST": {
+    "_doc": "Relative flow only. Absolute bounding boxes are computed by the layout engine at render time.",
+    "flow": [
+      "rg_sec_01",
+      "rg_sec_02",
+      "rg_sec_03",
+      "rg_sec_04",
+      "rg_sec_05",
+      "rg_sec_06",
+      "rg_sec_08",
+      "rg_p_sp01_q01",
+      "rg_p_sp01_q02",
+      "rg_p_sp01_q03",
+      "rg_p_sp02_q01",
+      "rg_p_sp02_q02",
+      "rg_p_sp02_q03",
+      "rg_p_sp03_q01",
+      "rg_p_sp03_q02",
+      "rg_p_sp03_q03",
+      "rg_p_sp04_q01",
+      "rg_p_sp04_q02",
+      "rg_p_sp04_q03",
+      "rg_p_sp05_q01",
+      "rg_p_sp05_q02",
+      "rg_p_sp05_q03",
+      "rg_p_sp06_q01",
+      "rg_p_sp06_q02",
+      "rg_p_sp06_q03",
+      "rg_p_sp07_q01",
+      "rg_p_sp07_q02",
+      "rg_p_sp07_q03",
+      "rg_p_sp08_q01",
+      "rg_p_sp08_q02",
+      "rg_p_sp08_q03",
+      "rg_fig_sp01_q03",
+      "rg_fig_sp02_q01",
+      "rg_fig_sp02_q02",
+      "rg_fig_sp02_q03",
+      "rg_fig_sp03_q01",
+      "rg_fig_sp03_q02",
+      "rg_fig_sp03_q03",
+      "rg_fig_sp04_q02",
+      "rg_fig_sp04_q03",
+      "rg_fig_sp05_q02",
+      "rg_fig_sp06_q01",
+      "rg_fig_sp06_q03",
+      "rg_fig_sp07_q02",
+      "rg_fig_sp08_q01",
+      "rg_fig_sp08_q02",
+      "rg_fig_vlm_3_1",
+      "rg_fig_vlm_4_1",
+      "rg_fig_vlm_5_1",
+      "rg_fig_vlm_6_1",
+      "rg_fig_vlm_7_1",
+      "rg_fig_vlm_8_1"
+    ]
+  }
+}

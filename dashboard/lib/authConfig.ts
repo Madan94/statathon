@@ -16,7 +16,9 @@ export const PROTECTED_PREFIXES = [
   '/analysis',
   '/reports',
   '/report-builder',
+  '/report',
   '/profile',
+  '/activity',
 ] as const;
 
 export function isAuthRoute(pathname: string): boolean {

@@ -1,0 +1,118 @@
+{
+  "$schema": "bharatstat/template-ast/v1",
+  "_doc": "VALUE-FREE render skeleton. Keeps every structural label (headings, column headers, roles, units, formats, palette refs, slot wiring) but NO data: content=\"\", rows=[], series=[], caption=\"\". Pairs 1:1 with template.blueprint.json by shared IDs. The binder clones this, fills the slots from a dataset, and emits report.output.ast.json.",
+  "metadata": {
+    "templateId": "tpl_plfs_annual_v1",
+    "blueprintRef": "tpl_plfs_annual_v1",
+    "name": "PLFS Annual Report \u2014 Employment Indicators",
+    "locale": "en-IN",
+    "version": "1.0.0",
+    "valueFree": true,
+    "generatedFrom": "Periodic Labour Force Survey \u2014 Annual Report"
+  },
+  "styleAST": {
+    "styles": [
+      { "styleId": "s_h1", "role": "heading1", "font": "Noto Sans", "sizePt": 18, "bold": true, "color": "#0B5394" },
+      { "styleId": "s_body", "role": "body", "font": "Noto Sans", "sizePt": 11, "bold": false, "color": "#222222" },
+      { "styleId": "s_table", "role": "tableCell", "font": "Noto Sans", "sizePt": 9, "align": "right" },
+      { "styleId": "s_caption", "role": "caption", "font": "Noto Sans", "sizePt": 9, "italic": true, "color": "#555555" }
+    ]
+  },
+  "semanticAST": {
+    "sections": [
+      {
+        "sectionId": "sec_wpr",
+        "title": "Worker Population Ratio",
+        "level": 1,
+        "order": 1,
+        "styleRef": "s_h1",
+        "topicRef": "topic_wpr",
+        "children": ["p_wpr_intro", "fig_wpr_01", "table_wpr_state"]
+      }
+    ]
+  },
+  "contentAST": {
+    "blocks": [
+      {
+        "blockId": "p_wpr_intro",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "q_wpr_01",
+        "templateQuestion": "Compare WPR across sector for the current period.",
+        "slot": { "fillFrom": "q_wpr_01_c1", "status": "empty" }
+      }
+    ]
+  },
+  "tableAST": {
+    "tables": [
+      {
+        "tableId": "table_wpr_state",
+        "templateRef": "tt_wpr_state",
+        "biQuery": "q_wpr_02",
+        "title": "Worker Population Ratio by State/UT and Sector",
+        "columnGroups": [
+          { "groupId": "grp_rural", "label": "Rural", "spanRefs": ["col_rural_person"] },
+          { "groupId": "grp_urban", "label": "Urban", "spanRefs": ["col_urban_person"] }
+        ],
+        "columns": [
+          { "columnId": "col_state", "header": "State/UT", "role": "dimension", "entityRef": "ent_state", "align": "left", "format": null },
+          { "columnId": "col_rural_person", "header": "Rural", "role": "measure", "entityRef": "ent_wpr", "group": "grp_rural", "unit": "percent", "format": "percent.1", "align": "right" },
+          { "columnId": "col_urban_person", "header": "Urban", "role": "measure", "entityRef": "ent_wpr", "group": "grp_urban", "unit": "percent", "format": "percent.1", "align": "right" }
+        ],
+        "rows": [],
+        "footnotes": [
+          { "noteId": "fn_source", "text": "", "textTemplate": "Source: {{dataset.title}}, {{period.current}}." },
+          { "noteId": "fn_wpr", "text": "", "textTemplate": "WPR computed on usual status (ps+ss) for persons aged {{filter.age_group}}." }
+        ],
+        "slot": { "fillFrom": "q_wpr_02", "status": "empty" }
+      }
+    ]
+  },
+  "chartAST": {
+    "charts": [
+      {
+        "chartId": "chart_wpr_sector",
+        "biQuery": "q_wpr_01",
+        "chartType": "grouped_bar",
+        "title": "Worker Population Ratio by Sector",
+        "xAxis": { "entityRef": "ent_sector", "label": "Sector" },
+        "yAxis": { "entityRef": "ent_wpr", "label": "WPR (%)", "unit": "percent" },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": { "fillFrom": "q_wpr_01_c2", "status": "empty" }
+      }
+    ]
+  },
+  "figureAST": {
+    "figures": [
+      {
+        "figureId": "fig_wpr_01",
+        "templateRef": "ft_wpr_01",
+        "caption": "",
+        "captionTemplate": "Worker Population Ratio by Sector, {{period.current}}",
+        "chartRef": "chart_wpr_sector",
+        "styleRef": "s_caption",
+        "slot": { "status": "empty" }
+      }
+    ]
+  },
+  "layoutAST": {
+    "pages": [
+      {
+        "pageId": "pg_1",
+        "size": "A4",
+        "regions": [
+          { "regionId": "rg_title", "role": "heading", "bindsTo": "sec_wpr", "bbox": null },
+          { "regionId": "rg_intro", "role": "body", "bindsTo": "p_wpr_intro", "bbox": null },
+          { "regionId": "rg_fig", "role": "figure", "bindsTo": "fig_wpr_01", "bbox": null },
+          { "regionId": "rg_table", "role": "table", "bindsTo": "table_wpr_state", "bbox": null }
+        ]
+      }
+    ]
+  },
+  "geometryAST": {
+    "_doc": "Relative flow only. Absolute bounding boxes are computed by the layout engine at render time.",
+    "flow": ["rg_title", "rg_intro", "rg_fig", "rg_table"]
+  }
+}

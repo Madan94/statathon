@@ -1,0 +1,649 @@
+{
+  "$schema": "bharatstat/report-output-ast/v1",
+  "_doc": "GENERATED per run. = template.ast.json cloned + every slot FILLED from a dataset + four provenance layers (datasetAST, bindingAST, analyticsAST, evidenceAST). This is the ONLY file where numbers and prose exist. Every value is traceable: content/cell/series -> evidenceAST -> analyticsAST (plan+execution+rowIds) -> datasetAST.",
+  "metadata": {
+    "reportId": "rpt_plfs_2024_001",
+    "templateId": "tpl_plfs_annual_v1",
+    "blueprintRef": "tpl_plfs_annual_v1",
+    "generatedAt": "2026-06-08T10:15:00+05:30",
+    "locale": "en-IN",
+    "datasetRef": "ds_plfs_2024",
+    "period": {
+      "current": "2023-24",
+      "prior": "2022-23",
+      "delta": "yoy"
+    },
+    "status": "complete",
+    "coverage": {
+      "questionsTotal": 2,
+      "questionsAnswered": 2,
+      "bindingsConfirmed": 6
+    },
+    "version": 1
+  },
+  "datasetAST": {
+    "datasetId": "ds_plfs_2024",
+    "title": "PLFS 2023-24 Unit-Level (Persons 15+)",
+    "rowCount": 101736,
+    "source": "uploaded:plfs_2024_unit.csv",
+    "archetype": "survey_microdata",
+    "columns": [
+      {
+        "name": "state",
+        "dtype": "string",
+        "role": "dimension",
+        "cardinality": 36,
+        "sampleValues": [
+          "Kerala",
+          "Maharashtra",
+          "Bihar"
+        ],
+        "unit": null
+      },
+      {
+        "name": "sector",
+        "dtype": "string",
+        "role": "dimension",
+        "cardinality": 2,
+        "sampleValues": [
+          "Rural",
+          "Urban"
+        ],
+        "unit": null
+      },
+      {
+        "name": "gender",
+        "dtype": "string",
+        "role": "dimension",
+        "cardinality": 2,
+        "sampleValues": [
+          "Male",
+          "Female"
+        ],
+        "unit": null
+      },
+      {
+        "name": "age",
+        "dtype": "int",
+        "role": "filter",
+        "min": 0,
+        "max": 110,
+        "unit": "years"
+      },
+      {
+        "name": "activity_status",
+        "dtype": "string",
+        "role": "dimension",
+        "cardinality": 9,
+        "sampleValues": [
+          "worker",
+          "unemployed",
+          "not_in_lf"
+        ],
+        "unit": null
+      },
+      {
+        "name": "weight",
+        "dtype": "float",
+        "role": "measure",
+        "min": 12.4,
+        "max": 9921.7,
+        "unit": "persons",
+        "semantic": "survey_multiplier"
+      },
+      {
+        "name": "wage",
+        "dtype": "float",
+        "role": "measure",
+        "min": 0,
+        "max": 250000,
+        "unit": "INR"
+      }
+    ],
+    "profileRef": "prof_plfs_2024"
+  },
+  "bindingAST": {
+    "entityBindings": [
+      {
+        "entityId": "ent_wpr",
+        "boundTo": {
+          "kind": "derived",
+          "expr": "100 * weighted_share(activity_status=='worker') WHERE age>=15",
+          "columns": [
+            "activity_status",
+            "age",
+            "weight"
+          ]
+        },
+        "method": "derived_measure",
+        "confidence": 0.95,
+        "status": "confirmed",
+        "alternatives": []
+      },
+      {
+        "entityId": "ent_sector",
+        "boundTo": {
+          "kind": "column",
+          "column": "sector"
+        },
+        "method": "exact_alias",
+        "confidence": 1.0,
+        "status": "confirmed",
+        "alternatives": []
+      },
+      {
+        "entityId": "ent_gender",
+        "boundTo": {
+          "kind": "column",
+          "column": "gender"
+        },
+        "method": "exact_alias",
+        "confidence": 1.0,
+        "status": "confirmed",
+        "alternatives": []
+      },
+      {
+        "entityId": "ent_state",
+        "boundTo": {
+          "kind": "column",
+          "column": "state"
+        },
+        "method": "exact_alias",
+        "confidence": 1.0,
+        "status": "confirmed",
+        "alternatives": []
+      },
+      {
+        "entityId": "ent_age_group",
+        "boundTo": {
+          "kind": "filter_expr",
+          "expr": "age>=15",
+          "column": "age"
+        },
+        "method": "rule",
+        "confidence": 0.9,
+        "status": "confirmed",
+        "alternatives": []
+      },
+      {
+        "entityId": "ent_period",
+        "boundTo": {
+          "kind": "constant",
+          "value": "2023-24"
+        },
+        "method": "metadata",
+        "confidence": 1.0,
+        "status": "confirmed",
+        "alternatives": []
+      }
+    ],
+    "questionBindings": [
+      {
+        "questionId": "q_wpr_01",
+        "resolvedRoles": {
+          "measures": [
+            "ent_wpr"
+          ],
+          "grouping": [
+            "ent_sector"
+          ],
+          "filters": [
+            {
+              "entity": "ent_age_group",
+              "expr": "age>=15"
+            }
+          ],
+          "time": "2023-24"
+        },
+        "planRef": "plan_q_wpr_01",
+        "executionRef": "exec_q_wpr_01",
+        "status": "executed"
+      },
+      {
+        "questionId": "q_wpr_02",
+        "resolvedRoles": {
+          "measures": [
+            "ent_wpr"
+          ],
+          "grouping": [
+            "ent_state"
+          ],
+          "filters": [],
+          "time": "2023-24"
+        },
+        "planRef": "plan_q_wpr_02",
+        "executionRef": "exec_q_wpr_02",
+        "status": "executed"
+      }
+    ],
+    "coverage": {
+      "entitiesRequired": 6,
+      "entitiesBound": 6,
+      "questionsResolvable": 2,
+      "blocked": []
+    }
+  },
+  "analyticsAST": {
+    "plans": [
+      {
+        "planId": "plan_q_wpr_01",
+        "questionId": "q_wpr_01",
+        "operation": "group_aggregate",
+        "measure": {
+          "columnExpr": "wpr",
+          "agg": "weighted_ratio",
+          "weightColumn": "weight"
+        },
+        "groupBy": [
+          "sector"
+        ],
+        "filters": [
+          "age>=15"
+        ],
+        "sort": {
+          "by": "wpr",
+          "order": "desc"
+        }
+      },
+      {
+        "planId": "plan_q_wpr_02",
+        "questionId": "q_wpr_02",
+        "operation": "rank",
+        "measure": {
+          "columnExpr": "wpr",
+          "agg": "weighted_ratio",
+          "weightColumn": "weight"
+        },
+        "groupBy": [
+          "state"
+        ],
+        "filters": [
+          "age>=15"
+        ],
+        "topN": 10,
+        "sort": {
+          "by": "wpr",
+          "order": "desc"
+        }
+      }
+    ],
+    "executions": [
+      {
+        "executionId": "exec_q_wpr_01",
+        "planRef": "plan_q_wpr_01",
+        "engine": "duckdb",
+        "rowsScanned": 101736,
+        "ms": 84,
+        "status": "ok"
+      },
+      {
+        "executionId": "exec_q_wpr_02",
+        "planRef": "plan_q_wpr_02",
+        "engine": "duckdb",
+        "rowsScanned": 101736,
+        "ms": 121,
+        "status": "ok"
+      }
+    ],
+    "aggregations": [
+      {
+        "aggId": "agg_wpr_sector",
+        "questionId": "q_wpr_01",
+        "groupBy": "sector",
+        "measure": "wpr",
+        "rows": [
+          {
+            "key": {
+              "sector": "Rural"
+            },
+            "value": 56.3,
+            "n": 71204,
+            "rowIds": [
+              "r:sector=Rural"
+            ]
+          },
+          {
+            "key": {
+              "sector": "Urban"
+            },
+            "value": 47.1,
+            "n": 30532,
+            "rowIds": [
+              "r:sector=Urban"
+            ]
+          }
+        ]
+      }
+    ],
+    "rankings": [
+      {
+        "rankId": "rank_wpr_state",
+        "questionId": "q_wpr_02",
+        "measure": "wpr",
+        "order": "desc",
+        "items": [
+          {
+            "rank": 1,
+            "key": {
+              "state": "Himachal Pradesh"
+            },
+            "value": 65.1,
+            "rowIds": [
+              "r:state=HP"
+            ]
+          },
+          {
+            "rank": 2,
+            "key": {
+              "state": "Sikkim"
+            },
+            "value": 63.0,
+            "rowIds": [
+              "r:state=SK"
+            ]
+          },
+          {
+            "rank": 3,
+            "key": {
+              "state": "Chhattisgarh"
+            },
+            "value": 62.7,
+            "rowIds": [
+              "r:state=CG"
+            ]
+          }
+        ]
+      }
+    ],
+    "trends": [],
+    "metrics": [
+      {
+        "metricId": "m_wpr_allindia",
+        "questionId": "q_wpr_01",
+        "label": "All-India WPR (15+)",
+        "value": 53.4,
+        "unit": "percent",
+        "rowIds": [
+          "r:all"
+        ]
+      }
+    ]
+  },
+  "evidenceAST": {
+    "evidence": [
+      {
+        "evidenceId": "ev_wpr_intro",
+        "questionId": "q_wpr_01",
+        "componentId": "q_wpr_01_c1",
+        "kind": "metric",
+        "analyticsRef": "m_wpr_allindia",
+        "columns": [
+          "activity_status",
+          "age",
+          "weight"
+        ],
+        "rowIds": [
+          "r:all"
+        ],
+        "computation": "weighted_ratio",
+        "value": 53.4,
+        "confidence": 0.95
+      },
+      {
+        "evidenceId": "ev_wpr_sector",
+        "questionId": "q_wpr_01",
+        "componentId": "q_wpr_01_c2",
+        "kind": "aggregation",
+        "analyticsRef": "agg_wpr_sector",
+        "columns": [
+          "sector",
+          "activity_status",
+          "age",
+          "weight"
+        ],
+        "rowIds": [
+          "r:sector=Rural",
+          "r:sector=Urban"
+        ],
+        "computation": "weighted_ratio",
+        "confidence": 0.95
+      },
+      {
+        "evidenceId": "ev_wpr_state",
+        "questionId": "q_wpr_02",
+        "componentId": "q_wpr_02_c1",
+        "kind": "ranking",
+        "analyticsRef": "rank_wpr_state",
+        "columns": [
+          "state",
+          "activity_status",
+          "age",
+          "weight"
+        ],
+        "rowIds": [
+          "r:state=HP",
+          "r:state=SK",
+          "r:state=CG"
+        ],
+        "computation": "weighted_ratio",
+        "confidence": 0.93
+      }
+    ]
+  },
+  "contentAST": {
+    "blocks": [
+      {
+        "blockId": "p_wpr_intro",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "In 2023-24, the Worker Population Ratio for persons aged 15 years and above stood at 53.4%. The rural sector recorded a markedly higher WPR (56.3%) than the urban sector (47.1%) — a gap of 9.2 percentage points that reflects the larger share of self-employment and agricultural work in rural areas.",
+        "biQuery": "q_wpr_01",
+        "provenance": {
+          "questionId": "q_wpr_01",
+          "componentId": "q_wpr_01_c1",
+          "evidenceRef": "ev_wpr_intro",
+          "analyticsRef": "m_wpr_allindia"
+        },
+        "slot": {
+          "status": "filled"
+        }
+      }
+    ]
+  },
+  "tableAST": {
+    "tables": [
+      {
+        "tableId": "table_wpr_state",
+        "templateRef": "tt_wpr_state",
+        "biQuery": "q_wpr_02",
+        "title": "Worker Population Ratio by State/UT and Sector",
+        "columnGroups": [
+          {
+            "groupId": "grp_rural",
+            "label": "Rural",
+            "spanRefs": [
+              "col_rural_person"
+            ]
+          },
+          {
+            "groupId": "grp_urban",
+            "label": "Urban",
+            "spanRefs": [
+              "col_urban_person"
+            ]
+          }
+        ],
+        "columns": [
+          {
+            "columnId": "col_state",
+            "header": "State/UT",
+            "role": "dimension",
+            "entityRef": "ent_state",
+            "align": "left",
+            "format": null
+          },
+          {
+            "columnId": "col_rural_person",
+            "header": "Rural",
+            "role": "measure",
+            "entityRef": "ent_wpr",
+            "group": "grp_rural",
+            "unit": "percent",
+            "format": "percent.1",
+            "align": "right"
+          },
+          {
+            "columnId": "col_urban_person",
+            "header": "Urban",
+            "role": "measure",
+            "entityRef": "ent_wpr",
+            "group": "grp_urban",
+            "unit": "percent",
+            "format": "percent.1",
+            "align": "right"
+          }
+        ],
+        "rows": [
+          {
+            "col_state": "Himachal Pradesh",
+            "col_rural_person": 65.1,
+            "col_urban_person": 54.0,
+            "rowIds": [
+              "r:state=HP"
+            ]
+          },
+          {
+            "col_state": "Sikkim",
+            "col_rural_person": 63.0,
+            "col_urban_person": 58.2,
+            "rowIds": [
+              "r:state=SK"
+            ]
+          },
+          {
+            "col_state": "Chhattisgarh",
+            "col_rural_person": 62.7,
+            "col_urban_person": 49.3,
+            "rowIds": [
+              "r:state=CG"
+            ]
+          }
+        ],
+        "footnotes": [
+          {
+            "noteId": "fn_source",
+            "text": "Source: PLFS 2023-24 Unit-Level (Persons 15+), 2023-24."
+          },
+          {
+            "noteId": "fn_wpr",
+            "text": "WPR computed on usual status (ps+ss) for persons aged 15+."
+          }
+        ],
+        "provenance": {
+          "questionId": "q_wpr_02",
+          "analyticsRef": "rank_wpr_state",
+          "evidenceRef": "ev_wpr_state"
+        },
+        "slot": {
+          "status": "filled"
+        }
+      }
+    ]
+  },
+  "chartAST": {
+    "charts": [
+      {
+        "chartId": "chart_wpr_sector",
+        "biQuery": "q_wpr_01",
+        "chartType": "grouped_bar",
+        "title": "Worker Population Ratio by Sector",
+        "xAxis": {
+          "entityRef": "ent_sector",
+          "label": "Sector"
+        },
+        "yAxis": {
+          "entityRef": "ent_wpr",
+          "label": "WPR (%)",
+          "unit": "percent"
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [
+          {
+            "label": "WPR",
+            "points": [
+              {
+                "x": "Rural",
+                "y": 56.3,
+                "color": "#1F7A1F",
+                "rowIds": [
+                  "r:sector=Rural"
+                ]
+              },
+              {
+                "x": "Urban",
+                "y": 47.1,
+                "color": "#0B5394",
+                "rowIds": [
+                  "r:sector=Urban"
+                ]
+              }
+            ]
+          }
+        ],
+        "provenance": {
+          "questionId": "q_wpr_01",
+          "analyticsRef": "agg_wpr_sector",
+          "evidenceRef": "ev_wpr_sector"
+        },
+        "slot": {
+          "status": "filled"
+        }
+      }
+    ]
+  },
+  "figureAST": {
+    "figures": [
+      {
+        "figureId": "fig_wpr_01",
+        "templateRef": "ft_wpr_01",
+        "caption": "Worker Population Ratio by Sector, 2023-24",
+        "chartRef": "chart_wpr_sector",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "filled"
+        }
+      }
+    ]
+  },
+  "semanticAST": {
+    "sections": [
+      {
+        "sectionId": "sec_wpr",
+        "title": "Worker Population Ratio",
+        "level": 1,
+        "order": 1,
+        "styleRef": "s_h1",
+        "topicRef": "topic_wpr",
+        "children": [
+          "p_wpr_intro",
+          "fig_wpr_01",
+          "table_wpr_state"
+        ]
+      }
+    ]
+  },
+  "auditAST": {
+    "binding": {
+      "engine": "duckdb",
+      "providerVision": "qwen",
+      "providerReasoning": "gemini",
+      "startedAt": "2026-06-08T10:14:33+05:30",
+      "finishedAt": "2026-06-08T10:15:00+05:30"
+    },
+    "warnings": [],
+    "humanReview": {
+      "bindingsConfirmedBy": "officer@example.com",
+      "at": "2026-06-08T10:14:55+05:30"
+    }
+  }
+}

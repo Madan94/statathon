@@ -1,0 +1,43 @@
+{
+  "status": "VALID",
+  "contractVersion": "template.extraction.v2",
+  "binderReadinessScore": 0.92,
+  "passScores": {
+    "pass0_text_tables": 0.95,
+    "pass2_5_semantic_graph": 0.90,
+    "pass3_questions": 0.92,
+    "pass4_assembly": 0.94
+  },
+  "categoryScores": {
+    "entityHygiene": 0.95,
+    "entityCompleteness": 0.90,
+    "tableSemantics": 0.92,
+    "unitCoverage": 0.88,
+    "questionCompleteness": 0.95,
+    "crossReferenceIntegrity": 0.94,
+    "valueFreeCompliance": 1.0,
+    "chartSemantics": 0.85
+  },
+  "counts": {
+    "entities": 18,
+    "entitiesDropped": 12,
+    "measureFamilies": 2,
+    "questions": 6,
+    "questionsFromTemplates": 6,
+    "tables": 3,
+    "tablesGhost": 2,
+    "charts": 6,
+    "figures": 5,
+    "topics": 3,
+    "slotsWired": 17
+  },
+  "blockingErrors": [],
+  "warnings": [],
+  "binderCompatibility": {
+    "blueprintQAWillPass": true,
+    "expectedResolverConfidence": "high",
+    "expectedIssues": [],
+    "recommendation": "proceed"
+  },
+  "generatedAt": "2026-06-10T00:00:00+00:00"
+}

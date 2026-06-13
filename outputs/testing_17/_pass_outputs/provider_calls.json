@@ -1,0 +1,614 @@
+[
+  {
+    "traceId": "llm_000001",
+    "task": "entity_extraction",
+    "modality": "vision",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-4o-graphiti-2",
+    "fallbackUsed": false,
+    "schemaRequired": false,
+    "schemaEnforced": false,
+    "schemaFingerprint": null,
+    "hasImage": true,
+    "promptChars": 1511,
+    "promptCharsOriginal": 1511,
+    "promptTruncated": false,
+    "maxTokens": 320,
+    "elapsedMs": 8273,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-4o-graphiti-2",
+        "fallback": false,
+        "maxTokens": 320,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 257
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000002",
+    "task": "entity_extraction",
+    "modality": "vision",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-4o-graphiti-2",
+    "fallbackUsed": false,
+    "schemaRequired": false,
+    "schemaEnforced": false,
+    "schemaFingerprint": null,
+    "hasImage": true,
+    "promptChars": 1458,
+    "promptCharsOriginal": 1458,
+    "promptTruncated": false,
+    "maxTokens": 320,
+    "elapsedMs": 4797,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-4o-graphiti-2",
+        "fallback": false,
+        "maxTokens": 320,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 169
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000003",
+    "task": "entity_extraction",
+    "modality": "vision",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-4o-graphiti-2",
+    "fallbackUsed": false,
+    "schemaRequired": false,
+    "schemaEnforced": false,
+    "schemaFingerprint": null,
+    "hasImage": true,
+    "promptChars": 1479,
+    "promptCharsOriginal": 1479,
+    "promptTruncated": false,
+    "maxTokens": 320,
+    "elapsedMs": 8354,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-4o-graphiti-2",
+        "fallback": false,
+        "maxTokens": 320,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 631
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000004",
+    "task": "entity_extraction",
+    "modality": "vision",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-4o-graphiti-2",
+    "fallbackUsed": false,
+    "schemaRequired": false,
+    "schemaEnforced": false,
+    "schemaFingerprint": null,
+    "hasImage": true,
+    "promptChars": 1481,
+    "promptCharsOriginal": 1481,
+    "promptTruncated": false,
+    "maxTokens": 320,
+    "elapsedMs": 8080,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-4o-graphiti-2",
+        "fallback": false,
+        "maxTokens": 320,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 518
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000005",
+    "task": "entity_extraction",
+    "modality": "vision",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-4o-graphiti-2",
+    "fallbackUsed": false,
+    "schemaRequired": false,
+    "schemaEnforced": false,
+    "schemaFingerprint": null,
+    "hasImage": true,
+    "promptChars": 1482,
+    "promptCharsOriginal": 1482,
+    "promptTruncated": false,
+    "maxTokens": 320,
+    "elapsedMs": 13330,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-4o-graphiti-2",
+        "fallback": false,
+        "maxTokens": 320,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 601
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000006",
+    "task": "entity_extraction",
+    "modality": "vision",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-4o-graphiti-2",
+    "fallbackUsed": false,
+    "schemaRequired": false,
+    "schemaEnforced": false,
+    "schemaFingerprint": null,
+    "hasImage": true,
+    "promptChars": 1481,
+    "promptCharsOriginal": 1481,
+    "promptTruncated": false,
+    "maxTokens": 320,
+    "elapsedMs": 7342,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-4o-graphiti-2",
+        "fallback": false,
+        "maxTokens": 320,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 539
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000007",
+    "task": "entity_extraction",
+    "modality": "vision",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-4o-graphiti-2",
+    "fallbackUsed": false,
+    "schemaRequired": false,
+    "schemaEnforced": false,
+    "schemaFingerprint": null,
+    "hasImage": true,
+    "promptChars": 1496,
+    "promptCharsOriginal": 1496,
+    "promptTruncated": false,
+    "maxTokens": 320,
+    "elapsedMs": 7343,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-4o-graphiti-2",
+        "fallback": false,
+        "maxTokens": 320,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 570
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000008",
+    "task": "entity_extraction",
+    "modality": "vision",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-4o-graphiti-2",
+    "fallbackUsed": false,
+    "schemaRequired": false,
+    "schemaEnforced": false,
+    "schemaFingerprint": null,
+    "hasImage": true,
+    "promptChars": 1497,
+    "promptCharsOriginal": 1497,
+    "promptTruncated": false,
+    "maxTokens": 320,
+    "elapsedMs": 13418,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-4o-graphiti-2",
+        "fallback": false,
+        "maxTokens": 320,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 423
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000009",
+    "task": "entity_extraction",
+    "modality": "vision",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-4o-graphiti-2",
+    "fallbackUsed": false,
+    "schemaRequired": false,
+    "schemaEnforced": false,
+    "schemaFingerprint": null,
+    "hasImage": true,
+    "promptChars": 1497,
+    "promptCharsOriginal": 1497,
+    "promptTruncated": false,
+    "maxTokens": 320,
+    "elapsedMs": 11703,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-4o-graphiti-2",
+        "fallback": false,
+        "maxTokens": 320,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 510
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000010",
+    "task": "entity_extraction",
+    "modality": "vision",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-4o-graphiti-2",
+    "fallbackUsed": false,
+    "schemaRequired": false,
+    "schemaEnforced": false,
+    "schemaFingerprint": null,
+    "hasImage": true,
+    "promptChars": 1484,
+    "promptCharsOriginal": 1484,
+    "promptTruncated": false,
+    "maxTokens": 320,
+    "elapsedMs": 10550,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-4o-graphiti-2",
+        "fallback": false,
+        "maxTokens": 320,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 542
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000011",
+    "task": "entity_classification",
+    "modality": "text",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-5.2-chat",
+    "fallbackUsed": false,
+    "schemaRequired": true,
+    "schemaEnforced": false,
+    "schemaFingerprint": "8162832ca32e",
+    "promptChars": 1575,
+    "promptCharsOriginal": 1575,
+    "promptTruncated": false,
+    "maxTokens": 512,
+    "elapsedMs": 6626,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-5.2-chat",
+        "fallback": false,
+        "maxTokens": 512,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 1162
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000012",
+    "task": "question_generation",
+    "modality": "vision",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-4o-graphiti-2",
+    "fallbackUsed": false,
+    "schemaRequired": true,
+    "schemaEnforced": false,
+    "schemaFingerprint": "d5a74eba9713",
+    "hasImage": true,
+    "promptChars": 3006,
+    "promptCharsOriginal": 3006,
+    "promptTruncated": false,
+    "maxTokens": 512,
+    "elapsedMs": 7512,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-4o-graphiti-2",
+        "fallback": false,
+        "maxTokens": 512,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 772
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000013",
+    "task": "question_generation",
+    "modality": "vision",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-4o-graphiti-2",
+    "fallbackUsed": false,
+    "schemaRequired": true,
+    "schemaEnforced": false,
+    "schemaFingerprint": "d5a74eba9713",
+    "hasImage": true,
+    "promptChars": 2405,
+    "promptCharsOriginal": 2405,
+    "promptTruncated": false,
+    "maxTokens": 512,
+    "elapsedMs": 20852,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-4o-graphiti-2",
+        "fallback": false,
+        "maxTokens": 512,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 917
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000014",
+    "task": "entity_binding",
+    "modality": "text",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-5.2-chat",
+    "fallbackUsed": false,
+    "schemaRequired": true,
+    "schemaEnforced": false,
+    "schemaFingerprint": "a15e9e337065",
+    "promptChars": 1053,
+    "promptCharsOriginal": 1053,
+    "promptTruncated": false,
+    "maxTokens": 1024,
+    "elapsedMs": 8475,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-5.2-chat",
+        "fallback": false,
+        "maxTokens": 1024,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 443
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000015",
+    "task": "entity_binding",
+    "modality": "text",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-5.2-chat",
+    "fallbackUsed": false,
+    "schemaRequired": true,
+    "schemaEnforced": false,
+    "schemaFingerprint": "a15e9e337065",
+    "promptChars": 1063,
+    "promptCharsOriginal": 1063,
+    "promptTruncated": false,
+    "maxTokens": 1024,
+    "elapsedMs": 7589,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-5.2-chat",
+        "fallback": false,
+        "maxTokens": 1024,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 561
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000016",
+    "task": "entity_binding",
+    "modality": "text",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-5.2-chat",
+    "fallbackUsed": false,
+    "schemaRequired": true,
+    "schemaEnforced": false,
+    "schemaFingerprint": "a15e9e337065",
+    "promptChars": 1048,
+    "promptCharsOriginal": 1048,
+    "promptTruncated": false,
+    "maxTokens": 1024,
+    "elapsedMs": 6095,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-5.2-chat",
+        "fallback": false,
+        "maxTokens": 1024,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 462
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000017",
+    "task": "entity_binding",
+    "modality": "text",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-5.2-chat",
+    "fallbackUsed": false,
+    "schemaRequired": true,
+    "schemaEnforced": false,
+    "schemaFingerprint": "a15e9e337065",
+    "promptChars": 1137,
+    "promptCharsOriginal": 1137,
+    "promptTruncated": false,
+    "maxTokens": 1024,
+    "elapsedMs": 5918,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-5.2-chat",
+        "fallback": false,
+        "maxTokens": 1024,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 233
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000018",
+    "task": "entity_binding",
+    "modality": "text",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-5.2-chat",
+    "fallbackUsed": false,
+    "schemaRequired": true,
+    "schemaEnforced": false,
+    "schemaFingerprint": "a15e9e337065",
+    "promptChars": 1168,
+    "promptCharsOriginal": 1168,
+    "promptTruncated": false,
+    "maxTokens": 1024,
+    "elapsedMs": 8593,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-5.2-chat",
+        "fallback": false,
+        "maxTokens": 1024,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 418
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000019",
+    "task": "entity_binding",
+    "modality": "text",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-5.2-chat",
+    "fallbackUsed": false,
+    "schemaRequired": true,
+    "schemaEnforced": false,
+    "schemaFingerprint": "a15e9e337065",
+    "promptChars": 1133,
+    "promptCharsOriginal": 1133,
+    "promptTruncated": false,
+    "maxTokens": 1024,
+    "elapsedMs": 5927,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-5.2-chat",
+        "fallback": false,
+        "maxTokens": 1024,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 333
+      }
+    ]
+  },
+  {
+    "traceId": "llm_000020",
+    "task": "fact_extraction",
+    "modality": "text",
+    "status": "success",
+    "primaryProvider": "azure",
+    "actualProvider": "azure",
+    "model": "gpt-5.2-chat",
+    "fallbackUsed": false,
+    "schemaRequired": false,
+    "schemaEnforced": false,
+    "schemaFingerprint": null,
+    "promptChars": 1570,
+    "promptCharsOriginal": 1570,
+    "promptTruncated": false,
+    "maxTokens": 4000,
+    "elapsedMs": 3879,
+    "attempts": [
+      {
+        "provider": "azure",
+        "model": "gpt-5.2-chat",
+        "fallback": false,
+        "maxTokens": 4000,
+        "schemaEnforced": false,
+        "keyLabel": "legacy:AZURE_OPENAI_API_KEY",
+        "status": "success",
+        "responseChars": 2
+      }
+    ]
+  }
+]

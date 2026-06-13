@@ -46,8 +46,13 @@ from .schema import (
 )
 from .loader import load_multi_ast, save_multi_ast
 from .coord_loader import load_coord_ast
-from .coord_deep_bi_orchestrator import run_coord_report_strict, CoordReportResult
-run_coord_report = run_coord_report_strict
+try:
+    from .coord_deep_bi_orchestrator import run_coord_report_strict, CoordReportResult
+    run_coord_report = run_coord_report_strict
+except ImportError:
+    run_coord_report_strict = None
+    CoordReportResult = None
+    run_coord_report = None
 from .builder import MultiASTBuilder
 
 __all__ = [

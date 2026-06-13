@@ -1,0 +1,3483 @@
+{
+  "$schema": "bharatstat/template-semantic-graph/v1",
+  "title": "testing 17",
+  "pageCount": 10,
+  "entities": [
+    {
+      "entityId": "ent_017",
+      "name": "Energy Introduction",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        2
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 2,
+          "tableId": "tbl_3",
+          "headerPath": [
+            "Energy Introduction"
+          ],
+          "physicalColumn": "Energy Introduction"
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0001"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_018",
+      "name": "Potential Introduction",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        2
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 2,
+          "tableId": "tbl_3",
+          "headerPath": [
+            "Potential Introduction"
+          ],
+          "physicalColumn": "Potential Introduction"
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0002"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_019",
+      "name": "Highlights of r 1.1 Coal Rese",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": "million_tonnes",
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        3
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 3,
+          "tableId": "tbl_4",
+          "headerPath": [
+            "Highlights of r 1.1 Coal Rese"
+          ],
+          "physicalColumn": "Highlights of r 1.1 Coal Rese"
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0003"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_020",
+      "name": "India rves",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        3
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 3,
+          "tableId": "tbl_4",
+          "headerPath": [
+            "India rves"
+          ],
+          "physicalColumn": "India rves"
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0004"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_021",
+      "name": "Energy Reserves",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": "million_tonnes",
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        4
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 4,
+          "tableId": "tbl_5",
+          "headerPath": [
+            "Energy Reserves"
+          ],
+          "physicalColumn": "Energy Reserves"
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0005"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_022",
+      "name": "Reserves",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": "million_tonnes",
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        4
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 4,
+          "tableId": "tbl_5",
+          "headerPath": [
+            "Reserves"
+          ],
+          "physicalColumn": "Reserves"
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0006"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_023",
+      "name": "Potential ial in India",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        5
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 5,
+          "tableId": "tbl_6",
+          "headerPath": [
+            "Potential ial in India"
+          ],
+          "physicalColumn": "Potential ial in India"
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0007"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_024",
+      "name": "Geographical Distr",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        6
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 6,
+          "tableId": "tbl_7",
+          "headerPath": [
+            "Geographical Distr"
+          ],
+          "physicalColumn": "Geographical Distr"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 6
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0008",
+        "ev_0009"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_025",
+      "name": "Energy Re enewable",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        6
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 6,
+          "tableId": "tbl_7",
+          "headerPath": [
+            "Energy Re enewable"
+          ],
+          "physicalColumn": "Energy Re enewable"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 6
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0010",
+        "ev_0009"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_026",
+      "name": "Potential ential",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        6
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 6,
+          "tableId": "tbl_7",
+          "headerPath": [
+            "Potential ential"
+          ],
+          "physicalColumn": "Potential ential"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 6
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0011",
+        "ev_0009"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_027",
+      "name": "States/ UTs",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        7,
+        9
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 7,
+          "tableId": "tbl_8",
+          "headerPath": [
+            "States/ UTs"
+          ],
+          "physicalColumn": "States/ UTs"
+        },
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 9,
+          "tableId": "tbl_10",
+          "headerPath": [
+            "States/ UTs"
+          ],
+          "physicalColumn": "States/ UTs"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 9
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0012",
+        "ev_0013",
+        "ev_0014",
+        "ev_0015"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_028",
+      "name": "Proved 2024",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        7
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 7,
+          "tableId": "tbl_8",
+          "headerPath": [
+            "Proved 2024"
+          ],
+          "physicalColumn": "Proved 2024"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0016",
+        "ev_0014"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_029",
+      "name": "Proved 2025",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        7
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 7,
+          "tableId": "tbl_8",
+          "headerPath": [
+            "Proved 2025"
+          ],
+          "physicalColumn": "Proved 2025"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0017",
+        "ev_0014"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_030",
+      "name": "Indicated 2024",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        7
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 7,
+          "tableId": "tbl_8",
+          "headerPath": [
+            "Indicated 2024"
+          ],
+          "physicalColumn": "Indicated 2024"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0018",
+        "ev_0014"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_031",
+      "name": "Indicated 2025",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        7
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 7,
+          "tableId": "tbl_8",
+          "headerPath": [
+            "Indicated 2025"
+          ],
+          "physicalColumn": "Indicated 2025"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0019",
+        "ev_0014"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_032",
+      "name": "Inferred 2024",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        7
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 7,
+          "tableId": "tbl_8",
+          "headerPath": [
+            "Inferred 2024"
+          ],
+          "physicalColumn": "Inferred 2024"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0020",
+        "ev_0014"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_033",
+      "name": "Inferred 2025",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        7
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 7,
+          "tableId": "tbl_8",
+          "headerPath": [
+            "Inferred 2025"
+          ],
+          "physicalColumn": "Inferred 2025"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0021",
+        "ev_0014"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_034",
+      "name": "Total 2024",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        7
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 7,
+          "tableId": "tbl_8",
+          "headerPath": [
+            "Total 2024"
+          ],
+          "physicalColumn": "Total 2024"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0022",
+        "ev_0014"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_035",
+      "name": "Total 2025",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        7
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 7,
+          "tableId": "tbl_8",
+          "headerPath": [
+            "Total 2025"
+          ],
+          "physicalColumn": "Total 2025"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0023",
+        "ev_0014"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_036",
+      "name": "Distribution (%) 2024",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "percent",
+      "aggregation": "reported_value",
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [
+        "Distribution 2024"
+      ],
+      "pages": [
+        7
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 7,
+          "tableId": "tbl_8",
+          "headerPath": [
+            "Distribution (%) 2024"
+          ],
+          "physicalColumn": "Distribution (%) 2024"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0024",
+        "ev_0014"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_037",
+      "name": "Distribution (%) 2025",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "percent",
+      "aggregation": "reported_value",
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [
+        "Distribution 2025"
+      ],
+      "pages": [
+        7
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 7,
+          "tableId": "tbl_8",
+          "headerPath": [
+            "Distribution (%) 2025"
+          ],
+          "physicalColumn": "Distribution (%) 2025"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0025",
+        "ev_0014"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_038",
+      "name": "States/ UTs/ Region",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        8
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 8,
+          "tableId": "tbl_9",
+          "headerPath": [
+            "States/ UTs/ Region"
+          ],
+          "physicalColumn": "States/ UTs/ Region"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 8
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0026",
+        "ev_0027"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_039",
+      "name": "Crude Oil (Million Tonnes) 2024 Distribution\n(%)",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "percent",
+      "aggregation": "reported_value",
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [
+        "Crude Oil 2024 Distribution"
+      ],
+      "pages": [
+        8
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 8,
+          "tableId": "tbl_9",
+          "headerPath": [
+            "Crude Oil (Million Tonnes) 2024 Distribution\n(%)"
+          ],
+          "physicalColumn": "Crude Oil (Million Tonnes) 2024 Distribution\n(%)"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 8
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0028",
+        "ev_0027"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_040",
+      "name": "Crude Oil (Million Tonnes) 2025 Distribution\n(%)",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "percent",
+      "aggregation": "reported_value",
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [
+        "Crude Oil 2025 Distribution"
+      ],
+      "pages": [
+        8
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 8,
+          "tableId": "tbl_9",
+          "headerPath": [
+            "Crude Oil (Million Tonnes) 2025 Distribution\n(%)"
+          ],
+          "physicalColumn": "Crude Oil (Million Tonnes) 2025 Distribution\n(%)"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 8
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0029",
+        "ev_0027"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_041",
+      "name": "Small Hydro\nPower*",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "MW",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [
+        "Small Hydro Power*"
+      ],
+      "pages": [
+        9
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 9,
+          "tableId": "tbl_10",
+          "headerPath": [
+            "Small Hydro\nPower*"
+          ],
+          "physicalColumn": "Small Hydro\nPower*"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 9
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0030",
+        "ev_0015"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_042",
+      "name": "Biomass\nPower",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "MW",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [
+        "Biomass Power"
+      ],
+      "pages": [
+        9
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 9,
+          "tableId": "tbl_10",
+          "headerPath": [
+            "Biomass\nPower"
+          ],
+          "physicalColumn": "Biomass\nPower"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 9
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0031",
+        "ev_0015"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_043",
+      "name": "Cogeneration-\nbagasse",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "percent",
+      "aggregation": "reported_value",
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [
+        "Cogeneration- bagasse"
+      ],
+      "pages": [
+        9
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 9,
+          "tableId": "tbl_10",
+          "headerPath": [
+            "Cogeneration-\nbagasse"
+          ],
+          "physicalColumn": "Cogeneration-\nbagasse"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 9
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0032",
+        "ev_0015"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_044",
+      "name": "Solar Energy",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "MW",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        9
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 9,
+          "tableId": "tbl_10",
+          "headerPath": [
+            "Solar Energy"
+          ],
+          "physicalColumn": "Solar Energy"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 9
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0033",
+        "ev_0015"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_045",
+      "name": "Large Hydro#",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "MW",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        9
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 9,
+          "tableId": "tbl_10",
+          "headerPath": [
+            "Large Hydro#"
+          ],
+          "physicalColumn": "Large Hydro#"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 9
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0034",
+        "ev_0015"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_046",
+      "name": "Distribution (%)",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "percent",
+      "aggregation": "reported_value",
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [
+        "Distribution"
+      ],
+      "pages": [
+        9,
+        7,
+        8
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "table_header",
+          "confidence": 0.95,
+          "page": 9,
+          "tableId": "tbl_10",
+          "headerPath": [
+            "Distribution (%)"
+          ],
+          "physicalColumn": "Distribution (%)"
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 8
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 9
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0035",
+        "ev_0014",
+        "ev_0027",
+        "ev_0015"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_047",
+      "name": "Global Classification of Energy Reserves",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "million_tonnes",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        2
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "heading",
+          "confidence": 0.9898820122083029,
+          "page": 2,
+          "regionRef": "p003_r003",
+          "bbox": [
+            125,
+            263,
+            467,
+            277
+          ]
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 2
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0036",
+        "ev_0037"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_048",
+      "name": "Energy Reserves in India",
+      "entityType": "metadata",
+      "entityType_hint": "metadata",
+      "unit": "million_tonnes",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        2
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "heading",
+          "confidence": 0.9965241432189942,
+          "page": 2,
+          "regionRef": "p003_r008",
+          "bbox": [
+            125,
+            589,
+            352,
+            604
+          ]
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 2
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0038",
+        "ev_0037"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_049",
+      "name": "Energy Reserves and Potential",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "million_tonnes",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        0,
+        2
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 0
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 2
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0039",
+        "ev_0037"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_050",
+      "name": "Economic and Social Viability",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        2
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 2
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0037"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_051",
+      "name": "Field Project Status and Feasibility",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        2
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 2
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0037"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_052",
+      "name": "Geological Knowledge",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        2
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 2
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0037"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_053",
+      "name": "Class A: Commercially recoverable resources",
+      "entityType": "metadata",
+      "entityType_hint": "metadata",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        2
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 2
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0037"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_054",
+      "name": "Highlights of reserves in India",
+      "entityType": "metadata",
+      "entityType_hint": "metadata",
+      "unit": "million_tonnes",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        3
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 3
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0040"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_055",
+      "name": "Coal Reserves",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "million_tonnes",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        3
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 3
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0040"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_056",
+      "name": "Lignite Reserves",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "million_tonnes",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        3
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 3
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0040"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_057",
+      "name": "Proved",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        3,
+        7
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 3
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0040",
+        "ev_0014"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_058",
+      "name": "Indicated",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        3,
+        7
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 3
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0040",
+        "ev_0014"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_059",
+      "name": "Inferred",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        3,
+        7
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 3
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0040",
+        "ev_0014"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_060",
+      "name": "Crude Oil Reserves",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "million_tonnes",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        4
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 4
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0041"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_061",
+      "name": "Natural Gas Reserves",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "billion_cubic_metres",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        4
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 4
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0041"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_062",
+      "name": "Western Offshore",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        4
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 4
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0041"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_063",
+      "name": "Eastern Offshore",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        4
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 4
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0041"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_064",
+      "name": "Tamil Nadu",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        4
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 4
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0041"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_065",
+      "name": "Andhra Pradesh",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        4
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 4
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0041"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_066",
+      "name": "Assam",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        4
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 4
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0041"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_067",
+      "name": "Gujarat",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        4
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 4
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0041"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_068",
+      "name": "Rajasthan",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        4
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 4
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0041"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_069",
+      "name": "Others",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        4
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 4
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0041"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_070",
+      "name": "Total Estimated Reserves",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "million_tonnes",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        4
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 4
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0041"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_071",
+      "name": "Renewable Energy Potential in India",
+      "entityType": "metadata",
+      "entityType_hint": "metadata",
+      "unit": "MW",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        5
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 5
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0042"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_072",
+      "name": "Solar Power",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": "MW",
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        5
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 5
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0042"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_073",
+      "name": "Wind Power",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": "MW",
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        5
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 5
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0042"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_074",
+      "name": "Large Hydropower",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": "MW",
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        5
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 5
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0042"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_075",
+      "name": "Small Hydro Power",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": "MW",
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        5
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 5
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0042"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_076",
+      "name": "Biomass Power",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": "MW",
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        5,
+        9
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 5
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 9
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0042",
+        "ev_0015"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_077",
+      "name": "Cogeneration from Bagasse",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": "percent",
+      "aggregation": "reported_value",
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        5
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 5
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0042"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_078",
+      "name": "States/UTs",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        7,
+        9
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 7
+        },
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 9
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0014",
+        "ev_0015"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_079",
+      "name": "State/ UT/ Region",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": null,
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        8
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 8
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0027"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_080",
+      "name": "Crude Oil (Million Tonnes)",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "million_tonnes",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [
+        "Crude Oil"
+      ],
+      "pages": [
+        8
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 8
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0027"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_081",
+      "name": "Natural Gas (Billion Cubic Metres)",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "billion_cubic_metres",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [
+        "Natural Gas"
+      ],
+      "pages": [
+        8
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 8
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0027"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_082",
+      "name": "Estimated Reserves",
+      "entityType": "measure",
+      "entityType_hint": "measure",
+      "unit": "million_tonnes",
+      "aggregation": null,
+      "valueDomain": {
+        "kind": "open"
+      },
+      "aliases": [],
+      "pages": [
+        8
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 8
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0027"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_083",
+      "name": "Small Hydro Power*",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": "MW",
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        9
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 9
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0015"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_084",
+      "name": "Cogeneration-bagasse",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": "percent",
+      "aggregation": "reported_value",
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        9
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 9
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0015"
+      ],
+      "confidence": null
+    },
+    {
+      "entityId": "ent_085",
+      "name": "Large Hydro",
+      "entityType": "dimension",
+      "entityType_hint": "dimension",
+      "unit": "MW",
+      "aggregation": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aliases": [],
+      "pages": [
+        9
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "vlm_entity",
+          "confidence": 0.75,
+          "page": 9
+        }
+      ],
+      "evidenceRefs": [
+        "ev_0015"
+      ],
+      "confidence": null
+    }
+  ],
+  "sections": [
+    {
+      "sectionId": "ch_01",
+      "title": "Energy Reserves and Potential",
+      "level": 1,
+      "pageRange": [
+        2,
+        7
+      ]
+    },
+    {
+      "sectionId": "ch_02",
+      "title": "1 Energy Reserves and Potential",
+      "level": 1,
+      "pageRange": [
+        9,
+        9
+      ]
+    },
+    {
+      "sectionId": "sec_02_01",
+      "title": "CHAPTER 1 Energy Reserves and Potential Introduction",
+      "level": 2,
+      "pageRange": [
+        2,
+        2
+      ],
+      "pattern": "demographic_breakdown",
+      "suggestedComponents": [
+        "narrative_paragraph",
+        "data_table",
+        "pie_chart"
+      ]
+    },
+    {
+      "sectionId": "sec_02_02",
+      "title": "Global Classification of Energy Reserves",
+      "level": 2,
+      "pageRange": [
+        2,
+        2
+      ],
+      "pattern": "demographic_breakdown",
+      "suggestedComponents": [
+        "narrative_paragraph",
+        "data_table",
+        "pie_chart"
+      ]
+    },
+    {
+      "sectionId": "sec_02_03",
+      "title": "Energy Reserves in India",
+      "level": 2,
+      "pageRange": [
+        2,
+        2
+      ],
+      "pattern": "demographic_breakdown",
+      "suggestedComponents": [
+        "narrative_paragraph",
+        "data_table",
+        "pie_chart"
+      ]
+    },
+    {
+      "sectionId": "sec_02_04",
+      "title": "Energy reserves part of the energy resources that, based on technical, economic and other",
+      "level": 2,
+      "pageRange": [
+        2,
+        2
+      ],
+      "pattern": "demographic_breakdown",
+      "suggestedComponents": [
+        "narrative_paragraph",
+        "data_table",
+        "pie_chart"
+      ]
+    },
+    {
+      "sectionId": "sec_02_05",
+      "title": "Chapter 1: Energy Reserves and Potential Highlights of reserves in India 1.1 Coal Reserves",
+      "level": 2,
+      "pageRange": [
+        3,
+        3
+      ],
+      "pattern": "trend_analysis",
+      "suggestedComponents": [
+        "narrative_paragraph",
+        "line_chart",
+        "data_table"
+      ]
+    },
+    {
+      "sectionId": "sec_04_01",
+      "title": "Chapter 1: Energy Reserves and Potential",
+      "level": 2,
+      "pageRange": [
+        9,
+        9
+      ],
+      "pattern": "demographic_breakdown",
+      "suggestedComponents": [
+        "narrative_paragraph",
+        "data_table",
+        "pie_chart"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "tableId": "tbl_3_1",
+      "page": 2,
+      "columns": [
+        "Introduction",
+        "Energy Introduction",
+        "Res Introduction",
+        "erves and Introduction",
+        "Potential Introduction",
+        "Potential Introduction",
+        "Potential Introduction"
+      ],
+      "dimensions": [
+        "Introduction",
+        "Energy Introduction",
+        "Res Introduction",
+        "erves and Introduction",
+        "Potential Introduction",
+        "Potential Introduction",
+        "Potential Introduction"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "needsReview": true,
+      "sourceRefs": []
+    },
+    {
+      "tableId": "tbl_4_1",
+      "page": 3,
+      "columns": [
+        "Highlights of r 1.1 Coal Rese",
+        "eserves in rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves"
+      ],
+      "dimensions": [
+        "Highlights of r 1.1 Coal Rese",
+        "eserves in rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves",
+        "India rves"
+      ],
+      "measures": [],
+      "breakdowns": [
+        {
+          "measure": "India",
+          "breakdown_by": "qualifier",
+          "values": [
+            "rves",
+            "rves",
+            "rves",
+            "rves",
+            "rves",
+            "rves",
+            "rves"
+          ]
+        }
+      ],
+      "needsReview": true,
+      "sourceRefs": []
+    },
+    {
+      "tableId": "tbl_5_1",
+      "page": 4,
+      "columns": [
+        "1.3 Crude Oil",
+        "Cha Reserves",
+        "pter 1: Reserves",
+        "Energy Reserves",
+        "Reserves",
+        "and Potentia Reserves",
+        "l Reserves",
+        "l Reserves"
+      ],
+      "dimensions": [
+        "1.3 Crude Oil",
+        "Cha Reserves",
+        "pter 1: Reserves",
+        "Energy Reserves",
+        "Reserves",
+        "and Potentia Reserves",
+        "l Reserves",
+        "l Reserves"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "needsReview": true,
+      "sourceRefs": []
+    },
+    {
+      "tableId": "tbl_6_1",
+      "page": 5,
+      "columns": [
+        "1.5",
+        "Re",
+        "newable Energ",
+        "Chapter y Potent",
+        "1: Energy R ial in India",
+        "eserves and ial in India",
+        "Potential ial in India",
+        "Potential ial in India",
+        "Potential ial in India"
+      ],
+      "dimensions": [
+        "1.5",
+        "Re",
+        "newable Energ",
+        "Chapter y Potent",
+        "1: Energy R ial in India",
+        "eserves and ial in India",
+        "Potential ial in India",
+        "Potential ial in India",
+        "Potential ial in India"
+      ],
+      "measures": [],
+      "breakdowns": [
+        {
+          "measure": "Potential ial in",
+          "breakdown_by": "qualifier",
+          "values": [
+            "India",
+            "India",
+            "India"
+          ]
+        }
+      ],
+      "needsReview": true,
+      "sourceRefs": []
+    },
+    {
+      "tableId": "tbl_7_1",
+      "page": 6,
+      "columns": [
+        "Geographical Distr",
+        "Chapter 1: ibution of R",
+        "Energy Re enewable",
+        "serves and Energy Pot",
+        "Potential ential",
+        "Potential ential",
+        "Potential ential"
+      ],
+      "dimensions": [
+        "Geographical Distr",
+        "Chapter 1: ibution of R",
+        "Energy Re enewable",
+        "serves and Energy Pot",
+        "Potential ential",
+        "Potential ential",
+        "Potential ential"
+      ],
+      "measures": [],
+      "breakdowns": [
+        {
+          "measure": "Potential",
+          "breakdown_by": "qualifier",
+          "values": [
+            "ential",
+            "ential",
+            "ential"
+          ]
+        }
+      ],
+      "needsReview": true,
+      "sourceRefs": []
+    },
+    {
+      "tableId": "tbl_8_1",
+      "page": 7,
+      "columns": [
+        "States/ UTs",
+        "Proved 2024",
+        "Proved 2025",
+        "Indicated 2024",
+        "Indicated 2025",
+        "Inferred 2024",
+        "Inferred 2025",
+        "Total 2024",
+        "Total 2025",
+        "Distribution (%) 2024",
+        "Distribution (%) 2025"
+      ],
+      "dimensions": [
+        "States/ UTs",
+        "Proved 2024",
+        "Proved 2025",
+        "Indicated 2024",
+        "Total 2025"
+      ],
+      "measures": [
+        "Indicated 2025",
+        "Inferred 2024",
+        "Inferred 2025",
+        "Total 2024",
+        "Distribution (%) 2024",
+        "Distribution (%) 2025"
+      ],
+      "breakdowns": [
+        {
+          "measure": "Proved",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Indicated",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Inferred",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Total",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Distribution (%)",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        }
+      ],
+      "needsReview": false,
+      "sourceRefs": []
+    },
+    {
+      "tableId": "tbl_8_2",
+      "page": 7,
+      "columns": [
+        "States/ UTs",
+        "Proved 2024",
+        "Proved 2025",
+        "Indicated 2024",
+        "Indicated 2025",
+        "Inferred 2024",
+        "Inferred 2025",
+        "Total 2024",
+        "Total 2025",
+        "Distribution (%) 2024",
+        "Distribution (%) 2025"
+      ],
+      "dimensions": [
+        "States/ UTs"
+      ],
+      "measures": [
+        "Proved 2024",
+        "Proved 2025",
+        "Indicated 2024",
+        "Indicated 2025",
+        "Inferred 2024",
+        "Inferred 2025",
+        "Total 2024",
+        "Total 2025",
+        "Distribution (%) 2024",
+        "Distribution (%) 2025"
+      ],
+      "breakdowns": [
+        {
+          "measure": "Proved",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Indicated",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Inferred",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Total",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        },
+        {
+          "measure": "Distribution (%)",
+          "breakdown_by": "qualifier",
+          "values": [
+            "2024",
+            "2025"
+          ]
+        }
+      ],
+      "needsReview": false,
+      "sourceRefs": []
+    },
+    {
+      "tableId": "tbl_9_1",
+      "page": 8,
+      "columns": [
+        "States/ UTs/ Region",
+        "Crude Oil (Million Tonnes) 2024 Estimated\nReserves",
+        "Crude Oil (Million Tonnes) 2024 Distribution\n(%)",
+        "Crude Oil (Million Tonnes) 2025 Estimated\nReserves",
+        "Crude Oil (Million Tonnes) 2025 Distribution\n(%)",
+        "Natural Gas (Billion Cubic Metres) 2024 Estimated\nReserves",
+        "Natural Gas (Billion Cubic Metres) 2024 Distribution\n(%)",
+        "Natural Gas (Billion Cubic Metres) 2025 Estimated\nReserves",
+        "Natural Gas (Billion Cubic Metres) 2025 Distribution\n(%)"
+      ],
+      "dimensions": [
+        "States/ UTs/ Region"
+      ],
+      "measures": [
+        "Crude Oil (Million Tonnes) 2024 Estimated\nReserves",
+        "Crude Oil (Million Tonnes) 2024 Distribution\n(%)",
+        "Crude Oil (Million Tonnes) 2025 Estimated\nReserves",
+        "Crude Oil (Million Tonnes) 2025 Distribution\n(%)",
+        "Natural Gas (Billion Cubic Metres) 2024 Estimated\nReserves",
+        "Natural Gas (Billion Cubic Metres) 2024 Distribution\n(%)",
+        "Natural Gas (Billion Cubic Metres) 2025 Estimated\nReserves",
+        "Natural Gas (Billion Cubic Metres) 2025 Distribution\n(%)"
+      ],
+      "breakdowns": [],
+      "needsReview": false,
+      "sourceRefs": []
+    },
+    {
+      "tableId": "tbl_10_1",
+      "page": 9,
+      "columns": [
+        "Sl. No.",
+        "States/ UTs",
+        "Wind Power\n@ 150m",
+        "Small Hydro\nPower*",
+        "Biomass\nPower",
+        "Cogeneration-\nbagasse",
+        "Solar Energy",
+        "Large Hydro#",
+        "Total",
+        "Distribution (%)"
+      ],
+      "dimensions": [
+        "Sl. No.",
+        "States/ UTs"
+      ],
+      "measures": [
+        "Wind Power\n@ 150m",
+        "Small Hydro\nPower*",
+        "Biomass\nPower",
+        "Cogeneration-\nbagasse",
+        "Solar Energy",
+        "Large Hydro#",
+        "Total",
+        "Distribution (%)"
+      ],
+      "breakdowns": [],
+      "needsReview": false,
+      "sourceRefs": []
+    }
+  ],
+  "relationships": [
+    {
+      "from": "ent_027",
+      "to": "ent_031",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_032",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_033",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_034",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_036",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_037",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_028",
+      "to": "ent_031",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_028",
+      "to": "ent_032",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_028",
+      "to": "ent_033",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_028",
+      "to": "ent_034",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_028",
+      "to": "ent_036",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_028",
+      "to": "ent_037",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_029",
+      "to": "ent_031",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_029",
+      "to": "ent_032",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_029",
+      "to": "ent_033",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_029",
+      "to": "ent_034",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_029",
+      "to": "ent_036",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_029",
+      "to": "ent_037",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_030",
+      "to": "ent_031",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_030",
+      "to": "ent_032",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_030",
+      "to": "ent_033",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_030",
+      "to": "ent_034",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_030",
+      "to": "ent_036",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_030",
+      "to": "ent_037",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_035",
+      "to": "ent_031",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_035",
+      "to": "ent_032",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_035",
+      "to": "ent_033",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_035",
+      "to": "ent_034",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_035",
+      "to": "ent_036",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_035",
+      "to": "ent_037",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_028",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_029",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_030",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_031",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_032",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_033",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_034",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_035",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_036",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_037",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_038",
+      "to": "ent_039",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_038",
+      "to": "ent_040",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_041",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_042",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_043",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_044",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_045",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "ent_027",
+      "to": "ent_046",
+      "relation": "dimension_of"
+    },
+    {
+      "from": "India",
+      "to": "rves, rves, rves, rves, rves, rves, rves",
+      "relation": "breakdown_by"
+    },
+    {
+      "from": "Potential ial in",
+      "to": "India, India, India",
+      "relation": "breakdown_by"
+    },
+    {
+      "from": "Potential",
+      "to": "ential, ential, ential",
+      "relation": "breakdown_by"
+    },
+    {
+      "from": "Proved",
+      "to": "2024, 2025",
+      "relation": "breakdown_by"
+    },
+    {
+      "from": "Indicated",
+      "to": "2024, 2025",
+      "relation": "breakdown_by"
+    },
+    {
+      "from": "Inferred",
+      "to": "2024, 2025",
+      "relation": "breakdown_by"
+    },
+    {
+      "from": "Total",
+      "to": "2024, 2025",
+      "relation": "breakdown_by"
+    },
+    {
+      "from": "Distribution (%)",
+      "to": "2024, 2025",
+      "relation": "breakdown_by"
+    },
+    {
+      "from": "Proved",
+      "to": "2024, 2025",
+      "relation": "breakdown_by"
+    },
+    {
+      "from": "Indicated",
+      "to": "2024, 2025",
+      "relation": "breakdown_by"
+    },
+    {
+      "from": "Inferred",
+      "to": "2024, 2025",
+      "relation": "breakdown_by"
+    },
+    {
+      "from": "Total",
+      "to": "2024, 2025",
+      "relation": "breakdown_by"
+    },
+    {
+      "from": "Distribution (%)",
+      "to": "2024, 2025",
+      "relation": "breakdown_by"
+    }
+  ],
+  "evidenceIndex": [
+    {
+      "evidenceId": "ev_0001",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 2,
+      "tableId": "tbl_3",
+      "headerPath": [
+        "Energy Introduction"
+      ],
+      "physicalColumn": "Energy Introduction"
+    },
+    {
+      "evidenceId": "ev_0002",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 2,
+      "tableId": "tbl_3",
+      "headerPath": [
+        "Potential Introduction"
+      ],
+      "physicalColumn": "Potential Introduction"
+    },
+    {
+      "evidenceId": "ev_0003",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 3,
+      "tableId": "tbl_4",
+      "headerPath": [
+        "Highlights of r 1.1 Coal Rese"
+      ],
+      "physicalColumn": "Highlights of r 1.1 Coal Rese"
+    },
+    {
+      "evidenceId": "ev_0004",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 3,
+      "tableId": "tbl_4",
+      "headerPath": [
+        "India rves"
+      ],
+      "physicalColumn": "India rves"
+    },
+    {
+      "evidenceId": "ev_0005",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 4,
+      "tableId": "tbl_5",
+      "headerPath": [
+        "Energy Reserves"
+      ],
+      "physicalColumn": "Energy Reserves"
+    },
+    {
+      "evidenceId": "ev_0006",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 4,
+      "tableId": "tbl_5",
+      "headerPath": [
+        "Reserves"
+      ],
+      "physicalColumn": "Reserves"
+    },
+    {
+      "evidenceId": "ev_0007",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 5,
+      "tableId": "tbl_6",
+      "headerPath": [
+        "Potential ial in India"
+      ],
+      "physicalColumn": "Potential ial in India"
+    },
+    {
+      "evidenceId": "ev_0008",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 6,
+      "tableId": "tbl_7",
+      "headerPath": [
+        "Geographical Distr"
+      ],
+      "physicalColumn": "Geographical Distr"
+    },
+    {
+      "evidenceId": "ev_0009",
+      "sourceType": "vlm_entity",
+      "confidence": 0.75,
+      "page": 6
+    },
+    {
+      "evidenceId": "ev_0010",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 6,
+      "tableId": "tbl_7",
+      "headerPath": [
+        "Energy Re enewable"
+      ],
+      "physicalColumn": "Energy Re enewable"
+    },
+    {
+      "evidenceId": "ev_0011",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 6,
+      "tableId": "tbl_7",
+      "headerPath": [
+        "Potential ential"
+      ],
+      "physicalColumn": "Potential ential"
+    },
+    {
+      "evidenceId": "ev_0012",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 7,
+      "tableId": "tbl_8",
+      "headerPath": [
+        "States/ UTs"
+      ],
+      "physicalColumn": "States/ UTs"
+    },
+    {
+      "evidenceId": "ev_0013",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 9,
+      "tableId": "tbl_10",
+      "headerPath": [
+        "States/ UTs"
+      ],
+      "physicalColumn": "States/ UTs"
+    },
+    {
+      "evidenceId": "ev_0014",
+      "sourceType": "vlm_entity",
+      "confidence": 0.75,
+      "page": 7
+    },
+    {
+      "evidenceId": "ev_0015",
+      "sourceType": "vlm_entity",
+      "confidence": 0.75,
+      "page": 9
+    },
+    {
+      "evidenceId": "ev_0016",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 7,
+      "tableId": "tbl_8",
+      "headerPath": [
+        "Proved 2024"
+      ],
+      "physicalColumn": "Proved 2024"
+    },
+    {
+      "evidenceId": "ev_0017",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 7,
+      "tableId": "tbl_8",
+      "headerPath": [
+        "Proved 2025"
+      ],
+      "physicalColumn": "Proved 2025"
+    },
+    {
+      "evidenceId": "ev_0018",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 7,
+      "tableId": "tbl_8",
+      "headerPath": [
+        "Indicated 2024"
+      ],
+      "physicalColumn": "Indicated 2024"
+    },
+    {
+      "evidenceId": "ev_0019",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 7,
+      "tableId": "tbl_8",
+      "headerPath": [
+        "Indicated 2025"
+      ],
+      "physicalColumn": "Indicated 2025"
+    },
+    {
+      "evidenceId": "ev_0020",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 7,
+      "tableId": "tbl_8",
+      "headerPath": [
+        "Inferred 2024"
+      ],
+      "physicalColumn": "Inferred 2024"
+    },
+    {
+      "evidenceId": "ev_0021",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 7,
+      "tableId": "tbl_8",
+      "headerPath": [
+        "Inferred 2025"
+      ],
+      "physicalColumn": "Inferred 2025"
+    },
+    {
+      "evidenceId": "ev_0022",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 7,
+      "tableId": "tbl_8",
+      "headerPath": [
+        "Total 2024"
+      ],
+      "physicalColumn": "Total 2024"
+    },
+    {
+      "evidenceId": "ev_0023",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 7,
+      "tableId": "tbl_8",
+      "headerPath": [
+        "Total 2025"
+      ],
+      "physicalColumn": "Total 2025"
+    },
+    {
+      "evidenceId": "ev_0024",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 7,
+      "tableId": "tbl_8",
+      "headerPath": [
+        "Distribution (%) 2024"
+      ],
+      "physicalColumn": "Distribution (%) 2024"
+    },
+    {
+      "evidenceId": "ev_0025",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 7,
+      "tableId": "tbl_8",
+      "headerPath": [
+        "Distribution (%) 2025"
+      ],
+      "physicalColumn": "Distribution (%) 2025"
+    },
+    {
+      "evidenceId": "ev_0026",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 8,
+      "tableId": "tbl_9",
+      "headerPath": [
+        "States/ UTs/ Region"
+      ],
+      "physicalColumn": "States/ UTs/ Region"
+    },
+    {
+      "evidenceId": "ev_0027",
+      "sourceType": "vlm_entity",
+      "confidence": 0.75,
+      "page": 8
+    },
+    {
+      "evidenceId": "ev_0028",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 8,
+      "tableId": "tbl_9",
+      "headerPath": [
+        "Crude Oil (Million Tonnes) 2024 Distribution\n(%)"
+      ],
+      "physicalColumn": "Crude Oil (Million Tonnes) 2024 Distribution\n(%)"
+    },
+    {
+      "evidenceId": "ev_0029",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 8,
+      "tableId": "tbl_9",
+      "headerPath": [
+        "Crude Oil (Million Tonnes) 2025 Distribution\n(%)"
+      ],
+      "physicalColumn": "Crude Oil (Million Tonnes) 2025 Distribution\n(%)"
+    },
+    {
+      "evidenceId": "ev_0030",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 9,
+      "tableId": "tbl_10",
+      "headerPath": [
+        "Small Hydro\nPower*"
+      ],
+      "physicalColumn": "Small Hydro\nPower*"
+    },
+    {
+      "evidenceId": "ev_0031",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 9,
+      "tableId": "tbl_10",
+      "headerPath": [
+        "Biomass\nPower"
+      ],
+      "physicalColumn": "Biomass\nPower"
+    },
+    {
+      "evidenceId": "ev_0032",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 9,
+      "tableId": "tbl_10",
+      "headerPath": [
+        "Cogeneration-\nbagasse"
+      ],
+      "physicalColumn": "Cogeneration-\nbagasse"
+    },
+    {
+      "evidenceId": "ev_0033",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 9,
+      "tableId": "tbl_10",
+      "headerPath": [
+        "Solar Energy"
+      ],
+      "physicalColumn": "Solar Energy"
+    },
+    {
+      "evidenceId": "ev_0034",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 9,
+      "tableId": "tbl_10",
+      "headerPath": [
+        "Large Hydro#"
+      ],
+      "physicalColumn": "Large Hydro#"
+    },
+    {
+      "evidenceId": "ev_0035",
+      "sourceType": "table_header",
+      "confidence": 0.95,
+      "page": 9,
+      "tableId": "tbl_10",
+      "headerPath": [
+        "Distribution (%)"
+      ],
+      "physicalColumn": "Distribution (%)"
+    },
+    {
+      "evidenceId": "ev_0036",
+      "sourceType": "heading",
+      "confidence": 0.9898820122083029,
+      "page": 2,
+      "regionRef": "p003_r003",
+      "bbox": [
+        125,
+        263,
+        467,
+        277
+      ]
+    },
+    {
+      "evidenceId": "ev_0037",
+      "sourceType": "vlm_entity",
+      "confidence": 0.75,
+      "page": 2
+    },
+    {
+      "evidenceId": "ev_0038",
+      "sourceType": "heading",
+      "confidence": 0.9965241432189942,
+      "page": 2,
+      "regionRef": "p003_r008",
+      "bbox": [
+        125,
+        589,
+        352,
+        604
+      ]
+    },
+    {
+      "evidenceId": "ev_0039",
+      "sourceType": "vlm_entity",
+      "confidence": 0.75,
+      "page": 0
+    },
+    {
+      "evidenceId": "ev_0040",
+      "sourceType": "vlm_entity",
+      "confidence": 0.75,
+      "page": 3
+    },
+    {
+      "evidenceId": "ev_0041",
+      "sourceType": "vlm_entity",
+      "confidence": 0.75,
+      "page": 4
+    },
+    {
+      "evidenceId": "ev_0042",
+      "sourceType": "vlm_entity",
+      "confidence": 0.75,
+      "page": 5
+    }
+  ],
+  "diagnostics": {
+    "entityCount": 69,
+    "entitiesWithSourceRefs": 69,
+    "entitiesMissingSourceRefs": 0,
+    "evidenceCount": 42,
+    "tableCount": 9,
+    "sectionCount": 8
+  }
+}

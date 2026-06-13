@@ -1,0 +1,858 @@
+{
+  "questions_count": 21,
+  "topics_count": 8,
+  "questions": [
+    {
+      "questionId": "q_001",
+      "intent": "What are the key findings and statistics in the section on 'Periodic Labour Force Survey (PLFS) Annual'?",
+      "questionType": "describe",
+      "page": 0,
+      "sourceHeading": "Periodic Labour Force Survey (PLFS) Annual",
+      "requiredEntities": [
+        {
+          "entityRef": "Labour Force Participation Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Worker Population Ratio",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": {
+          "entityRef": "Labour Force Participation Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": "programmatic_chapter",
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "q_002",
+      "intent": "What are the key findings and statistics in the section on '1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above'?",
+      "questionType": "describe",
+      "page": 1,
+      "sourceHeading": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "requiredEntities": [
+        {
+          "entityRef": "Labour Force Participation Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Worker Population Ratio",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": {
+          "entityRef": "Labour Force Participation Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": "programmatic_chapter",
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "q_003",
+      "intent": "What are the key findings and statistics in the section on '2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained'?",
+      "questionType": "describe",
+      "page": 2,
+      "sourceHeading": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "requiredEntities": [
+        {
+          "entityRef": "Labour Force Participation Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Worker Population Ratio",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": {
+          "entityRef": "Labour Force Participation Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": "programmatic_chapter",
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "q_004",
+      "intent": "What are the key findings and statistics in the section on '3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and'?",
+      "questionType": "describe",
+      "page": 3,
+      "sourceHeading": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "requiredEntities": [
+        {
+          "entityRef": "Labour Force Participation Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Worker Population Ratio",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": {
+          "entityRef": "Labour Force Participation Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": "programmatic_chapter",
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "q_005",
+      "intent": "What is the trend in Labour Force Participation Rate from 2022 to 2025?",
+      "questionType": "trend",
+      "page": 4,
+      "sourceHeading": "4 Increase in proportion of workers with regular wage/ salary employment",
+      "requiredEntities": [
+        {
+          "entityRef": "Labour Force Participation Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Worker Population Ratio",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Labour Force Participation Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "line_chart",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": "programmatic_chapter",
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "q_006",
+      "intent": "What are the key findings and statistics in the section on '5 Manufacturing and service sectors witnessed enhanced worker participation'?",
+      "questionType": "describe",
+      "page": 5,
+      "sourceHeading": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "requiredEntities": [
+        {
+          "entityRef": "Labour Force Participation Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Worker Population Ratio",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": {
+          "entityRef": "Labour Force Participation Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": "programmatic_chapter",
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "q_007",
+      "intent": "How does Labour Force Participation Rate vary by Gender?",
+      "questionType": "comparison",
+      "page": 5,
+      "sourceHeading": "6 Earnings of female workers have seen a notable shift",
+      "requiredEntities": [
+        {
+          "entityRef": "Labour Force Participation Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Worker Population Ratio",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Labour Force Participation Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "split",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": "programmatic_chapter",
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "q_008",
+      "intent": "What are the key findings and statistics in the section on '7 Average number of years in formal education'?",
+      "questionType": "describe",
+      "page": 6,
+      "sourceHeading": "7 Average number of years in formal education",
+      "requiredEntities": [
+        {
+          "entityRef": "Labour Force Participation Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Worker Population Ratio",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Gender",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": {
+          "entityRef": "Labour Force Participation Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Gender"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "metric_card",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": "programmatic_chapter",
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "pq_1",
+      "intent": "How does UR vary across Age?",
+      "questionType": "comparison",
+      "page": null,
+      "sourceHeading": "Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_2",
+      "intent": "How does WPR vary across Age?",
+      "questionType": "comparison",
+      "page": null,
+      "sourceHeading": "Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_3",
+      "intent": "How does UR vary across Age?",
+      "questionType": "comparison",
+      "page": null,
+      "sourceHeading": "Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_4",
+      "intent": "What is the trend in WAGE across survey years?",
+      "questionType": "trend",
+      "page": null,
+      "sourceHeading": "Increase in proportion of workers with regular wage/ salary employment",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_5",
+      "intent": "How does UR vary across Sector?",
+      "questionType": "comparison",
+      "page": null,
+      "sourceHeading": "Manufacturing and service sectors witnessed enhanced worker participation",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_6",
+      "intent": "What is the EARNINGS and how does it compare across groups?",
+      "questionType": "comparison",
+      "page": null,
+      "sourceHeading": "Earnings of female workers have seen a notable shift",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_7",
+      "intent": "How does Average number of years in formal education vary across Age?",
+      "questionType": "comparison",
+      "page": null,
+      "sourceHeading": "Average number of years in formal education",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_8",
+      "intent": "What are the key findings in the section on Introduction?",
+      "questionType": "describe",
+      "page": null,
+      "sourceHeading": "Introduction",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_9",
+      "intent": "What are the key findings in the section on Sample Size?",
+      "questionType": "describe",
+      "page": null,
+      "sourceHeading": "Sample Size",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_10",
+      "intent": "What are the key findings in the section on Changes in Sample Design of PLFS?",
+      "questionType": "describe",
+      "page": null,
+      "sourceHeading": "Changes in Sample Design of PLFS",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_11",
+      "intent": "What are the key findings in the section on Conceptual Framework of Key Indicators?",
+      "questionType": "describe",
+      "page": null,
+      "sourceHeading": "Conceptual Framework of Key Indicators",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_12",
+      "intent": "What are the key findings in the section on Compatibility of PLFS 2025 results?",
+      "questionType": "describe",
+      "page": null,
+      "sourceHeading": "Compatibility of PLFS 2025 results",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    },
+    {
+      "questionId": "pq_13",
+      "intent": "What are the key findings in the section on Detailed tables included in the Annual Report?",
+      "questionType": "describe",
+      "page": null,
+      "sourceHeading": "Detailed tables included in the Annual Report",
+      "requiredEntities": [],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": null,
+      "inferenceMethod": null,
+      "inferenceConfidence": null
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Periodic Labour Force Survey (PLFS) Annual",
+      "description": "Programmatic questions from: Periodic Labour Force Survey (PLFS) Annual",
+      "questionIds": [
+        "q_001"
+      ],
+      "pageRange": [
+        0,
+        0
+      ]
+    },
+    {
+      "topicId": "topic_02",
+      "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "description": "Programmatic questions from: 1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "questionIds": [
+        "q_002"
+      ],
+      "pageRange": [
+        1,
+        1
+      ]
+    },
+    {
+      "topicId": "topic_03",
+      "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "description": "Programmatic questions from: 2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "questionIds": [
+        "q_003"
+      ],
+      "pageRange": [
+        2,
+        2
+      ]
+    },
+    {
+      "topicId": "topic_04",
+      "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "description": "Programmatic questions from: 3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "questionIds": [
+        "q_004"
+      ],
+      "pageRange": [
+        3,
+        3
+      ]
+    },
+    {
+      "topicId": "topic_05",
+      "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+      "description": "Programmatic questions from: 4 Increase in proportion of workers with regular wage/ salary employment",
+      "questionIds": [
+        "q_005"
+      ],
+      "pageRange": [
+        4,
+        4
+      ]
+    },
+    {
+      "topicId": "topic_06",
+      "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "description": "Programmatic questions from: 5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "questionIds": [
+        "q_006",
+        "q_007"
+      ],
+      "pageRange": [
+        5,
+        5
+      ]
+    },
+    {
+      "topicId": "topic_07",
+      "title": "6 Earnings of female workers have seen a notable shift",
+      "description": "Programmatic questions from: 6 Earnings of female workers have seen a notable shift",
+      "questionIds": [
+        "q_006",
+        "q_007"
+      ],
+      "pageRange": [
+        5,
+        5
+      ]
+    },
+    {
+      "topicId": "topic_08",
+      "title": "7 Average number of years in formal education",
+      "description": "Programmatic questions from: 7 Average number of years in formal education",
+      "questionIds": [
+        "q_008"
+      ],
+      "pageRange": [
+        6,
+        10
+      ]
+    }
+  ]
+}

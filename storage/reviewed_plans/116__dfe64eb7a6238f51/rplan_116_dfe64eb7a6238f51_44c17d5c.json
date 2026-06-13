@@ -1,0 +1,6332 @@
+{
+  "$schema": "binding.reviewedPlan.v1",
+  "planId": "rplan_116_dfe64eb7a6238f51_44c17d5c",
+  "templatePackageRef": {
+    "templateId": "116",
+    "version": "3.0",
+    "blueprintHash": "285a5cb4aaf8fc73",
+    "astHash": "44136fa355b3678a",
+    "semanticSlotGraphHash": "44136fa355b3678a"
+  },
+  "datasetId": "plfs sample",
+  "datasetSignature": "dfe64eb7a6238f51",
+  "bindingAstId": "bind_116_44c17d5c7051",
+  "status": "BLOCKED",
+  "planTree": [
+    {
+      "nodeId": "topic_01",
+      "nodeType": "topic",
+      "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 - December, 2025]",
+      "order": 1,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": [
+        {
+          "nodeId": "node_sp01_q01",
+          "nodeType": "question",
+          "title": "What was the Unemployment Rate in usual status (ps+ss) for persons aged 15 years and above with secondary and above education in 2025, and how does it compare to the 2024 figure?",
+          "order": 1,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_013",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_010",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_007",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_014",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp01_q01_c1",
+              "componentType": "narrative",
+              "questionId": "sp01_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_003",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_010",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_007",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_014",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_003",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [],
+                "filters": [
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_010",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_007",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_014",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp01_q01_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_003",
+                    "ent_013"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp01_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp01_q01_c2",
+              "componentType": "table",
+              "questionId": "sp01_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_003",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_010",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_007",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_014",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_003",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [],
+                "filters": [
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_010",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_007",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_014",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp01_q01_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_01",
+          "questionId": "sp01_q01"
+        },
+        {
+          "nodeId": "node_sp01_q02",
+          "nodeType": "question",
+          "title": "How did the Unemployment Rate according to usual status (ps+ss) for urban females aged 15 years and above change from 2024 to 2025?",
+          "order": 2,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_013",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_008",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_021",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_010",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp01_q02_c1",
+              "componentType": "narrative",
+              "questionId": "sp01_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_003",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_010",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "time_series",
+                "measure": {
+                  "entityRef": "ent_003",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_008",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_010",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "none"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp01_q02_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_003",
+                    "ent_013"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp01_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp01_q02_c2",
+              "componentType": "chart",
+              "questionId": "sp01_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_003",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_010",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "time_series",
+                "measure": {
+                  "entityRef": "ent_003",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_008",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_010",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "none"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp01_q02_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "ent_013",
+                  "yAxis": "ent_003"
+                },
+                "refs": {
+                  "chartRef": "chart_sp01_q02",
+                  "figureRef": "fig_sp01_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_01",
+          "questionId": "sp01_q02"
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_02",
+      "nodeType": "topic",
+      "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "order": 2,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": [
+        {
+          "nodeId": "node_sp02_q01",
+          "nodeType": "question",
+          "title": "What were the Labour Force Participation Rates for rural males and rural females in 2025?",
+          "order": 1,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_008",
+              "role": "breakdown",
+              "required": false
+            },
+            {
+              "entityId": "ent_013",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_021",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp02_q01_c1",
+              "componentType": "narrative",
+              "questionId": "sp02_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_001",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "breakdown",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_001",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [],
+                "filters": [
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp02_q01_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_008"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp02_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "degraded"
+            },
+            {
+              "componentId": "sp02_q01_c2",
+              "componentType": "table",
+              "questionId": "sp02_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_001",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "breakdown",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_001",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [],
+                "filters": [
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp02_q01_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              "slotIds": [],
+              "readiness": "degraded"
+            }
+          ],
+          "readiness": "degraded",
+          "children": [],
+          "parentId": "topic_02",
+          "questionId": "sp02_q01"
+        },
+        {
+          "nodeId": "node_sp02_q02",
+          "nodeType": "question",
+          "title": "How did the Labour Force Participation Rate for urban males and females in 2025 compare to the levels observed in 2024?",
+          "order": 2,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_008",
+              "role": "breakdown",
+              "required": false
+            },
+            {
+              "entityId": "ent_021",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_013",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp02_q02_c1",
+              "componentType": "narrative",
+              "questionId": "sp02_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_001",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "breakdown",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "time_series",
+                "measure": {
+                  "entityRef": "ent_001",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "none"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp02_q02_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_008"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp02_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "executable"
+            },
+            {
+              "componentId": "sp02_q02_c2",
+              "componentType": "chart",
+              "questionId": "sp02_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_001",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "breakdown",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "time_series",
+                "measure": {
+                  "entityRef": "ent_001",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "none"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp02_q02_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "ent_013",
+                  "yAxis": "ent_001"
+                },
+                "refs": {
+                  "chartRef": "chart_sp02_q02",
+                  "figureRef": "fig_sp02_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              "slotIds": [],
+              "readiness": "executable"
+            }
+          ],
+          "readiness": "executable",
+          "children": [],
+          "parentId": "topic_02",
+          "questionId": "sp02_q02"
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_03",
+      "nodeType": "topic",
+      "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "order": 3,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": [
+        {
+          "nodeId": "node_sp03_q01",
+          "nodeType": "question",
+          "title": "Compare the Worker Population Ratio (WPR) for rural males and rural females in 2025.",
+          "order": 1,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_008",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_021",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_013",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp03_q01_c1",
+              "componentType": "chart",
+              "questionId": "sp03_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_002",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_002",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_008"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp03_q01_c1",
+                "kind": "chart",
+                "order": 1,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_008",
+                  "yAxis": "ent_002"
+                },
+                "refs": {
+                  "chartRef": "chart_sp03_q01",
+                  "figureRef": "fig_sp03_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              "slotIds": [],
+              "readiness": "degraded"
+            },
+            {
+              "componentId": "sp03_q01_c2",
+              "componentType": "narrative",
+              "questionId": "sp03_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_002",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_002",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_008"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp03_q01_c2",
+                "kind": "narrative",
+                "order": 2,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_002",
+                    "ent_008"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp03_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "degraded"
+            }
+          ],
+          "readiness": "degraded",
+          "children": [],
+          "parentId": "topic_03",
+          "questionId": "sp03_q01"
+        },
+        {
+          "nodeId": "node_sp03_q02",
+          "nodeType": "question",
+          "title": "Describe the trend of the Worker Population Ratio (WPR) for rural females from 2022 to 2025.",
+          "order": 2,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_008",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_021",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_013",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp03_q02_c1",
+              "componentType": "chart",
+              "questionId": "sp03_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_002",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "time_series",
+                "measure": {
+                  "entityRef": "ent_002",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_008",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "none"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp03_q02_c1",
+                "kind": "chart",
+                "order": 1,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "ent_013",
+                  "yAxis": "ent_002"
+                },
+                "refs": {
+                  "chartRef": "chart_sp03_q02",
+                  "figureRef": "fig_sp03_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              "slotIds": [],
+              "readiness": "degraded"
+            },
+            {
+              "componentId": "sp03_q02_c2",
+              "componentType": "narrative",
+              "questionId": "sp03_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_002",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "time_series",
+                "measure": {
+                  "entityRef": "ent_002",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_008",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "none"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp03_q02_c2",
+                "kind": "narrative",
+                "order": 2,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_002",
+                    "ent_008"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp03_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "degraded"
+            }
+          ],
+          "readiness": "degraded",
+          "children": [],
+          "parentId": "topic_03",
+          "questionId": "sp03_q02"
+        },
+        {
+          "nodeId": "node_sp03_q03",
+          "nodeType": "question",
+          "title": "Compare the overall urban Worker Population Ratio (WPR) in 2025 with the rural female WPR.",
+          "order": 3,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_013",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_021",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_030",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_008",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp03_q03_c1",
+              "componentType": "narrative",
+              "questionId": "sp03_q03",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_002",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_030",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_002",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [],
+                "filters": [
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_030",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_008",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp03_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_002",
+                    "ent_013"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp03_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "degraded"
+            },
+            {
+              "componentId": "sp03_q03_c2",
+              "componentType": "table",
+              "questionId": "sp03_q03",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_002",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_030",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_002",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [],
+                "filters": [
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_030",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_008",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp03_q03_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              "slotIds": [],
+              "readiness": "degraded"
+            }
+          ],
+          "readiness": "degraded",
+          "children": [],
+          "parentId": "topic_03",
+          "questionId": "sp03_q03"
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_04",
+      "nodeType": "topic",
+      "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "order": 4,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": [
+        {
+          "nodeId": "node_sp04_q01",
+          "nodeType": "question",
+          "title": "In 2025, how did the female unemployment rate (6.4%) compare to the male unemployment rate (4.2%) in urban areas?",
+          "order": 1,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_008",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_021",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_013",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp04_q01_c1",
+              "componentType": "narrative",
+              "questionId": "sp04_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_003",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_003",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_008"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp04_q01_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_003",
+                    "ent_008"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp04_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp04_q01_c2",
+              "componentType": "chart",
+              "questionId": "sp04_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_003",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_003",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_008"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp04_q01_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_008",
+                  "yAxis": "ent_003"
+                },
+                "refs": {
+                  "chartRef": "chart_sp04_q01",
+                  "figureRef": "fig_sp04_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_04",
+          "questionId": "sp04_q01"
+        },
+        {
+          "nodeId": "node_sp04_q02",
+          "nodeType": "question",
+          "title": "How did the overall unemployment rate in rural areas (2.4%) compare to the overall unemployment rate in urban areas (4.8%) in 2025?",
+          "order": 2,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_021",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_013",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp04_q02_c1",
+              "componentType": "narrative",
+              "questionId": "sp04_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_003",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_003",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_021"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp04_q02_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_003",
+                    "ent_021"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp04_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp04_q02_c2",
+              "componentType": "metric",
+              "questionId": "sp04_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_003",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_003",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_021"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp04_q02_c2",
+                "kind": "metric",
+                "order": 2,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "metric_card"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_04",
+          "questionId": "sp04_q02"
+        },
+        {
+          "nodeId": "node_sp04_q03",
+          "nodeType": "question",
+          "title": "In rural areas in 2025, how did the male unemployment rate (2.6%) compare to the female unemployment rate (2.1%)?",
+          "order": 3,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_008",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_013",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_021",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp04_q03_c1",
+              "componentType": "narrative",
+              "questionId": "sp04_q03",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_003",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_003",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_008"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp04_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_003",
+                    "ent_008"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp04_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp04_q03_c2",
+              "componentType": "chart",
+              "questionId": "sp04_q03",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_003",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_003",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_008"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_021",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp04_q03_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_008",
+                  "yAxis": "ent_003"
+                },
+                "refs": {
+                  "chartRef": "chart_sp04_q03",
+                  "figureRef": "fig_sp04_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_04",
+          "questionId": "sp04_q03"
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_05",
+      "nodeType": "topic",
+      "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+      "order": 5,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": [
+        {
+          "nodeId": "node_sp05_q01",
+          "nodeType": "question",
+          "title": "What was the percentage share of workers in regular wage/salaried employment for males and females in 2025 compared to 2024?",
+          "order": 1,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_004",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_008",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_013",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_011",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp05_q01_c1",
+              "componentType": "narrative",
+              "questionId": "sp05_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_004",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_011",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_004",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_008"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_011",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp05_q01_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_004",
+                    "ent_008"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp05_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp05_q01_c2",
+              "componentType": "chart",
+              "questionId": "sp05_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_004",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_011",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_004",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_008"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_011",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp05_q01_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_008",
+                  "yAxis": "ent_004"
+                },
+                "refs": {
+                  "chartRef": "chart_sp05_q01",
+                  "figureRef": "fig_sp05_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp05_q01_c3",
+              "componentType": "table",
+              "questionId": "sp05_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_004",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_011",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_004",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_008"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_011",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp05_q01_c3",
+                "kind": "table",
+                "order": 3,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_05",
+          "questionId": "sp05_q01"
+        },
+        {
+          "nodeId": "node_sp05_q02",
+          "nodeType": "question",
+          "title": "By how many percentage points did the share of self-employment decline for females between 2024 and 2025?",
+          "order": 2,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_008",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_013",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_011",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_004",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp05_q02_c1",
+              "componentType": "metric",
+              "questionId": "sp05_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_008",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_011",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_004",
+                  "role": "measure",
+                  "required": true
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "time_series",
+                "measure": {
+                  "entityRef": "ent_004",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_008",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_011",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "none"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp05_q02_c1",
+                "kind": "metric",
+                "order": 1,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "metric_card"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp05_q02_c2",
+              "componentType": "narrative",
+              "questionId": "sp05_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_008",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_011",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_004",
+                  "role": "measure",
+                  "required": true
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "time_series",
+                "measure": {
+                  "entityRef": "ent_004",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_008",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_011",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "none"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp05_q02_c2",
+                "kind": "narrative",
+                "order": 2,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_008",
+                    "ent_013"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp05_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp05_q02_c3",
+              "componentType": "chart",
+              "questionId": "sp05_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_008",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_011",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_004",
+                  "role": "measure",
+                  "required": true
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "time_series",
+                "measure": {
+                  "entityRef": "ent_004",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_008",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_011",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "none"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp05_q02_c3",
+                "kind": "chart",
+                "order": 3,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "ent_013",
+                  "yAxis": "ent_004"
+                },
+                "refs": {
+                  "chartRef": "chart_sp05_q02",
+                  "figureRef": "fig_sp05_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_05",
+          "questionId": "sp05_q02"
+        },
+        {
+          "nodeId": "node_sp05_q03",
+          "nodeType": "question",
+          "title": "What was the percentage share of workers engaged in casual labour in 2025, and how does it compare to the 2024 figure?",
+          "order": 3,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_004",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_013",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_011",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp05_q03_c1",
+              "componentType": "narrative",
+              "questionId": "sp05_q03",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_004",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_011",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_004",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_011",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp05_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_004",
+                    "ent_013"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp05_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp05_q03_c2",
+              "componentType": "table",
+              "questionId": "sp05_q03",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_004",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_011",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_004",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_011",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp05_q03_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_05",
+          "questionId": "sp05_q03"
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_06",
+      "nodeType": "topic",
+      "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "order": 6,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": [
+        {
+          "nodeId": "node_sp06_q01",
+          "nodeType": "question",
+          "title": "What is the Worker Share in the Manufacturing sector in 2024 compared to 2025?",
+          "order": 1,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_004",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_009",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_013",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp06_q01_c1",
+              "componentType": "narrative",
+              "questionId": "sp06_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_004",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_009",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_004",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_009",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp06_q01_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_004",
+                    "ent_009"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp06_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp06_q01_c2",
+              "componentType": "chart",
+              "questionId": "sp06_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_004",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_009",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_004",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_009",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp06_q01_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_013",
+                  "yAxis": "ent_004"
+                },
+                "refs": {
+                  "chartRef": "chart_sp06_q01",
+                  "figureRef": "fig_sp06_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_06",
+          "questionId": "sp06_q01"
+        },
+        {
+          "nodeId": "node_sp06_q02",
+          "nodeType": "question",
+          "title": "How did the Worker Share in Agriculture change from 2024 to 2025?",
+          "order": 2,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_004",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_013",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_009",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp06_q02_c1",
+              "componentType": "narrative",
+              "questionId": "sp06_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_004",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_009",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_004",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_009",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp06_q02_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_004",
+                    "ent_013"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp06_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp06_q02_c2",
+              "componentType": "chart",
+              "questionId": "sp06_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_004",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_009",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_004",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_009",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp06_q02_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "ent_013",
+                  "yAxis": "ent_004"
+                },
+                "refs": {
+                  "chartRef": "chart_sp06_q02",
+                  "figureRef": "fig_sp06_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_06",
+          "questionId": "sp06_q02"
+        },
+        {
+          "nodeId": "node_sp06_q03",
+          "nodeType": "question",
+          "title": "What is the Worker Share in the Construction sector in 2025 compared to 2024?",
+          "order": 3,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_004",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_009",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_013",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp06_q03_c1",
+              "componentType": "narrative",
+              "questionId": "sp06_q03",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_004",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_009",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_004",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_009",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp06_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_004",
+                    "ent_009"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp06_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp06_q03_c2",
+              "componentType": "chart",
+              "questionId": "sp06_q03",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_004",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_009",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_004",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_009",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp06_q03_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_013",
+                  "yAxis": "ent_004"
+                },
+                "refs": {
+                  "chartRef": "chart_sp06_q03",
+                  "figureRef": "fig_sp06_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_06",
+          "questionId": "sp06_q03"
+        },
+        {
+          "nodeId": "node_sp07_q01",
+          "nodeType": "question",
+          "title": "What was the percentage growth in Average Monthly Earnings for female workers in regular wage/salaried employment compared to male workers between 2024 and 2025?",
+          "order": 4,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_006",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_008",
+              "role": "breakdown",
+              "required": false
+            },
+            {
+              "entityId": "ent_011",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_013",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp07_q01_c1",
+              "componentType": "narrative",
+              "questionId": "sp07_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_006",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "breakdown",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_011",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_006",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [],
+                "filters": [
+                  {
+                    "entityRef": "ent_011",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp07_q01_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_006",
+                    "ent_008"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp07_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp07_q01_c2",
+              "componentType": "table",
+              "questionId": "sp07_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_006",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "breakdown",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_011",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_006",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [],
+                "filters": [
+                  {
+                    "entityRef": "ent_011",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp07_q01_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_06",
+          "questionId": "sp07_q01"
+        },
+        {
+          "nodeId": "node_sp07_q02",
+          "nodeType": "question",
+          "title": "How did the Average Monthly Earnings for male workers in regular wage/salaried employment change from 2024 to 2025?",
+          "order": 5,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_006",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_008",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_011",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_013",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp07_q02_c1",
+              "componentType": "narrative",
+              "questionId": "sp07_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_006",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_011",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "time_series",
+                "measure": {
+                  "entityRef": "ent_006",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_008",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_011",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "none"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp07_q02_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_006",
+                    "ent_008"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp07_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp07_q02_c2",
+              "componentType": "chart",
+              "questionId": "sp07_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_006",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_011",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "groupBy",
+                  "required": true
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "time_series",
+                "measure": {
+                  "entityRef": "ent_006",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_013"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_008",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_011",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "none"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp07_q02_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "ent_013",
+                  "yAxis": "ent_006"
+                },
+                "refs": {
+                  "chartRef": "chart_sp07_q02",
+                  "figureRef": "fig_sp07_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_06",
+          "questionId": "sp07_q02"
+        },
+        {
+          "nodeId": "node_sp07_q03",
+          "nodeType": "question",
+          "title": "What is the difference in Average Monthly Earnings between male and female workers in regular wage/salaried employment in 2025?",
+          "order": 6,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_006",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_008",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_011",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_013",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp07_q03_c1",
+              "componentType": "narrative",
+              "questionId": "sp07_q03",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_006",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_011",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_006",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_008"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_011",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp07_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_006",
+                    "ent_008"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp07_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp07_q03_c2",
+              "componentType": "table",
+              "questionId": "sp07_q03",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_006",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_011",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_006",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_008"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_011",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp07_q03_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_06",
+          "questionId": "sp07_q03"
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_08",
+      "nodeType": "topic",
+      "title": "7 Average number of years in formal education",
+      "order": 7,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": [
+        {
+          "nodeId": "node_sp08_q01",
+          "nodeType": "question",
+          "title": "What is the difference in Formal Education Years between male and female persons aged 15 years and above at the all-India level in 2025?",
+          "order": 1,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_007",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_008",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_010",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_013",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp08_q01_c1",
+              "componentType": "narrative",
+              "questionId": "sp08_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_007",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_010",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_007",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_008"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_010",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp08_q01_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_007",
+                    "ent_008"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp08_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp08_q01_c2",
+              "componentType": "table",
+              "questionId": "sp08_q01",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_007",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_010",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_007",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_008"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_010",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp08_q01_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_08",
+          "questionId": "sp08_q01"
+        },
+        {
+          "nodeId": "node_sp08_q02",
+          "nodeType": "question",
+          "title": "How do Formal Education Years for males in Urban areas compare to those in Rural areas for persons aged 15 years and above in 2025?",
+          "order": 2,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_007",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_021",
+              "role": "breakdown",
+              "required": false
+            },
+            {
+              "entityId": "ent_008",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_010",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_013",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp08_q02_c1",
+              "componentType": "narrative",
+              "questionId": "sp08_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_007",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "breakdown",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_010",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_007",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [],
+                "filters": [
+                  {
+                    "entityRef": "ent_008",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_010",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp08_q02_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_007",
+                    "ent_021"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp08_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp08_q02_c2",
+              "componentType": "chart",
+              "questionId": "sp08_q02",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_007",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_021",
+                  "role": "breakdown",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_008",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_010",
+                  "role": "filter",
+                  "required": false
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_007",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [],
+                "filters": [
+                  {
+                    "entityRef": "ent_008",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_010",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  },
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp08_q02_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "",
+                  "yAxis": "ent_007"
+                },
+                "refs": {
+                  "chartRef": "chart_sp08_q02",
+                  "figureRef": "fig_sp08_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_08",
+          "questionId": "sp08_q02"
+        },
+        {
+          "nodeId": "node_sp08_q03",
+          "nodeType": "question",
+          "title": "What is the difference in the overall average Formal Education Years between persons aged 15 years and above and persons aged 25 years and above at the all-India level in 2025?",
+          "order": 3,
+          "source": "extracted",
+          "enabled": true,
+          "requiredEntities": [
+            {
+              "entityId": "ent_007",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_010",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_013",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "components": [
+            {
+              "componentId": "sp08_q03_c1",
+              "componentType": "metric",
+              "questionId": "sp08_q03",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_007",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_010",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_007",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_010"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp08_q03_c1",
+                "kind": "metric",
+                "order": 1,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "metric_card"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            },
+            {
+              "componentId": "sp08_q03_c2",
+              "componentType": "narrative",
+              "questionId": "sp08_q03",
+              "source": "extracted",
+              "requiredEntities": [
+                {
+                  "entityId": "ent_007",
+                  "role": "measure",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_010",
+                  "role": "groupBy",
+                  "required": true
+                },
+                {
+                  "entityId": "ent_013",
+                  "role": "filter",
+                  "required": false
+                }
+              ],
+              "analyticsSpec": {
+                "operation": "group_aggregate",
+                "measure": {
+                  "entityRef": "ent_007",
+                  "agg": "weighted_ratio"
+                },
+                "groupBy": [
+                  {
+                    "entityRef": "ent_010"
+                  }
+                ],
+                "filters": [
+                  {
+                    "entityRef": "ent_013",
+                    "op": "eq",
+                    "valueFrom": "defaultMember"
+                  }
+                ],
+                "sort": {
+                  "by": "measure",
+                  "order": "desc"
+                },
+                "topN": null,
+                "compare": {
+                  "kind": "across_group"
+                }
+              },
+              "formulaSpec": {},
+              "answerStructure": {
+                "componentId": "sp08_q03_c2",
+                "kind": "narrative",
+                "order": 2,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_007",
+                    "ent_010"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp08_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              "slotIds": [],
+              "readiness": "blocked"
+            }
+          ],
+          "readiness": "blocked",
+          "children": [],
+          "parentId": "topic_08",
+          "questionId": "sp08_q03"
+        }
+      ]
+    }
+  ],
+  "entityBindings": [
+    {
+      "entityId": "ent_001",
+      "entityName": "Labour Force Participation Rate",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "LFPR (ent_lfpr)"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.88,
+      "method": "alias",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.88,
+          "detail": "Alias matched to 'LFPR (ent_lfpr)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=measure col_role=measure"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_002",
+      "entityName": "Worker Population Ratio",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "WPR (ent_wpr)"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.88,
+      "method": "alias",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.88,
+          "detail": "Alias matched to 'WPR (ent_wpr)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=measure col_role=measure"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_003",
+      "entityName": "Unemployment Rate",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.09,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.09,
+          "detail": "Synonym/token match to 'UR (ent_ur)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=measure col_role=measure"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_004",
+      "entityName": "Worker Share",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: measure entity landed on dimension column 'State/UT (ent_state)'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=measure col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'measure' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_005",
+      "entityName": "Average Weekly Hours",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: measure entity landed on dimension column 'State/UT (ent_state)'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=measure col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'measure' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_006",
+      "entityName": "Average Monthly Earnings",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: measure entity landed on dimension column 'State/UT (ent_state)'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=measure col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'measure' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_007",
+      "entityName": "Formal Education Years",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_008",
+      "entityName": "Gender",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Gender (ent_gender)"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.88,
+      "method": "alias",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.88,
+          "detail": "Alias matched to 'Gender (ent_gender)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_009",
+      "entityName": "Sector",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Sector (ent_sector)"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.88,
+      "method": "alias",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.88,
+          "detail": "Alias matched to 'Sector (ent_sector)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_010",
+      "entityName": "Age Group",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Age Group (ent_age_group)"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.88,
+      "method": "alias",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.88,
+          "detail": "Alias matched to 'Age Group (ent_age_group)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        },
+        {
+          "signal": "unit",
+          "score": 0.8,
+          "detail": "Column has unit: years"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_011",
+      "entityName": "Employment Status",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: measure entity landed on dimension column 'State/UT (ent_state)'"
+      ],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=measure col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "Entity type 'measure' != column role"
+        },
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_012",
+      "entityName": "Industry",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.045,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.045,
+          "detail": "Synonym/token match to 'Sector (ent_sector)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_013",
+      "entityName": "Survey Period",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Survey Period (ent_period)"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.88,
+      "method": "alias",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.88,
+          "detail": "Alias matched to 'Survey Period (ent_period)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_014",
+      "entityName": "Activity Status",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_015",
+      "entityName": "Periodic Labour Force Survey",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.03,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.03,
+          "detail": "Synonym/token match to 'Survey Period (ent_period)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_016",
+      "entityName": "MoSPI",
+      "entityType": "metadata",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 0.3,
+          "detail": "entity=metadata col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_027",
+      "entityName": "Education Level",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_035",
+      "entityName": "Regular wage/salary",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_038",
+      "entityName": "Trade, hotel & restaurant",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_043",
+      "entityName": "Self-employment",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_046",
+      "entityName": "Current Weekly Status",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_049",
+      "entityName": "Activity Status - Usual Status",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    },
+    {
+      "entityId": "ent_052",
+      "entityName": "Activity Status - Current Weekly Status",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "rejected",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "synonym",
+          "score": 0.0,
+          "detail": "Synonym/token match to 'State/UT (ent_state)'"
+        },
+        {
+          "signal": "role_compatibility",
+          "score": 1.0,
+          "detail": "entity=dimension col_role=dimension"
+        }
+      ],
+      "risks": [
+        {
+          "code": "WEAK_ALIAS_ONLY",
+          "severity": "warn",
+          "message": "Matched by synonym/token only, no exact or alias match"
+        }
+      ]
+    }
+  ],
+  "questionBindings": [
+    {
+      "questionId": "sp01_q01",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [],
+        "filters": [
+          {
+            "column": "Survey Period (ent_period)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          },
+          {
+            "column": "Age Group (ent_age_group)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_003"
+      ],
+      "notes": [
+        "required measure 'ent_003' unresolved",
+        "filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened",
+        "filter 'ent_010'=None not found in 'Age Group (ent_age_group)' — widened",
+        "optional filter 'ent_007' unresolved — skipped",
+        "optional filter 'ent_014' unresolved — skipped"
+      ]
+    },
+    {
+      "questionId": "sp01_q02",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [
+          "Survey Period (ent_period)"
+        ],
+        "filters": [
+          {
+            "column": "Gender (ent_gender)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          },
+          {
+            "column": "Age Group (ent_age_group)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_003"
+      ],
+      "notes": [
+        "required measure 'ent_003' unresolved",
+        "filter 'ent_008'=None not found in 'Gender (ent_gender)' — widened",
+        "optional filter 'ent_021' unresolved — skipped",
+        "filter 'ent_010'=None not found in 'Age Group (ent_age_group)' — widened"
+      ]
+    },
+    {
+      "questionId": "sp02_q01",
+      "status": "degraded",
+      "resolvedRoles": {
+        "measures": [
+          "LFPR (ent_lfpr)"
+        ],
+        "dimensions": [
+          "Gender (ent_gender)"
+        ],
+        "filters": [
+          {
+            "column": "Survey Period (ent_period)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": [
+        "filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened",
+        "optional filter 'ent_021' unresolved — skipped"
+      ]
+    },
+    {
+      "questionId": "sp02_q02",
+      "status": "executable",
+      "resolvedRoles": {
+        "measures": [
+          "LFPR (ent_lfpr)"
+        ],
+        "dimensions": [
+          "Gender (ent_gender)",
+          "Survey Period (ent_period)"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": [
+        "optional filter 'ent_021' unresolved — skipped"
+      ]
+    },
+    {
+      "questionId": "sp03_q01",
+      "status": "degraded",
+      "resolvedRoles": {
+        "measures": [
+          "WPR (ent_wpr)"
+        ],
+        "dimensions": [
+          "Gender (ent_gender)"
+        ],
+        "filters": [
+          {
+            "column": "Survey Period (ent_period)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": [
+        "optional filter 'ent_021' unresolved — skipped",
+        "filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened"
+      ]
+    },
+    {
+      "questionId": "sp03_q02",
+      "status": "degraded",
+      "resolvedRoles": {
+        "measures": [
+          "WPR (ent_wpr)"
+        ],
+        "dimensions": [
+          "Survey Period (ent_period)"
+        ],
+        "filters": [
+          {
+            "column": "Gender (ent_gender)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": [
+        "filter 'ent_008'=None not found in 'Gender (ent_gender)' — widened",
+        "optional filter 'ent_021' unresolved — skipped"
+      ]
+    },
+    {
+      "questionId": "sp03_q03",
+      "status": "degraded",
+      "resolvedRoles": {
+        "measures": [
+          "WPR (ent_wpr)"
+        ],
+        "dimensions": [],
+        "filters": [
+          {
+            "column": "Survey Period (ent_period)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          },
+          {
+            "column": "Gender (ent_gender)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": [
+        "filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened",
+        "optional filter 'ent_021' unresolved — skipped",
+        "optional filter 'ent_030' unresolved — skipped",
+        "filter 'ent_008'=None not found in 'Gender (ent_gender)' — widened"
+      ]
+    },
+    {
+      "questionId": "sp04_q01",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [
+          "Gender (ent_gender)"
+        ],
+        "filters": [
+          {
+            "column": "Survey Period (ent_period)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_003"
+      ],
+      "notes": [
+        "required measure 'ent_003' unresolved",
+        "optional filter 'ent_021' unresolved — skipped",
+        "filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened"
+      ]
+    },
+    {
+      "questionId": "sp04_q02",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [],
+        "filters": [
+          {
+            "column": "Survey Period (ent_period)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_003",
+        "ent_021"
+      ],
+      "notes": [
+        "required measure 'ent_003' unresolved",
+        "required groupBy 'ent_021' unresolved",
+        "filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened"
+      ]
+    },
+    {
+      "questionId": "sp04_q03",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [
+          "Gender (ent_gender)"
+        ],
+        "filters": [
+          {
+            "column": "Survey Period (ent_period)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_003"
+      ],
+      "notes": [
+        "required measure 'ent_003' unresolved",
+        "filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened",
+        "optional filter 'ent_021' unresolved — skipped"
+      ]
+    },
+    {
+      "questionId": "sp05_q01",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [
+          "Gender (ent_gender)",
+          "Survey Period (ent_period)"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_004"
+      ],
+      "notes": [
+        "required measure 'ent_004' unresolved",
+        "optional filter 'ent_011' unresolved — skipped"
+      ]
+    },
+    {
+      "questionId": "sp05_q02",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [
+          "Survey Period (ent_period)"
+        ],
+        "filters": [
+          {
+            "column": "Gender (ent_gender)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_004"
+      ],
+      "notes": [
+        "filter 'ent_008'=None not found in 'Gender (ent_gender)' — widened",
+        "optional filter 'ent_011' unresolved — skipped",
+        "required measure 'ent_004' unresolved"
+      ]
+    },
+    {
+      "questionId": "sp05_q03",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [
+          "Survey Period (ent_period)"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_004"
+      ],
+      "notes": [
+        "required measure 'ent_004' unresolved",
+        "optional filter 'ent_011' unresolved — skipped"
+      ]
+    },
+    {
+      "questionId": "sp06_q01",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [
+          "Survey Period (ent_period)"
+        ],
+        "filters": [
+          {
+            "column": "Sector (ent_sector)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_004"
+      ],
+      "notes": [
+        "required measure 'ent_004' unresolved",
+        "filter 'ent_009'=None not found in 'Sector (ent_sector)' — widened"
+      ]
+    },
+    {
+      "questionId": "sp06_q02",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [
+          "Survey Period (ent_period)"
+        ],
+        "filters": [
+          {
+            "column": "Sector (ent_sector)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_004"
+      ],
+      "notes": [
+        "required measure 'ent_004' unresolved",
+        "filter 'ent_009'=None not found in 'Sector (ent_sector)' — widened"
+      ]
+    },
+    {
+      "questionId": "sp06_q03",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [
+          "Survey Period (ent_period)"
+        ],
+        "filters": [
+          {
+            "column": "Sector (ent_sector)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_004"
+      ],
+      "notes": [
+        "required measure 'ent_004' unresolved",
+        "filter 'ent_009'=None not found in 'Sector (ent_sector)' — widened"
+      ]
+    },
+    {
+      "questionId": "sp07_q01",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [
+          "Gender (ent_gender)"
+        ],
+        "filters": [
+          {
+            "column": "Survey Period (ent_period)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_006"
+      ],
+      "notes": [
+        "required measure 'ent_006' unresolved",
+        "optional filter 'ent_011' unresolved — skipped",
+        "filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened"
+      ]
+    },
+    {
+      "questionId": "sp07_q02",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [
+          "Survey Period (ent_period)"
+        ],
+        "filters": [
+          {
+            "column": "Gender (ent_gender)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_006"
+      ],
+      "notes": [
+        "required measure 'ent_006' unresolved",
+        "filter 'ent_008'=None not found in 'Gender (ent_gender)' — widened",
+        "optional filter 'ent_011' unresolved — skipped"
+      ]
+    },
+    {
+      "questionId": "sp07_q03",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [
+          "Gender (ent_gender)"
+        ],
+        "filters": [
+          {
+            "column": "Survey Period (ent_period)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_006"
+      ],
+      "notes": [
+        "required measure 'ent_006' unresolved",
+        "optional filter 'ent_011' unresolved — skipped",
+        "filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened"
+      ]
+    },
+    {
+      "questionId": "sp08_q01",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [
+          "Gender (ent_gender)"
+        ],
+        "filters": [
+          {
+            "column": "Age Group (ent_age_group)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          },
+          {
+            "column": "Survey Period (ent_period)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_007"
+      ],
+      "notes": [
+        "required measure 'ent_007' unresolved",
+        "filter 'ent_010'=None not found in 'Age Group (ent_age_group)' — widened",
+        "filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened"
+      ]
+    },
+    {
+      "questionId": "sp08_q02",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [],
+        "filters": [
+          {
+            "column": "Gender (ent_gender)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          },
+          {
+            "column": "Age Group (ent_age_group)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          },
+          {
+            "column": "Survey Period (ent_period)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_007"
+      ],
+      "notes": [
+        "required measure 'ent_007' unresolved",
+        "optional breakdown 'ent_021' unresolved — skipped",
+        "filter 'ent_008'=None not found in 'Gender (ent_gender)' — widened",
+        "filter 'ent_010'=None not found in 'Age Group (ent_age_group)' — widened",
+        "filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened"
+      ]
+    },
+    {
+      "questionId": "sp08_q03",
+      "status": "blocked",
+      "resolvedRoles": {
+        "measures": [],
+        "dimensions": [
+          "Age Group (ent_age_group)"
+        ],
+        "filters": [
+          {
+            "column": "Survey Period (ent_period)",
+            "op": "eq",
+            "value": null,
+            "filterApplied": false
+          }
+        ],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [
+        "ent_007"
+      ],
+      "notes": [
+        "required measure 'ent_007' unresolved",
+        "filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened"
+      ]
+    }
+  ],
+  "coverage": {
+    "entities": {
+      "bound": 6,
+      "pending": 0,
+      "unresolved": 17
+    },
+    "questions": {
+      "executable": 1,
+      "blocked": 17,
+      "degraded": 4
+    },
+    "issues": [
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Average Weekly Hours' (measure) is unresolved but not required by any question.",
+        "entityId": "ent_005"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Employment Status' (measure) is unresolved but not required by any question.",
+        "entityId": "ent_011"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Industry' (dimension) is unresolved but not required by any question.",
+        "entityId": "ent_012"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Activity Status' (dimension) is unresolved but not required by any question.",
+        "entityId": "ent_014"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Periodic Labour Force Survey' (dimension) is unresolved but not required by any question.",
+        "entityId": "ent_015"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'MoSPI' (metadata) is unresolved but not required by any question.",
+        "entityId": "ent_016"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Education Level' (dimension) is unresolved but not required by any question.",
+        "entityId": "ent_027"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Regular wage/salary' (dimension) is unresolved but not required by any question.",
+        "entityId": "ent_035"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Trade, hotel & restaurant' (dimension) is unresolved but not required by any question.",
+        "entityId": "ent_038"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Self-employment' (dimension) is unresolved but not required by any question.",
+        "entityId": "ent_043"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Current Weekly Status' (dimension) is unresolved but not required by any question.",
+        "entityId": "ent_046"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Activity Status - Usual Status' (dimension) is unresolved but not required by any question.",
+        "entityId": "ent_049"
+      },
+      {
+        "severity": "info",
+        "code": "ENTITY_UNRESOLVED",
+        "message": "'Activity Status - Current Weekly Status' (dimension) is unresolved but not required by any question.",
+        "entityId": "ent_052"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp01_q01' is not executable — unresolved: ent_003.",
+        "questionId": "sp01_q01"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp01_q02' is not executable — unresolved: ent_003.",
+        "questionId": "sp01_q02"
+      },
+      {
+        "severity": "warn",
+        "code": "QUESTION_DEGRADED",
+        "message": "Question 'sp02_q01' runs degraded (filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened; optional filter 'ent_021' unresolved — skipped).",
+        "questionId": "sp02_q01"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'sp02_q01' has no time column — single-period snapshot.",
+        "questionId": "sp02_q01"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'sp02_q02' has no time column — single-period snapshot.",
+        "questionId": "sp02_q02"
+      },
+      {
+        "severity": "warn",
+        "code": "QUESTION_DEGRADED",
+        "message": "Question 'sp03_q01' runs degraded (optional filter 'ent_021' unresolved — skipped; filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened).",
+        "questionId": "sp03_q01"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'sp03_q01' has no time column — single-period snapshot.",
+        "questionId": "sp03_q01"
+      },
+      {
+        "severity": "warn",
+        "code": "QUESTION_DEGRADED",
+        "message": "Question 'sp03_q02' runs degraded (filter 'ent_008'=None not found in 'Gender (ent_gender)' — widened; optional filter 'ent_021' unresolved — skipped).",
+        "questionId": "sp03_q02"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'sp03_q02' has no time column — single-period snapshot.",
+        "questionId": "sp03_q02"
+      },
+      {
+        "severity": "warn",
+        "code": "QUESTION_DEGRADED",
+        "message": "Question 'sp03_q03' runs degraded (filter 'ent_013'=None not found in 'Survey Period (ent_period)' — widened; optional filter 'ent_021' unresolved — skipped; optional filter 'ent_030' unresolved — skipped; filter 'ent_008'=None not found in 'Gender (ent_gender)' — widened).",
+        "questionId": "sp03_q03"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'sp03_q03' has no time column — single-period snapshot.",
+        "questionId": "sp03_q03"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp04_q01' is not executable — unresolved: ent_003.",
+        "questionId": "sp04_q01"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp04_q02' is not executable — unresolved: ent_003, ent_021.",
+        "questionId": "sp04_q02"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp04_q03' is not executable — unresolved: ent_003.",
+        "questionId": "sp04_q03"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp05_q01' is not executable — unresolved: ent_004.",
+        "questionId": "sp05_q01"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp05_q02' is not executable — unresolved: ent_004.",
+        "questionId": "sp05_q02"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp05_q03' is not executable — unresolved: ent_004.",
+        "questionId": "sp05_q03"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp06_q01' is not executable — unresolved: ent_004.",
+        "questionId": "sp06_q01"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp06_q02' is not executable — unresolved: ent_004.",
+        "questionId": "sp06_q02"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp06_q03' is not executable — unresolved: ent_004.",
+        "questionId": "sp06_q03"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp07_q01' is not executable — unresolved: ent_006.",
+        "questionId": "sp07_q01"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp07_q02' is not executable — unresolved: ent_006.",
+        "questionId": "sp07_q02"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp07_q03' is not executable — unresolved: ent_006.",
+        "questionId": "sp07_q03"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp08_q01' is not executable — unresolved: ent_007.",
+        "questionId": "sp08_q01"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp08_q02' is not executable — unresolved: ent_007.",
+        "questionId": "sp08_q02"
+      },
+      {
+        "severity": "error",
+        "code": "QUESTION_BLOCKED",
+        "message": "Question 'sp08_q03' is not executable — unresolved: ent_007.",
+        "questionId": "sp08_q03"
+      }
+    ]
+  },
+  "semanticSlotGraph": {},
+  "virtualSlots": [],
+  "auditTrail": [
+    {
+      "event": "reviewed_plan_fast_path_created",
+      "source": "binding.finalize",
+      "timestamp": 1781202967.227662
+    }
+  ],
+  "createdAt": 1781202967.2276714,
+  "updatedAt": 1781202967.2288275
+}

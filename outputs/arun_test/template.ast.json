@@ -1,0 +1,1494 @@
+{
+  "$schema": "bharatstat/template-ast/v1",
+  "_doc": "VALUE-FREE render skeleton. Keeps every structural label (headings, column headers, roles, units, formats, palette refs, slot wiring) but NO data: content=\"\", rows=[], series=[], caption=\"\". Pairs 1:1 with template.blueprint.json by shared IDs. The binder clones this, fills the slots from a dataset, and emits report.output.ast.json.",
+  "metadata": {
+    "templateId": "tpl_document",
+    "blueprintRef": "tpl_document",
+    "name": "Document",
+    "locale": "en-IN",
+    "version": "3.0",
+    "valueFree": true,
+    "generatedFrom": "Document"
+  },
+  "styleAST": {
+    "styles": [
+      {
+        "styleId": "s_h1",
+        "role": "heading1",
+        "font": "Noto Sans",
+        "sizePt": 18,
+        "bold": true,
+        "color": "#0B5394"
+      },
+      {
+        "styleId": "s_h2",
+        "role": "heading2",
+        "font": "Noto Sans",
+        "sizePt": 14,
+        "bold": true,
+        "color": "#1155CC"
+      },
+      {
+        "styleId": "s_body",
+        "role": "body",
+        "font": "Noto Sans",
+        "sizePt": 11,
+        "bold": false,
+        "color": "#222222"
+      },
+      {
+        "styleId": "s_table",
+        "role": "tableCell",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "align": "right"
+      },
+      {
+        "styleId": "s_caption",
+        "role": "caption",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "italic": true,
+        "color": "#555555"
+      }
+    ]
+  },
+  "semanticAST": {
+    "sections": [
+      {
+        "sectionId": "sec_01",
+        "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+        "level": 1,
+        "order": 1,
+        "styleRef": "s_h1",
+        "topicRef": "topic_01",
+        "children": [
+          "p_sp01_q01",
+          "fig_sp01_q01",
+          "p_sp01_q02",
+          "fig_sp01_q02",
+          "p_sp01_q03",
+          "fig_sp01_q03"
+        ]
+      },
+      {
+        "sectionId": "sec_02",
+        "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+        "level": 1,
+        "order": 2,
+        "styleRef": "s_h1",
+        "topicRef": "topic_02",
+        "children": [
+          "p_sp02_q01",
+          "p_sp02_q02",
+          "fig_sp02_q02",
+          "p_sp02_q03",
+          "fig_sp02_q03"
+        ]
+      },
+      {
+        "sectionId": "sec_03",
+        "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+        "level": 1,
+        "order": 3,
+        "styleRef": "s_h1",
+        "topicRef": "topic_03",
+        "children": [
+          "p_sp03_q01",
+          "fig_sp03_q01",
+          "p_sp03_q02",
+          "fig_sp03_q02",
+          "p_sp03_q03",
+          "fig_sp03_q03"
+        ]
+      },
+      {
+        "sectionId": "sec_04",
+        "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+        "level": 1,
+        "order": 4,
+        "styleRef": "s_h1",
+        "topicRef": "topic_04",
+        "children": [
+          "p_sp04_q01",
+          "fig_sp04_q01",
+          "p_sp04_q02",
+          "fig_sp04_q02",
+          "p_sp04_q03",
+          "fig_sp04_q03"
+        ]
+      },
+      {
+        "sectionId": "sec_05",
+        "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+        "level": 1,
+        "order": 5,
+        "styleRef": "s_h1",
+        "topicRef": "topic_05",
+        "children": [
+          "p_sp05_q01",
+          "p_sp05_q02",
+          "fig_sp05_q02",
+          "p_sp05_q03",
+          "fig_sp05_q03"
+        ]
+      },
+      {
+        "sectionId": "sec_06",
+        "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+        "level": 1,
+        "order": 6,
+        "styleRef": "s_h1",
+        "topicRef": "topic_06",
+        "children": [
+          "p_sp06_q01",
+          "fig_sp06_q01",
+          "p_sp06_q02",
+          "fig_sp06_q02",
+          "p_sp06_q03",
+          "fig_sp06_q03",
+          "p_sp07_q01",
+          "fig_sp07_q01",
+          "p_sp07_q02",
+          "fig_sp07_q02",
+          "p_sp07_q03",
+          "fig_sp07_q03"
+        ]
+      },
+      {
+        "sectionId": "sec_08",
+        "title": "7 Average number of years in formal education",
+        "level": 1,
+        "order": 7,
+        "styleRef": "s_h1",
+        "topicRef": "topic_08",
+        "children": [
+          "p_sp08_q01",
+          "p_sp08_q02",
+          "fig_sp08_q02"
+        ]
+      }
+    ]
+  },
+  "contentAST": {
+    "blocks": [
+      {
+        "blockId": "p_sp01_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp01_q01",
+        "templateQuestion": "What is the Unemployment Rate under Usual Status (ps+ss) for persons aged 15 years and above in the Survey Year 2025, disaggregated by Gender and Rural/Urban Sector?",
+        "slot": {
+          "fillFrom": "sp01_q01__narrative",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp01_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp01_q02",
+        "templateQuestion": "How does the Unemployment Rate under Usual Status (ps+ss) for females compare to males in Rural and Urban sectors for Survey Year 2025 among persons aged 15 years and above?",
+        "slot": {
+          "fillFrom": "sp01_q02_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp01_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp01_q03",
+        "templateQuestion": "What is the Unemployment Rate under Usual Status (ps+ss) for different Age Groups in Survey Year 2025, and which Age Group records the highest rate?",
+        "slot": {
+          "fillFrom": "sp01_q03_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp02_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp02_q01",
+        "templateQuestion": "What is the Labour Force Participation Rate for persons of age 15 years and above by Gender and Rural/Urban Sector in the latest Survey Year under Usual Status (ps+ss)?",
+        "slot": {
+          "fillFrom": "sp02_q01__narrative",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp02_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp02_q02",
+        "templateQuestion": "How does the Labour Force Participation Rate for persons of age 15 years and above compare between males and females across Rural and Urban sectors in the latest Survey Year?",
+        "slot": {
+          "fillFrom": "sp02_q02_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp02_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp02_q03",
+        "templateQuestion": "What is the trend in Labour Force Participation Rate for persons of age 15 years and above over Survey Years under Usual Status (ps+ss), disaggregated by Gender?",
+        "slot": {
+          "fillFrom": "sp02_q03_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp03_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp03_q01",
+        "templateQuestion": "What is the Worker Population Ratio (WPR) for persons of Age Group 15 years and above under Usual Status (ps+ss) across Survey Year by Gender?",
+        "slot": {
+          "fillFrom": "sp03_q01__narrative",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp03_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp03_q02",
+        "templateQuestion": "How does the Worker Population Ratio (WPR) for persons of Age Group 15 years and above under Usual Status (ps+ss) compare between Rural/Urban Sector across Survey Year?",
+        "slot": {
+          "fillFrom": "sp03_q02_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp03_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp03_q03",
+        "templateQuestion": "What is the distribution of Worker Population Ratio (WPR) for persons of Age Group 15 years and above under Usual Status (ps+ss) by Status in Employment and Gender in the latest Survey Year?",
+        "slot": {
+          "fillFrom": "sp03_q03_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp04_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp04_q01",
+        "templateQuestion": "What is the Unemployment Rate(m) for persons of age 15 years and above by Gender(d) and Rural/Urban Sector(d) across Survey Year(d) as per the Periodic Labour Force Survey(m) under Usual Status (ps+ss)(f)?",
+        "slot": {
+          "fillFrom": "sp04_q01_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp04_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp04_q02",
+        "templateQuestion": "How does the Unemployment Rate(m) for persons of age 15 years and above compare between Rural/Urban Sector(d) within each Gender(d) for the latest Survey Year(d) under Usual Status (ps+ss)(f)?",
+        "slot": {
+          "fillFrom": "sp04_q02_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp04_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp04_q03",
+        "templateQuestion": "What is the distribution of Unemployment Rate(m) across Age Group(d) categories for persons aged 15 years and above by Gender(d) in the most recent Survey Year(d) under Usual Status (ps+ss)(f)?",
+        "slot": {
+          "fillFrom": "sp04_q03__narrative",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp05_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp05_q01",
+        "templateQuestion": "What is the share of workers in regular wage/salary employment under Usual Status (ps+ss) by Gender and Rural/Urban Sector in the latest Survey Year as per the Periodic Labour Force Survey?",
+        "slot": {
+          "fillFrom": "sp05_q01_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp05_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp05_q02",
+        "templateQuestion": "How has the proportion of workers in regular wage/salary employment under Usual Status (ps+ss) changed across Survey Years for different Age Groups?",
+        "slot": {
+          "fillFrom": "sp05_q02_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp05_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp05_q03",
+        "templateQuestion": "What is the Gender gap in the share of workers engaged in regular wage/salary employment under Usual Status (ps+ss) in Rural and Urban sectors for the latest Survey Year?",
+        "slot": {
+          "fillFrom": "sp05_q03_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp06_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp06_q01",
+        "templateQuestion": "What is the Unemployment Rate by Gender across Rural/Urban Sector for the latest Survey Year under Usual Status (ps+ss)?",
+        "slot": {
+          "fillFrom": "sp06_q01_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp06_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp06_q02",
+        "templateQuestion": "How has the Unemployment Rate changed across Survey Year for different Age Group categories under Usual Status (ps+ss)?",
+        "slot": {
+          "fillFrom": "sp06_q02_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp06_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp06_q03",
+        "templateQuestion": "What is the distribution of Unemployment Rate by Status in Employment across Gender for the latest Survey Year under Usual Status (ps+ss)?",
+        "slot": {
+          "fillFrom": "sp06_q03__narrative",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp07_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp07_q01",
+        "templateQuestion": "What is the average earnings of workers by Gender across Rural/Urban Sector in each Survey Year as per the Periodic Labour Force Survey under Usual Status (ps+ss)?",
+        "slot": {
+          "fillFrom": "sp07_q01__narrative",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp07_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp07_q02",
+        "templateQuestion": "What is the growth rate in average earnings of female workers compared to male workers across Survey Year under Usual Status (ps+ss) as reported by the Periodic Labour Force Survey?",
+        "slot": {
+          "fillFrom": "sp07_q02_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp07_q03",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp07_q03",
+        "templateQuestion": "How do average earnings of workers by Gender vary across Age Group and Rural/Urban Sector in the latest Survey Year according to the Periodic Labour Force Survey under Usual Status (ps+ss)?",
+        "slot": {
+          "fillFrom": "sp07_q03_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp08_q01",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp08_q01",
+        "templateQuestion": "What is the average number of years in formal education by Gender and Rural/Urban Sector during Survey Year 2025 under Usual Status (ps+ss) as per the Periodic Labour Force Survey?",
+        "slot": {
+          "fillFrom": "sp08_q01_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp08_q02",
+        "kind": "paragraph",
+        "styleRef": "s_body",
+        "content": "",
+        "biQuery": "sp08_q02",
+        "templateQuestion": "How has the average number of years in formal education changed between Survey Year 2024 and Survey Year 2025 by Gender under Usual Status (ps+ss) in the Periodic Labour Force Survey?",
+        "slot": {
+          "fillFrom": "sp08_q02_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp01_q02_c2",
+        "kind": "paragraph",
+        "content": "",
+        "biQuery": "sp01_q02",
+        "slot": {
+          "fillFrom": "sp01_q02_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp01_q03_c3",
+        "kind": "paragraph",
+        "content": "",
+        "biQuery": "sp01_q03",
+        "slot": {
+          "fillFrom": "sp01_q03_c3",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp02_q03_c2",
+        "kind": "paragraph",
+        "content": "",
+        "biQuery": "sp02_q03",
+        "slot": {
+          "fillFrom": "sp02_q03_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp04_q01_c3",
+        "kind": "paragraph",
+        "content": "",
+        "biQuery": "sp04_q01",
+        "slot": {
+          "fillFrom": "sp04_q01_c3",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp05_q03_c3",
+        "kind": "paragraph",
+        "content": "",
+        "biQuery": "sp05_q03",
+        "slot": {
+          "fillFrom": "sp05_q03_c3",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp07_q02_c2",
+        "kind": "paragraph",
+        "content": "",
+        "biQuery": "sp07_q02",
+        "slot": {
+          "fillFrom": "sp07_q02_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp07_q03_c3",
+        "kind": "paragraph",
+        "content": "",
+        "biQuery": "sp07_q03",
+        "slot": {
+          "fillFrom": "sp07_q03_c3",
+          "status": "empty"
+        }
+      },
+      {
+        "blockId": "p_sp08_q02_c2",
+        "kind": "paragraph",
+        "content": "",
+        "biQuery": "sp08_q02",
+        "slot": {
+          "fillFrom": "sp08_q02_c2",
+          "status": "empty"
+        }
+      }
+    ],
+    "lists": [],
+    "quotes": []
+  },
+  "tableAST": {
+    "tables": [
+      {
+        "tableId": "table_sp01_q01_c1",
+        "biQuery": "sp01_q01",
+        "rows": [],
+        "slot": {
+          "fillFrom": "sp01_q01_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_sp01_q03_c2",
+        "biQuery": "sp01_q03",
+        "rows": [],
+        "slot": {
+          "fillFrom": "sp01_q03_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_sp02_q01_c1",
+        "biQuery": "sp02_q01",
+        "rows": [],
+        "slot": {
+          "fillFrom": "sp02_q01_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_sp03_q02_c3",
+        "biQuery": "sp03_q02",
+        "rows": [],
+        "slot": {
+          "fillFrom": "sp03_q02_c3",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_sp03_q03_c3",
+        "biQuery": "sp03_q03",
+        "rows": [],
+        "slot": {
+          "fillFrom": "sp03_q03_c3",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_sp04_q01_c2",
+        "biQuery": "sp04_q01",
+        "rows": [],
+        "slot": {
+          "fillFrom": "sp04_q01_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_sp04_q02_c3",
+        "biQuery": "sp04_q02",
+        "rows": [],
+        "slot": {
+          "fillFrom": "sp04_q02_c3",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_sp04_q03_c2",
+        "biQuery": "sp04_q03",
+        "rows": [],
+        "slot": {
+          "fillFrom": "sp04_q03_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_sp05_q01_c2",
+        "biQuery": "sp05_q01",
+        "rows": [],
+        "slot": {
+          "fillFrom": "sp05_q01_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_sp05_q03_c2",
+        "biQuery": "sp05_q03",
+        "rows": [],
+        "slot": {
+          "fillFrom": "sp05_q03_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_sp06_q03_c2",
+        "biQuery": "sp06_q03",
+        "rows": [],
+        "slot": {
+          "fillFrom": "sp06_q03_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_sp07_q01_c2",
+        "biQuery": "sp07_q01",
+        "rows": [],
+        "slot": {
+          "fillFrom": "sp07_q01_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "tableId": "table_sp07_q03_c2",
+        "biQuery": "sp07_q03",
+        "rows": [],
+        "slot": {
+          "fillFrom": "sp07_q03_c2",
+          "status": "empty"
+        }
+      }
+    ]
+  },
+  "chartAST": {
+    "charts": [
+      {
+        "chartId": "chart_sp01_q01",
+        "biQuery": "sp01_q01",
+        "chartType": "grouped_bar",
+        "title": "Unemployment Rate by Rural/Urban Sector",
+        "xAxis": {
+          "entityRef": "ent_005",
+          "label": "Rural/Urban Sector"
+        },
+        "yAxis": {
+          "entityRef": "ent_003",
+          "label": "Unemployment Rate (percent)",
+          "unit": "percent"
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp01_q01_c2",
+          "status": "empty"
+        },
+        "chartTypes": [
+          "grouped_bar",
+          "line"
+        ]
+      },
+      {
+        "chartId": "chart_sp01_q03",
+        "biQuery": "sp01_q03",
+        "chartType": "grouped_bar",
+        "title": "Unemployment Rate by Age Group",
+        "xAxis": {
+          "entityRef": "ent_007",
+          "label": "Age Group"
+        },
+        "yAxis": {
+          "entityRef": "ent_003",
+          "label": "Unemployment Rate (percent)",
+          "unit": "percent"
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp01_q03_c1",
+          "status": "empty"
+        },
+        "chartTypes": [
+          "grouped_bar"
+        ]
+      },
+      {
+        "chartId": "chart_sp02_q02",
+        "biQuery": "sp02_q02",
+        "chartType": "grouped_bar",
+        "title": "Labour Force Participation Rate by Rural/Urban Sector",
+        "xAxis": {
+          "entityRef": "ent_005",
+          "label": "Rural/Urban Sector"
+        },
+        "yAxis": {
+          "entityRef": "ent_001",
+          "label": "Labour Force Participation Rate (percent)",
+          "unit": "percent"
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp02_q02_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp02_q03",
+        "biQuery": "sp02_q03",
+        "chartType": "line",
+        "title": "Labour Force Participation Rate by Survey Year",
+        "xAxis": {
+          "entityRef": "ent_006",
+          "label": "Survey Year"
+        },
+        "yAxis": {
+          "entityRef": "ent_001",
+          "label": "Labour Force Participation Rate (percent)",
+          "unit": "percent"
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp02_q03_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp03_q01",
+        "biQuery": "sp03_q01",
+        "chartType": "line",
+        "title": "Worker Population Ratio by Gender",
+        "xAxis": {
+          "entityRef": "ent_004",
+          "label": "Gender"
+        },
+        "yAxis": {
+          "entityRef": "ent_002",
+          "label": "Worker Population Ratio (percent)",
+          "unit": "percent"
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp03_q01_c1",
+          "status": "empty"
+        },
+        "chartTypes": [
+          "line",
+          "grouped_bar"
+        ]
+      },
+      {
+        "chartId": "chart_sp03_q02",
+        "biQuery": "sp03_q02",
+        "chartType": "line",
+        "title": "Worker Population Ratio by Survey Year",
+        "xAxis": {
+          "entityRef": "ent_006",
+          "label": "Survey Year"
+        },
+        "yAxis": {
+          "entityRef": "ent_002",
+          "label": "Worker Population Ratio (percent)",
+          "unit": "percent"
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp03_q02_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp05_q02",
+        "biQuery": "sp05_q02",
+        "chartType": "line",
+        "title": "Status in Employment by Survey Year",
+        "xAxis": {
+          "entityRef": "ent_006",
+          "label": "Survey Year"
+        },
+        "yAxis": {
+          "entityRef": "ent_008",
+          "label": "Status in Employment",
+          "unit": null
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp05_q02_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp05_q03",
+        "biQuery": "sp05_q03",
+        "chartType": "grouped_bar",
+        "title": "Worker Population Ratio by Rural/Urban Sector",
+        "xAxis": {
+          "entityRef": "ent_005",
+          "label": "Rural/Urban Sector"
+        },
+        "yAxis": {
+          "entityRef": "ent_002",
+          "label": "Worker Population Ratio (percent)",
+          "unit": "percent"
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp05_q03_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp06_q02",
+        "biQuery": "sp06_q02",
+        "chartType": "line",
+        "title": "Unemployment Rate by Survey Year",
+        "xAxis": {
+          "entityRef": "ent_006",
+          "label": "Survey Year"
+        },
+        "yAxis": {
+          "entityRef": "ent_003",
+          "label": "Unemployment Rate (percent)",
+          "unit": "percent"
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp06_q02_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp06_q03",
+        "biQuery": "sp06_q03",
+        "chartType": "grouped_bar",
+        "title": "Unemployment Rate by Gender",
+        "xAxis": {
+          "entityRef": "ent_004",
+          "label": "Gender"
+        },
+        "yAxis": {
+          "entityRef": "ent_003",
+          "label": "Unemployment Rate (percent)",
+          "unit": "percent"
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp06_q03_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp07_q01",
+        "biQuery": "sp07_q01",
+        "chartType": "grouped_bar",
+        "title": "Value by Rural/Urban Sector",
+        "xAxis": {
+          "entityRef": "ent_005",
+          "label": "Rural/Urban Sector"
+        },
+        "yAxis": {
+          "entityRef": "",
+          "label": "Value",
+          "unit": null
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp07_q01_c1",
+          "status": "empty"
+        },
+        "chartTypes": [
+          "grouped_bar"
+        ]
+      },
+      {
+        "chartId": "chart_sp07_q02",
+        "biQuery": "sp07_q02",
+        "chartType": "line",
+        "title": "Value by Survey Year",
+        "xAxis": {
+          "entityRef": "ent_006",
+          "label": "Survey Year"
+        },
+        "yAxis": {
+          "entityRef": "",
+          "label": "Value",
+          "unit": null
+        },
+        "paletteRef": "pal_mospi_default",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp07_q02_c1",
+          "status": "empty"
+        },
+        "chartTypes": [
+          "line"
+        ]
+      },
+      {
+        "chartId": "chart_sp03_q03_c2",
+        "biQuery": "sp03_q03",
+        "chartType": "grouped_bar",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp03_q03_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp04_q02_c2",
+        "biQuery": "sp04_q02",
+        "chartType": "grouped_bar",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp04_q02_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp04_q03_c1",
+        "biQuery": "sp04_q03",
+        "chartType": "grouped_bar",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp04_q03_c1",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp06_q01_c2",
+        "biQuery": "sp06_q01",
+        "chartType": "grouped_bar",
+        "series": [],
+        "slot": {
+          "fillFrom": "sp06_q01_c2",
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp01_q02",
+        "biQuery": "",
+        "chartType": "infographic_panel",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp03_q03",
+        "biQuery": "",
+        "chartType": "infographic_panel",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp04_q01",
+        "biQuery": "",
+        "chartType": "infographic_panel",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp04_q02",
+        "biQuery": "",
+        "chartType": "infographic_panel",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp04_q03",
+        "biQuery": "",
+        "chartType": "infographic_panel",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp06_q01",
+        "biQuery": "",
+        "chartType": "infographic_panel",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp07_q03",
+        "biQuery": "",
+        "chartType": "infographic_panel",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "chartId": "chart_sp08_q02",
+        "biQuery": "",
+        "chartType": "infographic_panel",
+        "series": [],
+        "slot": {
+          "status": "empty"
+        }
+      }
+    ]
+  },
+  "figureAST": {
+    "figures": [
+      {
+        "figureId": "fig_sp01_q01",
+        "templateRef": "ft_sp01_q01",
+        "caption": "",
+        "captionTemplate": "Unemployment Rate by Rural/Urban Sector, {{period.current}}",
+        "chartRef": "chart_sp01_q01",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp01_q02",
+        "templateRef": "ft_sp01_q02",
+        "caption": "",
+        "captionTemplate": "Unemployment Rate by Rural/Urban Sector, {{period.current}}",
+        "chartRef": "chart_sp01_q02",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp01_q03",
+        "templateRef": "ft_sp01_q03",
+        "caption": "",
+        "captionTemplate": "Unemployment Rate by Age Group, {{period.current}}",
+        "chartRef": "chart_sp01_q03",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp02_q02",
+        "templateRef": "ft_sp02_q02",
+        "caption": "",
+        "captionTemplate": "Labour Force Participation Rate by Rural/Urban Sector, {{period.current}}",
+        "chartRef": "chart_sp02_q02",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp02_q03",
+        "templateRef": "ft_sp02_q03",
+        "caption": "",
+        "captionTemplate": "Labour Force Participation Rate by Survey Year, {{period.current}}",
+        "chartRef": "chart_sp02_q03",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp03_q01",
+        "templateRef": "ft_sp03_q01",
+        "caption": "",
+        "captionTemplate": "Worker Population Ratio by Gender, {{period.current}}",
+        "chartRef": "chart_sp03_q01",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp03_q02",
+        "templateRef": "ft_sp03_q02",
+        "caption": "",
+        "captionTemplate": "Worker Population Ratio by Survey Year, {{period.current}}",
+        "chartRef": "chart_sp03_q02",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp03_q03",
+        "templateRef": "ft_sp03_q03",
+        "caption": "",
+        "captionTemplate": "Worker Population Ratio by Gender, {{period.current}}",
+        "chartRef": "chart_sp03_q03",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp04_q01",
+        "templateRef": "ft_sp04_q01",
+        "caption": "",
+        "captionTemplate": "Unemployment Rate by Rural/Urban Sector, {{period.current}}",
+        "chartRef": "chart_sp04_q01",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp04_q02",
+        "templateRef": "ft_sp04_q02",
+        "caption": "",
+        "captionTemplate": "Unemployment Rate by Rural/Urban Sector, {{period.current}}",
+        "chartRef": "chart_sp04_q02",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp04_q03",
+        "templateRef": "ft_sp04_q03",
+        "caption": "",
+        "captionTemplate": "Unemployment Rate by Age Group, {{period.current}}",
+        "chartRef": "chart_sp04_q03",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp05_q02",
+        "templateRef": "ft_sp05_q02",
+        "caption": "",
+        "captionTemplate": "Status in Employment by Survey Year, {{period.current}}",
+        "chartRef": "chart_sp05_q02",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp05_q03",
+        "templateRef": "ft_sp05_q03",
+        "caption": "",
+        "captionTemplate": "Worker Population Ratio by Rural/Urban Sector, {{period.current}}",
+        "chartRef": "chart_sp05_q03",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp06_q01",
+        "templateRef": "ft_sp06_q01",
+        "caption": "",
+        "captionTemplate": "Unemployment Rate by Rural/Urban Sector, {{period.current}}",
+        "chartRef": "chart_sp06_q01",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp06_q02",
+        "templateRef": "ft_sp06_q02",
+        "caption": "",
+        "captionTemplate": "Unemployment Rate by Survey Year, {{period.current}}",
+        "chartRef": "chart_sp06_q02",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp06_q03",
+        "templateRef": "ft_sp06_q03",
+        "caption": "",
+        "captionTemplate": "Unemployment Rate by Gender, {{period.current}}",
+        "chartRef": "chart_sp06_q03",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp07_q01",
+        "templateRef": "ft_sp07_q01",
+        "caption": "",
+        "captionTemplate": "Value by Rural/Urban Sector, {{period.current}}",
+        "chartRef": "chart_sp07_q01",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp07_q02",
+        "templateRef": "ft_sp07_q02",
+        "caption": "",
+        "captionTemplate": "Value by Survey Year, {{period.current}}",
+        "chartRef": "chart_sp07_q02",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp07_q03",
+        "templateRef": "ft_sp07_q03",
+        "caption": "",
+        "captionTemplate": "Value by Rural/Urban Sector, {{period.current}}",
+        "chartRef": "chart_sp07_q03",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      },
+      {
+        "figureId": "fig_sp08_q02",
+        "templateRef": "ft_sp08_q02",
+        "caption": "",
+        "captionTemplate": "Value by Survey Year, {{period.current}}",
+        "chartRef": "chart_sp08_q02",
+        "styleRef": "s_caption",
+        "slot": {
+          "status": "empty"
+        }
+      }
+    ]
+  },
+  "layoutAST": {
+    "pages": [
+      {
+        "pageId": "pg_front",
+        "size": "A4",
+        "role": "front_matter",
+        "regions": [
+          {
+            "regionId": "rg_title_page",
+            "role": "title_page",
+            "bindsTo": "title_page",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_table_of_contents",
+            "role": "table_of_contents",
+            "bindsTo": "table_of_contents",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_executive_summary",
+            "role": "executive_summary",
+            "bindsTo": "executive_summary",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_methodology_notes",
+            "role": "methodology_notes",
+            "bindsTo": "methodology_notes",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_source_notes",
+            "role": "source_notes",
+            "bindsTo": "source_notes",
+            "bbox": null
+          },
+          {
+            "regionId": "rg_glossary",
+            "role": "glossary",
+            "bindsTo": "glossary",
+            "bbox": null
+          }
+        ]
+      },
+      {
+        "pageId": "pg_body_1",
+        "size": "A4",
+        "role": "body",
+        "bindsTo": "topic_01",
+        "regions": []
+      },
+      {
+        "pageId": "pg_body_2",
+        "size": "A4",
+        "role": "body",
+        "bindsTo": "topic_02",
+        "regions": []
+      },
+      {
+        "pageId": "pg_body_3",
+        "size": "A4",
+        "role": "body",
+        "bindsTo": "topic_03",
+        "regions": []
+      },
+      {
+        "pageId": "pg_body_4",
+        "size": "A4",
+        "role": "body",
+        "bindsTo": "topic_04",
+        "regions": []
+      },
+      {
+        "pageId": "pg_body_5",
+        "size": "A4",
+        "role": "body",
+        "bindsTo": "topic_05",
+        "regions": []
+      },
+      {
+        "pageId": "pg_body_6",
+        "size": "A4",
+        "role": "body",
+        "bindsTo": "topic_06",
+        "regions": []
+      },
+      {
+        "pageId": "pg_body_7",
+        "size": "A4",
+        "role": "body",
+        "bindsTo": "topic_08",
+        "regions": []
+      },
+      {
+        "pageId": "pg_back",
+        "size": "A4",
+        "role": "back_matter",
+        "regions": []
+      }
+    ]
+  },
+  "geometryAST": {
+    "_doc": "Relative flow only. Absolute bounding boxes are computed by the layout engine at render time.",
+    "flow": [
+      "rg_sec_01",
+      "rg_sec_02",
+      "rg_sec_03",
+      "rg_sec_04",
+      "rg_sec_05",
+      "rg_sec_06",
+      "rg_sec_08",
+      "rg_p_sp01_q01",
+      "rg_p_sp01_q02",
+      "rg_p_sp01_q03",
+      "rg_p_sp02_q01",
+      "rg_p_sp02_q02",
+      "rg_p_sp02_q03",
+      "rg_p_sp03_q01",
+      "rg_p_sp03_q02",
+      "rg_p_sp03_q03",
+      "rg_p_sp04_q01",
+      "rg_p_sp04_q02",
+      "rg_p_sp04_q03",
+      "rg_p_sp05_q01",
+      "rg_p_sp05_q02",
+      "rg_p_sp05_q03",
+      "rg_p_sp06_q01",
+      "rg_p_sp06_q02",
+      "rg_p_sp06_q03",
+      "rg_p_sp07_q01",
+      "rg_p_sp07_q02",
+      "rg_p_sp07_q03",
+      "rg_p_sp08_q01",
+      "rg_p_sp08_q02",
+      "rg_fig_sp01_q01",
+      "rg_fig_sp01_q02",
+      "rg_fig_sp01_q03",
+      "rg_fig_sp02_q02",
+      "rg_fig_sp02_q03",
+      "rg_fig_sp03_q01",
+      "rg_fig_sp03_q02",
+      "rg_fig_sp03_q03",
+      "rg_fig_sp04_q01",
+      "rg_fig_sp04_q02",
+      "rg_fig_sp04_q03",
+      "rg_fig_sp05_q02",
+      "rg_fig_sp05_q03",
+      "rg_fig_sp06_q01",
+      "rg_fig_sp06_q02",
+      "rg_fig_sp06_q03",
+      "rg_fig_sp07_q01",
+      "rg_fig_sp07_q02",
+      "rg_fig_sp07_q03",
+      "rg_fig_sp08_q02"
+    ]
+  },
+  "customizationAST": {
+    "schema": "bharatstat/customization-ast/v1",
+    "controls": [
+      {
+        "controlId": "sector",
+        "label": "Sector",
+        "type": "multi_select",
+        "options": [
+          "rural",
+          "urban",
+          "all"
+        ]
+      },
+      {
+        "controlId": "sex",
+        "label": "Sex",
+        "type": "multi_select",
+        "options": [
+          "male",
+          "female",
+          "person"
+        ]
+      },
+      {
+        "controlId": "age_group",
+        "label": "Age group",
+        "type": "multi_select",
+        "options": [
+          "15_plus",
+          "all_ages"
+        ]
+      },
+      {
+        "controlId": "comparison_years",
+        "label": "Comparison years",
+        "type": "year_range",
+        "default": "latest_available"
+      }
+    ],
+    "defaultMode": "officer_review"
+  },
+  "publicationAST": {
+    "schema": "bharatstat/publication-ast/v1",
+    "targetPageRange": {
+      "min": 40,
+      "max": 80
+    },
+    "matter": [
+      "title_page",
+      "table_of_contents",
+      "executive_summary",
+      "methodology_notes",
+      "source_notes",
+      "glossary"
+    ],
+    "sectionCount": 0,
+    "questionCount": 23
+  },
+  "officerGuideAST": {
+    "schema": "bharatstat/officer-guide-ast/v1",
+    "reviewChecklist": [
+      "review_entity_evidence",
+      "review_formula_readiness",
+      "review_slot_lineage",
+      "approve_publication_controls"
+    ],
+    "blockingDecisions": [
+      "missing_source_refs",
+      "blocked_formula_spec",
+      "broken_slot_lineage"
+    ]
+  }
+}

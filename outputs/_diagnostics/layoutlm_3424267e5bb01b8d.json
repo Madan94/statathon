@@ -1,0 +1,482 @@
+{
+  "pdf": "1781232022_c49f7a4a841b4abd9729a479dd64c5b0_MoSPI Report.pdf",
+  "source_hash": "3424267e5bb0",
+  "layoutlm_used": true,
+  "total_regions": 36,
+  "pdfplumber_chars": 21521,
+  "pages": [
+    {
+      "page_index": 0,
+      "width": 2481,
+      "height": 3508,
+      "regions": [
+        {
+          "bbox": [
+            197,
+            138,
+            801,
+            251
+          ],
+          "type": "title",
+          "text": "Annual Report 2025-26",
+          "confidence": 0.9948054432868958
+        },
+        {
+          "bbox": [
+            445,
+            516,
+            557,
+            582
+          ],
+          "type": "figure",
+          "text": "",
+          "confidence": 0.9493319732802254
+        },
+        {
+          "bbox": [
+            199,
+            839,
+            799,
+            937
+          ],
+          "type": "text",
+          "text": "Government of India Ministry of Statistics & Programme Implementation Khurshid Lal Bhawan, Janpath New Delhi-110001 https://www.mospi.gov.in",
+          "confidence": 0.9968401141026441
+        }
+      ]
+    },
+    {
+      "page_index": 1,
+      "width": 2481,
+      "height": 3508,
+      "regions": [
+        {
+          "bbox": [
+            339,
+            83,
+            659,
+            98
+          ],
+          "type": "heading",
+          "text": "TABLE OF CONTENTS",
+          "confidence": 0.9825184941291809
+        },
+        {
+          "bbox": [
+            99,
+            134,
+            900,
+            844
+          ],
+          "type": "table",
+          "text": "Sl.No. CHAPTERS Page No. 1 Introduction 1-9 2 10-40 3 National Sample Survey (NSS) 41-62 4 63-78 5 Data Informatics & Innovation 79-91 6 Administrative Statistics 92-93 7 India in United Nations 94-95 8 Research and Analysis 96-97 9 Support for Statistical Strengthening 98-101 10 Media and Publicity 102-105 Members of Parliament Local Area Development Scheme( MPLADS) 12 Infrastructure and Project Monitoring 13 National Statistical Commission(NSC) 14 Indian Statistical Institute 15 Statistical Services 132-134 16 135-136 17 Other Activities 137-142 ANNEXURES I Allocation of Business to the Ministry of Statistics & Programme Implementation 143-144 IIA Organisation Chart of Ministry of Statistics & Programme Implementation 145 IIB Organisation Chart of National Statistical Commission 146 IIC Abbreviations used 147-149 III A Statement of Budget Estimate (SBE) - Annual Plan 2025-26 150 III B Total Plan Gross Budgetary Support (GBS) for 2024-25 (BE and RE) for North- Eastern Region 151 III C Total Plan Gross Budgetary Support (GBS) for 2025-26 (BE and RE) for North- Eastern Region 152 IV List of publications being brought out by various Divisions of Ministry 153-154 V 155 VI(A) Representation of SCs, STs And OBCs and number of Appointments made during the Calendar Year 2024 156 VI(B) Annual Statement showing the Representation of Persons with Disabilities in Services as on 1st January 2025 157",
+          "confidence": 0.9987740509411425
+        }
+      ]
+    },
+    {
+      "page_index": 2,
+      "width": 2481,
+      "height": 3508,
+      "regions": [
+        {
+          "bbox": [
+            359,
+            42,
+            638,
+            60
+          ],
+          "type": "header",
+          "text": "Annual Report 2025-26",
+          "confidence": 0.9682712435722352
+        },
+        {
+          "bbox": [
+            417,
+            90,
+            580,
+            137
+          ],
+          "type": "heading",
+          "text": "Chapter 1 Introduction",
+          "confidence": 0.9964351852734884
+        },
+        {
+          "bbox": [
+            70,
+            160,
+            928,
+            722
+          ],
+          "type": "list",
+          "text": "1.4 The Statistics Wing, called National Statistics Office (NSO), coordinates the statistical activities in 1.2 The Ministry has two wings viz. the Statistics Wing and the Programme Implementation (PI) Wing. There is one Autonomous Body known as the Indian Statistical Institute (ISI), which is an institute of national importance by an Act of Parliament, viz. The Indian Statistical Institute Act (ISI Act) 1959. It is a renowned and premier institute in the field of Statistics in the country. Also, National Statistical Commission (NSC), which was created through a Resolution of Government of India with effect from 12th July 2006 with a mandate to evolve policies, priorities and standards in statistical matters. The organisation chart of the Ministry is at Annexure IIA and IIB. 1.3 MoSPI, being the nodal Ministry of the Government of India for all statistical matters, attaches considerable importance to coverage and quality aspects of statistics released in the country. The statistics released by the Ministry are based on administrative sources, surveys and censuses conducted by the Central and State Governments, etc. The surveys conducted by the Ministry are based on scientific sampling methods. Data is collected through dedicated field staff who are regularly trained in the concepts and definitions of the items and the scope of the survey. In line with the emphasis on the quality of statistics released by the Ministry, the methodological issues of the statistical products of this Ministry are overseen by various committees viz, Advisory Committee on National Accounts, Technical Advisory Committee on Statistics of Price and Cost of Living (TAC on SPCL), Steering Committee for National Sample Surveys (NSS) along with various Advisory Groups/Expert Groups constituted from time to time as per requirement, etc. National Sample Surveys are conducted on a digital platform using Computer Assisted Personal Interviewing(CAPI) and the e-SIGMA system The Ministry compiles data-sets based on current data, after applying standard statistical techniques and extensive scrutiny and supervision. 1.1 The Ministry of Statistics and Programme Implementation (MoSPI) came into existence as an independent Ministry on 15th October 1999 after the merger of the Department of Statistics and the Department of Programme Implementation. The Ministry is the nodal agency for planning integrated development of the statistical system in the country and coordination of statistical activities among different stakeholders in Government of India, State Governments, Union Territories as well as meeting requirements of the International Agencies. The Allocation of Business to the Ministry of Statistics and Programme Implementation is placed at Annexure I .",
+          "confidence": 0.9851883591646218
+        }
+      ]
+    },
+    {
+      "page_index": 3,
+      "width": 2481,
+      "height": 3508,
+      "regions": [
+        {
+          "bbox": [
+            359,
+            42,
+            638,
+            60
+          ],
+          "type": "header",
+          "text": "Annual Report 2025-26",
+          "confidence": 0.966389787197113
+        },
+        {
+          "bbox": [
+            70,
+            90,
+            930,
+            574
+          ],
+          "type": "text",
+          "text": "statistics and classifications, statistical compilations and international practices. The contribution of the Ministry’s officials in international meetings on these subjects has been highly appreciated. 1.5 The NSO, MoSPI is responsible for preparation of national accounts, which include the estimates of Gross Domestic Product (GDP), National Income, Government/Private Final Consumption Expenditure, Capital Formation and Saving along with details of transactions of institutional sectors. The Ministry annually brings out a publication titled “National Accounts Statistics”, containing these statistics. The Ministry releases annual and quarterly estimates of Gross Domestic Product (GDP) from time to time as per pre-specified schedule given in Advance Release Calendar. As per the First Advance Estimates of GDP for FY 2025-26 released on 7th January, 2026, the growth in real Gross Domestic Product (GDP) during 2025-26 is estimated at 7.4 per cent as compared to the growth rate of 6.5 per cent in 2024-25. Real Gross Value Added (GVA) at Basic Prices is estimated at \u0000 184.50 lakh crore in 2025-26, as against \u0000 171.87 lakh crore in 2024- 25, showing the growth of 7.3 per cent. 1.6 The Consumer Price Index (CPI) is designed to measure the changes over time in general level of retail prices of selected goods and services that household purchase for the purpose of consumption. CPI numbers are widely used as macroeconomic indicator of inflation. It is also used as a tool by government and Reserve Bank of India (RBI) for targeting inflation and monitoring price stability. CPI’s use as a deflator in the National Accounts also reflects its importance in measurement of economic health of the country. The NSO, MoSPI releases data on Inflation and CPI on 12th of every month (or next working day, in case of 12th being a holiday). Therefore, time lag in release of this data is only 12 days which makes it one of the fastest CPI across the world. 1.7 MoSPI released Consumer Price Index (CPI) on Base 2012=100 for All India Rural, Urban and Combined for the month of December, 2025 (Provisional) which were 199.9, 195.9 and 198.0, showing an annual inflation rate of 0.76%, 2.03% and 1.33% respectively. All-India Consumer Food Price Index (CFPI) for the month of December, 2025 (Provisional) for Rural, Urban and Combined were 198.4, 205.9 and 201.1",
+          "confidence": 0.9998870443589617
+        }
+      ]
+    },
+    {
+      "page_index": 4,
+      "width": 2481,
+      "height": 3508,
+      "regions": [
+        {
+          "bbox": [
+            359,
+            42,
+            638,
+            60
+          ],
+          "type": "header",
+          "text": "Annual Report 2025-26",
+          "confidence": 0.9691337704658508
+        },
+        {
+          "bbox": [
+            70,
+            90,
+            928,
+            629
+          ],
+          "type": "text",
+          "text": "1.10 The Index of Industrial Production (IIP) with base year 2011-12 is compiled and published by the Economic Statistics Division (ESD) of MoSPI. The release timeline of IIP has been improved by reducing it from six weeks to four weeks, ensuring timelier availability of industrial output data. It is published on the 28th of every month (or the next working day if 28th is a holiday) with a time lag of four weeks from the reference month. The IIP covers three sectors namely Mining, Manufacturing and Electricity. The IIP for 2024-25 stands at 152.6, registering growth of 4%. The base year revision exercise of IIP is in progress and a Technical Advisory Committee (TAC) for the base year revision of IIP has been constituted on 27th September 2024 for the same. 1.11 The Ministry is entrusted with the development of indicator framework for Sustainable Development Goals (SDGs) in India to facilitate monitoring of SDGs. The Social Statistics Division of NSO developed a National Indicator Framework (NIF) for SDGs with identified data sources and periodicity for facilitating the monitoring of the SDGs at national level. The framework is dynamic in nature and is reviewed and refined every year. Presently, in SDG NIF 2025, there are 284 national indicators with identified data sources and periodicity.The division also compiles Environment Account using United Nations System of Environmental Economic Accounting Framework (UN SEEA Framework). The publications brought out by the Division during 2025-26 include Sustainable Development Goals National Indicator Framework Progress Report 2025, Data Snapshot on Sustainable Development Goals National Indicator Framework Progress Report 2025, Sustainable Development Goals – National Indicator Framework 2025, EnviStats India 2025: Environment Statistics, “Environmental Accounting on forest -2025”, Women and Men in India, 2024: Selected Indicators and Data and Ad hoc Publication Children in India 2025. 1.12 The National Sample Survey (NSS) under MoSPI is responsible for conducting large scale sample surveys in diverse fields on all India basis. Primary data is collected regularly through nation-wide household/enterprise surveys on various socio-economic subjects. Besides these surveys, the Ministry collects data on rural and urban prices and also plays a significant role in the improvement of crop statistics through supervision of the area enumeration and crop estimation surveys of the State agencies. It also maintains a frame of urban area units for drawing samples in urban areas. 1.13 The MoSPI website (https://www.mospi.gov.in ) serves as an integrated digital platform for",
+          "confidence": 0.8208877300271894
+        }
+      ]
+    },
+    {
+      "page_index": 5,
+      "width": 2481,
+      "height": 3508,
+      "regions": [
+        {
+          "bbox": [
+            359,
+            42,
+            638,
+            60
+          ],
+          "type": "header",
+          "text": "Annual Report 2025-26",
+          "confidence": 0.9381104350090027
+        },
+        {
+          "bbox": [
+            71,
+            89,
+            928,
+            209
+          ],
+          "type": "text",
+          "text": "Till 31st December, 2025, 38 meetings of ACNAS and its Sub -committees have been held. New series’ release by MoSPI will be done on 27th February, 2026. Industry wise estimates of GVA at both Current and Constant Prices along with expenditure side 2.9 estimates as per First Advance Estimates (FAE) of GDP for FY 2025-26 released on 7th January, 2026 and Provisional Estimates of GDP for FY 2024-25 released on 30th May, 2025 are given in the following statements and graphs:",
+          "confidence": 0.980857953033616
+        },
+        {
+          "bbox": [
+            184,
+            222,
+            814,
+            244
+          ],
+          "type": "heading",
+          "text": "Statement 1: First Advance Estimates of Annual GDP for FY 2025-26 and its Expenditure Components (at 2011- 12 Prices)",
+          "confidence": 0.8973159113755593
+        },
+        {
+          "bbox": [
+            74,
+            246,
+            927,
+            611
+          ],
+          "type": "table",
+          "text": "( \u0000 Crore) 2024-25 2025-26 Domestic Product 1 GVA at Basic Prices 1,61,51,477 1,71,87,446 1,84,49,828 6.4 7.3 2 Net Taxes on Products 14,99,114 16,09,509 17,40,091 7.4 8.1 3 Gross Domestic Product (GDP) @ 1,76,50,591 1,87,96,955 2,01,89,919 6.5 7.4 4 Net Domestic Product (NDP) 1,54,21,624 1,64,25,021 1,76,43,771 6.5 7.4 Expenditure Components # 5 Private Final Consumption Expenditure (PFCE) 99,06,774 1,06,19,579 1,13,67,565 7.2 7.0 6 Government Final Consumption Expenditure (GFCE) 16,69,675 17,07,730 17,96,419 2.3 5.2 7 Gross Fixed Capital Formation (GFCF) 59,15,288 63,33,084 68,28,576 7.1 7.8 8 Changes in Stocks (CIS) 3,05,610 3,19,228 3,34,875 4.5 4.9 9 Valuables 2,69,106 2,70,758 2,41,985 0.6 -10.6 10 Exports 38,25,494 40,68,098 43,27,569 6.3 6.4 11 Imports 43,90,614 42,29,390 48,40,195 -3.7 14.4 12 Discrepancies 1,49,257 -2,92,131 1,33,126 -1.6 0.7 13 GDP 1,76,50,591 1,87,96,955 2,01,89,919 6.5 7.4 Share in GDP(%) 14 Private Final Consumption Expenditure (PFCE) 56.1 56.5 56.3 Government Final Consumption 2024-25 (PE) 2025-26 (FAE) 2023-24 (FRE) Percentage Change Over Previous Year Item Sl. No.",
+          "confidence": 0.9998499790176016
+        }
+      ]
+    },
+    {
+      "page_index": 6,
+      "width": 2481,
+      "height": 3508,
+      "regions": [
+        {
+          "bbox": [
+            359,
+            42,
+            638,
+            60
+          ],
+          "type": "header",
+          "text": "Annual Report 2025-26",
+          "confidence": 0.8963765501976013
+        },
+        {
+          "bbox": [
+            107,
+            85,
+            904,
+            110
+          ],
+          "type": "heading",
+          "text": "Statement 2: First Advance Estimates of Annual GDP for FY 2025-26 and its Expenditure Components (at Current Prices)",
+          "confidence": 0.977091945707798
+        },
+        {
+          "bbox": [
+            73,
+            111,
+            931,
+            838
+          ],
+          "type": "table",
+          "text": "( \u0000 Crore) 2024-25 2025-26 Domestic Product 1 GVA at Basic Prices 2,74,12,888 3,00,22,033 3,23,47,873 9.5 7.7 2 Net Taxes on Products 27,10,068 30,46,113 33,66,013 12.4 10.5 3 Gross Domestic Product (GDP) @ 3,01,22,956 3,30,68,145 3,57,13,886 9.8 8.0 4 Net Domestic Product (NDP) 2,67,62,544 2,93,87,892 3,17,48,519 9.8 8.0 Expenditure Components # 5 Private Final Consumption Expenditure (PFCE) 1,81,30,431 2,02,98,413 2,19,63,865 12.0 8.2 6 Government Final Consumption Expenditure (GFCE) 31,04,298 33,03,119 35,19,836 6.4 6.6 7 Gross Fixed Capital Formation (GFCF) 91,65,224 98,86,129 1,07,11,183 7.9 8.3 8 Changes in Stocks (CIS) 4,59,571 4,97,181 5,16,698 8.2 3.9 9 Valuables 4,24,919 5,00,785 5,76,105 17.9 15.0 10 Exports 64,60,982 69,97,830 76,62,052 8.3 9.5 11 Imports 70,92,192 77,66,863 84,68,883 9.5 9.0 12 Discrepancies -5,30,277 -6,48,448 -7,66,970 -2.0 -2.1 13 GDP 3,01,22,956 3,30,68,145 3,57,13,886 9.8 8.0 Share in GDP(%) 14 Private Final Consumption Expenditure (PFCE) 60.2 61.4 61.5 15 Government Final Consumption Expenditure (GFCE) 10.3 10.0 9.9 16 Gross Fixed Capital Formation (GFCF) 30.4 29.9 30.0 17 Changes in Stocks (CIS) 1.5 1.5 1.4 18 Valuables 1.4 1.5 1.6 19 Exports 21.4 21.2 21.5 20 Imports 23.5 23.5 23.7 21 Discrepancies -1.8 -2.0 -2.1 22 GDP 100.0 100.0 100.0 National Product 23 Gross National Income (GNI) 2,97,10,786 3,25,89,848 3,51,58,997 9.7 7.9 24 Net National Income (NNI) 2,63,50,374 2,89,09,595 3,11,93,630 9.7 7.9 25 Gross National Disposable Income (GNDI) 3,05,94,001 3,35,48,469 3,62,04,794 9.7 7.9 26 Net National Disposable Income (NNDI) 2,72,33,589 2,98,68,215 3,22,39,426 9.7 7.9 27 Per Capita GDP (?) 2,15,935 2,34,859 2,51,393 8.8 7.0 28 Per Capita GNI (?) 2,12,981 2,31,462 2,47,487 8.7 6.9 29 Per Capita NNI (?) 1,88,892 2,05,324 2,19,575 8.7 6.9 30 Per Capita GNDI (?) 2,19,312 2,38,270 2,54,849 8.6 7.0 Per Capita Income, National Product and Final Consumption Item 2024-25 (PE) 2025-26 (FAE) 2023-24 (FRE) Sl. No. Percentage Change Over Previous",
+          "confidence": 0.9985979589751753
+        }
+      ]
+    },
+    {
+      "page_index": 7,
+      "width": 2481,
+      "height": 3508,
+      "regions": [
+        {
+          "bbox": [
+            359,
+            42,
+            638,
+            60
+          ],
+          "type": "header",
+          "text": "Annual Report 2025-26",
+          "confidence": 0.9573395729064942
+        },
+        {
+          "bbox": [
+            70,
+            88,
+            931,
+            639
+          ],
+          "type": "table",
+          "text": "( \u0000 Crore) 2024-25 2025-26 1. Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7 1.1 Agriculture, Livestock, Forestry & Fishing 23,67,287 24,76,805 25,54,071 4.6 3.1 1.2. Mining & Quarrying 3,30,007 3,38,884 3,36,550 2.7 -0.7 2. Secondary Sector 46,46,499 49,31,228 52,57,858 6.1 6.6 2.1. Manufacturing 28,25,935 29,53,647 31,61,364 4.5 7.0 2.2. Electricity, Gas, Water Supply & Other Utility Services 3,82,776 4,05,296 4,13,702 5.9 2.1 2.3. Construction 14,37,788 15,72,285 16,82,792 9.4 7.0 3. Tertiary Sector 88,07,683 94,40,529 1,03,01,349 7.2 9.1 3.1 Trade, Hotels, Transport, Communication & Services related to Broadcasting 29,94,536 31,76,830 34,15,552 6.1 7.5 3.2 Financial, Real Estate & Professional Services 38,14,586 40,88,072 44,94,341 7.2 9.9 3.3 Public Administration, Defence & Other Services* 19,98,561 21,75,628 23,91,455 8.9 9.9 GVA at Basic Prices 1,61,51,477 1,71,87,446 1,84,49,828 6.4 7.3 Percentage Change Over Previous Year Industry Statement 3: First Advance Estimates of GVA at Basic Prices by Economic Activity (at 2011- 12 Prices) 2023-24 (FRE) 2024-25 (PE) 2025-26 (FAE) ( \u0000 Crore) 2024-25 2025-26 1. Primary Sector 54,10,210 59,26,078 59,36,462 9.5 0.2 1.1 Agriculture, Livestock, Forestry & Fishing 48,77,867 53,85,291 54,27,908 10.4 0.8 1.2. Mining & Quarrying 5,32,343 5,40,788 5,08,554 1.6 -6.0 2. Secondary Sector 70,89,650 76,03,402 81,71,692 7.2 7.5 2.1. Manufacturing 39,21,596 41,69,419 45,54,580 6.3 9.2 2.2. Electricity, Gas, Water Supply & Other Utility Services 7,66,435 8,06,974 8,17,265 5.3 1.3 2.3. Construction 24,01,618 26,27,009 27,99,847 9.4 6.6 2023-24 (FRE) Percentage Change Over Previous Year 2024-25 (PE) 2025-26 (FAE) Statement 4: First Advance Estimates of GVA at Basic Prices by Economic Activity (at Current Prices) Industry",
+          "confidence": 0.9994759608023237
+        }
+      ]
+    },
+    {
+      "page_index": 8,
+      "width": 2481,
+      "height": 3508,
+      "regions": [
+        {
+          "bbox": [
+            359,
+            42,
+            638,
+            60
+          ],
+          "type": "header",
+          "text": "Annual Report 2025-26",
+          "confidence": 0.9895123362541198
+        },
+        {
+          "bbox": [
+            81,
+            91,
+            921,
+            121
+          ],
+          "type": "caption",
+          "text": "Fig. 1: Annual GDP and GVA Estimates along with Y-o-Y Growth Rates at Constant Prices",
+          "confidence": 0.999112072316083
+        },
+        {
+          "bbox": [
+            178,
+            163,
+            667,
+            229
+          ],
+          "type": "figure",
+          "text": "",
+          "confidence": 0.8503847784466214
+        },
+        {
+          "bbox": [
+            386,
+            164,
+            411,
+            176
+          ],
+          "type": "caption",
+          "text": "",
+          "confidence": 0.6866418719291687
+        },
+        {
+          "bbox": [
+            459,
+            163,
+            510,
+            177
+          ],
+          "type": "figure",
+          "text": "",
+          "confidence": 0.7124665081501007
+        },
+        {
+          "bbox": [
+            459,
+            163,
+            544,
+            177
+          ],
+          "type": "caption",
+          "text": "",
+          "confidence": 0.6138204038143158
+        },
+        {
+          "bbox": [
+            93,
+            163,
+            877,
+            839
+          ],
+          "type": "figure",
+          "text": "",
+          "confidence": 0.9562015984029997
+        }
+      ]
+    },
+    {
+      "page_index": 9,
+      "width": 2481,
+      "height": 3508,
+      "regions": [
+        {
+          "bbox": [
+            176,
+            111,
+            811,
+            126
+          ],
+          "type": "caption",
+          "text": "Fig. 2: Sectoral Composition and Growth Rates of Annual GVA",
+          "confidence": 0.9982626994450887
+        },
+        {
+          "bbox": [
+            93,
+            177,
+            883,
+            836
+          ],
+          "type": "figure",
+          "text": "",
+          "confidence": 0.9885179467347204
+        },
+        {
+          "bbox": [
+            512,
+            827,
+            588,
+            836
+          ],
+          "type": "figure",
+          "text": "",
+          "confidence": 0.5548943082491556
+        }
+      ]
+    },
+    {
+      "page_index": 10,
+      "width": 2481,
+      "height": 3508,
+      "regions": [
+        {
+          "bbox": [
+            0,
+            42,
+            999,
+            81
+          ],
+          "type": "header",
+          "text": "Annual Report 2025-26",
+          "confidence": 0.8439032062888145
+        },
+        {
+          "bbox": [
+            138,
+            92,
+            855,
+            184
+          ],
+          "type": "caption",
+          "text": "Fig. 3: Composition and Growth Rates of Annual GVA in Broad Sectors",
+          "confidence": 0.9902467661433749
+        },
+        {
+          "bbox": [
+            355,
+            171,
+            495,
+            184
+          ],
+          "type": "figure",
+          "text": "",
+          "confidence": 0.5904833376407623
+        },
+        {
+          "bbox": [
+            499,
+            171,
+            642,
+            181
+          ],
+          "type": "caption",
+          "text": "",
+          "confidence": 0.9841867685317993
+        },
+        {
+          "bbox": [
+            89,
+            456,
+            863,
+            827
+          ],
+          "type": "figure",
+          "text": "",
+          "confidence": 0.9990067426249277
+        }
+      ]
+    }
+  ]
+}

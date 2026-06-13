@@ -1,0 +1,565 @@
+{
+  "questions_count": 9,
+  "topics_count": 2,
+  "questions": [
+    {
+      "questionId": "sp01_q01",
+      "intent": "What is the classification framework used for energy reserves as per the United Nations Framework Classification for Fossil Energy and Mineral Reserves and Resources (UNFC 2009) in CHAPTER 1?",
+      "questionType": "describe",
+      "page": 2,
+      "sourceHeading": "CHAPTER 1 Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "Energy Reserves",
+          "role": "filter"
+        },
+        {
+          "entityRef": "UNFC 2009",
+          "role": "breakdown"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [
+          {
+            "entityRef": "UNFC 2009"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Energy Reserves"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp01_q02",
+      "intent": "How does the System of Environmental Economic Accounting (SEEA)-Energy categorize the detailed categories of UNFC into aggregated classes in CHAPTER 1?",
+      "questionType": "describe",
+      "page": 2,
+      "sourceHeading": "CHAPTER 1 Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "SEEA-Energy",
+          "role": "filter"
+        },
+        {
+          "entityRef": "UNFC",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "CHAPTER 1",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "summary_stats",
+        "measure": null,
+        "groupBy": [
+          {
+            "entityRef": "UNFC"
+          },
+          {
+            "entityRef": "CHAPTER 1"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "SEEA-Energy"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp01_q03",
+      "intent": "What are the three aggregated classes characterizing the commercial recoverability of resources as per the System of Environmental Economic Accounting (SEEA)-Energy in CHAPTER 1?",
+      "questionType": "composition",
+      "page": 2,
+      "sourceHeading": "CHAPTER 1 Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "SEEA-Energy",
+          "role": "filter"
+        },
+        {
+          "entityRef": "CHAPTER 1",
+          "role": "filter"
+        },
+        {
+          "entityRef": "commercial recoverability of resources",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "share",
+        "measure": {
+          "entityRef": "commercial recoverability of resources"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "SEEA-Energy"
+          },
+          {
+            "entityRef": "CHAPTER 1"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp02_q01",
+      "intent": "What is the distribution of energy reserves in India across different types of fossil fuels and renewable energy resources?",
+      "questionType": "distribution",
+      "page": 2,
+      "sourceHeading": "Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "Energy Reserves",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Types of fossil fuels and renewable energy resources",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "States/ UTs",
+          "role": "breakdown"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "distribution",
+        "measure": {
+          "entityRef": "Energy Reserves"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Types of fossil fuels and renewable energy resources"
+          },
+          {
+            "entityRef": "States/ UTs"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "multi-panel",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 2
+          },
+          {
+            "type": "data_table",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp02_q02",
+      "intent": "How do the energy reserves in India, specifically coal, lignite, crude oil, and natural gas, contribute to the country's overall energy potential?",
+      "questionType": "composition",
+      "page": 2,
+      "sourceHeading": "Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "Energy Reserves",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Coal Reserves",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Lignite Reserves",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Crude Oil Reserves",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Natural Gas Reserves",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "Geographical Distribution",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "share",
+        "measure": null,
+        "groupBy": [
+          {
+            "entityRef": "Coal Reserves"
+          },
+          {
+            "entityRef": "Lignite Reserves"
+          },
+          {
+            "entityRef": "Crude Oil Reserves"
+          },
+          {
+            "entityRef": "Natural Gas Reserves"
+          },
+          {
+            "entityRef": "Geographical Distribution"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Energy Reserves"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "multi-panel",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          },
+          {
+            "type": "data_table",
+            "renderOrder": 2
+          },
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 3
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp02_q03",
+      "intent": "What is the comparison of commercially recoverable resources (Class A) versus potentially commercially recoverable resources (Class B) in India's energy reserves?",
+      "questionType": "comparison",
+      "page": 2,
+      "sourceHeading": "Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "Energy Reserves",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Class A",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Class B",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Energy Reserves"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Class A"
+          },
+          {
+            "entityRef": "Class B"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp03_q01",
+      "intent": "What is the total estimated potential of Wind Power @ 150m for the top 5 states with the highest potential in India as on 31.03.2025?",
+      "questionType": "composition",
+      "page": 9,
+      "sourceHeading": "Chapter 1: Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "States/ UTs",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Proved 2025",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Indicated 2025",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Total 2025",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "share",
+        "measure": {
+          "entityRef": "Proved 2025"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "States/ UTs"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          },
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp03_q02",
+      "intent": "How does the estimated potential of Solar Energy compare between the states with the highest and lowest potential as on 31.03.2025?",
+      "questionType": "comparison",
+      "page": 9,
+      "sourceHeading": "Chapter 1: Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "States/ UTs",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Proved 2025",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Indicated 2025",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Inferred 2025",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Proved 2025"
+        },
+        "groupBy": [
+          {
+            "entityRef": "States/ UTs"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp03_q03",
+      "intent": "What is the distribution of estimated Large Hydro power potential across different states in India as on 31.03.2025?",
+      "questionType": "distribution",
+      "page": 9,
+      "sourceHeading": "Chapter 1: Energy Reserves and Potential",
+      "requiredEntities": [
+        {
+          "entityRef": "States/ UTs",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "Proved 2025",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Indicated 2025",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Inferred 2025",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "distribution",
+        "measure": {
+          "entityRef": "Proved 2025"
+        },
+        "groupBy": [
+          {
+            "entityRef": "States/ UTs"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "pie_chart",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "CHAPTER 1",
+      "description": "Questions from chapter: CHAPTER 1",
+      "questionIds": [
+        "sp01_q01",
+        "sp01_q02",
+        "sp01_q03",
+        "sp02_q01",
+        "sp02_q02",
+        "sp02_q03"
+      ],
+      "pageRange": [
+        2,
+        2
+      ]
+    },
+    {
+      "topicId": "topic_03",
+      "title": "1 Energy Reserves and Potential",
+      "description": "Questions from chapter: 1 Energy Reserves and Potential",
+      "questionIds": [
+        "sp03_q01",
+        "sp03_q02",
+        "sp03_q03"
+      ],
+      "pageRange": [
+        9,
+        9
+      ]
+    }
+  ]
+}

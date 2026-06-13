@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 interface DataTableProps {
   columns: string[];
-  data: any[][];
+  data: unknown[][];
   insights?: Record<string, { type?: string; semantic?: string; priority?: number }>;
 }
 

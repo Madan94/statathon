@@ -1,0 +1,3109 @@
+{
+  "$schema": "bharatstat/template-blueprint/v1",
+  "_doc": "VALUE-FREE + PROSE-FREE analytic brain. Defines WHAT to compute and HOW to render. Contains NO numbers, NO sentences, NO dataset. Pairs 1:1 with template.ast.json by shared IDs.",
+  "templateMeta": {
+    "templateId": "tpl_template_1_v1",
+    "name": "Document",
+    "domain": "general",
+    "locale": "en-IN",
+    "version": "3.0",
+    "valueFree": true,
+    "proseFree": true,
+    "sourceDocument": "Document",
+    "enterpriseReady": true,
+    "enterpriseContractVersion": "binding.template.enterprise.v1"
+  },
+  "entities": [
+    {
+      "entityId": "ent_001",
+      "canonicalName": "Labour Force Participation Rate",
+      "entityType": "measure",
+      "aliases": [
+        "Labour Force Participation Rate",
+        "LFPR"
+      ],
+      "unit": "percent",
+      "format": "0.0%",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "Labour Force Participation Rate",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "weighted_mean_or_reported_value",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "review_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "measure",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_002",
+      "canonicalName": "Worker Population Ratio",
+      "entityType": "measure",
+      "aliases": [
+        "Worker Population Ratio",
+        "WPR"
+      ],
+      "unit": "percent",
+      "format": "0.0%",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "Worker Population Ratio",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "weighted_mean_or_reported_value",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "review_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "measure",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_003",
+      "canonicalName": "Unemployment Rate",
+      "entityType": "measure",
+      "aliases": [
+        "Unemployment Rate",
+        "UR"
+      ],
+      "unit": "percent",
+      "format": "0.0%",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "Unemployment Rate",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "weighted_mean_or_reported_value",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "review_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "measure",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_004",
+      "canonicalName": "Gender",
+      "entityType": "dimension",
+      "aliases": [
+        "Gender",
+        "Male",
+        "Female",
+        "Persons"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "closed",
+        "members": [
+          "Male",
+          "Female",
+          "Transgender"
+        ]
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "Gender",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "not_applicable",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "not_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "dimension",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_005",
+      "canonicalName": "Rural/Urban Sector",
+      "entityType": "dimension",
+      "aliases": [
+        "Rural/Urban Sector",
+        "Rural",
+        "Urban"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "closed",
+        "members": [
+          "Rural",
+          "Urban"
+        ]
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "Rural/Urban Sector",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "not_applicable",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "not_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "dimension",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_006",
+      "canonicalName": "Survey Year",
+      "entityType": "dimension",
+      "aliases": [
+        "Survey Year",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "Survey Year",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "not_applicable",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "not_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "dimension",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_007",
+      "canonicalName": "Age Group",
+      "entityType": "dimension",
+      "aliases": [
+        "Age Group",
+        "15+",
+        "15-29",
+        "15-59",
+        "Youth"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "Age Group",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "not_applicable",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "not_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "dimension",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_008",
+      "canonicalName": "Status in Employment",
+      "entityType": "measure",
+      "aliases": [
+        "Status in Employment",
+        "Self-employed",
+        "Regular wage",
+        "Casual labour"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "Status in Employment",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "reported_value_review_required",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "not_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "measure",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_009",
+      "canonicalName": "Usual Status",
+      "entityType": "dimension",
+      "aliases": [
+        "Usual Status",
+        "ps+ss",
+        "usual status"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "Usual Status",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "not_applicable",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "not_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "dimension",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_010",
+      "canonicalName": "Periodic Labour Force Survey",
+      "entityType": "dimension",
+      "aliases": [
+        "Periodic Labour Force Survey",
+        "PLFS"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "Periodic Labour Force Survey",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "not_applicable",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "not_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "dimension",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_012",
+      "canonicalName": "Samrat (Release I",
+      "entityType": "measure",
+      "aliases": [
+        "Samrat (Release I"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.8,
+      "name": "Samrat (Release I",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "reported_value_review_required",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "not_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "measure",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_013",
+      "canonicalName": "Key findings",
+      "entityType": "dimension",
+      "aliases": [
+        "Key findings"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "Key findings",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "not_applicable",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "not_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "dimension",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_014",
+      "canonicalName": "A. Introduction",
+      "entityType": "dimension",
+      "aliases": [
+        "A. Introduction"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "A. Introduction",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "not_applicable",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "not_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "dimension",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_015",
+      "canonicalName": "B. Sample Size",
+      "entityType": "dimension",
+      "aliases": [
+        "B. Sample Size"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "B. Sample Size",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "not_applicable",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "not_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "dimension",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_018",
+      "canonicalName": "Labour Force Participation Rate :",
+      "entityType": "measure",
+      "aliases": [
+        "Labour Force Participation Rate :",
+        "LFPR"
+      ],
+      "unit": "percent",
+      "format": "0.0%",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": "lfpr",
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "Labour Force Participation Rate :",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "weighted_mean_or_reported_value",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "review_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "measure",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    },
+    {
+      "entityId": "ent_021",
+      "canonicalName": "Publications/ Reports",
+      "entityType": "dimension",
+      "aliases": [
+        "Publications/ Reports"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5,
+      "name": "Publications/ Reports",
+      "sourceRefs": [],
+      "evidence": [],
+      "aggregationPolicy": {
+        "method": "not_applicable",
+        "grain": "same_as_question_plan",
+        "missingWeightAction": "not_required"
+      },
+      "binderHints": {
+        "domain": "labour",
+        "preferredRole": "dimension",
+        "requiresOfficerReview": true
+      },
+      "qualityRules": [
+        {
+          "ruleId": "entity_has_evidence",
+          "severity": "block",
+          "required": true
+        },
+        {
+          "ruleId": "entity_has_alias",
+          "severity": "warn",
+          "required": true
+        }
+      ],
+      "officerReview": {
+        "status": "needs_review",
+        "checklist": [
+          "confirm_label",
+          "confirm_unit",
+          "confirm_source_evidence"
+        ]
+      },
+      "riskFlags": [
+        "missing_source_refs"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Periodic Labour Force Survey (PLFS) Annual",
+      "order": 1,
+      "semanticRef": "sec_01",
+      "questions": [
+        {
+          "questionId": "q_001",
+          "intent": "What are the key findings and statistics in the section on 'Periodic Labour Force Survey (PLFS) Annual'?",
+          "questionType": "describe",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "summary_stats",
+            "measure": {
+              "entityRef": "ent_001",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_004"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_001_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_002"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_001",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_001_c2",
+                "kind": "formula_metric",
+                "order": 2,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "formula_metric"
+              },
+              {
+                "componentId": "q_001__provenance",
+                "kind": "provenance",
+                "componentKind": "provenance",
+                "order": 99,
+                "outputContract": {
+                  "type": "provenance",
+                  "requiresEvidence": true
+                },
+                "refs": {}
+              }
+            ]
+          },
+          "questionText": "What are the key findings and statistics in the section on 'Periodic Labour Force Survey (PLFS) Annual'?",
+          "formulaSpec": {
+            "type": "DESCRIPTIVE",
+            "measureEntityIds": [
+              "ent_001",
+              "ent_002"
+            ],
+            "dimensionEntityIds": [
+              "ent_004"
+            ],
+            "timeEntityIds": [],
+            "weightColumn": null,
+            "multiplier": 1,
+            "readiness": "READY",
+            "blockedReasons": []
+          },
+          "binderContract": {
+            "schema": "bharatstat/question-binder-contract/v1",
+            "questionId": "q_001",
+            "domain": "labour",
+            "requiredBeforeS3_5": [
+              "formulaSpec",
+              "answerStructure.components",
+              "provenanceRequirements"
+            ],
+            "readiness": "READY"
+          },
+          "qualityGates": [
+            {
+              "gateId": "formula_spec_structured",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "answer_components_wired",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "provenance_component_present",
+              "severity": "block",
+              "required": true
+            }
+          ],
+          "provenanceRequirements": {
+            "required": true,
+            "minimumEvidenceRefs": 1,
+            "acceptedEvidence": [
+              "sourceRefs",
+              "table_header",
+              "layout_region",
+              "figure_region"
+            ]
+          },
+          "customization": {
+            "officerEditable": [
+              "questionText",
+              "narrativeDepth",
+              "chartType",
+              "tableDensity"
+            ],
+            "lockedFields": [
+              "questionId",
+              "formulaSpec.type"
+            ]
+          },
+          "answerPlan": {
+            "structure": [
+              "narrative",
+              "metric",
+              "visual_or_table_if_available",
+              "provenance"
+            ],
+            "valuePolicy": "value_free_template_only"
+          },
+          "reviewChecklist": [
+            "confirm_required_entities",
+            "confirm_formula_type",
+            "confirm_output_components",
+            "confirm_source_evidence"
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_02",
+      "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "order": 2,
+      "semanticRef": "sec_02",
+      "questions": [
+        {
+          "questionId": "q_002",
+          "intent": "What are the key findings and statistics in the section on '1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above'?",
+          "questionType": "describe",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "summary_stats",
+            "measure": {
+              "entityRef": "ent_001",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_004"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_002_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_002"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_002",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_002_c2",
+                "kind": "formula_metric",
+                "order": 2,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "formula_metric"
+              },
+              {
+                "componentId": "q_002__provenance",
+                "kind": "provenance",
+                "componentKind": "provenance",
+                "order": 99,
+                "outputContract": {
+                  "type": "provenance",
+                  "requiresEvidence": true
+                },
+                "refs": {}
+              }
+            ]
+          },
+          "questionText": "What are the key findings and statistics in the section on '1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above'?",
+          "formulaSpec": {
+            "type": "RATE",
+            "measureEntityIds": [
+              "ent_001",
+              "ent_002"
+            ],
+            "dimensionEntityIds": [
+              "ent_004"
+            ],
+            "timeEntityIds": [],
+            "weightColumn": null,
+            "multiplier": 100,
+            "readiness": "READY",
+            "blockedReasons": []
+          },
+          "binderContract": {
+            "schema": "bharatstat/question-binder-contract/v1",
+            "questionId": "q_002",
+            "domain": "labour",
+            "requiredBeforeS3_5": [
+              "formulaSpec",
+              "answerStructure.components",
+              "provenanceRequirements"
+            ],
+            "readiness": "READY"
+          },
+          "qualityGates": [
+            {
+              "gateId": "formula_spec_structured",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "answer_components_wired",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "provenance_component_present",
+              "severity": "block",
+              "required": true
+            }
+          ],
+          "provenanceRequirements": {
+            "required": true,
+            "minimumEvidenceRefs": 1,
+            "acceptedEvidence": [
+              "sourceRefs",
+              "table_header",
+              "layout_region",
+              "figure_region"
+            ]
+          },
+          "customization": {
+            "officerEditable": [
+              "questionText",
+              "narrativeDepth",
+              "chartType",
+              "tableDensity"
+            ],
+            "lockedFields": [
+              "questionId",
+              "formulaSpec.type"
+            ]
+          },
+          "answerPlan": {
+            "structure": [
+              "narrative",
+              "metric",
+              "visual_or_table_if_available",
+              "provenance"
+            ],
+            "valuePolicy": "value_free_template_only"
+          },
+          "reviewChecklist": [
+            "confirm_required_entities",
+            "confirm_formula_type",
+            "confirm_output_components",
+            "confirm_source_evidence"
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_03",
+      "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "order": 3,
+      "semanticRef": "sec_03",
+      "questions": [
+        {
+          "questionId": "q_003",
+          "intent": "What are the key findings and statistics in the section on '2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained'?",
+          "questionType": "describe",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "summary_stats",
+            "measure": {
+              "entityRef": "ent_001",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_004"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_003_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_002"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_003",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_003_c2",
+                "kind": "formula_metric",
+                "order": 2,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "formula_metric"
+              },
+              {
+                "componentId": "q_003__provenance",
+                "kind": "provenance",
+                "componentKind": "provenance",
+                "order": 99,
+                "outputContract": {
+                  "type": "provenance",
+                  "requiresEvidence": true
+                },
+                "refs": {}
+              }
+            ]
+          },
+          "questionText": "What are the key findings and statistics in the section on '2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained'?",
+          "formulaSpec": {
+            "type": "RATIO",
+            "measureEntityIds": [
+              "ent_001",
+              "ent_002"
+            ],
+            "dimensionEntityIds": [
+              "ent_004"
+            ],
+            "timeEntityIds": [],
+            "weightColumn": null,
+            "multiplier": 1,
+            "readiness": "READY",
+            "blockedReasons": []
+          },
+          "binderContract": {
+            "schema": "bharatstat/question-binder-contract/v1",
+            "questionId": "q_003",
+            "domain": "labour",
+            "requiredBeforeS3_5": [
+              "formulaSpec",
+              "answerStructure.components",
+              "provenanceRequirements"
+            ],
+            "readiness": "READY"
+          },
+          "qualityGates": [
+            {
+              "gateId": "formula_spec_structured",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "answer_components_wired",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "provenance_component_present",
+              "severity": "block",
+              "required": true
+            }
+          ],
+          "provenanceRequirements": {
+            "required": true,
+            "minimumEvidenceRefs": 1,
+            "acceptedEvidence": [
+              "sourceRefs",
+              "table_header",
+              "layout_region",
+              "figure_region"
+            ]
+          },
+          "customization": {
+            "officerEditable": [
+              "questionText",
+              "narrativeDepth",
+              "chartType",
+              "tableDensity"
+            ],
+            "lockedFields": [
+              "questionId",
+              "formulaSpec.type"
+            ]
+          },
+          "answerPlan": {
+            "structure": [
+              "narrative",
+              "metric",
+              "visual_or_table_if_available",
+              "provenance"
+            ],
+            "valuePolicy": "value_free_template_only"
+          },
+          "reviewChecklist": [
+            "confirm_required_entities",
+            "confirm_formula_type",
+            "confirm_output_components",
+            "confirm_source_evidence"
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_04",
+      "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "order": 4,
+      "semanticRef": "sec_04",
+      "questions": [
+        {
+          "questionId": "q_004",
+          "intent": "What are the key findings and statistics in the section on '3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and'?",
+          "questionType": "describe",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "summary_stats",
+            "measure": {
+              "entityRef": "ent_001",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_004"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_004_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_002"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_004",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_004_c2",
+                "kind": "formula_metric",
+                "order": 2,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "formula_metric"
+              },
+              {
+                "componentId": "q_004__provenance",
+                "kind": "provenance",
+                "componentKind": "provenance",
+                "order": 99,
+                "outputContract": {
+                  "type": "provenance",
+                  "requiresEvidence": true
+                },
+                "refs": {}
+              }
+            ]
+          },
+          "questionText": "What are the key findings and statistics in the section on '3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and'?",
+          "formulaSpec": {
+            "type": "RATE",
+            "measureEntityIds": [
+              "ent_001",
+              "ent_002"
+            ],
+            "dimensionEntityIds": [
+              "ent_004"
+            ],
+            "timeEntityIds": [],
+            "weightColumn": null,
+            "multiplier": 100,
+            "readiness": "READY",
+            "blockedReasons": []
+          },
+          "binderContract": {
+            "schema": "bharatstat/question-binder-contract/v1",
+            "questionId": "q_004",
+            "domain": "labour",
+            "requiredBeforeS3_5": [
+              "formulaSpec",
+              "answerStructure.components",
+              "provenanceRequirements"
+            ],
+            "readiness": "READY"
+          },
+          "qualityGates": [
+            {
+              "gateId": "formula_spec_structured",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "answer_components_wired",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "provenance_component_present",
+              "severity": "block",
+              "required": true
+            }
+          ],
+          "provenanceRequirements": {
+            "required": true,
+            "minimumEvidenceRefs": 1,
+            "acceptedEvidence": [
+              "sourceRefs",
+              "table_header",
+              "layout_region",
+              "figure_region"
+            ]
+          },
+          "customization": {
+            "officerEditable": [
+              "questionText",
+              "narrativeDepth",
+              "chartType",
+              "tableDensity"
+            ],
+            "lockedFields": [
+              "questionId",
+              "formulaSpec.type"
+            ]
+          },
+          "answerPlan": {
+            "structure": [
+              "narrative",
+              "metric",
+              "visual_or_table_if_available",
+              "provenance"
+            ],
+            "valuePolicy": "value_free_template_only"
+          },
+          "reviewChecklist": [
+            "confirm_required_entities",
+            "confirm_formula_type",
+            "confirm_output_components",
+            "confirm_source_evidence"
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_05",
+      "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+      "order": 5,
+      "semanticRef": "sec_05",
+      "questions": [
+        {
+          "questionId": "q_005",
+          "intent": "What is the trend in Labour Force Participation Rate from 2022 to 2025?",
+          "questionType": "trend",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "ent_001",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_004"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_005_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_002"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_005",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_005__formula_metric",
+                "kind": "formula_metric",
+                "componentKind": "formula_metric",
+                "order": 2,
+                "outputContract": {
+                  "type": "metric",
+                  "formulaType": "RATE"
+                },
+                "refs": {}
+              },
+              {
+                "componentId": "q_005_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "ent_004",
+                  "yAxis": "ent_001"
+                },
+                "refs": {
+                  "chartRef": "chart_q_005",
+                  "figureRef": "fig_q_005",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              {
+                "componentId": "q_005__provenance",
+                "kind": "provenance",
+                "componentKind": "provenance",
+                "order": 99,
+                "outputContract": {
+                  "type": "provenance",
+                  "requiresEvidence": true
+                },
+                "refs": {}
+              }
+            ]
+          },
+          "questionText": "What is the trend in Labour Force Participation Rate from 2022 to 2025?",
+          "formulaSpec": {
+            "type": "RATE",
+            "measureEntityIds": [
+              "ent_001",
+              "ent_002"
+            ],
+            "dimensionEntityIds": [
+              "ent_004"
+            ],
+            "timeEntityIds": [],
+            "weightColumn": null,
+            "multiplier": 100,
+            "readiness": "READY",
+            "blockedReasons": []
+          },
+          "binderContract": {
+            "schema": "bharatstat/question-binder-contract/v1",
+            "questionId": "q_005",
+            "domain": "labour",
+            "requiredBeforeS3_5": [
+              "formulaSpec",
+              "answerStructure.components",
+              "provenanceRequirements"
+            ],
+            "readiness": "READY"
+          },
+          "qualityGates": [
+            {
+              "gateId": "formula_spec_structured",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "answer_components_wired",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "provenance_component_present",
+              "severity": "block",
+              "required": true
+            }
+          ],
+          "provenanceRequirements": {
+            "required": true,
+            "minimumEvidenceRefs": 1,
+            "acceptedEvidence": [
+              "sourceRefs",
+              "table_header",
+              "layout_region",
+              "figure_region"
+            ]
+          },
+          "customization": {
+            "officerEditable": [
+              "questionText",
+              "narrativeDepth",
+              "chartType",
+              "tableDensity"
+            ],
+            "lockedFields": [
+              "questionId",
+              "formulaSpec.type"
+            ]
+          },
+          "answerPlan": {
+            "structure": [
+              "narrative",
+              "metric",
+              "visual_or_table_if_available",
+              "provenance"
+            ],
+            "valuePolicy": "value_free_template_only"
+          },
+          "reviewChecklist": [
+            "confirm_required_entities",
+            "confirm_formula_type",
+            "confirm_output_components",
+            "confirm_source_evidence"
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_06",
+      "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "order": 6,
+      "semanticRef": "sec_06",
+      "questions": [
+        {
+          "questionId": "q_006",
+          "intent": "What are the key findings and statistics in the section on '5 Manufacturing and service sectors witnessed enhanced worker participation'?",
+          "questionType": "describe",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "summary_stats",
+            "measure": {
+              "entityRef": "ent_001",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_004"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_006_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_002"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_006",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_006_c2",
+                "kind": "formula_metric",
+                "order": 2,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "formula_metric"
+              },
+              {
+                "componentId": "q_006__provenance",
+                "kind": "provenance",
+                "componentKind": "provenance",
+                "order": 99,
+                "outputContract": {
+                  "type": "provenance",
+                  "requiresEvidence": true
+                },
+                "refs": {}
+              }
+            ]
+          },
+          "questionText": "What are the key findings and statistics in the section on '5 Manufacturing and service sectors witnessed enhanced worker participation'?",
+          "formulaSpec": {
+            "type": "DESCRIPTIVE",
+            "measureEntityIds": [
+              "ent_001",
+              "ent_002"
+            ],
+            "dimensionEntityIds": [
+              "ent_004"
+            ],
+            "timeEntityIds": [],
+            "weightColumn": null,
+            "multiplier": 1,
+            "readiness": "READY",
+            "blockedReasons": []
+          },
+          "binderContract": {
+            "schema": "bharatstat/question-binder-contract/v1",
+            "questionId": "q_006",
+            "domain": "labour",
+            "requiredBeforeS3_5": [
+              "formulaSpec",
+              "answerStructure.components",
+              "provenanceRequirements"
+            ],
+            "readiness": "READY"
+          },
+          "qualityGates": [
+            {
+              "gateId": "formula_spec_structured",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "answer_components_wired",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "provenance_component_present",
+              "severity": "block",
+              "required": true
+            }
+          ],
+          "provenanceRequirements": {
+            "required": true,
+            "minimumEvidenceRefs": 1,
+            "acceptedEvidence": [
+              "sourceRefs",
+              "table_header",
+              "layout_region",
+              "figure_region"
+            ]
+          },
+          "customization": {
+            "officerEditable": [
+              "questionText",
+              "narrativeDepth",
+              "chartType",
+              "tableDensity"
+            ],
+            "lockedFields": [
+              "questionId",
+              "formulaSpec.type"
+            ]
+          },
+          "answerPlan": {
+            "structure": [
+              "narrative",
+              "metric",
+              "visual_or_table_if_available",
+              "provenance"
+            ],
+            "valuePolicy": "value_free_template_only"
+          },
+          "reviewChecklist": [
+            "confirm_required_entities",
+            "confirm_formula_type",
+            "confirm_output_components",
+            "confirm_source_evidence"
+          ]
+        },
+        {
+          "questionId": "q_007",
+          "intent": "How does Labour Force Participation Rate vary by Gender?",
+          "questionType": "comparison",
+          "priority": 2,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_001",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_004"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_007_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_002"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_007",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_007__formula_metric",
+                "kind": "formula_metric",
+                "componentKind": "formula_metric",
+                "order": 2,
+                "outputContract": {
+                  "type": "metric",
+                  "formulaType": "RATE"
+                },
+                "refs": {}
+              },
+              {
+                "componentId": "q_007_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_004",
+                  "yAxis": "ent_001"
+                },
+                "refs": {
+                  "chartRef": "chart_q_007",
+                  "figureRef": "fig_q_007",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              {
+                "componentId": "q_007__provenance",
+                "kind": "provenance",
+                "componentKind": "provenance",
+                "order": 99,
+                "outputContract": {
+                  "type": "provenance",
+                  "requiresEvidence": true
+                },
+                "refs": {}
+              }
+            ]
+          },
+          "questionText": "How does Labour Force Participation Rate vary by Gender?",
+          "formulaSpec": {
+            "type": "RATE",
+            "measureEntityIds": [
+              "ent_001",
+              "ent_002"
+            ],
+            "dimensionEntityIds": [
+              "ent_004"
+            ],
+            "timeEntityIds": [],
+            "weightColumn": null,
+            "multiplier": 100,
+            "readiness": "READY",
+            "blockedReasons": []
+          },
+          "binderContract": {
+            "schema": "bharatstat/question-binder-contract/v1",
+            "questionId": "q_007",
+            "domain": "labour",
+            "requiredBeforeS3_5": [
+              "formulaSpec",
+              "answerStructure.components",
+              "provenanceRequirements"
+            ],
+            "readiness": "READY"
+          },
+          "qualityGates": [
+            {
+              "gateId": "formula_spec_structured",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "answer_components_wired",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "provenance_component_present",
+              "severity": "block",
+              "required": true
+            }
+          ],
+          "provenanceRequirements": {
+            "required": true,
+            "minimumEvidenceRefs": 1,
+            "acceptedEvidence": [
+              "sourceRefs",
+              "table_header",
+              "layout_region",
+              "figure_region"
+            ]
+          },
+          "customization": {
+            "officerEditable": [
+              "questionText",
+              "narrativeDepth",
+              "chartType",
+              "tableDensity"
+            ],
+            "lockedFields": [
+              "questionId",
+              "formulaSpec.type"
+            ]
+          },
+          "answerPlan": {
+            "structure": [
+              "narrative",
+              "metric",
+              "visual_or_table_if_available",
+              "provenance"
+            ],
+            "valuePolicy": "value_free_template_only"
+          },
+          "reviewChecklist": [
+            "confirm_required_entities",
+            "confirm_formula_type",
+            "confirm_output_components",
+            "confirm_source_evidence"
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_07",
+      "title": "6 Earnings of female workers have seen a notable shift",
+      "order": 7,
+      "semanticRef": "sec_07",
+      "questions": [
+        {
+          "questionId": "q_006",
+          "intent": "What are the key findings and statistics in the section on '5 Manufacturing and service sectors witnessed enhanced worker participation'?",
+          "questionType": "describe",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "summary_stats",
+            "measure": {
+              "entityRef": "ent_001",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_004"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_006_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_002"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_006",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_006_c2",
+                "kind": "formula_metric",
+                "order": 2,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "formula_metric"
+              },
+              {
+                "componentId": "q_006__provenance",
+                "kind": "provenance",
+                "componentKind": "provenance",
+                "order": 99,
+                "outputContract": {
+                  "type": "provenance",
+                  "requiresEvidence": true
+                },
+                "refs": {}
+              }
+            ]
+          },
+          "questionText": "What are the key findings and statistics in the section on '5 Manufacturing and service sectors witnessed enhanced worker participation'?",
+          "formulaSpec": {
+            "type": "DESCRIPTIVE",
+            "measureEntityIds": [
+              "ent_001",
+              "ent_002"
+            ],
+            "dimensionEntityIds": [
+              "ent_004"
+            ],
+            "timeEntityIds": [],
+            "weightColumn": null,
+            "multiplier": 1,
+            "readiness": "READY",
+            "blockedReasons": []
+          },
+          "binderContract": {
+            "schema": "bharatstat/question-binder-contract/v1",
+            "questionId": "q_006",
+            "domain": "labour",
+            "requiredBeforeS3_5": [
+              "formulaSpec",
+              "answerStructure.components",
+              "provenanceRequirements"
+            ],
+            "readiness": "READY"
+          },
+          "qualityGates": [
+            {
+              "gateId": "formula_spec_structured",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "answer_components_wired",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "provenance_component_present",
+              "severity": "block",
+              "required": true
+            }
+          ],
+          "provenanceRequirements": {
+            "required": true,
+            "minimumEvidenceRefs": 1,
+            "acceptedEvidence": [
+              "sourceRefs",
+              "table_header",
+              "layout_region",
+              "figure_region"
+            ]
+          },
+          "customization": {
+            "officerEditable": [
+              "questionText",
+              "narrativeDepth",
+              "chartType",
+              "tableDensity"
+            ],
+            "lockedFields": [
+              "questionId",
+              "formulaSpec.type"
+            ]
+          },
+          "answerPlan": {
+            "structure": [
+              "narrative",
+              "metric",
+              "visual_or_table_if_available",
+              "provenance"
+            ],
+            "valuePolicy": "value_free_template_only"
+          },
+          "reviewChecklist": [
+            "confirm_required_entities",
+            "confirm_formula_type",
+            "confirm_output_components",
+            "confirm_source_evidence"
+          ]
+        },
+        {
+          "questionId": "q_007",
+          "intent": "How does Labour Force Participation Rate vary by Gender?",
+          "questionType": "comparison",
+          "priority": 2,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_001",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_004"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_007_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_002"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_007",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_007__formula_metric",
+                "kind": "formula_metric",
+                "componentKind": "formula_metric",
+                "order": 2,
+                "outputContract": {
+                  "type": "metric",
+                  "formulaType": "RATE"
+                },
+                "refs": {}
+              },
+              {
+                "componentId": "q_007_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "ent_004",
+                  "yAxis": "ent_001"
+                },
+                "refs": {
+                  "chartRef": "chart_q_007",
+                  "figureRef": "fig_q_007",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              },
+              {
+                "componentId": "q_007__provenance",
+                "kind": "provenance",
+                "componentKind": "provenance",
+                "order": 99,
+                "outputContract": {
+                  "type": "provenance",
+                  "requiresEvidence": true
+                },
+                "refs": {}
+              }
+            ]
+          },
+          "questionText": "How does Labour Force Participation Rate vary by Gender?",
+          "formulaSpec": {
+            "type": "RATE",
+            "measureEntityIds": [
+              "ent_001",
+              "ent_002"
+            ],
+            "dimensionEntityIds": [
+              "ent_004"
+            ],
+            "timeEntityIds": [],
+            "weightColumn": null,
+            "multiplier": 100,
+            "readiness": "READY",
+            "blockedReasons": []
+          },
+          "binderContract": {
+            "schema": "bharatstat/question-binder-contract/v1",
+            "questionId": "q_007",
+            "domain": "labour",
+            "requiredBeforeS3_5": [
+              "formulaSpec",
+              "answerStructure.components",
+              "provenanceRequirements"
+            ],
+            "readiness": "READY"
+          },
+          "qualityGates": [
+            {
+              "gateId": "formula_spec_structured",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "answer_components_wired",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "provenance_component_present",
+              "severity": "block",
+              "required": true
+            }
+          ],
+          "provenanceRequirements": {
+            "required": true,
+            "minimumEvidenceRefs": 1,
+            "acceptedEvidence": [
+              "sourceRefs",
+              "table_header",
+              "layout_region",
+              "figure_region"
+            ]
+          },
+          "customization": {
+            "officerEditable": [
+              "questionText",
+              "narrativeDepth",
+              "chartType",
+              "tableDensity"
+            ],
+            "lockedFields": [
+              "questionId",
+              "formulaSpec.type"
+            ]
+          },
+          "answerPlan": {
+            "structure": [
+              "narrative",
+              "metric",
+              "visual_or_table_if_available",
+              "provenance"
+            ],
+            "valuePolicy": "value_free_template_only"
+          },
+          "reviewChecklist": [
+            "confirm_required_entities",
+            "confirm_formula_type",
+            "confirm_output_components",
+            "confirm_source_evidence"
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_08",
+      "title": "7 Average number of years in formal education",
+      "order": 8,
+      "semanticRef": "sec_08",
+      "questions": [
+        {
+          "questionId": "q_008",
+          "intent": "What are the key findings and statistics in the section on '7 Average number of years in formal education'?",
+          "questionType": "describe",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "summary_stats",
+            "measure": {
+              "entityRef": "ent_001",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_004"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_008_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_002"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_008",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_008_c2",
+                "kind": "formula_metric",
+                "order": 2,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "formula_metric"
+              },
+              {
+                "componentId": "q_008__provenance",
+                "kind": "provenance",
+                "componentKind": "provenance",
+                "order": 99,
+                "outputContract": {
+                  "type": "provenance",
+                  "requiresEvidence": true
+                },
+                "refs": {}
+              }
+            ]
+          },
+          "questionText": "What are the key findings and statistics in the section on '7 Average number of years in formal education'?",
+          "formulaSpec": {
+            "type": "DESCRIPTIVE",
+            "measureEntityIds": [
+              "ent_001",
+              "ent_002"
+            ],
+            "dimensionEntityIds": [
+              "ent_004"
+            ],
+            "timeEntityIds": [],
+            "weightColumn": null,
+            "multiplier": 1,
+            "readiness": "READY",
+            "blockedReasons": []
+          },
+          "binderContract": {
+            "schema": "bharatstat/question-binder-contract/v1",
+            "questionId": "q_008",
+            "domain": "labour",
+            "requiredBeforeS3_5": [
+              "formulaSpec",
+              "answerStructure.components",
+              "provenanceRequirements"
+            ],
+            "readiness": "READY"
+          },
+          "qualityGates": [
+            {
+              "gateId": "formula_spec_structured",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "answer_components_wired",
+              "severity": "block",
+              "required": true
+            },
+            {
+              "gateId": "provenance_component_present",
+              "severity": "block",
+              "required": true
+            }
+          ],
+          "provenanceRequirements": {
+            "required": true,
+            "minimumEvidenceRefs": 1,
+            "acceptedEvidence": [
+              "sourceRefs",
+              "table_header",
+              "layout_region",
+              "figure_region"
+            ]
+          },
+          "customization": {
+            "officerEditable": [
+              "questionText",
+              "narrativeDepth",
+              "chartType",
+              "tableDensity"
+            ],
+            "lockedFields": [
+              "questionId",
+              "formulaSpec.type"
+            ]
+          },
+          "answerPlan": {
+            "structure": [
+              "narrative",
+              "metric",
+              "visual_or_table_if_available",
+              "provenance"
+            ],
+            "valuePolicy": "value_free_template_only"
+          },
+          "reviewChecklist": [
+            "confirm_required_entities",
+            "confirm_formula_type",
+            "confirm_output_components",
+            "confirm_source_evidence"
+          ]
+        }
+      ]
+    }
+  ],
+  "tableTemplates": [],
+  "documentMap": {
+    "order": [
+      "topic_01",
+      "topic_02",
+      "topic_03",
+      "topic_04",
+      "topic_05",
+      "topic_06",
+      "topic_07",
+      "topic_08"
+    ],
+    "frontMatter": [
+      "title_page",
+      "toc"
+    ],
+    "backMatter": [
+      "glossary",
+      "notes"
+    ]
+  },
+  "glossary": {
+    "LFPR": "Labour Force Participation Rate : — extracted indicator from the source document.",
+    "WPR": "Worker Population Ratio — extracted indicator from the source document.",
+    "UR": "Unemployment Rate — extracted indicator from the source document.",
+    "Self-employed": "Status in Employment — extracted indicator from the source document.",
+    "Samrat (Release I": "Samrat (Release I — extracted indicator from the source document."
+  },
+  "palette": {
+    "paletteId": "pal_mospi_default",
+    "sequential": [
+      "#0B5394",
+      "#3D85C6",
+      "#6FA8DC",
+      "#9FC5E8",
+      "#CFE2F3"
+    ],
+    "categorical": {
+      "Rural": "#1F7A1F",
+      "Urban": "#0B5394",
+      "Male": "#0B5394",
+      "Female": "#CC4125",
+      "Total": "#666666"
+    },
+    "semantic": {
+      "positive": "#1F7A1F",
+      "negative": "#CC0000",
+      "neutral": "#666666"
+    }
+  },
+  "renderProfile": {
+    "numberFormat": {
+      "locale": "en-IN",
+      "grouping": "lakh-crore",
+      "decimalSeparator": "."
+    },
+    "percentFormat": {
+      "decimals": 1,
+      "suffix": "%"
+    },
+    "currencyFormat": {
+      "symbol": "₹",
+      "grouping": "lakh-crore",
+      "decimals": 0
+    },
+    "fontFamily": "Noto Sans",
+    "pageSize": "A4"
+  },
+  "figureTemplates": [
+    {
+      "figureTemplateId": "ft_q_005",
+      "captionTemplate": "Worker Population Ratio by Gender, {{period.current}}",
+      "chartId": "chart_q_005",
+      "numbering": "Figure {{topic.order}}.1"
+    },
+    {
+      "figureTemplateId": "ft_q_007",
+      "captionTemplate": "Worker Population Ratio by Gender, {{period.current}}",
+      "chartId": "chart_q_007",
+      "numbering": "Figure {{topic.order}}.2"
+    }
+  ],
+  "enterprisePlan": {
+    "schema": "bharatstat/enterprise-template-plan/v1",
+    "domain": "labour",
+    "templateStyle": "domain_adaptive_officer_publication",
+    "contentSourcePolicy": "structure_only_no_observed_values"
+  },
+  "officerCustomization": {
+    "schema": "bharatstat/officer-customization/v1",
+    "domain": "labour",
+    "controls": [
+      {
+        "controlId": "sector",
+        "label": "Sector",
+        "type": "multi_select",
+        "options": [
+          "rural",
+          "urban",
+          "all"
+        ]
+      },
+      {
+        "controlId": "sex",
+        "label": "Sex",
+        "type": "multi_select",
+        "options": [
+          "male",
+          "female",
+          "person"
+        ]
+      },
+      {
+        "controlId": "age_group",
+        "label": "Age group",
+        "type": "multi_select",
+        "options": [
+          "15_plus",
+          "all_ages"
+        ]
+      },
+      {
+        "controlId": "comparison_years",
+        "label": "Comparison years",
+        "type": "year_range",
+        "default": "latest_available"
+      }
+    ],
+    "defaults": {
+      "narrativeDepth": "officer_briefing",
+      "tableDensity": "publication",
+      "chartDensity": "balanced",
+      "sourceNoteMode": "required"
+    }
+  },
+  "dataContract": {
+    "schema": "bharatstat/data-contract/v1",
+    "domain": "labour",
+    "unitRegistry": [
+      {
+        "unitId": "percent",
+        "label": "Percent",
+        "appliesTo": [
+          "lfpr",
+          "wpr",
+          "unemployment_rate",
+          "share"
+        ]
+      },
+      {
+        "unitId": "persons",
+        "label": "Persons",
+        "appliesTo": [
+          "population",
+          "workers"
+        ]
+      },
+      {
+        "unitId": "rupees",
+        "label": "Rupees",
+        "appliesTo": [
+          "earnings",
+          "wages"
+        ]
+      }
+    ],
+    "requiredEvidence": [
+      "page",
+      "sourceType",
+      "confidence"
+    ],
+    "valuePolicy": {
+      "observedValuesInTemplate": false,
+      "missingEvidenceAction": "block_or_review",
+      "reportedValuePolicy": "single_equal_or_weighted_else_ambiguous"
+    }
+  },
+  "binderDeliverableContract": {
+    "schema": "bharatstat/binder-deliverable/v1",
+    "domain": "labour",
+    "requiredStages": [
+      "S1_entity_review",
+      "S2_question_review",
+      "S3_binding",
+      "S3_5_readiness"
+    ],
+    "readinessGates": {
+      "noBrokenSlotRefs": true,
+      "allQuestionsHaveComponents": true,
+      "allEntitiesHaveEvidence": true,
+      "formulaSpecsStructured": true,
+      "provenanceComponentsRequired": true
+    }
+  },
+  "publicationContract": {
+    "schema": "bharatstat/publication-contract/v1",
+    "domain": "labour",
+    "targetPageRange": {
+      "min": 40,
+      "max": 80
+    },
+    "requiredMatter": [
+      "title_page",
+      "table_of_contents",
+      "executive_summary",
+      "methodology_notes",
+      "source_notes",
+      "glossary"
+    ],
+    "layoutProfile": {
+      "pageSize": "A4",
+      "columns": 1,
+      "chartPlacement": "near_question",
+      "tablePlacement": "near_question"
+    }
+  },
+  "formulaCatalog": {
+    "schema": "bharatstat/formula-catalog/v1",
+    "domain": "labour",
+    "formulas": [
+      {
+        "type": "REPORTED_VALUE",
+        "description": "Use reported value when deterministic and non-conflicting."
+      },
+      {
+        "type": "SHARE",
+        "description": "Aggregate numerator and denominator at the same grain, then divide."
+      },
+      {
+        "type": "RATE",
+        "description": "Use structured numerator, denominator, multiplier, and unit."
+      },
+      {
+        "type": "RATIO",
+        "description": "Compare two compatible measures at the same grain."
+      },
+      {
+        "type": "GROWTH",
+        "description": "Compare values across a declared time window."
+      },
+      {
+        "type": "INDEX",
+        "description": "Use declared base value/base period before execution."
+      }
+    ]
+  },
+  "qualityGateProfile": {
+    "schema": "bharatstat/quality-gate-profile/v1",
+    "domain": "labour",
+    "gates": [
+      {
+        "gateId": "entity_evidence",
+        "severity": "block",
+        "rule": "every_entity_has_sourceRefs_and_evidence"
+      },
+      {
+        "gateId": "question_contract",
+        "severity": "block",
+        "rule": "every_question_has_binder_fields"
+      },
+      {
+        "gateId": "slot_integrity",
+        "severity": "block",
+        "rule": "no_broken_fillFrom_or_missing_componentId"
+      },
+      {
+        "gateId": "schema_enforcement",
+        "severity": "warn",
+        "rule": "schema_required_calls_should_be_enforced_when_provider_supports_it"
+      }
+    ]
+  },
+  "officerWorkbench": {
+    "schema": "bharatstat/officer-workbench/v1",
+    "domain": "labour",
+    "reviewQueues": [
+      "entity_evidence",
+      "formula_readiness",
+      "slot_lineage",
+      "source_notes"
+    ],
+    "actions": [
+      "approve",
+      "request_evidence",
+      "edit_label",
+      "lock_slot",
+      "mark_not_ready"
+    ]
+  }
+}

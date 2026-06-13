@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import re
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -74,6 +75,32 @@ PRODUCTION_STAGE_ORDER = (
     "stage5_detailed_ast_hierarchy_assembly",
     "stage6_final_ast_json_layout",
 )
+
+
+def _layout_extraction_tools(extraction_method: str, *, sequential: bool = False) -> list[str]:
+    """Tool chips surfaced in template extraction UI (stage 2)."""
+    m = (extraction_method or "").lower()
+    tools: list[str] = []
+    if "colpali" in m:
+        tools.append("ColPali")
+    if "pdfplumber" in m:
+        tools.append("pdfplumber")
+    if "pymupdf" in m or "fitz" in m:
+        tools.append("PyMuPDF")
+    if "layoutlm" in m or "qwen-vl" in m:
+        tools.extend(["LayoutLM", "Qwen-VL"])
+    if sequential:
+        tools.append("GPU orchestrator")
+    return tools or ["pdfplumber", "PyMuPDF"]
+
+
+def _blueprint_extraction_tools(*, sequential: bool, used_sglang: bool) -> list[str]:
+    """Tool chips for stage 3 semantic blueprint extraction."""
+    if sequential and used_sglang:
+        return ["SGLang", "Qwen2.5-3B"]
+    if used_sglang:
+        return ["SGLang", "Gemini fallback"]
+    return ["Gemini", "Heuristics"]
 
 
 # ---------------- Built-in default (MoSPI-style) ----------------
@@ -209,36 +236,47 @@ def _heuristic_headings(words: list[dict]) -> list[str]:
 
 
 def _gemini_classify_sections(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]:
-    """Ask Gemini to map detected headings/layout into our block kinds.
+    """Ask an LLM to map detected headings/layout into our block kinds.
 
-    Returns block specs ordered per page; falls back gracefully if Gemini fails.
+    Routes through llm_router (provider-agnostic). Falls back to heuristic
+    if LLM is disabled or the call fails.
     """
     if not page_summaries:
         return []
-    try:
-        from core.gemini_client import get_generative_model
-    except Exception:
-        logger.info("google-genai not available; using heuristic classification")
+
+    from report_builder.llm_router import llm_text_call, llm_disabled
+
+    if llm_disabled():
+        logger.info("[blueprint] LLM_DISABLED — using heuristic classification")
         return _heuristic_classify_sections(page_summaries)
 
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        return _heuristic_classify_sections(page_summaries)
+    prompt = (
+        "You are a report-template compiler. Given a list of pages with detected "
+        "headings and layout signals, output a JSON list of block specs. Each item "
+        "must have: block_id (slug), kind (one of narrative/table/chart/metric/heading), "
+        "title (short), section (slug), required (bool), hints (object with page_index, "
+        "and optional chart_type/source).\n"
+        "Only return valid JSON. No prose.\n\n"
+        f"PAGES:\n{json.dumps(page_summaries, indent=2)[:8000]}"
+    )
+    logger.info(
+        "[blueprint] ▶ LLM classify   pages=%d   prompt=%d chars",
+        len(page_summaries), len(prompt),
+    )
+    t0 = time.monotonic()
     try:
-        model = get_generative_model()
-        if model is None:
-            return _heuristic_classify_sections(page_summaries)
-        prompt = (
-            "You are a report-template compiler. Given a list of pages with detected "
-            "headings and layout signals, output a JSON list of block specs. Each item "
-            "must have: block_id (slug), kind (one of narrative/table/chart/metric/heading), "
-            "title (short), section (slug), required (bool), hints (object with page_index, "
-            "and optional chart_type/source).\n"
-            "Only return valid JSON. No prose.\n\n"
-            f"PAGES:\n{json.dumps(page_summaries, indent=2)[:8000]}"
+        text = llm_text_call(
+            prompt=prompt,
+            task="entity_classification",
+            max_tokens=1200,
+            temperature=0.1,
         )
-        resp = model.generate_content(prompt)
-        text = (resp.text or "").strip()
+        elapsed = time.monotonic() - t0
+
+        if not text:
+            logger.info("[blueprint] LLM returned empty — using heuristic")
+            return _heuristic_classify_sections(page_summaries)
+
         # Strip markdown fences if present
         text = re.sub(r"^```(?:json)?|```$", "", text, flags=re.MULTILINE).strip()
         data = json.loads(text)
@@ -255,9 +293,17 @@ def _gemini_classify_sections(page_summaries: list[dict[str, Any]]) -> list[Bloc
                 ))
             except Exception:
                 continue
+        logger.info(
+            "[blueprint] ✓ LLM OK        blocks=%d   elapsed=%.1fs",
+            len(blocks), elapsed,
+        )
         return blocks or _heuristic_classify_sections(page_summaries)
     except Exception as exc:
-        logger.warning("Gemini classification failed: %s; using heuristic", exc)
+        elapsed = time.monotonic() - t0
+        logger.warning(
+            "[blueprint] ✗ LLM FAIL      elapsed=%.1fs   %s   → using heuristic",
+            elapsed, exc,
+        )
         return _heuristic_classify_sections(page_summaries)
 
 
@@ -286,60 +332,170 @@ def _heuristic_classify_sections(page_summaries: list[dict[str, Any]]) -> list[B
 def _colpali_extract(pdf_path: str | Path) -> list[dict[str, Any]] | None:
     """Vision-spatial extraction via ColPali.
 
-    Tries the local sidecar in this order:
-      1. `colpali-engine` Python package (HuggingFace model loaded in-process).
-      2. HTTP endpoint at COLPALI_ENDPOINT (e.g. http://colpali:8001/extract).
+    Respects COLPALI_IN_PROCESS env var (default: false).
+    When false (Docker mode), skips in-process model load and goes directly
+    to the HTTP endpoint at COLPALI_ENDPOINT (e.g. http://colpali:8001/extract).
+    When true (local dev without Docker), loads colpali-engine in-process.
+
     Returns the same `page_summaries` shape as `_pdfplumber_layout` so the
     downstream SGLang AST compiler is agnostic to source.
     """
-    try:
-        from colpali_engine.models import ColPali  # type: ignore
-        from colpali_engine.utils.processing_utils import process_images  # type: ignore
-        import pdf2image  # type: ignore
+    in_process = os.getenv("COLPALI_IN_PROCESS", "false").strip().lower() in ("1", "true", "yes")
 
-        model = ColPali.from_pretrained(os.getenv("COLPALI_MODEL", "vidore/colpali-v1.2"))
-        images = pdf2image.convert_from_path(str(pdf_path))
-        spatial = process_images(model, images)
-        # Adapt ColPali output (per-page bbox + caption tokens) to our shape.
-        out = []
-        for i, page in enumerate(spatial):
-            out.append({
-                "page_index": i,
-                "width": page.get("width"),
-                "height": page.get("height"),
-                "word_count": len(page.get("tokens") or []),
-                "has_tables": any(b.get("kind") == "table" for b in page.get("blocks") or []),
-                "table_count": sum(1 for b in page.get("blocks") or [] if b.get("kind") == "table"),
-                "headings": [b.get("text") for b in page.get("blocks") or [] if b.get("kind") == "heading"],
-                "raw_text_sample": page.get("text", "")[:600],
-                "colpali_blocks": page.get("blocks") or [],
-            })
-        return out
-    except Exception:
-        pass
+    if in_process:
+        try:
+            from colpali_engine.models import ColPali  # type: ignore
+            from colpali_engine.utils.processing_utils import process_images  # type: ignore
+            import pdf2image  # type: ignore
+
+            model = ColPali.from_pretrained(os.getenv("COLPALI_MODEL", "vidore/colpali-v1.2"))
+            poppler_path = os.getenv("POPPLER_PATH") or None
+            images = pdf2image.convert_from_path(str(pdf_path), poppler_path=poppler_path)
+            spatial = process_images(model, images)
+            # Adapt ColPali output (per-page bbox + caption tokens) to our shape.
+            out = []
+            for i, page in enumerate(spatial):
+                out.append({
+                    "page_index": i,
+                    "width": page.get("width"),
+                    "height": page.get("height"),
+                    "word_count": len(page.get("tokens") or []),
+                    "has_tables": any(b.get("kind") == "table" for b in page.get("blocks") or []),
+                    "table_count": sum(1 for b in page.get("blocks") or [] if b.get("kind") == "table"),
+                    "headings": [b.get("text") for b in page.get("blocks") or [] if b.get("kind") == "heading"],
+                    "raw_text_sample": page.get("text", "")[:600],
+                    "colpali_blocks": page.get("blocks") or [],
+                })
+            return out
+        except Exception:
+            pass
 
     endpoint = os.getenv("COLPALI_ENDPOINT")
     if endpoint:
         try:
             import requests  # type: ignore
 
+            # Always use base URL + /extract so this is consistent with ColPaliClient
+            # which also appends /extract. COLPALI_ENDPOINT must NOT include /extract.
+            colpali_url = endpoint.rstrip("/") + "/extract"
+            timeout = int(os.getenv("COLPALI_TIMEOUT", "300"))
+            logger.info(
+                "[blueprint._colpali_extract] → %s  timeout=%ds",
+                colpali_url, timeout,
+            )
+            t0 = time.monotonic()
             with open(pdf_path, "rb") as f:
-                r = requests.post(endpoint, files={"file": f}, timeout=120)
+                r = requests.post(colpali_url, files={"file": f}, timeout=timeout)
             r.raise_for_status()
-            return r.json().get("pages") or None
+            pages = r.json().get("pages") or None
+            logger.info(
+                "[blueprint._colpali_extract] OK  pages=%d  elapsed=%.1fs",
+                len(pages) if pages else 0,
+                time.monotonic() - t0,
+            )
+            if pages:
+                from report_builder.gpu_orchestrator import _normalize_colpali_pages
+                return _normalize_colpali_pages(pages)
+            return None
         except Exception as exc:
-            logger.info("ColPali endpoint unreachable: %s", exc)
+            logger.info("[blueprint._colpali_extract] endpoint unreachable: %s", exc)
     return None
 
 
 def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]:
     """Compile page summaries to a SGLang-structured block list.
 
-    Uses the sglang Python frontend when available; otherwise drives a Gemini
-    call with the SGLang prompt convention (produces identical JSON shape).
+    Priority (first success wins):
+      1. SGLang HTTP endpoint at SGLANG_ENDPOINT (Docker container, port 8002).
+         This is the primary path when SGLang Docker is running.
+      2. sglang Python in-process SDK (only if `sglang` is installed locally).
+      3. Gemini gemini-2.5-flash HTTP fallback (always works, no local install).
+
+    Why HTTP-first:
+      The UI upload flow goes through blueprint.compile_template_production() which
+      calls this function. The Docker SGLang container is only reachable via HTTP —
+      trying `import sglang` first completely bypassed the container.
     """
     if not page_summaries:
         return []
+
+    import json as _json
+
+    def _parse_blocks(data: Any, source: str) -> list[BlockSpec]:
+        """Parse a raw JSON value into BlockSpec list."""
+        if isinstance(data, dict):
+            # SGLang may wrap in {"blocks": [...]} or {"items": [...]}
+            data = data.get("blocks") or data.get("items") or []
+        blocks: list[BlockSpec] = []
+        for i, entry in enumerate(data if isinstance(data, list) else []):
+            try:
+                blocks.append(BlockSpec(
+                    block_id=str(entry.get("block_id") or f"blk_{i}"),
+                    kind=str(entry.get("kind") or "narrative"),
+                    title=str(entry.get("title") or "Section"),
+                    section=str(entry.get("section") or "body"),
+                    required=bool(entry.get("required", True)),
+                    hints=entry.get("hints") or {},
+                ))
+            except Exception:
+                continue
+        if blocks:
+            logger.info("SGLang (%s) compiled %d blocks", source, len(blocks))
+        return blocks
+
+    # ── Attempt 1: HTTP endpoint (Docker SGLang container at SGLANG_ENDPOINT) ──
+    endpoint = os.getenv("SGLANG_ENDPOINT", "").strip()
+    if endpoint:
+        try:
+            import requests  # type: ignore
+
+            model = os.getenv("SGLANG_MODEL") or "Qwen/Qwen2.5-VL-3B-Instruct-AWQ"
+            # Truncate page data to ~3000 chars so input fits in 4096 context
+            pages_text = _json.dumps(page_summaries)[:3000]
+            prompt = (
+                "You compile statistical-report PDFs into structured block ASTs.\n"
+                "Output ONLY a JSON array. Each item must have: "
+                "block_id (slug), kind (narrative|table|chart|metric|heading), "
+                "title (short string), section (slug), required (bool), "
+                "hints (object with at least page_index).\n\n"
+                f"PAGES:\n{pages_text}"
+            )
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": "You compile statistical-report PDFs into block ASTs."},
+                    {"role": "user", "content": prompt},
+                ],
+                "temperature": 0.1,
+                "max_tokens": 2048,
+            }
+            timeout = int(os.getenv("SGLANG_TIMEOUT", "120"))
+            logger.info(
+                "[blueprint] ▶ SGLang POST    url=%s   model=%s   timeout=%ds",
+                endpoint, model, timeout,
+            )
+            t0 = time.monotonic()
+            r = requests.post(
+                f"{endpoint.rstrip('/')}/v1/chat/completions",
+                json=payload,
+                timeout=timeout,
+            )
+            r.raise_for_status()
+            content = r.json()["choices"][0]["message"]["content"]
+            # Strip markdown fences if present
+            content = re.sub(r"^```(?:json)?|```$", "", content.strip(), flags=re.MULTILINE).strip()
+            data = _json.loads(content)
+            blocks = _parse_blocks(data, f"http:{endpoint}")
+            if blocks:
+                logger.info(
+                    "[blueprint] ✓ SGLang OK      blocks=%d   elapsed=%.1fs",
+                    len(blocks), time.monotonic() - t0,
+                )
+                return blocks
+        except Exception as exc:
+            logger.info("[blueprint] ⚠ SGLang unavailable: %s   🔁 falling back", exc)
+
+    # ── Attempt 2: sglang Python in-process SDK (only if locally installed) ──
     try:
         import sglang as sgl  # type: ignore
 
@@ -352,26 +508,19 @@ def _sglang_compile_ast(page_summaries: list[dict[str, Any]]) -> list[BlockSpec]
             )
             s += sgl.assistant(sgl.gen("ast", max_tokens=2048))
 
-        import json as _json
         state = _ast_program.run(pages_json=_json.dumps(page_summaries)[:8000])
         try:
             data = _json.loads(state["ast"])
         except Exception:
             data = []
-        blocks: list[BlockSpec] = []
-        for i, entry in enumerate(data if isinstance(data, list) else []):
-            blocks.append(BlockSpec(
-                block_id=str(entry.get("block_id") or f"blk_{i}"),
-                kind=str(entry.get("kind") or "narrative"),
-                title=str(entry.get("title") or "Section"),
-                section=str(entry.get("section") or "body"),
-                required=bool(entry.get("required", True)),
-                hints=entry.get("hints") or {},
-            ))
+        blocks = _parse_blocks(data, "in-process")
         if blocks:
             return blocks
     except Exception:
         pass
+
+    # ── Attempt 3: Gemini fallback ──
+    logger.info("[blueprint] 🔁 fallback chain  SGLang ✗ → in-process ✗ → Gemini")
     return _gemini_classify_sections(page_summaries)
 
 
@@ -383,6 +532,7 @@ def compile_template_production(
     template_name: str,
     *,
     progress: Callable[[str, int, dict[str, Any]], None] | None = None,
+    resume_from: str = "",
 ) -> tuple[TemplateAST, dict[str, Any]]:
     """Run full 6-stage extraction with strict architecture payload."""
     path = Path(pdf_path)
@@ -399,9 +549,140 @@ def compile_template_production(
     _tick(PRODUCTION_STAGE_ORDER[0], 20, {"sha256": file_hash, "status": "completed"})
 
     _tick(PRODUCTION_STAGE_ORDER[1], 35, {"status": "started"})
+
+    # ── V2 Multi-Pass Pipeline (LayoutLM + Qwen-VL) ──────────────────────────
+    # Activated by EXTRACTION_PIPELINE=v2 (default: v1 for backwards compat)
+    if os.getenv("EXTRACTION_PIPELINE", "v1") == "v2" and path.exists():
+        logger.info("[blueprint] ▶ EXTRACTION_PIPELINE=v2 — using multi-pass pipeline")
+        from report_builder.extraction_pipeline import run_extraction_pipeline
+
+        enterprise_ast = run_extraction_pipeline(
+            pdf_path=path,
+            doc_title=template_name or "Document",
+            source_hash=file_hash or "",
+            progress_callback=lambda stage, pct, data: _tick(stage, pct, {"v2": True}),
+            resume_from=resume_from,
+        )
+        # Build TemplateAST from enterprise AST for backward compat
+        v2_blocks: list[BlockSpec] = []
+
+        # Use semantic sections (gold-standard) or fall back to hierarchy (legacy)
+        sections = enterprise_ast.get("semanticAST", {}).get("sections") or []
+        hierarchy = enterprise_ast.get("semanticAST", {}).get("hierarchy") or []
+        if sections:
+            for sec in sections[:30]:
+                v2_blocks.append(BlockSpec(
+                    block_id=sec.get("sectionId") or f"sec_{len(v2_blocks)}",
+                    kind="heading",
+                    title=sec.get("title", "Section")[:80],
+                    section="body",
+                    required=True,
+                    hints={"level": sec.get("level", 1), "topicRef": sec.get("topicRef", "")},
+                ))
+        elif hierarchy:
+            for node in hierarchy[:30]:
+                node_id = node.get("nodeId") or node.get("id") or f"sec_{len(v2_blocks)}"
+                title = node.get("title", "Section")[:80]
+                level = node.get("level", 2)
+                kind = "heading" if level <= 1 else "narrative"
+                v2_blocks.append(BlockSpec(
+                    block_id=node_id,
+                    kind=kind,
+                    title=title,
+                    section="body",
+                    required=True,
+                    hints={"level": level},
+                ))
+
+        # Add table blocks from tableAST
+        for tbl in (enterprise_ast.get("tableAST", {}).get("tables") or [])[:20]:
+            v2_blocks.append(BlockSpec(
+                block_id=tbl.get("tableId", f"tbl_{len(v2_blocks)}"),
+                kind="table",
+                title=tbl.get("title", "Table"),
+                section="body",
+                required=True,
+                hints={"columns": tbl.get("columns", [])},
+            ))
+
+        # Add figure/chart blocks
+        for fig in (enterprise_ast.get("figureAST", {}).get("figures") or [])[:10]:
+            v2_blocks.append(BlockSpec(
+                block_id=fig.get("figureId", f"fig_{len(v2_blocks)}"),
+                kind="chart",
+                title=fig.get("caption", "Figure")[:80],
+                section="body",
+                required=False,
+                hints={},
+            ))
+        for chart in (enterprise_ast.get("chartAST", {}).get("charts") or [])[:10]:
+            v2_blocks.append(BlockSpec(
+                block_id=chart.get("chartId", f"chart_{len(v2_blocks)}"),
+                kind="chart",
+                title=chart.get("title", "Chart")[:80],
+                section="body",
+                required=False,
+                hints={"chartType": chart.get("type", "unknown")},
+            ))
+
+        # If hierarchy was empty, fall back to page-level narrative blocks
+        if not v2_blocks:
+            for para in (enterprise_ast.get("contentAST", {}).get("paragraphs") or [])[:40]:
+                v2_blocks.append(BlockSpec(
+                    block_id=para.get("id", f"blk_{len(v2_blocks)}"),
+                    kind="narrative",
+                    title=para.get("content", "")[:60],
+                    section="body",
+                    required=True,
+                    hints={},
+                ))
+
+        if not v2_blocks:
+            v2_blocks = list(DEFAULT_MOSPI_TEMPLATE.blocks)
+
+        ast = TemplateAST(
+            name=template_name or "Enterprise Document",
+            source_hash=file_hash,
+            page_count=enterprise_ast.get("page_count") or enterprise_ast.get("metadata", {}).get("pageCount", 0),
+            blocks=v2_blocks,
+            extraction_method="layoutlm+qwen-vl+sequential",
+        )
+        # Gold-standard: the enterprise_ast IS the payload (all keys at top level)
+        # The frontend reads ast.styleAST, ast.semanticAST, ast.blueprint etc. directly.
+        payload = enterprise_ast.copy()
+        # Backward compat fields
+        payload["name"] = template_name
+        payload["source_hash"] = file_hash
+        payload["page_count"] = enterprise_ast.get("page_count") or enterprise_ast.get("metadata", {}).get("pageCount", 0)
+        payload["extraction_method"] = "layoutlm+qwen-vl+sequential"
+        payload["blocks"] = [b.__dict__ if hasattr(b, '__dict__') else b for b in v2_blocks]
+        payload["doc_id"] = enterprise_ast.get("metadata", {}).get("templateId") or enterprise_ast.get("metadata", {}).get("documentId", "MOSPI_TPL_01")
+        diagnostics["blueprint_payload"] = payload
+        diagnostics["stages"]["v2_pipeline"] = {"status": "completed"}
+        _tick(PRODUCTION_STAGE_ORDER[5], 100, {"status": "completed"})
+        return ast, diagnostics
+
+    # ── V1 Legacy Pipeline ────────────────────────────────────────────────────
     pages: list[dict[str, Any]] = []
     extraction_method = "unknown"
-    if path.exists():
+
+    # ── Sequential GPU mode: use orchestrator (ColPali Docker → stop → SGLang Docker → stop)
+    from report_builder.gpu_orchestrator import get_pipeline_mode, extract_with_colpali
+
+    gpu_mode = get_pipeline_mode()
+    _sequential = gpu_mode == "sequential"
+
+    if _sequential and path.exists():
+        logger.info("[blueprint] ▶ PIPELINE_GPU_MODE=sequential   orchestrating Docker containers")
+        raw_pages = extract_with_colpali(path)
+        if raw_pages:
+            pages = raw_pages
+            extraction_method = "colpali+sequential"
+        else:
+            logger.warning("[blueprint] ⚠ sequential ColPali failed — falling back to local extractors")
+            _sequential = False  # fall through to local path below
+
+    if not _sequential and path.exists():
         try:
             from template_engine.ingestion.pdf_loader import load_pdf  # type: ignore
 
@@ -497,15 +778,47 @@ def compile_template_production(
     ]
     diagnostics["stages"][PRODUCTION_STAGE_ORDER[1]] = {
         "page_count": len(pages),
+        "extraction_method": extraction_method,
         "section_hierarchy": section_hierarchy[:25],
         "page_layout_preview": page_layout_preview,
         "layout_extractors": {"paragraphs": True, "tables": True},
+        "tools": _layout_extraction_tools(extraction_method, sequential=_sequential),
         "status": "completed",
     }
     _tick(PRODUCTION_STAGE_ORDER[1], 45, diagnostics["stages"][PRODUCTION_STAGE_ORDER[1]])
 
     _tick(PRODUCTION_STAGE_ORDER[2], 55, {"status": "started"})
-    inferred_blocks = _sglang_compile_ast(pages)
+
+    # ── Sequential GPU mode: use orchestrator for SGLang too
+    inferred_blocks: list[BlockSpec] = []
+    used_sglang = False
+    if _sequential:
+        from report_builder.gpu_orchestrator import compile_with_sglang
+        raw_blocks = compile_with_sglang(pages)
+        if raw_blocks:
+            for i, entry in enumerate(raw_blocks):
+                try:
+                    inferred_blocks.append(BlockSpec(
+                        block_id=str(entry.get("block_id") or f"blk_{i}"),
+                        kind=str(entry.get("kind") or "narrative"),
+                        title=str(entry.get("title") or "Section"),
+                        section=str(entry.get("section") or "body"),
+                        required=bool(entry.get("required", True)),
+                        hints=entry.get("hints") or {},
+                    ))
+                except Exception:
+                    continue
+            if inferred_blocks:
+                used_sglang = True
+                logger.info(
+                    "[blueprint] ✓ sequential SGLang   blocks=%d", len(inferred_blocks)
+                )
+        if not inferred_blocks:
+            logger.info("[blueprint] ⚠ sequential SGLang returned 0 blocks — trying Gemini fallback")
+            inferred_blocks = _sglang_compile_ast(pages)
+    else:
+        inferred_blocks = _sglang_compile_ast(pages)
+
     if not inferred_blocks:
         # fallback still uses real headings from extracted pages
         inferred_blocks = _heuristic_classify_sections(pages)
@@ -521,7 +834,12 @@ def compile_template_production(
     _tick(
         PRODUCTION_STAGE_ORDER[2],
         65,
-        {"questions_count": len(generalized_questions), "status": "completed"},
+        {
+            "questions_count": len(generalized_questions),
+            "block_count": len(inferred_blocks),
+            "tools": _blueprint_extraction_tools(sequential=_sequential, used_sglang=used_sglang),
+            "status": "completed",
+        },
     )
 
     _tick(PRODUCTION_STAGE_ORDER[3], 75, {"status": "started"})
@@ -631,3 +949,114 @@ def template_from_ast_json(payload: dict[str, Any]) -> TemplateAST:
             for i, b in enumerate(payload.get("blocks") or [])
         ],
     )
+
+
+# ---------------------------------------------------------------------------
+# Bridge: new deep TemplateBlueprintAST → legacy TemplateAST
+# ---------------------------------------------------------------------------
+
+def template_from_deep_blueprint(blueprint) -> TemplateAST:
+    """Convert a TemplateBlueprintAST (new pipeline) to the legacy TemplateAST.
+
+    This shim allows the report_builder pipeline to consume output from the
+    enhanced template_engine.pipeline without modification to downstream phases.
+
+    Maps: topic → section, question → block (kind inferred from answer components).
+    """
+    blocks: list[BlockSpec] = []
+    counter = 0
+
+    for topic in (blueprint.topics or []):
+        # Emit heading block for topic
+        section_slug = re.sub(r"[^a-z0-9]+", "_", topic.title.lower()).strip("_") or f"section_{counter}"
+        blocks.append(BlockSpec(
+            block_id=f"blk_{counter}",
+            kind="heading",
+            title=topic.title,
+            section=section_slug,
+            hints={"page_range": topic.pageRange},
+        ))
+        counter += 1
+
+        for question in (topic.questions or []):
+            kind = _infer_block_kind(question)
+            blocks.append(BlockSpec(
+                block_id=f"blk_{counter}",
+                kind=kind,
+                title=question.intent[:80] if question.intent else "Section",
+                section=section_slug,
+                hints={
+                    "question_id": question.questionId,
+                    "question_type": question.questionType,
+                    "confidence": question.inferenceConfidence,
+                    "component_count": len(question.answerStructure.components),
+                },
+            ))
+            counter += 1
+
+    return TemplateAST(
+        name=blueprint.name,
+        source_hash=blueprint.sourceHash,
+        page_count=blueprint.pageCount,
+        blocks=blocks or list(DEFAULT_MOSPI_TEMPLATE.blocks),
+        extraction_method=blueprint.extractionMethod or "deep_pipeline",
+    )
+
+
+def _infer_block_kind(question) -> str:
+    """Infer legacy block kind from a QuestionNode's answer components."""
+    if not question.answerStructure or not question.answerStructure.components:
+        return "narrative"
+
+    type_counts: dict[str, int] = {}
+    for comp in question.answerStructure.components:
+        type_counts[comp.type] = type_counts.get(comp.type, 0) + 1
+
+    # Priority: table > chart > metric > narrative
+    if "data_table" in type_counts or "cross_tabulation_matrix" in type_counts:
+        return "table"
+    if any(k in type_counts for k in ("grouped_bar_chart", "line_chart", "pie_chart", "geographic_map")):
+        return "chart"
+    if "metric_card" in type_counts:
+        return "metric"
+    return "narrative"
+
+
+def compile_template_from_deep_pipeline(
+    pdf_path: str | Path,
+    template_name: str,
+    *,
+    progress: Callable[[str, int, dict[str, Any]], None] | None = None,
+) -> tuple[TemplateAST, dict[str, Any]]:
+    """Bridge: run the new deep pipeline and return legacy-format TemplateAST.
+
+    Falls back to compile_template_production if the deep pipeline fails.
+    """
+    try:
+        from template_engine.pipeline import run_extraction_pipeline
+
+        result = run_extraction_pipeline(
+            pdf_path=pdf_path,
+            template_name=template_name,
+            progress_callback=(lambda p: progress(p.stage, p.progress_pct, p.to_dict()))
+            if progress else None,
+        )
+
+        if result.success and result.ast:
+            legacy_ast = template_from_deep_blueprint(result.ast)
+            diagnostics = {
+                "source_hash": result.source_hash,
+                "stages": result.progress.timings,
+                "deep_pipeline": True,
+                "topics": len(result.ast.topics),
+                "questions": sum(len(t.questions) for t in result.ast.topics),
+                "entities": len(result.ast.entities),
+                "blueprint_payload": result.ast.to_dict(),
+            }
+            return legacy_ast, diagnostics
+
+    except Exception as exc:
+        logger.warning("Deep pipeline failed, falling back: %s", exc)
+
+    # Fallback to original production pipeline
+    return compile_template_production(pdf_path, template_name, progress=progress)

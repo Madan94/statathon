@@ -1,24 +1,51 @@
-FROM python:3.12-slim
+# syntax=docker/dockerfile:1
+# ─────────────────────────────────────────────────────────────────────────────
+# Statathon API Server + Pipeline Runner
+#
+# DESIGN: Fail-fast + maximum cache + future-proof
+#   1. System deps (rarely changes)
+#   2. requirements.txt (changes on dep upgrades)
+#   3. Verify critical imports (catch broken deps at build)
+#   4. App code (changes every commit → last layer)
+#
+# Two modes (same image):
+#   API:       CMD uvicorn (default)
+#   Pipeline:  command: ["python", "/app/scripts/run_pipeline.py"]
+# ─────────────────────────────────────────────────────────────────────────────
+FROM python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
 
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential gcc \
-    && rm -rf /var/lib/apt/lists/*
+# ── Layer 1: System deps (changes ~never) ────────────────────────────────────
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+        build-essential gcc curl \
+    && rm -rf /tmp/*
 
+# ── Layer 2: Python deps (changes only on requirements.txt edits) ────────────
 COPY requirements.txt /app/requirements.txt
-RUN pip install --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir -r /app/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade pip setuptools wheel \
+    && pip install --prefer-binary -r /app/requirements.txt
 
+# ── Layer 3: Fail-fast verification — catch import/ABI issues at build ───────
+RUN python -c "\
+import fastapi, uvicorn, pydantic; \
+import pdfplumber; \
+print(f'✓ fastapi={fastapi.__version__} pydantic={pydantic.__version__} pdfplumber OK')"
+
+# ── Layer 4: App code (changes most → last for max cache hits) ───────────────
 COPY . /app
-
 RUN ln -sfn /app/scripts /app/api/scripts
-
-WORKDIR /app/api
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+HEALTHCHECK --interval=20s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -fsS http://127.0.0.1:8000/health || exit 1
+
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

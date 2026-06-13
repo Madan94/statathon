@@ -1,11 +1,12 @@
+import os
 import numpy as np
 
 
 class BertEmbedder:
 
-    def __init__(self, model=None, model_name="BAAI/bge-m3", vector_store=None):
+    def __init__(self, model=None, model_name=None, vector_store=None):
         self._model = model
-        self._model_name = model_name
+        self._model_name = model_name or os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")
         self._cache = {}            # fast in-memory cache (lives for one process)
         self._store = vector_store   # persistent on-disk cache (survives across runs)
 
@@ -30,7 +31,7 @@ class BertEmbedder:
             self._cache[text] = vec
             return vec
         # 3. compute (triggers model load if needed)
-        vec = self._get_model().encode(text, convert_to_numpy=True, normalize_embeddings=True)
+        vec = self._get_model().encode(text, convert_to_numpy=True)
         self._cache[text] = vec
         if self._store:
             self._store.store_embedding(text, vec)
@@ -52,7 +53,7 @@ class BertEmbedder:
                 to_compute.append(t)
 
         if to_compute:
-            vectors = self._get_model().encode(to_compute, convert_to_numpy=True, batch_size=16, normalize_embeddings=True)
+            vectors = self._get_model().encode(to_compute, convert_to_numpy=True, batch_size=64)
             for text, vec in zip(to_compute, vectors):
                 self._cache[text] = vec
                 if self._store:

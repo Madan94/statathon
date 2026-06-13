@@ -39,6 +39,7 @@ httptools==0.7.1
 httpx==0.28.1
 huggingface_hub==1.14.0
 google-generativeai>=0.8.0,<1
+google-genai>=1.0.0
 idna==3.13
 Jinja2==3.1.6
 joblib==1.5.3
@@ -78,6 +79,7 @@ qdrant-client>=1.12.0,<2
 redis==7.4.0
 regex==2026.4.4
 reportlab==4.5.0
+pdf2image>=1.16.0
 pdfplumber>=0.11.4,<1
 PyMuPDF>=1.24.12,<2
 rich==15.0.0
@@ -110,3 +112,10 @@ vine==5.1.0
 watchfiles==1.1.1
 wcwidth==0.7.0
 websockets==16.0
+
+# ── Missing but required by codebase ──────────────────────────────────────────
+groq>=1.0.0,<2                   # Groq SDK (used as fallback in llm_router)
+prophet>=1.1.5                   # Time series forecasting (agents/analytics_agent)
+statsmodels>=0.14.0              # ARIMA models (agents/analytics_agent)
+pytesseract>=0.3.10              # OCR fallback (services/layoutlm)
+botocore>=1.35.0,<2              # AWS S3 (api/dataset_api) — pulled by boto3 but pinned

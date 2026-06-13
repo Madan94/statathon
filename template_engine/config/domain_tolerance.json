@@ -1,0 +1,31 @@
+{
+  "plfs": {
+    "default": 0.02,
+    "count": 0,
+    "percentage": 0.01,
+    "ratio": 0.02,
+    "rate": 0.01
+  },
+  "census": {
+    "default": 0.0,
+    "count": 0,
+    "percentage": 0.005
+  },
+  "energy": {
+    "default": 0.10,
+    "count": 0.05,
+    "percentage": 0.05,
+    "reserves": 0.15
+  },
+  "health": {
+    "default": 0.05,
+    "count": 0,
+    "percentage": 0.02
+  },
+  "generic": {
+    "default": 0.05,
+    "count": 0,
+    "percentage": 0.02,
+    "ratio": 0.03
+  }
+}

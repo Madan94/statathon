@@ -1,0 +1,16 @@
+{
+  "$schema": "bharatstat/semantic-slot-graph/v1",
+  "templateId": "tpl_arun_test_25_v1",
+  "slots": [],
+  "issues": [],
+  "counts": {
+    "questions": 0,
+    "components": 0,
+    "slotsCreated": 2,
+    "issuesBefore": 0,
+    "issuesAfter": 0,
+    "crosswalkQuestions": 0,
+    "crosswalkComponents": 0,
+    "semanticSlots": 0
+  }
+}

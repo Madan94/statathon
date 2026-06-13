@@ -2,6 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { isAuthRoute, PUBLIC_ROUTES } from './authConfig';
 import { redirectToLogin } from './authSession';
 import { getCsrfToken } from './csrf';
+import type { EditInput } from './report/types';
 
 /** Browser uses same-origin proxy so httpOnly cookies are set on the dashboard host. */
 function resolveApiBase(): string {
@@ -1069,6 +1070,7 @@ export interface ReportTemplate {
 
 export interface ReportTemplateWithAst extends ReportTemplate {
   ast: Record<string, unknown>;
+  filter_config?: DataFilterSpec | null;
 }
 
 export interface TemplateExtractionJob {
@@ -1294,7 +1296,7 @@ export const reportBuilderApi = {
     }
     throw new Error('Template extraction timed out');
   },
-  getTemplate: async (id: number) => {
+  getTemplate: async (id: number): Promise<ReportTemplateWithAst> => {
     const { data } = await api.get(`/report-builder/templates/${id}`);
     return data;
   },
@@ -1429,6 +1431,726 @@ export const reportBuilderApi = {
       await new Promise((r) => setTimeout(r, intervalMs));
     }
     throw new Error('Report builder job timed out');
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Binding phase — datasetAST · bindingAST · coverage  (confirm-every-binding)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface DatasetColumnProfile {
+  name: string;
+  dtype: string;
+  role: 'dimension' | 'measure' | 'time' | 'id' | 'metadata';
+  cardinality: number;
+  sampleValues: unknown[];
+  unit?: string | null;
+  minValue?: number | null;
+  maxValue?: number | null;
+  nullPct: number;
+}
+
+export interface DatasetColumnGroup {
+  stem: string;
+  kind: 'measureGroup' | 'periodGroup';
+  members: string[];
+}
+
+export interface DatasetAst {
+  datasetId: string;
+  sourceFile: string;
+  rowCount: number;
+  archetype: string;
+  columns: DatasetColumnProfile[];
+  columnGroups: DatasetColumnGroup[];
+  reshape: unknown[];
+}
+
+export interface BoundColumn {
+  column: string;
+  memberLabel?: string | null;
+  period?: string | null;
+}
+
+export interface BindingCandidate {
+  column: string;
+  confidence: number;
+  method: string;
+}
+
+export type BindingMethod =
+  | 'exact'
+  | 'alias'
+  | 'glossary'
+  | 'synonym'
+  | 'embedding'
+  | 'manual';
+export type BindingStatus =
+  | 'proposed'
+  | 'confirmed'
+  | 'overridden'
+  | 'rejected'
+  | 'unresolved';
+export type Cardinality = 'oneToOne' | 'memberSet' | 'composite' | 'timeSeries';
+
+export interface EntityBinding {
+  entityId: string;
+  entityName: string;
+  entityType: 'dimension' | 'measure' | 'time' | 'filter' | 'metadata';
+  cardinality: Cardinality;
+  columns: BoundColumn[];
+  combine: string;
+  confidence: number;
+  method: BindingMethod;
+  status: BindingStatus;
+  alternatives: BindingCandidate[];
+  typeMismatch?: boolean;
+  notes?: string[];
+  evidence?: Array<Record<string, unknown>>;
+  risks?: Array<Record<string, unknown>>;
+}
+
+export interface ColumnOwner {
+  entityId: string;
+  entityName: string;
+  entityType: EntityBinding['entityType'];
+  cardinality: Cardinality;
+  status: BindingStatus;
+  sharePolicy: 'exclusive' | 'shared';
+  shareReason?: string;
+}
+
+export interface ColumnOwnershipEntry {
+  column: string;
+  owners: ColumnOwner[];
+  locked: boolean;
+}
+
+export interface ColumnOwnershipConflict {
+  column: string;
+  severity?: CoverageSeverity;
+  code: string;
+  message: string;
+  owners: ColumnOwner[];
+}
+
+export interface ColumnOwnershipMap {
+  columns: Record<string, ColumnOwnershipEntry>;
+  conflicts: ColumnOwnershipConflict[];
+}
+
+export interface ResolvedFilter {
+  column: string;
+  op: string;
+  value: unknown;
+  filterApplied: boolean;
+}
+
+export interface ResolvedTime {
+  column: string | null;
+  periods: Record<string, unknown>;
+  timeResolved: boolean;
+}
+
+export interface ResolvedRoles {
+  measures: string[];
+  dimensions: string[];
+  filters: ResolvedFilter[];
+  time: ResolvedTime;
+}
+
+export type QuestionStatus = 'executable' | 'blocked' | 'degraded';
+
+export interface QuestionBinding {
+  questionId: string;
+  status: QuestionStatus;
+  resolvedRoles: ResolvedRoles;
+  unresolvedEntities: string[];
+  notes: string[];
+}
+
+export type CoverageSeverity = 'error' | 'warn' | 'info';
+
+export interface CoverageIssue {
+  severity: CoverageSeverity;
+  code: string;
+  message: string;
+  entityId?: string;
+  questionId?: string;
+}
+
+export interface CoverageReport {
+  entities: { bound: number; pending: number; unresolved: number };
+  questions: { executable: number; blocked: number; degraded: number };
+  issues: CoverageIssue[];
+}
+
+export interface BindingStartResult {
+  template_id: string;
+  signature: string;
+  dataset_id: string;
+  dataset_ast: DatasetAst;
+  proposals: EntityBinding[];
+  confirmations: Record<string, unknown>;
+  pending: string[];
+  column_ownership: ColumnOwnershipMap;
+}
+
+export interface BindingTemplatePackage {
+  template_id: string;
+  name: string;
+  source: 'built_in' | 'db' | string;
+  status: 'VALID' | 'VALID_WITH_WARNINGS' | 'INVALID' | 'UNKNOWN' | 'DEMO' | string;
+  version: string;
+  ast_available: boolean;
+  blueprint_available: boolean;
+  semantic_slot_graph_available: boolean;
+  topics_count: number;
+  chapters_count?: number;
+  sections_count?: number;
+  questions_count: number;
+  entities_count: number;
+  chart_slots_count: number;
+  table_slots_count: number;
+  external_refs_count: number;
+  diagnostics_score?: number | null;
+  richness_score?: number | null;
+  description?: string | null;
+  domain?: string | null;
+  report_type?: string | null;
+  updated_at?: string | null;
+}
+
+export interface BindingProposalsResult {
+  template_id: string;
+  signature: string;
+  dataset_id: string;
+  proposals: EntityBinding[];
+  confirmations: Record<string, unknown>;
+  pending: string[];
+  column_ownership: ColumnOwnershipMap;
+}
+
+export interface BindingRecordResult {
+  template_id: string;
+  signature: string;
+  dataset_id: string;
+  proposals: EntityBinding[];
+  confirmations: Record<string, unknown>;
+  column_ownership: ColumnOwnershipMap;
+  updated_at: number;
+}
+
+export interface BindingDependencyGraph {
+  entityToQuestions: Record<string, string[]>;
+  entityToComponents: Record<string, string[]>;
+  columnToEntities: Record<string, string[]>;
+  questionToEntities: Record<string, string[]>;
+  questionToColumns: Record<string, string[]>;
+  slotToQuestion: Record<string, string>;
+}
+
+export interface BindingWorkspaceIssue {
+  issueId?: string;
+  severity?: CoverageSeverity | string;
+  code?: string;
+  message: string;
+  entityId?: string;
+  questionId?: string;
+  nodeId?: string;
+  componentId?: string;
+  column?: string;
+  targetMode?: string;
+}
+
+export interface BindingPhaseStatus {
+  status: 'Ready' | 'Review' | 'Blocked' | 'Open' | string;
+  message: string;
+  targetMode?: string;
+  counts?: Record<string, number>;
+}
+
+export interface BindingWorkspace {
+  template_id: string;
+  signature: string;
+  dataset_id: string;
+  template_package: BindingTemplatePackage;
+  dataset_ast: DatasetAst;
+  proposals: EntityBinding[];
+  confirmations: Record<string, unknown>;
+  pending: string[];
+  column_ownership: ColumnOwnershipMap;
+  reviewed_plan?: ReviewedPlanSummary | null;
+  dependency_graph: BindingDependencyGraph;
+  issues: BindingWorkspaceIssue[];
+  phase_statuses?: Record<string, BindingPhaseStatus>;
+}
+
+export interface BindingFinalizeResult {
+  template_id: string;
+  signature: string;
+  coverage: CoverageReport;
+  question_bindings: QuestionBinding[];
+  binding_ast: Record<string, unknown>;
+  reviewed_plan?: {
+    planId: string;
+    status: 'READY' | 'DEGRADED' | 'BLOCKED' | 'DRAFT';
+    bindingAstId: string;
+    path: string;
+    topicCount: number;
+    questionCount: number;
+    componentCount: number;
+    semanticSlotCount: number;
+    virtualSlotCount: number;
+    virtualSlots: Array<Record<string, unknown>>;
+    planTree: ReviewedPlanNode[];
+  } | null;
+  has_errors: boolean;
+}
+
+export type ReviewedPlanSummary = NonNullable<BindingFinalizeResult['reviewed_plan']>;
+
+export interface ReviewedPlanNodePatchPayload {
+  title?: string;
+  enabled?: boolean;
+  required_entities?: Array<Record<string, unknown>>;
+}
+
+export interface ReviewedPlanQuestionPayload {
+  parent_node_id: string;
+  title: string;
+  required_entities?: Array<Record<string, unknown>>;
+  analytics_spec?: Record<string, unknown>;
+}
+
+export interface ComponentDefinition {
+  componentType: string;
+  label: string;
+  group: string;
+  allowedNodeTypes: string[];
+  requiredFields: string[];
+  requiresAnalyticsSpec: boolean;
+  defaultSlotBehavior: string;
+}
+
+export interface ReviewedPlanComponentPayload {
+  component_type: string;
+  payload?: Record<string, unknown>;
+}
+
+export interface ComponentRecommendation {
+  component_type: string;
+  label: string;
+  group: string;
+  score: number;
+  reason: string;
+  payload: Record<string, unknown>;
+}
+
+export interface ReviewedPlanComponentPatchPayload {
+  required_entities?: Array<Record<string, unknown>>;
+  analytics_spec?: Record<string, unknown>;
+  formula_spec?: Record<string, unknown>;
+}
+
+export interface ReviewedPlanPromotionResult {
+  derivedTemplateId: string;
+  templateId?: number | null;
+  path: string;
+  learnedEntityCount: number;
+  learnedEntitiesPath: string;
+  dbWarning?: string;
+}
+
+export interface LearnedEntityRecord {
+  entityId: string;
+  entityName: string;
+  entityType: EntityBinding['entityType'];
+  cardinality?: Cardinality;
+  columns?: BoundColumn[];
+  source?: string;
+  planId?: string;
+  templateId?: string;
+  derivedTemplateId?: string;
+}
+
+export interface ReviewedPlanComponent {
+  componentId: string;
+  componentType: string;
+  questionId: string;
+  source: string;
+  requiredEntities: Array<Record<string, unknown>>;
+  analyticsSpec: Record<string, unknown>;
+  formulaSpec: Record<string, unknown>;
+  answerStructure: Record<string, unknown>;
+  slotIds: string[];
+  readiness: string;
+}
+
+export interface ReviewedPlanNode {
+  nodeId: string;
+  nodeType: 'topic' | 'subtopic' | 'subsubtopic' | 'question';
+  title: string;
+  parentId?: string;
+  order: number;
+  source: string;
+  enabled: boolean;
+  questionId?: string;
+  requiredEntities: Array<Record<string, unknown>>;
+  components: ReviewedPlanComponent[];
+  readiness: string;
+  children: ReviewedPlanNode[];
+}
+
+export type ExecutionReadyStatus = 'READY' | 'DEGRADED' | 'NOT_READY';
+
+export interface BindingExecutionReadyResult {
+  contract_version: string;
+  template_id: string;
+  dataset_id: string;
+  binding_ast_id: string;
+  status: ExecutionReadyStatus;
+  dataset_ast: DatasetAst;
+  binding_ast: Record<string, unknown>;
+  statistical_context: Record<string, unknown>;
+  plans: Array<Record<string, unknown>>;
+  blocked_questions: Array<Record<string, unknown>>;
+  readiness_report: Record<string, unknown>;
+  dataframe_ref: Record<string, unknown>;
+  lineage_index: Record<string, unknown>;
+  frozen_at: string;
+}
+
+export type BindingAction = 'confirm' | 'override' | 'reject' | 'share' | 'reopen';
+
+export interface BindingConfirmPayload {
+  entity_id: string;
+  action: BindingAction;
+  columns?: string[];
+  note?: string;
+  force_transfer?: boolean;
+  transfer_from_entity_ids?: string[];
+  share_policy?: 'exclusive' | 'shared';
+  share_reason?: string;
+}
+
+export interface ManualEntityPayload {
+  entity_name: string;
+  entity_type: EntityBinding['entityType'];
+  columns: string[];
+  cardinality?: Cardinality;
+  note?: string;
+  share_policy?: 'exclusive' | 'shared';
+  share_reason?: string;
+}
+
+export const bindingPhaseApi = {
+  /** Binder-native template package list with blueprint/AST/slot metadata. */
+  listTemplatePackages: async (): Promise<BindingTemplatePackage[]> => {
+    const { data } = await api.get('/report-builder/binding-phase/template-packages');
+    return data;
+  },
+  /** S0 profile + S1 propose. Optional blueprint file; defaults to the bundled gold PLFS template. */
+  start: async (
+    datasetFile: File,
+    templateId = 'tpl_plfs_annual_v1',
+    blueprintFile?: File
+  ): Promise<BindingStartResult> => {
+    const form = new FormData();
+    form.append('template_id', templateId);
+    form.append('dataset', datasetFile);
+    if (blueprintFile) form.append('blueprint', blueprintFile);
+    const { data } = await api.post('/report-builder/binding-phase/start', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  },
+  getProposals: async (
+    templateId: string,
+    signature: string
+  ): Promise<BindingProposalsResult> => {
+    const { data } = await api.get(
+      `/report-builder/binding-phase/${templateId}/${signature}/proposals`
+    );
+    return data;
+  },
+  getWorkspace: async (
+    templateId: string,
+    signature: string
+  ): Promise<BindingWorkspace> => {
+    const { data } = await api.get(
+      `/report-builder/binding-phase/${templateId}/${signature}/workspace`
+    );
+    return data;
+  },
+  /** Record one human decision (confirm / override-with-columns / reject). */
+  confirm: async (
+    templateId: string,
+    signature: string,
+    body: BindingConfirmPayload
+  ): Promise<BindingRecordResult> => {
+    const { data } = await api.post(
+      `/report-builder/binding-phase/${templateId}/${signature}/confirm`,
+      body
+    );
+    return data;
+  },
+  /** Add an officer-created entity from selected dataset column(s). */
+  addEntity: async (
+    templateId: string,
+    signature: string,
+    body: ManualEntityPayload
+  ): Promise<BindingRecordResult> => {
+    const { data } = await api.post(
+      `/report-builder/binding-phase/${templateId}/${signature}/entities`,
+      body
+    );
+    return data;
+  },
+  /** Apply confirmations, resolve every question (S3) + compute the coverage gate (B6). */
+  finalize: async (
+    templateId: string,
+    signature: string
+  ): Promise<BindingFinalizeResult> => {
+    const { data } = await api.post(
+      `/report-builder/binding-phase/${templateId}/${signature}/finalize`
+    );
+    return data;
+  },
+  /** Build and validate the canonical S4 ExecutionBundle handoff. */
+  executionReady: async (
+    templateId: string,
+    signature: string
+  ): Promise<BindingExecutionReadyResult> => {
+    const { data } = await api.get(
+      `/report-builder/binding-phase/${templateId}/${signature}/execution-ready`
+    );
+    return data;
+  },
+  getReviewedPlan: async (
+    templateId: string,
+    signature: string
+  ): Promise<ReviewedPlanSummary> => {
+    const { data } = await api.get(
+      `/report-builder/binding-phase/${templateId}/${signature}/reviewed-plan`
+    );
+    return data;
+  },
+  patchReviewedPlanNode: async (
+    templateId: string,
+    signature: string,
+    nodeId: string,
+    body: ReviewedPlanNodePatchPayload
+  ): Promise<ReviewedPlanSummary> => {
+    const { data } = await api.patch(
+      `/report-builder/binding-phase/${templateId}/${signature}/reviewed-plan/nodes/${nodeId}`,
+      body
+    );
+    return data;
+  },
+  addReviewedPlanQuestion: async (
+    templateId: string,
+    signature: string,
+    body: ReviewedPlanQuestionPayload
+  ): Promise<ReviewedPlanSummary> => {
+    const { data } = await api.post(
+      `/report-builder/binding-phase/${templateId}/${signature}/reviewed-plan/questions`,
+      body
+    );
+    return data;
+  },
+  listComponentRegistry: async (): Promise<ComponentDefinition[]> => {
+    const { data } = await api.get('/report-builder/binding-phase/component-registry');
+    return data;
+  },
+  listComponentRecommendations: async (
+    templateId: string,
+    signature: string,
+    nodeId: string
+  ): Promise<ComponentRecommendation[]> => {
+    const { data } = await api.get(
+      `/report-builder/binding-phase/${templateId}/${signature}/reviewed-plan/nodes/${nodeId}/component-recommendations`
+    );
+    return data;
+  },
+  addReviewedPlanComponent: async (
+    templateId: string,
+    signature: string,
+    nodeId: string,
+    body: ReviewedPlanComponentPayload
+  ): Promise<ReviewedPlanSummary> => {
+    const { data } = await api.post(
+      `/report-builder/binding-phase/${templateId}/${signature}/reviewed-plan/nodes/${nodeId}/components`,
+      body
+    );
+    return data;
+  },
+  patchReviewedPlanComponent: async (
+    templateId: string,
+    signature: string,
+    nodeId: string,
+    componentId: string,
+    body: ReviewedPlanComponentPatchPayload
+  ): Promise<ReviewedPlanSummary> => {
+    const { data } = await api.patch(
+      `/report-builder/binding-phase/${templateId}/${signature}/reviewed-plan/nodes/${nodeId}/components/${componentId}`,
+      body
+    );
+    return data;
+  },
+  promoteReviewedPlan: async (
+    templateId: string,
+    signature: string,
+    body: { name?: string } = {}
+  ): Promise<ReviewedPlanPromotionResult> => {
+    const { data } = await api.post(
+      `/report-builder/binding-phase/${templateId}/${signature}/reviewed-plan/promote`,
+      body
+    );
+    return data;
+  },
+  listLearnedEntities: async (templateId?: string): Promise<LearnedEntityRecord[]> => {
+    const { data } = await api.get('/report-builder/binding-phase/learned-entities', {
+      params: templateId ? { template_id: templateId } : undefined,
+    });
+    return data;
+  },
+};
+
+// ── Generation phase (S4→S6) ────────────────────────────────────────────────
+
+export interface GenerateResult {
+  template_id: string;
+  signature: string;
+  report_id: string;
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+  stats: Record<string, unknown>;
+  coverage: Record<string, number>;
+  narrative_trace: Array<Record<string, unknown>>;
+  fill_trace: Array<Record<string, unknown>>;
+}
+
+export const generatePhaseApi = {
+  /** Run S4→S6 on a finalized binding: analytics → fill → narrate → assemble → render. */
+  generate: async (
+    templateId: string,
+    signature: string,
+    body: { period?: string; report_id?: string; use_llm?: boolean } = {}
+  ): Promise<GenerateResult> => {
+    const { data } = await api.post(
+      `/report-builder/generate-phase/${templateId}/${signature}/generate`,
+      body
+    );
+    return data;
+  },
+  /** The assembled report.output.ast.json (latest, or a saved version). */
+  getReport: async (
+    templateId: string,
+    signature: string,
+    version?: number
+  ): Promise<Record<string, unknown>> => {
+    const qs = version != null ? `?version=${version}` : '';
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/report${qs}`
+    );
+    return data;
+  },
+  /** Absolute URL of the rendered standalone HTML report (for an iframe / new tab). */
+  reportHtmlUrl: (templateId: string, signature: string): string =>
+    `${API_BASE}/report-builder/generate-phase/${templateId}/${signature}/report.html`,
+  /** Absolute URL of the on-demand PDF (cover + TOC + appendix). Returns 503 if
+   *  the server's PDF engine is unavailable — fall back to the HTML report. */
+  reportPdfUrl: (
+    templateId: string,
+    signature: string,
+    opts: { engine?: string; locale?: string; theme?: string } = {}
+  ): string => {
+    const qs = new URLSearchParams();
+    if (opts.engine) qs.set('engine', opts.engine);
+    if (opts.locale) qs.set('locale', opts.locale);
+    if (opts.theme) qs.set('theme', opts.theme);
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return `${API_BASE}/report-builder/generate-phase/${templateId}/${signature}/report.pdf${suffix}`;
+  },
+  /** Author defaults for this template (returns filled defaults if none saved). */
+  getProfile: async (
+    templateId: string,
+    signature: string
+  ): Promise<Record<string, unknown>> => {
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/profile`
+    );
+    return data;
+  },
+  /** Persist the author's full template profile. */
+  putProfile: async (
+    templateId: string,
+    signature: string,
+    profile: Record<string, unknown>
+  ): Promise<Record<string, unknown>> => {
+    const { data } = await api.put(
+      `/report-builder/generate-phase/${templateId}/${signature}/profile`,
+      profile
+    );
+    return data;
+  },
+  /** Sparse viewer overrides saved for this report. */
+  getOverrides: async (
+    templateId: string,
+    signature: string
+  ): Promise<Record<string, unknown>> => {
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/overrides`
+    );
+    return data;
+  },
+  /** Merge sparse viewer overrides into the stored set (deep-merge server-side). */
+  patchOverrides: async (
+    templateId: string,
+    signature: string,
+    overrides: Record<string, unknown>
+  ): Promise<Record<string, unknown>> => {
+    const { data } = await api.patch(
+      `/report-builder/generate-phase/${templateId}/${signature}/overrides`,
+      overrides
+    );
+    return data;
+  },
+  /** Absolute URL of the customized server render (effective profile applied). */
+  customRenderUrl: (
+    templateId: string,
+    signature: string,
+    opts: { format?: 'html' | 'pdf'; engine?: string } = {}
+  ): string => {
+    const qs = new URLSearchParams();
+    if (opts.format) qs.set('format', opts.format);
+    if (opts.engine) qs.set('engine', opts.engine);
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return `${API_BASE}/report-builder/generate-phase/${templateId}/${signature}/render${suffix}`;
+  },
+  /** Apply one human edit; returns {ok, version, audit}. */
+  editReport: async (
+    templateId: string,
+    signature: string,
+    edit: EditInput
+  ): Promise<{ ok: boolean; version: number; audit: Record<string, unknown> }> => {
+    const { data } = await api.post(
+      `/report-builder/generate-phase/${templateId}/${signature}/edit`,
+      edit
+    );
+    return data;
+  },
+  /** List saved version numbers and the current one. */
+  getVersions: async (
+    templateId: string,
+    signature: string
+  ): Promise<{ versions: number[]; current: number | null }> => {
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/versions`
+    );
+    return data;
   },
 };
 

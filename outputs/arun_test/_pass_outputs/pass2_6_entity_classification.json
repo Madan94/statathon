@@ -1,0 +1,180 @@
+{
+  "classified_entities": [
+    {
+      "entityId": "ent_001",
+      "name": "Labour Force Participation Rate",
+      "entityType_hint": "measure",
+      "source": "pre_seeded",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_002",
+      "name": "Worker Population Ratio",
+      "entityType_hint": "measure",
+      "source": "pre_seeded",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_003",
+      "name": "Unemployment Rate",
+      "entityType_hint": "measure",
+      "source": "pre_seeded",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_004",
+      "name": "Gender",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_005",
+      "name": "Rural/Urban Sector",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_006",
+      "name": "Survey Year",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_007",
+      "name": "Age Group",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_008",
+      "name": "Status in Employment",
+      "entityType_hint": "measure",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_009",
+      "name": "Usual Status (ps+ss)",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_010",
+      "name": "Periodic Labour Force Survey",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_011",
+      "name": "MoSPI",
+      "entityType_hint": "metadata",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_012",
+      "name": "Samrat (Release I",
+      "entityType_hint": "measure",
+      "source": "table_header",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_013",
+      "name": "Snapshot",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_014",
+      "name": "Key findings",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_015",
+      "name": "A. Introduction",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_016",
+      "name": "C. Changes in Sample Design of PLFS",
+      "entityType_hint": "metadata",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_017",
+      "name": "E. Compatibility of PLFS 2025 results",
+      "entityType_hint": "metadata",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_018",
+      "name": "B. Sample Size",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_019",
+      "name": "PLFS: Changes in 2025",
+      "entityType_hint": "metadata",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_020",
+      "name": "Labour Force Participation Rate (LFPR):",
+      "entityType_hint": "measure",
+      "source": "heading",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_021",
+      "name": "Scan the QR code below to access MoSPI",
+      "entityType_hint": "metadata",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_022",
+      "name": "Publications/ Reports",
+      "entityType_hint": "dimension",
+      "source": "heading",
+      "unit": null,
+      "confidence": null
+    }
+  ]
+}

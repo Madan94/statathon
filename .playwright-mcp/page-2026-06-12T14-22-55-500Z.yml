@@ -1,0 +1,39 @@
+- generic [active] [ref=e1]:
+  - region "Notifications alt+T"
+  - generic [ref=e2]:
+    - complementary "Main navigation" [ref=e3]:
+      - link "BharatStat Visual Report Generation Tool" [ref=e5] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e6]: BharatStat
+        - paragraph [ref=e7]: Visual Report Generation Tool
+      - navigation [ref=e8]:
+        - link "Home" [ref=e9] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e10]
+          - text: Home
+        - link "Upload" [ref=e13] [cursor=pointer]:
+          - /url: /upload
+          - img [ref=e14]
+          - text: Upload
+        - link "Report Builder" [ref=e17] [cursor=pointer]:
+          - /url: /report-builder
+          - img [ref=e18]
+          - text: Report Builder
+        - link "All Activity" [ref=e21] [cursor=pointer]:
+          - /url: /activity
+          - img [ref=e22]
+          - text: All Activity
+        - link "Profile" [ref=e26] [cursor=pointer]:
+          - /url: /profile
+          - img [ref=e27]
+          - text: Profile
+    - generic [ref=e30]:
+      - banner [ref=e31]:
+        - button "Log out" [ref=e34]:
+          - img [ref=e35]
+          - generic [ref=e38]: Logout
+      - main [ref=e39]:
+        - paragraph [ref=e41]: Verifying session…
+  - button "Open Next.js Dev Tools" [ref=e47] [cursor=pointer]:
+    - img [ref=e48]
+  - alert [ref=e51]

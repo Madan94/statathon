@@ -1,0 +1,434 @@
+{
+  "$schema": "bharatstat/template-blueprint/v1",
+  "_doc": "VALUE-FREE + PROSE-FREE analytic brain. Defines WHAT to compute and HOW to render. Contains NO numbers, NO sentences, NO dataset. Pairs 1:1 with template.ast.json by shared IDs.",
+  "templateMeta": {
+    "templateId": "tpl_arun_test_11_v1",
+    "name": "Document",
+    "domain": "general",
+    "locale": "en-IN",
+    "version": "3.0",
+    "valueFree": true,
+    "proseFree": true,
+    "sourceDocument": "Document"
+  },
+  "entities": [
+    {
+      "entityId": "ent_012",
+      "canonicalName": "LFPR",
+      "entityType": "measure",
+      "aliases": [],
+      "unit": "percent",
+      "format": "0.0%",
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": "lfpr",
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_013",
+      "canonicalName": "State/UT",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "high",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_014",
+      "canonicalName": "Rural",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_015",
+      "canonicalName": "Urban",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_016",
+      "canonicalName": "Worker Population Ratio",
+      "entityType": "measure",
+      "aliases": [
+        "WPR",
+        "Worker Population Ratio"
+      ],
+      "unit": "percent",
+      "format": "0.0%",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": "wpr",
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_017",
+      "canonicalName": "Statement",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "high",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_018",
+      "canonicalName": "WPR",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": "percent",
+      "format": "0.0%",
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": "wpr",
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_019",
+      "canonicalName": "UR in usual status",
+      "entityType": "dimension",
+      "aliases": [
+        "UR in usual status"
+      ],
+      "unit": "percent",
+      "format": "0.0%",
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": "ur",
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_020",
+      "canonicalName": "Earnings from regular wage/ salary and self-employment",
+      "entityType": "measure",
+      "aliases": [],
+      "unit": "INR",
+      "format": "₹#,##,##0",
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_021",
+      "canonicalName": "Earnings from casual labour work",
+      "entityType": "dimension",
+      "aliases": [
+        "Earnings from casual labour work"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_022",
+      "canonicalName": "Average number of years in formal education",
+      "entityType": "measure",
+      "aliases": [],
+      "unit": "count",
+      "format": "#,##,##0",
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_023",
+      "canonicalName": "Usual Status",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_024",
+      "canonicalName": "Principal activity status",
+      "entityType": "dimension",
+      "aliases": [
+        "Principal activity status"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_025",
+      "canonicalName": "Subsidary economic activity status",
+      "entityType": "dimension",
+      "aliases": [
+        "Subsidary economic activity status"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_026",
+      "canonicalName": "Activity Status - Current Weekly Status",
+      "entityType": "dimension",
+      "aliases": [
+        "CWS",
+        "Activity Status - Current Weekly Status"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Arun Test 11",
+      "order": 1,
+      "semanticRef": "sec_01",
+      "questions": [
+        {
+          "questionId": "q_001",
+          "intent": "What are the key findings and statistics in the section on 'Arun Test 11'?",
+          "questionType": "describe",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_012",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_016",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_013",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "summary_stats",
+            "measure": {
+              "entityRef": "ent_012",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_013"
+              }
+            ],
+            "filters": [],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "q_001_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_012",
+                    "ent_016"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_q_001",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "q_001_c2",
+                "kind": "metric",
+                "order": 2,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "metric_card"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "tableTemplates": [],
+  "documentMap": {
+    "order": [
+      "topic_01"
+    ],
+    "frontMatter": [
+      "title_page",
+      "toc"
+    ],
+    "backMatter": [
+      "glossary",
+      "notes"
+    ]
+  },
+  "glossary": {
+    "LFPR": "LFPR — extracted indicator from the source document.",
+    "WPR": "Worker Population Ratio — extracted indicator from the source document.",
+    "Earnings from regular wage/ salary and self-employment": "Earnings from regular wage/ salary and self-employment — extracted indicator from the source document.",
+    "Average number of years in formal education": "Average number of years in formal education — extracted indicator from the source document."
+  },
+  "palette": {
+    "paletteId": "pal_mospi_default",
+    "sequential": [
+      "#0B5394",
+      "#3D85C6",
+      "#6FA8DC",
+      "#9FC5E8",
+      "#CFE2F3"
+    ],
+    "categorical": {
+      "Rural": "#1F7A1F",
+      "Urban": "#0B5394",
+      "Male": "#0B5394",
+      "Female": "#CC4125",
+      "Total": "#666666"
+    },
+    "semantic": {
+      "positive": "#1F7A1F",
+      "negative": "#CC0000",
+      "neutral": "#666666"
+    }
+  },
+  "renderProfile": {
+    "numberFormat": {
+      "locale": "en-IN",
+      "grouping": "lakh-crore",
+      "decimalSeparator": "."
+    },
+    "percentFormat": {
+      "decimals": 1,
+      "suffix": "%"
+    },
+    "currencyFormat": {
+      "symbol": "₹",
+      "grouping": "lakh-crore",
+      "decimals": 0
+    },
+    "fontFamily": "Noto Sans",
+    "pageSize": "A4"
+  },
+  "figureTemplates": []
+}

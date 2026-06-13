@@ -1,0 +1,19 @@
+Reporting Period,Sector,Gender,Age Group,State/UT,population_count,labour_force_count,worker_count,unemployed_count,sample_weight,LFPR,WPR,UR,source_note,estimate_status
+2023-24,Rural,Male,15+,India,100000,62000,59500,2500,1.00,62.0,59.5,4.0,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Rural,Female,15+,India,100000,32000,30500,1500,1.00,32.0,30.5,4.7,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Rural,Total,15+,India,200000,94000,90000,4000,1.00,47.0,45.0,4.3,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Urban,Male,15+,India,80000,59000,56000,3000,1.00,73.8,70.0,5.1,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Urban,Female,15+,India,80000,26000,24500,1500,1.00,32.5,30.6,5.8,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Urban,Total,15+,India,160000,85000,80500,4500,1.00,53.1,50.3,5.3,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Total,Total,15+,India,360000,179000,170500,8500,1.00,49.7,47.4,4.7,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Rural,Male,15-29,India,30000,18000,16500,1500,1.00,60.0,55.0,8.3,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Rural,Female,15-29,India,30000,9000,8200,800,1.00,30.0,27.3,8.9,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Urban,Male,15-29,India,25000,16000,14500,1500,1.00,64.0,58.0,9.4,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Urban,Female,15-29,India,25000,8500,7600,900,1.00,34.0,30.4,10.6,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Total,Total,15-29,India,110000,51500,46800,4700,1.00,46.8,42.5,9.1,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Total,Total,15+,Kerala,50000,26000,24500,1500,1.00,52.0,49.0,5.8,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Total,Total,15+,Tamil Nadu,60000,33000,31500,1500,1.00,55.0,52.5,4.5,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Total,Total,15+,Maharashtra,70000,37000,35200,1800,1.00,52.9,50.3,4.9,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Total,Total,15+,Uttar Pradesh,80000,38000,36000,2000,1.00,47.5,45.0,5.3,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Total,Total,15+,Rajasthan,55000,27000,25600,1400,1.00,49.1,46.5,5.2,synthetic_demo_mospi_short_enterprise_v1,final_demo
+2023-24,Total,Total,15+,Assam,45000,22000,20700,1300,1.00,48.9,46.0,5.9,synthetic_demo_mospi_short_enterprise_v1,final_demo

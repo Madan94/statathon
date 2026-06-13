@@ -1,0 +1,42 @@
+name: Deploy backend to EC2
+
+# Auto-deploy the FastAPI backend to the EC2 box on every push to main.
+# The frontend (dashboard/) is deployed separately by Vercel's Git integration,
+# so changes that only touch dashboard/** are ignored here.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'dashboard/**'
+      - '**/*.md'
+  workflow_dispatch: {}
+
+# Never run two deploys at once; cancel a stale one if a newer push arrives.
+concurrency:
+  group: deploy-ec2
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Only run in the deployment repo — harmless no-op if this file ever lands
+    # in the upstream team repo.
+    if: github.repository == 'SYLESH-1125/bharatstat'
+    steps:
+      - name: SSH deploy (pull + restart + health check)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          timeout: 60s
+          command_timeout: 15m
+          # Forward the ephemeral per-run token so the box can pull the repo
+          # with no standing credentials stored on the server.
+          envs: GITHUB_TOKEN
+          script: bash /home/ubuntu/deploy.sh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

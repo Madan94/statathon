@@ -1,0 +1,30 @@
+[tool.pytest.ini_options]
+# ── Discovery ─────────────────────────────────────────────────────────────────
+testpaths   = ["tests"]
+pythonpath  = ["."]           # repo root always on sys.path — no PYTHONPATH env var needed
+
+# ── Output ────────────────────────────────────────────────────────────────────
+addopts     = "-ra --tb=short --strict-markers"
+
+# ── Custom markers ────────────────────────────────────────────────────────────
+markers = [
+    "live:        requires at least one live external service",
+    "live_db:     requires Supabase/Postgres connection",
+    "live_s3:     requires Cloudflare R2 / S3 credentials",
+    "live_llm:    requires GEMINI_API_KEY",
+    "live_vlm:    requires running ColPali service (COLPALI_ENDPOINT)",
+    "live_sglang: requires running SGLang server (SGLANG_ENDPOINT)",
+]
+
+# ── Warning filters ───────────────────────────────────────────────────────────
+# Suppress noisy third-party deprecations so actual test output is readable
+filterwarnings = [
+    "ignore::FutureWarning:google.*:",
+    "ignore::FutureWarning:agents.*:",
+    "ignore::FutureWarning:template_engine.*:",
+    "ignore::DeprecationWarning:google.*:",
+    "ignore::DeprecationWarning:template_engine.*:",
+    "ignore::DeprecationWarning:report_builder.*:",
+    "ignore::DeprecationWarning:agents.*:",
+    "ignore::pytest.PytestUnknownMarkWarning",
+]

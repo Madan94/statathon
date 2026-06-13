@@ -257,7 +257,15 @@ def _assign_verdict(checks: list[ClaimCheck]) -> str:
 # ---------------------------------------------------------------------------
 
 class VerifierAgent:
-    """Multi-pass verifier for narrative blocks."""
+    """Multi-pass verifier for narrative blocks.
+
+    Supports domain-aware tolerance via PipelineConfig.verifier cascade:
+      entity_type override > domain override > default (±5%)
+    """
+
+    def __init__(self, domain: str = "", verifier_config=None):
+        self._domain = domain
+        self._verifier_config = verifier_config
 
     def verify(
         self,
@@ -287,6 +295,9 @@ class VerifierAgent:
 
         # Pass 2: recompute
         for c in checks:
+            # Apply domain-aware tolerance
+            c.tolerance = self._resolve_tolerance(c.interpretation)
+
             # 2a: match against facts dict
             closest, dist = _closest_fact(fact_values, c.claimed_value)
             if closest is not None and dist <= c.tolerance:
@@ -341,3 +352,27 @@ class VerifierAgent:
         if any(v.overall_status == "warn" for v in verdicts):
             return "warn"
         return "pass"
+
+    def _resolve_tolerance(self, claim_type: str) -> float:
+        """Domain-aware tolerance cascade: verifier_config > domain_tolerance.json > default."""
+        default_tol = 0.05
+
+        if self._verifier_config is not None:
+            try:
+                return self._verifier_config.get_tolerance(self._domain, claim_type)
+            except Exception:
+                pass
+
+        # Fallback: try loading domain_tolerance.json directly
+        try:
+            import pathlib
+            tol_path = pathlib.Path(__file__).resolve().parent.parent / "template_engine" / "config" / "domain_tolerance.json"
+            if tol_path.exists():
+                import json as _json
+                data = _json.loads(tol_path.read_text())
+                domain_data = data.get(self._domain, data.get("generic", {}))
+                return domain_data.get(claim_type, domain_data.get("default", default_tol))
+        except Exception:
+            pass
+
+        return default_tol

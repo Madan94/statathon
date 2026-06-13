@@ -1,0 +1,87 @@
+{
+  "_meta": "Simulated ideal knowledge graph — what pass2.5 SHOULD produce after consuming pass0+pass1+pass2",
+  "entities_count": 18,
+  "table_structures_count": 4,
+  "chapters_count": 1,
+  "entities": [
+    {"entityId": "ent_001", "name": "States/ UTs", "source": "table_header", "entityType_hint": "dimension", "pages": [7, 8, 9]},
+    {"entityId": "ent_002", "name": "Proved", "source": "table_header", "entityType_hint": "measure", "pages": [7]},
+    {"entityId": "ent_003", "name": "Indicated", "source": "table_header", "entityType_hint": "measure", "pages": [7]},
+    {"entityId": "ent_004", "name": "Inferred", "source": "table_header", "entityType_hint": "measure", "pages": [7]},
+    {"entityId": "ent_005", "name": "Total", "source": "table_header", "entityType_hint": "measure", "pages": [7, 9]},
+    {"entityId": "ent_006", "name": "Distribution (%)", "source": "table_header", "entityType_hint": "measure", "pages": [7, 8, 9]},
+    {"entityId": "ent_007", "name": "Crude Oil", "source": "table_header", "entityType_hint": "measure", "pages": [8]},
+    {"entityId": "ent_008", "name": "Natural Gas", "source": "table_header", "entityType_hint": "measure", "pages": [8]},
+    {"entityId": "ent_009", "name": "Wind Power", "source": "table_header", "entityType_hint": "measure", "pages": [9]},
+    {"entityId": "ent_010", "name": "Solar Energy", "source": "table_header", "entityType_hint": "measure", "pages": [9]},
+    {"entityId": "ent_011", "name": "Small Hydro Power", "source": "table_header", "entityType_hint": "measure", "pages": [9]},
+    {"entityId": "ent_012", "name": "Biomass Power", "source": "table_header", "entityType_hint": "measure", "pages": [9]},
+    {"entityId": "ent_013", "name": "Cogeneration-bagasse", "source": "table_header", "entityType_hint": "measure", "pages": [9]},
+    {"entityId": "ent_014", "name": "Large Hydro", "source": "table_header", "entityType_hint": "measure", "pages": [9]},
+    {"entityId": "ent_015", "name": "Coal Reserves", "source": "vlm", "entityType_hint": "measure", "pages": [3]},
+    {"entityId": "ent_016", "name": "Lignite Reserves", "source": "vlm", "entityType_hint": "measure", "pages": [3]},
+    {"entityId": "ent_017", "name": "Renewable Energy Potential", "source": "heading", "entityType_hint": "measure", "pages": [5, 6]},
+    {"entityId": "ent_018", "name": "Estimated Reserves", "source": "table_header", "entityType_hint": "measure", "pages": [8]}
+  ],
+  "table_structures": [
+    {
+      "tableId": "tbl_8_2",
+      "page": 7,
+      "tableTitle": "Table 1.1: Statewise Estimated Reserves of Coal (As on 1st April 2025)",
+      "columns": ["States/ UTs", "Proved 2024", "Proved 2025", "Indicated 2024", "Indicated 2025", "Inferred 2024", "Inferred 2025", "Total 2024", "Total 2025", "Distribution (%) 2024", "Distribution (%) 2025"],
+      "dimensions": ["States/ UTs"],
+      "measures": ["Proved 2024", "Proved 2025", "Indicated 2024", "Indicated 2025", "Inferred 2024", "Inferred 2025", "Total 2024", "Total 2025", "Distribution (%) 2024", "Distribution (%) 2025"],
+      "breakdowns": [{"measure": "Proved", "breakdown_by": "qualifier", "values": ["2024", "2025"]}, {"measure": "Indicated", "breakdown_by": "qualifier", "values": ["2024", "2025"]}, {"measure": "Inferred", "breakdown_by": "qualifier", "values": ["2024", "2025"]}],
+      "columnGroups": [{"label": "Proved", "span": 2}, {"label": "Indicated", "span": 2}, {"label": "Inferred", "span": 2}, {"label": "Total", "span": 2}, {"label": "Distribution (%)", "span": 2}],
+      "layout": "cross_tabulation"
+    },
+    {
+      "tableId": "tbl_8_3",
+      "page": 7,
+      "tableTitle": "Table 1.2: Statewise Estimated Reserves of Lignite (As on 1st April 2025)",
+      "columns": ["States/ UTs", "Proved 2024", "Proved 2025", "Indicated 2024", "Indicated 2025", "Inferred 2024", "Inferred 2025", "Total 2024", "Total 2025", "Distribution (%) 2024", "Distribution (%) 2025"],
+      "dimensions": ["States/ UTs"],
+      "measures": ["Proved 2024", "Proved 2025", "Indicated 2024", "Indicated 2025", "Inferred 2024", "Inferred 2025", "Total 2024", "Total 2025", "Distribution (%) 2024", "Distribution (%) 2025"],
+      "breakdowns": [{"measure": "Proved", "breakdown_by": "qualifier", "values": ["2024", "2025"]}],
+      "columnGroups": [{"label": "Proved", "span": 2}, {"label": "Indicated", "span": 2}, {"label": "Inferred", "span": 2}],
+      "layout": "cross_tabulation"
+    },
+    {
+      "tableId": "tbl_9_2",
+      "page": 8,
+      "tableTitle": "Table 1.3: Statewise Estimated Reserves of Crude Oil and Natural Gas (As on 1st April 2025)",
+      "columns": ["States/ UTs/ Region", "Crude Oil (Million Tonnes) 2024 Estimated Reserves", "Crude Oil (Million Tonnes) 2024 Distribution (%)", "Crude Oil (Million Tonnes) 2025 Estimated Reserves", "Crude Oil (Million Tonnes) 2025 Distribution (%)", "Natural Gas (Billion Cubic Metres) 2024 Estimated Reserves", "Natural Gas (Billion Cubic Metres) 2024 Distribution (%)", "Natural Gas (Billion Cubic Metres) 2025 Estimated Reserves", "Natural Gas (Billion Cubic Metres) 2025 Distribution (%)"],
+      "dimensions": ["States/ UTs/ Region"],
+      "measures": ["Crude Oil 2024 Estimated Reserves", "Crude Oil 2024 Distribution (%)", "Crude Oil 2025 Estimated Reserves", "Crude Oil 2025 Distribution (%)", "Natural Gas 2024 Estimated Reserves", "Natural Gas 2024 Distribution (%)", "Natural Gas 2025 Estimated Reserves", "Natural Gas 2025 Distribution (%)"],
+      "breakdowns": [],
+      "columnGroups": [{"label": "Crude Oil (Million Tonnes)", "span": 4}, {"label": "Natural Gas (Billion Cubic Metres)", "span": 4}],
+      "layout": "cross_tabulation"
+    },
+    {
+      "tableId": "tbl_10_2",
+      "page": 9,
+      "tableTitle": "Table 1.4: Sourcewise and Statewise Estimated Potential of Renewable Power in India (as on 31.03.2025)",
+      "columns": ["Sl. No.", "States/ UTs", "Wind Power @ 150m", "Small Hydro Power*", "Biomass Power", "Cogeneration-bagasse", "Solar Energy", "Large Hydro#", "Total", "Distribution (%)"],
+      "dimensions": ["Sl. No.", "States/ UTs"],
+      "measures": ["Wind Power @ 150m", "Small Hydro Power*", "Biomass Power", "Cogeneration-bagasse", "Solar Energy", "Large Hydro#", "Total", "Distribution (%)"],
+      "breakdowns": [],
+      "columnGroups": [],
+      "layout": "simple"
+    }
+  ],
+  "chapters": [
+    {
+      "chapterId": "ch_01",
+      "title": "Energy Reserves and Potential",
+      "pageRange": [2, 9],
+      "sections": [
+        {"sectionId": "sec_01_01", "title": "1.1 Coal Reserves", "page": 3, "level": 2},
+        {"sectionId": "sec_01_02", "title": "1.2 Lignite Reserves", "page": 3, "level": 2},
+        {"sectionId": "sec_01_03", "title": "1.3 Crude Oil Reserves", "page": 4, "level": 2},
+        {"sectionId": "sec_01_04", "title": "1.4 Natural Gas Reserves", "page": 4, "level": 2},
+        {"sectionId": "sec_01_05", "title": "1.5 Renewable Energy Potential in India", "page": 5, "level": 2},
+        {"sectionId": "sec_01_06", "title": "Geographical Distribution of Renewable Energy Potential", "page": 6, "level": 2}
+      ]
+    }
+  ]
+}

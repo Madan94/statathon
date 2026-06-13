@@ -1,0 +1,200 @@
+{
+  "vlm_success_count": 10,
+  "total_entities": 66,
+  "chart_pages": 4,
+  "pages": [
+    {
+      "page": 0,
+      "vlm_used": true,
+      "structure_type": "title_page",
+      "entities": [
+        "Energy Reserves and Potential"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "Chapter One"
+    },
+    {
+      "page": 1,
+      "vlm_used": true,
+      "structure_type": "title_page",
+      "entities": [],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "harish payaluga"
+    },
+    {
+      "page": 2,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Global Classification of Energy Reserves",
+        "Economic and Social Viability",
+        "Field Project Status and Feasibility",
+        "Geological Knowledge",
+        "Class A",
+        "Class B",
+        "Class C",
+        "Energy Reserves in India",
+        "Energy Reserves and Potential"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "CHAPTER 1 Energy Reserves and Potential"
+    },
+    {
+      "page": 3,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Highlights of reserves in India",
+        "Proved",
+        "Inferred",
+        "Indicated",
+        "Total Estimated reserves"
+      ],
+      "chart_types": [
+        "pie"
+      ],
+      "chart_titles": [
+        "Fig 1.1 Estimated Reserves of Coal in India as on 01.04.2025",
+        "Fig 1.2 Estimated Reserves of Lignite in India as on 01.04.2025"
+      ],
+      "table_title": "",
+      "section_heading": "Chapter 1: Energy Reserves and Potential"
+    },
+    {
+      "page": 4,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Energy Reserves and Potential",
+        "Crude Oil Reserves",
+        "Natural Gas Reserves"
+      ],
+      "chart_types": [
+        "pie"
+      ],
+      "chart_titles": [
+        "Fig 1.3: Estimated Reserves of Crude Oil in India as on 01.04.2025",
+        "Fig 1.4 : Estimated Reserves of Natural Gas in India as on 01.04.2025"
+      ],
+      "table_title": "",
+      "section_heading": "Chapter 1: Energy Reserves and Potential"
+    },
+    {
+      "page": 5,
+      "vlm_used": true,
+      "structure_type": "chart_page",
+      "entities": [
+        "Renewable Energy Potential in India",
+        "Wind Power",
+        "Solar",
+        "Large Hydro",
+        "Small Hydro Power",
+        "Biomass Power",
+        "Cogeneration-bagasse"
+      ],
+      "chart_types": [
+        "pie"
+      ],
+      "chart_titles": [
+        "Source wise Estimated Potential of Renewable Power in India as on 31.03.2025"
+      ],
+      "table_title": "",
+      "section_heading": "Chapter 1: Energy Reserves and Potential"
+    },
+    {
+      "page": 6,
+      "vlm_used": true,
+      "structure_type": "chart_page",
+      "entities": [
+        "Energy Reserves and Potential",
+        "Geographical Distr",
+        "Energy Re enewable",
+        "Potential ential"
+      ],
+      "chart_types": [
+        "pie"
+      ],
+      "chart_titles": [
+        "Fig 1.6: Statewise Estimated Potential of Renewable Power (in percentage) in India as on 31.03.2025"
+      ],
+      "table_title": "",
+      "section_heading": "Chapter 1: Energy Reserves and Potential"
+    },
+    {
+      "page": 7,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "States/ UTs",
+        "Proved",
+        "Indicated",
+        "Inferred",
+        "Distribution (%)",
+        "All India Total",
+        "Proved 2024",
+        "Proved 2025",
+        "Indicated 2024",
+        "Indicated 2025",
+        "Inferred 2024",
+        "Inferred 2025",
+        "Total 2024",
+        "Total 2025",
+        "Distribution (%) 2024",
+        "Distribution (%) 2025"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "Table 1.1: Statewise Estimated Reserves of Coal (As on 1st April 2025)\nTable 1.2: Statewise Estimated Reserves of Lignite(As on 1st April 2025)",
+      "section_heading": "Chapter 1: Energy Reserves and Potential"
+    },
+    {
+      "page": 8,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "States/UTs/ Region",
+        "Crude Oil (Billion Tonnes)",
+        "Estimated Reserves",
+        "Distribution (%)",
+        "Natural Gas (Billion Cubic Metres)",
+        "States/ UTs/ Region",
+        "Crude Oil (Million Tonnes) 2024 Distribution\n(%)",
+        "Crude Oil (Million Tonnes) 2025 Distribution\n(%)"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "Table 1.3: Statewise Estimated Reserves of Crude Oil and Natural Gas (As on 1st April 2025)",
+      "section_heading": "Chapter 1: Energy Reserves and Potential"
+    },
+    {
+      "page": 9,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "Sl.No",
+        "States/ UTs",
+        "Wind Power*",
+        "Small Hydro Power#",
+        "Biomass Power",
+        "Cogeneration(in sugarcane)",
+        "Solar Energy",
+        "Large Hydro",
+        "Distribution (%)",
+        "Small Hydro\nPower*",
+        "Biomass\nPower",
+        "Cogeneration-\nbagasse",
+        "Large Hydro#"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "Table 1.4: Sourcewise and Statewise Estimated Potential of Renewable Power in India (as on 31.03.2025)",
+      "section_heading": "Chapter 1: Energy Reserves and Potential"
+    }
+  ]
+}

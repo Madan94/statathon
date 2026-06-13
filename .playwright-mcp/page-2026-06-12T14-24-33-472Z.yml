@@ -1,0 +1,203 @@
+- generic [ref=e1]:
+  - region "Notifications alt+T"
+  - generic [ref=e2]:
+    - complementary "Main navigation" [ref=e3]:
+      - link "BharatStat Visual Report Generation Tool" [ref=e5] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e6]: BharatStat
+        - paragraph [ref=e7]: Visual Report Generation Tool
+      - navigation [ref=e8]:
+        - link "Home" [ref=e9] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e10]
+          - text: Home
+        - link "Upload" [ref=e13] [cursor=pointer]:
+          - /url: /upload
+          - img [ref=e14]
+          - text: Upload
+        - link "Report Builder" [ref=e17] [cursor=pointer]:
+          - /url: /report-builder
+          - img [ref=e18]
+          - text: Report Builder
+        - link "All Activity" [ref=e21] [cursor=pointer]:
+          - /url: /activity
+          - img [ref=e22]
+          - text: All Activity
+        - link "Profile" [ref=e26] [cursor=pointer]:
+          - /url: /profile
+          - img [ref=e27]
+          - text: Profile
+    - generic [ref=e30]:
+      - banner [ref=e31]:
+        - generic [ref=e33]:
+          - generic "officer@example.com" [ref=e52]:
+            - img [ref=e53]
+            - text: Dev Test Officer
+          - button "Log out" [ref=e34]:
+            - img [ref=e35]
+            - generic [ref=e38]: Logout
+      - main [ref=e39]:
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - heading "Bind dataset to template" [level=1] [ref=e58]
+            - paragraph [ref=e59]: Map your dataset's columns to the report's expected entities — one confirmation at a time — then check the coverage gate before generating.
+          - link "Report Builder" [ref=e61] [cursor=pointer]:
+            - /url: /report-builder
+            - button "Report Builder" [ref=e62]:
+              - img [ref=e63]
+              - text: Report Builder
+        - list "Binding progress" [ref=e66]:
+          - listitem [ref=e67]:
+            - generic [ref=e69]: "1"
+            - generic [ref=e71]:
+              - paragraph [ref=e72]: Upload dataset
+              - paragraph [ref=e73]: CSV + template
+          - listitem [ref=e74]:
+            - generic [ref=e77]: "2"
+            - generic [ref=e79]:
+              - paragraph [ref=e80]: Confirm bindings
+              - paragraph [ref=e81]: Review every match
+          - listitem [ref=e82]:
+            - generic [ref=e85]: "3"
+            - generic [ref=e86]:
+              - paragraph [ref=e87]: Coverage gate
+              - paragraph [ref=e88]: Ready to generate
+        - generic [ref=e91]:
+          - generic [ref=e92]:
+            - heading "Create binding session" [level=2] [ref=e93]
+            - paragraph [ref=e94]: Choose a report template package, upload the dataset, then open the review workspace.
+          - generic [ref=e95]:
+            - generic [ref=e96]:
+              - generic [ref=e98]:
+                - paragraph [ref=e99]: 1. Report template
+                - paragraph [ref=e100]: Select the package that contains the blueprint, render skeleton, and slot graph.
+              - generic [ref=e101]:
+                - generic [ref=e102]:
+                  - generic [ref=e103]:
+                    - generic [ref=e104]:
+                      - paragraph [ref=e105]: Selected template
+                      - paragraph [ref=e106]: sanjay testing
+                      - paragraph [ref=e107]: Template 120 - v3.0
+                    - generic [ref=e144]: VALID
+                  - generic [ref=e145]:
+                    - generic [ref=e146]:
+                      - strong [ref=e147]: "7"
+                      - text: topics
+                    - generic [ref=e148]:
+                      - strong [ref=e149]: "0"
+                      - text: chapters
+                    - generic [ref=e150]:
+                      - strong [ref=e151]: "7"
+                      - text: sections
+                    - generic [ref=e152]:
+                      - strong [ref=e153]: "24"
+                      - text: questions
+                    - generic [ref=e154]:
+                      - strong [ref=e155]: "24"
+                      - text: entities
+                - generic [ref=e108]:
+                  - generic [ref=e110]:
+                    - paragraph [ref=e111]: Template catalog
+                    - paragraph [ref=e112]: 3 of 101 templates shown. Press / to search.
+                  - generic [ref=e115]:
+                    - generic [ref=e116]:
+                      - generic [ref=e117]:
+                        - img
+                        - searchbox "Search by name, id, domain, source, or description" [ref=e118]: sanjay
+                      - generic [ref=e119]:
+                        - generic [ref=e120]:
+                          - text: Source
+                          - combobox "Source" [ref=e121]:
+                            - option "All sources" [selected]
+                            - option "Built-in"
+                            - option "Extracted"
+                        - generic [ref=e122]:
+                          - text: Filter
+                          - combobox "Filter" [ref=e123]:
+                            - option "All templates" [selected]
+                            - option "Valid only"
+                            - option "Rich templates"
+                            - option "Needs review"
+                        - generic [ref=e124]:
+                          - text: Sort
+                          - combobox "Sort" [ref=e125]:
+                            - option "Recommended" [selected]
+                            - option "Newest"
+                            - option "Richest"
+                            - option "Most questions"
+                            - option "Name A-Z"
+                      - generic [ref=e126]:
+                        - button "sanjay Rich Template 47 - 0 topics - 168 questions - 0 entities VALID" [ref=e276]:
+                          - img [ref=e278]
+                          - generic [ref=e282]:
+                            - generic [ref=e283]:
+                              - generic [ref=e284]: sanjay
+                              - generic [ref=e285]: Rich
+                            - generic [ref=e286]: Template 47 - 0 topics - 168 questions - 0 entities
+                          - generic [ref=e287]: VALID
+                        - button "sanjay testing Rich Template 120 - 7 topics - 24 questions - 24 entities VALID" [active] [ref=e456]:
+                          - img [ref=e458]
+                          - generic [ref=e462]:
+                            - generic [ref=e463]:
+                              - generic [ref=e464]: sanjay testing
+                              - img [ref=e1351]
+                              - generic [ref=e465]: Rich
+                            - generic [ref=e466]: Template 120 - 7 topics - 24 questions - 24 entities
+                          - generic [ref=e467]: VALID
+                        - button "sanjay-syl-chuchu Rich Template 111 - 2 topics - 24 questions - 32 entities VALID" [ref=e492]:
+                          - img [ref=e494]
+                          - generic [ref=e498]:
+                            - generic [ref=e499]:
+                              - generic [ref=e500]: sanjay-syl-chuchu
+                              - generic [ref=e501]: Rich
+                            - generic [ref=e502]: Template 111 - 2 topics - 24 questions - 32 entities
+                          - generic [ref=e503]: VALID
+                    - complementary [ref=e127]:
+                      - generic [ref=e128]:
+                        - img [ref=e129]
+                        - text: Preview
+                      - generic [ref=e1329]:
+                        - generic [ref=e1330]:
+                          - paragraph [ref=e1331]: sanjay testing
+                          - paragraph [ref=e1332]: Production extracted template
+                        - generic [ref=e1333]:
+                          - generic [ref=e1334]:
+                            - strong [ref=e1335]: "7"
+                            - text: topics
+                          - generic [ref=e1336]:
+                            - strong [ref=e1337]: "0"
+                            - text: chapters
+                          - generic [ref=e1338]:
+                            - strong [ref=e1339]: "7"
+                            - text: sections
+                          - generic [ref=e1340]:
+                            - strong [ref=e1341]: "24"
+                            - text: questions
+                          - generic [ref=e1342]:
+                            - strong [ref=e1343]: "27"
+                            - text: charts
+                          - generic [ref=e1344]:
+                            - strong [ref=e1345]: "4"
+                            - text: tables
+                        - generic [ref=e1346]:
+                          - paragraph [ref=e1347]: "ID: 120"
+                          - paragraph [ref=e1348]: "Domain: labour_force"
+                          - paragraph [ref=e1349]: "Updated: 12 Jun 2026"
+                          - paragraph [ref=e1350]: "Readiness: not scored"
+            - generic [ref=e131]:
+              - generic [ref=e132]:
+                - paragraph [ref=e133]: 2. Dataset
+                - paragraph [ref=e134]: Upload the CSV that will be profiled into DatasetAST.
+              - generic [ref=e135] [cursor=pointer]:
+                - img [ref=e136]
+                - paragraph [ref=e139]: Click to choose a CSV dataset
+                - paragraph [ref=e140]: The binder will infer measures, dimensions, time columns, samples, and column ownership.
+            - button "Advanced template controls Show" [ref=e142]:
+              - text: Advanced template controls
+              - generic [ref=e143]: Show
+            - button "Create binding session" [disabled]:
+              - text: Create binding session
+              - img
+  - button "Open Next.js Dev Tools" [ref=e47] [cursor=pointer]:
+    - img [ref=e48]
+  - alert [ref=e51]

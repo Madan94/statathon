@@ -1,0 +1,851 @@
+{
+  "questions_count": 15,
+  "topics_count": 3,
+  "questions": [
+    {
+      "questionId": "sp01_q01",
+      "intent": "How many years of data does the Ministry of Statistics & Programme Implementation report cover?",
+      "questionType": "trend",
+      "page": 0,
+      "sourceHeading": "Government of India",
+      "requiredEntities": [
+        {
+          "entityRef": "MoSPI",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Years of data",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Years of data"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "MoSPI"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp01_q02",
+      "intent": "What is the percentage increase in the number of Khurshid Lal Bhawan visitors from 2024 to 2025?",
+      "questionType": "comparison",
+      "page": 0,
+      "sourceHeading": "Government of India",
+      "requiredEntities": [
+        {
+          "entityRef": "Khurshid Lal Bhawan visitors",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Year",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "2024 and 2025 data",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Khurshid Lal Bhawan visitors"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Year"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "2024 and 2025 data"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "sp01_q03",
+      "intent": "How many years have the Annual Reports of the Government of India been published since 2025?",
+      "questionType": "trend",
+      "page": 0,
+      "sourceHeading": "Government of India",
+      "requiredEntities": [
+        {
+          "entityRef": "Publication Year of Annual Reports",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Government of India",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Publication Year of Annual Reports"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Government of India"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "sp02_q01",
+      "intent": "What is the percentage change in the number of pages from the introduction to the national sample survey?",
+      "questionType": "trend",
+      "page": 1,
+      "sourceHeading": "TABLE OF CONTENTS",
+      "requiredEntities": [
+        {
+          "entityRef": "CHAPTERS Introduction",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Page No.",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Page No."
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "CHAPTERS Introduction"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp02_q02",
+      "intent": "How many more pages are there in the national sample survey compared to the introduction?",
+      "questionType": "comparison",
+      "page": 1,
+      "sourceHeading": "TABLE OF CONTENTS",
+      "requiredEntities": [
+        {
+          "entityRef": "CHAPTERS Introduction",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Page No. 1-9",
+          "role": "measure"
+        },
+        {
+          "entityRef": "National Sample Survey",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Page No. 1-9"
+        },
+        "groupBy": [
+          {
+            "entityRef": "National Sample Survey"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "CHAPTERS Introduction"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp02_q03",
+      "intent": "What is the total number of pages covered under the 'Data Informatics & Innovation' section?",
+      "questionType": "composition",
+      "page": 1,
+      "sourceHeading": "TABLE OF CONTENTS",
+      "requiredEntities": [
+        {
+          "entityRef": "CHAPTERS Introduction",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Page No.",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "share",
+        "measure": {
+          "entityRef": "Page No."
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "CHAPTERS Introduction"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "sp03_q01",
+      "intent": "What was the percentage change in the Primary Sector's employment from 2023-24 to 2024-25?",
+      "questionType": "comparison",
+      "page": 7,
+      "sourceHeading": "SECTION TOPIC: \"1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7\"",
+      "requiredEntities": [
+        {
+          "entityRef": "Primary Sector's employment",
+          "role": "measure"
+        },
+        {
+          "entityRef": "2023-24",
+          "role": "filter"
+        },
+        {
+          "entityRef": "2024-25",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Primary Sector's employment"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "2023-24"
+          },
+          {
+            "entityRef": "2024-25"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "sp03_q02",
+      "intent": "How much did the employment in the Primary Sector increase from 2024-25 to 2025-26?",
+      "questionType": "trend",
+      "page": 7,
+      "sourceHeading": "SECTION TOPIC: \"1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7\"",
+      "requiredEntities": [
+        {
+          "entityRef": "Primary Sector",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Employment",
+          "role": "measure"
+        },
+        {
+          "entityRef": "2024-25",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "2025-26",
+          "role": "breakdown"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Employment"
+        },
+        "groupBy": [
+          {
+            "entityRef": "2024-25"
+          },
+          {
+            "entityRef": "2025-26"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Primary Sector"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp03_q03",
+      "intent": "What was the difference in the employment growth rate between the Primary Sector and the Secondary Sector from 2024-25 to 2025-26?",
+      "questionType": "correlation",
+      "page": 7,
+      "sourceHeading": "SECTION TOPIC: \"1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7\"",
+      "requiredEntities": [
+        {
+          "entityRef": "Primary Sector",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Secondary Sector",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Employment Growth Rate",
+          "role": "measure"
+        },
+        {
+          "entityRef": "2024-25 to 2025-26",
+          "role": "breakdown"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "correlate",
+        "measure": {
+          "entityRef": "Employment Growth Rate"
+        },
+        "groupBy": [
+          {
+            "entityRef": "2024-25 to 2025-26"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Primary Sector"
+          },
+          {
+            "entityRef": "Secondary Sector"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.5
+    },
+    {
+      "questionId": "sp04_q01",
+      "intent": "What is the percentage change in the secondary sector's employment from 2023-24 to 2024-25?",
+      "questionType": "comparison",
+      "page": 7,
+      "sourceHeading": "2 Secondary Sector 46,46,499 49,31,228 52,57,858 6.1 6.6",
+      "requiredEntities": [
+        {
+          "entityRef": "Table",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Secondary sector's employment",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Table"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Secondary sector's employment"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp04_q02",
+      "intent": "How much did the secondary sector's employment increase from 2024-25 to 2025-26?",
+      "questionType": "trend",
+      "page": 7,
+      "sourceHeading": "2 Secondary Sector 46,46,499 49,31,228 52,57,858 6.1 6.6",
+      "requiredEntities": [
+        {
+          "entityRef": "Secondary sector's employment",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Year",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Secondary sector's employment"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "Year"
+          }
+        ],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "metric_card",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp04_q03",
+      "intent": "What was the percentage change in the secondary sector's employment compared to the primary sector's employment from 2023-24 to 2024-25?",
+      "questionType": "comparison",
+      "page": 7,
+      "sourceHeading": "2 Secondary Sector 46,46,499 49,31,228 52,57,858 6.1 6.6",
+      "requiredEntities": [
+        {
+          "entityRef": "Secondary sector's employment",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Primary sector's employment",
+          "role": "compare"
+        },
+        {
+          "entityRef": "2023-24",
+          "role": "filter"
+        },
+        {
+          "entityRef": "2024-25",
+          "role": "filter"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Secondary sector's employment"
+        },
+        "groupBy": [],
+        "filters": [
+          {
+            "entityRef": "2023-24"
+          },
+          {
+            "entityRef": "2024-25"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp05_q01",
+      "intent": "Compare the percentage change over previous year for the Tertiary Sector in 2024-25 and 2025-26.",
+      "questionType": "comparison",
+      "page": 7,
+      "sourceHeading": "3 Tertiary Sector",
+      "requiredEntities": [
+        {
+          "entityRef": "Tertiary Sector",
+          "role": "filter"
+        },
+        {
+          "entityRef": "Percentage Change Over Previous Year",
+          "role": "measure"
+        },
+        {
+          "entityRef": "2024-25 and 2025-26",
+          "role": "breakdown"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "Percentage Change Over Previous Year"
+        },
+        "groupBy": [
+          {
+            "entityRef": "2024-25 and 2025-26"
+          }
+        ],
+        "filters": [
+          {
+            "entityRef": "Tertiary Sector"
+          }
+        ],
+        "time": null,
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null,
+        "compare": {
+          "kind": "across_group"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 1
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp05_q02",
+      "intent": "Determine if the Tertiary Sector's employment distribution shows a trend towards higher percentages over time.",
+      "questionType": "trend",
+      "page": 7,
+      "sourceHeading": "3 Tertiary Sector",
+      "requiredEntities": [
+        {
+          "entityRef": "Tertiary Sector's employment distribution",
+          "role": "measure"
+        },
+        {
+          "entityRef": "Time",
+          "role": "groupBy"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "time_series",
+        "measure": {
+          "entityRef": "Tertiary Sector's employment distribution"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Time"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "line_chart",
+            "renderOrder": 1
+          },
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    },
+    {
+      "questionId": "sp05_q03",
+      "intent": "Identify the distribution of employment in the Tertiary Sector across different regions or categories.",
+      "questionType": "distribution",
+      "page": 7,
+      "sourceHeading": "3 Tertiary Sector",
+      "requiredEntities": [
+        {
+          "entityRef": "Tertiary Sector",
+          "role": "breakdown"
+        },
+        {
+          "entityRef": "regions or categories",
+          "role": "groupBy"
+        },
+        {
+          "entityRef": "employment",
+          "role": "measure"
+        }
+      ],
+      "analyticsSpec": {
+        "operation": "distribution",
+        "measure": {
+          "entityRef": "employment"
+        },
+        "groupBy": [
+          {
+            "entityRef": "Tertiary Sector"
+          },
+          {
+            "entityRef": "regions or categories"
+          }
+        ],
+        "filters": [],
+        "time": null,
+        "sort": null,
+        "topN": null,
+        "compare": {
+          "kind": "none"
+        }
+      },
+      "answerStructure": {
+        "layoutType": "single",
+        "components": [
+          {
+            "type": "grouped_bar_chart",
+            "renderOrder": 1
+          },
+          {
+            "type": "narrative_paragraph",
+            "renderOrder": 2
+          }
+        ]
+      },
+      "inferenceMethod": null,
+      "inferenceConfidence": 0.8
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Government of India",
+      "description": "Questions from chapter: Government of India",
+      "questionIds": [
+        "sp01_q01",
+        "sp01_q02",
+        "sp01_q03"
+      ],
+      "pageRange": [
+        0,
+        0
+      ]
+    },
+    {
+      "topicId": "topic_02",
+      "title": "TABLE OF CONTENTS",
+      "description": "Questions from chapter: TABLE OF CONTENTS",
+      "questionIds": [
+        "sp02_q01",
+        "sp02_q02",
+        "sp02_q03"
+      ],
+      "pageRange": [
+        1,
+        6
+      ]
+    },
+    {
+      "topicId": "topic_03",
+      "title": "1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7",
+      "description": "Questions from chapter: 1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7",
+      "questionIds": [
+        "sp03_q01",
+        "sp03_q02",
+        "sp03_q03",
+        "sp04_q01",
+        "sp04_q02",
+        "sp04_q03",
+        "sp05_q01",
+        "sp05_q02",
+        "sp05_q03"
+      ],
+      "pageRange": [
+        7,
+        7
+      ]
+    }
+  ]
+}

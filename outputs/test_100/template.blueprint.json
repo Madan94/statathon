@@ -1,0 +1,2680 @@
+{
+  "$schema": "bharatstat/template-blueprint/v1",
+  "_doc": "VALUE-FREE + PROSE-FREE analytic brain. Defines WHAT to compute and HOW to render. Contains NO numbers, NO sentences, NO dataset. Pairs 1:1 with template.ast.json by shared IDs.",
+  "templateMeta": {
+    "templateId": "tpl_test_100_v1",
+    "name": "Document",
+    "domain": "general",
+    "locale": "en-IN",
+    "version": "3.0",
+    "valueFree": true,
+    "proseFree": true,
+    "sourceDocument": "Document"
+  },
+  "entities": [
+    {
+      "entityId": "ent_001",
+      "canonicalName": "Labour Force Participation Rate",
+      "entityType": "measure",
+      "aliases": [
+        "LFPR"
+      ],
+      "unit": "percent",
+      "format": "0.0%",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_002",
+      "canonicalName": "Worker Population Ratio",
+      "entityType": "measure",
+      "aliases": [
+        "WPR"
+      ],
+      "unit": "percent",
+      "format": "0.0%",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_003",
+      "canonicalName": "Unemployment Rate",
+      "entityType": "measure",
+      "aliases": [
+        "UR"
+      ],
+      "unit": "percent",
+      "format": "0.0%",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_004",
+      "canonicalName": "Gender",
+      "entityType": "dimension",
+      "aliases": [
+        "Male",
+        "Female",
+        "Persons"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "closed",
+        "members": [
+          "Male",
+          "Female",
+          "Transgender"
+        ]
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_005",
+      "canonicalName": "Rural/Urban Sector",
+      "entityType": "dimension",
+      "aliases": [
+        "Rural",
+        "Urban"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "closed",
+        "members": [
+          "Rural",
+          "Urban"
+        ]
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_006",
+      "canonicalName": "Survey Year",
+      "entityType": "dimension",
+      "aliases": [
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_007",
+      "canonicalName": "Age Group",
+      "entityType": "dimension",
+      "aliases": [
+        "15+",
+        "15-29",
+        "15-59",
+        "Youth"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_008",
+      "canonicalName": "Status in Employment",
+      "entityType": "measure",
+      "aliases": [
+        "Self-employed",
+        "Regular wage",
+        "Casual labour"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_009",
+      "canonicalName": "Usual Status",
+      "entityType": "dimension",
+      "aliases": [
+        "ps+ss",
+        "usual status",
+        "Usual Status"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_010",
+      "canonicalName": "Periodic Labour Force Survey",
+      "entityType": "dimension",
+      "aliases": [
+        "PLFS"
+      ],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_014",
+      "canonicalName": "LFPR",
+      "entityType": "measure",
+      "aliases": [],
+      "unit": "percent",
+      "format": "0.0%",
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": "lfpr",
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_017",
+      "canonicalName": "Self-employed",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_018",
+      "canonicalName": "Rural",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_019",
+      "canonicalName": "Urban",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_020",
+      "canonicalName": "Usual Status",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_021",
+      "canonicalName": "Regular wage/salary",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_022",
+      "canonicalName": "Casual labour",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_026",
+      "canonicalName": "Regular wage",
+      "entityType": "measure",
+      "aliases": [],
+      "unit": "INR",
+      "format": "₹#,##,##0",
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_030",
+      "canonicalName": "Labour Force Participation Rate :",
+      "entityType": "measure",
+      "aliases": [
+        "LFPR",
+        "Labour Force Participation Rate :"
+      ],
+      "unit": "percent",
+      "format": "0.0%",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "weighted_ratio",
+      "glossaryRef": "lfpr",
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_034",
+      "canonicalName": "Activity Status - Current Weekly Status",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    },
+    {
+      "entityId": "ent_012",
+      "canonicalName": "Samrat (Release I",
+      "entityType": "measure",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": null,
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "indicator",
+      "cardinalityHint": "low",
+      "confidence": 0.8
+    },
+    {
+      "entityId": "ent_013",
+      "canonicalName": "Snapshot",
+      "entityType": "dimension",
+      "aliases": [],
+      "unit": null,
+      "format": null,
+      "valueDomain": {
+        "domainType": "open",
+        "members": []
+      },
+      "aggregation": null,
+      "glossaryRef": null,
+      "scope": "classifier",
+      "cardinalityHint": "low",
+      "confidence": 0.5
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Periodic Labour Force Survey (PLFS) Annual Report, 2025 [January, 2025 – December, 2025]",
+      "order": 1,
+      "semanticRef": "sec_01",
+      "questions": [
+        {
+          "questionId": "sp01_q01",
+          "intent": "What was the Unemployment Rate (UR) in usual status (ps+ss) among educated persons (secondary and above) by gender in the age group 15 years and above in 2025?",
+          "questionType": "comparison",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_004",
+              "role": "breakdown",
+              "required": false
+            },
+            {
+              "entityId": "ent_009",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_004",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_007",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_003",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_009",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_004",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_007",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp01_q01_c1",
+                "kind": "metric",
+                "order": 1,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "metric_card"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp01_q02",
+          "intent": "How did the Unemployment Rate (UR) in usual status (ps+ss) among urban female (age 15+) change from 2024 to 2025?",
+          "questionType": "trend",
+          "priority": 2,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_009",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_019",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_004",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_007",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_006",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "ent_003",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_006"
+              }
+            ],
+            "filters": [
+              {
+                "entityRef": "ent_009",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_019",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_004",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_007",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp01_q02_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_003",
+                    "ent_009"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp01_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp01_q03",
+          "intent": "Was there a difference in the Unemployment Rate (UR) in usual status (ps+ss) between rural and urban sectors for persons aged 15 years and above in 2025?",
+          "questionType": "comparison",
+          "priority": 3,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_005",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_009",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_007",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_003",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_005"
+              }
+            ],
+            "filters": [
+              {
+                "entityRef": "ent_009",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_007",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp01_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_003",
+                    "ent_005"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp01_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "topicId": "topic_02",
+      "title": "1 Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above",
+      "order": 2,
+      "semanticRef": "sec_02",
+      "questions": [
+        {
+          "questionId": "sp02_q01",
+          "intent": "What was the Labour Force Participation Rate (LFPR) for rural male and female persons of age 15 years and above in 2025, and how did it compare between the two genders?",
+          "questionType": "comparison",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_018",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_004",
+              "role": "breakdown",
+              "required": false
+            },
+            {
+              "entityId": "ent_007",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_001",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_018",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_007",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp02_q01_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_018"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp02_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp02_q02",
+          "intent": "How did the Labour Force Participation Rate (LFPR) for persons of age 15 years and above in rural areas compare to that in urban areas in 2025?",
+          "questionType": "comparison",
+          "priority": 2,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_005",
+              "role": "breakdown",
+              "required": false
+            },
+            {
+              "entityId": "ent_007",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_001",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_007",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp02_q02_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_005"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp02_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp02_q03",
+          "intent": "What was the Labour Force Participation Rate (LFPR) for persons of age 15 years and above in 2025, and how did it change from the previous year?",
+          "questionType": "trend",
+          "priority": 3,
+          "requiredEntities": [
+            {
+              "entityId": "ent_001",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_007",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_006",
+              "role": "breakdown",
+              "required": false
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "ent_001",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_007",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp02_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_001",
+                    "ent_007"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp02_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "topicId": "topic_03",
+      "title": "2 Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained",
+      "order": 3,
+      "semanticRef": "sec_03",
+      "questions": [
+        {
+          "questionId": "sp03_q01",
+          "intent": "What is the Worker Population Ratio (WPR) for rural male and female persons of age 15 years and above in 2025, and how do they compare?",
+          "questionType": "comparison",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_018",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_004",
+              "role": "breakdown",
+              "required": false
+            },
+            {
+              "entityId": "ent_007",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_002",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_018",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_007",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp03_q01_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_002",
+                    "ent_018"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp03_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "sp03_q01_c2",
+                "kind": "table",
+                "order": 2,
+                "outputContract": {
+                  "type": "table",
+                  "tableTemplateRef": ""
+                },
+                "refs": {
+                  "tableRef": "",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "table"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp03_q02",
+          "intent": "What is the trend in Worker Population Ratio (WPR) for urban persons of age 15 years and above from 2022 to 2025?",
+          "questionType": "trend",
+          "priority": 2,
+          "requiredEntities": [
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_019",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_007",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_006",
+              "role": "breakdown",
+              "required": false
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "ent_002",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_019",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_007",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp03_q02_c1",
+                "kind": "chart",
+                "order": 1,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "",
+                  "yAxis": "ent_002"
+                },
+                "refs": {
+                  "chartRef": "chart_sp03_q02",
+                  "figureRef": "fig_sp03_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp03_q03",
+          "intent": "How does the Worker Population Ratio (WPR) for rural persons of age 15 years and above compare to that of urban persons in 2025?",
+          "questionType": "comparison",
+          "priority": 3,
+          "requiredEntities": [
+            {
+              "entityId": "ent_002",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_005",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_007",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_002",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_005"
+              }
+            ],
+            "filters": [
+              {
+                "entityRef": "ent_007",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp03_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_002",
+                    "ent_005"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp03_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "topicId": "topic_04",
+      "title": "3 Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and",
+      "order": 4,
+      "semanticRef": "sec_04",
+      "questions": [
+        {
+          "questionId": "sp04_q01",
+          "intent": "What was the difference in unemployment rates between males and females in rural areas in 2025?",
+          "questionType": "comparison",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_004",
+              "role": "breakdown",
+              "required": false
+            },
+            {
+              "entityId": "ent_005",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_003",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_005",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp04_q01_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_003",
+                    "ent_004"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp04_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp04_q02",
+          "intent": "How did the unemployment rate in urban areas change from 2022 to 2025?",
+          "questionType": "trend",
+          "priority": 2,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_005",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_006",
+              "role": "groupBy",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "ent_003",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_006"
+              }
+            ],
+            "filters": [
+              {
+                "entityRef": "ent_005",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp04_q02_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_003",
+                    "ent_005"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp04_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "sp04_q02_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "ent_006",
+                  "yAxis": "ent_003"
+                },
+                "refs": {
+                  "chartRef": "chart_sp04_q02",
+                  "figureRef": "fig_sp04_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp04_q03",
+          "intent": "What was the difference in unemployment rates between rural and urban areas in 2025?",
+          "questionType": "comparison",
+          "priority": 3,
+          "requiredEntities": [
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "required": true
+            },
+            {
+              "entityId": "ent_005",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_003",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_005"
+              }
+            ],
+            "filters": [
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp04_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_003",
+                    "ent_005"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp04_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "topicId": "topic_05",
+      "title": "4 Increase in proportion of workers with regular wage/ salary employment",
+      "order": 5,
+      "semanticRef": "sec_05",
+      "questions": [
+        {
+          "questionId": "sp05_q01",
+          "intent": "What is the percentage point increase in the share of regular wage/salaried employment for male workers from 2022 to 2025?",
+          "questionType": "trend",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_004",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_008",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "ent_008",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_004",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp05_q01_c1",
+                "kind": "metric",
+                "order": 1,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "metric_card"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp05_q02",
+          "intent": "How does the share of self-employment in 2024 compare to 2025 for both male and female workers?",
+          "questionType": "comparison",
+          "priority": 2,
+          "requiredEntities": [
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_004",
+              "role": "breakdown",
+              "required": false
+            },
+            {
+              "entityId": "ent_017",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_017",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp05_q02_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_006",
+                    "ent_004"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp05_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "sp05_q02_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "grouped_bar",
+                  "xAxis": "",
+                  "yAxis": "ent_017"
+                },
+                "refs": {
+                  "chartRef": "chart_sp05_q02",
+                  "figureRef": "fig_sp05_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp05_q03",
+          "intent": "What is the percentage distribution of female workers engaged in casual labor in 2024 versus 2025?",
+          "questionType": "composition",
+          "priority": 3,
+          "requiredEntities": [
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_004",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_008",
+              "role": "breakdown",
+              "required": false
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "share",
+            "measure": {
+              "entityRef": "",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_004",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp05_q03_c1",
+                "kind": "chart",
+                "order": 1,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "pie",
+                  "xAxis": "",
+                  "yAxis": ""
+                },
+                "refs": {
+                  "chartRef": "chart_sp05_q03",
+                  "figureRef": "fig_sp05_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "topicId": "topic_06",
+      "title": "5 Manufacturing and service sectors witnessed enhanced worker participation",
+      "order": 6,
+      "semanticRef": "sec_06",
+      "questions": [
+        {
+          "questionId": "sp06_q01",
+          "intent": "What is the change in the share of employment in construction from 2024 to 2025?",
+          "questionType": "trend",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_008",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_unresolved_share of employ",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "ent_unresolved_share of employ",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_008",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp06_q01_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_006",
+                    "ent_008"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp06_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp06_q02",
+          "intent": "What is the change in the percentage of workers in manufacturing from 2024 to 2025?",
+          "questionType": "trend",
+          "priority": 2,
+          "requiredEntities": [
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_008",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_003",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "ent_003",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_008",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp06_q02_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_006",
+                    "ent_008"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp06_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp06_q03",
+          "intent": "What is the change in the share of employment in other services from 2024 to 2025?",
+          "questionType": "trend",
+          "priority": 3,
+          "requiredEntities": [
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_008",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_unresolved_share of employ",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "ent_unresolved_share of employ",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_008",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp06_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_006",
+                    "ent_008"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp06_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp07_q01",
+          "intent": "What is the difference in average earnings growth between male and female workers in regular wage/salaried employment from 2024 to 2025?",
+          "questionType": "comparison",
+          "priority": 4,
+          "requiredEntities": [
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_008",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_unresolved_average earning",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_unresolved_average earning",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_004"
+              }
+            ],
+            "filters": [
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_008",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp07_q01_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_006",
+                    "ent_004"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp07_q01",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp07_q02",
+          "intent": "What is the ratio of average earnings of female workers to male workers in regular wage/salaried employment in 2025?",
+          "questionType": "comparison",
+          "priority": 5,
+          "requiredEntities": [
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_008",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_unresolved_average earning",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_unresolved_average earning",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_004"
+              }
+            ],
+            "filters": [
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_008",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp07_q02_c1",
+                "kind": "metric",
+                "order": 1,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "metric_card"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp07_q03",
+          "intent": "How does the percentage growth in earnings of female workers compare to that of male workers in regular wage/salaried employment from 2024 to 2025?",
+          "questionType": "comparison",
+          "priority": 6,
+          "requiredEntities": [
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_004",
+              "role": "groupBy",
+              "required": true
+            },
+            {
+              "entityId": "ent_008",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_unresolved_earnings",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_unresolved_earnings",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [
+              {
+                "entityRef": "ent_004"
+              }
+            ],
+            "filters": [
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_008",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp07_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_006",
+                    "ent_004"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp07_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              },
+              {
+                "componentId": "sp07_q03_c2",
+                "kind": "chart",
+                "order": 2,
+                "outputContract": {
+                  "type": "chart",
+                  "chartType": "line",
+                  "xAxis": "ent_004",
+                  "yAxis": "ent_unresolved_earnings"
+                },
+                "refs": {
+                  "chartRef": "chart_sp07_q03",
+                  "figureRef": "fig_sp07_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "chart"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "topicId": "topic_08",
+      "title": "7 Average number of years in formal education",
+      "order": 7,
+      "semanticRef": "sec_08",
+      "questions": [
+        {
+          "questionId": "sp08_q01",
+          "intent": "What is the difference in average number of years in formal education between males and females aged 15 years and above at the all-India level in 2025?",
+          "questionType": "comparison",
+          "priority": 1,
+          "requiredEntities": [
+            {
+              "entityId": "ent_004",
+              "role": "breakdown",
+              "required": false
+            },
+            {
+              "entityId": "ent_007",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_unresolved_average number ",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_unresolved_average number ",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_007",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp08_q01_c1",
+                "kind": "metric",
+                "order": 1,
+                "outputContract": {
+                  "type": "metric"
+                },
+                "refs": {
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "metric_card"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp08_q02",
+          "intent": "What is the difference in average number of years in formal education between urban and rural areas for males aged 15 years and above in 2025?",
+          "questionType": "comparison",
+          "priority": 2,
+          "requiredEntities": [
+            {
+              "entityId": "ent_005",
+              "role": "breakdown",
+              "required": false
+            },
+            {
+              "entityId": "ent_007",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_unresolved_average number ",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "group_aggregate",
+            "measure": {
+              "entityRef": "ent_unresolved_average number ",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_007",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "across_group"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp08_q02_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_005",
+                    "ent_007"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp08_q02",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        },
+        {
+          "questionId": "sp08_q03",
+          "intent": "What is the average number of years in formal education for persons aged 25 years and above, and how does it compare to those aged 15 years and above in 2025?",
+          "questionType": "trend",
+          "priority": 3,
+          "requiredEntities": [
+            {
+              "entityId": "ent_007",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_006",
+              "role": "filter",
+              "required": false
+            },
+            {
+              "entityId": "ent_unresolved_average number ",
+              "role": "measure",
+              "required": true
+            }
+          ],
+          "analyticsSpec": {
+            "operation": "time_series",
+            "measure": {
+              "entityRef": "ent_unresolved_average number ",
+              "agg": "weighted_ratio"
+            },
+            "groupBy": [],
+            "filters": [
+              {
+                "entityRef": "ent_007",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              },
+              {
+                "entityRef": "ent_006",
+                "op": "eq",
+                "valueFrom": "defaultMember"
+              }
+            ],
+            "sort": {
+              "by": "measure",
+              "order": "desc"
+            },
+            "topN": null,
+            "compare": {
+              "kind": "none"
+            }
+          },
+          "answerStructure": {
+            "components": [
+              {
+                "componentId": "sp08_q03_c1",
+                "kind": "narrative",
+                "order": 1,
+                "outputContract": {
+                  "type": "prose",
+                  "minWords": 40,
+                  "maxWords": 90
+                },
+                "narrativeTemplate": {
+                  "tone": "formal-analytical",
+                  "mustMention": [
+                    "ent_007",
+                    "ent_006"
+                  ],
+                  "pattern": "headline_then_gap",
+                  "maxWords": 90
+                },
+                "refs": {
+                  "contentRef": "p_sp08_q03",
+                  "analyticsRef": "",
+                  "evidenceRef": ""
+                },
+                "componentKind": "narrative"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "tableTemplates": [],
+  "documentMap": {
+    "order": [
+      "topic_01",
+      "topic_02",
+      "topic_03",
+      "topic_04",
+      "topic_05",
+      "topic_06",
+      "topic_08"
+    ],
+    "frontMatter": [
+      "title_page",
+      "toc"
+    ],
+    "backMatter": [
+      "glossary",
+      "notes"
+    ]
+  },
+  "glossary": {
+    "LFPR": "Labour Force Participation Rate : — extracted indicator from the source document.",
+    "WPR": "Worker Population Ratio — extracted indicator from the source document.",
+    "UR": "Unemployment Rate — extracted indicator from the source document.",
+    "Self-employed": "Status in Employment — extracted indicator from the source document.",
+    "Regular wage": "Regular wage — extracted indicator from the source document.",
+    "Samrat (Release I": "Samrat (Release I — extracted indicator from the source document."
+  },
+  "palette": {
+    "paletteId": "pal_mospi_default",
+    "sequential": [
+      "#0B5394",
+      "#3D85C6",
+      "#6FA8DC",
+      "#9FC5E8",
+      "#CFE2F3"
+    ],
+    "categorical": {
+      "Rural": "#1F7A1F",
+      "Urban": "#0B5394",
+      "Male": "#0B5394",
+      "Female": "#CC4125",
+      "Total": "#666666"
+    },
+    "semantic": {
+      "positive": "#1F7A1F",
+      "negative": "#CC0000",
+      "neutral": "#666666"
+    }
+  },
+  "renderProfile": {
+    "numberFormat": {
+      "locale": "en-IN",
+      "grouping": "lakh-crore",
+      "decimalSeparator": "."
+    },
+    "percentFormat": {
+      "decimals": 1,
+      "suffix": "%"
+    },
+    "currencyFormat": {
+      "symbol": "₹",
+      "grouping": "lakh-crore",
+      "decimals": 0
+    },
+    "fontFamily": "Noto Sans",
+    "pageSize": "A4"
+  },
+  "figureTemplates": [
+    {
+      "figureTemplateId": "ft_sp03_q02",
+      "captionTemplate": "Worker Population Ratio by Category, {{period.current}}",
+      "chartId": "chart_sp03_q02",
+      "numbering": "Figure {{topic.order}}.1"
+    },
+    {
+      "figureTemplateId": "ft_sp04_q02",
+      "captionTemplate": "Unemployment Rate by Survey Year, {{period.current}}",
+      "chartId": "chart_sp04_q02",
+      "numbering": "Figure {{topic.order}}.2"
+    },
+    {
+      "figureTemplateId": "ft_sp05_q02",
+      "captionTemplate": "Self-employed by Category, {{period.current}}",
+      "chartId": "chart_sp05_q02",
+      "numbering": "Figure {{topic.order}}.3"
+    },
+    {
+      "figureTemplateId": "ft_sp05_q03",
+      "captionTemplate": "Value by Category, {{period.current}}",
+      "chartId": "chart_sp05_q03",
+      "numbering": "Figure {{topic.order}}.4"
+    },
+    {
+      "figureTemplateId": "ft_sp07_q03",
+      "captionTemplate": "Value by Gender, {{period.current}}",
+      "chartId": "chart_sp07_q03",
+      "numbering": "Figure {{topic.order}}.5"
+    },
+    {
+      "figureTemplateId": "ft_vlm_6_1",
+      "captionTemplate": "Percentage distribution of workers (in usual status) by status in employment, {{period.current}}",
+      "chartId": "chart_vlm_6_1",
+      "numbering": "Figure {{topic.order}}.6"
+    },
+    {
+      "figureTemplateId": "ft_vlm_7_1",
+      "captionTemplate": "Fig. 6(a): Earning from regular wage/salary and self-employment, {{period.current}}",
+      "chartId": "chart_vlm_7_1",
+      "numbering": "Figure {{topic.order}}.7"
+    },
+    {
+      "figureTemplateId": "ft_vlm_8_1",
+      "captionTemplate": "Average number of years in formal education, {{period.current}}",
+      "chartId": "chart_vlm_8_1",
+      "numbering": "Figure {{topic.order}}.8"
+    }
+  ]
+}

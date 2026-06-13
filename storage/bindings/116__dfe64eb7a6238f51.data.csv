@@ -1,0 +1,16 @@
+State/UT (ent_state),Sector (ent_sector),Gender (ent_gender),Age Group (ent_age_group),Survey Period (ent_period),WPR (ent_wpr),LFPR (ent_lfpr),UR (ent_ur)
+All India,Rural,Male,15+,2025-26,78.4,80.5,2.6
+All India,Rural,Female,15+,2025-26,44.9,45.9,2.1
+All India,Urban,Male,15+,2025-26,73,76.2,4.2
+All India,Urban,Female,15+,2025-26,25.9,27.7,6.4
+All India,Rural,Male,15+,2026-27,78.7,80.8,2.5
+All India,Rural,Female,15+,2026-27,45.5,46.4,1.9
+All India,Urban,Male,15+,2026-27,73.4,76.6,4
+All India,Urban,Female,15+,2026-27,26.5,28.3,6.1
+Maharashtra,Urban,Male,15+,2025-26,74.5,77,3.9
+Maharashtra,Rural,Female,15+,2025-26,47.2,48.1,1.9
+Tamil Nadu,Rural,Male,15+,2025-26,79.1,81.2,2.4
+Tamil Nadu,Urban,Female,15+,2025-26,28.1,30.5,5.8
+Uttar Pradesh,Rural,Male,15+,2025-26,77.8,80.1,2.8
+Uttar Pradesh,Urban,Female,15+,2025-26,22.4,24.1,7.1
+Gujarat,Urban,Male,15+,2025-26,75.1,78,3.5

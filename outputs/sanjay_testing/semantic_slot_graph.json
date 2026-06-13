@@ -1,0 +1,92 @@
+{
+  "$schema": "bharatstat/semantic-slot-graph/v1",
+  "templateId": "tpl_sanjay_testing_v1",
+  "slots": [
+    {
+      "slotId": "slot_q_pib_plfs_lfpr_comparison_c1",
+      "astBlockId": "p_q_pib_plfs_lfpr_comparison_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_02",
+      "questionId": "q_pib_plfs_lfpr_comparison",
+      "componentId": "q_pib_plfs_lfpr_comparison_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_pib_plfs_ur_comparison_c1",
+      "astBlockId": "p_q_pib_plfs_ur_comparison_c1",
+      "astKind": "content",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_04",
+      "questionId": "q_pib_plfs_ur_comparison",
+      "componentId": "q_pib_plfs_ur_comparison_c1",
+      "componentKind": "narrative"
+    },
+    {
+      "slotId": "slot_q_worker_population_ratio_gender",
+      "astBlockId": "chart_sp03_q01",
+      "astKind": "chart",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_03",
+      "questionId": "q_worker_population_ratio_gender"
+    },
+    {
+      "slotId": "slot_q_worker_population_ratio_sector",
+      "astBlockId": "chart_sp03_q03",
+      "astKind": "chart",
+      "source": "existing",
+      "confidence": 0.9,
+      "topicId": "topic_03",
+      "questionId": "q_worker_population_ratio_sector"
+    },
+    {
+      "slotId": "slot_q_pib_plfs_lfpr_comparison_c2",
+      "astBlockId": "chart_q_pib_plfs_lfpr_comparison_c2",
+      "astKind": "chart",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_02",
+      "questionId": "q_pib_plfs_lfpr_comparison",
+      "componentId": "q_pib_plfs_lfpr_comparison_c2",
+      "componentKind": "chart"
+    },
+    {
+      "slotId": "slot_q_pib_plfs_ur_comparison_c2",
+      "astBlockId": "chart_q_pib_plfs_ur_comparison_c2",
+      "astKind": "chart",
+      "source": "auto_created",
+      "confidence": 0.8,
+      "topicId": "topic_04",
+      "questionId": "q_pib_plfs_ur_comparison",
+      "componentId": "q_pib_plfs_ur_comparison_c2",
+      "componentKind": "chart"
+    }
+  ],
+  "issues": [
+    {
+      "severity": "error",
+      "code": "BROKEN_FILLFROM",
+      "message": "Slot 'chart_sp03_q01' has fillFrom='sp03_q01_c2' which doesn't exist",
+      "slotId": "chart_sp03_q01"
+    },
+    {
+      "severity": "error",
+      "code": "BROKEN_FILLFROM",
+      "message": "Slot 'chart_sp03_q03' has fillFrom='sp03_q03_c2' which doesn't exist",
+      "slotId": "chart_sp03_q03"
+    }
+  ],
+  "counts": {
+    "questions": 4,
+    "components": 8,
+    "slotsCreated": 8,
+    "issuesBefore": 6,
+    "issuesAfter": 2,
+    "crosswalkQuestions": 4,
+    "crosswalkComponents": 4,
+    "semanticSlots": 6
+  }
+}

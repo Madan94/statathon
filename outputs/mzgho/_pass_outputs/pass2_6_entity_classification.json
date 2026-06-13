@@ -1,0 +1,124 @@
+{
+  "classified_entities": [
+    {
+      "entityId": "ent_001",
+      "name": "Labour Force Participation Rate",
+      "entityType_hint": "measure",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_002",
+      "name": "Worker Population Ratio",
+      "entityType_hint": "measure",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_003",
+      "name": "Unemployment Rate",
+      "entityType_hint": "measure",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_004",
+      "name": "Gender",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_005",
+      "name": "Rural/Urban Sector",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_006",
+      "name": "Survey Year",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_007",
+      "name": "Age Group",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_008",
+      "name": "Status in Employment",
+      "entityType_hint": "measure",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_009",
+      "name": "Usual Status (ps+ss)",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_010",
+      "name": "Periodic Labour Force Survey",
+      "entityType_hint": "dimension",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_011",
+      "name": "MoSPI",
+      "entityType_hint": "metadata",
+      "source": "pre_seeded",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_012",
+      "name": "LFPR",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_014",
+      "name": "Rural",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_015",
+      "name": "Urban",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_016",
+      "name": "Report, 2025 [January, 2025 December, 2025]",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    }
+  ]
+}

@@ -1,0 +1,283 @@
+{
+  "layoutlm_used": true,
+  "total_regions": 36,
+  "toc_entries": [
+    {
+      "title": "Annual Report 2025-26",
+      "page": 0,
+      "level": 2
+    },
+    {
+      "title": "TABLE OF CONTENTS",
+      "page": 1,
+      "level": 2
+    },
+    {
+      "title": "Chapter 1 Introduction",
+      "page": 2,
+      "level": 3
+    },
+    {
+      "title": "Statement 1: First Advance Estimates of Annual GDP for FY 2025-26 and its Expenditure Components (at 2011- 12 Prices)",
+      "page": 5,
+      "level": 2
+    },
+    {
+      "title": "Statement 2: First Advance Estimates of Annual GDP for FY 2025-26 and its Expenditure Components (at Current Prices)",
+      "page": 6,
+      "level": 2
+    },
+    {
+      "title": "1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7",
+      "page": 7,
+      "level": 1
+    },
+    {
+      "title": "2 Secondary Sector 46,46,499 49,31,228 52,57,858 6.1 6.6",
+      "page": 7,
+      "level": 1
+    },
+    {
+      "title": "3 Tertiary Sector 88,07,683 94,40,529 1,03,01,349 7.2 9.1",
+      "page": 7,
+      "level": 1
+    }
+  ],
+  "pages": [
+    {
+      "page": 0,
+      "regions": [
+        {
+          "type": "title",
+          "confidence": 0.995,
+          "text": "Annual Report 2025-26"
+        },
+        {
+          "type": "figure",
+          "confidence": 0.949,
+          "text": ""
+        },
+        {
+          "type": "text",
+          "confidence": 0.997,
+          "text": "Government of India Ministry of Statistics & Programme Implementation Khurshid Lal Bhawan, Janpath N"
+        }
+      ]
+    },
+    {
+      "page": 1,
+      "regions": [
+        {
+          "type": "heading",
+          "confidence": 0.983,
+          "text": "TABLE OF CONTENTS"
+        },
+        {
+          "type": "table",
+          "confidence": 0.999,
+          "text": "Sl.No. CHAPTERS Page No. 1 Introduction 1-9 2 10-40 3 National Sample Survey (NSS) 41-62 4 63-78 5 D"
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.968,
+          "text": "Annual Report 2025-26"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.996,
+          "text": "Chapter 1 Introduction"
+        },
+        {
+          "type": "list",
+          "confidence": 0.985,
+          "text": "1.4 The Statistics Wing, called National Statistics Office (NSO), coordinates the statistical activi"
+        }
+      ]
+    },
+    {
+      "page": 3,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.966,
+          "text": "Annual Report 2025-26"
+        },
+        {
+          "type": "text",
+          "confidence": 1.0,
+          "text": "statistics and classifications, statistical compilations and international practices. The contributi"
+        }
+      ]
+    },
+    {
+      "page": 4,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.969,
+          "text": "Annual Report 2025-26"
+        },
+        {
+          "type": "text",
+          "confidence": 0.821,
+          "text": "1.10 The Index of Industrial Production (IIP) with base year 2011-12 is compiled and published by th"
+        }
+      ]
+    },
+    {
+      "page": 5,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.938,
+          "text": "Annual Report 2025-26"
+        },
+        {
+          "type": "text",
+          "confidence": 0.981,
+          "text": "Till 31st December, 2025, 38 meetings of ACNAS and its Sub -committees have been held. New series’ r"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.897,
+          "text": "Statement 1: First Advance Estimates of Annual GDP for FY 2025-26 and its Expenditure Components (at"
+        },
+        {
+          "type": "table",
+          "confidence": 1.0,
+          "text": "( \u0000 Crore) 2024-25 2025-26 Domestic Product 1 GVA at Basic Prices 1,61,51,477 1,71,87,446 1,84,49,82"
+        }
+      ]
+    },
+    {
+      "page": 6,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.896,
+          "text": "Annual Report 2025-26"
+        },
+        {
+          "type": "heading",
+          "confidence": 0.977,
+          "text": "Statement 2: First Advance Estimates of Annual GDP for FY 2025-26 and its Expenditure Components (at"
+        },
+        {
+          "type": "table",
+          "confidence": 0.999,
+          "text": "( \u0000 Crore) 2024-25 2025-26 Domestic Product 1 GVA at Basic Prices 2,74,12,888 3,00,22,033 3,23,47,87"
+        }
+      ]
+    },
+    {
+      "page": 7,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.957,
+          "text": "Annual Report 2025-26"
+        },
+        {
+          "type": "table",
+          "confidence": 0.999,
+          "text": "( \u0000 Crore) 2024-25 2025-26 1. Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7 1.1 Agriculture, "
+        }
+      ]
+    },
+    {
+      "page": 8,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.99,
+          "text": "Annual Report 2025-26"
+        },
+        {
+          "type": "caption",
+          "confidence": 0.999,
+          "text": "Fig. 1: Annual GDP and GVA Estimates along with Y-o-Y Growth Rates at Constant Prices"
+        },
+        {
+          "type": "figure",
+          "confidence": 0.85,
+          "text": ""
+        },
+        {
+          "type": "caption",
+          "confidence": 0.687,
+          "text": ""
+        },
+        {
+          "type": "figure",
+          "confidence": 0.712,
+          "text": ""
+        },
+        {
+          "type": "caption",
+          "confidence": 0.614,
+          "text": ""
+        },
+        {
+          "type": "figure",
+          "confidence": 0.956,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "page": 9,
+      "regions": [
+        {
+          "type": "caption",
+          "confidence": 0.998,
+          "text": "Fig. 2: Sectoral Composition and Growth Rates of Annual GVA"
+        },
+        {
+          "type": "figure",
+          "confidence": 0.989,
+          "text": ""
+        },
+        {
+          "type": "figure",
+          "confidence": 0.555,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "page": 10,
+      "regions": [
+        {
+          "type": "header",
+          "confidence": 0.844,
+          "text": "Annual Report 2025-26"
+        },
+        {
+          "type": "caption",
+          "confidence": 0.99,
+          "text": "Fig. 3: Composition and Growth Rates of Annual GVA in Broad Sectors"
+        },
+        {
+          "type": "figure",
+          "confidence": 0.59,
+          "text": ""
+        },
+        {
+          "type": "caption",
+          "confidence": 0.984,
+          "text": ""
+        },
+        {
+          "type": "figure",
+          "confidence": 0.999,
+          "text": ""
+        }
+      ]
+    }
+  ]
+}

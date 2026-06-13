@@ -572,6 +572,11 @@ class ReportTemplate(Base):
     source_storage_path = Column(String(1024), nullable=True)
     source_hash = Column(String(128), nullable=True, index=True)
     ast_json = Column(JSON, nullable=False)
+    blueprint_json = Column(JSON, nullable=True)
+    semantic_slot_graph_json = Column(JSON, nullable=True)
+    template_manifest_json = Column(JSON, nullable=True)
+    extraction_diagnostics_json = Column(JSON, nullable=True)
+    schema_version = Column(String(64), nullable=True)
     extraction_method = Column(String(64), nullable=True)  # "pdfplumber+gemini_vision" / "manual"
     page_count = Column(Integer, nullable=True)
     filter_config = Column(JSON, nullable=True)
@@ -636,7 +641,110 @@ class ReportTemplateExtractionJob(Base):
     source_hash = Column(String(128), nullable=True, index=True)
     extraction_method = Column(String(64), nullable=True)
     stage_diagnostics = Column(JSON, nullable=True)
+    template_ast_json = Column(JSON, nullable=True)
+    blueprint_json = Column(JSON, nullable=True)
+    semantic_slot_graph_json = Column(JSON, nullable=True)
+    template_manifest_json = Column(JSON, nullable=True)
+    extraction_diagnostics_json = Column(JSON, nullable=True)
+    schema_version = Column(String(64), nullable=True)
     error_message = Column(Text, nullable=True)
     created_template_id = Column(Integer, ForeignKey("report_templates.id"), nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Binding Phase — Session, Entities, Plans (Contract Compiler)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class BindingSession(Base):
+    """A binding session: one template + one dataset → frozen BindingAST."""
+
+    __tablename__ = "binding_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    template_id = Column(Integer, ForeignKey("report_templates.id"), nullable=False, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    # Identifiers
+    dataset_signature = Column(String(64), nullable=True, index=True)  # hash of column shapes
+    binding_ast_id = Column(String(64), nullable=True)  # unique ID for the frozen binding
+
+    # Status: draft → confirmed → frozen → execution_ready
+    status = Column(String(32), default="draft", nullable=False)
+    version = Column(Integer, default=1, nullable=False)
+
+    # Stored artifacts (JSON blobs)
+    dataset_ast_json = Column(JSON, nullable=True)       # S0 output
+    binding_ast_json = Column(JSON, nullable=True)       # S2.5 frozen binding
+    execution_bundle_json = Column(JSON, nullable=True)  # S3.5 final bundle
+    statistical_context_json = Column(JSON, nullable=True)
+    readiness_report_json = Column(JSON, nullable=True)
+
+    # Metadata
+    dataframe_path = Column(String(1024), nullable=True)  # path to stored CSV
+    blueprint_source = Column(String(32), default="db")   # db | upload | gold
+    plan_count = Column(Integer, default=0)
+    executable_count = Column(Integer, default=0)
+    blocked_count = Column(Integer, default=0)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    confirmed_at = Column(DateTime, nullable=True)   # S2 completed
+    frozen_at = Column(DateTime, nullable=True)      # S2.5 freeze
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class BindingEntity(Base):
+    """One entity→column binding within a session."""
+
+    __tablename__ = "binding_entities"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("binding_sessions.id"), nullable=False, index=True)
+
+    entity_id = Column(String(64), nullable=False)
+    entity_name = Column(String(256), nullable=True)
+    entity_type = Column(String(32), nullable=True)  # dimension | measure | time | filter
+
+    # Binding result
+    column_name = Column(String(256), nullable=True)
+    columns_json = Column(JSON, nullable=True)       # list of {column, memberLabel, period}
+    confidence = Column(Float, default=0.0)
+    method = Column(String(32), nullable=True)       # exact | alias | synonym | embedding | manual
+    status = Column(String(32), default="proposed")  # proposed | confirmed | overridden | rejected
+
+    # Review
+    override_reason = Column(Text, nullable=True)
+    evidence_json = Column(JSON, nullable=True)      # which signals produced the match
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class BindingPlan(Base):
+    """One execution plan for a question within a session."""
+
+    __tablename__ = "binding_plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("binding_sessions.id"), nullable=False, index=True)
+
+    plan_id = Column(String(64), nullable=False)
+    question_id = Column(String(64), nullable=False)
+    question_text = Column(Text, nullable=True)
+
+    # Status and type
+    status = Column(String(32), default="EXECUTABLE")  # EXECUTABLE | DEGRADED | BLOCKED
+    formula_type = Column(String(32), default="DIRECT")  # DIRECT | SHARE | RATE | GROWTH | ...
+    normalization_type = Column(String(32), default="NONE")
+
+    # Full plan (JSON blob)
+    plan_json = Column(JSON, nullable=True)
+
+    # Diagnostics
+    diagnostics_json = Column(JSON, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)

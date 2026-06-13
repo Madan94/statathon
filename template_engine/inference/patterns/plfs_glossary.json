@@ -1,0 +1,95 @@
+{
+  "abbreviations": {
+    "PLFS": "Periodic Labour Force Survey",
+    "LFPR": "Labour Force Participation Rate",
+    "WPR": "Worker Population Ratio",
+    "UR": "Unemployment Rate",
+    "CWS": "Current Weekly Status",
+    "UPSS": "Usual Principal and Subsidiary Status",
+    "UPS": "Usual Principal Status",
+    "CDS": "Current Daily Status",
+    "NIC": "National Industrial Classification",
+    "NCO": "National Classification of Occupations",
+    "MPCE": "Monthly Per Capita Consumer Expenditure",
+    "NSSO": "National Sample Survey Office",
+    "NSO": "National Statistical Office",
+    "MoSPI": "Ministry of Statistics and Programme Implementation",
+    "FSU": "First Stage Unit",
+    "UFS": "Urban Frame Survey",
+    "AGEGC": "Age-group and Educational Group Classification",
+    "HH": "Household",
+    "PSU": "Primary Sampling Unit"
+  },
+
+  "statement_archetypes": {
+    "state_level": {
+      "pattern": "(state|ut)[-\\s/]*(wise|level)|across.*states",
+      "question_type": "geographic",
+      "example": "Statement 7.1: State/UT-wise LFPR for persons of age 15 years and above"
+    },
+    "distribution": {
+      "pattern": "percentage distribution of.*by",
+      "question_type": "composition",
+      "example": "Statement 4.1: Percentage distribution of persons by broad activity status"
+    },
+    "cross_tabulation": {
+      "pattern": "by.*(?:industry|nic|nco).*(?:and|status)|according to.*and",
+      "question_type": "multi_dimensional",
+      "example": "Statement 6.3: Workers by industry (NIC-2008) and status in employment"
+    },
+    "rate": {
+      "pattern": "(lfpr|wpr|ur|unemployment rate|participation rate).*(?:age|sex|sector)",
+      "question_type": "comparative",
+      "example": "Statement 5.2: LFPR (in %) for age 15 years and above by sex"
+    },
+    "trend": {
+      "pattern": "(quarterly|annual).*estimates|trend.*over",
+      "question_type": "trend",
+      "example": "Statement 2.1: Quarterly estimates of key labour indicators"
+    }
+  },
+
+  "column_semantics": {
+    "dimensions": {
+      "sector": ["Rural", "Urban", "Rural+Urban", "Total"],
+      "sex": ["Male", "Female", "Person", "Transgender"],
+      "age_group": ["15-29", "30-44", "45-59", "15 & above", "15+", "All ages"],
+      "broad_status": ["Self-employed", "Regular wage/salaried", "Casual labour"],
+      "education": ["Not literate", "Below primary", "Primary", "Middle", "Secondary", "Higher secondary", "Graduate & above"],
+      "industry_section": ["Agriculture", "Mining", "Manufacturing", "Construction", "Trade", "Transport", "Services"],
+      "status_in_employment": ["Own account worker", "Employer", "Helper in HH enterprise", "Regular salaried/wage employee", "Casual labour"]
+    },
+    "measures": {
+      "rates": ["LFPR", "WPR", "UR"],
+      "counts": ["Estimated no. of persons", "Sample persons", "No. of HHs"],
+      "percentages": ["Percentage distribution", "Share (%)", "Proportion"],
+      "ratios": ["Worker-Population Ratio", "Dependency ratio"]
+    }
+  },
+
+  "entity_hints": {
+    "LFPR": {"entityType": "measure", "unit": "percentage", "range": [0, 100]},
+    "WPR": {"entityType": "measure", "unit": "percentage", "range": [0, 100]},
+    "UR": {"entityType": "measure", "unit": "percentage", "range": [0, 100]},
+    "Rural": {"entityType": "dimension", "category": "sector"},
+    "Urban": {"entityType": "dimension", "category": "sector"},
+    "Male": {"entityType": "dimension", "category": "sex"},
+    "Female": {"entityType": "dimension", "category": "sex"},
+    "Person": {"entityType": "dimension", "category": "sex"},
+    "CWS": {"entityType": "filter", "category": "activity_status_approach"},
+    "UPSS": {"entityType": "filter", "category": "activity_status_approach"},
+    "CDS": {"entityType": "filter", "category": "activity_status_approach"}
+  },
+
+  "statement_number_regex": "Statement\\s+(\\d+)\\.(\\d+)(?:\\s*\\(([^)]+)\\))?",
+
+  "quarter_pattern": "(?:January|April|July|October)[-–](?:March|June|September|December)\\s*\\d{4}",
+
+  "plfs_report_identifiers": [
+    "Periodic Labour Force Survey",
+    "Annual Report",
+    "Quarterly Bulletin",
+    "PLFS",
+    "Key Indicators of Employment"
+  ]
+}

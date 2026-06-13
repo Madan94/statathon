@@ -1,0 +1,244 @@
+{
+  "classified_entities": [
+    {
+      "entityId": "ent_001",
+      "name": "Labour Force Participation Rate",
+      "entityType_hint": "measure",
+      "source": "domain_pack",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_002",
+      "name": "Worker Population Ratio",
+      "entityType_hint": "measure",
+      "source": "domain_pack",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_003",
+      "name": "Unemployment Rate",
+      "entityType_hint": "measure",
+      "source": "domain_pack",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_004",
+      "name": "Worker Share",
+      "entityType_hint": "measure",
+      "source": "domain_pack",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_005",
+      "name": "Average Weekly Hours",
+      "entityType_hint": "measure",
+      "source": "domain_pack",
+      "unit": "hours_per_week",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_006",
+      "name": "Average Monthly Earnings",
+      "entityType_hint": "measure",
+      "source": "domain_pack",
+      "unit": "INR",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_007",
+      "name": "Formal Education Years",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": "years",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_008",
+      "name": "Gender",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_009",
+      "name": "Sector",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_010",
+      "name": "Age Group",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_011",
+      "name": "Employment Status",
+      "entityType_hint": "measure",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_012",
+      "name": "Industry",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_013",
+      "name": "Survey Period",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_014",
+      "name": "Activity Status",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_015",
+      "name": "Periodic Labour Force Survey",
+      "entityType_hint": "dimension",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_016",
+      "name": "MoSPI",
+      "entityType_hint": "metadata",
+      "source": "domain_pack",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_017",
+      "name": "LFPR",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": "percent",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_019",
+      "name": "Rural",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_020",
+      "name": "Urban",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_022",
+      "name": "Self-employed",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_023",
+      "name": "Regular wage",
+      "entityType_hint": "measure",
+      "source": "vlm",
+      "unit": "INR",
+      "confidence": null
+    },
+    {
+      "entityId": "ent_024",
+      "name": "Manufacturing sector",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_025",
+      "name": "Agriculture sector",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_027",
+      "name": "Casual labour",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_029",
+      "name": "Changes in Sample Design of PLFS",
+      "entityType_hint": "metadata",
+      "source": "section_heading",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_030",
+      "name": "Activity Status - Usual Status",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_033",
+      "name": "Activity Status - Current Weekly Status",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_043",
+      "name": "Sample Size",
+      "entityType_hint": "dimension",
+      "source": "text_pattern",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_026",
+      "name": "Report, 2025 [January, 2025 December, 2025]",
+      "entityType_hint": "metadata",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    },
+    {
+      "entityId": "ent_031",
+      "name": "Principal Activity Status",
+      "entityType_hint": "dimension",
+      "source": "vlm",
+      "unit": null,
+      "confidence": null
+    }
+  ]
+}

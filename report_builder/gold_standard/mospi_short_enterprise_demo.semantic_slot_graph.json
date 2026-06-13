@@ -1,0 +1,401 @@
+{
+  "$schema": "bharatstat/semantic-slot-graph/v1",
+  "templateId": "tpl_mospi_short_enterprise_demo_v1",
+  "blueprintRef": "tpl_mospi_short_enterprise_demo_v1",
+  "astRef": "tpl_mospi_short_enterprise_demo_v1",
+  "graphVersion": "1.0.0",
+  "lineagePolicy": {
+    "lineageRequiredByDefault": true,
+    "officerEditableByDefault": true,
+    "failOnBrokenFillFrom": true,
+    "allowStaleFillFromRepair": true
+  },
+  "slots": [
+    {
+      "slotId": "slot_exec_lfpr_metric",
+      "astBlockId": "metric_exec_lfpr",
+      "astKind": "metric_card",
+      "source": "short_enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_01_executive_snapshot",
+      "sectionId": "sec_01_headline_indicators",
+      "questionId": "q_exec_summary_lfpr",
+      "componentId": "cmp_exec_lfpr_metric",
+      "componentKind": "metric_card",
+      "requiredEntities": [
+        "ent_lfpr",
+        "ent_period"
+      ],
+      "formulaRefs": [
+        "formula_lfpr_weighted"
+      ],
+      "lineageRequired": true,
+      "officerEditable": false,
+      "lockedFields": [
+        "formulaSpec.type",
+        "requiredEntities",
+        "format"
+      ]
+    },
+    {
+      "slotId": "slot_exec_lfpr_note",
+      "astBlockId": "text_exec_lfpr_note",
+      "astKind": "content",
+      "source": "short_enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_01_executive_snapshot",
+      "sectionId": "sec_01_headline_indicators",
+      "questionId": "q_exec_summary_lfpr",
+      "componentId": "cmp_exec_lfpr_note",
+      "componentKind": "narrative_paragraph",
+      "requiredEntities": [
+        "ent_lfpr",
+        "ent_period"
+      ],
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "sourceNoteRequired",
+        "unsupportedCausalClaims"
+      ]
+    },
+    {
+      "slotId": "slot_exec_ur_metric",
+      "astBlockId": "metric_exec_ur",
+      "astKind": "metric_card",
+      "source": "short_enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_01_executive_snapshot",
+      "sectionId": "sec_01_headline_indicators",
+      "questionId": "q_exec_summary_ur",
+      "componentId": "cmp_exec_ur_metric",
+      "componentKind": "metric_card",
+      "requiredEntities": [
+        "ent_ur",
+        "ent_period"
+      ],
+      "formulaRefs": [
+        "formula_ur_weighted"
+      ],
+      "lineageRequired": true,
+      "officerEditable": false,
+      "lockedFields": [
+        "formulaSpec.type",
+        "requiredEntities",
+        "format"
+      ]
+    },
+    {
+      "slotId": "slot_quality_table",
+      "astBlockId": "table_quality",
+      "astKind": "table",
+      "source": "short_enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_01_executive_snapshot",
+      "sectionId": "sec_02_data_quality",
+      "questionId": "q_data_quality_coverage",
+      "componentId": "cmp_quality_table",
+      "componentKind": "table",
+      "requiredEntities": [
+        "ent_period"
+      ],
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "checkIds",
+        "readinessStatus"
+      ]
+    },
+    {
+      "slotId": "slot_quality_note",
+      "astBlockId": "text_quality_note",
+      "astKind": "content",
+      "source": "short_enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_01_executive_snapshot",
+      "sectionId": "sec_02_data_quality",
+      "questionId": "q_data_quality_coverage",
+      "componentId": "cmp_quality_note",
+      "componentKind": "narrative_paragraph",
+      "requiredEntities": [
+        "ent_period"
+      ],
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "datasetProfileRequired",
+        "sourceNoteRequired"
+      ]
+    },
+    {
+      "slotId": "slot_lfpr_gender_sector_chart",
+      "astBlockId": "chart_lfpr_gender_sector",
+      "astKind": "chart",
+      "source": "short_enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_02_participation_and_employment",
+      "subtopicId": "subtopic_02_01_participation",
+      "sectionId": "sec_03_gender_sector_lfpr",
+      "questionId": "q_gender_sector_lfpr",
+      "componentId": "cmp_lfpr_gender_sector_chart",
+      "componentKind": "chart",
+      "requiredEntities": [
+        "ent_lfpr",
+        "ent_gender",
+        "ent_sector",
+        "ent_period"
+      ],
+      "formulaRefs": [
+        "formula_lfpr_weighted"
+      ],
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "xEntityRef",
+        "seriesEntityRef",
+        "yEntityRef",
+        "analyticsSpec"
+      ]
+    },
+    {
+      "slotId": "slot_lfpr_gender_sector_note",
+      "astBlockId": "text_lfpr_gender_sector_note",
+      "astKind": "content",
+      "source": "short_enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_02_participation_and_employment",
+      "subtopicId": "subtopic_02_01_participation",
+      "sectionId": "sec_03_gender_sector_lfpr",
+      "questionId": "q_gender_sector_lfpr",
+      "componentId": "cmp_lfpr_gender_sector_note",
+      "componentKind": "narrative_paragraph",
+      "requiredEntities": [
+        "ent_lfpr",
+        "ent_gender",
+        "ent_sector"
+      ],
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "sourceNoteRequired",
+        "unsupportedCausalClaims"
+      ]
+    },
+    {
+      "slotId": "slot_wpr_table",
+      "astBlockId": "table_wpr",
+      "astKind": "table",
+      "source": "short_enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_02_participation_and_employment",
+      "subtopicId": "subtopic_02_02_employment",
+      "sectionId": "sec_05_wpr_overview",
+      "questionId": "q_employment_wpr",
+      "componentId": "cmp_wpr_table",
+      "componentKind": "table",
+      "requiredEntities": [
+        "ent_wpr",
+        "ent_period",
+        "ent_sector"
+      ],
+      "formulaRefs": [
+        "formula_wpr_weighted"
+      ],
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "tableColumns",
+        "formulaSpec.type",
+        "sourceNoteRequired"
+      ]
+    },
+    {
+      "slotId": "slot_wpr_note",
+      "astBlockId": "text_wpr_note",
+      "astKind": "content",
+      "source": "short_enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_02_participation_and_employment",
+      "subtopicId": "subtopic_02_02_employment",
+      "sectionId": "sec_05_wpr_overview",
+      "questionId": "q_employment_wpr",
+      "componentId": "cmp_wpr_note",
+      "componentKind": "narrative_paragraph",
+      "requiredEntities": [
+        "ent_wpr",
+        "ent_period"
+      ],
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "sourceNoteRequired",
+        "unsupportedCausalClaims"
+      ]
+    },
+    {
+      "slotId": "slot_state_coverage_table",
+      "astBlockId": "table_state_coverage",
+      "astKind": "table",
+      "source": "short_enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_03_officer_publication_close",
+      "sectionId": "sec_07_state_coverage_optional",
+      "questionId": "q_state_coverage_optional",
+      "componentId": "cmp_state_coverage_table",
+      "componentKind": "table",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_period"
+      ],
+      "lineageRequired": true,
+      "officerEditable": true,
+      "visibility": "show_if_ent_state_ut_bound",
+      "lockedFields": [
+        "stateCoveragePolicy",
+        "sourceNoteRequired"
+      ]
+    },
+    {
+      "slotId": "slot_state_coverage_note",
+      "astBlockId": "text_state_coverage_note",
+      "astKind": "content",
+      "source": "short_enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_03_officer_publication_close",
+      "sectionId": "sec_07_state_coverage_optional",
+      "questionId": "q_state_coverage_optional",
+      "componentId": "cmp_state_coverage_note",
+      "componentKind": "narrative_paragraph",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_period"
+      ],
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "sourceNoteRequired",
+        "coverageCaveat"
+      ]
+    },
+    {
+      "slotId": "slot_publication_checklist",
+      "astBlockId": "checklist_publication",
+      "astKind": "checklist",
+      "source": "short_enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_03_officer_publication_close",
+      "sectionId": "sec_08_publication_checklist",
+      "questionId": "q_publication_readiness",
+      "componentId": "cmp_publication_checklist",
+      "componentKind": "checklist",
+      "requiredEntities": [
+        "ent_period"
+      ],
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "qualityGateStatus",
+        "blockingChecks"
+      ]
+    },
+    {
+      "slotId": "slot_publication_source_notes",
+      "astBlockId": "source_notes_publication",
+      "astKind": "source_note",
+      "source": "short_enterprise_built_in",
+      "confidence": 1.0,
+      "topicId": "topic_03_officer_publication_close",
+      "sectionId": "sec_08_publication_checklist",
+      "questionId": "q_publication_readiness",
+      "componentId": "cmp_publication_source_notes",
+      "componentKind": "source_note_block",
+      "requiredEntities": [
+        "ent_period"
+      ],
+      "lineageRequired": true,
+      "officerEditable": true,
+      "lockedFields": [
+        "sourceNotes",
+        "datasetSignature",
+        "auditTrail"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "q_exec_summary_lfpr",
+      "to": "slot_exec_lfpr_metric",
+      "type": "fills"
+    },
+    {
+      "from": "q_exec_summary_lfpr",
+      "to": "slot_exec_lfpr_note",
+      "type": "fills"
+    },
+    {
+      "from": "q_exec_summary_ur",
+      "to": "slot_exec_ur_metric",
+      "type": "fills"
+    },
+    {
+      "from": "q_data_quality_coverage",
+      "to": "slot_quality_table",
+      "type": "fills"
+    },
+    {
+      "from": "q_data_quality_coverage",
+      "to": "slot_quality_note",
+      "type": "fills"
+    },
+    {
+      "from": "q_gender_sector_lfpr",
+      "to": "slot_lfpr_gender_sector_chart",
+      "type": "fills"
+    },
+    {
+      "from": "q_gender_sector_lfpr",
+      "to": "slot_lfpr_gender_sector_note",
+      "type": "fills"
+    },
+    {
+      "from": "q_employment_wpr",
+      "to": "slot_wpr_table",
+      "type": "fills"
+    },
+    {
+      "from": "q_employment_wpr",
+      "to": "slot_wpr_note",
+      "type": "fills"
+    },
+    {
+      "from": "q_state_coverage_optional",
+      "to": "slot_state_coverage_table",
+      "type": "fills"
+    },
+    {
+      "from": "q_state_coverage_optional",
+      "to": "slot_state_coverage_note",
+      "type": "fills"
+    },
+    {
+      "from": "q_publication_readiness",
+      "to": "slot_publication_checklist",
+      "type": "fills"
+    },
+    {
+      "from": "q_publication_readiness",
+      "to": "slot_publication_source_notes",
+      "type": "fills"
+    }
+  ],
+  "slotPolicies": {
+    "maxChartsPerSection": 1,
+    "maxTablesPerSection": 1,
+    "maxPages": 9,
+    "sourceNotesMustRender": true,
+    "unboundOptionalSlotsMayDegrade": [
+      "slot_state_coverage_table",
+      "slot_state_coverage_note"
+    ]
+  }
+}

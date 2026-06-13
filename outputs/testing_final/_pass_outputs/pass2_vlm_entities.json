@@ -1,0 +1,195 @@
+{
+  "vlm_success_count": 9,
+  "total_entities": 40,
+  "chart_pages": 6,
+  "pages": [
+    {
+      "page": 0,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Unemployment Rate",
+        "Gender",
+        "Urban",
+        "Self-employed",
+        "Regular wage",
+        "Report, 2025 [January, 2025 December, 2025]"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 1,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "1. Stable Labour Force Participation Rate (LFPR) for persons of age 15 years and above"
+    },
+    {
+      "page": 2,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [
+        "LFPR(%) in usual status (ps+ss) for persons of age 15 years and above in rural areas",
+        "LFPR(%) in usual status (ps+ss) for persons of age 15 years and above in urban areas"
+      ],
+      "table_title": "",
+      "section_heading": "2. Worker Population Ratio (WPR) for persons of age 15 years and above remains sustained"
+    },
+    {
+      "page": 3,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Unemployment Rate",
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [
+        "WPR(%) in usual status (ps+ss) for persons of age 15 years and above in rural areas",
+        "WPR(%) in usual status (ps+ss) for persons of age 15 years and above in urban areas"
+      ],
+      "table_title": "",
+      "section_heading": "3. Unemployment Rates (UR) reflect stability and improvement for persons of age 15 years and"
+    },
+    {
+      "page": 4,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Gender",
+        "Rural",
+        "Urban",
+        "Self-employed",
+        "Regular wage/salary employment"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [
+        "UR(%) in usual status (ps+ss) for persons of age 15 years and above in rural areas",
+        "UR(%) in usual status (ps+ss) for persons of age 15 years and above in urban areas"
+      ],
+      "table_title": "",
+      "section_heading": "4. Increase in proportion of workers with regular wage/ salary employment"
+    },
+    {
+      "page": 5,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Worker Share",
+        "Industry",
+        "Gender",
+        "Self-employed",
+        "Regular wage/salary",
+        "Casual labour"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [
+        "Percentage distribution of workers (in usual status) by status in employment",
+        "Percentage distribution of workers (in usual status) by industry of work"
+      ],
+      "table_title": "",
+      "section_heading": "5. Manufacturing and service sectors witnessed enhanced worker participation"
+    },
+    {
+      "page": 6,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Gender",
+        "Urban",
+        "Rural"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [
+        "Fig. 6(a): Earning from regular wage/ salary and self-employment",
+        "Fig. 6(b): Earning from casual labour work (other than public work)"
+      ],
+      "table_title": "",
+      "section_heading": "7. Average number of years in formal education"
+    },
+    {
+      "page": 7,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Gender",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [
+        "bar_chart"
+      ],
+      "chart_titles": [
+        "Average number of years in formal education"
+      ],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 8,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "LFPR",
+        "Unemployment Rate",
+        "Rural",
+        "Urban"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": "C. Changes in Sample Design of PLFS"
+    },
+    {
+      "page": 9,
+      "vlm_used": false,
+      "structure_type": "narrative",
+      "entities": [],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 10,
+      "vlm_used": false,
+      "structure_type": "data_table",
+      "entities": [],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    }
+  ]
+}

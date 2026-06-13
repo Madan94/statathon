@@ -1,0 +1,477 @@
+{
+  "templateId": "tpl_plfs_annual_v1",
+  "datasetSignature": "5f4ae0298a537c06",
+  "datasetId": "mospi_short_enterprise_demo.gold_dataset",
+  "proposals": [
+    {
+      "entityId": "ent_wpr",
+      "entityName": "Worker Population Ratio",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "WPR"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "proposed",
+      "alternatives": [
+        {
+          "column": "population_count",
+          "confidence": 0.045,
+          "method": "synonym"
+        },
+        {
+          "column": "worker_count",
+          "confidence": 0.045,
+          "method": "synonym"
+        }
+      ],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Worker Population Ratio matched dataset column 'WPR'",
+          "column": "WPR"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.045,
+          "detail": "alternative candidate column 'population_count'",
+          "column": "population_count"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.045,
+          "detail": "alternative candidate column 'worker_count'",
+          "column": "worker_count"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_lfpr",
+      "entityName": "Labour Force Participation Rate",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "LFPR"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "proposed",
+      "alternatives": [
+        {
+          "column": "UR",
+          "confidence": 0.88,
+          "method": "alias"
+        },
+        {
+          "column": "labour_force_count",
+          "confidence": 0.072,
+          "method": "synonym"
+        }
+      ],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Labour Force Participation Rate matched dataset column 'LFPR'",
+          "column": "LFPR"
+        },
+        {
+          "signal": "candidate_alias",
+          "score": 0.88,
+          "detail": "alternative candidate column 'UR'",
+          "column": "UR"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.072,
+          "detail": "alternative candidate column 'labour_force_count'",
+          "column": "labour_force_count"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_ur",
+      "entityName": "Unemployment Rate",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "UR"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "proposed",
+      "alternatives": [
+        {
+          "column": "unemployed_count",
+          "confidence": 0.16,
+          "method": "synonym"
+        }
+      ],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Unemployment Rate matched dataset column 'UR'",
+          "column": "UR"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.16,
+          "detail": "alternative candidate column 'unemployed_count'",
+          "column": "unemployed_count"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Reporting Period'",
+          "column": "Reporting Period"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_sector",
+      "entityName": "Sector",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Sector"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "proposed",
+      "alternatives": [
+        {
+          "column": "UR",
+          "confidence": 0.88,
+          "method": "alias"
+        }
+      ],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Sector matched dataset column 'Sector'",
+          "column": "Sector"
+        },
+        {
+          "signal": "candidate_alias",
+          "score": 0.88,
+          "detail": "alternative candidate column 'UR'",
+          "column": "UR"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Reporting Period'",
+          "column": "Reporting Period"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_gender",
+      "entityName": "Gender",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Gender"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "proposed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Gender matched dataset column 'Gender'",
+          "column": "Gender"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Reporting Period'",
+          "column": "Reporting Period"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Sector'",
+          "column": "Sector"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_state",
+      "entityName": "State/UT",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "State/UT"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "proposed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "State/UT matched dataset column 'State/UT'",
+          "column": "State/UT"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Reporting Period'",
+          "column": "Reporting Period"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Sector'",
+          "column": "Sector"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_age_group",
+      "entityName": "Age Group",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Age Group"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.98,
+      "method": "exact",
+      "status": "proposed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "exact_name",
+          "score": 0.98,
+          "detail": "Age Group matched dataset column 'Age Group'",
+          "column": "Age Group"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Reporting Period'",
+          "column": "Reporting Period"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Sector'",
+          "column": "Sector"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_period",
+      "entityName": "Survey Period",
+      "entityType": "time",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "UR"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.616,
+      "method": "alias",
+      "status": "proposed",
+      "alternatives": [
+        {
+          "column": "Reporting Period",
+          "confidence": 0.06,
+          "method": "synonym"
+        }
+      ],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.616,
+          "detail": "Survey Period matched dataset column 'UR'",
+          "column": "UR"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.06,
+          "detail": "alternative candidate column 'Reporting Period'",
+          "column": "Reporting Period"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Sector'",
+          "column": "Sector"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "time entity 'Survey Period' matched measure column 'UR'",
+          "column": "UR"
+        }
+      ],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: time entity landed on measure column 'UR'"
+      ]
+    },
+    {
+      "entityId": "ent_earnings",
+      "entityName": "Average Monthly Earnings",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [],
+      "combine": "none",
+      "confidence": 0.0,
+      "method": "synonym",
+      "status": "unresolved",
+      "alternatives": [],
+      "evidence": [],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "measure entity 'Average Monthly Earnings' matched dimension column 'Reporting Period'",
+          "column": "Reporting Period"
+        }
+      ],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: measure entity landed on dimension column 'Reporting Period'"
+      ]
+    },
+    {
+      "entityId": "ent_hours",
+      "entityName": "Average Weekly Hours",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "UR"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.88,
+      "method": "alias",
+      "status": "proposed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.88,
+          "detail": "Average Weekly Hours matched dataset column 'UR'",
+          "column": "UR"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Reporting Period'",
+          "column": "Reporting Period"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.0,
+          "detail": "alternative candidate column 'Sector'",
+          "column": "Sector"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_employment_status",
+      "entityName": "Employment Status",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "UR"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.616,
+      "method": "alias",
+      "status": "proposed",
+      "alternatives": [
+        {
+          "column": "estimate_status",
+          "confidence": 0.06,
+          "method": "synonym"
+        },
+        {
+          "column": "labour_force_count",
+          "confidence": 0.045,
+          "method": "synonym"
+        }
+      ],
+      "evidence": [
+        {
+          "signal": "alias",
+          "score": 0.616,
+          "detail": "Employment Status matched dataset column 'UR'",
+          "column": "UR"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.06,
+          "detail": "alternative candidate column 'estimate_status'",
+          "column": "estimate_status"
+        },
+        {
+          "signal": "candidate_synonym",
+          "score": 0.045,
+          "detail": "alternative candidate column 'labour_force_count'",
+          "column": "labour_force_count"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "dimension entity 'Employment Status' matched measure column 'UR'",
+          "column": "UR"
+        }
+      ],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: dimension entity landed on measure column 'UR'"
+      ]
+    }
+  ],
+  "confirmations": {},
+  "updatedAt": 1781290681.1158526
+}

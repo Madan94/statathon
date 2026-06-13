@@ -1,0 +1,239 @@
+{
+  "contractVersion": "binding.executionBundle.v1",
+  "templateId": "tpl_test_v1",
+  "datasetId": "ds_test",
+  "bindingAstId": "bind_tpl_test_v1_602fe17aad40",
+  "status": "READY",
+  "datasetAst": {
+    "datasetId": "ds_test",
+    "sourceFile": "",
+    "rowCount": 6,
+    "archetype": "survey",
+    "columns": [
+      {
+        "name": "sal",
+        "dtype": "number",
+        "role": "measure",
+        "cardinality": 0,
+        "sampleValues": [],
+        "nullPct": 0.0
+      },
+      {
+        "name": "sector",
+        "dtype": "string",
+        "role": "dimension",
+        "cardinality": 0,
+        "sampleValues": [],
+        "nullPct": 0.0
+      }
+    ],
+    "columnGroups": [],
+    "reshape": []
+  },
+  "bindingAst": {
+    "templateId": "tpl_test_v1",
+    "datasetId": "ds_test",
+    "datasetSignature": "sig_test_0001",
+    "entityBindings": [
+      {
+        "entityId": "ent_sal",
+        "entityName": "Average Salary",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "sal"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.0,
+        "method": "synonym",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [],
+        "risks": []
+      },
+      {
+        "entityId": "ent_sector",
+        "entityName": "Sector",
+        "entityType": "dimension",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "sector"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.0,
+        "method": "synonym",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [],
+        "risks": []
+      }
+    ],
+    "questionBindings": [
+      {
+        "questionId": "q_sal_01",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "sal"
+          ],
+          "dimensions": [
+            "sector"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      }
+    ],
+    "coverage": {
+      "entities": {
+        "bound": 2,
+        "pending": 0,
+        "unresolved": 0
+      },
+      "questions": {
+        "executable": 1,
+        "blocked": 0,
+        "degraded": 0
+      },
+      "issues": [
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_sal_01' has no time column \u2014 single-period snapshot.",
+          "questionId": "q_sal_01"
+        }
+      ]
+    }
+  },
+  "statisticalContext": {},
+  "plans": [
+    {
+      "planId": "plan_q_sal_01",
+      "questionId": "q_sal_01",
+      "questionText": "Average salary by sector",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "column": "sal",
+          "agg": "mean",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "sector"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "group_aggregate",
+        "measure": {
+          "entityRef": "ent_sal",
+          "agg": "mean"
+        },
+        "groupBy": [
+          {
+            "entityRef": "ent_sector"
+          }
+        ],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "sal"
+        ],
+        "dimensions": [
+          "sector"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_sal_01_c1"
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_sal_01",
+        "sourceEntityIds": [],
+        "sourceColumnIds": [
+          "sal",
+          "sector"
+        ]
+      },
+      "diagnostics": []
+    }
+  ],
+  "blockedQuestions": [],
+  "readinessReport": {
+    "executableCount": 1,
+    "degradedCount": 0,
+    "blockedCount": 0,
+    "checks": [
+      {
+        "level": "statistical",
+        "severity": "info",
+        "passed": false,
+        "code": "LOW_CARDINALITY_GROUPBY",
+        "message": "Dimension 'sector' has cardinality 0 \u2014 groupBy won't produce useful results",
+        "planId": "plan_q_sal_01",
+        "recommendedAction": "Consider removing groupBy or using a higher-cardinality column"
+      }
+    ],
+    "warnings": [],
+    "errors": [],
+    "status": "READY"
+  },
+  "dataframeRef": {
+    "type": "csv",
+    "path": "C:\\Users\\2504861\\AppData\\Local\\Temp\\pytest-of-2504861\\pytest-140\\test_get_report_returns_assemb0\\bindings\\tpl_test_v1__sig_test_0001.data.csv",
+    "contentHash": "sha256:c12a0226bea342e07d8d265fc9c59f61"
+  },
+  "lineageIndex": {
+    "q_sal_01": {
+      "sourceQuestionId": "q_sal_01",
+      "sourceEntityIds": [],
+      "sourceColumnIds": [
+        "sal",
+        "sector"
+      ]
+    }
+  },
+  "frozenAt": "2026-06-12T18:30:51.124702+00:00"
+}

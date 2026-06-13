@@ -1,0 +1,45 @@
+- generic [active] [ref=e1]:
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e7] [cursor=pointer]:
+    - img [ref=e8]
+  - alert [ref=e11]
+  - generic [ref=e12]:
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - link "BharatStat" [ref=e17] [cursor=pointer]:
+          - /url: /
+        - paragraph [ref=e18]: Step 1 of 2
+      - generic [ref=e19]:
+        - heading "Sign in" [level=1] [ref=e23]
+        - paragraph [ref=e24]: Enter your email and password to continue.
+        - generic [ref=e25]:
+          - paragraph [ref=e26]: Dev test officer
+          - paragraph [ref=e27]:
+            - text: "Email:"
+            - code [ref=e28]: officer@example.com
+          - paragraph [ref=e29]:
+            - text: "Password:"
+            - code [ref=e30]: TestOfficer123!
+          - paragraph [ref=e31]:
+            - text: "OTP (if prompted):"
+            - code [ref=e32]: "123456"
+          - button "Dev quick login (skip OTP)" [disabled]
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e36]: Email
+            - textbox "Email" [ref=e37]: officer@example.com
+          - generic [ref=e38]:
+            - generic [ref=e39]: Password
+            - generic [ref=e40]:
+              - textbox "Password" [ref=e41]: TestOfficer123!
+              - button "Show password" [ref=e42]:
+                - img [ref=e43]
+          - button "Please wait…" [disabled]
+        - paragraph [ref=e47]:
+          - text: New officer?
+          - link "Create an account" [ref=e48] [cursor=pointer]:
+            - /url: /signup
+    - generic [ref=e51]:
+      - img [ref=e52]
+      - blockquote [ref=e69]: “Your survey data, ready to tell its story.”
+      - paragraph [ref=e70]: BharatStat — survey intelligence for India

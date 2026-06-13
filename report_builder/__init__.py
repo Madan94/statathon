@@ -17,4 +17,16 @@ way, so a deployment with the full stack online produces byte-compatible
 artifacts to one running locally.
 """
 
-from .pipeline import generate_report  # re-exported for routes
+# Lazy re-export (PEP 562). Importing a leaf subpackage such as
+# ``report_builder.binding`` or ``report_builder.generation`` must NOT drag in the
+# heavy extraction/agent pipeline (pandas + Neo4j/Redis/Qdrant + agents/firewall/
+# exporter), which previously added ~3 s and import-time service coupling to every
+# ``report_builder.*`` import. ``generate_report`` is resolved on first access, so
+# ``from report_builder import generate_report`` still works for the routes that
+# need it while the generate-phase API stays light.
+def __getattr__(name: str):
+    if name == "generate_report":
+        from .pipeline import generate_report as _generate_report
+
+        return _generate_report
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

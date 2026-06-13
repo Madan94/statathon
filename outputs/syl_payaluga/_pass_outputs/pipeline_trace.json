@@ -1,0 +1,72 @@
+{
+  "passes": {
+    "pass0_rasterize": {
+      "elapsed_s": 22.2,
+      "images": 10,
+      "text_pages": 10
+    },
+    "pass1_layout": {
+      "elapsed_s": 57.0,
+      "layoutlm_used": true,
+      "pages_with_regions": 10,
+      "total_regions": 151,
+      "toc_entries": 25,
+      "toc_l1_chapters": 4
+    },
+    "pass2_entities": {
+      "elapsed_s": 23.4,
+      "pages_total": 10,
+      "vlm_success": 10,
+      "vlm_success_rate": 100,
+      "total_entities": 67,
+      "chart_pages_detected": 4,
+      "total_chart_types": 4,
+      "vlm_provider": "groq",
+      "vlm_fallback_used": true
+    },
+    "pass2_5_kg": {
+      "elapsed_s": 0.1,
+      "entities": 62,
+      "total_entities": 62,
+      "hierarchy_nodes": 62,
+      "table_structures": 9,
+      "chapters": 3,
+      "section_patterns": 7
+    },
+    "pass2_6_classification": {
+      "elapsed_s": 1.1,
+      "measures": 29,
+      "dimensions": 26,
+      "filters": 0,
+      "metadata": 7
+    },
+    "pass2_7_enrichment": {
+      "elapsed_s": 0.0,
+      "ok": true,
+      "with_unit": 9,
+      "with_value_domain": 26,
+      "glossary_terms": 0
+    },
+    "pass3_questions": {
+      "elapsed_s": 10.1,
+      "questions": 9,
+      "topics": 2
+    },
+    "pass4_assembly": {
+      "elapsed_s": 0.0,
+      "paragraphs": 7,
+      "tables": 9,
+      "figures": 5,
+      "charts_detected": 5,
+      "chart_pages": 1,
+      "blueprint_topics": 2,
+      "blueprint_entities": 61
+    },
+    "pass5_gemini": {
+      "elapsed_s": 0.1,
+      "status": "success"
+    }
+  },
+  "total_elapsed": 118.8,
+  "doc_type": "statistical_annual_report"
+}
