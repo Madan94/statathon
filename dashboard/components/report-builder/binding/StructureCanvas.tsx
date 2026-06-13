@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { BarChart3, ChevronDown, ChevronRight, EyeOff, FileText, FunctionSquare, GripVertical, Image, ListTree, MessageSquare, Pencil, Plus, Table2 } from 'lucide-react';
+import { BarChart3, ChevronDown, ChevronRight, EyeOff, FileText, FunctionSquare, Image, ListTree, MessageSquare, Pencil, Plus, Table2 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -233,6 +233,7 @@ export function StructureCanvas({
     return ids;
   });
   const [serverRecs, setServerRecs] = useState<{ nodeId: string; items: ComponentRecommendation[] }>({ nodeId: '', items: [] });
+  const [showAddPopup, setShowAddPopup] = useState(false);
 
   const selectedNode = allNodes.find((n) => n.nodeId === selectedNodeId) || plan.planTree[0];
   const selectedIssues = selectedNode ? issues.filter((i) => issueMatchesNode(i, selectedNode, dependencyGraph)) : [];
@@ -431,6 +432,85 @@ export function StructureCanvas({
     );
   };
 
+  const renderSectionDetail = () => {
+    if (!selectedNode) return null;
+    const questions = selectedNode.children;
+    return (
+      <div className="space-y-4">
+        {/* Questions with their components */}
+        {questions.length > 0 ? (
+          <div className="space-y-3">
+            {questions.map((q) => (
+              <div
+                key={q.nodeId}
+                className={`cursor-pointer rounded-xl border p-4 transition-colors ${selectedNodeId === q.nodeId ? 'border-primary/30 bg-primary/5' : 'border-border bg-surface hover:border-primary/20'}`}
+                onClick={() => setSelectedNodeId(q.nodeId)}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-success" />
+                      <span className="text-sm font-medium text-text">{q.title}</span>
+                    </div>
+                    {q.questionId && <p className="ml-4 mt-0.5 font-mono text-[10px] text-text-muted">{q.questionId}</p>}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    {q.enabled === false && <Badge variant="muted" className="text-[8px]">off</Badge>}
+                    <Badge variant={readinessVariant(q.readiness)} className="text-[9px]">{q.readiness}</Badge>
+                  </div>
+                </div>
+                {/* Required entities for the question */}
+                {q.requiredEntities.length > 0 && (
+                  <div className="ml-4 mt-2 flex flex-wrap gap-1">
+                    {q.requiredEntities.map((e, i) => (
+                      <span key={i} className="rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-medium text-primary">
+                        {String(e.entityId || e.entityRef || '')}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {/* Components inline */}
+                {q.components.length > 0 && (
+                  <div className="ml-4 mt-2 space-y-1.5">
+                    {q.components.map((comp) => {
+                      const Icon = componentIcon(comp.componentType);
+                      return (
+                        <div key={comp.componentId} className="flex items-center justify-between rounded-lg border border-border bg-surface-card px-3 py-2">
+                          <span className="flex items-center gap-2 text-xs">
+                            <Icon className="h-3.5 w-3.5 text-text-muted" />
+                            <span className="font-medium text-text">{componentLabel(comp.componentType, componentDefinitions)}</span>
+                            {comp.slotIds.length > 0 && <Badge variant="muted" className="text-[8px]">{comp.slotIds.length}s</Badge>}
+                          </span>
+                          <div className="flex gap-2">
+                            <button type="button" disabled={busy} onClick={(e) => { e.stopPropagation(); onEditComponentEntities(q, comp); }} className="text-[9px] font-semibold text-primary hover:underline disabled:opacity-50">Entities</button>
+                            {['chart', 'table', 'formula_metric'].includes(comp.componentType) && (
+                              <button type="button" disabled={busy} onClick={(e) => { e.stopPropagation(); onEditAnalytics(q, comp); }} className="text-[9px] font-semibold text-primary hover:underline disabled:opacity-50">Config</button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-text-muted">No questions in this section yet.</p>
+        )}
+        {/* Section-level components */}
+        {selectedNode.components.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Section components</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {selectedNode.components.map((comp) => renderComponentCard(selectedNode, comp))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderQuestionDetail = () => {
     if (!selectedNode) return null;
     return (
@@ -522,7 +602,10 @@ export function StructureCanvas({
   const renderDetail = () => {
     if (!selectedNode) return <p className="py-8 text-center text-sm text-text-muted">Select an item from the tree.</p>;
     if (selectedNode.nodeType === 'topic') return renderTopicDetail();
-    if (selectedNode.nodeType === 'subtopic' || selectedNode.nodeType === 'subsubtopic') return renderChapterDetail();
+    // Chapter (subtopic) → show section cards with questions inside
+    if (selectedNode.nodeType === 'subtopic') return renderChapterDetail();
+    // Section (subsubtopic) OR a question-container → show questions inline
+    if (selectedNode.nodeType === 'subsubtopic') return renderSectionDetail();
     return renderQuestionDetail();
   };
 
@@ -603,6 +686,10 @@ export function StructureCanvas({
                     </Button>
                   </>
                 )}
+                {/* Add child / component button */}
+                <Button size="sm" variant="ghost" disabled={busy} onClick={() => setShowAddPopup(true)} className="h-7 w-7 px-0 text-primary">
+                  <Plus className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           )}
@@ -625,24 +712,90 @@ export function StructureCanvas({
         </div>
       </div>
 
-      {/* Bottom toolbar */}
-      <div className="sticky bottom-0 z-10 rounded-xl border border-border bg-surface-card/95 px-4 py-3 shadow-lg backdrop-blur">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
-              Add to {selectedNode ? `"${selectedNode.title.slice(0, 20)}${selectedNode.title.length > 20 ? '…' : ''}"` : 'selection'}:
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {addQuestionSlot}
-              {addComponentSlot}
+      {/* Add popup (triggered by + icon in header) */}
+      {showAddPopup && selectedNode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowAddPopup(false)}>
+          <div className="w-[min(92vw,28rem)] rounded-2xl border border-border bg-surface-card p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-text">Add to "{selectedNode.title}"</h3>
+                <p className="mt-0.5 text-[11px] text-text-muted">{nodeTypeLabel(selectedNode.nodeType)} · Choose what to add</p>
+              </div>
+              <button type="button" onClick={() => setShowAddPopup(false)} className="rounded-md p-1 text-text-muted hover:bg-border/60 hover:text-text">
+                <Plus className="h-4 w-4 rotate-45" />
+              </button>
             </div>
-          </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-text-muted">
-            <GripVertical className="h-3.5 w-3.5" />
-            <span>Reorder (drag coming soon)</span>
+
+            {/* Structural items (for non-question nodes) */}
+            {selectedNode.nodeType !== 'question' && (
+              <div className="mb-4 space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Structure</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {selectedNode.nodeType === 'topic' && (
+                    <button type="button" className="rounded-lg border border-border bg-surface px-3 py-2 text-left text-xs hover:border-accent/60" onClick={() => setShowAddPopup(false)}>
+                      <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-accent" /><span className="font-semibold text-text">New Chapter</span></span>
+                      <span className="mt-0.5 block text-text-muted">Add a sub-section under this topic</span>
+                    </button>
+                  )}
+                  {(selectedNode.nodeType === 'subtopic' || selectedNode.nodeType === 'subsubtopic') && (
+                    <button type="button" className="rounded-lg border border-border bg-surface px-3 py-2 text-left text-xs hover:border-accent/60" onClick={() => setShowAddPopup(false)}>
+                      <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-border" /><span className="font-semibold text-text">New Section</span></span>
+                      <span className="mt-0.5 block text-text-muted">Add a section with questions</span>
+                    </button>
+                  )}
+                  <button type="button" className="rounded-lg border border-border bg-surface px-3 py-2 text-left text-xs hover:border-accent/60" onClick={() => setShowAddPopup(false)}>
+                    <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-success" /><span className="font-semibold text-text">New Question</span></span>
+                    <span className="mt-0.5 block text-text-muted">Add a question node</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Component types */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Components</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {[
+                  { type: 'chart', label: 'Chart', desc: 'Bar, line, pie, or area visualization', icon: BarChart3 },
+                  { type: 'table', label: 'Table', desc: 'Structured data table with rows and columns', icon: Table2 },
+                  { type: 'formula_metric', label: 'Formula Metric', desc: 'SHARE, RATE, RATIO, or GROWTH calculation', icon: FunctionSquare },
+                  { type: 'narrative', label: 'Narrative', desc: 'Explanatory paragraph with insights', icon: FileText },
+                  { type: 'key_finding', label: 'Key Finding', desc: 'Highlighted summary finding', icon: FileText },
+                  { type: 'source_note', label: 'Source Note', desc: 'Data source attribution', icon: MessageSquare },
+                ].map(({ type, label, desc, icon: Icon }) => (
+                  <button
+                    key={type}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => { onAddRecommendedComponent(selectedNode.nodeId, type, {}); setShowAddPopup(false); }}
+                    className="rounded-lg border border-border bg-surface px-3 py-2.5 text-left text-xs transition-colors hover:border-primary/40 hover:bg-primary/5 disabled:opacity-50"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Icon className="h-4 w-4 text-text-muted" />
+                      <span className="font-semibold text-text">{label}</span>
+                    </span>
+                    <span className="mt-0.5 block text-[10px] text-text-muted">{desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Entity selection hint */}
+            {selectedNode.requiredEntities.length > 0 && (
+              <div className="mt-4 rounded-lg border border-border bg-surface px-3 py-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Available entities from this {nodeTypeLabel(selectedNode.nodeType).toLowerCase()}</p>
+                <div className="mt-1.5 flex flex-wrap gap-1">
+                  {selectedNode.requiredEntities.map((e, i) => (
+                    <span key={i} className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                      {String(e.entityId || e.entityRef || '')}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
