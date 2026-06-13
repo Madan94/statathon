@@ -77,11 +77,12 @@ def _entity_view(e: dict[str, Any]) -> dict[str, Any]:
         members = []
     return {
         "id": str(e.get("entityId") or e.get("id") or ""),
-        "name": str(e.get("canonicalName") or e.get("name") or ""),
+        "name": str(e.get("canonicalName") or e.get("entityName") or e.get("name") or ""),
         "type": str(e.get("entityType") or "dimension"),
         "aliases": [str(a) for a in (e.get("aliases") or [])],
         "members": [str(m) for m in members],
         "unit": e.get("unit"),
+        "columnExpr": e.get("columnExpr"),
     }
 
 
@@ -119,6 +120,12 @@ def _score_candidates(
     from deep_bi.column_synonym_kg import ColumnSynonymKG
 
     col_names = [p.name for p in dataset.columns]
+
+    # Priority: if the entity declares a columnExpr that matches a dataset column exactly, use it
+    column_expr = view.get("columnExpr") or ""
+    if column_expr and column_expr in col_names:
+        return [(column_expr, 0.99, "columnExpr")]
+
     own_phrases = [view["name"], *view["aliases"]]
     own_norms = {_normjoin(p) for p in own_phrases if p}
 
