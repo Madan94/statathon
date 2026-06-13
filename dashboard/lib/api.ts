@@ -2192,6 +2192,30 @@ export const generatePhaseApi = {
     );
     return data;
   },
+
+  /** Get the ordered queue of components to generate with metadata. */
+  getGenerationQueue: async (
+    templateId: string,
+    signature: string
+  ): Promise<Array<{ index: number; plan_id: string; question_id: string; component_type: string; title: string; section_path: string[]; status: string }>> => {
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/generation-queue`
+    );
+    return data;
+  },
+
+  /** Generate a single component by index. */
+  generateComponent: async (
+    templateId: string,
+    signature: string,
+    body: { index: number; use_llm?: boolean; redo?: boolean }
+  ): Promise<{ index: number; plan_id: string; component_type: string; title: string; content: Record<string, unknown>; narrative: string; status: string; next_index: number | null; next_preview: Record<string, unknown> | null; total: number; progress_pct: number }> => {
+    const { data } = await api.post(
+      `/report-builder/generate-phase/${templateId}/${signature}/generate-component`,
+      body
+    );
+    return data;
+  },
 };
 
 export default api;

@@ -489,6 +489,160 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
     )
 
 
+# ---------------------------------------------------------------------------
+# Per-component generation (step-by-step officer-controlled)
+# ---------------------------------------------------------------------------
+
+
+class ComponentQueueItem(BaseModel):
+    index: int
+    plan_id: str
+    question_id: str = ""
+    component_type: str = ""
+    title: str = ""
+    section_path: list[str] = []
+    status: str = "pending"  # pending | generating | done | skipped
+
+
+class GenerateComponentIn(BaseModel):
+    index: int
+    use_llm: Optional[bool] = None
+    redo: bool = False
+
+
+class GenerateComponentOut(BaseModel):
+    index: int
+    plan_id: str
+    component_type: str
+    title: str
+    content: dict[str, Any] = {}
+    narrative: str = ""
+    status: str = "done"
+    next_index: Optional[int] = None
+    next_preview: Optional[dict[str, Any]] = None
+    total: int = 0
+    progress_pct: float = 0.0
+
+
+@router.get("/{template_id}/{signature}/generation-queue")
+def get_generation_queue(template_id: str, signature: str) -> list[dict[str, Any]]:
+    """Return the ordered queue of components to generate, with metadata for preview."""
+    import pandas as pd
+
+    dataset, blueprint, df = _read_stash(template_id, signature)
+    binding = _rebuild_binding(template_id, signature, dataset, blueprint, df)
+    data_content_hash = compute_data_content_hash(df)
+    bundle = _build_bundle(template_id, signature, dataset, blueprint, df,
+                           data_content_hash=data_content_hash)
+    adapted = adapt_bundle(bundle)
+    if not adapted:
+        raise HTTPException(status_code=409, detail="No runnable plans")
+
+    queue: list[dict[str, Any]] = []
+    for i, plan in enumerate(adapted):
+        # Extract metadata from the plan
+        plan_dict = plan.to_dict() if hasattr(plan, 'to_dict') else (plan if isinstance(plan, dict) else {})
+        plan_id = plan_dict.get("planId") or plan_dict.get("plan_id") or f"plan_{i}"
+        question_id = plan_dict.get("questionId") or plan_dict.get("question_id") or ""
+        component_type = plan_dict.get("componentType") or plan_dict.get("component_type") or "narrative"
+        title = plan_dict.get("title") or plan_dict.get("questionText") or f"Component {i+1}"
+        section_path = plan_dict.get("sectionPath") or plan_dict.get("section_path") or []
+        queue.append(ComponentQueueItem(
+            index=i,
+            plan_id=plan_id,
+            question_id=question_id,
+            component_type=component_type,
+            title=title,
+            section_path=section_path if isinstance(section_path, list) else [],
+            status="pending",
+        ).dict())
+    return queue
+
+
+@router.post("/{template_id}/{signature}/generate-component")
+def generate_single_component(
+    template_id: str, signature: str, body: GenerateComponentIn
+) -> GenerateComponentOut:
+    """Generate a single component by index. Returns the content + next preview."""
+    import pandas as pd
+
+    dataset, blueprint, df = _read_stash(template_id, signature)
+    binding = _rebuild_binding(template_id, signature, dataset, blueprint, df)
+    template = _load_template_ast()
+    context = blueprint.get("statisticalContext") or {}
+
+    # Build & adapt bundle
+    data_content_hash = compute_data_content_hash(df)
+    bundle = _build_bundle(template_id, signature, dataset, blueprint, df,
+                           data_content_hash=data_content_hash)
+    adapted = adapt_bundle(bundle)
+    if not adapted:
+        raise HTTPException(status_code=409, detail="No runnable plans")
+
+    idx = body.index
+    if idx < 0 or idx >= len(adapted):
+        raise HTTPException(status_code=400, detail=f"Index {idx} out of range (0..{len(adapted)-1})")
+
+    # Run ONLY this one plan through the coordinator
+    single_plan = [adapted[idx]]
+    analytics_obj, evidence_obj, row_index = run_execution(
+        single_plan, df, question_meta=_question_meta(blueprint))
+    analytics = analytics_obj.to_dict()
+    evidence = evidence_obj.to_dict()
+
+    # Fill + narrate just this component
+    visuals = fill_visuals(template, analytics, evidence, context=context)
+    narrated = narrate(template, analytics, evidence, context=context,
+                       questions=_prose_config(blueprint), use_llm=body.use_llm)
+
+    # Extract the content for this specific component
+    content_blocks = narrated.get("contentAST", {}).get("blocks", [])
+    narrative_text = ""
+    component_content: dict[str, Any] = {}
+    if content_blocks:
+        block = content_blocks[0] if content_blocks else {}
+        narrative_text = str(block.get("content") or block.get("text") or block.get("value") or "")
+        component_content = block
+
+    # Plan metadata
+    plan_dict = adapted[idx].to_dict() if hasattr(adapted[idx], 'to_dict') else (adapted[idx] if isinstance(adapted[idx], dict) else {})
+    plan_id = plan_dict.get("planId") or plan_dict.get("plan_id") or f"plan_{idx}"
+    component_type = plan_dict.get("componentType") or plan_dict.get("component_type") or "narrative"
+    title = plan_dict.get("title") or plan_dict.get("questionText") or f"Component {idx+1}"
+
+    # Next preview
+    next_idx = idx + 1 if idx + 1 < len(adapted) else None
+    next_preview = None
+    if next_idx is not None:
+        next_plan = adapted[next_idx].to_dict() if hasattr(adapted[next_idx], 'to_dict') else (adapted[next_idx] if isinstance(adapted[next_idx], dict) else {})
+        next_preview = {
+            "index": next_idx,
+            "plan_id": next_plan.get("planId") or next_plan.get("plan_id") or f"plan_{next_idx}",
+            "component_type": next_plan.get("componentType") or next_plan.get("component_type") or "narrative",
+            "title": next_plan.get("title") or next_plan.get("questionText") or f"Component {next_idx+1}",
+        }
+
+    total = len(adapted)
+    progress = round(((idx + 1) / total) * 100, 1)
+
+    logger.info("[generate-phase] component %d/%d (%s) for %s__%s",
+                idx + 1, total, component_type, template_id, signature)
+
+    return GenerateComponentOut(
+        index=idx,
+        plan_id=plan_id,
+        component_type=component_type,
+        title=title,
+        content=component_content,
+        narrative=narrative_text,
+        status="done",
+        next_index=next_idx,
+        next_preview=next_preview,
+        total=total,
+        progress_pct=progress,
+    )
+
+
 @router.get("/{template_id}/{signature}/report")
 def get_report(
     template_id: str, signature: str, version: Optional[int] = None
