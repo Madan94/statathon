@@ -11,6 +11,33 @@ _USECASE_TO_ARCHETYPE: dict[str, str] = {
     "energy": "energy",
 }
 
+# Persisted as dataset_context.dataset_type / inferred_context in DB.
+_USECASE_TO_DATASET_TYPE: dict[str, str] = {
+    "industry": "economic_survey",
+    "labour": "labor",
+    "consumption": "socioeconomic",
+    "energy": "economic_survey",
+    "demography": "census",
+    "health": "health_survey",
+    "education": "education_statistics",
+    "agriculture": "agriculture",
+    "infrastructure": "infrastructure",
+    "environment": "economic_survey",
+}
+
+
+def _usecase_name(uc: Any) -> str:
+    if isinstance(uc, dict):
+        return str(uc.get("usecase") or "").strip()
+    return str(uc or "").strip()
+
+
+def _dataset_type_from_usecase(uc: Any) -> str:
+    name = _usecase_name(uc)
+    if not name:
+        return ""
+    return _USECASE_TO_DATASET_TYPE.get(name, name)
+
 
 def _archetype_entries(uc: Any) -> list[dict[str, Any]]:
     if not uc:
@@ -38,7 +65,8 @@ def v2_to_legacy_bundle(v2: dict[str, Any]) -> dict[str, Any]:
                 column_cluster_map[str(col)] = str(cid)
 
     uc = v2.get("usecase") or {}
-    usecase_name = uc.get("usecase") if isinstance(uc, dict) else str(uc)
+    usecase_name = _usecase_name(uc)
+    dataset_type = _dataset_type_from_usecase(uc)
 
     return {
         "semantic_mapping": v2.get("semantic_mapping") or {},
@@ -47,6 +75,7 @@ def v2_to_legacy_bundle(v2: dict[str, Any]) -> dict[str, Any]:
         "schema_graph": v2.get("schema_graph") or {},
         "knowledge_graph": v2.get("knowledge_graph") or {},
         "dataset_context": {
+            "dataset_type": dataset_type,
             "usecase": usecase_name,
             "usecase_confidence": uc.get("confidence") if isinstance(uc, dict) else None,
             "archetypes": _archetype_entries(uc),

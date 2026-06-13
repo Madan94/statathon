@@ -12,6 +12,7 @@ from core.ingestion import (
     load_file,
 )
 from database.models import Dataset
+from pipelines.storage_paths import resolve_dataset_storage_path
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ def probe_and_persist_dataset_metadata(
     """
     try:
         if ds.storage_path:
-            path = ds.storage_path
+            path = resolve_dataset_storage_path(ds.storage_path) or ds.storage_path
             if ds.file_size is None and os.path.isfile(path):
                 ds.file_size = os.path.getsize(path)
             if not ds.storage_provider:

@@ -18,6 +18,7 @@ from .response_builder import dataset_metadata_response, dataset_upload_response
 from .schemas import RegisterDatasetRequest, UploadUrlRequest
 from .services import profile_registered_dataset, save_upload
 from .storage_keys import generate_object_key
+from pipelines.storage_paths import upload_storage_dir
 from services.dataset_profile_service import DatasetProfileService
 from services.normalization_service import NormalizationService
 
@@ -41,8 +42,7 @@ def upload(
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user_id),
 ):
-    upload_dir = os.getenv("UPLOAD_STORAGE_PATH", "./storage/uploads")
-    ds = save_upload(file, upload_dir, user_id=user_id, db=db)
+    ds = save_upload(file, str(upload_storage_dir()), user_id=user_id, db=db)
     return dataset_upload_response(ds)
 
 

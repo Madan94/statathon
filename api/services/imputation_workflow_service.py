@@ -25,7 +25,7 @@ from services.analysis_query import (
 )
 from services.analysis_payload_cache import invalidate_analysis_cache
 from services.phase_audit_service import PhaseAuditService
-from services.phase_snapshot_service import PhaseSnapshotService
+from services.phase_snapshot_service import refresh_downstream_with_status
 from services.phase_status_service import PhaseStatusService
 
 logger = logging.getLogger(__name__)
@@ -213,10 +213,13 @@ class ImputationWorkflowService:
                 "imputation_user_decisions": user_decisions,
             },
         )
-        try:
-            PhaseSnapshotService(self.db).refresh_downstream(analysis_id, "imputation")
-        except Exception as exc:
-            logger.warning("imputation snapshot skipped for analysis %s: %s", analysis_id, exc)
+        snapshot, snapshot_error = refresh_downstream_with_status(
+            self.db, analysis_id, "imputation"
+        )
+        if snapshot_error:
+            logger.warning(
+                "imputation snapshot failed for analysis %s: %s", analysis_id, snapshot_error
+            )
         progress = PhaseStatusService(self.db).recompute_imputation_columns(analysis_id)
         invalidate_analysis_cache(analysis_id)
         self.db.commit()
@@ -227,6 +230,8 @@ class ImputationWorkflowService:
             "method": method.lower(),
             "saved": len(rows),
             "complete": progress["complete"],
+            "snapshot": snapshot,
+            "snapshot_error": snapshot_error,
         }
 
     def review_progress(self, analysis_id: int) -> dict[str, Any]:

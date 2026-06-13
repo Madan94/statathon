@@ -1,6 +1,7 @@
 """Create versioned dataset snapshots after each review phase completes."""
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import pandas as pd
@@ -28,6 +29,24 @@ from services.normalization_transform_service import (
 )
 
 STAGE_PRIORITY = ("imputed", "anomaly_reviewed", "validated", "normalized", "original")
+
+logger = logging.getLogger(__name__)
+
+
+def refresh_downstream_with_status(
+    db: Session, analysis_id: int, from_phase: str
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Rebuild snapshots; return (snapshot_meta, error_message)."""
+    try:
+        result = PhaseSnapshotService(db).refresh_downstream(analysis_id, from_phase)
+        return result, None
+    except Exception as exc:
+        logger.exception(
+            "Snapshot refresh failed for analysis %s from %s",
+            analysis_id,
+            from_phase,
+        )
+        return None, str(exc)
 
 
 def latest_snapshot_stage(db: Session, analysis_id: int) -> str | None:
@@ -181,7 +200,11 @@ class PhaseSnapshotService:
             ui_to_physical, _ = _column_maps(self.db, analysis_id)
 
         checkpoint = load_analysis_checkpoint(self.db, analysis_id) or {}
-        phase3 = checkpoint.get("phase3") if isinstance(checkpoint.get("phase3"), dict) else {}
+        phase3_checkpoint = (
+            checkpoint.get("phase3") if isinstance(checkpoint.get("phase3"), dict) else {}
+        )
+        phase3_overlay = load_checkpoint_phase3_overlay(self.db, analysis_id)
+        phase3 = {**phase3_checkpoint, **phase3_overlay}
         imputation_rows = (
             self.db.query(ImputationRowDecision)
             .filter(ImputationRowDecision.analysis_id == analysis_id)

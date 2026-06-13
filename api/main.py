@@ -34,8 +34,10 @@ from database.database import Base, engine, SessionLocal
 import database.models  # noqa: F401 — register metadata for semantic tables
 
 from pipelines.model_path import ensure_huggingface_hub_cache
+from pipelines.storage_paths import normalize_storage_env
 
 ensure_huggingface_hub_cache(_REPO_ROOT)
+normalize_storage_env()
 
 from auth.routes import router as auth_router
 from auth.oauth_routes import router as oauth_router

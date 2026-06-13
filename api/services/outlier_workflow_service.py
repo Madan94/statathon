@@ -20,7 +20,7 @@ from services.analysis_query import build_phase3_from_relational, merge_checkpoi
 from services.analysis_payload_cache import invalidate_analysis_cache
 from services.normalization_service import NormalizationService
 from services.phase_audit_service import PhaseAuditService
-from services.phase_snapshot_service import PhaseSnapshotService
+from services.phase_snapshot_service import refresh_downstream_with_status
 from services.phase_status_service import PhaseStatusService
 
 MethodChoice = Literal["Z_SCORE", "IQR"]
@@ -378,16 +378,24 @@ class OutlierWorkflowService:
             phase3["converted_to_missing"] = handoff
         self._save_phase3(analysis_id, an.dataset_id, phase3)
         PhaseStatusService(self.db).recompute_anomaly_columns(analysis_id)
-        try:
-            PhaseSnapshotService(self.db).refresh_downstream(analysis_id, "anomaly")
-        except Exception as exc:
+        snapshot, snapshot_error = refresh_downstream_with_status(
+            self.db, analysis_id, "anomaly"
+        )
+        if snapshot_error:
             import logging
             logging.getLogger(__name__).warning(
-                "anomaly/processed snapshot skipped for analysis %s: %s", analysis_id, exc
+                "anomaly snapshot failed for analysis %s: %s", analysis_id, snapshot_error
             )
         invalidate_analysis_cache(analysis_id)
         self.db.commit()
-        return {"success": True, "analysis_id": analysis_id, "column": column, "saved": len(rows)}
+        return {
+            "success": True,
+            "analysis_id": analysis_id,
+            "column": column,
+            "saved": len(rows),
+            "snapshot": snapshot,
+            "snapshot_error": snapshot_error,
+        }
 
     def review_progress(self, analysis_id: int) -> dict[str, Any]:
         self._load_analysis(analysis_id)

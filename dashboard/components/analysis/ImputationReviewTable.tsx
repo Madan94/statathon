@@ -9,6 +9,7 @@ import {
   resolveMissingCount,
 } from '@/lib/outlierColumnUtils';
 import Card from '@/components/ui/Card';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
@@ -288,9 +289,11 @@ export default function ImputationReviewTable({ column, analysisId, results, cla
           )}
         </div>
         {loadingRows ? (
-          <p className="text-sm text-text-muted flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading row context…
-          </p>
+          <div className="space-y-2" aria-busy="true" aria-label="Loading missing rows">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
         ) : (
           <>
             <div className="flex flex-wrap items-center gap-2 mb-3 p-3 rounded-lg bg-border/20 border border-border/60">

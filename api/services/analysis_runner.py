@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from database.database import SessionLocal
 from database.models import Analysis, Dataset, Report
 from pipelines.orchestrator import run_pipeline
+from pipelines.storage_paths import report_storage_dir
 from object_storage.object_store import try_build_default_store
 from services.gpu_worker_client import run_remote_analysis
 
@@ -57,7 +58,7 @@ def run_semantic_analysis_pipeline(
         raise ValueError("Dataset missing both storage_path and object_key")
 
     store = _pipeline_object_store(ds)
-    report_dir = os.getenv("REPORT_STORAGE_PATH", "./storage/reports")
+    report_dir = str(report_storage_dir())
 
     return run_pipeline(
         storage_path=ds.storage_path,
@@ -138,7 +139,7 @@ def finalize_successful_analysis(
     from services.analysis_payload_cache import invalidate_analysis_cache
 
     invalidate_analysis_cache(analysis_id)
-    report_dir = os.getenv("REPORT_STORAGE_PATH", "./storage/reports")
+    report_dir = str(report_storage_dir())
     db.add(
         Report(
             analysis_id=analysis_id,

@@ -15,7 +15,7 @@ from services.analysis_query import (
 )
 from services.analysis_payload_cache import invalidate_analysis_cache
 from services.phase_audit_service import PhaseAuditService
-from services.phase_snapshot_service import PhaseSnapshotService
+from services.phase_snapshot_service import PhaseSnapshotService, refresh_downstream_with_status
 from services.phase_status_service import PhaseStatusService, _candidate_key, _resolve_rule_id
 
 logger = logging.getLogger(__name__)
@@ -101,13 +101,14 @@ class ValidationWorkflowService:
             payload=meta or {},
         )
         PhaseStatusService(self.db).mark_rule_validation_complete(analysis_id)
-        try:
-            PhaseSnapshotService(self.db).refresh_downstream(analysis_id, "validation")
-        except Exception as exc:
+        snapshot, snapshot_error = refresh_downstream_with_status(
+            self.db, analysis_id, "validation"
+        )
+        if snapshot_error:
             logger.warning(
-                "validation snapshot skipped for analysis %s: %s",
+                "validation snapshot failed for analysis %s: %s",
                 analysis_id,
-                exc,
+                snapshot_error,
             )
         invalidate_analysis_cache(analysis_id)
         self.db.commit()
@@ -116,6 +117,8 @@ class ValidationWorkflowService:
             "analysis_id": analysis_id,
             "validation_acknowledged": True,
             "rule_validation_completed": True,
+            "snapshot": snapshot,
+            "snapshot_error": snapshot_error,
         }
 
     def proceed_to_anomaly(
@@ -156,13 +159,14 @@ class ValidationWorkflowService:
             payload={"saved": saved, **(meta or {})},
         )
         PhaseStatusService(self.db).mark_rule_validation_complete(analysis_id)
-        try:
-            PhaseSnapshotService(self.db).refresh_downstream(analysis_id, "validation")
-        except Exception as exc:
+        snapshot, snapshot_error = refresh_downstream_with_status(
+            self.db, analysis_id, "validation"
+        )
+        if snapshot_error:
             logger.warning(
-                "validation snapshot skipped for analysis %s: %s",
+                "validation snapshot failed for analysis %s: %s",
                 analysis_id,
-                exc,
+                snapshot_error,
             )
         invalidate_analysis_cache(analysis_id)
         self.db.commit()
@@ -172,6 +176,8 @@ class ValidationWorkflowService:
             "saved": saved,
             "validation_acknowledged": True,
             "rule_validation_completed": True,
+            "snapshot": snapshot,
+            "snapshot_error": snapshot_error,
         }
 
     def save_decisions(
@@ -183,17 +189,24 @@ class ValidationWorkflowService:
     ) -> dict[str, Any]:
         self._load(analysis_id)
         saved = self._persist_decisions(analysis_id, decisions, user_id=user_id, commit=False)
-        try:
-            PhaseSnapshotService(self.db).refresh_downstream(analysis_id, "validation")
-        except Exception as exc:
+        snapshot, snapshot_error = refresh_downstream_with_status(
+            self.db, analysis_id, "validation"
+        )
+        if snapshot_error:
             logger.warning(
-                "validation snapshot skipped for analysis %s: %s",
+                "validation snapshot failed for analysis %s: %s",
                 analysis_id,
-                exc,
+                snapshot_error,
             )
         invalidate_analysis_cache(analysis_id)
         self.db.commit()
-        return {"success": True, "analysis_id": analysis_id, "saved": saved}
+        return {
+            "success": True,
+            "analysis_id": analysis_id,
+            "saved": saved,
+            "snapshot": snapshot,
+            "snapshot_error": snapshot_error,
+        }
 
     def _persist_decisions(
         self,

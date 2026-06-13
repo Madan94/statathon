@@ -222,6 +222,10 @@ export interface AnomalyColumnBlock {
   recommended?: string;
   z_score_confidence?: number;
   iqr_confidence?: number;
+  z_score_pros?: string[];
+  z_score_cons?: string[];
+  iqr_pros?: string[];
+  iqr_cons?: string[];
   reason?: string[];
   method_selected?: string | null;
   detection_run?: boolean;
@@ -458,6 +462,7 @@ export interface WeightedProfile {
 export interface ColumnNormalizationRow {
   original_name: string;
   normalized_name: string;
+  canonical_name?: string;
   display_name: string;
   domain?: string;
   match_method?: string;
@@ -476,6 +481,7 @@ export interface AnalysisResult {
   column_normalization?: ColumnNormalizationRow[];
   domain_registry?: DomainRegistry;
   dataset_context?: Record<string, unknown>;
+  dataset_profile?: Record<string, unknown>;
   clusters?: Array<Record<string, unknown>>;
   schema_graph?: { nodes?: unknown[]; edges?: unknown[] };
   knowledge_graph?: Record<string, unknown>;

@@ -1,6 +1,7 @@
 import os
 import shutil
 import uuid
+from pathlib import Path
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -18,7 +19,7 @@ def save_upload(file, upload_dir: str, user_id: int, db: Session) -> Dataset:
         raise HTTPException(status_code=400, detail=f"Unsupported file type: {ext or '(none)'}")
 
     name = f"{uuid.uuid4().hex}{ext}"
-    path = os.path.join(upload_dir, name)
+    path = str((Path(upload_dir) / name).resolve())
     with open(path, "wb") as f:
         shutil.copyfileobj(file.file, f)
 

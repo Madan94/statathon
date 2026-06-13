@@ -110,7 +110,7 @@ function MethodCard({
       <Button
         onClick={onSelect}
         disabled={loading}
-        variant={selected ? 'default' : 'outline'}
+        variant={selected ? 'primary' : 'outline'}
         className="w-full gap-2"
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
@@ -156,7 +156,14 @@ export default function MethodSelectionPanel({
     );
   }
 
-  const gof = block.goodness_of_fit ?? {};
+  const gof = (block.goodness_of_fit ?? {}) as {
+    mean?: number;
+    median?: number;
+    standard_deviation?: number;
+    skewness?: number;
+    kurtosis?: number;
+    p_value?: number;
+  };
   const recommended = String(block.recommended ?? 'Z_SCORE').toUpperCase();
   const zConf = Number(block.z_score_confidence ?? 0);
   const iqrConf = Number(block.iqr_confidence ?? 0);

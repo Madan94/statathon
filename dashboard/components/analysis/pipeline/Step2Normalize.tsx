@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnalysisResult } from '@/lib/api';
-import { buildNormalizationPlan } from '@/lib/columnNormalization';
+import { analysisApi } from '@/lib/api';
+import { buildNormalizationPlan, resolveColumnProfileStats } from '@/lib/columnNormalization';
 import { Button } from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -24,6 +25,7 @@ export interface ColumnDecision {
 
 interface Props {
   results: AnalysisResult;
+  analysisId: number;
   decisions: Record<string, ColumnDecision>;
   onProceed: (decisions: Record<string, ColumnDecision>) => void;
   onBack: () => void;
@@ -39,16 +41,17 @@ function methodVariant(method: string): 'success' | 'warning' | 'default' | 'mut
   return 'muted';
 }
 
-export default function Step2Normalize({ results, decisions, onProceed, onBack, saving }: Props) {
+export default function Step2Normalize({
+  results,
+  analysisId,
+  decisions,
+  onProceed,
+  onBack,
+  saving,
+}: Props) {
   const plan = useMemo(() => buildNormalizationPlan(results), [results]);
 
-  const health = results.health as {
-    rows?: number;
-    missing_per_column?: Record<string, number>;
-    dtypes?: Record<string, string>;
-  } | undefined;
-  const columnProfiles = results.column_profiles;
-  const schema = results.schema ?? {};
+  const health = results.health as { rows?: number } | undefined;
   const totalRows = health?.rows ?? 0;
 
   const [cols, setCols] = useState<Record<string, ColumnDecision>>(() => {
@@ -68,6 +71,28 @@ export default function Step2Normalize({ results, decisions, onProceed, onBack, 
     });
     return init;
   });
+
+  useEffect(() => {
+    analysisApi
+      .getNormalization(analysisId)
+      .then((norm) => {
+        if (norm.columns.length > 0) {
+          const fromApi: Record<string, ColumnDecision> = {};
+          for (const c of norm.columns) {
+            fromApi[c.original_name] = {
+              originalName: c.original_name,
+              displayName: c.normalized_name,
+              suggestedName: c.normalized_name,
+              normalizedName: c.normalized_name,
+              included: Boolean(c.is_active ?? (!c.is_deleted && !c.is_excluded)),
+              isDeleted: c.is_deleted,
+            };
+          }
+          setCols((prev) => ({ ...prev, ...fromApi }));
+        }
+      })
+      .catch(() => {});
+  }, [analysisId]);
 
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -188,13 +213,11 @@ export default function Step2Normalize({ results, decisions, onProceed, onBack, 
               {plan.map((p) => {
                 const col = cols[p.originalName];
                 if (!col) return null;
-                const profile = columnProfiles?.[p.originalName] as
-                  | { missing_ratio?: number; datatype?: string }
-                  | undefined;
-                const missing = health?.missing_per_column?.[p.originalName] ?? 0;
-                const ratio =
-                  totalRows > 0 ? missing / totalRows : profile?.missing_ratio ?? 0;
-                const colType = schema[p.originalName] ?? profile?.datatype ?? '—';
+                const { type: colType, missingRatio: ratio } = resolveColumnProfileStats(
+                  p.originalName,
+                  p.profileKey,
+                  results,
+                );
                 const isEditing = editingKey === p.originalName;
                 const edited = col.displayName !== col.suggestedName;
 
@@ -283,13 +306,19 @@ export default function Step2Normalize({ results, decisions, onProceed, onBack, 
                                 ? 'bg-danger'
                                 : ratio > 0.1
                                 ? 'bg-warning'
-                                : 'bg-success/60'
+                                : ratio > 0
+                                ? 'bg-text-muted'
+                                : 'bg-success'
                             )}
-                            style={{ width: `${Math.min(ratio * 100, 100)}%` }}
+                            style={{
+                              width: `${Math.min(Math.max(ratio * 100, ratio === 0 ? 100 : 0), 100)}%`,
+                            }}
                           />
                         </div>
                         <span className="text-xs text-text-muted">
-                          {(ratio * 100).toFixed(0)}%
+                          {totalRows > 0 || ratio > 0
+                            ? `${(ratio * 100).toFixed(0)}%`
+                            : '0%'}
                         </span>
                       </div>
                     </td>

@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import type { AnalysisResult, ColumnProfile } from '@/lib/api';
 import { analysisApi } from '@/lib/api';
-import { isNumericColumn, resolveAnomalyBlock } from '@/lib/outlierColumnUtils';
+import { analysisRoutes } from '@/lib/analysisPipeline';
+import { isNumericColumn, resolveAnomalyBlock, resolveMissingCount } from '@/lib/outlierColumnUtils';
 import ColumnNav from './columns/ColumnNav';
 import MethodSelectionPanel from './columns/MethodSelectionPanel';
 import AnomalyPanel from './columns/AnomalyPanel';
@@ -80,6 +82,7 @@ export default function ColumnAnalysisLayout({
     ? columns[currentIndex + 1]
     : null;
 
+  const routes = analysisRoutes(analysisId);
   const validationComplete = Boolean(phaseStatus?.rule_validation_completed);
 
   const selectedBlock = selectedColumn ? resolveAnomalyBlock(selectedColumn, results) : null;
@@ -158,8 +161,13 @@ export default function ColumnAnalysisLayout({
     onProceedToDatasetReview();
   };
 
-  const canMarkDone = !isNumeric
-    || (detectionRun && columnDecisionsComplete.has(selectedColumn ?? ''));
+  const missingForSelected = selectedColumn ? resolveMissingCount(selectedColumn, results) : 0;
+  const imputationDoneForSelected = missingForSelected === 0 || (phaseStatus?.column_reviews?.imputation ?? []).some(
+    (r) => r.column === selectedColumn && (r.status === 'reviewed' || r.status === 'auto_reviewed'),
+  );
+  const canMarkDone = isNumeric
+    ? detectionRun && columnDecisionsComplete.has(selectedColumn ?? '') && imputationDoneForSelected
+    : imputationDoneForSelected;
 
   const anomalyAuto = phaseStatus?.anomaly?.auto_reviewed ?? 0;
   const imputationAuto = phaseStatus?.imputation?.auto_reviewed ?? 0;
@@ -167,7 +175,7 @@ export default function ColumnAnalysisLayout({
   return (
     <div className="flex flex-col pb-24" style={{ minHeight: 'calc(100vh - 160px)' }}>
       <WorkflowStepper currentStep={3} className="mb-4" />
-      <AnalysisStepper currentStep={7} className="mb-4" />
+      <AnalysisStepper analysisId={analysisId} currentStep={7} className="mb-4" />
 
       <div className="flex flex-1 overflow-hidden rounded-xl border border-border min-h-[520px]">
         <ColumnNav
@@ -224,7 +232,13 @@ export default function ColumnAnalysisLayout({
 
               {!validationComplete && (
                 <Alert variant="warning" title="Complete rule validation first">
-                  Return to Step 6 (Rule Validation) and proceed through the validation gate before reviewing anomalies.
+                  <p className="text-sm">
+                    Save and proceed through{' '}
+                    <Link href={routes.validation} className="text-primary underline font-medium">
+                      rule validation
+                    </Link>
+                    , then use <strong>Apply to dataset</strong> before reviewing anomalies.
+                  </p>
                 </Alert>
               )}
 
@@ -285,7 +299,9 @@ export default function ColumnAnalysisLayout({
                       results={results}
                       onDecisionsComplete={() => {
                         setColumnDecisionsComplete((prev) => new Set(prev).add(selectedColumn));
-                        setReviewedColumns((prev) => new Set(prev).add(selectedColumn));
+                        if (resolveMissingCount(selectedColumn, results) === 0) {
+                          setReviewedColumns((prev) => new Set(prev).add(selectedColumn));
+                        }
                         void refreshPhaseStatus();
                       }}
                     />
@@ -293,8 +309,13 @@ export default function ColumnAnalysisLayout({
                 </>
               ) : (
                 !isNumeric && (
-                  <p className="text-sm text-text-muted">
-                    Column type is non-numeric — outlier detection is not applicable.
+                  <p className="text-sm text-text-muted rounded-lg border border-border/60 bg-surface/40 p-3">
+                    This column is <strong>non-numeric</strong> — Z-score / IQR outlier detection does not apply.
+                    {resolveMissingCount(selectedColumn, results) > 0 ? (
+                      <> Review missing values in the panel below, then mark done.</>
+                    ) : (
+                      <> No missing values were detected — mark done to move to the next column.</>
+                    )}
                   </p>
                 )
               )}

@@ -61,6 +61,7 @@ def run_phase3_intel(df: pd.DataFrame, schema: dict[str, str], state: AnalysisSt
         unified_domains=unified_domains,
         archetypes=archetypes,
         analysis_id=getattr(state, "analysis_id", None),
+        column_normalization=getattr(state, "column_normalization", None) or [],
     )
 
     # Keep legacy validation_manager call too (writes single/multi blocks
@@ -71,6 +72,7 @@ def run_phase3_intel(df: pd.DataFrame, schema: dict[str, str], state: AnalysisSt
         schema_graph=state.schema_graph,
         priority_dependencies=state.dependency_graph,
         dataset_context_hint=dataset_ctx,
+        column_normalization=getattr(state, "column_normalization", None) or [],
     )
 
     # ---- Step 2: Goodness-of-fit + method confidence (no auto detection) ----
@@ -90,6 +92,7 @@ def run_phase3_intel(df: pd.DataFrame, schema: dict[str, str], state: AnalysisSt
     state.validation_results = {
         "single_column": (gate.get("single_column") or []) + (val.get("single_column") or []),
         "multi_column": (gate.get("multi_column") or []) + (val.get("multi_column") or []),
+        "rules_inventory": gate.get("rules_inventory") or [],
         "summary": {
             **(val.get("summary") or {}),
             "gate": gate.get("summary"),
