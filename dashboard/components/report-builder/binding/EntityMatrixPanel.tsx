@@ -96,6 +96,8 @@ interface EntityMatrixPanelProps {
   onConfirmAll?: () => void;
   /** Optional: save a column lifecycle decision. */
   onColumnDecide?: (decision: ColumnDecision) => void;
+  /** Optional: open add-entity form pre-filled for a specific column. */
+  onCreateEntity?: (columnName: string) => void;
   className?: string;
 }
 
@@ -112,6 +114,7 @@ interface ColumnRowProps {
   busy: boolean;
   onDecide: (entityId: string, decision: EntityDecision) => void;
   onColumnDecide?: (decision: ColumnDecision) => void;
+  onCreateEntity?: (columnName: string) => void;
 }
 
 function ColumnRow({
@@ -125,6 +128,7 @@ function ColumnRow({
   busy,
   onDecide,
   onColumnDecide,
+  onCreateEntity,
 }: ColumnRowProps) {
   const [showIgnoreMenu, setShowIgnoreMenu] = useState(false);
   const [ignoreNote, setIgnoreNote] = useState('');
@@ -152,10 +156,6 @@ function entityStatusBadge(status: EntityBinding['status']): 'success' | 'defaul
     setShowIgnoreMenu(false);
     setIgnoreNote('');
     setPendingIgnoreStatus(null);
-  };
-
-  const handleMarkNeedsQuestion = () => {
-    onColumnDecide?.({ column: col.name, status: 'needs_question' });
   };
 
   return (
@@ -270,15 +270,17 @@ function entityStatusBadge(status: EntityBinding['status']): 'success' | 'defaul
           <div className="rounded-lg border border-dashed border-border bg-surface px-3 py-2">
             <p className="text-xs text-text-muted">No template entity matched this column.</p>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-6 px-2 text-[10px]"
-                onClick={() => onColumnDecide?.({ column: col.name, status: 'needs_question' })}
-              >
-                <Plus className="h-3 w-3" /> Needs question
-              </Button>
+              {onCreateEntity && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 text-[10px]"
+                  onClick={() => onCreateEntity(col.name)}
+                >
+                  <Plus className="h-3 w-3" /> Create entity
+                </Button>
+              )}
               {IGNORE_STATUSES.map((s) => (
                 <Button
                   key={s}
@@ -297,7 +299,7 @@ function entityStatusBadge(status: EntityBinding['status']): 'success' | 'defaul
       </div>
 
       {/* Column lifecycle actions when entity is skipped or column has no match */}
-      {onColumnDecide && (!lifecycleStatus || IGNORE_STATUSES.includes(lifecycleStatus as ColumnDecisionStatus) || lifecycleStatus === 'needs_question') && (
+      {onColumnDecide && (!lifecycleStatus || IGNORE_STATUSES.includes(lifecycleStatus as ColumnDecisionStatus)) && (
         <div className="relative mt-2">
           <button
             type="button"
@@ -311,11 +313,7 @@ function entityStatusBadge(status: EntityBinding['status']): 'success' | 'defaul
           {showIgnoreMenu && (
             <div className="absolute left-0 top-6 z-30 w-64 rounded-xl border border-border bg-surface-card p-3 shadow-xl">
               <p className="mb-2 text-xs font-semibold text-text">Column lifecycle</p>
-              {([
-                'needs_question',
-                'added_as_entity',
-                ...IGNORE_STATUSES,
-              ] as ColumnDecisionStatus[]).map((s) => (
+              {IGNORE_STATUSES.map((s) => (
                 <button
                   key={s}
                   type="button"
@@ -323,18 +321,22 @@ function entityStatusBadge(status: EntityBinding['status']): 'success' | 'defaul
                     'block w-full rounded-lg px-2 py-1.5 text-left text-xs text-text-muted transition-colors hover:bg-surface hover:text-text',
                     lifecycleStatus === s && 'font-semibold text-text',
                   )}
-                  onClick={() => {
-                    if (s === 'needs_question' || s === 'added_as_entity') {
-                      handleIgnoreSubmit(s);
-                    } else {
-                      setPendingIgnoreStatus(s);
-                    }
-                  }}
+                  onClick={() => setPendingIgnoreStatus(s)}
                 >
                   <span className="font-medium">{LIFECYCLE_META[s].label}</span>
                   <span className="ml-1 text-[10px] opacity-70">— {LIFECYCLE_META[s].hint}</span>
                 </button>
               ))}
+              {onCreateEntity && (
+                <button
+                  type="button"
+                  className="mt-1 block w-full rounded-lg px-2 py-1.5 text-left text-xs text-primary transition-colors hover:bg-primary/5"
+                  onClick={() => { setShowIgnoreMenu(false); onCreateEntity(col.name); }}
+                >
+                  <span className="font-medium">Create new entity</span>
+                  <span className="ml-1 text-[10px] opacity-70">— Bind this column to a new entity</span>
+                </button>
+              )}
               {pendingIgnoreStatus && (
                 <div className="mt-2 space-y-1.5">
                   <p className="text-[10px] text-text-muted">Optional note for audit trail:</p>
@@ -436,6 +438,7 @@ export function EntityMatrixPanel({
   onDecide,
   onConfirmAll,
   onColumnDecide,
+  onCreateEntity,
   className,
 }: EntityMatrixPanelProps) {
   const [tab, setTab] = useState<MatrixTab>('dataset');
@@ -500,16 +503,10 @@ export function EntityMatrixPanel({
 
   // Stats
   const totalColumns = columns.length;
+  // Use backend column_decisions as source of truth (aligned with page header stats)
   const decidedColumns = useMemo(() => {
-    return columns.filter((col) => {
-      const entity = columnToEntity.get(col.name);
-      if (entity) {
-        const dec = decisions[entity.entityId];
-        return dec && dec.action !== 'reopen';
-      }
-      return !!columnDecisions[col.name];
-    }).length;
-  }, [columns, columnToEntity, decisions, columnDecisions]);
+    return columns.filter((col) => !!columnDecisions[col.name]).length;
+  }, [columns, columnDecisions]);
 
   const unmatchedEntities = useMemo(
     () => bindings.filter((b) => b.status === 'unresolved' || b.columns.length === 0),
@@ -696,6 +693,7 @@ export function EntityMatrixPanel({
                   busy={!!(entity && busyEntity === entity.entityId)}
                   onDecide={onDecide}
                   onColumnDecide={onColumnDecide}
+                  onCreateEntity={onCreateEntity}
                 />
               );
             })

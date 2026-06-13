@@ -1129,6 +1129,12 @@ export default function BindingWorkflowPage() {
             onDecide={onDecide}
             onConfirmAll={confirmAllRemaining}
             onColumnDecide={onColumnDecide}
+            onCreateEntity={(columnName) => {
+              setNewEntityColumn(columnName);
+              setNewEntityName(columnName.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()));
+              setNewEntityType(entityTypeForColumn(columnName));
+              setAddEntityOpen(true);
+            }}
           />
         </div>
       );
