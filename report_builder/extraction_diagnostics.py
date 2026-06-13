@@ -881,10 +881,10 @@ def _has_spec(q: Any) -> bool:
 
 
 def _question_requires_measure(q: Any) -> bool:
-    qtype = str(_get(q, "questionType") or "")
+    qtype = str(_get(q, "questionType") or "").strip().lower()
     spec = _get(q, "analyticsSpec") or {}
     operation = str(spec.get("operation") or "").lower() if isinstance(spec, dict) else ""
-    if qtype in ("descriptive", "summary"):
+    if qtype in ("descriptive", "describe", "summary"):
         return False
     if operation in ("describe", "summary", "summary_stats"):
         return False

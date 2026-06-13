@@ -26,9 +26,6 @@ from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel
 
 from report_builder.binding import review as R
-from report_builder.binding.execution_bundle_factory import build_execution_bundle
-from report_builder.binding.execution_contracts import ExecutionBundle
-from report_builder.binding.freeze_store import get_freeze_info, load_frozen_bundle
 from report_builder.binding.report import build_coverage
 from report_builder.binding.question_binder import bind_questions
 from report_builder.binding.schema import BindingAST, DatasetAST, EntityBinding
@@ -48,14 +45,20 @@ from report_builder.generation import (
     render_html,
     render_pdf,
     run_analytics,
+    run_execution,
+    attach_insights,
+    enrich_report_provenance,
+    ensure_lifecycle,
+    evaluate_gate,
     validate_report,
+    verify_report,
     EditRejected,
     ReportOverrides,
     TemplateProfile,
 )
-from report_builder.generation.bundle_adapter import AdaptedPlan, adapt_bundle
-from report_builder.generation.coordinator import run_execution
-from report_builder.generation.lineage import enrich_report_provenance
+from report_builder.binding.execution_bundle_factory import build_execution_bundle
+from report_builder.binding.freeze_store import get_freeze_info, load_frozen_bundle
+from report_builder.generation.bundle_adapter import adapt_bundle
 from report_builder.generation.run_modes import (
     DataDriftError,
     bundle_data_hash,
@@ -64,7 +67,6 @@ from report_builder.generation.run_modes import (
     resolve_publish_mode,
     verify_data_hash,
 )
-from report_builder.generation.verifier import evaluate_gate, verify_report
 
 logger = logging.getLogger(__name__)
 
@@ -83,9 +85,10 @@ class GenerateIn(BaseModel):
     period: Optional[str] = None            # reference period label, e.g. "2023-24"
     report_id: Optional[str] = None
     use_llm: Optional[bool] = None          # None ⇒ auto (on iff LLM enabled)
-    plan_source: Optional[str] = None       # default execution_bundle; legacy is explicit only
-    mode: Optional[str] = None              # fresh | frozen | test
-    publish_mode: Optional[str] = None      # strict | draft
+    plan_source: Optional[str] = None       # "bundle" (gold, default) | "legacy" (override; else env GENERATION_PLAN_SOURCE)
+    mode: Optional[str] = None              # "fresh" (default) | "frozen" | "test" (else env GENERATION_MODE)
+    bundle_version: Optional[int] = None    # frozen mode: which frozen version to load (None ⇒ latest)
+    publish_mode: Optional[str] = None      # "strict" (default, FAIL→409) | "draft" (FAIL allowed, non-publishable)
 
 
 class GenerateOut(BaseModel):
@@ -99,13 +102,14 @@ class GenerateOut(BaseModel):
     coverage: dict[str, Any]
     narrative_trace: list[dict[str, Any]]
     fill_trace: list[dict[str, Any]]
-    plan_source: str = "execution_bundle"
-    mode: str = "fresh"
-    data_content_hash: str = ""
-    bundle_version: Optional[int] = None
-    verdict: str = ""
-    publishable: bool = True
-    publish_mode: str = "strict"
+    plan_source: str = "execution_bundle"   # which planner produced analyticsAST.plans
+    mode: str = "fresh"                      # fresh | frozen | test
+    data_content_hash: str = ""             # value-level hash of the executed dataset
+    bundle_version: Optional[int] = None    # frozen bundle version used (when known)
+    verdict: str = "PASS"                    # verifier gate: PASS | WARN | FAIL
+    quality_score: float = 0.0              # report quality score 0..100
+    publishable: bool = True                # False when verifier FAILed (draft mode)
+    publish_mode: str = "strict"            # strict | draft
 
 
 # ---------------------------------------------------------------------------
@@ -141,10 +145,6 @@ def _report_path(template_id: str, signature: str) -> Path:
 
 def _html_path(template_id: str, signature: str) -> Path:
     return _stash_path(template_id, signature, "report.html")
-
-
-def _bundle_fixture_path(template_id: str, signature: str) -> Path:
-    return _stash_path(template_id, signature, "bundle.json")
 
 
 def _profile_path(template_id: str, signature: str) -> Path:
@@ -186,13 +186,6 @@ def _load_overrides(template_id: str, signature: str) -> dict[str, Any]:
 
 def _load_template_ast() -> dict[str, Any]:
     return json.loads(_GOLD_TEMPLATE_AST.read_text(encoding="utf-8-sig"))
-
-
-def _load_generation_template(template_id: str, signature: str) -> dict[str, Any]:
-    path = _stash_path(template_id, signature, "template_ast.json")
-    if path.exists():
-        return json.loads(path.read_text(encoding="utf-8-sig"))
-    return _load_template_ast()
 
 
 def _question_meta(blueprint: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -253,102 +246,61 @@ def _rebuild_binding(template_id: str, signature: str, dataset: DatasetAST,
 
 
 def _plan_source(body: GenerateIn) -> str:
-    explicit = (body.plan_source or "").strip().lower()
-    env = (os.environ.get("GENERATION_PLAN_SOURCE") or "").strip().lower()
-    return "legacy" if explicit == "legacy" or env == "legacy" else "execution_bundle"
+    """Resolve the plan source: request override > env > default 'bundle'.
+
+    'bundle' (gold) sources analyticsAST.plans from the team's ExecutionBundle.
+    'legacy' uses the older blueprint+BindingAST planner (fallback only).
+    """
+    choice = (body.plan_source or os.getenv("GENERATION_PLAN_SOURCE") or "bundle").strip().lower()
+    return "legacy" if choice == "legacy" else "bundle"
 
 
-def _build_bundle(
-    template_id: str,
-    signature: str,
-    dataset: DatasetAST,
-    blueprint: dict[str, Any],
-    df: "Any",
-    *,
-    data_content_hash: str = "",
-) -> ExecutionBundle:
+def _build_bundle(template_id: str, signature: str, dataset: DatasetAST,
+                  blueprint: dict[str, Any], df: "Any", data_content_hash: str = ""):
+    """Build the canonical ExecutionBundle for this dataset (the S4 input contract).
+
+    Always builds from the *current* stash + review record via the single canonical
+    factory, which also freezes the result for reproducibility/audit. We intentionally
+    do NOT prefer a previously-frozen bundle here: a stale frozen artifact from an
+    earlier blueprint/binding must never silently drive generation.
+
+    ``data_content_hash`` (when provided) is pinned into the frozen bundle's
+    ``dataframeRef`` so a later ``frozen`` run can detect data drift.
+    """
     record = R.load_record(template_id, signature)
     if record is None:
         raise HTTPException(status_code=404, detail="no binding record — finalize binding first")
+    df_path = str(_stash_path(template_id, signature, "data.csv"))
     return build_execution_bundle(
         template_id=template_id,
         signature=signature,
         record=record,
         dataset=dataset,
         blueprint=blueprint,
-        dataframe_path=str(_stash_path(template_id, signature, "data.csv")),
+        dataframe_path=df_path,
         df=df,
         data_content_hash=data_content_hash,
     )
 
 
-def _load_mode_bundle(
-    template_id: str,
-    signature: str,
-    dataset: DatasetAST,
-    blueprint: dict[str, Any],
-    df: "Any",
-    mode: str,
-) -> tuple[ExecutionBundle, str, Optional[int]]:
-    data_hash = compute_data_content_hash(df)
-    if mode == "test":
-        path = _bundle_fixture_path(template_id, signature)
-        if not path.exists():
-            raise HTTPException(status_code=404, detail="test mode fixture bundle not found")
-        bundle = ExecutionBundle.from_dict(json.loads(path.read_text(encoding="utf-8")))
-        if not bundle_data_hash(bundle):
-            bundle.dataframeRef = {**dict(bundle.dataframeRef or {}), "contentHash": data_hash}
-        return bundle, bundle_data_hash(bundle) or data_hash, None
+def _load_fixture_bundle(template_id: str, signature: str):
+    """Load a fixture ExecutionBundle for ``test`` mode (deterministic regression).
 
-    if mode == "frozen":
-        bundle = load_frozen_bundle(template_id, signature)
-        if bundle is None:
-            raise HTTPException(status_code=404, detail="frozen bundle not found")
-        try:
-            data_hash = verify_data_hash(bundle, df)
-        except DataDriftError as exc:
-            raise HTTPException(status_code=409, detail=str(exc))
-        info = get_freeze_info(template_id, signature) or {}
-        return bundle, data_hash, info.get("version")
+    Reads ``<stash>/<template>__<signature>.bundle.json`` — a pre-built bundle laid
+    down alongside the fixture dataset. ``test`` mode runs straight from this fixture
+    without rebuilding (no factory/binder) or freezing (no real-storage writes), so a
+    regression always executes the exact same plans over the exact same data.
+    """
+    from report_builder.binding.execution_contracts import ExecutionBundle
 
-    bundle = _build_bundle(
-        template_id,
-        signature,
-        dataset,
-        blueprint,
-        df,
-        data_content_hash=data_hash,
-    )
-    info = get_freeze_info(template_id, signature) or {}
-    return bundle, data_hash, info.get("version")
-
-
-def _execute_bundle_path(
-    template_id: str,
-    signature: str,
-    dataset: DatasetAST,
-    blueprint: dict[str, Any],
-    df: "Any",
-    mode: str,
-) -> tuple[dict[str, Any], dict[str, Any], dict[str, list[int]], ExecutionBundle, list[AdaptedPlan], str, Optional[int]]:
-    bundle, data_hash, bundle_version = _load_mode_bundle(
-        template_id, signature, dataset, blueprint, df, mode)
-    if bundle.status == "NOT_READY":
-        raise HTTPException(status_code=409, detail="ExecutionBundle is NOT_READY")
-    adapted = adapt_bundle(bundle)
-    if not adapted:
-        raise HTTPException(status_code=409, detail="ExecutionBundle has no runnable plans (all BLOCKED)")
-    analytics_obj, evidence_obj, row_index = run_execution(
-        adapted, df, question_meta=_question_meta(blueprint))
-    return (
-        analytics_obj.to_dict(),
-        evidence_obj.to_dict(),
-        row_index,
-        bundle,
-        adapted,
-        data_hash,
-        bundle_version,
-    )
+    path = _stash_path(template_id, signature, "bundle.json")
+    if not path.exists():
+        return None
+    try:
+        return ExecutionBundle.from_dict(json.loads(path.read_text(encoding="utf-8")))
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.error("[generate-phase] failed to load fixture bundle %s: %s", path, exc)
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -366,35 +318,80 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
     → standalone HTML. Idempotent: overwrites the prior report for this dataset.
     """
     dataset, blueprint, df = _read_stash(template_id, signature)
-    source = _plan_source(body)
-    mode = resolve_mode(body.mode)
-    publish_mode = resolve_publish_mode(body.publish_mode)
-
     binding = _rebuild_binding(template_id, signature, dataset, blueprint, df)
     if any(i.get("severity") == "error" for i in binding.coverage.get("issues", [])):
         raise HTTPException(status_code=409, detail="binding coverage gate has errors — resolve before generating")
 
-    template = _load_generation_template(template_id, signature)
+    template = _load_template_ast()
     context = {
         "dataset": {"title": (blueprint.get("metadata") or {}).get("title") or dataset.datasetId},
         "period": {"current": body.period or ""},
     }
 
-    # S4 — analytics
-    bundle: ExecutionBundle | None = None
-    adapted: list[AdaptedPlan] = []
-    bundle_version: Optional[int] = None
+    # S4 — analytics.
+    # GOLD PATH (default): plans come from the team's validated ExecutionBundle, not a
+    # re-derived planner. Readiness is honored here: NOT_READY blocks generation, and
+    # the adapter never emits BLOCKED plans. LEGACY planner stays behind a flag.
+    #
+    # Reproducibility (generation modes): the dataset is pinned by a value-level
+    # contentHash. `fresh` builds + freezes the bundle with that hash; `frozen` loads a
+    # frozen bundle and refuses to run if the live data has drifted from the pinned hash.
+    mode = resolve_mode(body.mode)
     data_content_hash = compute_data_content_hash(df)
-    if source == "legacy":
+    plan_source = _plan_source(body)
+    bundle_version: Optional[int] = None
+    bundle = None
+    adapted = None
+    if plan_source == "legacy":
         plans = build_plans(blueprint, binding, dataset)
         analytics_obj, evidence_obj, row_index = run_analytics(
             plans, df, question_meta=_question_meta(blueprint))
-        analytics, evidence = analytics_obj.to_dict(), evidence_obj.to_dict()
-        plan_source = "legacy_planner"
     else:
-        analytics, evidence, row_index, bundle, adapted, data_content_hash, bundle_version = _execute_bundle_path(
-            template_id, signature, dataset, blueprint, df, mode)
-        plan_source = "execution_bundle"
+        if mode == "frozen":
+            bundle = load_frozen_bundle(template_id, signature, body.bundle_version)
+            if bundle is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="no frozen bundle for this dataset — run a fresh generation first",
+                )
+            # Reproducibility gate: the live data must match the pinned snapshot.
+            try:
+                verify_data_hash(bundle, df)
+            except DataDriftError as drift:
+                raise HTTPException(status_code=409, detail=str(drift)) from drift
+            info = get_freeze_info(template_id, signature) or {}
+            bundle_version = body.bundle_version or info.get("version")
+            data_content_hash = bundle_data_hash(bundle) or data_content_hash
+        elif mode == "test":
+            bundle = _load_fixture_bundle(template_id, signature)
+            if bundle is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="no fixture bundle for this dataset — test mode needs a .bundle.json fixture",
+                )
+            data_content_hash = bundle_data_hash(bundle) or data_content_hash
+        else:  # fresh
+            bundle = _build_bundle(template_id, signature, dataset, blueprint, df,
+                                   data_content_hash=data_content_hash)
+            if bundle.status == "NOT_READY":
+                raise HTTPException(
+                    status_code=409,
+                    detail="execution bundle is NOT_READY — binding has blocking errors; resolve before generating",
+                )
+            info = get_freeze_info(template_id, signature) or {}
+            bundle_version = info.get("version")
+        # Adapt the full bundle (carries formulaSpec / normalizationPlan / lineage /
+        # multi-measure fan-out) and route each plan through the S4 coordinator, which
+        # applies normalization, computes formulas, and runs simple aggregations.
+        adapted = adapt_bundle(bundle)
+        if not adapted:
+            raise HTTPException(
+                status_code=409,
+                detail="execution bundle has no runnable plans (all BLOCKED) — nothing to generate",
+            )
+        analytics_obj, evidence_obj, row_index = run_execution(
+            adapted, df, question_meta=_question_meta(blueprint))
+    analytics, evidence = analytics_obj.to_dict(), evidence_obj.to_dict()
 
     # S5a — fill visuals; S5b — narrate
     visuals = fill_visuals(template, analytics, evidence, context=context)
@@ -416,27 +413,49 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
     )
     result = validate_report(report, row_index=row_index)
     report["auditAST"]["warnings"] = result["warnings"]
-    enrich_report_provenance(report, adapted=adapted, evidence=evidence, bundle=bundle)
 
-    verification = verify_report(
-        report,
-        analytics,
-        evidence,
-        bundle=bundle,
-        adapted=adapted,
-        dataframe=df,
-        row_index=row_index,
+    # S5e — provenance + statistical-context enrichment. Closes the audit chain:
+    # per-plan lineage into each artifact's provenance, coverage + dataset identity
+    # under auditAST.provenance, and the bundle's StatisticalContext surfaced under
+    # auditAST.statisticalContext. Additive — the gold report shape is unchanged.
+    enrich_report_provenance(
+        report, adapted=adapted, evidence=evidence, bundle=bundle,
         content_hash=data_content_hash,
     )
-    gate = evaluate_gate(verification, publish_mode=publish_mode)
+
+    # S5d — verify: judge trust without mutating the report's values. The verdict is
+    # recorded into auditAST and then enforced by the publish gate below.
+    verification = verify_report(
+        report, analytics, evidence,
+        bundle=bundle, adapted=adapted, dataframe=df,
+        row_index=row_index, content_hash=data_content_hash,
+    )
     report["auditAST"]["verification"] = verification.to_dict()
+
+    # S5f — BI insights: evidence-backed findings derived from the trusted analytics
+    # only (never the raw data). Records machine-readable objects under
+    # auditAST.insights + a human "Key Findings" block. Deterministic / offline.
+    attach_insights(
+        report,
+        quality=verification.quality,
+        verifier_checks=[c.to_dict() for c in verification.checks],
+    )
+
+    # S5g — publish gate. A verifier FAIL is never publishable; in `strict` (official,
+    # default) mode it blocks output with 409 and nothing is persisted, in `draft` mode
+    # the report is returned but clearly marked non-publishable. WARN never blocks.
+    publish_mode = resolve_publish_mode(body.publish_mode)
+    gate = evaluate_gate(verification, publish_mode=publish_mode)
     report["auditAST"]["gate"] = gate.to_dict()
     report["auditAST"]["publishable"] = gate.publishable
     if gate.blocked:
-        detail = f"verification {gate.verdict} blocked in {gate.publishMode} mode"
-        if gate.failedChecks:
-            detail += f": {', '.join(gate.failedChecks)}"
-        raise HTTPException(status_code=409, detail=detail)
+        logger.warning("[generate-phase] %s__%s — BLOCKED by verifier gate: %s",
+                       template_id, signature, gate.reason)
+        raise HTTPException(status_code=409, detail=gate.reason)
+
+    # S5h — lifecycle defaults: a freshly generated, publishable report starts at
+    # publishStatus=generated with an empty officer-review/lifecycle audit log.
+    ensure_lifecycle(report)
 
     # S6 — render + persist
     html_str = render_html(report)
@@ -444,8 +463,9 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     _html_path(template_id, signature).write_text(html_str, encoding="utf-8")
 
-    logger.info("[generate-phase] %s__%s — report=%s valid=%s errors=%d",
-                template_id, signature, report_id, result["ok"], len(result["errors"]))
+    logger.info("[generate-phase] %s__%s — report=%s valid=%s errors=%d plans=%s mode=%s hash=%s",
+                template_id, signature, report_id, result["ok"], len(result["errors"]),
+                plan_source, mode, data_content_hash)
 
     return GenerateOut(
         template_id=template_id,
@@ -458,13 +478,14 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
         coverage=report["metadata"]["coverage"],
         narrative_trace=narrated["narrativeTrace"],
         fill_trace=visuals["fillTrace"],
-        plan_source=plan_source,
+        plan_source="execution_bundle" if plan_source == "bundle" else "legacy_planner",
         mode=mode,
         data_content_hash=data_content_hash,
         bundle_version=bundle_version,
         verdict=verification.verdict,
+        quality_score=verification.quality.get("finalScore", 0.0),
         publishable=gate.publishable,
-        publish_mode=gate.publishMode,
+        publish_mode=publish_mode,
     )
 
 

@@ -66,6 +66,13 @@ class ManualEntityIn(BaseModel):
     share_reason: Optional[str] = None
 
 
+class ColumnDecisionIn(BaseModel):
+    column: str
+    status: str  # matched | added_as_entity | ignored_metadata | ignored_duplicate | ignored_out_of_scope | needs_question
+    entity_id: Optional[str] = None
+    note: Optional[str] = None
+
+
 class ReviewedPlanNodePatchIn(BaseModel):
     title: Optional[str] = None
     enabled: Optional[bool] = None
@@ -130,6 +137,7 @@ class ProposalsOut(BaseModel):
     confirmations: dict[str, dict[str, Any]]
     pending: list[str]
     column_ownership: dict[str, Any]
+    column_decisions: dict[str, dict[str, Any]] = {}
 
 
 class RecordOut(BaseModel):
@@ -139,6 +147,7 @@ class RecordOut(BaseModel):
     proposals: list[dict[str, Any]]
     confirmations: dict[str, dict[str, Any]]
     column_ownership: dict[str, Any]
+    column_decisions: dict[str, dict[str, Any]] = {}
     updated_at: float
 
 
@@ -151,6 +160,7 @@ class StartOut(BaseModel):
     confirmations: dict[str, dict[str, Any]]
     pending: list[str]
     column_ownership: dict[str, Any]
+    column_decisions: dict[str, dict[str, Any]] = {}
     blueprint_qa: dict[str, Any] | None = None
     statistical_qa: dict[str, Any] | None = None
 
@@ -175,6 +185,7 @@ class WorkspaceOut(BaseModel):
     confirmations: dict[str, dict[str, Any]]
     pending: list[str]
     column_ownership: dict[str, Any]
+    column_decisions: dict[str, dict[str, Any]] = {}
     reviewed_plan: dict[str, Any] | None = None
     dependency_graph: dict[str, Any]
     issues: list[dict[str, Any]]
@@ -209,6 +220,10 @@ def _pending_ids(record: R.ReviewRecord) -> list[str]:
 
 def _ownership(record: R.ReviewRecord) -> dict[str, Any]:
     return R.compute_column_ownership(record)
+
+
+def _column_decisions(record: R.ReviewRecord) -> dict[str, dict[str, Any]]:
+    return {k: v.to_dict() for k, v in record.columnDecisions.items()}
 
 
 def _columns_for_decision(record: R.ReviewRecord, entity_id: str, columns: list[str] | None) -> list[str]:
@@ -425,6 +440,7 @@ def _build_dependency_graph(
 
 def _workspace_issues(
     record: R.ReviewRecord,
+    dataset: DatasetAST,
     binding: BindingAST,
     ownership: dict[str, Any],
     reviewed_plan: "Any" = None,
@@ -460,6 +476,16 @@ def _workspace_issues(
             "message": f"{pending_id} still needs officer review.",
             "targetMode": "entities",
         })
+    for column in getattr(dataset, "columns", []) or []:
+        name = str(getattr(column, "name", "") or "")
+        if name and name not in record.columnDecisions:
+            issues.append({
+                "severity": "info",
+                "code": "COLUMN_NEEDS_REVIEW",
+                "column": name,
+                "message": f"Dataset column '{name}' needs a binder decision: match, add as entity, ignore, or mark for a new question.",
+                "targetMode": "entities",
+            })
     if reviewed_plan is not None:
         for issue in (getattr(reviewed_plan, "coverage", {}) or {}).get("issues") or []:
             normalized = dict(issue)
@@ -1026,6 +1052,7 @@ async def start_binding(
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         pending=_pending_ids(record),
         column_ownership=_ownership(record),
+        column_decisions=_column_decisions(record),
         blueprint_qa=blueprint_qa.to_dict(),
         statistical_qa=statistical_qa.to_dict(),
     )
@@ -1043,6 +1070,7 @@ def get_proposals(template_id: str, signature: str) -> ProposalsOut:
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         pending=_pending_ids(record),
         column_ownership=_ownership(record),
+        column_decisions=_column_decisions(record),
     )
 
 
@@ -1124,6 +1152,7 @@ def post_confirm(template_id: str, signature: str, body: ConfirmIn) -> RecordOut
         proposals=record.proposals,
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         column_ownership=_ownership(record),
+        column_decisions=_column_decisions(record),
         updated_at=record.updatedAt,
     )
 
@@ -1139,6 +1168,35 @@ def get_record(template_id: str, signature: str) -> RecordOut:
         proposals=record.proposals,
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         column_ownership=_ownership(record),
+        column_decisions=_column_decisions(record),
+        updated_at=record.updatedAt,
+    )
+
+
+@router.post("/{template_id}/{signature}/column-decision", response_model=RecordOut)
+def post_column_decision(template_id: str, signature: str, body: ColumnDecisionIn) -> RecordOut:
+    """Record one dataset-column lifecycle decision for dataset-first binder review."""
+    record = _load_or_404(template_id, signature)
+    try:
+        R.set_column_decision(
+            record,
+            column=body.column,
+            status=body.status,
+            entity_id=body.entity_id or "",
+            note=body.note or "",
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    path = R.save_record(record)
+    logger.info("[binding-phase] column decision %s=%s on %s → %s", body.column, body.status, signature, path.name)
+    return RecordOut(
+        template_id=record.templateId,
+        signature=record.datasetSignature,
+        dataset_id=record.datasetId,
+        proposals=record.proposals,
+        confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
+        column_ownership=_ownership(record),
+        column_decisions=_column_decisions(record),
         updated_at=record.updatedAt,
     )
 
@@ -1165,7 +1223,7 @@ def get_workspace(template_id: str, signature: str) -> WorkspaceOut:
         },
     ).dict()
     dependency_graph = _build_dependency_graph(blueprint, binding, reviewed_plan)
-    issues = _workspace_issues(record, binding, ownership, reviewed_plan)
+    issues = _workspace_issues(record, dataset, binding, ownership, reviewed_plan)
     return WorkspaceOut(
         template_id=record.templateId,
         signature=record.datasetSignature,
@@ -1176,6 +1234,7 @@ def get_workspace(template_id: str, signature: str) -> WorkspaceOut:
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         pending=_pending_ids(record),
         column_ownership=ownership,
+        column_decisions=_column_decisions(record),
         reviewed_plan=reviewed_payload,
         dependency_graph=dependency_graph,
         issues=issues,
@@ -1223,6 +1282,7 @@ def post_manual_entity(template_id: str, signature: str, body: ManualEntityIn) -
         proposals=record.proposals,
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         column_ownership=_ownership(record),
+        column_decisions=_column_decisions(record),
         updated_at=record.updatedAt,
     )
 

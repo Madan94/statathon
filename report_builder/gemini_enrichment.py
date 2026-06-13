@@ -50,43 +50,64 @@ def _get_genai_client():
 
 
 def _call_gemini_json(prompt: str, max_retries: int = 2) -> dict[str, Any] | None:
-    """Call Gemini and parse JSON response. Retries on parse failure."""
-    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        logger.error("[gemini] No API key set")
-        return None
+    """Call the configured LLM provider and parse a JSON object response.
 
+    Provider-agnostic: routes through ``llm_router.llm_text_call`` first so the
+    enrichment pass honours the configured provider (Azure / OpenAI / Groq /
+    Gemini) instead of being hardwired to the Gemini SDK. Falls back to the
+    Gemini SDK only when the router returns nothing AND a Gemini key is present.
+    Retries on JSON parse failure.
+    """
     for attempt in range(max_retries):
+        text = ""
+        # ── Primary: provider-agnostic router (uses Azure when configured) ──
         try:
-            # Prefer new google-genai SDK
+            from report_builder.llm_router import llm_text_call
+
+            routed = llm_text_call(prompt, task="semantic_fallback", max_tokens=4096, temperature=0.2)
+            if routed:
+                text = routed.strip()
+        except Exception as exc:  # noqa: BLE001 — router must never crash enrichment
+            logger.debug("[enrich] router call failed (attempt %d): %s", attempt + 1, exc)
+
+        # ── Fallback: direct Gemini SDK (only if router gave nothing) ──
+        if not text:
+            api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+            if not api_key:
+                # No router output and no Gemini key — nothing more to try.
+                if attempt == max_retries - 1:
+                    return None
+                continue
             try:
-                from google import genai
-                client = genai.Client(api_key=api_key)
-                response = client.models.generate_content(
-                    model=_GEMINI_MODEL, contents=prompt
-                )
-                text = (response.text or "").strip()
-            except ImportError:
-                # Fall back to deprecated google-generativeai SDK
-                import google.generativeai as legacy_genai
-                legacy_genai.configure(api_key=api_key)
-                model = legacy_genai.GenerativeModel(_GEMINI_MODEL)
-                response = model.generate_content(prompt)
-                text = (response.text or "").strip()
+                try:
+                    from google import genai
+                    client = genai.Client(api_key=api_key)
+                    response = client.models.generate_content(model=_GEMINI_MODEL, contents=prompt)
+                    text = (response.text or "").strip()
+                except ImportError:
+                    import google.generativeai as legacy_genai
+                    legacy_genai.configure(api_key=api_key)
+                    model = legacy_genai.GenerativeModel(_GEMINI_MODEL)
+                    response = model.generate_content(prompt)
+                    text = (response.text or "").strip()
+            except Exception as exc:
+                logger.error("[enrich] Gemini SDK fallback failed: %s", exc)
+                return None
 
-            # Strip markdown code fences
-            if text.startswith("```"):
-                text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+        if not text:
+            return None
 
+        # Strip markdown code fences
+        if text.startswith("```"):
+            text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+        try:
             return json.loads(text)
         except json.JSONDecodeError as e:
-            logger.warning("[gemini] JSON parse failed (attempt %d): %s", attempt + 1, e)
+            logger.warning("[enrich] JSON parse failed (attempt %d): %s", attempt + 1, e)
             if attempt == max_retries - 1:
-                logger.error("[gemini] All retries exhausted")
+                logger.error("[enrich] All retries exhausted")
                 return None
-        except Exception as e:
-            logger.error("[gemini] API call failed: %s", e)
-            return None
+    return None
 
 
 def gemini_extract_semantic_hierarchy(
@@ -316,23 +337,32 @@ def gemini_full_enrichment(ast_dict: dict[str, Any]) -> dict[str, Any]:
 
     # Offline / air-gapped or no credentials → skip cleanly (deterministic output).
     if (os.getenv("LLM_DISABLED") or "").strip().lower() in ("1", "true", "yes", "on"):
-        logger.info("[gemini-enrich] LLM_DISABLED set — skipping enrichment")
+        logger.info("[enrich] LLM_DISABLED set — skipping enrichment")
         return ast_dict
 
-    # Gate: only fire Gemini if explicitly enabled via env.
-    # Respects the user's model routing choices. Gemini enrichment runs ONLY when:
-    #   GEMINI_ENRICHMENT=true  OR  REASONING_PROVIDER=gemini  OR  VLM_PROVIDER=gemini
-    _gemini_enrichment_enabled = (os.getenv("GEMINI_ENRICHMENT") or "").strip().lower() in ("1", "true", "yes", "on")
-    _provider_is_gemini = (
-        (os.getenv("REASONING_PROVIDER") or "").strip().lower() == "gemini"
-        or (os.getenv("VLM_PROVIDER") or "").strip().lower() == "gemini"
+    # Gate: fire when enrichment is explicitly enabled OR a real cloud provider is
+    # configured for reasoning/vision. This makes enrichment provider-agnostic —
+    # Azure / OpenAI / Groq / Gemini all qualify (calls route through llm_router).
+    _enrichment_enabled = (os.getenv("GEMINI_ENRICHMENT") or "").strip().lower() in ("1", "true", "yes", "on") \
+        or (os.getenv("ENRICHMENT_ENABLED") or "").strip().lower() in ("1", "true", "yes", "on")
+    _cloud_providers = {"gemini", "azure", "openai", "groq"}
+    _reasoning = (os.getenv("REASONING_PROVIDER") or "").strip().lower()
+    _vlm = (os.getenv("VLM_PROVIDER") or "").strip().lower()
+    _semantic = (os.getenv("PROVIDER_SEMANTIC_FALLBACK") or "").strip().lower()
+    _provider_is_cloud = bool(_cloud_providers & {_reasoning, _vlm, _semantic})
+    if not _enrichment_enabled and not _provider_is_cloud:
+        logger.info("[enrich] Skipped — enrichment not enabled and no cloud provider configured")
+        return ast_dict
+
+    # Credential check: any configured cloud provider's key satisfies this.
+    _has_credentials = bool(
+        os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        or os.getenv("AZURE_OPENAI_API_KEY")
+        or os.getenv("OPENAI_API_KEY")
+        or os.getenv("GROQ_API_KEY")
     )
-    if not _gemini_enrichment_enabled and not _provider_is_gemini:
-        logger.info("[gemini-enrich] Skipped — GEMINI_ENRICHMENT not enabled and providers are not gemini")
-        return ast_dict
-
-    if not (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")):
-        logger.info("[gemini-enrich] No Gemini API key — skipping enrichment")
+    if not _has_credentials:
+        logger.info("[enrich] No provider API key — skipping enrichment")
         return ast_dict
 
     # Build pages_text from extracted_assets or contentAST

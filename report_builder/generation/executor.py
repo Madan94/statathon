@@ -17,13 +17,17 @@ Engine label is ``"pandas"`` (gold uses ``"duckdb"``; the backend is swappable).
 from __future__ import annotations
 
 import logging
-import re
 import time
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
+from report_builder.generation._agg import (
+    _agg_value,
+    _apply_filters,
+    _native,
+    _row_token,
+)
 from report_builder.generation.schema import (
     Aggregation,
     AggregationRow,
@@ -41,119 +45,10 @@ from report_builder.generation.schema import (
 
 logger = logging.getLogger(__name__)
 
-_FILTER_RE = re.compile(r"^\s*([A-Za-z_][\w ]*?)\s*(==|!=|>=|<=|>|<)\s*(.+?)\s*$")
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Filtering
-# ─────────────────────────────────────────────────────────────────────────────
-
-
-def _coerce(value: str) -> Any:
-    v = value.strip()
-    if (v.startswith("'") and v.endswith("'")) or (v.startswith('"') and v.endswith('"')):
-        return v[1:-1]
-    try:
-        return int(v)
-    except ValueError:
-        pass
-    try:
-        return float(v)
-    except ValueError:
-        return v
-
-
-def _apply_filters(df: pd.DataFrame, exprs: list[str]) -> tuple[pd.DataFrame, list[str]]:
-    """Apply ``col OP value`` filter strings; return (filtered frame, applied list).
-
-    A filter whose column is missing is skipped (widen-on-missing — never error),
-    matching the binding phase's "never silently drop rows by guessing" rule.
-    """
-    cur = df
-    applied: list[str] = []
-    for expr in exprs or []:
-        m = _FILTER_RE.match(expr)
-        if not m:
-            continue
-        col, op, raw = m.group(1).strip(), m.group(2), _coerce(m.group(3))
-        if col not in cur.columns:
-            logger.warning("[exec] filter column %r not in dataset — widening", col)
-            continue
-        series = cur[col]
-        try:
-            if op == "==":
-                mask = series.astype(str) == str(raw) if series.dtype == object else series == raw
-            elif op == "!=":
-                mask = series.astype(str) != str(raw) if series.dtype == object else series != raw
-            elif op == ">=":
-                mask = series >= raw
-            elif op == "<=":
-                mask = series <= raw
-            elif op == ">":
-                mask = series > raw
-            else:
-                mask = series < raw
-        except TypeError:
-            logger.warning("[exec] filter %r type-mismatch — widening", expr)
-            continue
-        cur = cur[mask]
-        applied.append(expr)
-    return cur, applied
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Aggregation math
-# ─────────────────────────────────────────────────────────────────────────────
-
-
-def _agg_value(frame: pd.DataFrame, measure: str, agg: str, weight: str | None) -> float | None:
-    """Compute one scalar measure over ``frame`` (None if not computable)."""
-    if measure not in frame.columns or frame.empty:
-        return None
-    col = pd.to_numeric(frame[measure], errors="coerce")
-    if agg in ("weighted_mean", "weighted_ratio") and weight and weight in frame.columns:
-        # A weighted mean of the measure column. Any percent-scaling for a 0/1
-        # share lives in the *derived-measure expression* (e.g. the gold binding
-        # ``100 * weighted_share(...)``), never in the agg itself, so a column that
-        # is already a percentage is not double-scaled.
-        w = pd.to_numeric(frame[weight], errors="coerce")
-        valid = col.notna() & w.notna()
-        denom = w[valid].sum()
-        if denom == 0:
-            return None
-        return _round(float((col[valid] * w[valid]).sum() / denom))
-    if agg in ("weighted_sum",) and weight and weight in frame.columns:
-        w = pd.to_numeric(frame[weight], errors="coerce")
-        return float((col * w).sum(skipna=True))
-    if agg in ("sum", "weighted_sum"):
-        return float(col.sum(skipna=True))
-    if agg in ("count",):
-        return int(col.notna().sum())
-    if agg in ("median",):
-        return _round(col.median(skipna=True))
-    if agg in ("min",):
-        return _round(col.min(skipna=True))
-    if agg in ("max",):
-        return _round(col.max(skipna=True))
-    # mean / ratio / default
-    return _round(col.mean(skipna=True))
-
-
-def _round(v: Any, ndigits: int = 1) -> float | None:
-    if v is None or (isinstance(v, float) and np.isnan(v)):
-        return None
-    return round(float(v), ndigits)
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Per-operation executors
 # ─────────────────────────────────────────────────────────────────────────────
-
-
-def _row_token(prefix_pairs: dict[str, Any]) -> str:
-    if not prefix_pairs:
-        return "r:all"
-    return "r:" + ",".join(f"{k}={v}" for k, v in prefix_pairs.items())
 
 
 def _exec_group_aggregate(plan: AnalyticsPlanRec, df: pd.DataFrame) -> tuple[Aggregation, dict[str, list[int]]]:
@@ -254,14 +149,6 @@ def _exec_metric(plan: AnalyticsPlanRec, df: pd.DataFrame, label: str) -> tuple[
     )
     return metric, row_index
 
-
-def _native(v: Any) -> Any:
-    """Convert numpy scalars to plain python for clean JSON."""
-    if isinstance(v, (np.integer,)):
-        return int(v)
-    if isinstance(v, (np.floating,)):
-        return float(v)
-    return v
 
 
 # ─────────────────────────────────────────────────────────────────────────────

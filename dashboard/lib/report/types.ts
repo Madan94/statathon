@@ -18,6 +18,14 @@ export interface Provenance {
   componentId?: string;
   analyticsRef?: string;
   evidenceRef?: string | string[];
+  // Phase 6 lineage enrichment (optional — older reports won't have these).
+  planId?: string;
+  componentRef?: string;
+  sourceColumns?: string[];
+  formulaType?: string;
+  filters?: string[];
+  rowIds?: string[];
+  contentHash?: string;
 }
 
 export interface ChartPoint {
@@ -103,6 +111,9 @@ export interface Block {
   content?: LocalizedLabel;
   provenance?: Provenance;
   biQuery?: string;
+  locked?: boolean;
+  title?: LocalizedLabel;
+  items?: string[];
 }
 
 export interface Section {
@@ -122,53 +133,114 @@ export interface EvidenceItem {
   rowIds?: string[];
 }
 
+/** Phase 5 — one verifier check (pass | warn | fail). */
 export interface VerificationCheck {
   code: string;
-  severity: 'fail' | 'warn' | 'info' | string;
+  severity: 'pass' | 'warn' | 'fail' | string;
   message: string;
-  [k: string]: unknown;
+  refs?: Record<string, unknown>;
 }
 
-export interface VerificationQuality {
-  finalScore?: number;
-  provenanceCoverage?: number;
-  formulaCoverage?: number;
-  failCount?: number;
-  warnCount?: number;
-  [k: string]: unknown;
-}
-
-export interface VerificationSummary {
-  verdict?: string;
-  quality?: VerificationQuality;
+/** Phase 5 — verifier verdict + quality score. */
+export interface Verification {
+  verdict?: 'PASS' | 'WARN' | 'FAIL' | string;
   checks?: VerificationCheck[];
-  [k: string]: unknown;
+  quality?: {
+    finalScore?: number;
+    provenanceCoverage?: number;
+    formulaCoverage?: number;
+    verifiedNumberRatio?: number;
+    caveatCoverage?: number;
+    blockedLeakCount?: number;
+    failCount?: number;
+    warnCount?: number;
+    [k: string]: number | undefined;
+  };
 }
 
-export interface PublishGate {
+/** Phase 8 — publish gate decision. */
+export interface GateDecision {
+  verdict?: string;
+  publishMode?: 'strict' | 'draft' | string;
   publishable?: boolean;
+  blocked?: boolean;
   reason?: string;
-  [k: string]: unknown;
+  failedChecks?: string[];
 }
 
+/** Phase 7 — one evidence-backed BI insight. */
 export interface Insight {
   insightId: string;
+  kind: string;
   text: string;
-  severity?: 'finding' | 'caveat' | 'warning' | string;
-  [k: string]: unknown;
+  questionId?: string;
+  planId?: string;
+  analyticsRef?: string;
+  evidenceRef?: string;
+  value?: unknown;
+  confidence?: number;
+  severity?: 'info' | 'warning' | 'caveat' | string;
+  refs?: Record<string, unknown>;
 }
 
-export interface AuditProvenance {
-  contentHash?: string;
-  [k: string]: unknown;
+/** Phase 6 — per-plan provenance lineage entry. */
+export interface LineageEntry {
+  questionId?: string;
+  planId?: string;
+  componentRef?: string;
+  measureColumn?: string;
+  analyticsRef?: string;
+  evidenceRef?: string;
+  sourceColumns?: string[];
+  rowIds?: string[];
+  formulaType?: string;
+  filters?: string[];
+  status?: string;
 }
 
+/** Phase 9 — one officer lifecycle transition / action log entry. */
+export interface LifecycleEntry {
+  action?: string;
+  from?: string;
+  to?: string;
+  blockId?: string;
+  fromVersion?: number;
+  toVersion?: number;
+  by?: string;
+  at?: string;
+  note?: string;
+}
+
+/** The audit subtree — trust (verifier/gate/provenance/insights) + officer control. */
 export interface AuditAST {
-  verification?: VerificationSummary;
-  gate?: PublishGate;
-  insights?: Insight[];
-  provenance?: AuditProvenance;
+  warnings?: string[];
   publishable?: boolean;
+  verification?: Verification;
+  gate?: GateDecision;
+  insights?: Insight[];
+  provenance?: {
+    coverage?: number;
+    measuredValues?: number;
+    tracedValues?: number;
+    datasetSignature?: string;
+    contentHash?: string;
+    entries?: LineageEntry[];
+  };
+  statisticalContext?: {
+    geographyLevel?: string;
+    timeCoverage?: string[];
+    unitRegistry?: Record<string, string>;
+    sourceNotes?: string[];
+    footnotes?: string[];
+    estimateStatus?: string;
+    surveyRound?: string;
+    referenceDate?: string;
+    [k: string]: unknown;
+  };
+  humanReview?: {
+    edits?: Array<Record<string, unknown>>;
+    lifecycle?: LifecycleEntry[];
+  };
   [k: string]: unknown;
 }
 
@@ -178,11 +250,12 @@ export interface ReportAST {
     title?: string;
     status?: string;
     version?: number;
+    period?: { current?: string };
+    // Phase 9 lifecycle + Phase 4 reproducibility (optional).
     publishStatus?: string;
     publishedAt?: string;
     publishedBy?: string;
     dataContentHash?: string;
-    period?: { current?: string };
     [k: string]: unknown;
   };
   semanticAST?: { sections?: Section[] };

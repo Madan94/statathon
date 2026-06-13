@@ -28,6 +28,11 @@ function evidenceRefs(p?: Provenance): string[] {
   return ev ? [ev] : [];
 }
 
+function shortHash(h: string): string {
+  const body = h.includes(':') ? h.split(':', 2)[1] : h;
+  return body.length > 12 ? `${body.slice(0, 12)}…` : body;
+}
+
 export function ProvenanceDrawer({ target, onClose }: Props) {
   if (!target) return null;
   const p = target.provenance;
@@ -60,8 +65,19 @@ export function ProvenanceDrawer({ target, onClose }: Props) {
             <Field label="Question" value={p.questionId} />
           )}
           {p?.componentId && <Field label="Component" value={p.componentId} />}
+          {p?.planId && <Field label="Plan" value={p.planId} />}
+          {p?.formulaType && p.formulaType !== 'DIRECT' && (
+            <Field label="Formula" value={p.formulaType} />
+          )}
           {p?.analyticsRef && <Field label="Analytics" value={p.analyticsRef} />}
           {refs.length > 0 && <Field label="Evidence" value={refs.join(', ')} />}
+          {p?.sourceColumns && p.sourceColumns.length > 0 && (
+            <Field label="Source columns" value={p.sourceColumns.join(', ')} />
+          )}
+          {p?.filters && p.filters.length > 0 && (
+            <Field label="Filters" value={p.filters.join(', ')} />
+          )}
+          {p?.contentHash && <Field label="Data hash" value={shortHash(p.contentHash)} />}
           {target.rowIds && target.rowIds.length > 0 && (
             <div>
               <dt className="text-xs uppercase tracking-wide text-text-muted">Row IDs</dt>

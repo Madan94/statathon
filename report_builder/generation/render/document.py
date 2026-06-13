@@ -192,39 +192,40 @@ def number_figures_tables(report: dict[str, Any]) -> dict[str, Any]:
 def build_provenance_appendix(report: dict[str, Any]) -> str:
     """Evidence table: questionId / componentId / rowIds / analyticsRef.
 
-    Pulls from ``provenanceAST.evidence`` when present, else scans block
-    provenance. Returns '' when there is nothing to show.
+    Prefers the enriched ``auditAST.provenance.entries`` (every measured output, with
+    plan + source-column trace); falls back to ``provenanceAST.evidence``, then to
+    block-level provenance. Returns '' when there is nothing to show.
     """
-    rows: list[tuple[str, str, str, str, str]] = []
-    prov = report.get("provenanceAST") or {}
-    evidence = prov.get("evidence") or []
-    for ev in evidence:
+    rows: list[tuple[str, str, str, str]] = []
+
+    # Source 1 (richest): the per-plan lineage entries enriched in S5e.
+    audit_prov = (report.get("auditAST") or {}).get("provenance") or {}
+    for e in audit_prov.get("entries") or []:
         rows.append((
-            str(ev.get("questionId") or ""),
-            str(ev.get("planId") or ""),
-            str(ev.get("componentId") or ev.get("evidenceId") or ""),
-            str(ev.get("analyticsRef") or ev.get("computation") or ""),
-            ", ".join(ev.get("rowIds") or []),
+            str(e.get("questionId") or ""),
+            str(e.get("planId") or e.get("componentRef") or ""),
+            str(e.get("analyticsRef") or e.get("formulaType") or ""),
+            ", ".join(e.get("rowIds") or []),
         ))
+
+    # Source 2: an explicit provenanceAST (legacy / external).
     if not rows:
-        audit_prov = (report.get("auditAST") or {}).get("provenance") or {}
-        for entry in audit_prov.get("entries") or []:
-            if not isinstance(entry, dict):
-                continue
+        prov = report.get("provenanceAST") or {}
+        for ev in prov.get("evidence") or []:
             rows.append((
-                str(entry.get("questionId") or ""),
-                str(entry.get("planId") or ""),
-                str(entry.get("componentRef") or ""),
-                str(entry.get("analyticsRef") or ""),
-                ", ".join(entry.get("rowIds") or []),
+                str(ev.get("questionId") or ""),
+                str(ev.get("componentId") or ev.get("evidenceId") or ""),
+                str(ev.get("analyticsRef") or ev.get("computation") or ""),
+                ", ".join(ev.get("rowIds") or []),
             ))
+
+    # Source 3: scan content-block provenance.
     if not rows:
         for b in (report.get("contentAST") or {}).get("blocks", []):
             p = b.get("provenance") or {}
             if p:
                 rows.append((
                     str(p.get("questionId") or ""),
-                    str(p.get("planId") or ""),
                     str(p.get("componentId") or ""),
                     str(p.get("analyticsRef") or ""),
                     ", ".join(p.get("evidenceRef") or []) if isinstance(p.get("evidenceRef"), list)
@@ -235,15 +236,15 @@ def build_provenance_appendix(report: dict[str, Any]) -> str:
         return ""
 
     body = []
-    for q, plan, c, a, ids in rows:
+    for q, c, a, ids in rows:
         body.append(
-            f"<tr><td>{esc(q)}</td><td>{esc(plan)}</td><td>{esc(c)}</td>"
+            f"<tr><td>{esc(q)}</td><td>{esc(c)}</td>"
             f"<td>{esc(a)}</td><td>{esc(ids)}</td></tr>"
         )
     return (
         '<section class="provenance-appendix"><h2>Appendix: Provenance</h2>'
         '<table class="data-table"><thead><tr>'
-        "<th>Question</th><th>Plan</th><th>Component</th><th>Analytics</th><th>Row IDs</th>"
+        "<th>Question</th><th>Component</th><th>Analytics</th><th>Row IDs</th>"
         f'</tr></thead><tbody>{"".join(body)}</tbody></table></section>'
     )
 

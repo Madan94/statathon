@@ -130,7 +130,11 @@ def _enterprise_layout_pages(skeleton: dict[str, Any], blueprint: dict[str, Any]
 def build_value_free_skeleton(ast: dict[str, Any]) -> dict[str, Any]:
     """Derive \u2460 template.ast.json (render skeleton) from the assembled AST."""
     meta = dict(ast.get("metadata") or {})
-    template_id = meta.get("documentId") or "tpl_document"
+    # Use the SAME normalizer as the blueprint so ① template.ast and
+    # ② template.blueprint always share one binder address. Falling back to a bare
+    # "tpl_document" here (while the blueprint derived "tpl_<title>_v1") produced a
+    # systemic TEMPLATE_ID_MISMATCH that blocked S3.5 on every extraction.
+    template_id = _normalize_template_id(meta, ast.get("blueprint") or {})
     skeleton: dict[str, Any] = {
         "$schema": "bharatstat/template-ast/v1",
         "_doc": _GOLD_AST_DOC,

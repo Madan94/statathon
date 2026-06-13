@@ -5,7 +5,6 @@ import { BarChart3, EyeOff, FileText, FunctionSquare, ListTree, Pencil, Plus, Ta
 
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import type {
   BindingDependencyGraph,
   BindingWorkspaceIssue,
@@ -99,81 +98,6 @@ function issueMatchesNode(issue: BindingWorkspaceIssue, node: ReviewedPlanNode, 
   return false;
 }
 
-function NodeCard({
-  node,
-  depth,
-  selected,
-  dependencyGraph,
-  issues,
-  onSelect,
-}: {
-  node: ReviewedPlanNode;
-  depth: number;
-  selected: boolean;
-  dependencyGraph?: BindingDependencyGraph;
-  issues: BindingWorkspaceIssue[];
-  onSelect: (node: ReviewedPlanNode) => void;
-}) {
-  const nodeIssues = issues.filter((issue) => issueMatchesNode(issue, node, dependencyGraph));
-  const resolvedColumns = node.questionId ? dependencyGraph?.questionToColumns[node.questionId] || [] : [];
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(node)}
-      className={`w-full rounded-lg border p-3 text-left transition-colors ${selected ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-surface hover:border-accent/50'}`}
-      style={{ marginLeft: depth * 14, width: `calc(100% - ${depth * 14}px)` }}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">{node.nodeType}</span>
-            {node.enabled === false && <Badge variant="muted">disabled</Badge>}
-            {nodeIssues.length > 0 && <Badge variant="warning">{nodeIssues.length} issue{nodeIssues.length > 1 ? 's' : ''}</Badge>}
-          </div>
-          <p className="mt-1 line-clamp-2 text-sm font-semibold text-text">{node.title}</p>
-          {node.questionId && <p className="mt-1 font-mono text-[11px] text-text-muted">{node.questionId}</p>}
-        </div>
-        <Badge variant={readinessVariant(node.readiness)}>{node.readiness}</Badge>
-      </div>
-      <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] text-text-muted">
-        {node.requiredEntities.length > 0 && <span className="rounded bg-border px-2 py-0.5">{node.requiredEntities.length} entities</span>}
-        {resolvedColumns.length > 0 && <span className="rounded bg-border px-2 py-0.5">{resolvedColumns.length} columns</span>}
-        {node.components.length > 0 && <span className="rounded bg-border px-2 py-0.5">{node.components.length} components</span>}
-      </div>
-    </button>
-  );
-}
-
-function renderCanvasNodes({
-  nodes,
-  depth,
-  selectedNodeId,
-  dependencyGraph,
-  issues,
-  onSelect,
-}: {
-  nodes: ReviewedPlanNode[];
-  depth: number;
-  selectedNodeId: string;
-  dependencyGraph?: BindingDependencyGraph;
-  issues: BindingWorkspaceIssue[];
-  onSelect: (node: ReviewedPlanNode) => void;
-}) {
-  return nodes.map((node) => (
-    <div key={node.nodeId} className="space-y-2">
-      <NodeCard
-        node={node}
-        depth={depth}
-        selected={selectedNodeId === node.nodeId}
-        dependencyGraph={dependencyGraph}
-        issues={issues}
-        onSelect={onSelect}
-      />
-      {node.children.length > 0 && renderCanvasNodes({ nodes: node.children, depth: depth + 1, selectedNodeId, dependencyGraph, issues, onSelect })}
-    </div>
-  ));
-}
-
 export function StructureCanvas({
   plan,
   dependencyGraph,
@@ -264,129 +188,171 @@ export function StructureCanvas({
 
       {editorSlot}
 
-      <div className="grid gap-4 xl:grid-cols-[13rem_1fr_20rem]">
-        <Card className="p-4" title="Outline" description="Report sections and questions.">
-          <div className="max-h-[34rem] space-y-1 overflow-auto pr-1">
-            {nodes.map((node) => (
-              <button
-                key={node.nodeId}
-                type="button"
-                onClick={() => setSelectedNodeId(node.nodeId)}
-                className={`w-full rounded-md px-2 py-1.5 text-left text-xs transition-colors ${selectedNodeId === node.nodeId ? 'bg-primary/10 text-primary' : 'text-text-muted hover:bg-surface'}`}
-              >
-                <span className="block truncate font-semibold">{node.title}</span>
-                <span className="block truncate uppercase">{node.nodeType}</span>
-              </button>
-            ))}
-          </div>
-        </Card>
-
-        <Card className="p-4" title="Structure canvas" description="Select a report item to inspect bindings, components, and slots.">
-          <div className="max-h-[42rem] space-y-2 overflow-auto pr-1">
-            {renderCanvasNodes({
-              nodes: plan.planTree,
-              depth: 0,
-              selectedNodeId: selectedNode?.nodeId || '',
-              dependencyGraph,
-              issues,
-              onSelect: (node) => setSelectedNodeId(node.nodeId),
-            })}
-          </div>
-        </Card>
-
-        <Card className="p-4" title="Inspector" description="Selected item controls.">
-          {selectedNode ? (
-            <div className="space-y-4">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="muted">{selectedNode.nodeType}</Badge>
-                  <Badge variant={readinessVariant(selectedNode.readiness)}>{selectedNode.readiness}</Badge>
-                </div>
-                <p className="mt-2 text-sm font-semibold text-text">{selectedNode.title}</p>
-                {selectedNode.questionId && <p className="mt-1 font-mono text-[11px] text-text-muted">{selectedNode.questionId}</p>}
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" disabled={busy} onClick={() => onRename(selectedNode)}>
-                  <Pencil className="h-4 w-4" /> Rename
-                </Button>
-                {selectedNode.nodeType === 'question' && (
-                  <>
-                    <Button size="sm" variant="outline" disabled={busy} onClick={() => onToggle(selectedNode)}>
-                      <EyeOff className="h-4 w-4" /> {selectedNode.enabled === false ? 'Enable' : 'Disable'}
-                    </Button>
-                    <Button size="sm" variant="outline" disabled={busy} onClick={() => onEditEntities(selectedNode)}>
-                      <ListTree className="h-4 w-4" /> Entities
-                    </Button>
-                  </>
+      <div className="grid gap-4 xl:grid-cols-[20rem_1fr]">
+        {/* Left panel: tree navigator */}
+        <div className="rounded-xl border border-border bg-surface-card p-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">Report structure</p>
+          <div className="max-h-[50rem] space-y-1 overflow-auto pr-1">
+            {plan.planTree.map((topNode) => (
+              <div key={topNode.nodeId} className="space-y-0.5">
+                <button
+                  type="button"
+                  onClick={() => setSelectedNodeId(topNode.nodeId)}
+                  className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${selectedNodeId === topNode.nodeId ? 'border border-primary/30 bg-primary/5 text-primary' : 'border border-transparent text-text hover:bg-surface'}`}
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="truncate text-sm font-semibold">{topNode.title}</span>
+                    <Badge variant={readinessVariant(topNode.readiness)} className="text-[10px] shrink-0">{topNode.readiness}</Badge>
+                  </span>
+                  <span className="mt-0.5 block text-[11px] uppercase text-text-muted">{topNode.nodeType}</span>
+                </button>
+                {topNode.children.length > 0 && (
+                  <div className="ml-3 space-y-0.5 border-l border-border pl-2">
+                    {topNode.children.map((child) => (
+                      <button
+                        key={child.nodeId}
+                        type="button"
+                        onClick={() => setSelectedNodeId(child.nodeId)}
+                        className={`w-full rounded-md px-2.5 py-1.5 text-left text-xs transition-colors ${selectedNodeId === child.nodeId ? 'bg-primary/10 text-primary' : 'text-text-muted hover:bg-surface hover:text-text'}`}
+                      >
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="truncate font-medium">{child.title}</span>
+                          {child.enabled === false && <Badge variant="muted" className="text-[9px]">off</Badge>}
+                          {issues.filter((issue) => issueMatchesNode(issue, child, dependencyGraph)).length > 0 && (
+                            <Badge variant="warning" className="text-[9px]">{issues.filter((issue) => issueMatchesNode(issue, child, dependencyGraph)).length}</Badge>
+                          )}
+                        </span>
+                        <span className="mt-0.5 flex items-center gap-2 text-[10px] text-text-muted">
+                          <span className="uppercase">{child.nodeType}</span>
+                          {child.components.length > 0 && <span>{child.components.length} comp</span>}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
+            ))}
+          </div>
+        </div>
 
-              <div className="space-y-2 text-xs">
-                <p className="font-semibold uppercase tracking-wide text-text-muted">Required entities</p>
-                <p className="rounded-lg border border-border bg-surface px-3 py-2 text-text-muted">
-                  {selectedNode.requiredEntities.length ? requiredEntitiesToText(selectedNode.requiredEntities) : 'No required entities recorded.'}
-                </p>
-              </div>
-
-              <div className="space-y-2 text-xs">
-                <p className="font-semibold uppercase tracking-wide text-text-muted">Resolved columns</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedColumns.length ? selectedColumns.map((column) => (
-                    <span key={column} className="rounded bg-border px-2 py-0.5 text-text-muted">{column}</span>
-                  )) : <span className="text-text-muted">No columns resolved yet.</span>}
+        {/* Right panel: detail inspector */}
+        <div className="rounded-xl border border-border bg-surface-card p-5">
+          {selectedNode ? (
+            <div className="space-y-5">
+              {/* Header */}
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-4">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="muted">{selectedNode.nodeType}</Badge>
+                    <Badge variant={readinessVariant(selectedNode.readiness)}>{selectedNode.readiness}</Badge>
+                    {selectedNode.enabled === false && <Badge variant="muted">Disabled</Badge>}
+                  </div>
+                  <h3 className="mt-2 text-lg font-semibold text-text">{selectedNode.title}</h3>
+                  {selectedNode.questionId && <p className="mt-1 font-mono text-xs text-text-muted">{selectedNode.questionId}</p>}
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <Button size="sm" variant="outline" disabled={busy} onClick={() => onRename(selectedNode)}>
+                    <Pencil className="h-4 w-4" /> Rename
+                  </Button>
+                  {selectedNode.nodeType === 'question' && (
+                    <>
+                      <Button size="sm" variant="outline" disabled={busy} onClick={() => onToggle(selectedNode)}>
+                        <EyeOff className="h-4 w-4" /> {selectedNode.enabled === false ? 'Enable' : 'Disable'}
+                      </Button>
+                      <Button size="sm" variant="outline" disabled={busy} onClick={() => onEditEntities(selectedNode)}>
+                        <ListTree className="h-4 w-4" /> Entities
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-2 text-xs">
-                <p className="font-semibold uppercase tracking-wide text-text-muted">Entity links</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedEntities.length ? selectedEntities.map((entityId) => (
-                    <span key={entityId} className="rounded bg-border px-2 py-0.5 font-mono text-text-muted">{entityId}</span>
-                  )) : <span className="text-text-muted">No linked entities found.</span>}
+              {/* Metadata grid */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Required entities</p>
+                  <div className="rounded-lg border border-border bg-surface px-3 py-2">
+                    {selectedNode.requiredEntities.length ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedNode.requiredEntities.map((entity, i) => (
+                          <span key={i} className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                            {String(entity.entityId || entity.entityRef || '')}
+                            <span className="ml-1 text-primary/60">{String(entity.role || '')}</span>
+                          </span>
+                        ))}
+                      </div>
+                    ) : <span className="text-xs text-text-muted">None recorded</span>}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Resolved columns</p>
+                  <div className="rounded-lg border border-border bg-surface px-3 py-2">
+                    {selectedColumns.length ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedColumns.map((column) => (
+                          <span key={column} className="rounded bg-border px-2 py-0.5 font-mono text-xs text-text-muted">{column}</span>
+                        ))}
+                      </div>
+                    ) : <span className="text-xs text-text-muted">No columns resolved</span>}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Entity links</p>
+                  <div className="rounded-lg border border-border bg-surface px-3 py-2">
+                    {selectedEntities.length ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedEntities.map((entityId) => (
+                          <span key={entityId} className="rounded bg-border px-2 py-0.5 font-mono text-xs text-text-muted">{entityId}</span>
+                        ))}
+                      </div>
+                    ) : <span className="text-xs text-text-muted">No linked entities</span>}
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
+              {/* Components section */}
+              <div className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Components</p>
-                {selectedNode.components.length ? selectedNode.components.map((component) => {
-                  const focused = initialComponentId === component.componentId;
-                  return (
-                  <div key={component.componentId} className={`rounded-lg border px-3 py-2 text-xs ${focused ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-surface'}`}>
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold text-text">{componentLabel(component.componentType, componentDefinitions)}</p>
-                      {component.slotIds.length > 0 && <Badge variant="muted">{component.slotIds.length} slot{component.slotIds.length > 1 ? 's' : ''}</Badge>}
-                    </div>
-                    <button type="button" disabled={busy} onClick={() => onEditComponentEntities(selectedNode, component)} className="mt-1 font-semibold text-primary hover:underline disabled:opacity-50">
-                      Component entities
-                    </button>
-                    {component.formulaSpec && Object.keys(component.formulaSpec).length > 0 && (
-                      <button type="button" disabled={busy} onClick={() => onEditFormula(selectedNode, component)} className="ml-2 mt-1 font-semibold text-primary hover:underline disabled:opacity-50">
-                        Edit formula spec
-                      </button>
-                    )}
-                    {component.componentType === 'formula_metric' && Object.keys(component.formulaSpec || {}).length === 0 && (
-                      <button type="button" disabled={busy} onClick={() => onEditFormula(selectedNode, component)} className="ml-2 mt-1 font-semibold text-primary hover:underline disabled:opacity-50">
-                        Configure formula
-                      </button>
-                    )}
-                    {['chart', 'table', 'formula_metric'].includes(component.componentType) && (
-                      <button type="button" disabled={busy} onClick={() => onEditAnalytics(selectedNode, component)} className="ml-2 mt-1 font-semibold text-primary hover:underline disabled:opacity-50">
-                        Analytics
-                      </button>
-                    )}
+                {selectedNode.components.length ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {selectedNode.components.map((component) => {
+                      const focused = initialComponentId === component.componentId;
+                      return (
+                        <div key={component.componentId} className={`rounded-xl border p-4 ${focused ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-surface'}`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-semibold text-text">{componentLabel(component.componentType, componentDefinitions)}</p>
+                            {component.slotIds.length > 0 && <Badge variant="muted">{component.slotIds.length} slot{component.slotIds.length > 1 ? 's' : ''}</Badge>}
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <button type="button" disabled={busy} onClick={() => onEditComponentEntities(selectedNode, component)} className="text-xs font-semibold text-primary hover:underline disabled:opacity-50">
+                              Entities
+                            </button>
+                            {(component.formulaSpec && Object.keys(component.formulaSpec).length > 0) || component.componentType === 'formula_metric' ? (
+                              <button type="button" disabled={busy} onClick={() => onEditFormula(selectedNode, component)} className="text-xs font-semibold text-primary hover:underline disabled:opacity-50">
+                                {component.formulaSpec && Object.keys(component.formulaSpec).length > 0 ? 'Edit formula' : 'Configure formula'}
+                              </button>
+                            ) : null}
+                            {['chart', 'table', 'formula_metric'].includes(component.componentType) && (
+                              <button type="button" disabled={busy} onClick={() => onEditAnalytics(selectedNode, component)} className="text-xs font-semibold text-primary hover:underline disabled:opacity-50">
+                                Analytics
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  );
-                }) : <p className="text-xs text-text-muted">No components attached yet.</p>}
+                ) : <p className="text-sm text-text-muted">No components attached yet.</p>}
               </div>
 
+              {/* Recommended components */}
               {recommendations.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Recommended components</p>
-                    {selectedNode.nodeId !== serverRecommendationState.nodeId && loadRecommendations && <span className="text-[11px] text-text-muted">Loading</span>}
+                    <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Add component</p>
+                    {selectedNode.nodeId !== serverRecommendationState.nodeId && loadRecommendations && <span className="text-[11px] text-text-muted">Loading…</span>}
                   </div>
-                  <div className="grid gap-2">
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {recommendations.map((recommendation) => {
                       const componentType = recommendation.componentType;
                       const Icon = componentIcon(componentType);
@@ -396,19 +362,14 @@ export function StructureCanvas({
                           type="button"
                           disabled={busy}
                           onClick={() => onAddRecommendedComponent(selectedNode.nodeId, componentType, recommendation.payload)}
-                          className="rounded-lg border border-border bg-surface px-3 py-2 text-left text-xs hover:border-accent/60 disabled:opacity-50"
+                          className="rounded-xl border border-border bg-surface px-4 py-3 text-left transition-colors hover:border-accent/60 disabled:opacity-50"
                         >
-                          <span className="flex items-center justify-between gap-2">
-                            <span className="flex min-w-0 items-center gap-2">
-                              <Icon className="h-4 w-4 shrink-0 text-text-muted" />
-                              <span className="truncate font-semibold text-text">{recommendation.label}</span>
-                            </span>
-                            <span className="flex shrink-0 items-center gap-2">
-                              {recommendation.score > 0 && <Badge variant="muted">{Math.round(recommendation.score * 100)}%</Badge>}
-                              <Plus className="h-4 w-4 text-primary" />
-                            </span>
+                          <span className="flex items-center gap-2">
+                            <Icon className="h-4 w-4 shrink-0 text-text-muted" />
+                            <span className="text-sm font-semibold text-text">{recommendation.label}</span>
+                            {recommendation.score > 0 && <Badge variant="muted" className="ml-auto">{Math.round(recommendation.score * 100)}%</Badge>}
                           </span>
-                          <span className="mt-1 block text-text-muted">{recommendation.reason}</span>
+                          <span className="mt-1 block text-xs text-text-muted">{recommendation.reason}</span>
                         </button>
                       );
                     })}
@@ -416,22 +377,25 @@ export function StructureCanvas({
                 </div>
               )}
 
+              {/* Issues */}
               {selectedIssues.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Issues on this item</p>
-                  {selectedIssues.map((issue, index) => (
-                    <div key={issue.issueId || `${issue.code || 'issue'}-${index}`} className="rounded-lg border border-warning/30 bg-warning/5 px-3 py-2 text-xs text-text-muted">
-                      <p className="font-semibold text-text">{issue.code || issue.severity || 'Issue'}</p>
-                      <p className="mt-1">{issue.message}</p>
-                    </div>
-                  ))}
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Issues</p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {selectedIssues.map((issue, index) => (
+                      <div key={issue.issueId || `${issue.code || 'issue'}-${index}`} className="rounded-lg border border-warning/30 bg-warning/5 px-3 py-2 text-xs text-text-muted">
+                        <p className="font-semibold text-text">{issue.code || issue.severity || 'Issue'}</p>
+                        <p className="mt-1">{issue.message}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
           ) : (
-            <p className="text-sm text-text-muted">Select a report item to inspect it.</p>
+            <p className="py-8 text-center text-sm text-text-muted">Select an item from the tree to inspect it.</p>
           )}
-        </Card>
+        </div>
       </div>
 
       <div className="grid gap-3 xl:grid-cols-2">

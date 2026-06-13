@@ -149,6 +149,12 @@ def compile_template_artifacts(
     if _early_doc_type == "pib_press_release":
         _apply_plfs_entity_overrides(bp)
 
+    # Thread extraction provenance onto every binder entity. Hygiene/normalize/enrich
+    # drop the raw ``source`` field, leaving entities with no sourceRefs/evidence — the
+    # S3.5 gate then blocks the package (ENTITY_MISSING_SOURCE_REFS). Backfill honest
+    # provenance (how each entity was discovered) so the evidence chain is traceable.
+    _backfill_entity_evidence(bp, raw_entities)
+
     # Add measure families
     if norm_result.measureFamilies:
         bp["measureFamilies"] = [f.to_dict() for f in norm_result.measureFamilies]
@@ -872,6 +878,55 @@ def _entity_to_dict(entity: Any) -> dict[str, Any]:
     return d
 
 
+def _backfill_entity_evidence(blueprint: dict[str, Any], raw_entities: list[dict[str, Any]]) -> None:
+    """Attach honest extraction provenance (sourceRefs + evidence) to binder entities.
+
+    Hygiene/normalize/enrich drop the raw ``source`` marker each entity carried
+    (``heading`` / ``vlm`` / ``pre_seeded`` / ``domain_pack`` / ``canonical_mospi``),
+    so the final blueprint entities have no sourceRefs/evidence and the S3.5 gate
+    blocks the package. This records *how* each entity was discovered — it never
+    fabricates a document location it does not have (domain-pack/pre-seeded entities
+    are honestly marked as template seeds, not document evidence).
+    """
+    source_by_name: dict[str, str] = {}
+    for raw in raw_entities or []:
+        if not isinstance(raw, dict):
+            continue
+        src = str(raw.get("source") or "").strip()
+        if not src:
+            continue
+        for key in (raw.get("canonicalName"), raw.get("name")):
+            if key:
+                source_by_name[str(key).strip().lower()] = src
+        for alias in (raw.get("aliases") or []):
+            if alias:
+                source_by_name.setdefault(str(alias).strip().lower(), src)
+
+    for entity in blueprint.get("entities") or []:
+        if not isinstance(entity, dict):
+            continue
+        if entity.get("entityType") not in ("measure", "dimension", "time"):
+            continue
+        name = str(entity.get("canonicalName") or entity.get("name") or "").strip().lower()
+        source = source_by_name.get(name) or "pipeline_extraction"
+        document_derived = source in ("heading", "vlm", "table", "ocr", "pdfplumber")
+        if not entity.get("sourceRefs"):
+            entity["sourceRefs"] = [{
+                "sourceType": source,
+                "discoveredVia": source,
+                "ref": entity.get("canonicalName") or entity.get("name") or entity.get("entityId"),
+                "documentDerived": document_derived,
+                "confidence": entity.get("confidence"),
+            }]
+        if not entity.get("evidence"):
+            entity["evidence"] = {
+                "sourceType": source,
+                "discoveredVia": source,
+                "documentDerived": document_derived,
+                "label": entity.get("canonicalName") or entity.get("name") or entity.get("entityId"),
+            }
+
+
 def _apply_plfs_entity_overrides(blueprint: dict[str, Any]) -> None:
     """Apply deterministic PLFS ontology corrections after generic enrichment."""
     try:
@@ -1225,6 +1280,37 @@ def _repair_spec_refs(spec: dict[str, Any], ref_map: dict[str, str], valid: set[
                     broken.append(ref)
 
 
+def _question_is_executable(q: dict[str, Any]) -> bool:
+    """Whether a question is binder-executable (mirrors the S3.5 gate's measure rule).
+
+    A non-descriptive analytic question must name a measure in BOTH its
+    ``requiredEntities`` (role == measure) AND its ``analyticsSpec.measure`` /
+    ``measures[]``. Gap-fill questions that arrive with empty requiredEntities and an
+    empty measure ref are non-executable — the S3.5 gate flags them as
+    ANALYTIC_QUESTION_NOT_EXECUTABLE with action "Drop or repair before S3.5", so we
+    drop them here instead of letting them block the whole package.
+    """
+    qtype = str(q.get("questionType") or "").lower()
+    spec = q.get("analyticsSpec") or {}
+    operation = str(spec.get("operation") or "").lower() if isinstance(spec, dict) else ""
+    if qtype in ("descriptive", "describe", "summary") or operation in ("describe", "summary", "summary_stats"):
+        return True  # descriptive questions need no measure
+
+    def _ref(v: Any) -> bool:
+        if isinstance(v, dict):
+            return bool(v.get("entityRef") or v.get("entityId") or v.get("column"))
+        return bool(v)
+
+    has_measure_spec = _ref(spec.get("measure")) or (
+        isinstance(spec.get("measures"), list) and any(_ref(m) for m in spec.get("measures"))
+    )
+    has_required_measure = any(
+        r.get("role") == "measure" and (r.get("entityId") or r.get("entityRef"))
+        for r in (q.get("requiredEntities") or [])
+    )
+    return has_measure_spec and has_required_measure
+
+
 def _filter_or_repair_existing_questions(
     questions: list[dict[str, Any]],
     ref_map: dict[str, str],
@@ -1248,6 +1334,10 @@ def _filter_or_repair_existing_questions(
             # Cannot fix — drop
             dropped.append({"questionId": qid, "reason": f"broken_refs: {still_broken[:3]}", "broken_count": len(still_broken)})
             repair_log.append({"questionId": qid, "repaired": False, "broken": still_broken[:3]})
+        elif not _question_is_executable(repaired_q):
+            # No resolvable measure — non-executable; drop so it can't block S3.5.
+            dropped.append({"questionId": qid, "reason": "not_executable: no measure entity/spec"})
+            repair_log.append({"questionId": qid, "repaired": False, "broken": ["no_measure"]})
         else:
             # All refs resolved (either already valid or remapped)
             kept.append(repaired_q)

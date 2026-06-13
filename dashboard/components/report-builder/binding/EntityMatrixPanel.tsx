@@ -605,7 +605,7 @@ export function EntityMatrixPanel({
               tab === 'dataset' ? 'bg-primary/10 text-primary' : 'text-text-muted hover:text-text',
             )}
           >
-            Dataset matching
+            Column mapping
           </button>
           <button
             type="button"
@@ -615,7 +615,7 @@ export function EntityMatrixPanel({
               tab === 'template' ? 'bg-primary/10 text-primary' : 'text-text-muted hover:text-text',
             )}
           >
-            Template coverage
+            Entity coverage
           </button>
         </div>
 

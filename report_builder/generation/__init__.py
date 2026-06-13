@@ -35,9 +35,47 @@ from .schema import (
 )
 from .planner_adapter import build_plan, build_plans
 from .executor import run_analytics
+from .coordinator import (
+    CoordinatorResult,
+    PlanOutcome,
+    run_execution,
+    run_execution_detailed,
+)
+from .run_modes import (
+    DataDriftError,
+    GENERATION_MODES,
+    attach_data_hash,
+    bundle_data_hash,
+    compute_data_content_hash,
+    resolve_mode,
+    verify_data_hash,
+)
 from .filler import fill_visuals
 from .narrator import narrate, validate_numbers
 from .assembler import assemble_report, validate_report
+from .verifier import (
+    GateDecision,
+    VerificationCheck,
+    VerificationReport,
+    VerifierPolicy,
+    evaluate_gate,
+    is_publishable,
+    verify_report,
+)
+from .lineage import (
+    LineageEntry,
+    MeasuredValue,
+    build_lineage_index,
+    enrich_report_provenance,
+    iter_measured_values,
+    provenance_coverage,
+)
+from .insights import (
+    Insight,
+    attach_insights,
+    derive_insights,
+    key_findings,
+)
 from .renderer import render_html, render_pdf
 from .render.pdf import pdf_available
 from .profile import (
@@ -54,16 +92,58 @@ from .edit import (
     current_version,
     EditRejected,
 )
+from .lifecycle import (
+    LifecycleError,
+    archive,
+    assert_editable,
+    ensure_lifecycle,
+    get_status,
+    is_block_locked,
+    lock_block,
+    mark_published,
+    mark_reviewed,
+    restore_version,
+    set_publish_status,
+    unlock_block,
+)
 
 __all__ = [
     "build_plan",
     "build_plans",
     "run_analytics",
+    "run_execution",
+    "run_execution_detailed",
+    "CoordinatorResult",
+    "PlanOutcome",
+    "DataDriftError",
+    "GENERATION_MODES",
+    "attach_data_hash",
+    "bundle_data_hash",
+    "compute_data_content_hash",
+    "resolve_mode",
+    "verify_data_hash",
     "fill_visuals",
     "narrate",
     "validate_numbers",
     "assemble_report",
     "validate_report",
+    "verify_report",
+    "evaluate_gate",
+    "is_publishable",
+    "GateDecision",
+    "VerificationCheck",
+    "VerificationReport",
+    "VerifierPolicy",
+    "enrich_report_provenance",
+    "build_lineage_index",
+    "iter_measured_values",
+    "provenance_coverage",
+    "LineageEntry",
+    "MeasuredValue",
+    "derive_insights",
+    "attach_insights",
+    "key_findings",
+    "Insight",
     "render_html",
     "render_pdf",
     "pdf_available",
@@ -77,6 +157,18 @@ __all__ = [
     "bump_version",
     "current_version",
     "EditRejected",
+    "ensure_lifecycle",
+    "get_status",
+    "set_publish_status",
+    "mark_reviewed",
+    "mark_published",
+    "archive",
+    "lock_block",
+    "unlock_block",
+    "is_block_locked",
+    "assert_editable",
+    "restore_version",
+    "LifecycleError",
     "Aggregation",
     "AggregationRow",
     "AnalyticsAST",

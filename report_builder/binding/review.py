@@ -87,6 +87,33 @@ class Confirmation:
         )
 
 
+@dataclass
+class ColumnDecision:
+    """One officer decision about a dataset column's binder usage."""
+
+    column: str
+    status: str                      # matched | added_as_entity | ignored_metadata | ignored_duplicate | ignored_out_of_scope | needs_question
+    entityId: str = ""
+    note: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {"column": self.column, "status": self.status}
+        if self.entityId:
+            out["entityId"] = self.entityId
+        if self.note:
+            out["note"] = self.note
+        return out
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "ColumnDecision":
+        return cls(
+            column=str(d.get("column") or ""),
+            status=str(d.get("status") or "needs_question"),
+            entityId=str(d.get("entityId") or d.get("entity_id") or ""),
+            note=str(d.get("note") or ""),
+        )
+
+
 class ColumnOwnershipConflict(Exception):
     """Raised when an exclusive column assignment would steal another owner."""
 
@@ -105,6 +132,7 @@ class ReviewRecord:
     datasetId: str = ""
     proposals: list[dict[str, Any]] = field(default_factory=list)  # snapshot of S1
     confirmations: dict[str, Confirmation] = field(default_factory=dict)  # entityId → decision
+    columnDecisions: dict[str, ColumnDecision] = field(default_factory=dict)  # column → decision
     updatedAt: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
@@ -114,6 +142,7 @@ class ReviewRecord:
             "datasetId": self.datasetId,
             "proposals": list(self.proposals),
             "confirmations": {k: v.to_dict() for k, v in self.confirmations.items()},
+            "columnDecisions": {k: v.to_dict() for k, v in self.columnDecisions.items()},
             "updatedAt": self.updatedAt,
         }
 
@@ -126,6 +155,9 @@ class ReviewRecord:
             proposals=list(d.get("proposals") or []),
             confirmations={
                 k: Confirmation.from_dict(v) for k, v in (d.get("confirmations") or {}).items()
+            },
+            columnDecisions={
+                k: ColumnDecision.from_dict(v) for k, v in (d.get("columnDecisions") or d.get("column_decisions") or {}).items()
             },
             updatedAt=float(d.get("updatedAt") or 0.0),
         )
@@ -221,6 +253,56 @@ def _decision_columns(record: ReviewRecord, entity_id: str) -> list[str]:
     if decision and decision.columns is not None:
         return [c for c in decision.columns if c]
     return _proposal_columns(_proposal_by_id(record, entity_id))
+
+
+_COLUMN_DECISION_STATUSES = {
+    "matched",
+    "added_as_entity",
+    "ignored_metadata",
+    "ignored_duplicate",
+    "ignored_out_of_scope",
+    "needs_question",
+}
+
+
+def set_column_decision(
+    record: ReviewRecord,
+    *,
+    column: str,
+    status: str,
+    entity_id: str = "",
+    note: str = "",
+) -> ReviewRecord:
+    """Persist an officer decision for one dataset column."""
+    clean_column = column.strip()
+    if not clean_column:
+        raise ValueError("column is required")
+    clean_status = status.strip()
+    if clean_status not in _COLUMN_DECISION_STATUSES:
+        raise ValueError(f"unsupported column decision status '{status}'")
+    if clean_status in {"matched", "added_as_entity"} and not entity_id.strip():
+        raise ValueError(f"{clean_status} column decisions require entity_id")
+    record.columnDecisions[clean_column] = ColumnDecision(
+        column=clean_column,
+        status=clean_status,
+        entityId=entity_id.strip(),
+        note=note.strip(),
+    )
+    return record
+
+
+def mark_columns_matched(
+    record: ReviewRecord,
+    *,
+    columns: list[str],
+    entity_id: str,
+    status: str = "matched",
+    note: str = "",
+) -> ReviewRecord:
+    for column in columns:
+        if column:
+            set_column_decision(record, column=column, status=status, entity_id=entity_id, note=note)
+    return record
 
 
 def _owner_for(record: ReviewRecord, entity_id: str, columns: list[str]) -> dict[str, Any] | None:
@@ -411,6 +493,7 @@ def add_manual_entity(
         sharePolicy=policy,
         shareReason=share_reason,
     )
+    mark_columns_matched(record, columns=selected, entity_id=entity_id, status="added_as_entity", note=note)
     return record
 
 
@@ -456,6 +539,7 @@ def confirm(
         sharePolicy=policy,
         shareReason=share_reason,
     )
+    mark_columns_matched(record, columns=selected, entity_id=entity_id, status="matched", note=note)
     return record
 
 
@@ -469,6 +553,9 @@ def reject(record: ReviewRecord, entity_id: str, *, note: str = "") -> ReviewRec
 def reopen(record: ReviewRecord, entity_id: str) -> ReviewRecord:
     """Clear a prior human decision so the entity returns to proposal state."""
     record.confirmations.pop(entity_id, None)
+    for column, decision in list(record.columnDecisions.items()):
+        if decision.entityId == entity_id and decision.status in {"matched", "added_as_entity"}:
+            record.columnDecisions.pop(column, None)
     return record
 
 

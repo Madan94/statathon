@@ -15,6 +15,7 @@ import { CoveragePanel } from '@/components/report-builder/binding/CoveragePanel
 import { StructureCanvas } from '@/components/report-builder/binding/StructureCanvas';
 import { EntityMatrixPanel, type EntityDecision } from '@/components/report-builder/binding/EntityMatrixPanel';
 import { TemplatePackagePicker } from '@/components/report-builder/binding/TemplatePackagePicker';
+import { ConflictResolutionModal, type ColumnConflict, type ConflictResolution } from '@/components/report-builder/binding/ConflictResolutionModal';
 import {
   bindingPhaseApi,
   type BindingAction,
@@ -182,6 +183,14 @@ export default function BindingWorkflowPage() {
   const [newEntityShareReason, setNewEntityShareReason] = useState('');
   const [addEntityOpen, setAddEntityOpen] = useState(false);
 
+  // conflict resolution modal state
+  const [conflictModal, setConflictModal] = useState<{
+    entityId: string;
+    entityName: string;
+    conflicts: ColumnConflict[];
+    pendingDecision: Decision;
+  } | null>(null);
+
   // step 2
   const [finalizing, setFinalizing] = useState(false);
   const [result, setResult] = useState<BindingFinalizeResult | null>(null);
@@ -233,6 +242,12 @@ export default function BindingWorkflowPage() {
     () => proposals.filter((p) => !decisions[p.entityId]).length,
     [proposals, decisions]
   );
+
+  // Column-decision-based gate: all dataset columns must have a decision
+  const totalColumns = session?.dataset_ast.columns.length ?? 0;
+  const decidedColumnCount = Object.keys(session?.column_decisions ?? {}).length;
+  const allColumnsDecided = totalColumns > 0 && decidedColumnCount >= totalColumns;
+  const undecidedColumnCount = totalColumns - decidedColumnCount;
   const currentReviewedPlan = result?.reviewed_plan ?? workspace?.reviewed_plan ?? null;
   const planContainers = useMemo(
     () => collectPlanContainers(currentReviewedPlan?.planTree ?? []),
@@ -298,7 +313,7 @@ export default function BindingWorkflowPage() {
     }
   };
 
-  const onDecide = async (entityId: string, decision: Decision) => {
+  const onDecide = async (entityId: string, decision: Decision, opts?: { force_transfer?: boolean; share_policy?: 'exclusive' | 'shared'; share_reason?: string }) => {
     if (!session) return;
     setBusyEntity(entityId);
     setError(null);
@@ -306,12 +321,57 @@ export default function BindingWorkflowPage() {
       const record: BindingRecordResult = await bindingPhaseApi.confirm(session.template_id, session.signature, {
         entity_id: entityId,
         ...decision,
+        ...(opts?.force_transfer ? { force_transfer: true } : {}),
+        ...(opts?.share_policy ? { share_policy: opts.share_policy, share_reason: opts.share_reason } : {}),
       });
       await refreshFromRecord(record);
     } catch (err) {
-      setError(errMessage(err, 'Could not record that decision'));
+      // Detect 409 COLUMN_ALREADY_OWNED → show conflict modal
+      const resp = (err as { response?: { status?: number; data?: { detail?: { code?: string; conflicts?: ColumnConflict[] } } } })?.response;
+      if (resp?.status === 409 && resp?.data?.detail?.code === 'COLUMN_ALREADY_OWNED') {
+        const proposal = proposals.find((p) => p.entityId === entityId);
+        setConflictModal({
+          entityId,
+          entityName: proposal?.entityName || entityId,
+          conflicts: resp.data.detail.conflicts ?? [],
+          pendingDecision: decision,
+        });
+      } else {
+        setError(errMessage(err, 'Could not record that decision'));
+      }
     } finally {
       setBusyEntity(null);
+    }
+  };
+
+  const onResolveConflict = async (resolution: ConflictResolution) => {
+    if (!conflictModal || !session) return;
+    const { entityId, pendingDecision } = conflictModal;
+    setConflictModal(null);
+
+    if (resolution.mode === 'transfer') {
+      await onDecide(entityId, pendingDecision, { force_transfer: true });
+    } else if (resolution.mode === 'share') {
+      await onDecide(entityId, { ...pendingDecision, action: 'share' }, { share_policy: 'shared', share_reason: resolution.shareReason });
+    } else if (resolution.mode === 'create_new' && resolution.newEntityName) {
+      // Create a brand-new entity for the column instead
+      const col = proposals.find((p) => p.entityId === entityId)?.columns?.[0];
+      const columnName = typeof col === 'object' ? col.column : col;
+      if (columnName) {
+        try {
+          setBusyEntity('__adding__');
+          const record = await bindingPhaseApi.addEntity(session.template_id, session.signature, {
+            columns: [columnName],
+            entity_name: resolution.newEntityName,
+            entity_type: resolution.newEntityType || 'dimension',
+          });
+          await refreshFromRecord(record);
+        } catch (err) {
+          setError(errMessage(err, 'Could not create the new entity'));
+        } finally {
+          setBusyEntity(null);
+        }
+      }
     }
   };
 
@@ -326,6 +386,7 @@ export default function BindingWorkflowPage() {
         const record = await bindingPhaseApi.confirm(session.template_id, session.signature, {
           entity_id: p.entityId,
           action: 'confirm',
+          force_transfer: true,
         });
         await refreshFromRecord(record);
       } catch (err) {
@@ -760,8 +821,8 @@ export default function BindingWorkflowPage() {
 
   const workbenchModes: Array<{ id: WorkbenchMode; label: string; hint: string; status: 'Ready' | 'Review' | 'Blocked' | 'Open' }> = [
     { id: 'overview', label: 'Overview', hint: phaseHint('overview', 'Session health'), status: phaseStatus('overview', 'Open') },
-    { id: 'entities', label: 'Entity matching', hint: phaseHint('entities', `${remaining} pending`), status: phaseStatus('entities', remaining === 0 ? 'Ready' : 'Review') },
-    { id: 'questions', label: 'Question plan', hint: phaseHint('questions', currentReviewedPlan ? `${currentReviewedPlan.questionCount} questions` : 'Finalize first'), status: phaseStatus('questions', currentReviewedPlan ? 'Ready' : allDecided ? 'Review' : 'Blocked') },
+    { id: 'entities', label: 'Dataset mapping', hint: phaseHint('entities', `${undecidedColumnCount} columns pending`), status: phaseStatus('entities', allColumnsDecided ? 'Ready' : remaining === 0 ? 'Review' : 'Review') },
+    { id: 'questions', label: 'Question plan', hint: phaseHint('questions', currentReviewedPlan ? `${currentReviewedPlan.questionCount} questions` : 'Finalize first'), status: phaseStatus('questions', currentReviewedPlan ? 'Ready' : allColumnsDecided ? 'Review' : 'Blocked') },
     { id: 'columns', label: 'Dataset columns', hint: phaseHint('columns', `${session?.dataset_ast.columns.length ?? 0} columns`), status: phaseStatus('columns', ownershipStats.conflicts > 0 ? 'Blocked' : 'Ready') },
     { id: 'issues', label: 'Issues', hint: phaseHint('issues', `${workspaceIssues.length} open`), status: phaseStatus('issues', workspaceIssues.length ? 'Review' : 'Ready') },
     { id: 'handoff', label: 'S3.5 handoff', hint: handoffHint, status: handoffStatus },
@@ -986,18 +1047,18 @@ export default function BindingWorkflowPage() {
           <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/5 via-surface-card to-surface-card p-4 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Entity matching</p>
-                <h2 className="mt-1 text-lg font-semibold text-text">Review template entities against dataset columns</h2>
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Dataset mapping</p>
+                <h2 className="mt-1 text-lg font-semibold text-text">Map dataset columns to report entities</h2>
                 <p className="mt-1 max-w-3xl text-sm text-text-muted">
-                  {remaining > 0
-                    ? `${remaining} of ${proposals.length} entities still need officer review. Confirm confident matches, override weak ones, and add missing entities without leaving the matrix.`
-                    : 'All entity bindings have decisions. You can still reopen any match before the coverage gate.'}
+                  {undecidedColumnCount > 0
+                    ? `${undecidedColumnCount} of ${totalColumns} columns still need a decision. Confirm matches, ignore metadata columns, or create new entities.`
+                    : 'All columns have decisions. You can still adjust mappings before the coverage gate.'}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Badge variant={remaining === 0 ? 'success' : 'warning'}>{decidedCount}/{proposals.length} reviewed</Badge>
-                  <Badge variant="muted">{session.dataset_ast.columns.length} profiled columns</Badge>
+                  <Badge variant={undecidedColumnCount === 0 ? 'success' : 'warning'}>{decidedColumnCount}/{totalColumns} columns decided</Badge>
+                  <Badge variant={remaining === 0 ? 'success' : 'muted'}>{decidedCount}/{proposals.length} entities confirmed</Badge>
                   <Badge variant={ownershipStats.conflicts > 0 ? 'danger' : 'success'}>
-                    {ownershipStats.conflicts > 0 ? `${ownershipStats.conflicts} allocation conflicts` : 'Allocation calm'}
+                    {ownershipStats.conflicts > 0 ? `${ownershipStats.conflicts} allocation conflicts` : 'No conflicts'}
                   </Badge>
                 </div>
               </div>
@@ -1084,7 +1145,7 @@ export default function BindingWorkflowPage() {
               </p>
             </div>
             {!currentReviewedPlan && (
-              <Button onClick={onFinalize} disabled={finalizing || !allDecided}>
+              <Button onClick={onFinalize} disabled={finalizing || !allColumnsDecided}>
                 {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
                 Build reviewed plan
               </Button>
@@ -1519,9 +1580,9 @@ export default function BindingWorkflowPage() {
           <main className="min-w-0 pt-4">{renderWorkbenchPanel()}</main>
           <div className="mt-4 flex flex-wrap justify-end gap-2">
             <Button variant="outline" size="sm" onClick={resetAll}><ArrowLeft className="h-4 w-4" /> Start over</Button>
-            <Button size="sm" onClick={onFinalize} disabled={finalizing || !allDecided}>
+            <Button size="sm" onClick={onFinalize} disabled={finalizing || !allColumnsDecided}>
               {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-              Coverage gate
+              Coverage gate{undecidedColumnCount > 0 ? ` (${undecidedColumnCount} columns pending)` : ''}
             </Button>
           </div>
         </div>
@@ -1679,6 +1740,16 @@ export default function BindingWorkflowPage() {
         {(step === 1 || step === 2) && session && bindingWorkbench}
 
       </div>
+
+      {/* Conflict resolution modal */}
+      <ConflictResolutionModal
+        open={!!conflictModal}
+        entityId={conflictModal?.entityId ?? ''}
+        entityName={conflictModal?.entityName ?? ''}
+        conflicts={conflictModal?.conflicts ?? []}
+        onResolve={onResolveConflict}
+        onCancel={() => setConflictModal(null)}
+      />
     </>
   );
 }
