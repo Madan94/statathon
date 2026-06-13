@@ -56,7 +56,7 @@ export default function AppShell({ children, breadcrumbs }: AppShellProps) {
           </div>
         </>
       )}
-      <div className="flex min-h-screen min-w-0 flex-col md:pl-20">
+      <div className="flex min-h-screen min-w-0 flex-col md:pl-64">
         <TopBar breadcrumbs={breadcrumbs} onMenuClick={() => setMobileOpen(true)} />
         <main className="flex-1 px-4 md:px-8 py-6 max-w-7xl w-full mx-auto">
           <SessionGuard>{children}</SessionGuard>
