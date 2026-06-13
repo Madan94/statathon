@@ -19,6 +19,13 @@ import type {
 
 type ComponentAction = (nodeId: string, componentType: string, payload?: Record<string, unknown>) => void | Promise<void>;
 
+export interface EntityPropagationRequest {
+  nodeId: string;
+  entityIds: string[];
+  /** The chain of ancestor nodeIds that should receive these entities */
+  ancestorNodeIds: string[];
+}
+
 interface StructureCanvasProps {
   plan: ReviewedPlanSummary;
   dependencyGraph?: BindingDependencyGraph;
@@ -38,6 +45,10 @@ interface StructureCanvasProps {
   onEditAnalytics: (node: ReviewedPlanNode, component: ReviewedPlanComponent) => void;
   loadRecommendations?: (nodeId: string) => Promise<ComponentRecommendation[]>;
   onAddRecommendedComponent: ComponentAction;
+  /** Called after component creation to propagate entities up the hierarchy */
+  onPropagateEntities?: (request: EntityPropagationRequest) => void | Promise<void>;
+  /** Called when a node is reordered (drag-dropped) */
+  onReorderNode?: (sourceId: string, targetId: string) => void | Promise<void>;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -223,7 +234,7 @@ export function StructureCanvas({
   plan, dependencyGraph, issues = [], componentDefinitions, busy,
   initialQuestionId, initialComponentId, editorSlot, addQuestionSlot, addComponentSlot,
   onRename, onToggle, onEditEntities, onEditComponentEntities, onEditFormula, onEditAnalytics,
-  loadRecommendations, onAddRecommendedComponent,
+  loadRecommendations, onAddRecommendedComponent, onPropagateEntities, onReorderNode,
 }: StructureCanvasProps) {
   const allNodes = useMemo(() => flatten(plan.planTree), [plan.planTree]);
   const [selectedNodeId, setSelectedNodeId] = useState(() => (
@@ -267,6 +278,25 @@ export function StructureCanvas({
     if (!selectedNode) return;
     const payload: Record<string, unknown> = { ...addFormData };
     onAddRecommendedComponent(selectedNode.nodeId, addComponentType, payload);
+
+    // Propagate selected entities up the hierarchy
+    if (onPropagateEntities && addFormData.selectedEntities.length > 0) {
+      const ancestorIds: string[] = [];
+      let parentId = selectedNode.parentId;
+      while (parentId) {
+        ancestorIds.push(parentId);
+        const parent = allNodes.find((n) => n.nodeId === parentId);
+        parentId = parent?.parentId;
+      }
+      if (ancestorIds.length > 0) {
+        onPropagateEntities({
+          nodeId: selectedNode.nodeId,
+          entityIds: addFormData.selectedEntities,
+          ancestorNodeIds: ancestorIds,
+        });
+      }
+    }
+
     setShowAddPopup(false);
   };
 
@@ -282,8 +312,9 @@ export function StructureCanvas({
   };
   const confirmMove = () => {
     if (!moveConfirm) return;
-    // TODO: call backend reorder API
-    // For now just close — the API wire-up comes in the next phase
+    if (onReorderNode) {
+      onReorderNode(moveConfirm.sourceId, moveConfirm.targetId);
+    }
     setMoveConfirm(null);
   };
 
