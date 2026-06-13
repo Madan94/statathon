@@ -1477,35 +1477,131 @@ export default function BindingWorkflowPage() {
     }
 
     if (workbenchMode === 'issues') {
+      // Group issues by severity and target
+      const errorIssues = workspaceIssues.filter((i) => i.severity === 'error' || i.severity === 'danger');
+      const warningIssues = workspaceIssues.filter((i) => i.severity === 'warn' || i.severity === 'warning');
+      const infoIssues = workspaceIssues.filter((i) => i.severity === 'info' || (!i.severity || i.severity === 'note'));
+      const entityIssues = workspaceIssues.filter((i) => i.entityId);
+      const questionIssues = workspaceIssues.filter((i) => i.questionId);
+      const columnIssues = workspaceIssues.filter((i) => i.column && !i.entityId);
+
+      const renderIssueCard = (issue: BindingWorkspaceIssue, index: number) => {
+        const isError = issue.severity === 'error' || issue.severity === 'danger';
+        const isWarning = issue.severity === 'warn' || issue.severity === 'warning';
+        return (
+          <div
+            key={issue.issueId || `${issue.code || 'issue'}-${index}`}
+            className={`rounded-lg border px-4 py-3 ${isError ? 'border-danger/30 bg-danger/5' : isWarning ? 'border-warning/30 bg-warning/5' : 'border-border bg-surface'}`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={isError ? 'danger' : isWarning ? 'warning' : 'muted'} className="text-[10px]">
+                    {issue.code || issue.severity || 'INFO'}
+                  </Badge>
+                  {issue.entityId && (
+                    <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">{issue.entityId}</span>
+                  )}
+                  {issue.questionId && (
+                    <span className="rounded bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-accent">{issue.questionId}</span>
+                  )}
+                  {issue.column && (
+                    <span className="rounded bg-border px-1.5 py-0.5 font-mono text-[10px] text-text-muted">{issue.column}</span>
+                  )}
+                </div>
+                <p className="mt-1.5 text-sm text-text">{issue.message}</p>
+                {/* Actionable hint based on issue type */}
+                <p className="mt-1 text-xs text-text-muted italic">
+                  {issue.code === 'ENTITY_NEEDS_DECISION' ? 'Go to Dataset Mapping and confirm or reject this entity.' :
+                   issue.code === 'COLUMN_NEEDS_REVIEW' ? 'Go to Dataset Mapping and assign a lifecycle decision to this column.' :
+                   issue.code === 'COVERAGE_ISSUE' ? 'Review the Question Plan — this question may need entity adjustments.' :
+                   issue.code === 'QUESTION_BLOCKED' ? 'A required entity is missing or rejected. Check entity bindings.' :
+                   issue.code === 'COMPONENT_INVALID' ? 'This component has invalid configuration. Edit it in the Question Plan.' :
+                   issue.entityId ? 'Navigate to Dataset Mapping to resolve this entity binding.' :
+                   issue.questionId ? 'Navigate to Question Plan to review this question.' :
+                   'Review the affected area to resolve this issue.'}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={`shrink-0 text-xs ${isError ? 'border-danger text-danger hover:bg-danger/10' : ''}`}
+                onClick={() => focusIssue(issue)}
+              >
+                {issue.entityId ? 'Fix binding' : issue.questionId ? 'Fix question' : issue.column ? 'Fix column' : 'View'}
+              </Button>
+            </div>
+          </div>
+        );
+      };
+
       return (
-        <div className="space-y-4">
+        <div className="space-y-5">
+          {/* Summary header */}
+          <div className="rounded-2xl border border-border bg-gradient-to-br from-surface-card via-surface to-surface-card p-4 shadow-sm">
+            <h2 className="text-lg font-semibold text-text">Workspace Issues</h2>
+            <p className="mt-1 text-sm text-text-muted">
+              {workspaceIssues.length === 0 ? 'No issues found — the binding session is healthy.' :
+               `${workspaceIssues.length} issue${workspaceIssues.length > 1 ? 's' : ''} found. ${errorIssues.length > 0 ? `${errorIssues.length} blocking error${errorIssues.length > 1 ? 's' : ''} must be resolved before generation.` : 'No blocking errors — you can proceed to generation.'}`}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <div className={`rounded-lg px-3 py-1.5 text-xs ${errorIssues.length > 0 ? 'border border-danger/30 bg-danger/5 text-danger' : 'border border-border bg-surface text-text-muted'}`}>
+                <span className="font-semibold">{errorIssues.length}</span> errors
+              </div>
+              <div className={`rounded-lg px-3 py-1.5 text-xs ${warningIssues.length > 0 ? 'border border-warning/30 bg-warning/5 text-warning' : 'border border-border bg-surface text-text-muted'}`}>
+                <span className="font-semibold">{warningIssues.length}</span> warnings
+              </div>
+              <div className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text-muted">
+                <span className="font-semibold">{infoIssues.length}</span> info
+              </div>
+              {entityIssues.length > 0 && <div className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text-muted"><span className="font-semibold">{entityIssues.length}</span> entity</div>}
+              {questionIssues.length > 0 && <div className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text-muted"><span className="font-semibold">{questionIssues.length}</span> question</div>}
+              {columnIssues.length > 0 && <div className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text-muted"><span className="font-semibold">{columnIssues.length}</span> column</div>}
+            </div>
+          </div>
+
           {result && (
             <CoveragePanel coverage={result.coverage} questionBindings={result.question_bindings} hasErrors={result.has_errors} />
           )}
-          <Card title="Workspace issues" description="Open blockers, unresolved entities, and ownership risks.">
+
+          {/* Errors first (blocking) */}
+          {errorIssues.length > 0 && (
             <div className="space-y-2">
-              {workspaceIssues.length === 0 ? (
-                <div className="rounded-lg border border-success/25 bg-success/5 px-3 py-2 text-sm text-text-muted">No workspace issues are currently reported.</div>
-              ) : workspaceIssues.map((issue: BindingWorkspaceIssue, index) => (
-                <div key={issue.issueId || `${issue.code || 'issue'}-${issue.entityId || issue.column || index}`} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant={issue.severity === 'error' || issue.severity === 'danger' ? 'danger' : issue.severity === 'warn' || issue.severity === 'warning' ? 'warning' : 'muted'}>
-                        {issue.code || issue.severity || 'ISSUE'}
-                      </Badge>
-                      {issue.entityId && <span className="font-mono text-xs text-text-muted">{issue.entityId}</span>}
-                      {issue.questionId && <span className="font-mono text-xs text-text-muted">{issue.questionId}</span>}
-                      {issue.column && <span className="font-mono text-xs text-text-muted">{issue.column}</span>}
-                    </div>
-                    <Button type="button" variant="outline" size="sm" onClick={() => focusIssue(issue)}>
-                      Go fix
-                    </Button>
-                  </div>
-                  <p className="mt-1 text-text-muted">{issue.message}</p>
-                </div>
-              ))}
+              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-danger">
+                <AlertCircle className="h-3.5 w-3.5" /> Blocking errors — must resolve before generation
+              </p>
+              {errorIssues.map((issue, i) => renderIssueCard(issue, i))}
             </div>
-          </Card>
+          )}
+
+          {/* Warnings */}
+          {warningIssues.length > 0 && (
+            <div className="space-y-2">
+              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-warning">
+                <AlertTriangle className="h-3.5 w-3.5" /> Warnings — review recommended
+              </p>
+              {warningIssues.map((issue, i) => renderIssueCard(issue, i + errorIssues.length))}
+            </div>
+          )}
+
+          {/* Info */}
+          {infoIssues.length > 0 && (
+            <div className="space-y-2">
+              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                <Info className="h-3.5 w-3.5" /> Information
+              </p>
+              {infoIssues.map((issue, i) => renderIssueCard(issue, i + errorIssues.length + warningIssues.length))}
+            </div>
+          )}
+
+          {workspaceIssues.length === 0 && (
+            <div className="rounded-xl border border-success/25 bg-success/5 p-6 text-center">
+              <CheckCircle2 className="mx-auto h-8 w-8 text-success" />
+              <p className="mt-2 text-sm font-semibold text-text">All clear</p>
+              <p className="mt-1 text-xs text-text-muted">No issues detected. You can proceed to the S3.5 handoff.</p>
+            </div>
+          )}
         </div>
       );
     }
