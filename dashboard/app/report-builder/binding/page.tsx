@@ -1153,27 +1153,23 @@ export default function BindingWorkflowPage() {
     if (workbenchMode === 'entities') {
       return (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/5 via-surface-card to-surface-card p-4 shadow-sm">
+          <div className="rounded-xl border border-border bg-surface px-4 py-4">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Dataset mapping</p>
-                <h2 className="mt-1 text-lg font-semibold text-text">Map dataset columns to report entities</h2>
-                <p className="mt-1 max-w-3xl text-sm text-text-muted">
+                <p className="text-sm font-semibold text-text">
                   {undecidedColumnCount > 0
-                    ? `${undecidedColumnCount} of ${session.dataset_ast.columns.length} columns still need a decision. Confirm matches, ignore metadata columns, or create new entities.`
-                    : 'All columns have decisions. You can still adjust mappings before the coverage gate.'}
+                    ? `${undecidedColumnCount} of ${session.dataset_ast.columns.length} columns need decisions`
+                    : 'All columns mapped successfully'}
                 </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Badge variant={undecidedColumnCount === 0 ? 'success' : 'warning'}>{decidedColumnCount}/{session.dataset_ast.columns.length} columns decided</Badge>
-                  <Badge variant={remaining === 0 ? 'success' : 'muted'}>{decidedCount}/{proposals.length} entities confirmed</Badge>
-                  <Badge variant={ownershipStats.conflicts > 0 ? 'danger' : 'success'}>
-                    {ownershipStats.conflicts > 0 ? `${ownershipStats.conflicts} allocation conflicts` : 'No conflicts'}
-                  </Badge>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Badge variant={undecidedColumnCount === 0 ? 'success' : 'warning'}>{decidedColumnCount}/{session.dataset_ast.columns.length} decided</Badge>
+                  <Badge variant={remaining === 0 ? 'success' : 'muted'}>{decidedCount}/{proposals.length} confirmed</Badge>
+                  {ownershipStats.conflicts > 0 && <Badge variant="danger">{ownershipStats.conflicts} conflicts</Badge>}
                 </div>
               </div>
               <div className="relative flex shrink-0 items-center gap-2">
                 <Button variant="outline" size="sm" onClick={confirmAllRemaining} disabled={!!busyEntity || remaining === 0}>
-                  <Sparkles className="h-4 w-4" /> Confirm all proposed
+                  <Sparkles className="h-4 w-4" /> Confirm all
                 </Button>
                 <div className="relative">
                   <Button
