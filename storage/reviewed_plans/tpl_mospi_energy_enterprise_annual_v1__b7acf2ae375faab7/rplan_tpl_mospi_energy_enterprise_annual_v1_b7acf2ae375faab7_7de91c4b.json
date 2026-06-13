@@ -721,10 +721,37 @@
                       "readiness": "executable"
                     }
                   ],
-                  "readiness": "unknown",
+                  "readiness": "executable",
                   "children": [],
                   "parentId": "section_coal_state",
                   "questionId": "q_coal_state_01"
+                },
+                {
+                  "nodeId": "node_q_manual_how",
+                  "nodeType": "question",
+                  "title": "how",
+                  "order": 2,
+                  "source": "manual",
+                  "enabled": true,
+                  "requiredEntities": [],
+                  "components": [
+                    {
+                      "componentId": "q_manual_how_component_1",
+                      "componentType": "narrative",
+                      "questionId": "q_manual_how",
+                      "source": "manual",
+                      "requiredEntities": [],
+                      "analyticsSpec": {},
+                      "formulaSpec": {},
+                      "answerStructure": {},
+                      "slotIds": [],
+                      "readiness": "draft"
+                    }
+                  ],
+                  "readiness": "draft",
+                  "children": [],
+                  "parentId": "section_coal_state",
+                  "questionId": "q_manual_how"
                 }
               ],
               "parentId": "chapter_coal_lignite"
@@ -6277,41 +6304,23 @@
     {
       "event": "reviewed_plan_fast_path_created",
       "source": "binding.finalize",
-      "timestamp": 1781348627.3918252
+      "timestamp": 1781351832.7052946
+    },
+    {
+      "event": "reviewed_plan_question_added",
+      "parentNodeId": "section_coal_state",
+      "nodeId": "node_q_manual_how",
+      "timestamp": 1781352021.987679
     },
     {
       "event": "reviewed_plan_node_patched",
-      "nodeId": "node_q_coal_state_01",
+      "nodeId": "topic_conventional_reserves",
       "changes": {
-        "enabled": false
+        "title": "Conventional Energy Reserves"
       },
-      "timestamp": 1781348789.7315712
-    },
-    {
-      "event": "reviewed_plan_node_patched",
-      "nodeId": "node_q_coal_state_01",
-      "changes": {
-        "enabled": true
-      },
-      "timestamp": 1781348818.882417
-    },
-    {
-      "event": "reviewed_plan_node_patched",
-      "nodeId": "node_q_coal_state_01",
-      "changes": {
-        "enabled": false
-      },
-      "timestamp": 1781348822.4963856
-    },
-    {
-      "event": "reviewed_plan_node_patched",
-      "nodeId": "node_q_coal_state_01",
-      "changes": {
-        "enabled": true
-      },
-      "timestamp": 1781348825.2290373
+      "timestamp": 1781352164.9698923
     }
   ],
-  "createdAt": 1781348627.3918371,
-  "updatedAt": 1781348825.2300062
+  "createdAt": 1781351832.7052987,
+  "updatedAt": 1781352164.976704
 }
