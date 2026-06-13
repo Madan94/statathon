@@ -35,7 +35,7 @@ import {
 } from '@/lib/api';
 
 type Decision = EntityDecision;
-type WorkbenchMode = 'overview' | 'entities' | 'questions' | 'columns' | 'issues' | 'handoff';
+type WorkbenchMode = 'overview' | 'dataset' | 'entities' | 'questions' | 'issues' | 'handoff';
 
 const STEPS = [
   { id: 'upload', label: 'Upload dataset', hint: 'CSV + template' },
@@ -861,7 +861,7 @@ export default function BindingWorkflowPage() {
   const focusIssue = (issue: BindingWorkspaceIssue) => {
     setFocusedQuestionId(issue.questionId || null);
     setFocusedComponentId(issue.componentId || null);
-    if (issue.targetMode && ['overview', 'entities', 'questions', 'columns', 'issues', 'handoff'].includes(issue.targetMode)) {
+    if (issue.targetMode && ['overview', 'dataset', 'entities', 'questions', 'issues', 'handoff'].includes(issue.targetMode)) {
       setWorkbenchMode(issue.targetMode as WorkbenchMode);
       return;
     }
@@ -874,7 +874,7 @@ export default function BindingWorkflowPage() {
       return;
     }
     if (issue.column) {
-      setWorkbenchMode('columns');
+      setWorkbenchMode('entities');
       return;
     }
     setWorkbenchMode('issues');
@@ -932,9 +932,9 @@ export default function BindingWorkflowPage() {
 
   const workbenchModes: Array<{ id: WorkbenchMode; label: string; hint: string; status: 'Ready' | 'Review' | 'Blocked' | 'Open' }> = [
     { id: 'overview', label: 'Overview', hint: phaseHint('overview', 'Session health'), status: phaseStatus('overview', 'Open') },
+    { id: 'dataset', label: 'Dataset profile', hint: phaseHint('dataset', `${session?.dataset_ast.columns.length ?? 0} columns profiled`), status: 'Ready' },
     { id: 'entities', label: 'Dataset mapping', hint: phaseHint('entities', `${undecidedColumnCount} columns pending`), status: phaseStatus('entities', allColumnsDecided ? 'Ready' : remaining === 0 ? 'Review' : 'Review') },
     { id: 'questions', label: 'Question plan', hint: phaseHint('questions', currentReviewedPlan ? `${currentReviewedPlan.questionCount} questions` : 'Finalize first'), status: phaseStatus('questions', currentReviewedPlan ? 'Ready' : allColumnsDecided ? 'Review' : 'Blocked') },
-    { id: 'columns', label: 'Dataset columns', hint: phaseHint('columns', `${session?.dataset_ast.columns.length ?? 0} columns`), status: phaseStatus('columns', ownershipStats.conflicts > 0 ? 'Blocked' : 'Ready') },
     { id: 'issues', label: 'Issues', hint: phaseHint('issues', `${workspaceIssues.length} open`), status: phaseStatus('issues', workspaceIssues.length ? 'Review' : 'Ready') },
     { id: 'handoff', label: 'S3.5 handoff', hint: handoffHint, status: handoffStatus },
   ];
@@ -1382,136 +1382,96 @@ export default function BindingWorkflowPage() {
       );
     }
 
-    if (workbenchMode === 'columns') {
-      const columnDecisionsMap = session.column_decisions ?? {};
-      const undecidedColumns = session.dataset_ast.columns.filter((col) => !columnDecisionsMap[col.name]);
-      const decidedColumns = session.dataset_ast.columns.filter((col) => columnDecisionsMap[col.name]);
-      const conflictColumns = (session.column_ownership.conflicts ?? []).map((c) => c.column);
-      const LIFECYCLE_LABELS: Record<string, string> = {
-        matched: 'Matched',
-        added_as_entity: 'Added as entity',
-        ignored_metadata: 'Ignored (metadata)',
-        ignored_duplicate: 'Ignored (duplicate)',
-        ignored_out_of_scope: 'Ignored (scope)',
-        needs_question: 'Needs question',
-      };
+    if (workbenchMode === 'dataset') {
+      const cols = session.dataset_ast.columns;
+      const measures = cols.filter((c) => c.role === 'measure');
+      const dimensions = cols.filter((c) => c.role === 'dimension');
+      const timeColumns = cols.filter((c) => c.role === 'time');
+      const metaCols = cols.filter((c) => c.role === 'metadata' || c.role === 'id');
       return (
         <div className="space-y-5">
-          {/* Summary bar */}
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <div className="rounded-xl border border-border bg-surface p-3 text-sm">
-              <p className="text-[11px] uppercase text-text-muted">Total columns</p>
-              <p className="mt-1 font-semibold text-text">{session.dataset_ast.columns.length}</p>
-            </div>
-            <div className="rounded-xl border border-success/25 bg-success/5 p-3 text-sm">
-              <p className="text-[11px] uppercase text-text-muted">Reviewed</p>
-              <p className="mt-1 font-semibold text-text">{decidedColumns.length}</p>
-            </div>
-            <div className="rounded-xl border border-warning/25 bg-warning/5 p-3 text-sm">
-              <p className="text-[11px] uppercase text-text-muted">Undecided</p>
-              <p className="mt-1 font-semibold text-text">{undecidedColumns.length}</p>
-            </div>
-            <div className={`rounded-xl border p-3 text-sm ${conflictColumns.length > 0 ? 'border-danger/25 bg-danger/5' : 'border-border bg-surface'}`}>
-              <p className="text-[11px] uppercase text-text-muted">Ownership conflicts</p>
-              <p className="mt-1 font-semibold text-text">{conflictColumns.length}</p>
+          {/* File header */}
+          <div className="rounded-2xl border border-border bg-gradient-to-br from-surface-card via-surface to-surface-card p-5 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-text">{session.dataset_id}.csv</h3>
+                <p className="mt-1 text-sm text-text-muted">Profiled dataset · {session.dataset_ast.rowCount} rows × {cols.length} columns</p>
+                <p className="mt-0.5 text-xs text-text-muted">Archetype: {session.dataset_ast.archetype || 'generic'} · Source: {session.dataset_ast.sourceFile || 'uploaded'}</p>
+              </div>
+              <div className="grid grid-cols-4 gap-3 text-center">
+                <div className="rounded-lg border border-border bg-surface px-3 py-2">
+                  <p className="text-lg font-semibold text-text">{dimensions.length}</p>
+                  <p className="text-[10px] uppercase text-text-muted">Dimensions</p>
+                </div>
+                <div className="rounded-lg border border-success/25 bg-success/5 px-3 py-2">
+                  <p className="text-lg font-semibold text-text">{measures.length}</p>
+                  <p className="text-[10px] uppercase text-text-muted">Measures</p>
+                </div>
+                <div className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2">
+                  <p className="text-lg font-semibold text-text">{timeColumns.length}</p>
+                  <p className="text-[10px] uppercase text-text-muted">Time</p>
+                </div>
+                <div className="rounded-lg border border-border bg-surface px-3 py-2">
+                  <p className="text-lg font-semibold text-text">{metaCols.length}</p>
+                  <p className="text-[10px] uppercase text-text-muted">Metadata</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-[1.3fr_1fr]">
-            {/* Column lifecycle table */}
-            <Card title="Column lifecycle decisions" description="Every dataset column must have a decision before the coverage gate.">
-              <div className="max-h-[34rem] space-y-2 overflow-auto pr-1">
-                {undecidedColumns.length > 0 && (
-                  <div className="mb-3">
-                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Undecided</p>
-                    {undecidedColumns.map((col) => {
-                      const ownership = session.column_ownership.columns?.[col.name];
-                      const hasOwner = (ownership?.owners?.length ?? 0) > 0;
-                      const hasConflict = conflictColumns.includes(col.name);
-                      return (
-                        <div key={col.name} className={`mb-2 rounded-lg border px-3 py-2 text-sm ${hasConflict ? 'border-danger/30 bg-danger/5' : 'border-border bg-surface'}`}>
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-text">{col.name}</span>
-                              <span className="text-[10px] text-text-muted">{col.role} · {col.dtype}</span>
-                              {hasConflict && <Badge variant="danger" className="text-[10px]">Conflict</Badge>}
-                              {hasOwner && !hasConflict && <Badge variant="warning" className="text-[10px]">Claimed</Badge>}
-                            </div>
-                            <div className="flex gap-1">
-                              {(['ignored_metadata', 'ignored_out_of_scope', 'needs_question'] as const).map((s) => (
-                                <Button
-                                  key={s}
-                                  type="button"
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 px-1.5 text-[10px] text-text-muted"
-                                  onClick={() => onColumnDecide({ column: col.name, status: s })}
-                                >
-                                  {LIFECYCLE_LABELS[s]}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-                          {(col.sampleValues?.length ?? 0) > 0 && (
-                            <p className="mt-1 text-[10px] text-text-muted">
-                              e.g. {col.sampleValues.slice(0, 4).map(String).join(', ')}
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
+          {/* Column groups */}
+          {session.dataset_ast.columnGroups.length > 0 && (
+            <Card title="Column groups" description="Detected structural patterns in the dataset columns.">
+              <div className="flex flex-wrap gap-2">
+                {session.dataset_ast.columnGroups.map((g) => (
+                  <div key={g.stem} className="rounded-lg border border-border bg-surface px-3 py-2 text-xs">
+                    <p className="font-semibold text-text">{g.stem} <Badge variant="muted" className="ml-1 text-[8px]">{g.kind}</Badge></p>
+                    <p className="mt-0.5 text-text-muted">{g.members.join(', ')}</p>
                   </div>
-                )}
-                {decidedColumns.length > 0 && (
-                  <div>
-                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted">Decided</p>
-                    {decidedColumns.map((col) => {
-                      const dec = columnDecisionsMap[col.name];
-                      return (
-                        <div key={col.name} className="mb-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-medium text-text">{col.name}</span>
-                            <div className="flex items-center gap-2">
-                              <Badge variant={dec.status === 'matched' || dec.status === 'added_as_entity' ? 'success' : dec.status === 'needs_question' ? 'warning' : 'muted'} className="text-[10px]">
-                                {LIFECYCLE_LABELS[dec.status] ?? dec.status}
-                              </Badge>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="ghost"
-                                className="h-5 px-1 text-[10px] text-text-muted"
-                                onClick={() => onColumnDecide({ column: col.name, status: 'matched' })}
-                              >
-                                Change
-                              </Button>
-                            </div>
-                          </div>
-                          {dec.note && <p className="mt-0.5 text-[10px] text-text-muted">{dec.note}</p>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                ))}
               </div>
             </Card>
+          )}
 
-            {/* Ownership panel */}
-            <div className="space-y-3">
-              <DatasetProfileCard dataset={session.dataset_ast} />
-              {conflictColumns.length > 0 && (
-                <Card title="Ownership conflicts" description="These columns have multiple exclusive owners — resolve in Entity matching.">
-                  <div className="space-y-2">
-                    {(session.column_ownership.conflicts ?? []).map((conflict) => (
-                      <div key={conflict.column} className="rounded-lg border border-danger/25 bg-danger/5 px-3 py-2 text-xs">
-                        <p className="font-semibold text-text">{conflict.column}</p>
-                        <p className="text-text-muted">{conflict.message}</p>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              )}
+          {/* Full column table */}
+          <Card title="All columns" description={`${cols.length} profiled columns with role, type, cardinality, and null analysis.`}>
+            <div className="overflow-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border text-left text-[10px] uppercase text-text-muted">
+                    <th className="px-3 py-2">Column</th>
+                    <th className="px-3 py-2">Role</th>
+                    <th className="px-3 py-2">Type</th>
+                    <th className="px-3 py-2 text-right">Cardinality</th>
+                    <th className="px-3 py-2 text-right">Null %</th>
+                    <th className="px-3 py-2">Sample values</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {cols.map((col) => (
+                    <tr key={col.name} className="hover:bg-surface-card/50">
+                      <td className="px-3 py-2 font-medium text-text">{col.name}</td>
+                      <td className="px-3 py-2">
+                        <Badge variant={col.role === 'measure' ? 'success' : col.role === 'dimension' ? 'warning' : col.role === 'time' ? 'default' : 'muted'} className="text-[9px]">
+                          {col.role}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-2 text-text-muted">{col.dtype}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-text-muted">{col.cardinality}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        <span className={col.nullPct > 0.5 ? 'text-danger' : col.nullPct > 0 ? 'text-warning' : 'text-text-muted'}>
+                          {col.nullPct > 0 ? `${(col.nullPct * 100).toFixed(0)}%` : '—'}
+                        </span>
+                      </td>
+                      <td className="max-w-[12rem] truncate px-3 py-2 text-text-muted">
+                        {(col.sampleValues ?? []).slice(0, 3).map(String).join(', ')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
+          </Card>
         </div>
       );
     }
