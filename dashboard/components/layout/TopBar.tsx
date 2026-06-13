@@ -18,10 +18,32 @@ function autoBreadcrumbs(pathname: string): Crumb[] {
       { label: 'Upload', href: '/upload' },
     ];
   }
-  if (pathname.startsWith('/report-builder')) {
+  if (pathname === '/report/report-ast-generator') {
     return [
       { label: 'Home', href: '/dashboard' },
-      { label: 'Report Builder', href: '/report-builder' },
+      { label: 'Report AST Generator', href: '/report/report-ast-generator' },
+    ];
+  }
+  const astTemplate = pathname.match(/^\/report\/report-ast-generator\/([^/]+)$/);
+  if (astTemplate) {
+    const slug = decodeURIComponent(astTemplate[1]).replace(/-/g, ' ');
+    const title = slug.replace(/\b\w/g, (c) => c.toUpperCase());
+    return [
+      { label: 'Home', href: '/dashboard' },
+      { label: 'Report AST Generator', href: '/report/report-ast-generator' },
+      { label: title },
+    ];
+  }
+  if (pathname === '/report-builder') {
+    return [
+      { label: 'Home', href: '/dashboard' },
+      { label: 'Report AST Generator', href: '/report/report-ast-generator' },
+    ];
+  }
+  if (pathname.startsWith('/report/report-builder') || pathname.startsWith('/report-builder/')) {
+    return [
+      { label: 'Home', href: '/dashboard' },
+      { label: 'Report Builder', href: '/report/report-builder' },
     ];
   }
   if (pathname === '/profile') {

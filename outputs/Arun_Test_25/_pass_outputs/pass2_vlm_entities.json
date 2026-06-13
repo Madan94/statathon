@@ -1,0 +1,214 @@
+{
+  "vlm_success_count": 11,
+  "total_entities": 87,
+  "chart_pages": 2,
+  "pages": [
+    {
+      "page": 0,
+      "vlm_used": true,
+      "structure_type": "title_page",
+      "entities": [
+        "Annual Report",
+        "Government of India",
+        "Ministry of Statistics Programme Implementation",
+        "Khurshid Lal Bhawan, Janpath"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 1,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "CHAPTERS",
+        "ANNEXURES",
+        "Sl.No. 1",
+        "CHAPTERS Introduction",
+        "Page No. 1-9",
+        "Introduction 1-9",
+        "National Sample Survey (NSS) 41-62",
+        "Data Informatics Innovation 79-91",
+        "Administrative Statistics 92-93",
+        "India in United Nations 94-95",
+        "Research and Analysis 96-97",
+        "Support for Statistical Strengthening 98-101",
+        "Eastern Region",
+        "Services as on 1st January 2025",
+        "TABLE OF CONTENTS"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 2,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Statistics an n 15th Octo me Impleme",
+        "(MoSPI) ca e Departm dal agency",
+        "Annual Report 2025-26",
+        "Ministry is at Annexure IIA and IIB.",
+        "Implementation is placed at Annexure"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 3,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Annual Report",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 4,
+      "vlm_used": true,
+      "structure_type": "narrative",
+      "entities": [
+        "Annual Report",
+        "Index of Industrial Production (IIP)",
+        "SDGs",
+        "National Indicator Framework (NIF)",
+        "Sustainable Development Goals (SDGs)",
+        "UNSEEA Framework",
+        "MoSPI",
+        "-12 is f IIP h trial ou",
+        "September 2024 for the same.",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 5,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "Statement",
+        "Gross Domestic Product",
+        "Private Consumption",
+        "Government Consumption",
+        "Fixed Capital Formation",
+        "Changes in Stocks",
+        "Valuables",
+        "Exports",
+        "Imports",
+        "Depreciations",
+        "National Income",
+        "Final Consumption",
+        "Per Capita GDP",
+        "Per Capita GNI",
+        "Per Capita National Income",
+        "Domestic Product",
+        "Expenditure Components",
+        "Share in GDP(%)",
+        "National Product",
+        "Percentage Change"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 6,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "Gross Domestic Product (GDP)",
+        "Domestic Product",
+        "Private Final Consumption Expenditure (PFCE)",
+        "Government Final Consumption",
+        "Gross Fixed Capital Formation (GFCEF)",
+        "Changes in Stocks (CIS)",
+        "Valuables",
+        "Exports",
+        "Imports",
+        "Discrepancies",
+        "Share of GDP%",
+        "National Product",
+        "Per Capita Income",
+        "National Product and Final Consumption",
+        "Percentage Change\nOver Previous\n2024-25 2025-26",
+        "Expenditure Components",
+        "Share in GDP(%)",
+        "Item Sl. No. Over Previous",
+        "Percentage Change",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 7,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "Industry",
+        "Percentage Change Over\nPrevious Year 2024-25",
+        "Percentage Change Over\nPrevious Year 2025-26",
+        "Percentage Change Over",
+        "Previous Year Industry",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 8,
+      "vlm_used": true,
+      "structure_type": "data_table",
+      "entities": [
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 9,
+      "vlm_used": true,
+      "structure_type": "chart_page",
+      "entities": [
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    },
+    {
+      "page": 10,
+      "vlm_used": true,
+      "structure_type": "chart_page",
+      "entities": [
+        "Composition (%) of Nominal GVA",
+        "Annual Report 2025-26"
+      ],
+      "chart_types": [],
+      "chart_titles": [],
+      "table_title": "",
+      "section_heading": ""
+    }
+  ]
+}

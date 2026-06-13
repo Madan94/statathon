@@ -692,7 +692,7 @@ export default function BindingWorkflowPage() {
   };
 
   const generationHref = executionReady
-    ? `/report-builder?template_id=${encodeURIComponent(executionReady.template_id)}&signature=${encodeURIComponent(session?.signature ?? '')}&binding_ast_id=${encodeURIComponent(executionReady.binding_ast_id)}&execution_status=${encodeURIComponent(executionReady.status)}`
+    ? `/report/report-builder?template_id=${encodeURIComponent(executionReady.template_id)}&signature=${encodeURIComponent(session?.signature ?? '')}&binding_ast_id=${encodeURIComponent(executionReady.binding_ast_id)}&execution_status=${encodeURIComponent(executionReady.status)}`
     : '/report-builder/binding';
 
   useEffect(() => {
@@ -1283,7 +1283,7 @@ export default function BindingWorkflowPage() {
         title="Bind dataset to template"
         description="Map your dataset's columns to the report's expected entities — one confirmation at a time — then check the coverage gate before generating."
         actions={
-          <Link href="/report-builder">
+          <Link href="/report/report-builder">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4" /> Report Builder
             </Button>

@@ -199,7 +199,7 @@ export default function JobCanvasPage() {
     return (
       <>
         <Alert variant="error">{error || 'Job not found'}</Alert>
-        <Button className="mt-4" onClick={() => router.push('/report-builder')}>
+        <Button className="mt-4" onClick={() => router.push('/report/report-builder')}>
           ← Back
         </Button>
       </>
@@ -219,7 +219,7 @@ export default function JobCanvasPage() {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => router.push('/report-builder')}
+              onClick={() => router.push('/report/report-builder')}
             >
               ← Back
             </Button>

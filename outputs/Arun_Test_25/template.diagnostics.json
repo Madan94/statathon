@@ -1,0 +1,64 @@
+{
+  "status": "INVALID",
+  "contractVersion": "template.extraction.v2",
+  "binderReadinessScore": 0.472,
+  "passScores": {},
+  "categoryScores": {
+    "entityHygiene": 0.43,
+    "entityCompleteness": 0.846,
+    "tableSemantics": 0.625,
+    "unitCoverage": 0.615,
+    "questionCompleteness": 0.0,
+    "crossReferenceIntegrity": 0.5,
+    "valueFreeCompliance": 1.0,
+    "chartSemantics": 0.7
+  },
+  "counts": {
+    "entities": 14,
+    "entitiesDropped": 37,
+    "tables": 8,
+    "charts": 1,
+    "figures": 1,
+    "topics": 10
+  },
+  "blockingErrors": [
+    {
+      "severity": "error",
+      "code": "NO_QUESTIONS",
+      "message": "Blueprint has zero questions",
+      "sourcePhase": "E0"
+    }
+  ],
+  "warnings": [
+    {
+      "severity": "warn",
+      "code": "GENERIC_TEMPLATE_NAME",
+      "message": "templateMeta.name is generic — should identify the report",
+      "sourcePhase": "E0"
+    },
+    {
+      "severity": "warn",
+      "code": "GENERIC_DOMAIN",
+      "message": "templateMeta.domain is 'general' — should be specific (energy, labour_force, etc.)",
+      "sourcePhase": "E0"
+    },
+    {
+      "severity": "warn",
+      "code": "MEASURES_MISSING_UNIT",
+      "message": "5 measure entities have no unit",
+      "sourcePhase": "E0"
+    }
+  ],
+  "quarantinedCount": 37,
+  "repairsCount": 2,
+  "binderCompatibility": {
+    "blueprintQAWillPass": false,
+    "expectedResolverConfidence": "medium",
+    "expectedIssues": [
+      "Extraction contract validation failed"
+    ],
+    "recommendation": "invalid"
+  },
+  "runtime": {},
+  "generatedAt": "2026-06-12T08:15:31.200808+00:00"
+}

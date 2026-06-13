@@ -1,0 +1,162 @@
+{
+  "passes": {
+    "pass0_rasterize": {
+      "elapsed_s": 12.6,
+      "images": 11,
+      "text_pages": 11
+    },
+    "pass1_layout": {
+      "elapsed_s": 60.4,
+      "layoutlm_used": true,
+      "pages_with_regions": 11,
+      "total_regions": 36,
+      "toc_entries": 8,
+      "toc_l1_chapters": 3
+    },
+    "pass1_5_section_graph": {
+      "docType": "statistical_annual_report",
+      "title": "Arun Test 25",
+      "sections": 7,
+      "backMatter": 1,
+      "figuresAssociated": 8,
+      "orphanRegions": 0,
+      "sectionList": [
+        {
+          "sectionId": "sg_00",
+          "title": "Annual Report 2025-26",
+          "pageStart": 0,
+          "pageEnd": 0,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 1,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_01",
+          "title": "TABLE OF CONTENTS",
+          "pageStart": 1,
+          "pageEnd": 4,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_03",
+          "title": "Statement 1: First Advance Estimates of Annual GDP for FY 2025-26 and its Expenditure Components (at 2011- 12 Prices)",
+          "pageStart": 5,
+          "pageEnd": 5,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_04",
+          "title": "Statement 2: First Advance Estimates of Annual GDP for FY 2025-26 and its Expenditure Components (at Current Prices)",
+          "pageStart": 6,
+          "pageEnd": 6,
+          "level": 2,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_05",
+          "title": "1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7",
+          "pageStart": 7,
+          "pageEnd": 7,
+          "level": 1,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_06",
+          "title": "2 Secondary Sector 46,46,499 49,31,228 52,57,858 6.1 6.6",
+          "pageStart": 7,
+          "pageEnd": 7,
+          "level": 1,
+          "isBackMatter": false,
+          "figureCount": 0,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_07",
+          "title": "3 Tertiary Sector 88,07,683 94,40,529 1,03,01,349 7.2 9.1",
+          "pageStart": 7,
+          "pageEnd": 10,
+          "level": 1,
+          "isBackMatter": false,
+          "figureCount": 7,
+          "expectedEntities": []
+        },
+        {
+          "sectionId": "sg_02",
+          "title": "Chapter 1 Introduction",
+          "pageStart": 2,
+          "pageEnd": 4,
+          "level": 3,
+          "isBackMatter": true,
+          "figureCount": 0,
+          "expectedEntities": []
+        }
+      ]
+    },
+    "pass2_entities": {
+      "elapsed_s": 53.6,
+      "pages_total": 11,
+      "vlm_success": 11,
+      "vlm_success_rate": 100,
+      "total_entities": 87,
+      "chart_pages_detected": 2,
+      "total_chart_types": 0,
+      "vlm_provider": "qwen",
+      "vlm_fallback_used": true
+    },
+    "pass2_5_kg": {
+      "elapsed_s": 0.0,
+      "entities": 70,
+      "total_entities": 70,
+      "hierarchy_nodes": 70,
+      "table_structures": 8,
+      "chapters": 4,
+      "section_patterns": 7
+    },
+    "pass2_6_classification": {
+      "elapsed_s": 2.5,
+      "measures": 11,
+      "dimensions": 51,
+      "filters": 0,
+      "metadata": 8
+    },
+    "pass2_7_enrichment": {
+      "elapsed_s": 0.1,
+      "ok": true,
+      "with_unit": 10,
+      "with_value_domain": 70,
+      "glossary_terms": 0
+    },
+    "pass3_questions": {
+      "elapsed_s": 45.3,
+      "questions": 12,
+      "topics": 2
+    },
+    "pass4_assembly": {
+      "elapsed_s": 0.0,
+      "paragraphs": 8,
+      "tables": 8,
+      "figures": 1,
+      "charts_detected": 1,
+      "chart_pages": 1,
+      "blueprint_topics": 2,
+      "blueprint_entities": 68
+    },
+    "pass5_gemini": {
+      "elapsed_s": 0.1,
+      "status": "success"
+    }
+  },
+  "total_elapsed": 208.1,
+  "doc_type": "statistical_annual_report"
+}

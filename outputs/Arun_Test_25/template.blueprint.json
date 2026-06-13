@@ -1,0 +1,1182 @@
+{
+  "$schema": "bharatstat/template-blueprint/v1",
+  "_doc": "VALUE-FREE + PROSE-FREE analytic brain. Defines WHAT to compute and HOW to render. Contains NO numbers, NO sentences, NO dataset. Pairs 1:1 with template.ast.json by shared IDs.",
+  "templateMeta": {
+    "templateId": "tpl_arun_test_25_v1",
+    "name": "Document",
+    "domain": "general",
+    "locale": "en-IN",
+    "version": "3.0",
+    "valueFree": true,
+    "proseFree": true,
+    "sourceDocument": "Document"
+  },
+  "entities": [
+    {
+      "entityId": "ent_percentage_changeover_previous2024_25_20",
+      "canonicalName": "Percentage Change\nOver Previous\n2024-25 2025-26",
+      "entityType": "measure",
+      "aliases": [
+        "Percentage",
+        "Percentage_Change\nOver_Previous\n2024-25_2025-26"
+      ],
+      "unit": "percent",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "reported_value",
+      "scope": "indicator",
+      "confidence": 0.85,
+      "isDerived": true
+    },
+    {
+      "entityId": "ent_percentage_change_overprevious_year_2024",
+      "canonicalName": "Percentage Change Over\nPrevious Year 2024-25",
+      "entityType": "measure",
+      "aliases": [
+        "Percentage",
+        "Percentage_Change_Over\nPrevious_Year_2024-25"
+      ],
+      "unit": "percent",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "reported_value",
+      "scope": "indicator",
+      "confidence": 0.85,
+      "isDerived": true
+    },
+    {
+      "entityId": "ent_percentage_change_overprevious_year_2025",
+      "canonicalName": "Percentage Change Over\nPrevious Year 2025-26",
+      "entityType": "measure",
+      "aliases": [
+        "Percentage",
+        "Percentage_Change_Over\nPrevious_Year_2025-26"
+      ],
+      "unit": "percent",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "reported_value",
+      "scope": "indicator",
+      "confidence": 0.85,
+      "isDerived": true
+    },
+    {
+      "entityId": "ent_eastern_region",
+      "canonicalName": "Eastern Region",
+      "entityType": "dimension",
+      "aliases": [
+        "Eastern",
+        "Eastern_Region"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "categorical",
+        "members": "open",
+        "expectedCardinality": 6
+      },
+      "aggregation": null,
+      "scope": "classifier",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_index_of_industrial_production",
+      "canonicalName": "Index of Industrial Production",
+      "entityType": "measure",
+      "aliases": [
+        "Index_of_Industrial_Production"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0
+      },
+      "aggregation": null,
+      "scope": "indicator",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_private_consumption",
+      "canonicalName": "Private Consumption",
+      "entityType": "measure",
+      "aliases": [
+        "Private",
+        "Private_Consumption"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0
+      },
+      "aggregation": null,
+      "scope": "indicator",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_final_consumption",
+      "canonicalName": "Final Consumption",
+      "entityType": "measure",
+      "aliases": [
+        "Final",
+        "Final_Consumption"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0
+      },
+      "aggregation": null,
+      "scope": "indicator",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_expenditure_components",
+      "canonicalName": "Expenditure Components",
+      "entityType": "measure",
+      "aliases": [
+        "Expenditure",
+        "Expenditure_Components"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0
+      },
+      "aggregation": null,
+      "scope": "indicator",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_share_in_gdp",
+      "canonicalName": "Share in GDP",
+      "entityType": "measure",
+      "aliases": [
+        "Share in GDP (%)",
+        "Distribution (%)",
+        "Share_in_GDP"
+      ],
+      "unit": "percent",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "reported_value",
+      "scope": "indicator",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_percentage_change",
+      "canonicalName": "Percentage Change",
+      "entityType": "measure",
+      "aliases": [
+        "Percentage",
+        "Percentage_Change"
+      ],
+      "unit": "percent",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "reported_value",
+      "scope": "indicator",
+      "confidence": 0.85,
+      "isDerived": true
+    },
+    {
+      "entityId": "ent_private_final_consumption_expenditure",
+      "canonicalName": "Private Final Consumption Expenditure",
+      "entityType": "measure",
+      "aliases": [
+        "Private",
+        "Private_Final_Consumption_Expenditure"
+      ],
+      "unit": null,
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0
+      },
+      "aggregation": null,
+      "scope": "indicator",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_share_of_gdppercent",
+      "canonicalName": "Share of GDPPercent",
+      "entityType": "measure",
+      "aliases": [
+        "Share_of_GDPPercent"
+      ],
+      "unit": "percent",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "reported_value",
+      "scope": "indicator",
+      "confidence": 0.85,
+      "isDerived": true
+    },
+    {
+      "entityId": "ent_pci",
+      "canonicalName": "Per Capita Income",
+      "entityType": "measure",
+      "aliases": [
+        "PCI",
+        "Per_Capita_Income"
+      ],
+      "unit": "INR",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0
+      },
+      "aggregation": "sum",
+      "scope": "indicator",
+      "confidence": 0.85
+    },
+    {
+      "entityId": "ent_composition_percent_of_nominal_gva",
+      "canonicalName": "Composition Percent of Nominal GVA",
+      "entityType": "measure",
+      "aliases": [
+        "Composition",
+        "Composition_Percent_of_Nominal_GVA"
+      ],
+      "unit": "percent",
+      "valueDomain": {
+        "kind": "ratio",
+        "min": 0,
+        "max": 100
+      },
+      "aggregation": "reported_value",
+      "scope": "indicator",
+      "confidence": 0.85,
+      "isDerived": true
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_01",
+      "title": "Annual Report 2025-26",
+      "order": 1,
+      "semanticRef": "sec_01",
+      "questions": []
+    },
+    {
+      "topicId": "topic_02",
+      "title": "1 Primary Sector 26,97,294 28,15,689 28,90,621 4.4 2.7",
+      "order": 2,
+      "semanticRef": "sec_02",
+      "questions": []
+    }
+  ],
+  "tableTemplates": [
+    {
+      "tableTemplateId": "tt_2_1",
+      "title": "Sl.No. 1 by CHAPTERS Introduction (3 cols, p.2)",
+      "columnGroups": [],
+      "columns": [
+        {
+          "columnId": "col_chapters_introductio",
+          "header": "CHAPTERS Introduction",
+          "role": "dimension",
+          "entityRef": "ent_018",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_page_no__1_9",
+          "header": "Page No. 1-9",
+          "role": "dimension",
+          "entityRef": "ent_019",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_sl_no__1",
+          "header": "Sl.No. 1",
+          "role": "measure",
+          "entityRef": "ent_017",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        }
+      ],
+      "dimensions": [
+        "col_chapters_introductio",
+        "col_page_no__1_9"
+      ],
+      "measures": [
+        "col_sl_no__1"
+      ],
+      "breakdowns": [],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_2_1_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_page_no__1_9",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_3_1",
+      "title": "Table p.3: 1.1 The Ministry of independent Ministry o Department of Program, Statistics an n 15th Octo me Impleme, d Pro ber 1 ntatio... (8 cols, 40 rows)",
+      "columnGroups": [],
+      "columns": [
+        {
+          "columnId": "col_1_1_the_ministry_of_",
+          "header": "1.1 The Ministry of independent Ministry o Department of Program",
+          "role": "dimension",
+          "entityRef": "ent_032",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_statistics_an_n_15th",
+          "header": "Statistics an n 15th Octo me Impleme",
+          "role": "dimension",
+          "entityRef": "ent_020",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_d_pro_ber_1_ntatio",
+          "header": "d Pro ber 1 ntatio",
+          "role": "dimension",
+          "entityRef": "ent_017",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_gramme_i_999_after_t",
+          "header": "gramme I 999 after t n. The M",
+          "role": "dimension",
+          "entityRef": "",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_mplementation_he_mer",
+          "header": "mplementation he merger of th inistry is the no",
+          "role": "dimension",
+          "entityRef": "ent_022",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col__mospi__ca_e_departm",
+          "header": "(MoSPI) ca e Departm dal agency",
+          "role": "dimension",
+          "entityRef": "ent_021",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_me_into_e_ent_of_sta",
+          "header": "me into e ent of Sta for plann",
+          "role": "dimension",
+          "entityRef": "ent_020",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_xistence_as_an_tisti",
+          "header": "xistence as an tistics and the ing integrated",
+          "role": "measure",
+          "entityRef": "ent_044",
+          "dtype": "number",
+          "unit": "percent",
+          "format": "percent.1",
+          "align": "right"
+        }
+      ],
+      "dimensions": [
+        "col_1_1_the_ministry_of_",
+        "col_statistics_an_n_15th",
+        "col_d_pro_ber_1_ntatio",
+        "col_gramme_i_999_after_t",
+        "col_mplementation_he_mer",
+        "col__mospi__ca_e_departm",
+        "col_me_into_e_ent_of_sta"
+      ],
+      "measures": [
+        "col_xistence_as_an_tisti"
+      ],
+      "breakdowns": [],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_3_1_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_statistics_an_n_15th",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_4_1",
+      "title": "Table p.4: statistics and Ministry's offi, classific cials in i, ations, statistica nternational mee... (8 cols, 44 rows)",
+      "columnGroups": [],
+      "columns": [
+        {
+          "columnId": "col_statistics_and_minis",
+          "header": "statistics and Ministry's offi",
+          "role": "dimension",
+          "entityRef": "ent_020",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_classific_cials_in_i",
+          "header": "classific cials in i",
+          "role": "dimension",
+          "entityRef": "",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_ations__statistica_n",
+          "header": "ations, statistica nternational mee",
+          "role": "dimension",
+          "entityRef": "",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_l_compilations_an_ti",
+          "header": "l compilations an tings on these sub",
+          "role": "dimension",
+          "entityRef": "ent_044",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_d_internat_jects_has",
+          "header": "d internat jects has be",
+          "role": "dimension",
+          "entityRef": "",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_ional_p_en_high",
+          "header": "ional p en high",
+          "role": "dimension",
+          "entityRef": "",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_ractices__the_contri",
+          "header": "ractices. The contri ly appreciated.",
+          "role": "dimension",
+          "entityRef": "",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_bution_of_the_ly_app",
+          "header": "bution of the ly appreciated.",
+          "role": "dimension",
+          "entityRef": "",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        }
+      ],
+      "dimensions": [
+        "col_statistics_and_minis",
+        "col_classific_cials_in_i",
+        "col_ations__statistica_n",
+        "col_l_compilations_an_ti",
+        "col_d_internat_jects_has",
+        "col_ional_p_en_high",
+        "col_ractices__the_contri",
+        "col_bution_of_the_ly_app"
+      ],
+      "measures": [],
+      "breakdowns": [],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_4_1_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_classific_cials_in_i",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_5_1",
+      "title": "Table p.5: 1.10 Econo from si, The Index of mic Statistics x weeks to fo, Industrial Division (E ur weeks,... (11 cols, 46 rows)",
+      "columnGroups": [],
+      "columns": [
+        {
+          "columnId": "col_1_10_econo_from_si",
+          "header": "1.10 Econo from si",
+          "role": "dimension",
+          "entityRef": "",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_the_index_of_mic_sta",
+          "header": "The Index of mic Statistics x weeks to fo",
+          "role": "dimension",
+          "entityRef": "ent_020",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_industrial_division_",
+          "header": "Industrial Division (E ur weeks,",
+          "role": "dimension",
+          "entityRef": "ent_047",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_ip_i__lie",
+          "header": "IP I. lie",
+          "role": "dimension",
+          "entityRef": "",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col___with_base_the_rele",
+          "header": ") with base The release r availabilit",
+          "role": "dimension",
+          "entityRef": "",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_year_2011_timeline_o",
+          "header": "year 2011 timeline o y of indus",
+          "role": "dimension",
+          "entityRef": "ent_026",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col__12_is_f_iip_h_trial",
+          "header": "-12 is f IIP h trial ou",
+          "role": "dimension",
+          "entityRef": "ent_022",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_compiled_as_been_im_",
+          "header": "compiled as been im tput data.",
+          "role": "dimension",
+          "entityRef": "ent_044",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_and_pu_prove_it_is_p",
+          "header": "and pu prove It is p",
+          "role": "dimension",
+          "entityRef": "ent_022",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_blished_by_the_d_by_",
+          "header": "blished by the d by reducing it ublished on the",
+          "role": "dimension",
+          "entityRef": "ent_044",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_production__i_sd__of",
+          "header": "Production (I SD) of MoSP ensuring time",
+          "role": "measure",
+          "entityRef": "ent_047",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        }
+      ],
+      "dimensions": [
+        "col_1_10_econo_from_si",
+        "col_the_index_of_mic_sta",
+        "col_industrial_division_",
+        "col_ip_i__lie",
+        "col___with_base_the_rele",
+        "col_year_2011_timeline_o",
+        "col__12_is_f_iip_h_trial",
+        "col_compiled_as_been_im_",
+        "col_and_pu_prove_it_is_p",
+        "col_blished_by_the_d_by_"
+      ],
+      "measures": [
+        "col_production__i_sd__of"
+      ],
+      "breakdowns": [],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_5_1_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_the_index_of_mic_sta",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_6_1",
+      "title": "Table p.6: Sl. No., Item Domestic Product, 2023-24\n(FRE) Domestic Product... (6 cols, 10 rows)",
+      "columnGroups": [],
+      "columns": [
+        {
+          "columnId": "col_sl__no_",
+          "header": "Sl. No.",
+          "role": "dimension",
+          "entityRef": "ent_083",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_item_domestic_produc",
+          "header": "Item Domestic Product",
+          "role": "dimension",
+          "entityRef": "ent_023",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2023_24__fre__domest",
+          "header": "2023-24\n(FRE) Domestic Product",
+          "role": "dimension",
+          "entityRef": "ent_069",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2024_25__pe__domesti",
+          "header": "2024-25\n(PE) Domestic Product",
+          "role": "dimension",
+          "entityRef": "ent_069",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2025_26__fae__domest",
+          "header": "2025-26\n(FAE) Domestic Product",
+          "role": "dimension",
+          "entityRef": "ent_069",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_percentage_change_ov",
+          "header": "Percentage Change\nOver Previous\nYear\n2024-25 2025-26 Domestic Product",
+          "role": "measure",
+          "entityRef": "ent_069",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        }
+      ],
+      "dimensions": [
+        "col_sl__no_",
+        "col_item_domestic_produc",
+        "col_2023_24__fre__domest",
+        "col_2024_25__pe__domesti",
+        "col_2025_26__fae__domest"
+      ],
+      "measures": [
+        "col_percentage_change_ov"
+      ],
+      "breakdowns": [],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_6_1_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_item_domestic_produc",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_7_1",
+      "title": "Table p.7: Sl. No., Item, 2023-24\n(FRE)... (6 cols, 10 rows)",
+      "columnGroups": [],
+      "columns": [
+        {
+          "columnId": "col_sl__no_",
+          "header": "Sl. No.",
+          "role": "dimension",
+          "entityRef": "ent_083",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_item",
+          "header": "Item",
+          "role": "dimension",
+          "entityRef": "ent_023",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2023_24__fre_",
+          "header": "2023-24\n(FRE)",
+          "role": "dimension",
+          "entityRef": "",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2024_25__pe_",
+          "header": "2024-25\n(PE)",
+          "role": "dimension",
+          "entityRef": "ent_053",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2025_26__fae_",
+          "header": "2025-26\n(FAE)",
+          "role": "dimension",
+          "entityRef": "ent_044",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_percentage_change_ov",
+          "header": "Percentage Change\nOver Previous\n2024-25 2025-26",
+          "role": "measure",
+          "entityRef": "ent_024",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right"
+        }
+      ],
+      "dimensions": [
+        "col_sl__no_",
+        "col_item",
+        "col_2023_24__fre_",
+        "col_2024_25__pe_",
+        "col_2025_26__fae_"
+      ],
+      "measures": [
+        "col_percentage_change_ov"
+      ],
+      "breakdowns": [],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_7_1_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_item",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_8_1",
+      "title": "Table p.8: Industry, 2023-24\n(FRE), 2024-25\n(PE)... (6 cols, 3 rows)",
+      "columnGroups": [
+        {
+          "groupId": "grp_2024_25",
+          "label": "2024-25",
+          "spanRefs": [
+            "col_percentage_change_ov"
+          ]
+        },
+        {
+          "groupId": "grp_2025_26",
+          "label": "2025-26",
+          "spanRefs": [
+            "col_percentage_change_ov"
+          ]
+        }
+      ],
+      "columns": [
+        {
+          "columnId": "col_industry",
+          "header": "Industry",
+          "role": "dimension",
+          "entityRef": "ent_025",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2023_24__fre_",
+          "header": "2023-24\n(FRE)",
+          "role": "dimension",
+          "entityRef": "",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2024_25__pe_",
+          "header": "2024-25\n(PE)",
+          "role": "dimension",
+          "entityRef": "ent_053",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2025_26__fae_",
+          "header": "2025-26\n(FAE)",
+          "role": "dimension",
+          "entityRef": "ent_044",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_percentage_change_ov",
+          "header": "Percentage Change Over\nPrevious Year 2024-25",
+          "role": "measure",
+          "entityRef": "ent_026",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right",
+          "group": "grp_2024_25",
+          "filterContext": {
+            "ent_026": "2024-25"
+          }
+        },
+        {
+          "columnId": "col_percentage_change_ov",
+          "header": "Percentage Change Over\nPrevious Year 2025-26",
+          "role": "measure",
+          "entityRef": "ent_027",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right",
+          "group": "grp_2025_26",
+          "filterContext": {
+            "ent_026": "2025-26"
+          }
+        }
+      ],
+      "dimensions": [
+        "col_industry",
+        "col_2023_24__fre_",
+        "col_2024_25__pe_",
+        "col_2025_26__fae_"
+      ],
+      "measures": [
+        "col_percentage_change_ov",
+        "col_percentage_change_ov"
+      ],
+      "breakdowns": [
+        "ent_026"
+      ],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_8_1_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_2023_24__fre_",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    },
+    {
+      "tableTemplateId": "tt_8_2",
+      "title": "Table p.8: Industry, 2023-24\n(FRE), 2024-25\n(PE)... (6 cols, 3 rows)",
+      "columnGroups": [
+        {
+          "groupId": "grp_2024_25",
+          "label": "2024-25",
+          "spanRefs": [
+            "col_percentage_change_ov"
+          ]
+        },
+        {
+          "groupId": "grp_2025_26",
+          "label": "2025-26",
+          "spanRefs": [
+            "col_percentage_change_ov"
+          ]
+        }
+      ],
+      "columns": [
+        {
+          "columnId": "col_industry",
+          "header": "Industry",
+          "role": "dimension",
+          "entityRef": "ent_025",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2023_24__fre_",
+          "header": "2023-24\n(FRE)",
+          "role": "dimension",
+          "entityRef": "",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2024_25__pe_",
+          "header": "2024-25\n(PE)",
+          "role": "dimension",
+          "entityRef": "ent_053",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_2025_26__fae_",
+          "header": "2025-26\n(FAE)",
+          "role": "dimension",
+          "entityRef": "ent_044",
+          "dtype": "string",
+          "align": "left",
+          "format": null
+        },
+        {
+          "columnId": "col_percentage_change_ov",
+          "header": "Percentage Change Over\nPrevious Year 2024-25",
+          "role": "measure",
+          "entityRef": "ent_026",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right",
+          "group": "grp_2024_25",
+          "filterContext": {
+            "ent_026": "2024-25"
+          }
+        },
+        {
+          "columnId": "col_percentage_change_ov",
+          "header": "Percentage Change Over\nPrevious Year 2025-26",
+          "role": "measure",
+          "entityRef": "ent_027",
+          "dtype": "number",
+          "unit": null,
+          "format": "number",
+          "align": "right",
+          "group": "grp_2025_26",
+          "filterContext": {
+            "ent_026": "2025-26"
+          }
+        }
+      ],
+      "dimensions": [
+        "col_industry",
+        "col_2023_24__fre_",
+        "col_2024_25__pe_",
+        "col_2025_26__fae_"
+      ],
+      "measures": [
+        "col_percentage_change_ov",
+        "col_percentage_change_ov"
+      ],
+      "breakdowns": [
+        "ent_026"
+      ],
+      "footnotes": [
+        {
+          "noteId": "fn_tt_8_2_src",
+          "marker": "Source",
+          "textTemplate": "Source: {{dataset.title}}, {{period.current}}."
+        }
+      ],
+      "sort": {
+        "by": "col_2023_24__fre_",
+        "order": "desc"
+      },
+      "emptyPolicy": "show_dash"
+    }
+  ],
+  "documentMap": {
+    "order": [
+      "topic_01",
+      "topic_02"
+    ],
+    "frontMatter": [
+      "title_page",
+      "toc"
+    ],
+    "backMatter": [
+      "glossary",
+      "notes"
+    ]
+  },
+  "glossary": {
+    "MoSPI": "Ministry of Statistics and Programme Implementation - responsible for official statistics in India.",
+    "Sl.No. 1": "Sl.No. 1 - statistical indicator extracted from the source document.",
+    "IIP": "Index of Industrial Production (IIP) - statistical indicator extracted from the source document.",
+    "National Income": "National Income (INR) - statistical indicator extracted from the source document.",
+    "Per Capita GDP": "Per Capita GDP - statistical indicator extracted from the source document.",
+    "Per Capita National Income": "Per Capita National Income (INR) - statistical indicator extracted from the source document.",
+    "Expenditure Components": "Expenditure Components - statistical indicator extracted from the source document.",
+    "Percentage Change": "Percentage Change (percent) - statistical indicator extracted from the source document.",
+    "PFCE": "Private Final Consumption Expenditure (PFCE) - statistical indicator extracted from the source document.",
+    "Per Capita Income": "Per Capita Income (INR) - statistical indicator extracted from the source document.",
+    "Percentage Change Over": "Percentage Change Over (percent) - statistical indicator extracted from the source document.",
+    "Composition (%) of Nominal GVA": "Composition (%) of Nominal GVA - statistical indicator extracted from the source document."
+  },
+  "palette": {
+    "paletteId": "pal_mospi_default",
+    "sequential": [
+      "#0B5394",
+      "#3D85C6",
+      "#6FA8DC",
+      "#9FC5E8",
+      "#CFE2F3"
+    ],
+    "categorical": {
+      "Rural": "#1F7A1F",
+      "Urban": "#0B5394",
+      "Male": "#0B5394",
+      "Female": "#CC4125",
+      "Total": "#666666"
+    },
+    "semantic": {
+      "positive": "#1F7A1F",
+      "negative": "#CC0000",
+      "neutral": "#666666"
+    }
+  },
+  "renderProfile": {
+    "numberFormat": {
+      "locale": "en-IN",
+      "grouping": "lakh-crore",
+      "decimalSeparator": "."
+    },
+    "percentFormat": {
+      "decimals": 1,
+      "suffix": "%"
+    },
+    "currencyFormat": {
+      "symbol": "₹",
+      "grouping": "lakh-crore",
+      "decimals": 0
+    },
+    "fontFamily": "Noto Sans",
+    "pageSize": "A4"
+  },
+  "figureTemplates": [
+    {
+      "figureTemplateId": "ft_chart_sp01_q03",
+      "chartType": "bar",
+      "chartSubject": "Data Informatics Innovation 79-91",
+      "captionTemplate": "Data Informatics Innovation 79-91",
+      "detectionMethod": "vlm_detection",
+      "confidence": 0.35
+    }
+  ],
+  "statisticalContext": {
+    "sourceDocument": "Document",
+    "domain": "general"
+  },
+  "externalTableReferences": [
+    {
+      "refId": "ext_plfs_annual_report_tables",
+      "label": "Detailed tables included in the Annual Report",
+      "sourceDocument": "PLFS Annual Report",
+      "status": "external_not_embedded",
+      "accessHint": "MoSPI publication / QR link",
+      "binderAction": "optional_external_dataset"
+    }
+  ],
+  "chartPanelGroups": [
+    {
+      "groupId": "chart_group_data_informatics_innovation_79_91_1",
+      "measureEntityId": "",
+      "figureNumber": "",
+      "panels": [
+        {
+          "chartId": "chart_sp01_q03",
+          "panel": "",
+          "filters": [],
+          "dimensionEntityId": ""
+        }
+      ]
+    }
+  ]
+}

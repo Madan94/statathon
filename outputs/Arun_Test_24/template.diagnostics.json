@@ -1,0 +1,50 @@
+{
+  "status": "VALID",
+  "contractVersion": "template.extraction.v2",
+  "binderReadinessScore": 0.898,
+  "passScores": {},
+  "categoryScores": {
+    "entityHygiene": 0.828,
+    "entityCompleteness": 0.944,
+    "tableSemantics": 0.789,
+    "unitCoverage": 0.933,
+    "questionCompleteness": 0.925,
+    "crossReferenceIntegrity": 1.0,
+    "valueFreeCompliance": 1.0,
+    "chartSemantics": 0.5
+  },
+  "counts": {
+    "entities": 18,
+    "entitiesDropped": 23,
+    "questions": 14,
+    "questionsFromTemplates": 9,
+    "tables": 9,
+    "topics": 4,
+    "slotsWired": 40
+  },
+  "blockingErrors": [],
+  "warnings": [
+    {
+      "severity": "warn",
+      "code": "MEASURES_MISSING_UNIT",
+      "message": "1 measure entities have no unit",
+      "sourcePhase": "E0"
+    },
+    {
+      "severity": "warn",
+      "code": "ENTITIES_MISSING_ALIASES",
+      "message": "2 measure/dimension entities have empty aliases",
+      "sourcePhase": "E0"
+    }
+  ],
+  "quarantinedCount": 23,
+  "repairsCount": 40,
+  "binderCompatibility": {
+    "blueprintQAWillPass": true,
+    "expectedResolverConfidence": "high",
+    "expectedIssues": [],
+    "recommendation": "proceed"
+  },
+  "runtime": {},
+  "generatedAt": "2026-06-11T14:45:55.606631+00:00"
+}

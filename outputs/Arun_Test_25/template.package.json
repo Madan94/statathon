@@ -1,0 +1,32 @@
+{
+  "$schema": "bharatstat/template-package/v1",
+  "templateId": "tpl_arun_test_25_v1",
+  "version": "3.0",
+  "name": "Document",
+  "status": "INVALID",
+  "artifacts": {
+    "templateAst": {
+      "path": "template.ast.json",
+      "hash": "f5334595e6f2917e"
+    },
+    "templateBlueprint": {
+      "path": "template.blueprint.json",
+      "hash": "1248dbcd2ddbfe84"
+    },
+    "semanticSlotGraph": {
+      "path": "semantic_slot_graph.json",
+      "hash": "d94984a22c361541"
+    },
+    "diagnostics": {
+      "path": "template.diagnostics.json",
+      "hash": "cec9eb45f00d197c"
+    }
+  },
+  "metadata": {
+    "domain": "general",
+    "locale": "en-IN",
+    "valueFree": true
+  },
+  "extractionScore": 0.472,
+  "sourceDocument": "Document"
+}

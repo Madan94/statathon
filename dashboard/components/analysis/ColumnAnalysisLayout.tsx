@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import type { AnalysisResult, ColumnProfile } from '@/lib/api';
 import { analysisApi } from '@/lib/api';
 import { isNumericColumn, resolveAnomalyBlock } from '@/lib/outlierColumnUtils';
@@ -59,8 +60,8 @@ export default function ColumnAnalysisLayout({
   results: initialResults,
   analysisId,
   onBack,
-  onProceedToDatasetReview,
 }: Props) {
+  const router = useRouter();
   const [results, setResults] = useState(initialResults);
   const [phaseStatus, setPhaseStatus] = useState<PhaseStatus | null>(null);
   const columns = useMemo(() => orderedColumns(results), [results]);
@@ -155,7 +156,7 @@ export default function ColumnAnalysisLayout({
       toast.error('Complete anomaly and missing-value review before proceeding');
       return;
     }
-    onProceedToDatasetReview();
+    router.push(`/report/report-builder?analysisId=${analysisId}`);
   };
 
   const canMarkDone = !isNumeric
