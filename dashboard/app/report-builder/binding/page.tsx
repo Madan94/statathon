@@ -482,6 +482,19 @@ export default function BindingWorkflowPage() {
       await loadWorkspace(session.template_id, session.signature);
       setWorkbenchMode('questions');
       setStep(2);
+      // If finalize passed without errors, auto-prepare S3.5 bundle
+      if (!res.has_errors) {
+        try {
+          const bundle = await bindingPhaseApi.executionReady(session.template_id, session.signature);
+          setExecutionReady(bundle);
+          await loadWorkspace(session.template_id, session.signature);
+          if (bundle.status === 'READY' || bundle.status === 'DEGRADED') {
+            setWorkbenchMode('handoff');
+          }
+        } catch {
+          // S3.5 preparation is optional at this point — don't block the flow
+        }
+      }
     } catch (err) {
       setError(errMessage(err, 'Could not finalize the bindings'));
     } finally {
