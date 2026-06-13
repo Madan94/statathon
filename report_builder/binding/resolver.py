@@ -320,7 +320,14 @@ def resolve_entity(
     ranked = _score_candidates(view, dataset, embedder=embedder)
     best_col, best_conf, best_method = (ranked[0] if ranked else (None, 0.0, "synonym"))
 
-    cardinality, columns, combine, notes = _classify_cardinality(view, best_col, dataset)
+    # When columnExpr gave a direct match, force oneToOne — skip group detection
+    if best_method == "columnExpr" and best_col:
+        columns = [BoundColumn(column=best_col)]
+        cardinality = "oneToOne"
+        combine = "none"
+        notes: list[str] = []
+    else:
+        cardinality, columns, combine, notes = _classify_cardinality(view, best_col, dataset)
 
     # Group bindings (memberSet/timeSeries/composite) carry their own confidence.
     if cardinality != "oneToOne":

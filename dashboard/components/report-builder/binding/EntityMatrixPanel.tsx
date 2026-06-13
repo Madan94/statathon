@@ -467,10 +467,6 @@ export function EntityMatrixPanel({
         }
       }
     }
-    // Debug: log if map is suspiciously empty
-    if (bindings.length > 0 && map.size === 0) {
-      console.error('[EntityMatrixPanel] BUG: columnToEntity is EMPTY despite', bindings.length, 'bindings. First binding:', JSON.stringify(bindings[0], null, 2).slice(0, 300));
-    }
     return map;
   }, [bindings]);
 
