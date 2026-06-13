@@ -1627,6 +1627,7 @@ export interface BindingTemplatePackage {
   domain?: string | null;
   report_type?: string | null;
   updated_at?: string | null;
+  readiness_label?: string | null;
 }
 
 export interface BindingProposalsResult {

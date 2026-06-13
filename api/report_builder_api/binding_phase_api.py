@@ -120,6 +120,8 @@ class TemplatePackageOut(BaseModel):
     blueprint_available: bool = False
     semantic_slot_graph_available: bool = False
     topics_count: int = 0
+    chapters_count: int = 0
+    sections_count: int = 0
     questions_count: int = 0
     entities_count: int = 0
     chart_slots_count: int = 0
@@ -127,6 +129,9 @@ class TemplatePackageOut(BaseModel):
     external_refs_count: int = 0
     diagnostics_score: float | None = None
     description: str | None = None
+    domain: str | None = None
+    updated_at: str | None = None
+    readiness_label: str | None = None
 
 
 class ProposalsOut(BaseModel):
@@ -715,14 +720,49 @@ def _count_questions(blueprint: dict[str, Any]) -> int:
     return count
 
 
+def _count_chapters(blueprint: dict[str, Any]) -> int:
+    count = 0
+    for topic in blueprint.get("topics") or []:
+        if isinstance(topic, dict):
+            count += len(topic.get("chapters") or [])
+    return count
+
+
+def _count_sections(blueprint: dict[str, Any]) -> int:
+    count = 0
+    for topic in blueprint.get("topics") or []:
+        if isinstance(topic, dict):
+            for chapter in topic.get("chapters") or []:
+                if isinstance(chapter, dict):
+                    count += len(chapter.get("sections") or [])
+    return count
+
+
+def _count_slot_types(slot_graph: dict[str, Any] | None) -> tuple[int, int]:
+    """Count chart and table slots from the semantic slot graph."""
+    if not isinstance(slot_graph, dict):
+        return 0, 0
+    charts = 0
+    tables = 0
+    for slot in slot_graph.get("slots") or []:
+        st = slot.get("slotType") or slot.get("outputContract", {}).get("type", "")
+        if st == "chart" or (isinstance(slot.get("outputContract"), dict) and slot["outputContract"].get("chartType")):
+            charts += 1
+        elif st == "table":
+            tables += 1
+    return charts, tables
+
+
 def _package_from_ast_json(template_id: str, name: str, source: str, ast_json: dict[str, Any], description: str | None = None) -> TemplatePackageOut:
     blueprint = ast_json.get("blueprint") if isinstance(ast_json.get("blueprint"), dict) else ast_json
     template_ast = ast_json.get("template_ast") or ast_json.get("templateAst") or ast_json
     slot_graph = ast_json.get("semantic_slot_graph") or ast_json.get("semanticSlotGraph") or ast_json.get("semanticSlotGraph")
     diagnostics = ast_json.get("diagnostics") or ast_json.get("template_diagnostics") or ast_json.get("templateDiagnostics") or {}
     meta = blueprint.get("templateMeta") or ast_json.get("metadata") or ast_json.get("templateMeta") or {}
-    chart_slots = len((template_ast.get("chartAST") or {}).get("charts") or []) if isinstance(template_ast, dict) else 0
-    table_slots = len((template_ast.get("tableAST") or {}).get("tables") or []) if isinstance(template_ast, dict) else 0
+    # Chart/table counts: prefer slot graph, fall back to AST sections
+    sg_charts, sg_tables = _count_slot_types(slot_graph if isinstance(slot_graph, dict) and slot_graph.get("slots") else None)
+    chart_slots = sg_charts or (len((template_ast.get("chartAST") or {}).get("charts") or []) if isinstance(template_ast, dict) else 0)
+    table_slots = sg_tables or (len((template_ast.get("tableAST") or {}).get("tables") or []) if isinstance(template_ast, dict) else 0)
     score = diagnostics.get("binderReadinessScore") if isinstance(diagnostics, dict) else None
     return TemplatePackageOut(
         template_id=str(template_id),
@@ -734,13 +774,18 @@ def _package_from_ast_json(template_id: str, name: str, source: str, ast_json: d
         blueprint_available=bool(isinstance(blueprint, dict) and blueprint.get("entities")),
         semantic_slot_graph_available=bool(isinstance(slot_graph, dict) and slot_graph.get("slots")),
         topics_count=len(blueprint.get("topics") or []) if isinstance(blueprint, dict) else 0,
+        chapters_count=_count_chapters(blueprint) if isinstance(blueprint, dict) else 0,
+        sections_count=_count_sections(blueprint) if isinstance(blueprint, dict) else 0,
         questions_count=_count_questions(blueprint) if isinstance(blueprint, dict) else 0,
         entities_count=len(blueprint.get("entities") or []) if isinstance(blueprint, dict) else 0,
         chart_slots_count=chart_slots,
         table_slots_count=table_slots,
         external_refs_count=len(blueprint.get("externalTableReferences") or []) if isinstance(blueprint, dict) else 0,
         diagnostics_score=float(score) if score is not None else None,
-        description=description,
+        description=description or meta.get("description"),
+        domain=meta.get("domain"),
+        updated_at=meta.get("lastUpdated") or "bundled",
+        readiness_label=meta.get("releaseStage") or (f"{score:.0f}%" if score else "not scored"),
     )
 
 
@@ -751,7 +796,7 @@ def _load_builtin_gold_package(template_id: str) -> tuple[dict[str, Any], dict[s
     ``*.template.ast.json`` and ``*.semantic_slot_graph.json`` files sharing
     the same filename prefix.
     """
-    for blueprint_path in sorted(_GOLD_STANDARD_DIR.glob("*.template.blueprint.json")):
+    for blueprint_path in sorted(_GOLD_STANDARD_DIR.glob("**/*.template.blueprint.json")):
         try:
             blueprint = json.loads(blueprint_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
@@ -844,7 +889,7 @@ def _iter_builtin_gold_packages() -> list[TemplatePackageOut]:
     except Exception as exc:
         logger.warning("[binding-phase] failed to summarize built-in PLFS package: %s", exc)
 
-    for blueprint_path in sorted(_GOLD_STANDARD_DIR.glob("*.template.blueprint.json")):
+    for blueprint_path in sorted(_GOLD_STANDARD_DIR.glob("**/*.template.blueprint.json")):
         try:
             blueprint = json.loads(blueprint_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
