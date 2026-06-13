@@ -503,10 +503,18 @@ export function EntityMatrixPanel({
 
   // Stats
   const totalColumns = columns.length;
-  // Use backend column_decisions as source of truth (aligned with page header stats)
+  // A column is "decided" if it has a backend column_decision OR its best entity has a decision
   const decidedColumns = useMemo(() => {
-    return columns.filter((col) => !!columnDecisions[col.name]).length;
-  }, [columns, columnDecisions]);
+    return columns.filter((col) => {
+      if (columnDecisions[col.name]) return true;
+      const entity = columnToEntity.get(col.name);
+      if (entity) {
+        const dec = decisions[entity.entityId];
+        return !!dec && dec.action !== 'reopen';
+      }
+      return false;
+    }).length;
+  }, [columns, columnDecisions, columnToEntity, decisions]);
 
   const unmatchedEntities = useMemo(
     () => bindings.filter((b) => b.status === 'unresolved' || b.columns.length === 0),

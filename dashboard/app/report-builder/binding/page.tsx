@@ -243,11 +243,45 @@ export default function BindingWorkflowPage() {
     [proposals, decisions]
   );
 
-  // Column-decision-based gate: all dataset columns must have a decision
-  const totalColumns = session?.dataset_ast.columns.length ?? 0;
-  const decidedColumnCount = Object.keys(session?.column_decisions ?? {}).length;
-  const allColumnsDecided = totalColumns > 0 && decidedColumnCount >= totalColumns;
-  const undecidedColumnCount = totalColumns - decidedColumnCount;
+  // Column-decision-based gate: a column is "decided" if it has a backend column_decision
+  // OR if its best-matching entity has been confirmed/rejected/overridden (i.e. has a decision)
+  const { decidedColumnCount, allColumnsDecided, undecidedColumnCount } = useMemo(() => {
+    if (!session) return { decidedColumnCount: 0, allColumnsDecided: false, undecidedColumnCount: 0 };
+    const cols = session.dataset_ast.columns;
+    const colDec = session.column_decisions ?? {};
+    // Build column→entity map same way EntityMatrixPanel does
+    const colToEntityId = new Map<string, string>();
+    for (const proposal of proposals) {
+      for (const bc of proposal.columns) {
+        const colName = typeof bc === 'object' ? bc.column : String(bc);
+        if (colName && !colToEntityId.has(colName)) {
+          colToEntityId.set(colName, proposal.entityId);
+        }
+      }
+      for (const alt of proposal.alternatives ?? []) {
+        const colName = typeof alt === 'object' ? alt.column : String(alt);
+        if (colName && !colToEntityId.has(colName)) {
+          colToEntityId.set(colName, proposal.entityId);
+        }
+      }
+    }
+    let decided = 0;
+    for (const col of cols) {
+      // Has explicit backend decision?
+      if (colDec[col.name]) { decided++; continue; }
+      // Matched to a confirmed/rejected entity?
+      const entityId = colToEntityId.get(col.name);
+      if (entityId && decisions[entityId] && decisions[entityId].action !== 'reopen') {
+        decided++;
+      }
+    }
+    const total = cols.length;
+    return {
+      decidedColumnCount: decided,
+      allColumnsDecided: total > 0 && decided >= total,
+      undecidedColumnCount: total - decided,
+    };
+  }, [session, proposals, decisions]);
   const currentReviewedPlan = result?.reviewed_plan ?? workspace?.reviewed_plan ?? null;
   const planContainers = useMemo(
     () => collectPlanContainers(currentReviewedPlan?.planTree ?? []),
@@ -1051,11 +1085,11 @@ export default function BindingWorkflowPage() {
                 <h2 className="mt-1 text-lg font-semibold text-text">Map dataset columns to report entities</h2>
                 <p className="mt-1 max-w-3xl text-sm text-text-muted">
                   {undecidedColumnCount > 0
-                    ? `${undecidedColumnCount} of ${totalColumns} columns still need a decision. Confirm matches, ignore metadata columns, or create new entities.`
+                    ? `${undecidedColumnCount} of ${session.dataset_ast.columns.length} columns still need a decision. Confirm matches, ignore metadata columns, or create new entities.`
                     : 'All columns have decisions. You can still adjust mappings before the coverage gate.'}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Badge variant={undecidedColumnCount === 0 ? 'success' : 'warning'}>{decidedColumnCount}/{totalColumns} columns decided</Badge>
+                  <Badge variant={undecidedColumnCount === 0 ? 'success' : 'warning'}>{decidedColumnCount}/{session.dataset_ast.columns.length} columns decided</Badge>
                   <Badge variant={remaining === 0 ? 'success' : 'muted'}>{decidedCount}/{proposals.length} entities confirmed</Badge>
                   <Badge variant={ownershipStats.conflicts > 0 ? 'danger' : 'success'}>
                     {ownershipStats.conflicts > 0 ? `${ownershipStats.conflicts} allocation conflicts` : 'No conflicts'}
