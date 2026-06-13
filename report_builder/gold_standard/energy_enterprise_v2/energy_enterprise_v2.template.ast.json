@@ -1,0 +1,287 @@
+{
+  "$schema": "bharatstat/template-ast/v2",
+  "_doc": "VALUE-FREE render skeleton for India Energy Resources Enterprise Report v2. All content fields are empty placeholders — S4 generation fills them from the ExecutionBundle.",
+  "metadata": {
+    "templateId": "tpl_energy_enterprise_v2",
+    "blueprintRef": "tpl_energy_enterprise_v2",
+    "name": "India Energy Resources — Enterprise Report v2",
+    "locale": "en-IN",
+    "version": "2.0.0",
+    "valueFree": true,
+    "generatedFrom": "enterprise_built_in_energy_v2_generator",
+    "targetPageRange": "8-12",
+    "standardPageCount": 10,
+    "hardPageCap": 12,
+    "officerReady": true,
+    "auditRequired": true
+  },
+  "styleAST": {
+    "styles": [
+      {"styleId": "s_h1", "role": "heading1", "font": "Noto Sans", "sizePt": 18, "bold": true, "color": "#0B5394"},
+      {"styleId": "s_h2", "role": "heading2", "font": "Noto Sans", "sizePt": 15, "bold": true, "color": "#1155CC"},
+      {"styleId": "s_h3", "role": "heading3", "font": "Noto Sans", "sizePt": 13, "bold": true, "color": "#1C4587"},
+      {"styleId": "s_h4", "role": "heading4", "font": "Noto Sans", "sizePt": 11, "bold": true, "color": "#1C4587"},
+      {"styleId": "s_body", "role": "body", "font": "Noto Sans", "sizePt": 11, "bold": false, "color": "#222222"},
+      {"styleId": "s_metric", "role": "metric", "font": "Noto Sans", "sizePt": 16, "bold": true, "color": "#0B5394"},
+      {"styleId": "s_table", "role": "tableCell", "font": "Noto Sans", "sizePt": 9, "align": "right"},
+      {"styleId": "s_table_header", "role": "tableHeader", "font": "Noto Sans", "sizePt": 9, "bold": true, "align": "center", "bgColor": "#D9EAD3"},
+      {"styleId": "s_caption", "role": "caption", "font": "Noto Sans", "sizePt": 9, "italic": true, "color": "#555555"},
+      {"styleId": "s_note", "role": "sourceNote", "font": "Noto Sans", "sizePt": 8, "color": "#666666"},
+      {"styleId": "s_glossary", "role": "glossary", "font": "Noto Sans", "sizePt": 9, "color": "#444444"}
+    ]
+  },
+  "documentMap": [
+    {
+      "nodeId": "topic_conventional",
+      "nodeType": "topic",
+      "title": "Conventional Energy Reserves",
+      "style": "s_h1",
+      "order": 1,
+      "children": [
+        {
+          "nodeId": "ch_coal_lignite",
+          "nodeType": "chapter",
+          "title": "Coal & Lignite Reserves",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_coal_state",
+              "nodeType": "section",
+              "title": "State-wise Coal Reserves Distribution",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_coal_state_rank",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by total coal reserves",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {"slotId": "slot_coal_rank_narrative", "componentRef": "q_coal_state_rank_narrative", "slotType": "narrative", "placeholder": ""},
+                    {"slotId": "slot_coal_rank_table", "componentRef": "q_coal_state_rank_table", "slotType": "table", "placeholder": null},
+                    {"slotId": "slot_coal_rank_chart", "componentRef": "q_coal_state_rank_chart", "slotType": "chart", "placeholder": null}
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_reserve_category",
+              "nodeType": "section",
+              "title": "Reserve Classification Analysis",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_reserve_category_composition",
+                  "nodeType": "question",
+                  "title": "Reserve distribution by Proved/Indicated/Inferred",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {"slotId": "slot_rescat_narrative", "componentRef": "q_reserve_cat_narrative", "slotType": "narrative", "placeholder": ""},
+                    {"slotId": "slot_rescat_chart", "componentRef": "q_reserve_cat_chart", "slotType": "chart", "placeholder": null},
+                    {"slotId": "slot_rescat_formula", "componentRef": "q_reserve_cat_formula", "slotType": "metric", "placeholder": ""}
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_hydrocarbons",
+          "nodeType": "chapter",
+          "title": "Hydrocarbon Reserves",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_oil_gas",
+              "nodeType": "section",
+              "title": "Oil & Gas State Distribution",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_hydrocarbons_state",
+                  "nodeType": "question",
+                  "title": "Crude oil and natural gas reserves concentration",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {"slotId": "slot_hydro_narrative", "componentRef": "q_hydro_narrative", "slotType": "narrative", "placeholder": ""},
+                    {"slotId": "slot_hydro_table", "componentRef": "q_hydro_table", "slotType": "table", "placeholder": null},
+                    {"slotId": "slot_hydro_source", "componentRef": "q_hydro_source_note", "slotType": "source_note", "placeholder": ""}
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_renewable",
+      "nodeType": "topic",
+      "title": "Renewable Energy Potential",
+      "style": "s_h1",
+      "order": 2,
+      "children": [
+        {
+          "nodeId": "ch_renewable_capacity",
+          "nodeType": "chapter",
+          "title": "Source-wise Renewable Capacity",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_wind_solar",
+              "nodeType": "section",
+              "title": "Wind & Solar Potential",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_wind_solar_compare",
+                  "nodeType": "question",
+                  "title": "Wind vs Solar potential comparison",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {"slotId": "slot_windsolar_narrative", "componentRef": "q_windsolar_narrative", "slotType": "narrative", "placeholder": ""},
+                    {"slotId": "slot_windsolar_chart", "componentRef": "q_windsolar_chart", "slotType": "chart", "placeholder": null},
+                    {"slotId": "slot_windsolar_table", "componentRef": "q_windsolar_table", "slotType": "table", "placeholder": null}
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_hydro_biomass",
+              "nodeType": "section",
+              "title": "Small Hydro, Biomass & Large Hydro",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_hydro_biomass",
+                  "nodeType": "question",
+                  "title": "Niche renewable sources by state",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {"slotId": "slot_hydrobio_narrative", "componentRef": "q_hydrobio_narrative", "slotType": "narrative", "placeholder": ""},
+                    {"slotId": "slot_hydrobio_chart", "componentRef": "q_hydrobio_chart", "slotType": "chart", "placeholder": null},
+                    {"slotId": "slot_hydrobio_caveat", "componentRef": "q_hydrobio_caveat", "slotType": "caveat", "placeholder": ""}
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_source_mix",
+          "nodeType": "chapter",
+          "title": "Renewable Source Mix & Dominance",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_source_composition",
+              "nodeType": "section",
+              "title": "National Renewable Composition",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_source_mix_national",
+                  "nodeType": "question",
+                  "title": "Renewable source share analysis",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {"slotId": "slot_sourcemix_narrative", "componentRef": "q_sourcemix_narrative", "slotType": "narrative", "placeholder": ""},
+                    {"slotId": "slot_sourcemix_chart", "componentRef": "q_sourcemix_chart", "slotType": "chart", "placeholder": null},
+                    {"slotId": "slot_sourcemix_formula_solar", "componentRef": "q_sourcemix_formula_solar", "slotType": "metric", "placeholder": ""},
+                    {"slotId": "slot_sourcemix_formula_wind", "componentRef": "q_sourcemix_formula_wind", "slotType": "metric", "placeholder": ""}
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_crosscutting",
+      "nodeType": "topic",
+      "title": "Cross-Cutting Regional Analysis",
+      "style": "s_h1",
+      "order": 3,
+      "children": [
+        {
+          "nodeId": "ch_regional_profile",
+          "nodeType": "chapter",
+          "title": "Regional Energy Endowment",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_regional_comparison",
+              "nodeType": "section",
+              "title": "Conventional vs Renewable by Region",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_regional_energy",
+                  "nodeType": "question",
+                  "title": "Regional energy resource distribution",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {"slotId": "slot_regional_narrative", "componentRef": "q_regional_narrative", "slotType": "narrative", "placeholder": ""},
+                    {"slotId": "slot_regional_chart", "componentRef": "q_regional_chart", "slotType": "chart", "placeholder": null},
+                    {"slotId": "slot_regional_table", "componentRef": "q_regional_table", "slotType": "table", "placeholder": null},
+                    {"slotId": "slot_regional_formula", "componentRef": "q_regional_formula", "slotType": "metric", "placeholder": ""}
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_methodology",
+          "nodeType": "chapter",
+          "title": "Data Provenance & Methodology",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_data_notes",
+              "nodeType": "section",
+              "title": "Sources, Units & Coverage",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_methodology",
+                  "nodeType": "question",
+                  "title": "Data sources and methodology",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {"slotId": "slot_method_note", "componentRef": "q_method_note", "slotType": "methodology", "placeholder": ""},
+                    {"slotId": "slot_method_source", "componentRef": "q_method_source", "slotType": "source_note", "placeholder": ""},
+                    {"slotId": "slot_method_glossary", "componentRef": "q_method_glossary", "slotType": "glossary", "placeholder": ""},
+                    {"slotId": "slot_method_caveat", "componentRef": "q_method_caveat", "slotType": "caveat", "placeholder": ""}
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

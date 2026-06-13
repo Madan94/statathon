@@ -1,0 +1,19 @@
+State/UT,Region,Reserve Category,Energy Source,Period,Coal,Lignite,Proved,Indicated,Inferred,Total,Crude Oil,Natural Gas,Wind,Solar,Small Hydro,Biomass,Cogeneration-Bagasse,Large Hydro,Total Renewable
+Jharkhand,East,Proved,Solar,2025,83152,,53000,24000,6152,83152,,,120,18180,209,900,0,300,19709
+Odisha,East,Proved,Solar,2025,84500,,42000,33000,9500,84500,,,910,25780,295,500,0,2000,29485
+Chhattisgarh,Central,Proved,Solar,2025,76400,,46000,24000,6400,76400,,,314,18270,1107,236,0,600,20527
+West Bengal,East,Indicated,Solar,2025,33150,,14000,12000,7150,33150,,,20,6260,396,400,300,150,7526
+Madhya Pradesh,Central,Proved,Solar,2025,28200,,14000,10000,4200,28200,,,10484,61660,820,1200,0,500,74664
+Telangana,South,Indicated,Solar,2025,23200,,11000,8000,4200,23200,,,14000,20410,90,400,200,300,35400
+Maharashtra,West,Proved,Wind,2025,12800,,7000,4000,1800,12800,,,45394,64320,794,2000,3500,600,116608
+Andhra Pradesh,South,Inferred,Wind,2025,1950,,1000,600,350,1950,8,12,44229,38440,400,600,300,400,84369
+Tamil Nadu,South,Proved,Wind,2025,,35800,21000,11000,3800,35800,,,33800,17670,660,1000,1500,300,54930
+Rajasthan,North,Proved,Solar,2025,,6000,3500,1800,700,6000,25,34,18770,142310,52,1000,0,500,162632
+Gujarat,West,Indicated,Wind,2025,,2700,1400,900,400,2700,118,62,35071,35770,202,1600,350,600,73593
+Assam,North-East,Proved,Large Hydro,2025,350,,200,100,50,350,160,156,0,13760,240,200,0,600,14800
+Karnataka,South,,Wind,2025,,,,,,,,,55857,24700,4141,1800,2000,800,89298
+Himachal Pradesh,North,,Small Hydro,2025,,,,,,,,,64,33840,2398,150,0,20000,56452
+Uttarakhand,North,,Large Hydro,2025,,,,,,,,,0,16800,1708,100,0,18000,36608
+Arunachal Pradesh,North-East,,Large Hydro,2025,,,,,,,,,0,8650,1341,0,0,50000,59991
+Uttar Pradesh,Central,,Cogeneration-Bagasse,2025,,,,,,,,,0,22830,461,1617,1190,500,26598
+Bihar,East,,Biomass,2025,,,,,,,,,0,11200,223,1100,300,100,12923

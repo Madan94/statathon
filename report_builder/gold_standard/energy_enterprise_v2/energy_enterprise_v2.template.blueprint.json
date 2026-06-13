@@ -1,0 +1,1002 @@
+{
+  "$schema": "bharatstat/template-blueprint/v2",
+  "contractVersion": "template.extraction.v2",
+  "_doc": "Maximum-quality enterprise analytic blueprint for India Energy Statistics. 3 topics, 5 chapters, 7 sections, 7 questions, ~25 components. Full entity hierarchy with inheritance tracing, complete per-question metadata, BI-agent-ready analytical questions, formula catalog, and officer controls.",
+  "templateMeta": {
+    "templateId": "tpl_energy_enterprise_v2",
+    "name": "India Energy Resources — Enterprise Report v2",
+    "domain": "energy",
+    "reportType": "enterprise_energy_annual",
+    "locale": "en-IN",
+    "version": "2.0.0",
+    "sourceDocument": "Energy Statistics India 2025",
+    "valueFree": true,
+    "proseFree": true,
+    "targetPageCount": "8-12",
+    "standardPageCount": 10,
+    "hardPageCap": 12,
+    "description": "Enterprise-grade energy template covering conventional reserves (coal, lignite, hydrocarbons) and renewable potential (wind, solar, hydro, biomass) with state-level rankings, regional aggregation, composition analysis, and cross-cutting ratio metrics. Full hierarchy entity tracing and BI-agent-ready question contracts.",
+    "templateClass": "enterprise_publication",
+    "releaseStage": "built_in_officer_ready",
+    "createdBy": "BharatStat template architect",
+    "lastUpdated": "2026-06-13",
+    "compatibleStages": ["S0", "S1", "S2", "S3", "S3.5", "S4", "S5", "S6", "S7"],
+    "governance": {
+      "ownerRole": "MoSPI energy report officer",
+      "reviewRoles": ["statistical reviewer", "publication reviewer", "data steward"],
+      "approvalRequiredFor": ["locked statistical contracts", "publication status", "source note overrides"],
+      "auditMode": "lineage_required"
+    }
+  },
+  "statisticalContext": {
+    "sourceDocument": "Energy Statistics India 2025",
+    "ministry": "Ministry of Statistics and Programme Implementation",
+    "domain": "energy",
+    "geographyLevel": "state_ut",
+    "regionMapping": {
+      "East": ["Jharkhand", "Odisha", "West Bengal", "Bihar"],
+      "Central": ["Chhattisgarh", "Madhya Pradesh", "Uttar Pradesh"],
+      "South": ["Telangana", "Andhra Pradesh", "Tamil Nadu", "Karnataka"],
+      "West": ["Maharashtra", "Gujarat"],
+      "North": ["Rajasthan", "Himachal Pradesh", "Uttarakhand"],
+      "North-East": ["Assam", "Arunachal Pradesh"]
+    },
+    "timeCoverage": ["2025"],
+    "referenceDates": ["As on 1st April 2025"],
+    "dataSources": ["Geological Survey of India", "CMPDI", "MNRE", "Ministry of Petroleum and Natural Gas"],
+    "footnotes": ["P: Provisional", "*: Assessed potential", "#: Includes pumped storage"],
+    "glossary": {
+      "MT": "Million Tonnes",
+      "MW": "Megawatt",
+      "BCM": "Billion Cubic Metres",
+      "CMPDI": "Central Mine Planning and Design Institute",
+      "GSI": "Geological Survey of India",
+      "MNRE": "Ministry of New and Renewable Energy",
+      "Proved Reserves": "Reserves established with the highest degree of geological confidence.",
+      "Indicated Reserves": "Reserves estimated with reasonable geological confidence.",
+      "Inferred Reserves": "Reserves estimated with low geological confidence.",
+      "Reserve Category": "Geological confidence classification: Proved, Indicated, or Inferred."
+    }
+  },
+  "entities": [
+    {"entityId": "ent_state_ut", "entityName": "State/UT", "entityType": "dimension", "columnExpr": "State/UT", "role": "dimension", "unit": null, "cardinality": "18 states", "description": "Indian State or Union Territory"},
+    {"entityId": "ent_region", "entityName": "Region", "entityType": "dimension", "columnExpr": "Region", "role": "dimension", "unit": null, "cardinality": "6 regions", "description": "Geographic region (East/West/North/South/Central/North-East)"},
+    {"entityId": "ent_reserve_category", "entityName": "Reserve Category", "entityType": "dimension", "columnExpr": "Reserve Category", "role": "dimension", "unit": null, "cardinality": "3 categories + null", "description": "Geological confidence: Proved, Indicated, Inferred"},
+    {"entityId": "ent_energy_source", "entityName": "Energy Source", "entityType": "dimension", "columnExpr": "Energy Source", "role": "dimension", "unit": null, "cardinality": "6 sources", "description": "Primary energy source type (Solar, Wind, Large Hydro, etc.)"},
+    {"entityId": "ent_period", "entityName": "Period", "entityType": "time", "columnExpr": "Period", "role": "time", "unit": "year", "cardinality": "1 period (2025)", "description": "Reference year for the statistics"},
+    {"entityId": "ent_coal", "entityName": "Coal Reserves", "entityType": "measure", "columnExpr": "Coal", "role": "measure", "unit": "MT", "description": "Total coal reserves in million tonnes", "nullPct": 0.33},
+    {"entityId": "ent_lignite", "entityName": "Lignite Reserves", "entityType": "measure", "columnExpr": "Lignite", "role": "measure", "unit": "MT", "description": "Lignite reserves in million tonnes", "nullPct": 0.78},
+    {"entityId": "ent_proved", "entityName": "Proved Reserves", "entityType": "measure", "columnExpr": "Proved", "role": "measure", "unit": "MT", "description": "Reserves with highest geological confidence", "nullPct": 0.33},
+    {"entityId": "ent_indicated", "entityName": "Indicated Reserves", "entityType": "measure", "columnExpr": "Indicated", "role": "measure", "unit": "MT", "description": "Reserves with reasonable geological confidence", "nullPct": 0.33},
+    {"entityId": "ent_inferred", "entityName": "Inferred Reserves", "entityType": "measure", "columnExpr": "Inferred", "role": "measure", "unit": "MT", "description": "Reserves with lower geological confidence", "nullPct": 0.33},
+    {"entityId": "ent_total", "entityName": "Total Reserves", "entityType": "measure", "columnExpr": "Total", "role": "measure", "unit": "MT", "description": "Sum of Proved + Indicated + Inferred reserves", "nullPct": 0.33},
+    {"entityId": "ent_crude_oil", "entityName": "Crude Oil Reserves", "entityType": "measure", "columnExpr": "Crude Oil", "role": "measure", "unit": "MT", "description": "Crude oil reserves", "nullPct": 0.78},
+    {"entityId": "ent_natural_gas", "entityName": "Natural Gas Reserves", "entityType": "measure", "columnExpr": "Natural Gas", "role": "measure", "unit": "BCM", "description": "Natural gas reserves in billion cubic metres", "nullPct": 0.78},
+    {"entityId": "ent_wind", "entityName": "Wind Power Potential", "entityType": "measure", "columnExpr": "Wind", "role": "measure", "unit": "MW", "description": "Assessed wind energy potential in megawatts"},
+    {"entityId": "ent_solar", "entityName": "Solar Energy Potential", "entityType": "measure", "columnExpr": "Solar", "role": "measure", "unit": "MW", "description": "Assessed solar energy potential in megawatts"},
+    {"entityId": "ent_small_hydro", "entityName": "Small Hydro Power Potential", "entityType": "measure", "columnExpr": "Small Hydro", "role": "measure", "unit": "MW", "description": "Small hydropower potential (≤25 MW per project)"},
+    {"entityId": "ent_biomass", "entityName": "Biomass Power Potential", "entityType": "measure", "columnExpr": "Biomass", "role": "measure", "unit": "MW", "description": "Biomass-based power generation potential"},
+    {"entityId": "ent_cogen_bagasse", "entityName": "Cogeneration-Bagasse Potential", "entityType": "measure", "columnExpr": "Cogeneration-Bagasse", "role": "measure", "unit": "MW", "description": "Bagasse-based cogeneration potential"},
+    {"entityId": "ent_large_hydro", "entityName": "Large Hydro Power Potential", "entityType": "measure", "columnExpr": "Large Hydro", "role": "measure", "unit": "MW", "description": "Large hydropower potential (>25 MW per project)"},
+    {"entityId": "ent_total_renewable", "entityName": "Total Renewable Potential", "entityType": "measure", "columnExpr": "Total Renewable", "role": "measure", "unit": "MW", "description": "Sum of all renewable energy source potentials"}
+  ],
+  "formulaCatalog": [
+    {"formulaId": "f_proved_share", "formulaType": "SHARE", "label": "Proved Reserve Share", "numerator": "ent_proved", "denominator": "ent_total", "grain": "ent_state_ut", "displayFormat": "percentage", "precision": 1},
+    {"formulaId": "f_solar_share", "formulaType": "SHARE", "label": "Solar Share of Renewable", "numerator": "ent_solar", "denominator": "ent_total_renewable", "grain": "ent_state_ut", "displayFormat": "percentage", "precision": 1},
+    {"formulaId": "f_wind_share", "formulaType": "SHARE", "label": "Wind Share of Renewable", "numerator": "ent_wind", "denominator": "ent_total_renewable", "grain": "ent_state_ut", "displayFormat": "percentage", "precision": 1},
+    {"formulaId": "f_renewable_conventional_ratio", "formulaType": "RATIO", "label": "Renewable to Conventional Ratio", "numerator": "ent_total_renewable", "denominator": "ent_total", "grain": "ent_region", "displayFormat": "multiplier", "precision": 2, "note": "Cross-unit ratio (MW/MT) — interpret as relative magnitude index, not physical conversion"}
+  ],
+  "topics": [
+    {
+      "topicId": "topic_conventional",
+      "title": "Conventional Energy Reserves",
+      "order": 1,
+      "semanticRef": "conventional_energy_reserves",
+      "officerSummary": "Covers coal, lignite, and hydrocarbon (crude oil, natural gas) reserves by state, region, and geological confidence category.",
+      "pageBudget": {"min": 3, "max": 4},
+      "ownEntities": [
+        {"entityId": "ent_state_ut", "role": "dimension", "inherited": false},
+        {"entityId": "ent_region", "role": "dimension", "inherited": false},
+        {"entityId": "ent_period", "role": "time", "inherited": false}
+      ],
+      "chapters": [
+        {
+          "chapterId": "ch_coal_lignite",
+          "title": "Coal & Lignite Reserves",
+          "order": 1,
+          "chapterType": "analytical",
+          "officerSummary": "State-wise coal and lignite reserves with breakdown by geological confidence (Proved/Indicated/Inferred). Covers 12 coal-bearing states.",
+          "pageBudget": {"min": 2, "max": 3},
+          "ownEntities": [
+            {"entityId": "ent_coal", "role": "measure", "inherited": false},
+            {"entityId": "ent_lignite", "role": "measure", "inherited": false},
+            {"entityId": "ent_proved", "role": "measure", "inherited": false},
+            {"entityId": "ent_indicated", "role": "measure", "inherited": false},
+            {"entityId": "ent_inferred", "role": "measure", "inherited": false},
+            {"entityId": "ent_total", "role": "measure", "inherited": false},
+            {"entityId": "ent_reserve_category", "role": "dimension", "inherited": false}
+          ],
+          "inheritedEntities": [
+            {"entityId": "ent_state_ut", "from": "topic_conventional"},
+            {"entityId": "ent_region", "from": "topic_conventional"},
+            {"entityId": "ent_period", "from": "topic_conventional"}
+          ],
+          "sections": [
+            {
+              "sectionId": "sec_coal_state",
+              "title": "State-wise Coal Reserves Distribution",
+              "order": 1,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {"estimatedPages": 1.2},
+              "ownEntities": [
+                {"entityId": "ent_coal", "role": "measure", "inherited": false},
+                {"entityId": "ent_total", "role": "measure", "inherited": false}
+              ],
+              "inheritedEntities": [
+                {"entityId": "ent_state_ut", "from": "topic_conventional"},
+                {"entityId": "ent_region", "from": "topic_conventional"},
+                {"entityId": "ent_reserve_category", "from": "ch_coal_lignite"}
+              ],
+              "questions": [
+                {
+                  "questionId": "q_coal_state_rank",
+                  "intent": "Establish the geographic concentration of coal reserves and identify dominant coal-bearing states.",
+                  "questionText": "Rank States/UTs by total coal reserves showing regional concentration and identify the top 5 contributors.",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {"entityId": "ent_state_ut", "role": "dimension", "columnExpr": "State/UT", "usage": "row_identifier"},
+                    {"entityId": "ent_region", "role": "dimension", "columnExpr": "Region", "usage": "grouping"},
+                    {"entityId": "ent_coal", "role": "measure", "columnExpr": "Coal", "unit": "MT", "usage": "primary_metric"},
+                    {"entityId": "ent_total", "role": "measure", "columnExpr": "Total", "unit": "MT", "usage": "reference_total"}
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_state_ut",
+                    "sortBy": "ent_coal",
+                    "sortOrder": "descending",
+                    "topN": 12,
+                    "groupBy": "ent_region",
+                    "aggregation": "sum",
+                    "filters": [{"entity": "ent_coal", "condition": "not_null"}]
+                  },
+                  "officerIntent": "Show which states dominate India's coal reserves, grouped by region so the East's dominance is immediately visible.",
+                  "dataRequirements": {
+                    "minRows": 5,
+                    "requiredColumns": ["State/UT", "Region", "Coal", "Total"],
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_coal_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": ["ent_state_ut", "ent_coal"],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true,
+                    "caveatsWhenDegraded": ["Note: States with null Coal values excluded from ranking."]
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "Geological Survey of India / CMPDI estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "reviewChecklist": [
+                    "Verify Jharkhand and Odisha appear in top 3",
+                    "Confirm East region dominates",
+                    "Check null handling for non-coal states",
+                    "Validate total = sum of category columns"
+                  ],
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true,
+                    "alternativeViews": ["regional_aggregate_only", "top_5_only"]
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_coal_state_rank_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 60,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": ["ent_coal", "ent_state_ut", "ent_region"],
+                          "exampleOutput": "India's coal reserves are concentrated in the eastern states, with Odisha (84,500 MT) and Jharkhand (83,152 MT) together accounting for nearly half of the national total."
+                        },
+                        "requiredEntities": ["ent_coal", "ent_state_ut", "ent_region"],
+                        "customization": {"officerEditable": true, "canOverrideGenerated": true}
+                      },
+                      {
+                        "componentId": "q_coal_state_rank_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 12,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "State-wise Coal Reserves (MT)",
+                          "rowEntity": "ent_state_ut",
+                          "columns": ["ent_coal", "ent_total"],
+                          "groupRowsBy": "ent_region",
+                          "sortBy": "ent_coal",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "highlightRule": "top_3_bold",
+                          "unitLabel": "MT",
+                          "footnote": "Source: GSI/CMPDI, As on 1 April 2025"
+                        },
+                        "requiredEntities": ["ent_state_ut", "ent_region", "ent_coal", "ent_total"],
+                        "customization": {"officerEditable": true, "canHideColumns": true}
+                      },
+                      {
+                        "componentId": "q_coal_state_rank_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Top Coal-bearing States by Total Reserves",
+                          "chartType": "bar",
+                          "xAxis": {"entity": "ent_state_ut", "label": "State/UT"},
+                          "yAxes": [{"entity": "ent_coal", "label": "Coal Reserves (MT)", "color": "#4A3728"}],
+                          "groupBy": "ent_region",
+                          "sortBy": "ent_coal",
+                          "sortOrder": "descending",
+                          "topN": 10,
+                          "showDataLabels": true,
+                          "unitLabel": "MT"
+                        },
+                        "requiredEntities": ["ent_state_ut", "ent_region", "ent_coal"],
+                        "customization": {"officerEditable": true, "canChangeChartType": true}
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "sectionId": "sec_reserve_category",
+              "title": "Reserve Classification Analysis",
+              "order": 2,
+              "sectionArchetype": "composition_analysis",
+              "pagePlan": {"estimatedPages": 1.0},
+              "ownEntities": [
+                {"entityId": "ent_proved", "role": "measure", "inherited": false},
+                {"entityId": "ent_indicated", "role": "measure", "inherited": false},
+                {"entityId": "ent_inferred", "role": "measure", "inherited": false},
+                {"entityId": "ent_total", "role": "measure", "inherited": false}
+              ],
+              "inheritedEntities": [
+                {"entityId": "ent_state_ut", "from": "topic_conventional"},
+                {"entityId": "ent_reserve_category", "from": "ch_coal_lignite"}
+              ],
+              "questions": [
+                {
+                  "questionId": "q_reserve_category_composition",
+                  "intent": "Analyze the geological confidence distribution of reserves to assess exploration maturity.",
+                  "questionText": "How are India's coal and lignite reserves distributed across Proved, Indicated, and Inferred categories, and what does this imply for extraction readiness?",
+                  "questionType": "composition",
+                  "priority": "P1_must",
+                  "generationMethod": "SHARE",
+                  "estimatedPageWeight": 1.0,
+                  "requiredEntities": [
+                    {"entityId": "ent_state_ut", "role": "dimension", "columnExpr": "State/UT", "usage": "grain"},
+                    {"entityId": "ent_reserve_category", "role": "dimension", "columnExpr": "Reserve Category", "usage": "composition_axis"},
+                    {"entityId": "ent_proved", "role": "measure", "columnExpr": "Proved", "unit": "MT", "usage": "numerator"},
+                    {"entityId": "ent_indicated", "role": "measure", "columnExpr": "Indicated", "unit": "MT", "usage": "part"},
+                    {"entityId": "ent_inferred", "role": "measure", "columnExpr": "Inferred", "unit": "MT", "usage": "part"},
+                    {"entityId": "ent_total", "role": "measure", "columnExpr": "Total", "unit": "MT", "usage": "denominator"}
+                  ],
+                  "analyticsSpec": {
+                    "operation": "composition",
+                    "grain": "national",
+                    "aggregation": "sum",
+                    "parts": ["ent_proved", "ent_indicated", "ent_inferred"],
+                    "whole": "ent_total"
+                  },
+                  "formulaSpec": {
+                    "formulaType": "SHARE",
+                    "formulaRef": "f_proved_share",
+                    "numerator": "ent_proved",
+                    "denominator": "ent_total",
+                    "grain": "national",
+                    "displayFormat": "percentage",
+                    "precision": 1
+                  },
+                  "officerIntent": "Show that most of India's reserves are in the Proved category (exploration-mature), giving confidence for extraction planning.",
+                  "dataRequirements": {
+                    "minRows": 5,
+                    "requiredColumns": ["Proved", "Indicated", "Inferred", "Total"],
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_total_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": ["ent_proved", "ent_indicated", "ent_inferred", "ent_total"],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true,
+                    "caveatsWhenDegraded": ["Note: States without reserve classification excluded."]
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "GSI classification standards",
+                    "lineageRequired": true
+                  },
+                  "reviewChecklist": [
+                    "Verify Proved + Indicated + Inferred = Total for each state",
+                    "Confirm Proved share > 50% nationally",
+                    "Check that category nulls align with non-coal states"
+                  ],
+                  "customization": {"officerEditable": true, "toggleable": true},
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_reserve_cat_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {"type": "prose", "minWords": 50, "maxWords": 100, "requiresEvidence": true},
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "composition_headline_with_percentages",
+                          "mustMention": ["ent_proved", "ent_total"],
+                          "exampleOutput": "Proved reserves constitute 63% of India's total coal reserves (2,21,700 MT of 3,52,900 MT), indicating a high level of exploration maturity across major coal-bearing states."
+                        },
+                        "requiredEntities": ["ent_proved", "ent_indicated", "ent_inferred", "ent_total"]
+                      },
+                      {
+                        "componentId": "q_reserve_cat_chart",
+                        "kind": "chart",
+                        "order": 2,
+                        "outputContract": {"type": "visualization", "chartType": "pie", "maxSlices": 3},
+                        "chartSpec": {
+                          "title": "National Reserve Distribution by Category",
+                          "chartType": "pie",
+                          "slices": [
+                            {"entity": "ent_proved", "label": "Proved", "color": "#2E7D32"},
+                            {"entity": "ent_indicated", "label": "Indicated", "color": "#FFA000"},
+                            {"entity": "ent_inferred", "label": "Inferred", "color": "#C62828"}
+                          ],
+                          "showPercentage": true,
+                          "showAbsoluteValue": true,
+                          "unitLabel": "MT"
+                        },
+                        "requiredEntities": ["ent_proved", "ent_indicated", "ent_inferred"]
+                      },
+                      {
+                        "componentId": "q_reserve_cat_formula",
+                        "kind": "formula_metric",
+                        "order": 3,
+                        "outputContract": {"type": "computed_metric", "displayFormat": "percentage", "precision": 1},
+                        "formulaSpec": {
+                          "formulaType": "SHARE",
+                          "numerator": "ent_proved",
+                          "denominator": "ent_total",
+                          "grain": "national",
+                          "aggregation": "sum_then_divide",
+                          "displayAs": "Proved reserves as % of total"
+                        },
+                        "requiredEntities": ["ent_proved", "ent_total"]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chapterId": "ch_hydrocarbons",
+          "title": "Hydrocarbon Reserves",
+          "order": 2,
+          "chapterType": "analytical",
+          "officerSummary": "Crude oil and natural gas reserves distribution. Concentrated in very few states (Rajasthan, Gujarat, Assam).",
+          "pageBudget": {"min": 1, "max": 1.5},
+          "ownEntities": [
+            {"entityId": "ent_crude_oil", "role": "measure", "inherited": false},
+            {"entityId": "ent_natural_gas", "role": "measure", "inherited": false}
+          ],
+          "inheritedEntities": [
+            {"entityId": "ent_state_ut", "from": "topic_conventional"},
+            {"entityId": "ent_region", "from": "topic_conventional"},
+            {"entityId": "ent_period", "from": "topic_conventional"}
+          ],
+          "sections": [
+            {
+              "sectionId": "sec_oil_gas",
+              "title": "Oil & Gas State Distribution",
+              "order": 1,
+              "sectionArchetype": "concentration_analysis",
+              "pagePlan": {"estimatedPages": 1.0},
+              "ownEntities": [
+                {"entityId": "ent_crude_oil", "role": "measure", "inherited": false},
+                {"entityId": "ent_natural_gas", "role": "measure", "inherited": false}
+              ],
+              "inheritedEntities": [
+                {"entityId": "ent_state_ut", "from": "topic_conventional"},
+                {"entityId": "ent_region", "from": "topic_conventional"}
+              ],
+              "questions": [
+                {
+                  "questionId": "q_hydrocarbons_state",
+                  "intent": "Identify the few states with hydrocarbon reserves and quantify their holdings.",
+                  "questionText": "Which states hold crude oil and natural gas reserves, and how concentrated are these resources geographically?",
+                  "questionType": "distribution",
+                  "priority": "P2_should",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 0.8,
+                  "requiredEntities": [
+                    {"entityId": "ent_state_ut", "role": "dimension", "columnExpr": "State/UT", "usage": "row_identifier"},
+                    {"entityId": "ent_crude_oil", "role": "measure", "columnExpr": "Crude Oil", "unit": "MT", "usage": "primary_metric"},
+                    {"entityId": "ent_natural_gas", "role": "measure", "columnExpr": "Natural Gas", "unit": "BCM", "usage": "secondary_metric"}
+                  ],
+                  "analyticsSpec": {
+                    "operation": "filter_and_rank",
+                    "grain": "ent_state_ut",
+                    "filters": [{"condition": "ent_crude_oil IS NOT NULL OR ent_natural_gas IS NOT NULL"}],
+                    "sortBy": "ent_crude_oil",
+                    "sortOrder": "descending"
+                  },
+                  "officerIntent": "Highlight that hydrocarbons are extremely concentrated — only 4 states have reserves. This contrasts with coal's wider distribution.",
+                  "dataRequirements": {"minRows": 2, "requiredColumns": ["State/UT", "Crude Oil", "Natural Gas"], "nullHandling": "show_only_non_null"},
+                  "binderContract": {"requiredBindings": ["ent_state_ut", "ent_crude_oil"], "fallbackBehavior": "DEGRADE_TO_AVAILABLE"},
+                  "qualityGates": {"minConfidence": 0.8, "evidenceRequired": true},
+                  "provenanceRequirements": {"sourceAttribution": "Ministry of Petroleum and Natural Gas", "lineageRequired": true},
+                  "reviewChecklist": ["Verify only 4 states have data", "Confirm Assam and Gujarat dominate", "Note different units: MT vs BCM"],
+                  "customization": {"officerEditable": true, "toggleable": true},
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_hydro_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {"type": "prose", "minWords": 40, "maxWords": 80, "requiresEvidence": true},
+                        "narrativeTemplate": {"tone": "formal-statistical", "pattern": "concentration_highlight", "mustMention": ["ent_crude_oil", "ent_natural_gas", "ent_state_ut"]},
+                        "requiredEntities": ["ent_crude_oil", "ent_natural_gas", "ent_state_ut"]
+                      },
+                      {
+                        "componentId": "q_hydro_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {"type": "structured_data", "minRows": 2, "maxRows": 5, "showTotals": true},
+                        "tableSpec": {"title": "Hydrocarbon Reserves by State", "rowEntity": "ent_state_ut", "columns": ["ent_crude_oil", "ent_natural_gas"], "sortBy": "ent_crude_oil", "sortOrder": "descending", "footnote": "Source: MoPNG. Units: Crude Oil (MT), Natural Gas (BCM)"},
+                        "requiredEntities": ["ent_state_ut", "ent_crude_oil", "ent_natural_gas"]
+                      },
+                      {
+                        "componentId": "q_hydro_source_note",
+                        "kind": "source_note",
+                        "order": 3,
+                        "outputContract": {"type": "attribution"},
+                        "content": {"sourceName": "Ministry of Petroleum and Natural Gas / Directorate General of Hydrocarbons", "coverage": "Data for producing states only (Rajasthan, Gujarat, Assam, Andhra Pradesh)", "reference": "As on 1 April 2025"}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_renewable",
+      "title": "Renewable Energy Potential",
+      "order": 2,
+      "semanticRef": "renewable_energy_potential",
+      "officerSummary": "State-wise assessed potential for wind, solar, small hydro, biomass, cogeneration, and large hydro. Source mix composition analysis.",
+      "pageBudget": {"min": 3, "max": 5},
+      "ownEntities": [
+        {"entityId": "ent_state_ut", "role": "dimension", "inherited": false},
+        {"entityId": "ent_region", "role": "dimension", "inherited": false},
+        {"entityId": "ent_energy_source", "role": "dimension", "inherited": false},
+        {"entityId": "ent_period", "role": "time", "inherited": false}
+      ],
+      "chapters": [
+        {
+          "chapterId": "ch_renewable_capacity",
+          "title": "Source-wise Renewable Capacity",
+          "order": 1,
+          "chapterType": "analytical",
+          "officerSummary": "Detailed state-wise potential for each renewable source. Wind and solar dominate but hydro and biomass fill niche roles.",
+          "pageBudget": {"min": 2, "max": 3},
+          "ownEntities": [
+            {"entityId": "ent_wind", "role": "measure", "inherited": false},
+            {"entityId": "ent_solar", "role": "measure", "inherited": false},
+            {"entityId": "ent_small_hydro", "role": "measure", "inherited": false},
+            {"entityId": "ent_biomass", "role": "measure", "inherited": false},
+            {"entityId": "ent_cogen_bagasse", "role": "measure", "inherited": false},
+            {"entityId": "ent_large_hydro", "role": "measure", "inherited": false},
+            {"entityId": "ent_total_renewable", "role": "measure", "inherited": false}
+          ],
+          "inheritedEntities": [
+            {"entityId": "ent_state_ut", "from": "topic_renewable"},
+            {"entityId": "ent_region", "from": "topic_renewable"},
+            {"entityId": "ent_energy_source", "from": "topic_renewable"}
+          ],
+          "sections": [
+            {
+              "sectionId": "sec_wind_solar",
+              "title": "Wind & Solar Potential",
+              "order": 1,
+              "sectionArchetype": "comparison_ranking",
+              "pagePlan": {"estimatedPages": 1.5},
+              "ownEntities": [
+                {"entityId": "ent_wind", "role": "measure", "inherited": false},
+                {"entityId": "ent_solar", "role": "measure", "inherited": false},
+                {"entityId": "ent_total_renewable", "role": "measure", "inherited": false}
+              ],
+              "inheritedEntities": [
+                {"entityId": "ent_state_ut", "from": "topic_renewable"},
+                {"entityId": "ent_region", "from": "topic_renewable"}
+              ],
+              "questions": [
+                {
+                  "questionId": "q_wind_solar_compare",
+                  "intent": "Compare the two dominant renewable sources across states to reveal geographic specialization.",
+                  "questionText": "Compare wind and solar assessed potential across India's states, identifying which states specialize in each source and the overall regional pattern.",
+                  "questionType": "comparison",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.3,
+                  "requiredEntities": [
+                    {"entityId": "ent_state_ut", "role": "dimension", "columnExpr": "State/UT", "usage": "row_identifier"},
+                    {"entityId": "ent_region", "role": "dimension", "columnExpr": "Region", "usage": "grouping"},
+                    {"entityId": "ent_wind", "role": "measure", "columnExpr": "Wind", "unit": "MW", "usage": "primary_comparison"},
+                    {"entityId": "ent_solar", "role": "measure", "columnExpr": "Solar", "unit": "MW", "usage": "secondary_comparison"},
+                    {"entityId": "ent_total_renewable", "role": "measure", "columnExpr": "Total Renewable", "unit": "MW", "usage": "reference_total"}
+                  ],
+                  "analyticsSpec": {"operation": "compare_rank", "grain": "ent_state_ut", "metrics": ["ent_wind", "ent_solar"], "sortBy": "ent_total_renewable", "sortOrder": "descending", "topN": 10},
+                  "officerIntent": "Show that wind is concentrated in western/southern coastal states while solar is distributed more broadly, with Rajasthan leading solar massively.",
+                  "dataRequirements": {"minRows": 10, "requiredColumns": ["State/UT", "Wind", "Solar", "Total Renewable"]},
+                  "binderContract": {"requiredBindings": ["ent_state_ut", "ent_wind", "ent_solar"], "fallbackBehavior": "DEGRADE_TO_AVAILABLE"},
+                  "qualityGates": {"minConfidence": 0.9, "evidenceRequired": true},
+                  "provenanceRequirements": {"sourceAttribution": "MNRE assessed potential estimates", "lineageRequired": true},
+                  "reviewChecklist": ["Verify Karnataka leads wind", "Confirm Rajasthan leads solar", "Check Maharashtra in both top lists"],
+                  "customization": {"officerEditable": true, "toggleable": true, "alternativeViews": ["solar_only", "wind_only"]},
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_windsolar_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {"type": "prose", "minWords": 70, "maxWords": 130, "requiresEvidence": true},
+                        "narrativeTemplate": {"tone": "formal-statistical", "pattern": "comparison_with_geographic_insight", "mustMention": ["ent_wind", "ent_solar", "ent_state_ut", "ent_region"]},
+                        "requiredEntities": ["ent_wind", "ent_solar", "ent_state_ut", "ent_region"]
+                      },
+                      {
+                        "componentId": "q_windsolar_chart",
+                        "kind": "chart",
+                        "order": 2,
+                        "outputContract": {"type": "visualization", "chartType": "grouped_bar", "minSeries": 2, "maxCategories": 10},
+                        "chartSpec": {"title": "Wind vs Solar Potential by State (Top 10)", "chartType": "grouped_bar", "xAxis": {"entity": "ent_state_ut", "label": "State/UT"}, "yAxes": [{"entity": "ent_wind", "label": "Wind (MW)", "color": "#1565C0"}, {"entity": "ent_solar", "label": "Solar (MW)", "color": "#FF8F00"}], "sortBy": "ent_total_renewable", "sortOrder": "descending", "topN": 10, "showDataLabels": true, "unitLabel": "MW"},
+                        "requiredEntities": ["ent_state_ut", "ent_wind", "ent_solar", "ent_total_renewable"]
+                      },
+                      {
+                        "componentId": "q_windsolar_table",
+                        "kind": "table",
+                        "order": 3,
+                        "outputContract": {"type": "structured_data", "minRows": 10, "maxRows": 18, "showTotals": true},
+                        "tableSpec": {"title": "State-wise Wind, Solar & Total Renewable Potential (MW)", "rowEntity": "ent_state_ut", "columns": ["ent_wind", "ent_solar", "ent_total_renewable"], "groupRowsBy": "ent_region", "sortBy": "ent_total_renewable", "sortOrder": "descending", "showRank": true, "unitLabel": "MW"},
+                        "requiredEntities": ["ent_state_ut", "ent_region", "ent_wind", "ent_solar", "ent_total_renewable"]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "sectionId": "sec_hydro_biomass",
+              "title": "Small Hydro, Biomass & Large Hydro",
+              "order": 2,
+              "sectionArchetype": "niche_source_analysis",
+              "pagePlan": {"estimatedPages": 1.0},
+              "ownEntities": [
+                {"entityId": "ent_small_hydro", "role": "measure", "inherited": false},
+                {"entityId": "ent_biomass", "role": "measure", "inherited": false},
+                {"entityId": "ent_cogen_bagasse", "role": "measure", "inherited": false},
+                {"entityId": "ent_large_hydro", "role": "measure", "inherited": false}
+              ],
+              "inheritedEntities": [
+                {"entityId": "ent_state_ut", "from": "topic_renewable"},
+                {"entityId": "ent_total_renewable", "from": "ch_renewable_capacity"}
+              ],
+              "questions": [
+                {
+                  "questionId": "q_hydro_biomass",
+                  "intent": "Document niche renewable sources that play significant roles in specific states (Himalayan hydro, agricultural biomass).",
+                  "questionText": "What is the state-wise assessed potential for small hydro, biomass, cogeneration-bagasse, and large hydro, and which states specialize in these niche sources?",
+                  "questionType": "distribution",
+                  "priority": "P2_should",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.0,
+                  "requiredEntities": [
+                    {"entityId": "ent_state_ut", "role": "dimension", "columnExpr": "State/UT", "usage": "row_identifier"},
+                    {"entityId": "ent_small_hydro", "role": "measure", "columnExpr": "Small Hydro", "unit": "MW", "usage": "metric"},
+                    {"entityId": "ent_biomass", "role": "measure", "columnExpr": "Biomass", "unit": "MW", "usage": "metric"},
+                    {"entityId": "ent_cogen_bagasse", "role": "measure", "columnExpr": "Cogeneration-Bagasse", "unit": "MW", "usage": "metric"},
+                    {"entityId": "ent_large_hydro", "role": "measure", "columnExpr": "Large Hydro", "unit": "MW", "usage": "metric"}
+                  ],
+                  "analyticsSpec": {"operation": "stacked_comparison", "grain": "ent_state_ut", "metrics": ["ent_small_hydro", "ent_biomass", "ent_cogen_bagasse", "ent_large_hydro"]},
+                  "officerIntent": "Show that large hydro is dominated by NE/Himalayan states, biomass by sugarcane states (UP, Maharashtra), small hydro by hill states.",
+                  "dataRequirements": {"minRows": 10, "requiredColumns": ["State/UT", "Small Hydro", "Biomass", "Large Hydro"]},
+                  "binderContract": {"requiredBindings": ["ent_state_ut", "ent_small_hydro", "ent_biomass", "ent_large_hydro"], "fallbackBehavior": "DEGRADE_TO_AVAILABLE"},
+                  "qualityGates": {"minConfidence": 0.8, "evidenceRequired": true},
+                  "provenanceRequirements": {"sourceAttribution": "MNRE", "lineageRequired": true},
+                  "reviewChecklist": ["Verify Arunachal Pradesh leads large hydro", "Confirm Himachal Pradesh leads small hydro", "Check UP for cogeneration-bagasse"],
+                  "customization": {"officerEditable": true, "toggleable": true},
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_hydrobio_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {"type": "prose", "minWords": 60, "maxWords": 110, "requiresEvidence": true},
+                        "narrativeTemplate": {"tone": "formal-statistical", "pattern": "niche_specialization_highlight", "mustMention": ["ent_large_hydro", "ent_small_hydro", "ent_biomass"]},
+                        "requiredEntities": ["ent_small_hydro", "ent_biomass", "ent_large_hydro", "ent_state_ut"]
+                      },
+                      {
+                        "componentId": "q_hydrobio_chart",
+                        "kind": "chart",
+                        "order": 2,
+                        "outputContract": {"type": "visualization", "chartType": "stacked_bar", "minSeries": 3, "maxCategories": 12},
+                        "chartSpec": {"title": "Niche Renewable Potential by State (MW)", "chartType": "stacked_bar", "xAxis": {"entity": "ent_state_ut", "label": "State/UT"}, "yAxes": [{"entity": "ent_small_hydro", "label": "Small Hydro", "color": "#0288D1"}, {"entity": "ent_biomass", "label": "Biomass", "color": "#388E3C"}, {"entity": "ent_cogen_bagasse", "label": "Cogeneration", "color": "#F57C00"}, {"entity": "ent_large_hydro", "label": "Large Hydro", "color": "#5E35B1"}], "showDataLabels": false, "unitLabel": "MW"},
+                        "requiredEntities": ["ent_state_ut", "ent_small_hydro", "ent_biomass", "ent_cogen_bagasse", "ent_large_hydro"]
+                      },
+                      {
+                        "componentId": "q_hydrobio_caveat",
+                        "kind": "data_caveat",
+                        "order": 3,
+                        "outputContract": {"type": "caveat"},
+                        "content": {"issueType": "missing_data", "description": "Several states show zero potential for specific sources (e.g., Wind=0 for landlocked NE states). These are valid zeros (no assessed potential) rather than missing data.", "affectedEntities": ["ent_cogen_bagasse", "ent_large_hydro"]}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chapterId": "ch_source_mix",
+          "title": "Renewable Source Mix & Dominance",
+          "order": 2,
+          "chapterType": "analytical",
+          "officerSummary": "National composition of renewable potential by source type. SHARE formula analysis showing solar and wind dominance.",
+          "pageBudget": {"min": 1, "max": 2},
+          "ownEntities": [
+            {"entityId": "ent_total_renewable", "role": "measure", "inherited": false},
+            {"entityId": "ent_wind", "role": "measure", "inherited": false},
+            {"entityId": "ent_solar", "role": "measure", "inherited": false}
+          ],
+          "inheritedEntities": [
+            {"entityId": "ent_state_ut", "from": "topic_renewable"},
+            {"entityId": "ent_energy_source", "from": "topic_renewable"}
+          ],
+          "sections": [
+            {
+              "sectionId": "sec_source_composition",
+              "title": "National Renewable Composition",
+              "order": 1,
+              "sectionArchetype": "composition_analysis",
+              "pagePlan": {"estimatedPages": 1.2},
+              "ownEntities": [
+                {"entityId": "ent_wind", "role": "measure", "inherited": false},
+                {"entityId": "ent_solar", "role": "measure", "inherited": false},
+                {"entityId": "ent_small_hydro", "role": "measure", "inherited": false},
+                {"entityId": "ent_biomass", "role": "measure", "inherited": false},
+                {"entityId": "ent_cogen_bagasse", "role": "measure", "inherited": false},
+                {"entityId": "ent_large_hydro", "role": "measure", "inherited": false},
+                {"entityId": "ent_total_renewable", "role": "measure", "inherited": false}
+              ],
+              "inheritedEntities": [
+                {"entityId": "ent_energy_source", "from": "topic_renewable"}
+              ],
+              "questions": [
+                {
+                  "questionId": "q_source_mix_national",
+                  "intent": "Quantify the national renewable energy mix to show which sources have the greatest potential.",
+                  "questionText": "What share does each renewable source (wind, solar, small hydro, biomass, cogeneration, large hydro) contribute to India's total assessed renewable potential?",
+                  "questionType": "composition",
+                  "priority": "P1_must",
+                  "generationMethod": "SHARE",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {"entityId": "ent_energy_source", "role": "dimension", "columnExpr": "Energy Source", "usage": "composition_axis"},
+                    {"entityId": "ent_wind", "role": "measure", "columnExpr": "Wind", "unit": "MW", "usage": "part"},
+                    {"entityId": "ent_solar", "role": "measure", "columnExpr": "Solar", "unit": "MW", "usage": "part"},
+                    {"entityId": "ent_small_hydro", "role": "measure", "columnExpr": "Small Hydro", "unit": "MW", "usage": "part"},
+                    {"entityId": "ent_biomass", "role": "measure", "columnExpr": "Biomass", "unit": "MW", "usage": "part"},
+                    {"entityId": "ent_cogen_bagasse", "role": "measure", "columnExpr": "Cogeneration-Bagasse", "unit": "MW", "usage": "part"},
+                    {"entityId": "ent_large_hydro", "role": "measure", "columnExpr": "Large Hydro", "unit": "MW", "usage": "part"},
+                    {"entityId": "ent_total_renewable", "role": "measure", "columnExpr": "Total Renewable", "unit": "MW", "usage": "denominator"}
+                  ],
+                  "analyticsSpec": {"operation": "composition", "grain": "national", "aggregation": "sum", "parts": ["ent_wind", "ent_solar", "ent_small_hydro", "ent_biomass", "ent_cogen_bagasse", "ent_large_hydro"], "whole": "ent_total_renewable"},
+                  "formulaSpec": {"formulaType": "SHARE", "formulaRef": "f_solar_share", "numerator": "ent_solar", "denominator": "ent_total_renewable", "grain": "national", "displayFormat": "percentage", "precision": 1},
+                  "officerIntent": "Demonstrate that solar + wind together account for >80% of total renewable potential, making them the primary pillars of India's energy transition.",
+                  "dataRequirements": {"minRows": 15, "requiredColumns": ["Wind", "Solar", "Small Hydro", "Biomass", "Cogeneration-Bagasse", "Large Hydro", "Total Renewable"]},
+                  "binderContract": {"requiredBindings": ["ent_wind", "ent_solar", "ent_total_renewable"], "fallbackBehavior": "DEGRADE_TO_AVAILABLE"},
+                  "qualityGates": {"minConfidence": 0.9, "evidenceRequired": true},
+                  "provenanceRequirements": {"sourceAttribution": "MNRE assessed potential", "lineageRequired": true},
+                  "reviewChecklist": ["Verify sum of parts ≈ Total Renewable for each state", "Confirm solar share > 40%", "Confirm wind share > 25%", "Check that Large Hydro is significant (>10%)"],
+                  "customization": {"officerEditable": true, "toggleable": false},
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_sourcemix_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {"type": "prose", "minWords": 70, "maxWords": 120, "requiresEvidence": true},
+                        "narrativeTemplate": {"tone": "formal-statistical", "pattern": "composition_dominance_highlight", "mustMention": ["ent_solar", "ent_wind", "ent_total_renewable"]},
+                        "requiredEntities": ["ent_solar", "ent_wind", "ent_total_renewable"]
+                      },
+                      {
+                        "componentId": "q_sourcemix_chart",
+                        "kind": "chart",
+                        "order": 2,
+                        "outputContract": {"type": "visualization", "chartType": "donut", "maxSlices": 6},
+                        "chartSpec": {"title": "National Renewable Source Mix", "chartType": "donut", "slices": [{"entity": "ent_wind", "label": "Wind", "color": "#1565C0"}, {"entity": "ent_solar", "label": "Solar", "color": "#FF8F00"}, {"entity": "ent_small_hydro", "label": "Small Hydro", "color": "#0288D1"}, {"entity": "ent_biomass", "label": "Biomass", "color": "#388E3C"}, {"entity": "ent_cogen_bagasse", "label": "Cogeneration", "color": "#F57C00"}, {"entity": "ent_large_hydro", "label": "Large Hydro", "color": "#5E35B1"}], "showPercentage": true, "unitLabel": "MW"},
+                        "requiredEntities": ["ent_wind", "ent_solar", "ent_small_hydro", "ent_biomass", "ent_cogen_bagasse", "ent_large_hydro"]
+                      },
+                      {
+                        "componentId": "q_sourcemix_formula_solar",
+                        "kind": "formula_metric",
+                        "order": 3,
+                        "outputContract": {"type": "computed_metric", "displayFormat": "percentage", "precision": 1},
+                        "formulaSpec": {"formulaType": "SHARE", "numerator": "ent_solar", "denominator": "ent_total_renewable", "grain": "national", "aggregation": "sum_then_divide", "displayAs": "Solar share of total renewable potential"},
+                        "requiredEntities": ["ent_solar", "ent_total_renewable"]
+                      },
+                      {
+                        "componentId": "q_sourcemix_formula_wind",
+                        "kind": "formula_metric",
+                        "order": 4,
+                        "outputContract": {"type": "computed_metric", "displayFormat": "percentage", "precision": 1},
+                        "formulaSpec": {"formulaType": "SHARE", "numerator": "ent_wind", "denominator": "ent_total_renewable", "grain": "national", "aggregation": "sum_then_divide", "displayAs": "Wind share of total renewable potential"},
+                        "requiredEntities": ["ent_wind", "ent_total_renewable"]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_crosscutting",
+      "title": "Cross-Cutting Regional Analysis",
+      "order": 3,
+      "semanticRef": "regional_analysis_methodology",
+      "officerSummary": "Regional energy endowment comparison (conventional vs renewable), data sources, methodology notes, and coverage limitations.",
+      "pageBudget": {"min": 2, "max": 3},
+      "ownEntities": [
+        {"entityId": "ent_state_ut", "role": "dimension", "inherited": false},
+        {"entityId": "ent_region", "role": "dimension", "inherited": false},
+        {"entityId": "ent_total", "role": "measure", "inherited": false},
+        {"entityId": "ent_total_renewable", "role": "measure", "inherited": false},
+        {"entityId": "ent_period", "role": "time", "inherited": false}
+      ],
+      "chapters": [
+        {
+          "chapterId": "ch_regional_profile",
+          "title": "Regional Energy Endowment",
+          "order": 1,
+          "chapterType": "analytical",
+          "officerSummary": "Compares conventional and renewable resources by region, showing energy specialization patterns.",
+          "pageBudget": {"min": 1.5, "max": 2},
+          "ownEntities": [
+            {"entityId": "ent_coal", "role": "measure", "inherited": false},
+            {"entityId": "ent_total", "role": "measure", "inherited": false},
+            {"entityId": "ent_total_renewable", "role": "measure", "inherited": false}
+          ],
+          "inheritedEntities": [
+            {"entityId": "ent_state_ut", "from": "topic_crosscutting"},
+            {"entityId": "ent_region", "from": "topic_crosscutting"}
+          ],
+          "sections": [
+            {
+              "sectionId": "sec_regional_comparison",
+              "title": "Conventional vs Renewable by Region",
+              "order": 1,
+              "sectionArchetype": "cross_cutting_comparison",
+              "pagePlan": {"estimatedPages": 1.5},
+              "ownEntities": [
+                {"entityId": "ent_coal", "role": "measure", "inherited": false},
+                {"entityId": "ent_total", "role": "measure", "inherited": false},
+                {"entityId": "ent_total_renewable", "role": "measure", "inherited": false}
+              ],
+              "inheritedEntities": [
+                {"entityId": "ent_region", "from": "topic_crosscutting"},
+                {"entityId": "ent_state_ut", "from": "topic_crosscutting"}
+              ],
+              "questions": [
+                {
+                  "questionId": "q_regional_energy",
+                  "intent": "Reveal regional specialization patterns — East for coal, South/West for renewables, North for hydro.",
+                  "questionText": "How do conventional and renewable energy resources distribute across India's regions, and what is the ratio of renewable to conventional potential per region?",
+                  "questionType": "comparison",
+                  "priority": "P1_must",
+                  "generationMethod": "RATIO",
+                  "estimatedPageWeight": 1.5,
+                  "requiredEntities": [
+                    {"entityId": "ent_region", "role": "dimension", "columnExpr": "Region", "usage": "comparison_axis"},
+                    {"entityId": "ent_state_ut", "role": "dimension", "columnExpr": "State/UT", "usage": "detail_grain"},
+                    {"entityId": "ent_coal", "role": "measure", "columnExpr": "Coal", "unit": "MT", "usage": "conventional_proxy"},
+                    {"entityId": "ent_total", "role": "measure", "columnExpr": "Total", "unit": "MT", "usage": "conventional_total"},
+                    {"entityId": "ent_total_renewable", "role": "measure", "columnExpr": "Total Renewable", "unit": "MW", "usage": "renewable_total"}
+                  ],
+                  "analyticsSpec": {"operation": "group_aggregate_compare", "grain": "ent_region", "metrics": ["ent_total", "ent_total_renewable"], "aggregation": "sum"},
+                  "formulaSpec": {"formulaType": "RATIO", "formulaRef": "f_renewable_conventional_ratio", "numerator": "ent_total_renewable", "denominator": "ent_total", "grain": "ent_region", "displayFormat": "multiplier", "precision": 2, "note": "Cross-unit index (MW/MT)"},
+                  "officerIntent": "Highlight that East = coal powerhouse, South/West = renewable leaders, North/NE = hydro-dependent. The ratio metric is an index, not a physical conversion.",
+                  "dataRequirements": {"minRows": 10, "requiredColumns": ["Region", "Total", "Total Renewable"]},
+                  "binderContract": {"requiredBindings": ["ent_region", "ent_total", "ent_total_renewable"], "fallbackBehavior": "DEGRADE_TO_AVAILABLE"},
+                  "qualityGates": {"minConfidence": 0.85, "evidenceRequired": true},
+                  "provenanceRequirements": {"sourceAttribution": "Cross-source aggregation (GSI + MNRE)", "lineageRequired": true},
+                  "reviewChecklist": ["Verify East region coal total > 200,000 MT", "Confirm South leads renewable total", "Note that RATIO is cross-unit index not physical conversion"],
+                  "customization": {"officerEditable": true, "toggleable": true},
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_regional_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {"type": "prose", "minWords": 80, "maxWords": 140, "requiresEvidence": true},
+                        "narrativeTemplate": {"tone": "formal-statistical", "pattern": "regional_specialization_with_ratio", "mustMention": ["ent_region", "ent_total", "ent_total_renewable"]},
+                        "requiredEntities": ["ent_region", "ent_total", "ent_total_renewable"]
+                      },
+                      {
+                        "componentId": "q_regional_chart",
+                        "kind": "chart",
+                        "order": 2,
+                        "outputContract": {"type": "visualization", "chartType": "stacked_bar", "minSeries": 2, "maxCategories": 6},
+                        "chartSpec": {"title": "Energy Resources by Region", "chartType": "stacked_bar", "xAxis": {"entity": "ent_region", "label": "Region"}, "yAxes": [{"entity": "ent_total", "label": "Conventional (MT)", "color": "#4A3728"}, {"entity": "ent_total_renewable", "label": "Renewable (MW)", "color": "#2E7D32"}], "showDataLabels": true, "note": "Different units — proportional representation only"},
+                        "requiredEntities": ["ent_region", "ent_total", "ent_total_renewable"]
+                      },
+                      {
+                        "componentId": "q_regional_table",
+                        "kind": "table",
+                        "order": 3,
+                        "outputContract": {"type": "structured_data", "minRows": 5, "maxRows": 6, "showTotals": true},
+                        "tableSpec": {"title": "Regional Energy Profile Summary", "rowEntity": "ent_region", "columns": ["ent_total", "ent_total_renewable"], "sortBy": "ent_total", "sortOrder": "descending", "showTotals": true, "additionalColumns": [{"label": "Renewable/Conv Ratio", "formula": "f_renewable_conventional_ratio"}]},
+                        "requiredEntities": ["ent_region", "ent_total", "ent_total_renewable"]
+                      },
+                      {
+                        "componentId": "q_regional_formula",
+                        "kind": "formula_metric",
+                        "order": 4,
+                        "outputContract": {"type": "computed_metric", "displayFormat": "multiplier", "precision": 2},
+                        "formulaSpec": {"formulaType": "RATIO", "numerator": "ent_total_renewable", "denominator": "ent_total", "grain": "ent_region", "displayAs": "Renewable/Conventional index by region"},
+                        "requiredEntities": ["ent_total_renewable", "ent_total"]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chapterId": "ch_methodology",
+          "title": "Data Provenance & Methodology",
+          "order": 2,
+          "chapterType": "methodology",
+          "officerSummary": "Data sources, measurement units, coverage limitations, and methodological notes for reproducibility and audit.",
+          "pageBudget": {"min": 0.5, "max": 1},
+          "ownEntities": [],
+          "inheritedEntities": [{"entityId": "ent_period", "from": "topic_crosscutting"}],
+          "sections": [
+            {
+              "sectionId": "sec_data_notes",
+              "title": "Sources, Units & Coverage",
+              "order": 1,
+              "sectionArchetype": "methodology",
+              "pagePlan": {"estimatedPages": 0.7},
+              "ownEntities": [],
+              "inheritedEntities": [],
+              "questions": [
+                {
+                  "questionId": "q_methodology",
+                  "intent": "Provide full transparency on data provenance for audit compliance and reproducibility.",
+                  "questionText": "What are the data sources, measurement units, coverage scope, and known limitations of this energy statistics compilation?",
+                  "questionType": "methodology",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 0.7,
+                  "requiredEntities": [],
+                  "analyticsSpec": {"operation": "metadata_compilation"},
+                  "officerIntent": "Satisfy MoSPI audit requirements by documenting every source, unit, and known gap.",
+                  "dataRequirements": {"minRows": 0, "requiredColumns": []},
+                  "binderContract": {"requiredBindings": [], "fallbackBehavior": "ALWAYS_GENERATE"},
+                  "qualityGates": {"minConfidence": 1.0, "evidenceRequired": false},
+                  "provenanceRequirements": {"sourceAttribution": "Multiple (see content)", "lineageRequired": true},
+                  "reviewChecklist": ["All 4 source agencies mentioned", "All 3 unit types defined (MT, MW, BCM)", "Null percentages documented", "Geographic coverage noted (18 states)"],
+                  "customization": {"officerEditable": true, "toggleable": false},
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_method_note",
+                        "kind": "methodology_note",
+                        "order": 1,
+                        "outputContract": {"type": "methodology"},
+                        "content": {
+                          "title": "Methodology & Aggregation Rules",
+                          "description": "Coal/lignite reserves are reported as geological estimates (MT) classified by confidence level. Renewable potential is assessed capacity (MW) based on resource surveys. Regional aggregations are simple sums. SHARE formulas divide at the same grain (state or national) then display as percentage.",
+                          "assumptions": ["All reserves as on 1 April 2025", "Renewable potential = technically feasible capacity, not installed", "Reserve categories follow UNFC-2009 classification"],
+                          "limitations": ["Single time period — no trend analysis possible", "State boundaries as of 2025 Census delimitation", "Hydrocarbons data available for producing states only"]
+                        }
+                      },
+                      {
+                        "componentId": "q_method_source",
+                        "kind": "source_note",
+                        "order": 2,
+                        "outputContract": {"type": "attribution"},
+                        "content": {
+                          "sourceName": "Multiple agencies",
+                          "sources": [
+                            {"agency": "Geological Survey of India (GSI)", "covers": "Coal, lignite mineral reserve estimates"},
+                            {"agency": "CMPDI", "covers": "Coal reserve classification and compilation"},
+                            {"agency": "Ministry of New and Renewable Energy (MNRE)", "covers": "All renewable potential assessments"},
+                            {"agency": "Ministry of Petroleum and Natural Gas (MoPNG)", "covers": "Crude oil and natural gas reserves"}
+                          ],
+                          "coverage": "18 major states/UTs with significant energy resources. Period: 2025.",
+                          "accessDate": "June 2025"
+                        }
+                      },
+                      {
+                        "componentId": "q_method_glossary",
+                        "kind": "glossary_term",
+                        "order": 3,
+                        "outputContract": {"type": "definitions"},
+                        "content": {
+                          "terms": [
+                            {"term": "MT", "definition": "Million Tonnes — unit for coal, lignite, and crude oil reserves"},
+                            {"term": "MW", "definition": "Megawatt — unit for renewable energy potential (assessed capacity)"},
+                            {"term": "BCM", "definition": "Billion Cubic Metres — unit for natural gas reserves"},
+                            {"term": "Proved Reserves", "definition": "Reserves established with the highest degree of geological confidence under UNFC-2009"},
+                            {"term": "Assessed Potential", "definition": "Technically feasible energy generation capacity based on resource surveys, not installed capacity"}
+                          ]
+                        }
+                      },
+                      {
+                        "componentId": "q_method_caveat",
+                        "kind": "data_caveat",
+                        "order": 4,
+                        "outputContract": {"type": "caveat"},
+                        "content": {
+                          "issueType": "missing_data",
+                          "description": "Significant null values exist in measure columns for states without relevant resources. Coal: 33% null (6 states have no coal deposits). Lignite: 78% null (only 3 states). Crude Oil/Natural Gas: 78% null (only 4 producing states). These are true zeros (no resource) rather than data collection failures.",
+                          "affectedEntities": ["ent_coal", "ent_lignite", "ent_crude_oil", "ent_natural_gas"],
+                          "impactScope": "States without the relevant resource type show null; excluded from ranking/composition analysis for that resource."
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
