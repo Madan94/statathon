@@ -1025,21 +1025,19 @@ export default function BindingWorkflowPage() {
   );
 
   const renderWorkbenchNav = () => (
-    <nav className="flex gap-2 overflow-x-auto pb-1">
+    <nav className="flex gap-1 overflow-x-auto">
       {workbenchModes.map((mode) => (
         <button
           key={mode.id}
           type="button"
           onClick={() => setWorkbenchMode(mode.id)}
-          className={`min-w-[10.5rem] rounded-xl border px-3 py-2 text-left transition-colors ${workbenchMode === mode.id ? 'border-primary bg-primary/5 text-text shadow-sm' : 'border-transparent text-text-muted hover:border-border hover:bg-surface'}`}
+          className={`min-w-[9rem] rounded-lg px-3 py-2 text-left transition-all ${workbenchMode === mode.id ? 'bg-primary/8 text-text shadow-sm ring-1 ring-primary/20' : 'text-text-muted hover:bg-surface hover:text-text'}`}
         >
           <span className="flex items-center justify-between gap-2">
-            <span className="text-sm font-semibold">{mode.label}</span>
-            <Badge variant={mode.status === 'Ready' ? 'success' : mode.status === 'Blocked' ? 'danger' : mode.status === 'Review' ? 'warning' : 'muted'} className="px-1.5 py-0 text-[10px]">
-              {mode.status}
-            </Badge>
+            <span className="text-xs font-semibold">{mode.label}</span>
+            <span className={`h-1.5 w-1.5 rounded-full ${mode.status === 'Ready' ? 'bg-success' : mode.status === 'Blocked' ? 'bg-danger' : mode.status === 'Review' ? 'bg-warning' : 'bg-border'}`} />
           </span>
-          <span className="mt-0.5 block truncate text-xs">{mode.hint}</span>
+          <span className="mt-0.5 block truncate text-[10px] text-text-muted">{mode.hint}</span>
         </button>
       ))}
     </nav>
@@ -1734,30 +1732,29 @@ export default function BindingWorkflowPage() {
 
   const bindingWorkbench = session ? (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-border bg-surface-card p-4 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Binder workbench</p>
-            <h2 className="mt-1 text-xl font-semibold text-text">{packageForWorkbench?.name ?? session.template_id}</h2>
-            <p className="mt-1 text-sm text-text-muted">Dataset {session.dataset_id} · signature {session.signature}</p>
+      <div className="rounded-2xl border border-border bg-surface-card shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-semibold text-text">{packageForWorkbench?.name ?? session.template_id}</h2>
+            <p className="mt-0.5 text-xs text-text-muted">{session.dataset_id} · {session.signature.slice(0, 8)}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {workspaceLoading && <Badge variant="muted">Refreshing…</Badge>}
-            <Badge variant={remaining === 0 ? 'success' : 'warning'}>{remaining === 0 ? 'Bindings reviewed' : `${remaining} pending`}</Badge>
+            <Badge variant={remaining === 0 ? 'success' : 'warning'}>{remaining === 0 ? 'All matched' : `${remaining} pending`}</Badge>
             {currentReviewedPlan && <Badge variant="success">Plan ready</Badge>}
             {executionReady && <Badge variant={EXECUTION_READY_META[executionReady.status].badge}>{executionReady.status}</Badge>}
           </div>
         </div>
-        <div className="pt-4">
-          <div className="sticky top-3 z-20 rounded-2xl border border-border bg-surface-card/95 p-2 shadow-sm backdrop-blur">
+        <div className="px-5 pt-4 pb-5">
+          <div className="sticky top-3 z-20 rounded-xl border border-border bg-surface-card/95 p-1.5 shadow-sm backdrop-blur">
             {renderWorkbenchNav()}
           </div>
-          <main className="min-w-0 pt-4">{renderWorkbenchPanel()}</main>
-          <div className="mt-4 flex flex-wrap justify-end gap-2">
+          <main className="min-w-0 pt-5">{renderWorkbenchPanel()}</main>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
             <Button variant="outline" size="sm" onClick={resetAll}><ArrowLeft className="h-4 w-4" /> Start over</Button>
             {!executionReady ? (
               <Button size="sm" onClick={onFinalize} disabled={finalizing || !allColumnsDecided}>
-                {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 {currentReviewedPlan ? 'Rebuild plan' : 'Build plan & prepare'}
               </Button>
             ) : (
@@ -1776,8 +1773,8 @@ export default function BindingWorkflowPage() {
   return (
     <>
       <PageHeader
-        title="Bind dataset to template"
-        description="Map your dataset's columns to the report's expected entities — one confirmation at a time — then check the coverage gate before generating."
+        title="Dataset binding"
+        description="Map columns to entities, review the question plan, and prepare for report generation."
         actions={
           <Link href="/report/report-builder">
             <Button variant="outline" size="sm">
