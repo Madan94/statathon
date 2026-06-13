@@ -1476,6 +1476,7 @@ export type BindingMethod =
   | 'glossary'
   | 'synonym'
   | 'embedding'
+  | 'columnExpr'
   | 'manual';
 export type BindingStatus =
   | 'proposed'

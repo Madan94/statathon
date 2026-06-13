@@ -450,16 +450,20 @@ export function EntityMatrixPanel({
   const columnToEntity = useMemo(() => {
     const map = new Map<string, EntityBinding>();
     for (const binding of bindings) {
-      for (const bc of binding.columns) {
-        const existing = map.get(bc.column);
+      const cols = Array.isArray(binding.columns) ? binding.columns : [];
+      for (const bc of cols) {
+        const colName = typeof bc === 'object' ? bc.column : String(bc);
+        if (!colName) continue;
+        const existing = map.get(colName);
         if (!existing || binding.confidence > existing.confidence) {
-          map.set(bc.column, binding);
+          map.set(colName, binding);
         }
       }
-      // Also include alternatives for secondary candidates
-      for (const alt of binding.alternatives) {
-        if (!map.has(alt.column)) {
-          map.set(alt.column, binding);
+      const alts = Array.isArray(binding.alternatives) ? binding.alternatives : [];
+      for (const alt of alts) {
+        const altCol = typeof alt === 'object' ? alt.column : String(alt);
+        if (altCol && !map.has(altCol)) {
+          map.set(altCol, binding);
         }
       }
     }
