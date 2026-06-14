@@ -101,7 +101,7 @@ export default function ReportBuilderLandingPage() {
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Database className="h-6 w-6" />
             </div>
-            <h3 className="mt-4 text-base font-bold text-text">Dataset Binding</h3>
+            <h3 className="mt-4 text-base font-bold text-text">Dataset Binder</h3>
             <p className="mt-1 text-sm text-text-muted">
               Upload a CSV, match columns to template entities, review the question plan, and prepare for generation.
             </p>
@@ -111,35 +111,35 @@ export default function ReportBuilderLandingPage() {
           </div>
         </Link>
 
-        <Link href="/report-builder/new" className="group">
+        <Link href="/report-builder/canvas" className="group">
           <div className="rounded-2xl border border-border bg-gradient-to-br from-accent/5 via-surface-card to-surface p-6 shadow-sm transition-all hover:border-accent/40 hover:shadow-md">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 text-accent">
-              <FileText className="h-6 w-6" />
+              <BookOpen className="h-6 w-6" />
             </div>
-            <h3 className="mt-4 text-base font-bold text-text">Classic Report</h3>
+            <h3 className="mt-4 text-base font-bold text-text">Report Canvas</h3>
             <p className="mt-1 text-sm text-text-muted">
-              Six-step wizard: pick analysis, choose template, map blocks, configure filters, and generate.
+              Generate components, edit the document, chat with Deep BI Agent, and export publication-ready reports.
             </p>
             <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-accent group-hover:underline">
-              Create report <ArrowRight className="h-3 w-3" />
+              Open canvas <ArrowRight className="h-3 w-3" />
             </span>
           </div>
         </Link>
 
-        <div className="rounded-2xl border border-border bg-gradient-to-br from-success/5 via-surface-card to-surface p-6 shadow-sm">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success/10 text-success">
-            <Sparkles className="h-6 w-6" />
+        <Link href="/report/report-ast-generator" className="group">
+          <div className="rounded-2xl border border-border bg-gradient-to-br from-success/5 via-surface-card to-surface p-6 shadow-sm transition-all hover:border-success/40 hover:shadow-md">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success/10 text-success">
+              <Sparkles className="h-6 w-6" />
+            </div>
+            <h3 className="mt-4 text-base font-bold text-text">Template Extraction</h3>
+            <p className="mt-1 text-sm text-text-muted">
+              {loading ? 'Loading...' : `${templates.length} templates available · ${validTemplates.length} valid · ${richTemplates.length} rich`}
+            </p>
+            <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-success group-hover:underline">
+              Manage templates <ArrowRight className="h-3 w-3" />
+            </span>
           </div>
-          <h3 className="mt-4 text-base font-bold text-text">Pipeline Overview</h3>
-          <p className="mt-1 text-sm text-text-muted">
-            {loading ? 'Loading...' : `${templates.length} templates available · ${validTemplates.length} valid · ${richTemplates.length} rich`}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2 text-[10px]">
-            <Badge variant="success">{validTemplates.length} valid</Badge>
-            <Badge variant="warning">{templates.length - validTemplates.length} other</Badge>
-            {jobs.length > 0 && <Badge variant="muted">{jobs.length} recent jobs</Badge>}
-          </div>
-        </div>
+        </Link>
       </div>
 
       {/* Workflow steps */}
@@ -245,13 +245,13 @@ export default function ReportBuilderLandingPage() {
       {/* Quick links */}
       <div className="grid gap-3 rounded-xl border border-border bg-surface-card p-4 sm:grid-cols-4">
         <Link href="/report-builder/binding" className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-text transition-colors hover:bg-surface hover:text-primary">
-          <Database className="h-4 w-4" /> Dataset binding
+          <Database className="h-4 w-4" /> Dataset Binder
         </Link>
-        <Link href="/report-builder/new" className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-text transition-colors hover:bg-surface hover:text-primary">
-          <FileText className="h-4 w-4" /> Classic wizard
+        <Link href="/report-builder/canvas" className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-text transition-colors hover:bg-surface hover:text-primary">
+          <BookOpen className="h-4 w-4" /> Report Canvas
         </Link>
         <Link href="/report/report-ast-generator" className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-text transition-colors hover:bg-surface hover:text-primary">
-          <FunctionSquare className="h-4 w-4" /> AST generator
+          <FunctionSquare className="h-4 w-4" /> Template Extraction
         </Link>
         <Link href="/upload" className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-text transition-colors hover:bg-surface hover:text-primary">
           <Plus className="h-4 w-4" /> Upload dataset
