@@ -209,19 +209,188 @@ export default function ReportCanvasPage() {
     setCurrentIndex(next + 1);
   }, [queue, currentIndex, generated, generateOne]);
 
+  // ─── Agent Tool Registry ────────────────────────────────────────
+  const agentTools = useCallback(() => ({
+    get_component: (idx: number) => {
+      const block = blocks.find(b => b.componentIndex === idx);
+      if (!block) return { error: 'Component not found' };
+      return { index: idx, kind: block.kind, title: block.title, content: block.content, status: block.status, metricValue: block.metricValue };
+    },
+    get_report_outline: () => {
+      return blocks.filter(b => b.kind === 'heading').map(b => ({ id: b.id, level: b.level, text: b.content }));
+    },
+    get_all_components: () => {
+      return queue.map((q, i) => ({ index: i, title: q.title, type: q.component_type, generated: generated.has(i), section: q.section_path.join(' > ') }));
+    },
+    update_narrative: (idx: number, newText: string) => {
+      const block = blocks.find(b => b.componentIndex === idx);
+      if (!block) return { error: 'Component not found' };
+      setBlocks(prev => prev.map(b => b.componentIndex === idx ? { ...b, content: newText } : b));
+      return { success: true, index: idx, updated: newText.slice(0, 80) };
+    },
+    regenerate_component: async (idx: number, opts?: { topN?: number }) => {
+      addChat({ role: 'assistant', content: `Regenerating component ${idx}...`, status: 'thinking', componentIndex: idx });
+      setBlocks(prev => prev.map(b => b.componentIndex === idx ? { ...b, status: 'generating' } : b));
+      try {
+        const result = await generatePhaseApi.generateComponent(templateId, signature, { index: idx, use_llm: true, redo: true });
+        const contentObj = result.content || {};
+        setBlocks(prev => prev.map(b => b.componentIndex === idx ? {
+          ...b, content: result.narrative || String(contentObj.text || contentObj.content || contentObj.value || ''),
+          title: result.title, kind: (result.component_type === 'formula_metric' ? 'metric' : result.component_type) as DocBlock['kind'],
+          metricValue: contentObj.value != null ? String(contentObj.value) : undefined,
+          metricUnit: contentObj.unit ? String(contentObj.unit) : undefined,
+          tableData: (contentObj.items || contentObj.rankingData || contentObj.rows) ? contentObj as Record<string, unknown> : undefined,
+          status: 'done',
+        } : b));
+        return { success: true, title: result.title, narrative: result.narrative?.slice(0, 100) };
+      } catch (err) {
+        setBlocks(prev => prev.map(b => b.componentIndex === idx ? { ...b, status: 'error' } : b));
+        return { error: err instanceof Error ? err.message : 'Failed' };
+      }
+    },
+    add_component: (afterIdx: number, kind: DocBlock['kind'], content: string) => {
+      const afterBlock = blocks.find(b => b.componentIndex === afterIdx);
+      if (afterBlock) {
+        const newBlock: DocBlock = { id: `agent-${Date.now()}`, kind, content, status: 'done' };
+        setBlocks(prev => {
+          const i = prev.findIndex(b => b.id === afterBlock.id);
+          const n = [...prev]; n.splice(i + 1, 0, newBlock); return n;
+        });
+        return { success: true, kind, content: content.slice(0, 60) };
+      }
+      return { error: 'Target block not found' };
+    },
+    remove_component: (idx: number) => {
+      const block = blocks.find(b => b.componentIndex === idx);
+      if (!block) return { error: 'Component not found' };
+      setBlocks(prev => prev.filter(b => b.id !== block.id));
+      return { success: true, removed: block.title };
+    },
+    inspect_component: (idx: number) => {
+      const item = queue[idx];
+      const block = blocks.find(b => b.componentIndex === idx);
+      if (!item || !block) return { error: 'Not found' };
+      return {
+        index: idx, planId: item.plan_id, questionId: item.question_id,
+        componentType: item.component_type, title: item.title,
+        sectionPath: item.section_path, status: block.status,
+        content: block.content?.slice(0, 200), hasData: !!block.tableData,
+        generated: generated.has(idx),
+        generationTime: genTimes.get(idx) ? `${genTimes.get(idx)}ms` : null,
+      };
+    },
+  }), [blocks, queue, generated, genTimes, templateId, signature, addChat]);
+
+  // ─── Agent message handler ────────────────────────────────────────
+  const handleAgentMessage = useCallback(async (userMsg: string) => {
+    addChat({ role: 'user', content: userMsg });
+    addChat({ role: 'assistant', content: 'Thinking...', status: 'thinking' });
+
+    const tools = agentTools();
+    const lower = userMsg.toLowerCase();
+
+    // Simple intent detection (will be replaced by LLM function calling)
+    let response = '';
+    let toolUsed = '';
+
+    try {
+      if (lower.includes('inspect') || lower.includes('details') || lower.includes('show')) {
+        const idxMatch = userMsg.match(/(\d+)/);
+        const idx = idxMatch ? parseInt(idxMatch[1]) : currentIndex;
+        const result = tools.inspect_component(idx);
+        toolUsed = 'inspect_component';
+        response = result.error ? `Error: ${result.error}` :
+          `**Component ${idx}: ${result.title}**\n` +
+          `Type: ${result.componentType} · Status: ${result.status}\n` +
+          `Section: ${(result.sectionPath || []).join(' > ')}\n` +
+          `Plan: ${result.planId} · Question: ${result.questionId}\n` +
+          (result.content ? `\nContent: "${result.content}"` : '\nNo content yet.') +
+          (result.generationTime ? `\nGenerated in: ${result.generationTime}` : '');
+      } else if (lower.includes('regenerate') || lower.includes('redo') || lower.includes('retry')) {
+        const idxMatch = userMsg.match(/(\d+)/);
+        const idx = idxMatch ? parseInt(idxMatch[1]) : currentIndex;
+        toolUsed = 'regenerate_component';
+        const result = await tools.regenerate_component(idx);
+        response = result.error ? `Failed: ${result.error}` :
+          `✓ Regenerated **${result.title}**\n\n> ${result.narrative || 'Done'}`;
+      } else if (lower.includes('outline') || lower.includes('structure') || lower.includes('toc')) {
+        toolUsed = 'get_report_outline';
+        const outline = tools.get_report_outline();
+        response = `**Report Outline (${outline.length} headings):**\n\n` +
+          outline.map((h, i) => `${'  '.repeat((h.level || 1) - 1)}${i + 1}. ${h.text}`).join('\n');
+      } else if (lower.includes('list') || lower.includes('all components') || lower.includes('queue')) {
+        toolUsed = 'get_all_components';
+        const all = tools.get_all_components();
+        const done = all.filter(c => c.generated).length;
+        response = `**Components: ${done}/${all.length} generated**\n\n` +
+          all.slice(0, 15).map(c => `${c.generated ? '✓' : '○'} [${c.index}] ${c.title} (${c.type})`).join('\n') +
+          (all.length > 15 ? `\n... and ${all.length - 15} more` : '');
+      } else if (lower.includes('update') || lower.includes('change text') || lower.includes('edit')) {
+        const idxMatch = userMsg.match(/component\s*(\d+)/i) || userMsg.match(/(\d+)/);
+        const idx = idxMatch ? parseInt(idxMatch[1]) : currentIndex;
+        const textMatch = userMsg.match(/["""](.+?)["""]/) || userMsg.match(/to\s+(.+)$/i);
+        if (textMatch) {
+          toolUsed = 'update_narrative';
+          const result = tools.update_narrative(idx, textMatch[1]);
+          response = result.error ? `Error: ${result.error}` : `✓ Updated component ${idx} narrative.`;
+        } else {
+          response = 'Please specify the new text in quotes, e.g.: Update component 0 to "New text here"';
+        }
+      } else if (lower.includes('remove') || lower.includes('delete')) {
+        const idxMatch = userMsg.match(/(\d+)/);
+        if (idxMatch) {
+          toolUsed = 'remove_component';
+          const result = tools.remove_component(parseInt(idxMatch[1]));
+          response = result.error ? `Error: ${result.error}` : `✓ Removed: ${result.removed}`;
+        } else {
+          response = 'Please specify which component to remove (by index number).';
+        }
+      } else if (lower.includes('add') || lower.includes('insert')) {
+        const afterMatch = userMsg.match(/after\s*(\d+)/i);
+        const afterIdx = afterMatch ? parseInt(afterMatch[1]) : Math.max(0, currentIndex - 1);
+        const isChart = lower.includes('chart');
+        const isTable = lower.includes('table');
+        const isMetric = lower.includes('metric');
+        const kind: DocBlock['kind'] = isChart ? 'chart' : isTable ? 'table' : isMetric ? 'metric' : 'narrative';
+        toolUsed = 'add_component';
+        const result = tools.add_component(afterIdx, kind, '');
+        response = result.error ? `Error: ${result.error}` : `✓ Added ${kind} block after component ${afterIdx}. Double-click to edit.`;
+      } else {
+        response = `I can help you with:\n` +
+          `• **inspect [N]** — view component details & provenance\n` +
+          `• **regenerate [N]** — re-generate a component\n` +
+          `• **outline** — show document structure\n` +
+          `• **list** — show all components & status\n` +
+          `• **update [N] to "text"** — change narrative text\n` +
+          `• **add [type] after [N]** — insert a new block\n` +
+          `• **remove [N]** — delete a component\n\n` +
+          `Or describe what you want in natural language.`;
+      }
+    } catch (err) {
+      response = `Error: ${err instanceof Error ? err.message : 'Something went wrong'}`;
+    }
+
+    // Replace the "Thinking..." message with the result
+    setChatMessages(prev => {
+      const msgs = [...prev];
+      const thinkingIdx = msgs.findLastIndex(m => m.status === 'thinking');
+      if (thinkingIdx >= 0) {
+        msgs[thinkingIdx] = { ...msgs[thinkingIdx], content: response, status: 'done', tool: toolUsed || undefined };
+      } else {
+        msgs.push({ id: `msg-${Date.now()}`, role: 'assistant', content: response, timestamp: Date.now(), status: 'done', tool: toolUsed || undefined });
+      }
+      return msgs;
+    });
+  }, [agentTools, addChat, currentIndex]);
+
   // ─── Chat submit ───────────────────────────────────────────────────
   const handleChatSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
     const msg = chatInput.trim();
     setChatInput('');
-    addChat({ role: 'user', content: msg });
-
-    // For now, echo — agent function calling will replace this
-    setTimeout(() => {
-      addChat({ role: 'assistant', content: `I understand you want: "${msg}". Agent function calling will be connected to the backend Deep BI agent for real modifications. For now, use the canvas controls directly.`, status: 'done' });
-    }, 500);
-  }, [chatInput, addChat]);
+    handleAgentMessage(msg);
+  }, [chatInput, handleAgentMessage]);
 
   // ─── Block CRUD ────────────────────────────────────────────────────
   const updateBlock = (id: string, u: Partial<DocBlock>) => setBlocks(prev => prev.map(b => b.id === id ? { ...b, ...u } : b));
@@ -358,14 +527,20 @@ export default function ReportCanvasPage() {
                   <div className="flex items-start gap-2 text-[10px] text-slate-400">
                     {msg.status === 'thinking' && <Loader2 className="mt-0.5 h-3 w-3 animate-spin shrink-0" />}
                     {msg.status === 'done' && <CheckCircle2 className="mt-0.5 h-3 w-3 text-emerald-400 shrink-0" />}
-                    {msg.status === 'error' && <span className="mt-0.5 h-3 w-3 text-red-400 shrink-0">✗</span>}
+                    {msg.status === 'error' && <span className="mt-0.5 shrink-0 text-red-400">✗</span>}
                     <span>{msg.content}</span>
                   </div>
                 ) : (
                   <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                    {msg.tool && (
+                      <div className="mb-1.5 flex items-center gap-1.5">
+                        <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[8px] font-semibold text-indigo-600">{msg.tool}</span>
+                        {msg.status === 'done' && <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" />}
+                      </div>
+                    )}
                     <div className="text-[11px] leading-relaxed text-slate-700 whitespace-pre-wrap">
                       {msg.content.split('**').map((part, i) =>
-                        i % 2 === 0 ? part : <strong key={i} className="font-semibold">{part}</strong>
+                        i % 2 === 0 ? part : <strong key={i} className="font-semibold text-slate-900">{part}</strong>
                       )}
                     </div>
                     {msg.status === 'thinking' && (
@@ -375,9 +550,8 @@ export default function ReportCanvasPage() {
                     )}
                     {msg.componentIndex != null && msg.status === 'done' && (
                       <div className="mt-2 flex gap-1">
-                        <button className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-medium text-slate-600 hover:bg-slate-200">Inspect</button>
-                        <button className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-medium text-slate-600 hover:bg-slate-200">Modify</button>
-                        <button className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-medium text-slate-600 hover:bg-slate-200">Regenerate</button>
+                        <button onClick={() => handleAgentMessage(`inspect ${msg.componentIndex}`)} className="rounded bg-slate-200/60 px-2 py-0.5 text-[9px] font-medium text-slate-600 hover:bg-slate-200">Inspect</button>
+                        <button onClick={() => handleAgentMessage(`regenerate ${msg.componentIndex}`)} className="rounded bg-slate-200/60 px-2 py-0.5 text-[9px] font-medium text-slate-600 hover:bg-slate-200">Regenerate</button>
                       </div>
                     )}
                   </div>
@@ -389,23 +563,37 @@ export default function ReportCanvasPage() {
             ))}
           </div>
 
+          {/* Quick actions */}
+          <div className="border-t border-slate-100 px-3 py-2 flex flex-wrap gap-1">
+            {[
+              { label: 'Outline', cmd: 'outline' },
+              { label: 'List all', cmd: 'list' },
+              { label: 'Inspect current', cmd: `inspect ${currentIndex}` },
+            ].map(({ label, cmd }) => (
+              <button key={cmd} type="button" onClick={() => handleAgentMessage(cmd)}
+                className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[9px] font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors">
+                {label}
+              </button>
+            ))}
+          </div>
+
           {/* Chat input */}
           <form onSubmit={handleChatSubmit} className="border-t border-slate-100 p-3">
-            <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+            <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-blue-200/50 focus-within:border-blue-300 transition-all">
               <input
                 value={chatInput}
                 onChange={e => setChatInput(e.target.value)}
                 placeholder="Ask about any component, or give instructions..."
                 className="flex-1 bg-transparent text-[11px] text-slate-700 placeholder:text-slate-400 outline-none"
+                onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); handleChatSubmit(e); } }}
               />
-              <button type="submit" disabled={!chatInput.trim()} className="rounded bg-blue-600 px-2 py-1 text-[9px] font-medium text-white disabled:opacity-30 hover:bg-blue-700">
+              <button type="submit" disabled={!chatInput.trim()} className="rounded-md bg-blue-600 px-2.5 py-1 text-[9px] font-medium text-white disabled:opacity-30 hover:bg-blue-700 transition-colors">
                 Send
               </button>
             </div>
-            <div className="mt-1.5 flex gap-1.5 text-[8px] text-slate-400">
-              <span className="rounded bg-slate-100 px-1.5 py-0.5">Ctrl+Enter to send</span>
-              <span className="rounded bg-slate-100 px-1.5 py-0.5">/ for commands</span>
-            </div>
+            <p className="mt-1.5 text-[8px] text-slate-400">
+              Try: inspect 0 · regenerate 1 · outline · add chart after 3 · remove 5
+            </p>
           </form>
         </div>
       )}
