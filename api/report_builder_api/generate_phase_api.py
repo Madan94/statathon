@@ -73,7 +73,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/report-builder/generate-phase", tags=["generate-phase"])
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_GOLD_TEMPLATE_AST = _REPO_ROOT / "report_builder" / "gold_standard" / "template.ast.json"
+_GOLD_DIR  = _REPO_ROOT / "report_builder" / "gold_standard"
+_GOLD_TEMPLATE_AST = _GOLD_DIR / "template.ast.json"   # default/fallback
 
 
 # ---------------------------------------------------------------------------
@@ -184,7 +185,34 @@ def _load_overrides(template_id: str, signature: str) -> dict[str, Any]:
     return {}
 
 
-def _load_template_ast() -> dict[str, Any]:
+def _load_template_ast(template_id: str = "") -> dict[str, Any]:
+    """Load a template AST, preferring the template-specific one if it exists.
+
+    Search order:
+      1. gold_standard/<template_id>/<template_id>.template.ast.json
+      2. gold_standard/<template_id>.template.ast.json
+      3. gold_standard/template.ast.json (generic fallback)
+    """
+    if template_id:
+        # 1. Subdirectory: gold_standard/energy_enterprise_v2/energy_enterprise_v2.template.ast.json
+        # Strip 'tpl_' prefix for directory names
+        tid = template_id.replace("tpl_", "")
+        sub = _GOLD_DIR / tid / f"{tid}.template.ast.json"
+        if sub.exists():
+            logger.info("[template_ast] loaded %s", sub.name)
+            return json.loads(sub.read_text(encoding="utf-8-sig"))
+        # 2. Flat: gold_standard/energy_enterprise_v2.template.ast.json
+        flat = _GOLD_DIR / f"{tid}.template.ast.json"
+        if flat.exists():
+            logger.info("[template_ast] loaded %s", flat.name)
+            return json.loads(flat.read_text(encoding="utf-8-sig"))
+        # 3. With tpl_ prefix
+        sub2 = _GOLD_DIR / template_id / f"{template_id}.template.ast.json"
+        if sub2.exists():
+            logger.info("[template_ast] loaded %s", sub2.name)
+            return json.loads(sub2.read_text(encoding="utf-8-sig"))
+    # Fallback: generic template
+    logger.warning("[template_ast] no template-specific AST for '%s', using generic fallback", template_id)
     return json.loads(_GOLD_TEMPLATE_AST.read_text(encoding="utf-8-sig"))
 
 
@@ -311,6 +339,72 @@ def _question_registry(blueprint: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return registry
 
 
+def _build_component_template(
+    base_template: dict[str, Any],
+    question_id: str,
+    qinfo: dict[str, Any],
+    plan: "Any",
+) -> dict[str, Any]:
+    """Build a per-component template AST for narration.
+
+    The static template AST has contentAST.blocks pre-defined for specific
+    question IDs. When doing per-component generation, we need to ensure the
+    narrator can find a block matching this question. If no block exists, we
+    dynamically inject one.
+
+    Returns a shallow copy of the base template with an ensured content block.
+    """
+    import copy
+    tpl = copy.deepcopy(base_template)
+
+    # Check if the template already has a block for this question
+    content_ast = tpl.get("contentAST") or {}
+    blocks = content_ast.get("blocks", [])
+    has_match = any(
+        _block_matches_question(b, question_id)
+        for b in blocks
+    )
+
+    if has_match:
+        # Template has a matching block — use it as-is
+        return tpl
+
+    # No matching block — inject a dynamic one for this question
+    title = qinfo.get("title") or question_id
+    measure_col = plan.measureColumn if hasattr(plan, "measureColumn") else ""
+    op = plan.planRec.operation if hasattr(plan, "planRec") else ""
+
+    dynamic_block = {
+        "blockId": f"p_{question_id}_{measure_col}".replace(" ", "_").lower(),
+        "kind": "paragraph",
+        "styleRef": "bodyText",
+        "content": "",
+        "biQuery": question_id,
+        "templateQuestion": title,
+        "slot": {
+            "fillFrom": question_id,
+            "operation": op,
+            "measure": measure_col,
+        },
+        "provenance": {"questionId": question_id},
+    }
+
+    content_ast.setdefault("blocks", []).append(dynamic_block)
+    tpl["contentAST"] = content_ast
+    return tpl
+
+
+def _block_matches_question(block: dict[str, Any], question_id: str) -> bool:
+    """Check if a template content block targets this question ID."""
+    slot_ref = (block.get("slot") or {}).get("fillFrom") or block.get("biQuery") or ""
+    if slot_ref == question_id:
+        return True
+    # Also match base question from compound refs like "q_coal_state_rank__chart"
+    if slot_ref and question_id and slot_ref.startswith(question_id):
+        return True
+    return False
+
+
 def _rebuild_binding(template_id: str, signature: str, dataset: DatasetAST,
                      blueprint: dict[str, Any], df: "Any") -> BindingAST:
     """Rebuild the finalized binding from the persisted review record + stash."""
@@ -407,7 +501,7 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
     if any(i.get("severity") == "error" for i in binding.coverage.get("issues", [])):
         raise HTTPException(status_code=409, detail="binding coverage gate has errors — resolve before generating")
 
-    template = _load_template_ast()
+    template = _load_template_ast(template_id)
     context = {
         "dataset": {"title": (blueprint.get("metadata") or {}).get("title") or dataset.datasetId},
         "period": {"current": body.period or ""},
@@ -695,7 +789,7 @@ def generate_single_component(
 
     dataset, blueprint, df = _read_stash(template_id, signature)
     binding = _rebuild_binding(template_id, signature, dataset, blueprint, df)
-    template = _load_template_ast()
+    template = _load_template_ast(template_id)
     context = blueprint.get("statisticalContext") or {}
 
     # Build & adapt bundle
@@ -712,6 +806,9 @@ def generate_single_component(
 
     # Build rich metadata from the blueprint
     registry = _question_registry(blueprint)
+    question_id = adapted[idx].questionId or adapted[idx].planRec.questionId
+    plan_id = adapted[idx].planRec.planId
+    qinfo = registry.get(question_id, {})
 
     # Run ONLY this one plan through the coordinator
     single_plan = [adapted[idx]]
@@ -720,49 +817,70 @@ def generate_single_component(
     analytics = analytics_obj.to_dict()
     evidence = evidence_obj.to_dict()
 
-    # Fill + narrate just this component
-    visuals = fill_visuals(template, analytics, evidence, context=context)
-    narrated = narrate(template, analytics, evidence, context=context,
-                       questions=_prose_config(blueprint), use_llm=body.use_llm)
-
-    # Extract the content for this specific component
-    content_blocks = narrated.get("contentAST", {}).get("blocks", [])
-    narrative_text = ""
-    component_content: dict[str, Any] = {}
-
-    # Also check analytics results directly for richer content
+    # ── Extract raw analytics data (rankings use 'items', aggregations use 'rows') ──
     aggs = analytics.get("aggregations", [])
     rankings = analytics.get("rankings", [])
     metrics = analytics.get("metrics", [])
     trends = analytics.get("trends", [])
+    executions = analytics.get("executions", [])
+
+    logger.info("[generate-component] plan=%s q=%s — aggs=%d ranks=%d metrics=%d trends=%d exec=%s",
+                plan_id, question_id, len(aggs), len(rankings), len(metrics), len(trends),
+                [(e.get("engine"), e.get("status"), e.get("rowsScanned")) for e in executions])
+
+    # ── Build a per-component template for narration ──
+    # The static template AST may not have contentAST.blocks matching this
+    # question's ID. We dynamically inject a block so the narrator can work.
+    component_template = _build_component_template(
+        template, question_id, qinfo, adapted[idx])
+
+    # Fill visuals + narrate using the component-specific template
+    visuals = fill_visuals(component_template, analytics, evidence, context=context)
+    prose = _prose_config(blueprint)
+    narrated = narrate(component_template, analytics, evidence, context=context,
+                       questions=prose, use_llm=body.use_llm)
+
+    # Extract narrated content
+    content_blocks = narrated.get("contentAST", {}).get("blocks", [])
+    narrative_text = ""
+    component_content: dict[str, Any] = {}
 
     if content_blocks:
         block = content_blocks[0]
         narrative_text = str(block.get("content") or block.get("text") or block.get("value") or "")
         component_content = block
 
-    # If narration was empty/fallback, build content from analytics results
-    if not narrative_text or "could not be computed" in narrative_text.lower():
-        # Try to surface analytics data as structured content
+    # ── Build structured content from analytics when narration is empty/generic ──
+    narration_failed = (
+        not narrative_text
+        or "could not be computed" in narrative_text.lower()
+        or len(narrative_text) < 20
+    )
+
+    if narration_failed:
         if rankings:
             rk = rankings[0]
+            items = rk.get("items", [])  # rankings use 'items' not 'rows'
+            measure = rk.get("measure", adapted[idx].measureColumn or "value")
             component_content = {
                 "type": "ranking",
-                "questionId": adapted[idx].questionId,
-                "rows": rk.get("rows", [])[:10],
-                "measure": rk.get("measure", ""),
-                "groupBy": rk.get("groupBy", ""),
-                "text": f"Top {len(rk.get('rows', [])[:10])} by {rk.get('measure', 'value')}",
+                "questionId": question_id,
+                "items": items[:12],
+                "measure": measure,
+                "order": rk.get("order", "desc"),
+                "text": f"Top {len(items)} ranked by {measure}",
             }
             narrative_text = component_content["text"]
         elif aggs:
             ag = aggs[0]
+            rows = ag.get("rows", ag.get("items", []))
             component_content = {
                 "type": "aggregation",
-                "questionId": adapted[idx].questionId,
-                "rows": ag.get("rows", [])[:10],
-                "measure": ag.get("measure", ""),
-                "text": f"Aggregation: {ag.get('measure', 'value')} by {ag.get('groupBy', 'group')}",
+                "questionId": question_id,
+                "rows": rows[:15],
+                "measure": ag.get("measure", adapted[idx].measureColumn or ""),
+                "groupBy": ag.get("groupBy", ""),
+                "text": f"{ag.get('measure', 'Value')} aggregated across {len(rows)} groups",
             }
             narrative_text = component_content["text"]
         elif metrics:
@@ -771,16 +889,33 @@ def generate_single_component(
                 "type": "metric",
                 "value": mt.get("value"),
                 "unit": mt.get("unit", ""),
-                "text": f"{mt.get('label', 'Metric')}: {mt.get('value', '—')}",
+                "label": mt.get("label", adapted[idx].measureLabel or "Metric"),
+                "text": f"{mt.get('label', 'Metric')}: {mt.get('value', '—')} {mt.get('unit', '')}".strip(),
+            }
+            narrative_text = component_content["text"]
+        elif trends:
+            tr = trends[0]
+            points = tr.get("points", tr.get("items", []))
+            component_content = {
+                "type": "trend",
+                "questionId": question_id,
+                "points": points[:20],
+                "measure": tr.get("measure", ""),
+                "text": f"Trend: {tr.get('measure', 'value')} over {len(points)} periods",
             }
             narrative_text = component_content["text"]
 
-    # Plan metadata (enriched from registry)
-    question_id = adapted[idx].questionId or adapted[idx].planRec.questionId
-    plan_id = adapted[idx].planRec.planId
-    qinfo = registry.get(question_id, {})
+    # Also attach raw analytics data to the content for the frontend to render
+    if not component_content.get("type"):
+        component_content["questionId"] = question_id
 
-    # Determine component type
+    # Always include structured analytics data for the frontend
+    if rankings and "items" not in component_content:
+        component_content["rankingData"] = rankings[0].get("items", [])[:12]
+    if aggs and "rows" not in component_content:
+        component_content["aggregationData"] = (aggs[0].get("rows") or aggs[0].get("items", []))[:15]
+
+    # ── Determine component type from analytics ──
     op = (adapted[idx].planRec.operation or "").lower()
     fspec = adapted[idx].formulaSpec
     if fspec and (fspec.type or "DIRECT").upper() != "DIRECT":
@@ -794,13 +929,13 @@ def generate_single_component(
     else:
         component_type = "narrative"
 
-    # Build title
+    # ── Build title ──
     if adapted[idx].fannedOut and adapted[idx].measureLabel:
         title = adapted[idx].measureLabel
     else:
         title = qinfo.get("title") or plan_id
 
-    # Next preview
+    # ── Next preview ──
     next_idx = idx + 1 if idx + 1 < len(adapted) else None
     next_preview = None
     if next_idx is not None:
@@ -817,9 +952,10 @@ def generate_single_component(
     total = len(adapted)
     progress = round(((idx + 1) / total) * 100, 1)
 
-    logger.info("[generate-phase] component %d/%d (%s) q=%s for %s__%s — aggs=%d ranks=%d metrics=%d",
+    logger.info("[generate-phase] component %d/%d (%s) q=%s for %s__%s — "
+                "narrative=%d chars, content_type=%s",
                 idx + 1, total, component_type, question_id, template_id, signature,
-                len(aggs), len(rankings), len(metrics))
+                len(narrative_text), component_content.get("type", "block"))
 
     return GenerateComponentOut(
         index=idx,
