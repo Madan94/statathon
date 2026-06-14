@@ -188,13 +188,35 @@ def _load_template_ast() -> dict[str, Any]:
     return json.loads(_GOLD_TEMPLATE_AST.read_text(encoding="utf-8-sig"))
 
 
+def _iter_questions(blueprint: dict[str, Any]):
+    """Walk the full topic→chapter→section→question hierarchy, yielding
+    ``(question_dict, section_path_list)`` for every question found.
+
+    The energy-enterprise blueprint stores questions at the *section* level
+    (topics[].chapters[].sections[].questions[]), not at the topic level.
+    Earlier helpers only walked ``topic.questions`` and found nothing.
+    """
+    for topic in blueprint.get("topics") or []:
+        t_title = topic.get("title") or topic.get("topicId") or "Topic"
+        # questions directly on topic (flat blueprints)
+        for q in topic.get("questions") or []:
+            yield q, [t_title]
+        for chapter in topic.get("chapters") or []:
+            c_title = chapter.get("title") or chapter.get("chapterId") or "Chapter"
+            for q in chapter.get("questions") or []:
+                yield q, [t_title, c_title]
+            for section in chapter.get("sections") or []:
+                s_title = section.get("title") or section.get("sectionId") or "Section"
+                for q in section.get("questions") or []:
+                    yield q, [t_title, c_title, s_title]
+
+
 def _question_meta(blueprint: dict[str, Any]) -> dict[str, dict[str, Any]]:
     meta: dict[str, dict[str, Any]] = {}
-    for topic in blueprint.get("topics") or []:
-        for q in topic.get("questions") or []:
-            qid = q.get("questionId")
-            if qid:
-                meta[qid] = {"label": q.get("intent") or q.get("sourceHeading") or qid}
+    for q, _path in _iter_questions(blueprint):
+        qid = q.get("questionId")
+        if qid:
+            meta[qid] = {"label": q.get("intent") or q.get("sourceHeading") or q.get("questionText") or qid}
     return meta
 
 
@@ -203,27 +225,90 @@ def _prose_config(blueprint: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
     def name(ref: Any) -> str:
         e = ent.get(ref) or {}
-        return e.get("canonicalName") or e.get("name") or ""
+        return e.get("canonicalName") or e.get("entityName") or e.get("name") or ""
 
     cfg: dict[str, dict[str, Any]] = {}
-    for topic in blueprint.get("topics") or []:
-        for q in topic.get("questions") or []:
-            qid = q.get("questionId")
-            spec = q.get("analyticsSpec") or {}
-            if not qid:
-                continue
-            measure_ref = (spec.get("measure") or {}).get("entityRef")
-            group_refs = [g.get("entityRef") for g in (spec.get("groupBy") or [])]
-            agg = (spec.get("measure") or {}).get("agg") or ""
-            mlabel = name(measure_ref)
-            cfg[qid] = {
-                "measureLabel": mlabel or qid,
-                "measureShort": mlabel.split("(")[0].strip() if mlabel else "",
-                "dimensionNoun": name(group_refs[0]).lower() if group_refs else "",
-                "unit": (spec.get("measure") or {}).get("unit")
-                or ("percent" if ("ratio" in agg or "share" in agg) else None),
-            }
+    for q, _path in _iter_questions(blueprint):
+        qid = q.get("questionId")
+        spec = q.get("analyticsSpec") or {}
+        if not qid:
+            continue
+        # Handle both structured measure spec and flat entity-ref formats
+        measure_spec = spec.get("measure") or {}
+        if isinstance(measure_spec, dict):
+            measure_ref = measure_spec.get("entityRef") or measure_spec.get("entity")
+            agg = measure_spec.get("agg") or measure_spec.get("aggregation") or ""
+            unit = measure_spec.get("unit")
+        else:
+            measure_ref = str(measure_spec) if measure_spec else None
+            agg = spec.get("aggregation") or ""
+            unit = None
+        # Fallback: sortBy as the measure entity (for rank operations)
+        if not measure_ref:
+            measure_ref = spec.get("sortBy") or spec.get("grain")
+        raw_groups = spec.get("groupBy") or []
+        group_refs = []
+        for g in raw_groups:
+            if isinstance(g, dict):
+                group_refs.append(g.get("entityRef") or g.get("entity"))
+            elif isinstance(g, str):
+                group_refs.append(g)
+        # Also add grain as a group if not already listed
+        grain = spec.get("grain")
+        if grain and grain not in group_refs:
+            group_refs.insert(0, grain)
+        mlabel = name(measure_ref) if measure_ref else ""
+        dim_label = name(group_refs[0]) if group_refs else ""
+        cfg[qid] = {
+            "measureLabel": mlabel or (q.get("questionText") or qid)[:40],
+            "measureShort": mlabel.split("(")[0].strip() if mlabel else "",
+            "dimensionNoun": dim_label.lower() if dim_label else "",
+            "unit": unit or ("percent" if ("ratio" in agg or "share" in agg) else None),
+            "operation": spec.get("operation") or "",
+        }
     return cfg
+
+
+def _question_registry(blueprint: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Build a lookup: questionId → {title, questionText, sectionPath, componentTypes}.
+
+    Used by the generation-queue and generate-component endpoints to provide
+    rich metadata (proper titles, section breadcrumbs, component types) for
+    the frontend's document canvas and trace sidebar.
+    """
+    registry: dict[str, dict[str, Any]] = {}
+    for q, section_path in _iter_questions(blueprint):
+        qid = q.get("questionId")
+        if not qid:
+            continue
+        # Gather component types from outputContract.components
+        components = []
+        oc = q.get("outputContract") or {}
+        for comp in oc.get("components") or []:
+            ct = comp.get("componentType") or comp.get("type")
+            if ct:
+                components.append(ct)
+        # Fallback: infer from analyticsSpec
+        if not components:
+            spec = q.get("analyticsSpec") or {}
+            op = (spec.get("operation") or "").lower()
+            if "rank" in op or "group" in op:
+                components = ["table", "narrative"]
+            elif "trend" in op or "growth" in op:
+                components = ["chart", "narrative"]
+            elif "share" in op or "ratio" in op:
+                components = ["chart", "narrative"]
+            else:
+                components = ["narrative"]
+
+        registry[qid] = {
+            "title": q.get("questionText") or q.get("intent") or q.get("sourceHeading") or qid,
+            "questionText": q.get("questionText") or "",
+            "sectionPath": section_path,
+            "componentTypes": components,
+            "intent": q.get("intent") or "",
+        }
+    return registry
 
 
 def _rebuild_binding(template_id: str, signature: str, dataset: DatasetAST,
@@ -538,24 +623,66 @@ def get_generation_queue(template_id: str, signature: str) -> list[dict[str, Any
     if not adapted:
         raise HTTPException(status_code=409, detail="No runnable plans")
 
+    # Build rich question registry from the blueprint hierarchy
+    registry = _question_registry(blueprint)
+
     queue: list[dict[str, Any]] = []
     for i, plan in enumerate(adapted):
-        # Extract metadata from the plan
-        plan_dict = plan.to_dict() if hasattr(plan, 'to_dict') else (plan if isinstance(plan, dict) else {})
-        plan_id = plan_dict.get("planId") or plan_dict.get("plan_id") or f"plan_{i}"
-        question_id = plan_dict.get("questionId") or plan_dict.get("question_id") or ""
-        component_type = plan_dict.get("componentType") or plan_dict.get("component_type") or "narrative"
-        title = plan_dict.get("title") or plan_dict.get("questionText") or f"Component {i+1}"
-        section_path = plan_dict.get("sectionPath") or plan_dict.get("section_path") or []
-        queue.append(ComponentQueueItem(
-            index=i,
-            plan_id=plan_id,
-            question_id=question_id,
-            component_type=component_type,
-            title=title,
-            section_path=section_path if isinstance(section_path, list) else [],
-            status="pending",
-        ).dict())
+        plan_id = plan.planRec.planId
+        question_id = plan.questionId or plan.planRec.questionId
+
+        # Look up rich metadata from the blueprint registry
+        qinfo = registry.get(question_id, {})
+        section_path = qinfo.get("sectionPath", [])
+        question_text = qinfo.get("title", "")
+
+        # Determine component type from outputContract or adapted plan
+        component_types = qinfo.get("componentTypes", [])
+        # For fan-out plans, the measure label gives a better title
+        if plan.fannedOut and plan.measureLabel:
+            title = f"{plan.measureLabel}"
+        else:
+            title = question_text or plan_id
+
+        # Determine primary component type for this adapted plan
+        # If the plan has formula spec, it's a metric; if ranking, table; etc.
+        op = (plan.planRec.operation or "").lower()
+        if plan.formulaSpec and (plan.formulaSpec.type or "DIRECT").upper() != "DIRECT":
+            comp_type = "formula_metric"
+        elif "rank" in op:
+            comp_type = "table"
+        elif "trend" in op or "time_series" in op:
+            comp_type = "chart"
+        elif component_types:
+            comp_type = component_types[0]
+        else:
+            comp_type = "narrative"
+
+        # For multi-measure fan-outs, emit separate entries per component type
+        if component_types and len(component_types) > 1 and not plan.fannedOut:
+            for ci, ct in enumerate(component_types):
+                queue.append(ComponentQueueItem(
+                    index=len(queue),
+                    plan_id=f"{plan_id}__comp{ci}",
+                    question_id=question_id,
+                    component_type=ct,
+                    title=f"{title} ({ct.replace('_', ' ')})" if ct != "narrative" else title,
+                    section_path=section_path,
+                    status="pending",
+                ).dict())
+        else:
+            queue.append(ComponentQueueItem(
+                index=i,
+                plan_id=plan_id,
+                question_id=question_id,
+                component_type=comp_type,
+                title=title,
+                section_path=section_path,
+                status="pending",
+            ).dict())
+
+    logger.info("[generation-queue] %d adapted plans → %d queue items, %d sections in blueprint",
+                len(adapted), len(queue), len(set(str(q.get("sectionPath","")) for q in registry.values())))
     return queue
 
 
@@ -583,6 +710,9 @@ def generate_single_component(
     if idx < 0 or idx >= len(adapted):
         raise HTTPException(status_code=400, detail=f"Index {idx} out of range (0..{len(adapted)-1})")
 
+    # Build rich metadata from the blueprint
+    registry = _question_registry(blueprint)
+
     # Run ONLY this one plan through the coordinator
     single_plan = [adapted[idx]]
     analytics_obj, evidence_obj, row_index = run_execution(
@@ -599,34 +729,97 @@ def generate_single_component(
     content_blocks = narrated.get("contentAST", {}).get("blocks", [])
     narrative_text = ""
     component_content: dict[str, Any] = {}
+
+    # Also check analytics results directly for richer content
+    aggs = analytics.get("aggregations", [])
+    rankings = analytics.get("rankings", [])
+    metrics = analytics.get("metrics", [])
+    trends = analytics.get("trends", [])
+
     if content_blocks:
-        block = content_blocks[0] if content_blocks else {}
+        block = content_blocks[0]
         narrative_text = str(block.get("content") or block.get("text") or block.get("value") or "")
         component_content = block
 
-    # Plan metadata
-    plan_dict = adapted[idx].to_dict() if hasattr(adapted[idx], 'to_dict') else (adapted[idx] if isinstance(adapted[idx], dict) else {})
-    plan_id = plan_dict.get("planId") or plan_dict.get("plan_id") or f"plan_{idx}"
-    component_type = plan_dict.get("componentType") or plan_dict.get("component_type") or "narrative"
-    title = plan_dict.get("title") or plan_dict.get("questionText") or f"Component {idx+1}"
+    # If narration was empty/fallback, build content from analytics results
+    if not narrative_text or "could not be computed" in narrative_text.lower():
+        # Try to surface analytics data as structured content
+        if rankings:
+            rk = rankings[0]
+            component_content = {
+                "type": "ranking",
+                "questionId": adapted[idx].questionId,
+                "rows": rk.get("rows", [])[:10],
+                "measure": rk.get("measure", ""),
+                "groupBy": rk.get("groupBy", ""),
+                "text": f"Top {len(rk.get('rows', [])[:10])} by {rk.get('measure', 'value')}",
+            }
+            narrative_text = component_content["text"]
+        elif aggs:
+            ag = aggs[0]
+            component_content = {
+                "type": "aggregation",
+                "questionId": adapted[idx].questionId,
+                "rows": ag.get("rows", [])[:10],
+                "measure": ag.get("measure", ""),
+                "text": f"Aggregation: {ag.get('measure', 'value')} by {ag.get('groupBy', 'group')}",
+            }
+            narrative_text = component_content["text"]
+        elif metrics:
+            mt = metrics[0]
+            component_content = {
+                "type": "metric",
+                "value": mt.get("value"),
+                "unit": mt.get("unit", ""),
+                "text": f"{mt.get('label', 'Metric')}: {mt.get('value', '—')}",
+            }
+            narrative_text = component_content["text"]
+
+    # Plan metadata (enriched from registry)
+    question_id = adapted[idx].questionId or adapted[idx].planRec.questionId
+    plan_id = adapted[idx].planRec.planId
+    qinfo = registry.get(question_id, {})
+
+    # Determine component type
+    op = (adapted[idx].planRec.operation or "").lower()
+    fspec = adapted[idx].formulaSpec
+    if fspec and (fspec.type or "DIRECT").upper() != "DIRECT":
+        component_type = "formula_metric"
+    elif "rank" in op:
+        component_type = "table"
+    elif "trend" in op or "time_series" in op:
+        component_type = "chart"
+    elif qinfo.get("componentTypes"):
+        component_type = qinfo["componentTypes"][0]
+    else:
+        component_type = "narrative"
+
+    # Build title
+    if adapted[idx].fannedOut and adapted[idx].measureLabel:
+        title = adapted[idx].measureLabel
+    else:
+        title = qinfo.get("title") or plan_id
 
     # Next preview
     next_idx = idx + 1 if idx + 1 < len(adapted) else None
     next_preview = None
     if next_idx is not None:
-        next_plan = adapted[next_idx].to_dict() if hasattr(adapted[next_idx], 'to_dict') else (adapted[next_idx] if isinstance(adapted[next_idx], dict) else {})
+        nq = adapted[next_idx].questionId or adapted[next_idx].planRec.questionId
+        ninfo = registry.get(nq, {})
         next_preview = {
             "index": next_idx,
-            "plan_id": next_plan.get("planId") or next_plan.get("plan_id") or f"plan_{next_idx}",
-            "component_type": next_plan.get("componentType") or next_plan.get("component_type") or "narrative",
-            "title": next_plan.get("title") or next_plan.get("questionText") or f"Component {next_idx+1}",
+            "plan_id": adapted[next_idx].planRec.planId,
+            "component_type": "narrative",
+            "title": ninfo.get("title") or adapted[next_idx].planRec.planId,
+            "section_path": ninfo.get("sectionPath", []),
         }
 
     total = len(adapted)
     progress = round(((idx + 1) / total) * 100, 1)
 
-    logger.info("[generate-phase] component %d/%d (%s) for %s__%s",
-                idx + 1, total, component_type, template_id, signature)
+    logger.info("[generate-phase] component %d/%d (%s) q=%s for %s__%s — aggs=%d ranks=%d metrics=%d",
+                idx + 1, total, component_type, question_id, template_id, signature,
+                len(aggs), len(rankings), len(metrics))
 
     return GenerateComponentOut(
         index=idx,
