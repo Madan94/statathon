@@ -257,9 +257,10 @@ function AggTable({rows,title}:{rows:AggRow[];title?:string}) {
    DOCUMENT BLOCK
    ═══════════════════════════════════════════════════════════════════════════ */
 
-function DocumentBlock({block,onUpdate,onReorder,onDelete,onInsertAfter,readOnly}:{
+function DocumentBlock({block,onUpdate,onReorder,onDelete,onInsertAfter,readOnly,isSelected,onSelect}:{
   block:DocBlock;onUpdate?:(u:Partial<DocBlock>)=>void;onReorder?:(d:'up'|'down')=>void;
   onDelete?:()=>void;onInsertAfter?:(k:DocBlock['kind'])=>void;readOnly?:boolean;
+  isSelected?:boolean;onSelect?:()=>void;
 }) {
   const [editing,setEditing] = useState(false);
   const [showInsert,setShowInsert] = useState(false);
@@ -267,15 +268,16 @@ function DocumentBlock({block,onUpdate,onReorder,onDelete,onInsertAfter,readOnly
   const [hovered,setHovered] = useState(false);
   const [copied,setCopied] = useState(false);
   const isText = TEXT_KINDS.has(block.kind);
+  const active = isSelected || hovered;
 
   const doCopy = useCallback(()=>{
     navigator.clipboard.writeText(block.content||block.metricValue||'').then(()=>{setCopied(true);setTimeout(()=>setCopied(false),1200);}).catch(()=>{});
   },[block]);
 
   if (block.kind==='divider') return (
-    <div className="group relative my-5 flex items-center" onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}>
-      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent"/>
-      {!readOnly&&hovered&&<button type="button" onClick={onDelete} className="absolute -right-5 text-slate-300 hover:text-red-400 print:hidden"><Trash2 className="h-2.5 w-2.5"/></button>}
+    <div className="group relative my-5 flex items-center cursor-pointer" onClick={onSelect} onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}>
+      <div className={`h-px flex-1 transition-colors ${active?'bg-blue-300':'bg-gradient-to-r from-transparent via-slate-200 to-transparent'}`}/>
+      {!readOnly&&active&&<button type="button" onClick={e=>{e.stopPropagation();onDelete?.();}} className="absolute -right-7 rounded p-1 text-slate-300 hover:bg-red-50 hover:text-red-400 print:hidden"><Trash2 className="h-3 w-3"/></button>}
     </div>
   );
   if (block.kind==='spacer') return <div className="h-6"/>;
@@ -284,35 +286,37 @@ function DocumentBlock({block,onUpdate,onReorder,onDelete,onInsertAfter,readOnly
   const aggRows = useMemo(()=>block.kind==='table'?parseAggRows(block):[],[block]);
 
   return (
-    <div className="group/block relative" data-block-id={block.id}
+    <div className={`group/block relative ${isSelected?'z-10':''}`} data-block-id={block.id}
+      onClick={e=>{if(!editing){e.stopPropagation();onSelect?.();}}}
       onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>{setHovered(false);setShowMenu(false);setShowInsert(false);}}>
 
-      {/* side gutter controls */}
-      {!readOnly&&hovered&&block.status==='done'&&(
-        <div className="absolute -left-7 top-[3px] flex flex-col items-center gap-0 print:hidden">
-          <button type="button" onClick={()=>onReorder?.('up')} className="p-0.5 text-slate-300 hover:text-slate-600"><ChevronUp className="h-2.5 w-2.5"/></button>
-          <GripVertical className="h-2.5 w-2.5 cursor-grab text-slate-200 hover:text-slate-400"/>
-          <button type="button" onClick={()=>onReorder?.('down')} className="p-0.5 text-slate-300 hover:text-slate-600"><ChevronDown className="h-2.5 w-2.5"/></button>
+      {/* side gutter controls — larger hit targets */}
+      {!readOnly&&active&&block.status==='done'&&(
+        <div className="absolute -left-9 top-0 flex flex-col items-center gap-0 print:hidden">
+          <button type="button" onClick={e=>{e.stopPropagation();onReorder?.('up');}} className="rounded p-1 text-slate-300 hover:bg-slate-100 hover:text-slate-600 transition-colors"><ChevronUp className="h-3 w-3"/></button>
+          <GripVertical className="h-3 w-3 cursor-grab text-slate-200 hover:text-slate-500"/>
+          <button type="button" onClick={e=>{e.stopPropagation();onReorder?.('down');}} className="rounded p-1 text-slate-300 hover:bg-slate-100 hover:text-slate-600 transition-colors"><ChevronDown className="h-3 w-3"/></button>
         </div>
       )}
 
-      {/* action dot */}
-      {!readOnly&&hovered&&block.status==='done'&&(
-        <div className="absolute -right-6 top-[3px] print:hidden">
-          {copied?<span className="text-[8px] font-medium text-emerald-500">✓</span>
-          :<button type="button" onClick={()=>setShowMenu(!showMenu)} className="text-slate-300 hover:text-slate-500"><MoreHorizontal className="h-3 w-3"/></button>}
-          {showMenu&&(
-            <div className="absolute right-0 top-5 z-50 w-32 rounded-lg border border-slate-200/80 bg-white py-0.5 shadow-lg" onClick={e=>e.stopPropagation()}>
-              {isText&&<button type="button" onClick={()=>{setEditing(true);setShowMenu(false);}} className="flex w-full items-center gap-2 px-3 py-1 text-[10px] text-slate-600 hover:bg-slate-50"><Pencil className="h-2.5 w-2.5"/>Edit</button>}
-              <button type="button" onClick={()=>{doCopy();setShowMenu(false);}} className="flex w-full items-center gap-2 px-3 py-1 text-[10px] text-slate-600 hover:bg-slate-50"><Copy className="h-2.5 w-2.5"/>Copy</button>
-              <button type="button" onClick={()=>{onDelete?.();setShowMenu(false);}} className="flex w-full items-center gap-2 px-3 py-1 text-[10px] text-red-500 hover:bg-red-50"><Trash2 className="h-2.5 w-2.5"/>Remove</button>
-            </div>
+      {/* action bar — appears on select/hover */}
+      {!readOnly&&active&&block.status==='done'&&(
+        <div className="absolute -right-9 top-0 flex flex-col items-center gap-0.5 print:hidden">
+          {copied?<span className="rounded bg-emerald-50 px-1 py-0.5 text-[7px] font-semibold text-emerald-600">✓</span>:(
+            <>
+              {isText&&<button type="button" onClick={e=>{e.stopPropagation();setEditing(true);}} className="rounded p-1 text-slate-300 hover:bg-slate-100 hover:text-slate-600 transition-colors" title="Edit"><Pencil className="h-3 w-3"/></button>}
+              <button type="button" onClick={e=>{e.stopPropagation();doCopy();}} className="rounded p-1 text-slate-300 hover:bg-slate-100 hover:text-slate-600 transition-colors" title="Copy"><Copy className="h-3 w-3"/></button>
+              <button type="button" onClick={e=>{e.stopPropagation();onDelete?.();}} className="rounded p-1 text-slate-300 hover:bg-red-50 hover:text-red-400 transition-colors" title="Delete"><Trash2 className="h-3 w-3"/></button>
+            </>
           )}
         </div>
       )}
 
       {/* block body */}
-      <div className={`relative transition-colors duration-75 ${hovered&&!readOnly&&block.status==='done'?'bg-blue-50/15 rounded':''} ${block.status==='pending'?'opacity-[0.1]':''}`}
+      <div className={`relative rounded transition-all duration-100 ${
+        isSelected&&!readOnly&&block.status==='done'?'bg-blue-50/25 ring-1 ring-blue-200/40':
+        hovered&&!readOnly&&block.status==='done'?'bg-slate-50/40':''
+      } ${block.status==='pending'?'opacity-[0.18]':''}`}
         onDoubleClick={()=>{if(isText&&!readOnly&&block.status==='done')setEditing(true);}}>
 
         {block.status==='generating'&&<BlockShimmer title={block.title} kind={block.kind}/>}
@@ -325,7 +329,11 @@ function DocumentBlock({block,onUpdate,onReorder,onDelete,onInsertAfter,readOnly
         )}
 
         {block.status==='pending'&&(
-          <div className="flex items-center gap-1.5 py-1.5"><div className="h-1 w-1 rounded-full bg-slate-200"/><span className="text-[9px] text-slate-300">{block.title||blockLabel(block.kind)}</span></div>
+          <div className="flex items-center gap-2 py-2 px-1">
+            <div className="h-1.5 w-1.5 rounded-full bg-slate-200/80"/>
+            <span className="text-[9px] text-slate-400/60">{block.title||blockLabel(block.kind)}</span>
+            <span className="ml-auto rounded bg-slate-100/50 px-1.5 py-0.5 text-[7px] font-medium uppercase tracking-wider text-slate-300">{block.kind.replace(/_/g,' ')}</span>
+          </div>
         )}
 
         {block.status==='done'&&!editing&&(<>
@@ -397,10 +405,16 @@ function DocumentBlock({block,onUpdate,onReorder,onDelete,onInsertAfter,readOnly
         {editing&&<InlineEditor value={block.content} level={block.kind==='heading'?block.level:undefined} onChange={v=>onUpdate?.({content:v})} onBlur={()=>setEditing(false)}/>}
       </div>
 
-      {/* insert point */}
+      {/* insert line — visible on hover with clear affordance */}
       {!readOnly&&(
-        <div className="relative flex h-2 items-center justify-center print:hidden">
-          {hovered&&<button type="button" onClick={()=>setShowInsert(!showInsert)} className="relative z-10 flex h-3 w-3 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm hover:border-blue-300 hover:text-blue-500"><Plus className="h-2 w-2"/></button>}
+        <div className="relative flex h-3 items-center justify-center print:hidden" onClick={e=>e.stopPropagation()}>
+          {active&&<div className="absolute inset-x-0 top-1/2 h-px bg-blue-100 transition-opacity"/>}
+          {active&&(
+            <button type="button" onClick={()=>setShowInsert(!showInsert)}
+              className="relative z-10 flex h-4 w-4 items-center justify-center rounded-full border border-blue-200 bg-white text-blue-400 shadow-sm transition-all hover:scale-110 hover:border-blue-400 hover:text-blue-600 hover:shadow">
+              <Plus className="h-2.5 w-2.5"/>
+            </button>
+          )}
           {showInsert&&<InsertMenu onInsert={k=>onInsertAfter?.(k)} onClose={()=>setShowInsert(false)}/>}
         </div>
       )}
@@ -412,15 +426,30 @@ function DocumentBlock({block,onUpdate,onReorder,onDelete,onInsertAfter,readOnly
    COVER + TOC
    ═══════════════════════════════════════════════════════════════════════════ */
 
-function CoverSection({title,subtitle,blocks}:{title:string;subtitle?:string;blocks:DocBlock[]}) {
+function CoverSection({title,subtitle,blocks,collapsed,onToggle}:{title:string;subtitle?:string;blocks:DocBlock[];collapsed:boolean;onToggle:()=>void}) {
   const wc = wordCount(blocks);
   const toc = extractToc(blocks);
   const done = blocks.filter(b=>b.status==='done').length;
   const total = blocks.filter(b=>b.kind!=='divider'&&b.kind!=='spacer').length;
   const today = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
 
+  if (collapsed) return (
+    <div className="mb-6 flex items-center justify-between rounded-md bg-slate-50/50 px-4 py-2 print:hidden">
+      <div className="flex items-center gap-3">
+        <div className="flex h-5 w-5 items-center justify-center rounded bg-slate-800 text-[6px] font-bold text-white">BS</div>
+        <span className="text-[11px] font-semibold text-slate-700">{title}</span>
+        <span className="text-[9px] text-slate-400">{today} · {wc.toLocaleString()} words</span>
+      </div>
+      <button type="button" onClick={onToggle} className="rounded px-2 py-0.5 text-[9px] font-medium text-blue-600 hover:bg-blue-50">Expand cover</button>
+    </div>
+  );
+
   return (
     <div className="mb-12 pb-10 border-b border-slate-200/50">
+      {/* collapse toggle */}
+      <div className="mb-6 flex justify-end print:hidden">
+        <button type="button" onClick={onToggle} className="rounded px-2 py-0.5 text-[9px] font-medium text-slate-400 hover:bg-slate-50 hover:text-slate-600">Collapse</button>
+      </div>
       {/* header strip */}
       <div className="mb-10 flex items-center gap-3">
         <div className="flex h-8 w-8 items-center justify-center rounded bg-slate-800 text-[9px] font-bold text-white">BS</div>
@@ -465,10 +494,51 @@ export function ReportDocumentCanvas({
   blocks, onUpdateBlock, onReorderBlock, onDeleteBlock, onInsertBlock,
   readOnly=false, className, reportTitle, reportSubtitle,
 }: ReportDocumentCanvasProps) {
+  const [selectedId, setSelectedId] = useState<string|null>(null);
+  const [coverCollapsed, setCoverCollapsed] = useState(false);
   const done = blocks.filter(b=>b.status==='done').length;
   const total = blocks.filter(b=>b.kind!=='divider'&&b.kind!=='spacer').length;
   const gen = blocks.filter(b=>b.status==='generating').length;
   const wc = wordCount(blocks);
+
+  // Deselect when clicking the canvas background
+  const handleBgClick = useCallback(() => setSelectedId(null), []);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!selectedId || readOnly) return;
+      const blockIds = blocks.map(b => b.id);
+      const idx = blockIds.indexOf(selectedId);
+      if (idx < 0) return;
+
+      if (e.key === 'ArrowDown' && idx < blockIds.length - 1) {
+        e.preventDefault(); setSelectedId(blockIds[idx + 1]);
+      } else if (e.key === 'ArrowUp' && idx > 0) {
+        e.preventDefault(); setSelectedId(blockIds[idx - 1]);
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (!e.target || (e.target as HTMLElement).contentEditable !== 'true') {
+          e.preventDefault(); onDeleteBlock?.(selectedId);
+          setSelectedId(blockIds[idx + 1] || blockIds[idx - 1] || null);
+        }
+      } else if (e.key === 'Enter' && !e.shiftKey) {
+        const block = blocks.find(b => b.id === selectedId);
+        if (block && TEXT_KINDS.has(block.kind) && block.status === 'done') {
+          e.preventDefault();
+          // Trigger edit mode by scrolling into view
+          const el = document.querySelector(`[data-block-id="${selectedId}"]`);
+          el?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [selectedId, blocks, readOnly, onDeleteBlock]);
+
+  // Auto-collapse cover once generation starts
+  useEffect(() => {
+    if (gen > 0 && !coverCollapsed) setCoverCollapsed(true);
+  }, [gen, coverCollapsed]);
 
   return (
     <div className={className||''}>
@@ -490,20 +560,21 @@ export function ReportDocumentCanvas({
 
       {/* ═══ THE DOCUMENT — single continuous surface ═══ */}
       <div
-        className="mx-auto bg-white print:shadow-none print:m-0"
+        className="mx-auto bg-white print:shadow-none print:m-0 cursor-default"
+        onClick={handleBgClick}
         style={{
           width: '210mm',
           maxWidth: '100%',
-          padding: '24mm 28mm',
+          padding: '24mm 30mm',
           boxShadow: '0 0 0 1px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.03)',
           borderRadius: '1px',
           minHeight: '297mm',
         }}
       >
-        {/* Cover + TOC (flows into content) */}
-        <CoverSection title={reportTitle||'Energy Statistics Report'} subtitle={reportSubtitle} blocks={blocks}/>
+        {/* Cover + TOC (collapsible) */}
+        <CoverSection title={reportTitle||'Energy Statistics Report'} subtitle={reportSubtitle} blocks={blocks} collapsed={coverCollapsed} onToggle={()=>setCoverCollapsed(c=>!c)}/>
 
-        {/* Content blocks — continuous flow, no forced page breaks */}
+        {/* Content blocks — continuous flow */}
         <div>
           {blocks.map(block=>(
             <DocumentBlock key={block.id} block={block}
@@ -511,7 +582,9 @@ export function ReportDocumentCanvas({
               onReorder={onReorderBlock?(d)=>onReorderBlock(block.id,d):undefined}
               onDelete={onDeleteBlock?()=>onDeleteBlock(block.id):undefined}
               onInsertAfter={onInsertBlock?(k)=>onInsertBlock(block.id,k):undefined}
-              readOnly={readOnly}/>
+              readOnly={readOnly}
+              isSelected={selectedId===block.id}
+              onSelect={()=>setSelectedId(block.id)}/>
           ))}
 
           {blocks.length===0&&(
