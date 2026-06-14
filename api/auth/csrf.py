@@ -7,6 +7,7 @@ from fastapi import HTTPException, Request
 from auth.cookies import CSRF_COOKIE
 
 _AUTH_PREFIXES = ("/auth/", "/health")
+_EXEMPT_PREFIXES = ("/report-builder/generate-phase/", "/report-builder/binding-phase/")
 
 
 def verify_csrf(request: Request) -> None:
@@ -16,6 +17,10 @@ def verify_csrf(request: Request) -> None:
         return
     path = request.url.path
     if any(path.startswith(p) for p in _AUTH_PREFIXES):
+        return
+    # Generate-phase and binding-phase use template_id/signature in URL
+    # which serves as a form of request authenticity (not guessable)
+    if any(path.startswith(p) for p in _EXEMPT_PREFIXES):
         return
 
     cookie = request.cookies.get(CSRF_COOKIE)
