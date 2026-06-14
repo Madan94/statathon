@@ -4430,9 +4430,9 @@
     {
       "event": "reviewed_plan_fast_path_created",
       "source": "binding.finalize",
-      "timestamp": 1781386469.7879484
+      "timestamp": 1781411665.6464832
     }
   ],
-  "createdAt": 1781386469.7880142,
-  "updatedAt": 1781386469.7986953
+  "createdAt": 1781411665.6464949,
+  "updatedAt": 1781411665.6536238
 }

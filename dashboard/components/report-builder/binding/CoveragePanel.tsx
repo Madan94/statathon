@@ -85,22 +85,48 @@ export function CoveragePanel({ coverage, questionBindings, hasErrors, className
       </div>
 
       {/* tallies */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-xl border border-border bg-surface-card p-4 shadow-sm">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Entities</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">Entities</p>
           <div className="grid grid-cols-3 gap-2">
             <Tally label="Bound" value={entities.bound} tone="good" />
             <Tally label="Pending" value={entities.pending} tone={entities.pending ? 'warn' : 'muted'} />
             <Tally label="Unresolved" value={entities.unresolved} tone={entities.unresolved ? 'bad' : 'muted'} />
           </div>
+          {/* Entity coverage bar */}
+          {(entities.bound + entities.pending + entities.unresolved) > 0 && (
+            <div className="mt-3">
+              <div className="flex h-2 overflow-hidden rounded-full bg-border/30">
+                {entities.bound > 0 && <span className="bg-success/60" style={{ width: `${(entities.bound / (entities.bound + entities.pending + entities.unresolved)) * 100}%` }} />}
+                {entities.pending > 0 && <span className="bg-warning/60" style={{ width: `${(entities.pending / (entities.bound + entities.pending + entities.unresolved)) * 100}%` }} />}
+                {entities.unresolved > 0 && <span className="bg-danger/60" style={{ width: `${(entities.unresolved / (entities.bound + entities.pending + entities.unresolved)) * 100}%` }} />}
+              </div>
+              <p className="mt-1 text-right text-[10px] text-text-muted">
+                {Math.round((entities.bound / (entities.bound + entities.pending + entities.unresolved)) * 100)}% bound
+              </p>
+            </div>
+          )}
         </div>
-        <div className="rounded-xl border border-border bg-surface-card p-4 shadow-sm sm:col-span-2">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Questions</p>
+        <div className="rounded-xl border border-border bg-surface-card p-4 shadow-sm">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">Questions</p>
           <div className="grid grid-cols-3 gap-2">
             <Tally label="Executable" value={questions.executable} tone="good" />
             <Tally label="Degraded" value={questions.degraded} tone={questions.degraded ? 'warn' : 'muted'} />
             <Tally label="Blocked" value={questions.blocked} tone={questions.blocked ? 'bad' : 'muted'} />
           </div>
+          {/* Question coverage bar */}
+          {(questions.executable + questions.degraded + questions.blocked) > 0 && (
+            <div className="mt-3">
+              <div className="flex h-2 overflow-hidden rounded-full bg-border/30">
+                {questions.executable > 0 && <span className="bg-success/60" style={{ width: `${(questions.executable / (questions.executable + questions.degraded + questions.blocked)) * 100}%` }} />}
+                {questions.degraded > 0 && <span className="bg-warning/60" style={{ width: `${(questions.degraded / (questions.executable + questions.degraded + questions.blocked)) * 100}%` }} />}
+                {questions.blocked > 0 && <span className="bg-danger/60" style={{ width: `${(questions.blocked / (questions.executable + questions.degraded + questions.blocked)) * 100}%` }} />}
+              </div>
+              <p className="mt-1 text-right text-[10px] text-text-muted">
+                {Math.round((questions.executable / (questions.executable + questions.degraded + questions.blocked)) * 100)}% executable
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

@@ -24,8 +24,10 @@ export const PLATFORM_NAV: PlatformNavItem[] = [
     label: 'Report',
     icon: FileText,
     items: [
+      { href: '/report-builder', label: 'Report Builder' },
+      { href: '/report-builder/binding', label: 'Dataset Binding' },
+      { href: '/report-builder/new', label: 'Classic Wizard' },
       { href: '/report/report-ast-generator', label: 'Report AST Generator' },
-      { href: '/report/report-builder', label: 'Report Builder' },
     ],
   },
   { type: 'link', href: '/activity', label: 'All Activity', icon: History },
