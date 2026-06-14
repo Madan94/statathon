@@ -78,7 +78,7 @@ function ContextPanel({ jobId }: { jobId: number }) {
 
   const rows = [
     { icon: Database, label: 'Dataset', ok: ctx?.dataset?.loaded ?? false,
-      detail: ctx?.dataset ? `${ctx.dataset.rows.toLocaleString()} rows × ${ctx.dataset.columns} cols` : '—' },
+      detail: ctx?.dataset ? `${(ctx.dataset.rows ?? 0).toLocaleString()} rows × ${ctx.dataset.columns ?? 0} cols` : '—' },
     { icon: Network, label: 'Knowledge Graph', ok: ctx?.knowledge_graph?.available ?? false,
       detail: ctx?.knowledge_graph?.backend ?? '—' },
     { icon: Brain, label: 'STM', ok: ctx?.stm?.available ?? false,
