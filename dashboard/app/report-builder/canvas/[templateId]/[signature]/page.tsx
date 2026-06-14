@@ -1,602 +1,95 @@
-'use client';
-
-/**
- * Report Canvas — the full generation + BI workspace.
- *
- * Route: /report-builder/canvas/[templateId]/[signature]
- * Entry: from S3.5 handoff button OR standalone binder selector.
- *
- * Layout: [A4 Document Canvas (left)] + [Deep BI Chat (right sidebar)]
- */
-
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿'use client';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import {
-  ArrowLeft, BarChart3, BookOpen, CheckCircle2, ChevronRight, Clock,
-  Download, ExternalLink, FileText, Layers, Loader2, MessageSquare,
-  Pause, Pencil, Play, RefreshCw, Settings, Sparkles, StopCircle, Zap,
-} from 'lucide-react';
-
-import { ReportDocumentCanvas, type DocBlock } from '@/components/report-builder/render/ReportDocumentCanvas';
+import { AlignCenter, AlignLeft, AlignRight, BarChart3, Bold, ChevronRight, Download, FileText, FunctionSquare, Hash, Image, Italic, Layers, Loader2, MessageSquare, Minus, Pause, Pencil, Play, Plus, Sparkles, Table2, TrendingUp, Type, Underline, Upload, X } from 'lucide-react';
 import { generatePhaseApi } from '@/lib/api';
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   TYPES
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-interface QueueItem {
-  index: number; plan_id: string; question_id: string;
-  component_type: string; title: string; section_path: string[]; status: string;
-}
-
-interface ChatMessage {
-  id: string;
-  role: 'system' | 'assistant' | 'user';
-  content: string;
-  componentIndex?: number;
-  timestamp: number;
-  status?: 'thinking' | 'done' | 'error';
-  tool?: string;
-  toolResult?: Record<string, unknown>;
-}
-
+interface QueueItem { index: number; plan_id: string; question_id: string; component_type: string; title: string; section_path: string[]; status: string; }
+interface GenBlock { index: number; kind: string; title: string; content: string; tableData?: Record<string, unknown>; metricValue?: string; metricUnit?: string; sectionPath: string[]; status: 'pending' | 'generating' | 'done' | 'error'; }
+interface ChatMsg { id: string; role: 'user' | 'assistant'; content: string; ts: number; }
 type Phase = 'init' | 'ready' | 'generating' | 'paused' | 'complete';
+type Panel = 'left' | 'right' | null;
+type LeftTab = 'pages' | 'elements' | 'upload';
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   HELPERS
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function fmtTime(ms: number) { return ms < 1000 ? `${ms}ms` : `${(ms/1000).toFixed(1)}s`; }
-
-function sectionFromPath(path: string[]) {
-  if (!path || !path.length) return '';
-  return path[path.length - 1];
+function fmtNum(n: number | string | undefined | null): string {
+  if (n == null || n === '') return '\u2014';
+  const v = typeof n === 'string' ? parseFloat(n) : n;
+  if (v == null || isNaN(v)) return String(n ?? '\u2014');
+  if (Math.abs(v) >= 1e7) return (v / 1e7).toFixed(2) + ' Cr';
+  if (Math.abs(v) >= 1e5) return (v / 1e5).toFixed(2) + ' L';
+  if (Math.abs(v) >= 1000) return v.toLocaleString('en-IN', { maximumFractionDigits: 1 });
+  return Number.isInteger(v) ? String(v) : v.toFixed(2);
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   MAIN PAGE
-   ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function ReportCanvasPage() {
   const params = useParams();
   const templateId = params.templateId as string;
   const signature = params.signature as string;
-
-  // Core state
   const [phase, setPhase] = useState<Phase>('init');
   const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [blocks, setBlocks] = useState<DocBlock[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [generated, setGenerated] = useState<Set<number>>(new Set());
+  const [blocks, setBlocks] = useState<GenBlock[]>([]);
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Chat state
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [panel, setPanel] = useState<Panel>(null);
+  const [leftTab, setLeftTab] = useState<LeftTab>('pages');
+  const [chatMsgs, setChatMsgs] = useState<ChatMsg[]>([]);
   const [chatInput, setChatInput] = useState('');
-  const [chatOpen, setChatOpen] = useState(true);
-
-  // Timing
-  const [genTimes, setGenTimes] = useState<Map<number, number>>(new Map());
   const abortRef = useRef(false);
+  const docRef = useRef<HTMLDivElement>(null);
+  const togglePanel = (p: Panel) => setPanel(prev => prev === p ? null : p);
 
-  // ─── Add chat message ──────────────────────────────────────────────
-  const addChat = useCallback((msg: Omit<ChatMessage, 'id' | 'timestamp'>) => {
-    setChatMessages(prev => [...prev, { ...msg, id: `msg-${Date.now()}-${Math.random().toString(36).slice(2)}`, timestamp: Date.now() }]);
-  }, []);
+  useEffect(() => { generatePhaseApi.getGenerationQueue(templateId, signature).then(q => { setQueue(q || []); setBlocks((q || []).map(item => ({ index: item.index, kind: item.component_type === 'formula_metric' ? 'metric' : item.component_type, title: item.title, content: '', sectionPath: item.section_path || [], status: 'pending' as const }))); setPhase('ready'); }).catch(() => setPhase('ready')); }, [templateId, signature]);
 
-  // ─── Load queue ────────────────────────────────────────────────────
-  useEffect(() => {
-    addChat({ role: 'system', content: `Loading generation queue for ${templateId}...`, status: 'thinking' });
+  const generateOne = useCallback(async (idx: number) => { setBlocks(prev => prev.map(b => b.index === idx ? { ...b, status: 'generating' as const } : b)); try { const r = await generatePhaseApi.generateComponent(templateId, signature, { index: idx, use_llm: true, redo: false }); const c = r.content || {}; setBlocks(prev => prev.map(b => b.index === idx ? { ...b, content: r.narrative || String(c.text || c.content || c.value || ''), title: r.title || b.title, kind: r.component_type === 'formula_metric' ? 'metric' : r.component_type, tableData: (c.items || c.rankingData || c.rows) ? c as Record<string, unknown> : undefined, metricValue: c.value != null ? String(c.value) : undefined, metricUnit: c.unit ? String(c.unit) : undefined, status: 'done' as const } : b)); return true; } catch { setBlocks(prev => prev.map(b => b.index === idx ? { ...b, status: 'error' as const } : b)); return false; } }, [templateId, signature]);
 
-    generatePhaseApi.getGenerationQueue(templateId, signature)
-      .then((q) => {
-        setQueue(q);
-        // Build initial blocks with section hierarchy
-        const initialBlocks: DocBlock[] = [];
-        let lastPath = '';
-        (q || []).forEach((item) => {
-          const path = (item.section_path || []).join(' › ');
-          if (path && path !== lastPath) {
-            // Determine heading level from path depth
-            const depth = (item.section_path || []).length;
-            initialBlocks.push({
-              id: `heading-${item.index}`,
-              kind: 'heading',
-              content: sectionFromPath(item.section_path),
-              title: path,
-              status: 'done',
-              level: depth <= 1 ? 1 : depth <= 2 ? 2 : 3,
-            });
-            lastPath = path;
-          }
-          initialBlocks.push({
-            id: `block-${item.index}`,
-            kind: (item.component_type === 'formula_metric' ? 'metric' : item.component_type) as DocBlock['kind'],
-            content: '',
-            title: item.title,
-            status: 'pending',
-            planId: item.plan_id,
-            componentIndex: item.index,
-          });
-        });
-        setBlocks(initialBlocks);
-        setPhase('ready');
-        addChat({ role: 'system', content: `Queue loaded: ${q.length} components across ${new Set(q.map(i => (i.section_path||[]).join('/'))).size} sections. Ready to generate.`, status: 'done' });
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Failed to load queue');
-        addChat({ role: 'system', content: `Error: ${err instanceof Error ? err.message : 'Failed'}`, status: 'error' });
-      });
-  }, [templateId, signature, addChat]);
+  const autoGenerate = useCallback(async () => { setPhase('generating'); setGenerating(true); abortRef.current = false; for (const b of blocks) { if (abortRef.current) { setPhase('paused'); break; } if (b.status === 'done') continue; await generateOne(b.index); } setGenerating(false); if (!abortRef.current) { setPhase('complete'); generatePhaseApi.generate(templateId, signature, { use_llm: true, publish_mode: 'draft' }).catch(() => {}); } }, [blocks, generateOne, templateId, signature]);
 
-  // ─── Generate single component ────────────────────────────────────
-  const generateOne = useCallback(async (idx: number): Promise<boolean> => {
-    if (idx >= queue.length) return false;
-    const item = queue[idx];
-    const t0 = Date.now();
+  const sendChat = useCallback((msg: string) => { if (!msg.trim()) return; setChatMsgs(prev => [...prev, { id: `u-${Date.now()}`, role: 'user', content: msg, ts: Date.now() }]); setChatInput(''); setTimeout(() => { setChatMsgs(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: `Processing: "${msg}". Select a block for context-aware actions.`, ts: Date.now() }]); }, 300); }, []);
 
-    addChat({ role: 'assistant', content: `Generating: **${item.title}** (${item.component_type})`, componentIndex: idx, status: 'thinking', tool: 'generate_component' });
-    setBlocks(prev => prev.map(b => b.componentIndex === idx ? { ...b, status: 'generating' } : b));
+  const doneCount = blocks.filter(b => b.status === 'done').length;
+  const progress = blocks.length > 0 ? Math.round((doneCount / blocks.length) * 100) : 0;
+  const selectedBlock = selectedIdx != null ? blocks.find(b => b.index === selectedIdx) : null;
+  const sections = useMemo(() => { const m = new Map<string, GenBlock[]>(); blocks.forEach(b => { const k = (b.sectionPath || [])[b.sectionPath.length - 1] || 'Untitled'; if (!m.has(k)) m.set(k, []); m.get(k)!.push(b); }); return m; }, [blocks]);
+  const reportTitle = templateId.replace(/^tpl_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
-    try {
-      const result = await generatePhaseApi.generateComponent(templateId, signature, { index: idx, use_llm: true, redo: false });
-      const elapsed = Date.now() - t0;
-      setGenTimes(prev => new Map([...prev, [idx, elapsed]]));
-
-      // Update block
-      const contentObj = result.content || {};
-      setBlocks(prev => prev.map(b => b.componentIndex === idx ? {
-        ...b,
-        content: result.narrative || String(contentObj.text || contentObj.content || contentObj.value || ''),
-        title: result.title,
-        kind: (result.component_type === 'formula_metric' ? 'metric' : result.component_type) as DocBlock['kind'],
-        metricValue: contentObj.value != null ? String(contentObj.value) : undefined,
-        metricUnit: contentObj.unit ? String(contentObj.unit) : undefined,
-        tableData: (contentObj.items || contentObj.rankingData || contentObj.rows || contentObj.aggregationData) ? contentObj as Record<string, unknown> : undefined,
-        status: 'done',
-      } : b));
-
-      setGenerated(prev => new Set([...prev, idx]));
-      addChat({
-        role: 'assistant',
-        content: `✓ **${result.title}** generated in ${fmtTime(elapsed)}${result.narrative ? `\n\n> ${result.narrative.slice(0, 150)}${result.narrative.length > 150 ? '...' : ''}` : ''}`,
-        componentIndex: idx,
-        status: 'done',
-      });
-      return true;
-    } catch (err) {
-      setBlocks(prev => prev.map(b => b.componentIndex === idx ? { ...b, status: 'error' } : b));
-      addChat({ role: 'assistant', content: `✗ Failed: ${err instanceof Error ? err.message : 'Unknown error'}`, componentIndex: idx, status: 'error' });
-      return false;
-    }
-  }, [queue, templateId, signature, addChat]);
-
-  // ─── Auto-generate all ─────────────────────────────────────────────
-  const autoGenerateAll = useCallback(async () => {
-    setPhase('generating');
-    setGenerating(true);
-    abortRef.current = false;
-    addChat({ role: 'system', content: `Starting auto-generation of ${queue.length - generated.size} remaining components...` });
-
-    for (let i = currentIndex; i < queue.length; i++) {
-      if (abortRef.current) { setPhase('paused'); break; }
-      if (generated.has(i)) continue;
-      setCurrentIndex(i);
-      await generateOne(i);
-    }
-
-    setGenerating(false);
-    if (!abortRef.current) {
-      setPhase('complete');
-      addChat({ role: 'system', content: '✓ All components generated. Report ready for review.' });
-      // Trigger full assembly
-      generatePhaseApi.generate(templateId, signature, { use_llm: true, publish_mode: 'draft' }).catch(() => {});
-    }
-  }, [queue, currentIndex, generated, generateOne, templateId, signature, addChat]);
-
-  const pauseGeneration = () => { abortRef.current = true; };
-
-  // ─── Single step generate ──────────────────────────────────────────
-  const generateNext = useCallback(async () => {
-    const next = queue.findIndex((_, i) => !generated.has(i) && i >= currentIndex);
-    if (next < 0) return;
-    setGenerating(true);
-    setCurrentIndex(next);
-    await generateOne(next);
-    setGenerating(false);
-    setCurrentIndex(next + 1);
-  }, [queue, currentIndex, generated, generateOne]);
-
-  // ─── Agent Tool Registry ────────────────────────────────────────
-  const agentTools = useCallback(() => ({
-    get_component: (idx: number) => {
-      const block = blocks.find(b => b.componentIndex === idx);
-      if (!block) return { error: 'Component not found' };
-      return { index: idx, kind: block.kind, title: block.title, content: block.content, status: block.status, metricValue: block.metricValue };
-    },
-    get_report_outline: () => {
-      return blocks.filter(b => b.kind === 'heading').map(b => ({ id: b.id, level: b.level, text: b.content }));
-    },
-    get_all_components: () => {
-      return queue.map((q, i) => ({ index: i, title: q.title, type: q.component_type, generated: generated.has(i), section: q.section_path.join(' > ') }));
-    },
-    update_narrative: (idx: number, newText: string) => {
-      const block = blocks.find(b => b.componentIndex === idx);
-      if (!block) return { error: 'Component not found' };
-      setBlocks(prev => prev.map(b => b.componentIndex === idx ? { ...b, content: newText } : b));
-      return { success: true, index: idx, updated: newText.slice(0, 80) };
-    },
-    regenerate_component: async (idx: number, opts?: { topN?: number }) => {
-      addChat({ role: 'assistant', content: `Regenerating component ${idx}...`, status: 'thinking', componentIndex: idx });
-      setBlocks(prev => prev.map(b => b.componentIndex === idx ? { ...b, status: 'generating' } : b));
-      try {
-        const result = await generatePhaseApi.generateComponent(templateId, signature, { index: idx, use_llm: true, redo: true });
-        const contentObj = result.content || {};
-        setBlocks(prev => prev.map(b => b.componentIndex === idx ? {
-          ...b, content: result.narrative || String(contentObj.text || contentObj.content || contentObj.value || ''),
-          title: result.title, kind: (result.component_type === 'formula_metric' ? 'metric' : result.component_type) as DocBlock['kind'],
-          metricValue: contentObj.value != null ? String(contentObj.value) : undefined,
-          metricUnit: contentObj.unit ? String(contentObj.unit) : undefined,
-          tableData: (contentObj.items || contentObj.rankingData || contentObj.rows) ? contentObj as Record<string, unknown> : undefined,
-          status: 'done',
-        } : b));
-        return { success: true, title: result.title, narrative: result.narrative?.slice(0, 100) };
-      } catch (err) {
-        setBlocks(prev => prev.map(b => b.componentIndex === idx ? { ...b, status: 'error' } : b));
-        return { error: err instanceof Error ? err.message : 'Failed' };
-      }
-    },
-    add_component: (afterIdx: number, kind: DocBlock['kind'], content: string) => {
-      const afterBlock = blocks.find(b => b.componentIndex === afterIdx);
-      if (afterBlock) {
-        const newBlock: DocBlock = { id: `agent-${Date.now()}`, kind, content, status: 'done' };
-        setBlocks(prev => {
-          const i = prev.findIndex(b => b.id === afterBlock.id);
-          const n = [...prev]; n.splice(i + 1, 0, newBlock); return n;
-        });
-        return { success: true, kind, content: content.slice(0, 60) };
-      }
-      return { error: 'Target block not found' };
-    },
-    remove_component: (idx: number) => {
-      const block = blocks.find(b => b.componentIndex === idx);
-      if (!block) return { error: 'Component not found' };
-      setBlocks(prev => prev.filter(b => b.id !== block.id));
-      return { success: true, removed: block.title };
-    },
-    inspect_component: (idx: number) => {
-      const item = queue[idx];
-      const block = blocks.find(b => b.componentIndex === idx);
-      if (!item || !block) return { error: 'Not found' };
-      return {
-        index: idx, planId: item.plan_id, questionId: item.question_id,
-        componentType: item.component_type, title: item.title,
-        sectionPath: item.section_path, status: block.status,
-        content: block.content?.slice(0, 200), hasData: !!block.tableData,
-        generated: generated.has(idx),
-        generationTime: genTimes.get(idx) ? `${genTimes.get(idx)}ms` : null,
-      };
-    },
-  }), [blocks, queue, generated, genTimes, templateId, signature, addChat]);
-
-  // ─── Agent message handler ────────────────────────────────────────
-  const handleAgentMessage = useCallback(async (userMsg: string) => {
-    addChat({ role: 'user', content: userMsg });
-    addChat({ role: 'assistant', content: 'Thinking...', status: 'thinking' });
-
-    const tools = agentTools();
-    const lower = userMsg.toLowerCase();
-
-    // Simple intent detection (will be replaced by LLM function calling)
-    let response = '';
-    let toolUsed = '';
-
-    try {
-      if (lower.includes('inspect') || lower.includes('details') || lower.includes('show')) {
-        const idxMatch = userMsg.match(/(\d+)/);
-        const idx = idxMatch ? parseInt(idxMatch[1]) : currentIndex;
-        const result = tools.inspect_component(idx);
-        toolUsed = 'inspect_component';
-        response = result.error ? `Error: ${result.error}` :
-          `**Component ${idx}: ${result.title}**\n` +
-          `Type: ${result.componentType} · Status: ${result.status}\n` +
-          `Section: ${(result.sectionPath || []).join(' > ')}\n` +
-          `Plan: ${result.planId} · Question: ${result.questionId}\n` +
-          (result.content ? `\nContent: "${result.content}"` : '\nNo content yet.') +
-          (result.generationTime ? `\nGenerated in: ${result.generationTime}` : '');
-      } else if (lower.includes('regenerate') || lower.includes('redo') || lower.includes('retry')) {
-        const idxMatch = userMsg.match(/(\d+)/);
-        const idx = idxMatch ? parseInt(idxMatch[1]) : currentIndex;
-        toolUsed = 'regenerate_component';
-        const result = await tools.regenerate_component(idx);
-        response = result.error ? `Failed: ${result.error}` :
-          `✓ Regenerated **${result.title}**\n\n> ${result.narrative || 'Done'}`;
-      } else if (lower.includes('outline') || lower.includes('structure') || lower.includes('toc')) {
-        toolUsed = 'get_report_outline';
-        const outline = tools.get_report_outline();
-        response = `**Report Outline (${outline.length} headings):**\n\n` +
-          outline.map((h, i) => `${'  '.repeat((h.level || 1) - 1)}${i + 1}. ${h.text}`).join('\n');
-      } else if (lower.includes('list') || lower.includes('all components') || lower.includes('queue')) {
-        toolUsed = 'get_all_components';
-        const all = tools.get_all_components();
-        const done = all.filter(c => c.generated).length;
-        response = `**Components: ${done}/${all.length} generated**\n\n` +
-          all.slice(0, 15).map(c => `${c.generated ? '✓' : '○'} [${c.index}] ${c.title} (${c.type})`).join('\n') +
-          (all.length > 15 ? `\n... and ${all.length - 15} more` : '');
-      } else if (lower.includes('update') || lower.includes('change text') || lower.includes('edit')) {
-        const idxMatch = userMsg.match(/component\s*(\d+)/i) || userMsg.match(/(\d+)/);
-        const idx = idxMatch ? parseInt(idxMatch[1]) : currentIndex;
-        const textMatch = userMsg.match(/["""](.+?)["""]/) || userMsg.match(/to\s+(.+)$/i);
-        if (textMatch) {
-          toolUsed = 'update_narrative';
-          const result = tools.update_narrative(idx, textMatch[1]);
-          response = result.error ? `Error: ${result.error}` : `✓ Updated component ${idx} narrative.`;
-        } else {
-          response = 'Please specify the new text in quotes, e.g.: Update component 0 to "New text here"';
-        }
-      } else if (lower.includes('remove') || lower.includes('delete')) {
-        const idxMatch = userMsg.match(/(\d+)/);
-        if (idxMatch) {
-          toolUsed = 'remove_component';
-          const result = tools.remove_component(parseInt(idxMatch[1]));
-          response = result.error ? `Error: ${result.error}` : `✓ Removed: ${result.removed}`;
-        } else {
-          response = 'Please specify which component to remove (by index number).';
-        }
-      } else if (lower.includes('add') || lower.includes('insert')) {
-        const afterMatch = userMsg.match(/after\s*(\d+)/i);
-        const afterIdx = afterMatch ? parseInt(afterMatch[1]) : Math.max(0, currentIndex - 1);
-        const isChart = lower.includes('chart');
-        const isTable = lower.includes('table');
-        const isMetric = lower.includes('metric');
-        const kind: DocBlock['kind'] = isChart ? 'chart' : isTable ? 'table' : isMetric ? 'metric' : 'narrative';
-        toolUsed = 'add_component';
-        const result = tools.add_component(afterIdx, kind, '');
-        response = result.error ? `Error: ${result.error}` : `✓ Added ${kind} block after component ${afterIdx}. Double-click to edit.`;
-      } else {
-        response = `I can help you with:\n` +
-          `• **inspect [N]** — view component details & provenance\n` +
-          `• **regenerate [N]** — re-generate a component\n` +
-          `• **outline** — show document structure\n` +
-          `• **list** — show all components & status\n` +
-          `• **update [N] to "text"** — change narrative text\n` +
-          `• **add [type] after [N]** — insert a new block\n` +
-          `• **remove [N]** — delete a component\n\n` +
-          `Or describe what you want in natural language.`;
-      }
-    } catch (err) {
-      response = `Error: ${err instanceof Error ? err.message : 'Something went wrong'}`;
-    }
-
-    // Replace the "Thinking..." message with the result
-    setChatMessages(prev => {
-      const msgs = [...prev];
-      const thinkingIdx = msgs.findLastIndex(m => m.status === 'thinking');
-      if (thinkingIdx >= 0) {
-        msgs[thinkingIdx] = { ...msgs[thinkingIdx], content: response, status: 'done', tool: toolUsed || undefined };
-      } else {
-        msgs.push({ id: `msg-${Date.now()}`, role: 'assistant', content: response, timestamp: Date.now(), status: 'done', tool: toolUsed || undefined });
-      }
-      return msgs;
-    });
-  }, [agentTools, addChat, currentIndex]);
-
-  // ─── Chat submit ───────────────────────────────────────────────────
-  const handleChatSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
-    const msg = chatInput.trim();
-    setChatInput('');
-    handleAgentMessage(msg);
-  }, [chatInput, handleAgentMessage]);
-
-  // ─── Block CRUD ────────────────────────────────────────────────────
-  const updateBlock = (id: string, u: Partial<DocBlock>) => setBlocks(prev => prev.map(b => b.id === id ? { ...b, ...u } : b));
-  const reorderBlock = (id: string, dir: 'up' | 'down') => setBlocks(prev => {
-    const i = prev.findIndex(b => b.id === id); if (i < 0) return prev;
-    const t = dir === 'up' ? i - 1 : i + 1; if (t < 0 || t >= prev.length) return prev;
-    const n = [...prev]; [n[i], n[t]] = [n[t], n[i]]; return n;
-  });
-  const deleteBlock = (id: string) => setBlocks(prev => prev.filter(b => b.id !== id));
-  const insertBlock = (afterId: string, kind: DocBlock['kind']) => setBlocks(prev => {
-    const i = prev.findIndex(b => b.id === afterId);
-    const nb: DocBlock = { id: `custom-${Date.now()}`, kind, content: '', status: 'done', level: kind === 'heading' ? 3 : undefined };
-    const n = [...prev]; n.splice(i + 1, 0, nb); return n;
-  });
-
-  // ─── Computed ──────────────────────────────────────────────────────
-  const progress = queue.length > 0 ? Math.round((generated.size / queue.length) * 100) : 0;
-
-  // ─── RENDER ────────────────────────────────────────────────────────
-  return (
-    <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
-      {/* ═══ LEFT: Canvas area ═══ */}
-      <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
-        {/* Top toolbar */}
-        <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-2">
-          <div className="flex items-center gap-3">
-            <Link href="/report-builder/binding" className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-            <div className="min-w-0">
-              <h1 className="truncate text-sm font-semibold text-slate-800">
-                {templateId.replace(/^tpl_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
-              </h1>
-              <p className="text-[10px] text-slate-400">{signature.slice(0, 8)} · {generated.size}/{queue.length} components</p>
-            </div>
-          </div>
-
-          {/* Generation controls */}
-          <div className="flex items-center gap-2">
-            {/* Progress */}
-            <div className="flex items-center gap-2 text-[10px] text-slate-400">
-              <div className="h-1 w-16 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-emerald-400 transition-all duration-500" style={{ width: `${progress}%` }} />
-              </div>
-              <span className="tabular-nums">{progress}%</span>
-            </div>
-
-            {phase === 'ready' && (
-              <>
-                <button onClick={generateNext} disabled={generating} className="flex items-center gap-1.5 rounded-md bg-slate-100 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50">
-                  <Sparkles className="h-3 w-3" /> Generate next
-                </button>
-                <button onClick={autoGenerateAll} disabled={generating} className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-blue-700 disabled:opacity-50">
-                  <Play className="h-3 w-3" /> Auto-generate all
-                </button>
-              </>
-            )}
-            {phase === 'generating' && (
-              <button onClick={pauseGeneration} className="flex items-center gap-1.5 rounded-md bg-amber-100 px-3 py-1.5 text-[11px] font-medium text-amber-700 hover:bg-amber-200">
-                <Pause className="h-3 w-3" /> Pause
-              </button>
-            )}
-            {phase === 'paused' && (
-              <button onClick={autoGenerateAll} className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-blue-700">
-                <Play className="h-3 w-3" /> Resume
-              </button>
-            )}
-            {phase === 'complete' && (
-              <div className="flex items-center gap-2">
-                <a href={generatePhaseApi.reportHtmlUrl(templateId, signature)} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-200">
-                  <ExternalLink className="h-3 w-3" /> HTML
-                </a>
-                <a href={generatePhaseApi.reportPdfUrl(templateId, signature)} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-200">
-                  <Download className="h-3 w-3" /> PDF
-                </a>
-              </div>
-            )}
-
-            {/* Toggle chat */}
-            <button onClick={() => setChatOpen(o => !o)} className={`rounded-md p-1.5 transition-colors ${chatOpen ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-100'}`}>
-              <MessageSquare className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Canvas scroll area */}
-        <div className="flex-1 overflow-auto bg-slate-100/50 p-6">
-          {phase === 'init' ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
-              <p className="mt-3 text-sm text-slate-400">Loading report canvas...</p>
-            </div>
-          ) : (
-            <ReportDocumentCanvas
-              blocks={blocks}
-              onUpdateBlock={updateBlock}
-              onReorderBlock={reorderBlock}
-              onDeleteBlock={deleteBlock}
-              onInsertBlock={insertBlock}
-              readOnly={generating}
-              reportTitle={templateId.replace(/^tpl_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
-              reportSubtitle={`Generated from dataset ${signature.slice(0, 8)} · ${queue.length} components`}
-            />
-          )}
+  return (<div className="flex h-screen flex-col overflow-hidden bg-[#f0f2f5]">
+    <div className="flex h-11 items-center justify-between border-b border-slate-200 bg-white px-3 shrink-0">
+      <div className="flex items-center gap-3"><button onClick={() => togglePanel('left')} className={`rounded p-1.5 ${panel === 'left' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:bg-slate-100'}`}><Layers className="h-4 w-4" /></button><Link href="/report-builder" className="text-slate-400 hover:text-slate-600"><ChevronRight className="h-3.5 w-3.5 rotate-180" /></Link><h1 className="text-[13px] font-semibold text-slate-800 truncate max-w-[200px]">{reportTitle}</h1></div>
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1"><div className="h-1.5 w-14 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-emerald-500 transition-all duration-700" style={{ width: `${progress}%` }} /></div><span className="text-[10px] font-medium tabular-nums text-slate-600">{doneCount}/{blocks.length}</span></div>
+        {phase === 'ready' && <button onClick={autoGenerate} className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-blue-700"><Play className="h-3 w-3" /> Auto-Generate</button>}
+        {phase === 'generating' && <button onClick={() => { abortRef.current = true; }} className="flex items-center gap-1.5 rounded-md bg-amber-500 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-amber-600"><Pause className="h-3 w-3" /> Pause</button>}
+        {phase === 'paused' && <button onClick={autoGenerate} className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-blue-700"><Play className="h-3 w-3" /> Resume</button>}
+        {phase === 'complete' && <a href={generatePhaseApi.reportPdfUrl(templateId, signature)} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-emerald-700"><Download className="h-3 w-3" /> PDF</a>}
+        <button onClick={() => togglePanel('right')} className={`rounded p-1.5 ${panel === 'right' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:bg-slate-100'}`}><MessageSquare className="h-4 w-4" /></button>
+      </div>
+    </div>
+    <div className="flex h-9 items-center gap-1 border-b border-slate-200 bg-white px-3 shrink-0">
+      <div className="flex items-center gap-0.5 rounded border border-slate-200 px-1"><button className="rounded p-1 text-slate-500 hover:bg-slate-100"><Bold className="h-3 w-3" /></button><button className="rounded p-1 text-slate-500 hover:bg-slate-100"><Italic className="h-3 w-3" /></button><button className="rounded p-1 text-slate-500 hover:bg-slate-100"><Underline className="h-3 w-3" /></button></div>
+      <span className="mx-1 h-4 w-px bg-slate-200" />
+      <div className="flex items-center gap-0.5 rounded border border-slate-200 px-1"><button className="rounded p-1 text-slate-500 hover:bg-slate-100"><AlignLeft className="h-3 w-3" /></button><button className="rounded p-1 text-slate-500 hover:bg-slate-100"><AlignCenter className="h-3 w-3" /></button><button className="rounded p-1 text-slate-500 hover:bg-slate-100"><AlignRight className="h-3 w-3" /></button></div>
+      <span className="mx-1 h-4 w-px bg-slate-200" />
+      <div className="flex items-center gap-0.5 rounded border border-slate-200 px-1"><button className="rounded p-1 text-slate-500 hover:bg-slate-100" title="Chart"><BarChart3 className="h-3 w-3" /></button><button className="rounded p-1 text-slate-500 hover:bg-slate-100" title="Table"><Table2 className="h-3 w-3" /></button><button className="rounded p-1 text-slate-500 hover:bg-slate-100" title="Metric"><Hash className="h-3 w-3" /></button><button className="rounded p-1 text-slate-500 hover:bg-slate-100" title="Text"><Type className="h-3 w-3" /></button></div>
+      <span className="mx-1 h-4 w-px bg-slate-200" />
+      <select className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[10px] text-slate-600"><option>A4</option><option>MoSPI</option><option>Letter</option></select>
+      <select className="ml-1 rounded border border-slate-200 bg-white px-2 py-0.5 text-[10px] text-slate-600"><option>100%</option><option>75%</option><option>Fit</option></select>
+    </div>
+    <div className="flex flex-1 overflow-hidden">
+      {panel === 'left' && (<div className="w-56 shrink-0 border-r border-slate-200 bg-white flex flex-col"><div className="flex border-b border-slate-100">{(['pages', 'elements', 'upload'] as const).map(tab => (<button key={tab} onClick={() => setLeftTab(tab)} className={`flex-1 py-2 text-[10px] font-semibold uppercase tracking-wide ${leftTab === tab ? 'border-b-2 border-blue-500 text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>{tab}</button>))}</div><div className="flex-1 overflow-auto p-2">{leftTab === 'pages' && (<div className="space-y-1">{Array.from(sections.entries()).map(([s, items]) => (<button key={s} onClick={() => { docRef.current?.querySelector(`[data-section="${s}"]`)?.scrollIntoView({ behavior: 'smooth' }); }} className="w-full rounded px-2 py-1.5 text-left text-[10px] font-medium text-slate-700 hover:bg-slate-50">{s} <span className="text-slate-400">({items.filter(i => i.status === 'done').length}/{items.length})</span></button>))}</div>)}{leftTab === 'elements' && (<div className="grid grid-cols-2 gap-1.5">{[{i: BarChart3, l: 'Chart'}, {i: Table2, l: 'Table'}, {i: Hash, l: 'Metric'}, {i: FileText, l: 'Text'}, {i: Image, l: 'Image'}, {i: Minus, l: 'Divider'}, {i: TrendingUp, l: 'Finding'}, {i: Pencil, l: 'Source'}, {i: Type, l: 'Heading'}, {i: Sparkles, l: 'AI Block'}].map(({i: Icon, l}) => (<button key={l} className="flex flex-col items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-2.5 hover:border-blue-300 hover:bg-blue-50 active:scale-95 transition-all"><Icon className="h-4 w-4 text-slate-600" /><span className="text-[9px] font-medium text-slate-600">{l}</span></button>))}</div>)}{leftTab === 'upload' && (<div className="flex flex-col items-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center"><Upload className="h-6 w-6 text-slate-300" /><p className="mt-2 text-[10px] text-slate-500">Drop files here</p></div>)}</div></div>)}
+      <div className="flex-1 overflow-auto p-6" onClick={() => setSelectedIdx(null)}>
+        <div ref={docRef} className="mx-auto bg-white" style={{ width: '210mm', maxWidth: '100%', minHeight: '297mm', padding: '20mm 25mm', boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 20px rgba(0,0,0,0.04)' }}>
+          {Array.from(sections.entries()).map(([section, items]) => (<div key={section} data-section={section} className="mb-8"><h2 className="mb-3 mt-6 text-[16px] font-bold text-slate-900 first:mt-0">{section}</h2><div className="mb-4 h-px bg-slate-200" />{items.map(block => (<div key={block.index} onClick={e => { e.stopPropagation(); setSelectedIdx(block.index); }} className={`relative mb-4 rounded-sm transition-all cursor-pointer ${selectedIdx === block.index ? 'ring-2 ring-blue-400 ring-offset-1' : 'hover:ring-1 hover:ring-slate-200'}`}>
+            {block.status === 'done' && (<div className="py-1">{(block.kind === 'narrative' || block.kind === 'key_finding') && <p className={`text-[12.5px] leading-[1.8] ${block.kind === 'key_finding' ? 'rounded bg-blue-50/60 px-4 py-3 font-medium' : ''} text-slate-700`}>{block.content}</p>}{block.kind === 'table' && block.tableData && (<div className="overflow-hidden rounded border border-slate-200"><div className="border-b border-slate-100 bg-slate-50 px-3 py-1.5"><span className="text-[10px] font-semibold text-slate-600">{block.title}</span></div><table className="w-full text-[10.5px]"><thead><tr className="border-b border-slate-100 bg-slate-50/50"><th className="px-3 py-1.5 text-left font-semibold text-slate-500">#</th><th className="px-3 py-1.5 text-left font-semibold text-slate-500">State/UT</th><th className="px-3 py-1.5 text-right font-semibold text-slate-500">{block.title}</th><th className="px-3 py-1.5 text-right font-semibold text-slate-500">Share</th></tr></thead><tbody>{((block.tableData.items || block.tableData.rankingData || []) as Array<{rank?: number; key?: Record<string, string>; value?: number}>).slice(0, 10).map((item, i) => { const total = ((block.tableData!.items || block.tableData!.rankingData || []) as Array<{value?: number}>).reduce((s, x) => s + (x.value || 0), 0); const pct = total > 0 && item.value ? ((item.value / total) * 100).toFixed(1) : '\u2014'; return (<tr key={i} className="border-b border-slate-100 last:border-b-0 hover:bg-blue-50/30"><td className="px-3 py-1 tabular-nums text-slate-400">{item.rank ?? i + 1}</td><td className="px-3 py-1 text-slate-700">{item.key ? Object.values(item.key)[0] : '\u2014'}</td><td className="px-3 py-1 text-right tabular-nums font-medium text-slate-800">{fmtNum(item.value)}</td><td className="px-3 py-1 text-right tabular-nums text-slate-400">{pct}%</td></tr>); })}</tbody></table></div>)}{block.kind === 'table' && !block.tableData && <p className="text-[12.5px] leading-[1.8] text-slate-700">{block.content}</p>}{block.kind === 'metric' && (<div className="flex items-baseline gap-2 rounded border border-slate-200 bg-gradient-to-r from-white to-slate-50 px-4 py-3"><span className="text-[24px] font-bold tabular-nums text-slate-800">{fmtNum(block.metricValue)}</span>{block.metricUnit && <span className="text-[11px] text-slate-400">{block.metricUnit}</span>}{block.content && <span className="ml-3 text-[11px] text-slate-500">{block.content}</span>}</div>)}{block.kind === 'source_note' && <p className="text-[9.5px] text-slate-400">Source: {block.content}</p>}{block.kind === 'chart' && (<div className="rounded border border-slate-200 p-4"><div className="flex h-32 items-end gap-[3%]">{[55, 80, 45, 70, 48, 85, 38, 62, 72, 50].map((h, i) => (<div key={i} className="flex-1 rounded-t" style={{ height: `${h}%`, background: `hsl(${215 + i * 3}, 50%, ${62 + i}%)` }} />))}</div><p className="mt-2 text-center text-[9px] text-slate-400">{block.title}</p></div>)}</div>)}
+            {block.status === 'generating' && (<div className="py-2"><div className="mb-2 flex items-center gap-2"><Loader2 className="h-3 w-3 animate-spin text-blue-500" /><span className="text-[10px] font-medium text-blue-600">{block.title}</span></div><div className="space-y-1.5"><div className="h-2.5 w-full animate-pulse rounded bg-slate-100" /><div className="h-2.5 w-[90%] animate-pulse rounded bg-slate-100" /><div className="h-2.5 w-[75%] animate-pulse rounded bg-slate-100" /></div></div>)}
+            {block.status === 'pending' && (<div className="flex items-center justify-between rounded border border-dashed border-slate-300 bg-slate-50/50 px-4 py-3" onClick={e => { e.stopPropagation(); generateOne(block.index); }}><div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded bg-slate-200 text-[9px] font-bold text-slate-500">{block.kind === 'table' ? '\u229e' : block.kind === 'chart' ? '\u25d1' : block.kind === 'metric' ? '#' : '\u00b6'}</span><span className="text-[11px] text-slate-500">{block.title}</span></div><span className="rounded bg-blue-100 px-2 py-0.5 text-[9px] font-medium text-blue-700 hover:bg-blue-200 cursor-pointer">Generate</span></div>)}
+            {block.status === 'error' && (<div className="flex items-center gap-2 rounded border border-red-200 bg-red-50 px-4 py-2" onClick={e => { e.stopPropagation(); generateOne(block.index); }}><span className="text-[10px] text-red-600">Failed: {block.title}</span><span className="rounded bg-red-100 px-2 py-0.5 text-[9px] font-medium text-red-700 cursor-pointer hover:bg-red-200">Retry</span></div>)}
+          </div>))}</div>))}
+          {blocks.length === 0 && phase !== 'init' && <div className="flex h-60 flex-col items-center justify-center text-slate-400"><FileText className="h-8 w-8 text-slate-200" /><p className="mt-3 text-sm">No components loaded</p></div>}
+          {phase === 'init' && <div className="flex h-60 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-slate-300" /></div>}
         </div>
       </div>
-
-      {/* ═══ RIGHT: Deep BI Chat sidebar ═══ */}
-      {chatOpen && (
-        <div className="flex w-80 flex-col border-l border-slate-200 bg-white xl:w-96">
-          {/* Chat header */}
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
-            <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-blue-500 to-indigo-600">
-                <Sparkles className="h-3 w-3 text-white" />
-              </div>
-              <span className="text-xs font-semibold text-slate-700">Deep BI Agent</span>
-            </div>
-            <div className="flex items-center gap-1 text-[9px] text-slate-400">
-              <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              <span>Active</span>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-auto px-3 py-3 space-y-3">
-            {chatMessages.map((msg) => (
-              <div key={msg.id} className={`${msg.role === 'user' ? 'ml-6' : ''}`}>
-                {msg.role === 'user' ? (
-                  <div className="rounded-lg bg-blue-600 px-3 py-2 text-[11px] text-white">
-                    {msg.content}
-                  </div>
-                ) : msg.role === 'system' ? (
-                  <div className="flex items-start gap-2 text-[10px] text-slate-400">
-                    {msg.status === 'thinking' && <Loader2 className="mt-0.5 h-3 w-3 animate-spin shrink-0" />}
-                    {msg.status === 'done' && <CheckCircle2 className="mt-0.5 h-3 w-3 text-emerald-400 shrink-0" />}
-                    {msg.status === 'error' && <span className="mt-0.5 shrink-0 text-red-400">✗</span>}
-                    <span>{msg.content}</span>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-                    {msg.tool && (
-                      <div className="mb-1.5 flex items-center gap-1.5">
-                        <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[8px] font-semibold text-indigo-600">{msg.tool}</span>
-                        {msg.status === 'done' && <CheckCircle2 className="h-2.5 w-2.5 text-emerald-400" />}
-                      </div>
-                    )}
-                    <div className="text-[11px] leading-relaxed text-slate-700 whitespace-pre-wrap">
-                      {msg.content.split('**').map((part, i) =>
-                        i % 2 === 0 ? part : <strong key={i} className="font-semibold text-slate-900">{part}</strong>
-                      )}
-                    </div>
-                    {msg.status === 'thinking' && (
-                      <div className="mt-2 flex items-center gap-1.5 text-[9px] text-blue-500">
-                        <Loader2 className="h-2.5 w-2.5 animate-spin" /> Working...
-                      </div>
-                    )}
-                    {msg.componentIndex != null && msg.status === 'done' && (
-                      <div className="mt-2 flex gap-1">
-                        <button onClick={() => handleAgentMessage(`inspect ${msg.componentIndex}`)} className="rounded bg-slate-200/60 px-2 py-0.5 text-[9px] font-medium text-slate-600 hover:bg-slate-200">Inspect</button>
-                        <button onClick={() => handleAgentMessage(`regenerate ${msg.componentIndex}`)} className="rounded bg-slate-200/60 px-2 py-0.5 text-[9px] font-medium text-slate-600 hover:bg-slate-200">Regenerate</button>
-                      </div>
-                    )}
-                  </div>
-                )}
-                <p className="mt-0.5 text-[8px] text-slate-300">
-                  {new Date(msg.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* Quick actions */}
-          <div className="border-t border-slate-100 px-3 py-2 flex flex-wrap gap-1">
-            {[
-              { label: 'Outline', cmd: 'outline' },
-              { label: 'List all', cmd: 'list' },
-              { label: 'Inspect current', cmd: `inspect ${currentIndex}` },
-            ].map(({ label, cmd }) => (
-              <button key={cmd} type="button" onClick={() => handleAgentMessage(cmd)}
-                className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[9px] font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors">
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Chat input */}
-          <form onSubmit={handleChatSubmit} className="border-t border-slate-100 p-3">
-            <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-blue-200/50 focus-within:border-blue-300 transition-all">
-              <input
-                value={chatInput}
-                onChange={e => setChatInput(e.target.value)}
-                placeholder="Ask about any component, or give instructions..."
-                className="flex-1 bg-transparent text-[11px] text-slate-700 placeholder:text-slate-400 outline-none"
-                onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); handleChatSubmit(e); } }}
-              />
-              <button type="submit" disabled={!chatInput.trim()} className="rounded-md bg-blue-600 px-2.5 py-1 text-[9px] font-medium text-white disabled:opacity-30 hover:bg-blue-700 transition-colors">
-                Send
-              </button>
-            </div>
-            <p className="mt-1.5 text-[8px] text-slate-400">
-              Try: inspect 0 · regenerate 1 · outline · add chart after 3 · remove 5
-            </p>
-          </form>
-        </div>
-      )}
+      {panel === 'right' && (<div className="w-80 shrink-0 border-l border-slate-200 bg-white flex flex-col"><div className="flex items-center justify-between border-b border-slate-100 px-3 py-2"><div className="flex items-center gap-2"><div className="flex h-5 w-5 items-center justify-center rounded bg-gradient-to-br from-blue-500 to-indigo-600"><Sparkles className="h-2.5 w-2.5 text-white" /></div><span className="text-[11px] font-semibold text-slate-700">Deep BI Agent</span></div><button onClick={() => setPanel(null)} className="rounded p-1 text-slate-400 hover:bg-slate-100"><X className="h-3.5 w-3.5" /></button></div>{selectedBlock && selectedBlock.status === 'done' && (<div className="border-b border-slate-100 bg-slate-50/50 p-3"><p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Selected: {selectedBlock.kind}</p><p className="mt-1 truncate text-[11px] font-medium text-slate-700">{selectedBlock.title}</p><div className="mt-2 flex flex-wrap gap-1"><button onClick={() => generateOne(selectedBlock.index)} className="rounded bg-white border border-slate-200 px-2 py-0.5 text-[9px] font-medium text-slate-600 hover:bg-slate-50">Regenerate</button>{selectedBlock.kind === 'table' && <button className="rounded bg-white border border-slate-200 px-2 py-0.5 text-[9px] font-medium text-slate-600 hover:bg-slate-50">Top 5</button>}{selectedBlock.kind === 'narrative' && <button className="rounded bg-white border border-slate-200 px-2 py-0.5 text-[9px] font-medium text-slate-600 hover:bg-slate-50">Shorter</button>}<button className="rounded bg-white border border-slate-200 px-2 py-0.5 text-[9px] font-medium text-slate-600 hover:bg-slate-50">Explain</button></div></div>)}<div className="flex-1 overflow-auto p-3 space-y-2">{chatMsgs.map(m => (<div key={m.id} className={m.role === 'user' ? 'ml-8' : ''}><div className={`rounded-lg px-3 py-2 text-[11px] leading-relaxed ${m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700'}`}>{m.content}</div></div>))}{chatMsgs.length === 0 && <div className="py-8 text-center text-[10px] text-slate-400"><p>Select a block, then ask questions</p><p>or request modifications.</p></div>}</div><form onSubmit={e => { e.preventDefault(); sendChat(chatInput); }} className="border-t border-slate-100 p-2"><div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 focus-within:border-blue-300 focus-within:ring-1 focus-within:ring-blue-200"><input value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="Ask about the selected block..." className="flex-1 bg-transparent text-[11px] text-slate-700 placeholder:text-slate-400 outline-none" /><button type="submit" disabled={!chatInput.trim()} className="rounded bg-blue-600 px-2 py-0.5 text-[9px] font-medium text-white disabled:opacity-30">Send</button></div></form></div>)}
     </div>
-  );
+  </div>);
 }
