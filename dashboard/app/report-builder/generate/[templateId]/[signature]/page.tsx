@@ -193,14 +193,19 @@ export default function GenerationWorkspacePage() {
         addTrace({ level: 'info', message: `Status: ${result.status} · Progress: ${result.progress_pct}%`, componentIndex: idx });
       }
 
-      // Update block
+      // Update block with generated content + structured data
+      const contentObj = result.content || {};
       setBlocks((prev) => prev.map((b) => b.componentIndex === idx ? {
         ...b,
-        content: result.narrative || String(result.content?.text || result.content?.content || result.content?.value || ''),
+        content: result.narrative || String(contentObj.text || contentObj.content || contentObj.value || ''),
         title: result.title,
         kind: (result.component_type === 'formula_metric' ? 'metric' : result.component_type) as DocBlock['kind'],
-        metricValue: result.content?.value != null ? String(result.content.value) : undefined,
-        metricUnit: result.content?.unit ? String(result.content.unit) : undefined,
+        metricValue: contentObj.value != null ? String(contentObj.value) : undefined,
+        metricUnit: contentObj.unit ? String(contentObj.unit) : undefined,
+        // Pass ranking/aggregation data for real table rendering
+        tableData: (contentObj.items || contentObj.rankingData || contentObj.rows || contentObj.aggregationData)
+          ? contentObj as Record<string, unknown>
+          : undefined,
         status: 'done',
       } : b));
 
@@ -510,6 +515,8 @@ export default function GenerationWorkspacePage() {
               onDeleteBlock={deleteBlock}
               onInsertBlock={insertBlock}
               readOnly={phase === 'generating' || phase === 'auto'}
+              reportTitle={templateId.replace(/^tpl_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+              reportSubtitle={`Generated from dataset ${signature.slice(0, 8)} · ${queue.length} components`}
             />
           )}
         </div>
