@@ -7,6 +7,17 @@ import { BlockRenderer } from '../blocks/BlockRenderer';
    Exact 210×297mm proportions. Content cannot overflow.
    ═══════════════════════════════════════════════════════════════════ */
 
+export type PageSize = 'a4' | 'a4-extended' | 'mospi' | 'letter';
+
+const PAGE_DIMENSIONS: Record<PageSize, { w: number; h: number; label: string }> = {
+  'a4':          { w: 210, h: 297, label: 'A4 (210×297mm)' },
+  'a4-extended': { w: 210, h: 350, label: 'A4 Extended' },
+  'mospi':       { w: 215, h: 305, label: 'MoSPI Standard' },
+  'letter':      { w: 216, h: 279, label: 'US Letter' },
+};
+
+export { PAGE_DIMENSIONS };
+
 interface A4PageProps {
   blocks: PageBlock[];
   pageNumber: number;
@@ -14,20 +25,22 @@ interface A4PageProps {
   selectedBlockId: string | null;
   onSelectBlock: (id: string | null) => void;
   onGenerate?: (index: number) => void;
+  pageSize?: PageSize;
+  zoom?: number;
 }
 
-export function A4Page({ blocks, pageNumber, totalPages, selectedBlockId, onSelectBlock, onGenerate }: A4PageProps) {
+export function A4Page({ blocks, pageNumber, totalPages, selectedBlockId, onSelectBlock, onGenerate, pageSize = 'a4', zoom = 100 }: A4PageProps) {
+  const dim = PAGE_DIMENSIONS[pageSize];
+  const scale = zoom / 100;
   return (
     <div
-      className="relative mx-auto bg-white overflow-hidden select-none"
+      className="relative mx-auto bg-white overflow-hidden select-none origin-top transition-transform duration-200"
       style={{
-        width: '210mm',
-        height: '297mm',
-        maxWidth: '100%',
-        maxHeight: '100%',
+        width: `${dim.w}mm`,
+        height: `${dim.h}mm`,
         padding: '18mm 22mm 20mm 22mm',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.04)',
-        aspectRatio: '210 / 297',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 4px 24px rgba(0,0,0,0.03)',
+        transform: `scale(${scale})`,
       }}
       onClick={() => onSelectBlock(null)}
     >

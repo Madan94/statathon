@@ -74,12 +74,31 @@ export function RightPanel({ selectedBlock, onClose, onRegenerate }: Props) {
         )}
       </div>
 
+      {/* @ Commands hint */}
+      <div className="border-t border-slate-100 px-3 py-1.5 flex flex-wrap gap-1">
+        {[
+          { cmd: '@regenerate', desc: 'Redo selected' },
+          { cmd: '@explain', desc: 'Show data source' },
+          { cmd: '@shorter', desc: 'Condense text' },
+          { cmd: '@chart', desc: 'Add visualization' },
+          { cmd: '@compare', desc: 'Compare values' },
+          { cmd: '@source', desc: 'Add attribution' },
+        ].map(({ cmd }) => (
+          <button key={cmd} type="button" onClick={() => setInput(cmd + ' ')}
+            className="rounded-full bg-slate-100 px-2 py-0.5 text-[8px] font-medium text-slate-500 transition-colors hover:bg-blue-100 hover:text-blue-700">
+            {cmd}
+          </button>
+        ))}
+      </div>
+
       {/* Input */}
       <form onSubmit={e => { e.preventDefault(); send(input); }} className="border-t border-slate-100 p-2">
         <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 focus-within:border-blue-300 focus-within:ring-1 focus-within:ring-blue-200">
-          <input value={input} onChange={e => setInput(e.target.value)} placeholder="Ask about the selected block..." className="flex-1 bg-transparent text-[11px] text-slate-700 placeholder:text-slate-400 outline-none" />
-          <button type="submit" disabled={!input.trim()} className="rounded bg-blue-600 px-2 py-0.5 text-[9px] font-medium text-white disabled:opacity-30">Send</button>
+          <span className="text-[10px] text-slate-300">@</span>
+          <input value={input} onChange={e => setInput(e.target.value)} placeholder="Type @ for commands or ask anything..." className="flex-1 bg-transparent text-[11px] text-slate-700 placeholder:text-slate-400 outline-none" />
+          <button type="submit" disabled={!input.trim()} className="rounded bg-blue-600 px-2 py-0.5 text-[9px] font-medium text-white disabled:opacity-30 hover:bg-blue-700">Send</button>
         </div>
+        <p className="mt-1 text-[8px] text-slate-300 text-center">@ commands • Ctrl+Enter • Select block for context</p>
       </form>
     </div>
   );

@@ -1,11 +1,11 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { generatePhaseApi } from '@/lib/api';
 import { useCanvasState } from './engine/useCanvasState';
 import { useGeneration } from './engine/useGeneration';
 import { TopNavBar } from './toolbar/TopNavBar';
 import { FormatRibbon } from './toolbar/FormatRibbon';
-import { A4Page } from './viewport/A4Page';
+import { A4Page, type PageSize } from './viewport/A4Page';
 import { PageNavigator } from './viewport/PageNavigator';
 import { LeftPanel } from './panels/LeftPanel';
 import { RightPanel } from './panels/RightPanel';
@@ -26,6 +26,9 @@ export function CanvasShell({ templateId, signature }: Props) {
     addPage, goToPage, nextPage, prevPage, addBlockToPage, updateBlock,
     currentPageBlocks, selectedBlock, setSelectedBlockId, selectedBlockId,
     doneBlocks, totalBlocks, progress, setGenerating, getPageBlocks } = state;
+
+  const [pageSize, setPageSize] = useState<PageSize>('a4');
+  const [zoom, setZoom] = useState(100);
 
   const generation = useGeneration({
     templateId, signature, queue, addBlockToPage, updateBlock,
@@ -58,7 +61,7 @@ export function CanvasShell({ templateId, signature }: Props) {
         onResume={generation.resume}
         pdfUrl={generatePhaseApi.reportPdfUrl(templateId, signature)}
       />
-      <FormatRibbon />
+      <FormatRibbon pageSize={pageSize} zoom={zoom} onPageSizeChange={setPageSize} onZoomChange={setZoom} />
 
       {/* Main area */}
       <div className="flex flex-1 overflow-hidden">
@@ -77,6 +80,8 @@ export function CanvasShell({ templateId, signature }: Props) {
               selectedBlockId={selectedBlockId}
               onSelectBlock={setSelectedBlockId}
               onGenerate={(idx) => generation.generateOne(idx)}
+              pageSize={pageSize}
+              zoom={zoom}
             />
           </div>
           <PageNavigator
@@ -85,6 +90,7 @@ export function CanvasShell({ templateId, signature }: Props) {
             onPrev={prevPage}
             onNext={nextPage}
             onAddPage={addPage}
+            onGoToPage={goToPage}
           />
         </div>
 
