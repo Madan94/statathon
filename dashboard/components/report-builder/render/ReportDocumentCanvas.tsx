@@ -61,10 +61,10 @@ const TEXT_KINDS = new Set<string>(['heading','narrative','key_finding','source_
 
 function blockLabel(kind: string) { return kind.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()); }
 
-function fmtNum(n: string|number|undefined): string {
+function fmtNum(n: string|number|undefined|null): string {
   if (n == null || n === '') return '—';
   const v = typeof n === 'string' ? parseFloat(n) : n;
-  if (isNaN(v)) return String(n);
+  if (v == null || isNaN(v)) return String(n ?? '—');
   if (Math.abs(v)>=1e7) return (v/1e7).toFixed(2)+' Cr';
   if (Math.abs(v)>=1e5) return (v/1e5).toFixed(2)+' L';
   if (Math.abs(v)>=1000) return v.toLocaleString('en-IN',{maximumFractionDigits:1});
@@ -72,11 +72,11 @@ function fmtNum(n: string|number|undefined): string {
   return v.toFixed(2);
 }
 
-function wordCount(blocks: DocBlock[]) { return blocks.reduce((n,b)=>n+(b.content||'').split(/\s+/).filter(Boolean).length,0); }
-function readTime(w: number) { return `${Math.max(1,Math.ceil(w/200))} min`; }
+function wordCount(blocks: DocBlock[]|undefined|null) { return (blocks||[]).reduce((n,b)=>n+((b?.content)||'').split(/\s+/).filter(Boolean).length,0); }
+function readTime(w: number|undefined|null) { const n=w||0; return `${Math.max(1,Math.ceil(n/200))} min`; }
 
-function extractToc(blocks: DocBlock[]) {
-  return blocks.filter(b=>b.kind==='heading'&&b.status==='done'&&b.content).map(b=>({id:b.id,text:b.content,level:b.level||2}));
+function extractToc(blocks: DocBlock[]|undefined|null) {
+  return (blocks||[]).filter(b=>b.kind==='heading'&&b.status==='done'&&b.content).map(b=>({id:b.id,text:b.content,level:b.level||2}));
 }
 
 interface RankItem { rank?:number; key?:Record<string,string>; value?:number; rowIds?:string[] }
@@ -426,11 +426,12 @@ function DocumentBlock({block,onUpdate,onReorder,onDelete,onInsertAfter,readOnly
    COVER + TOC
    ═══════════════════════════════════════════════════════════════════════════ */
 
-function CoverSection({title,subtitle,blocks,collapsed,onToggle}:{title:string;subtitle?:string;blocks:DocBlock[];collapsed:boolean;onToggle:()=>void}) {
-  const wc = wordCount(blocks);
+function CoverSection({title,subtitle,blocks:rawBlocks,collapsed,onToggle}:{title:string;subtitle?:string;blocks:DocBlock[];collapsed:boolean;onToggle:()=>void}) {
+  const blocks = rawBlocks || [];
+  const wc = wordCount(blocks) || 0;
   const toc = extractToc(blocks);
-  const done = blocks.filter(b=>b.status==='done').length;
-  const total = blocks.filter(b=>b.kind!=='divider'&&b.kind!=='spacer').length;
+  const done = blocks.filter(b=>b?.status==='done').length;
+  const total = blocks.filter(b=>b?.kind!=='divider'&&b?.kind!=='spacer').length;
   const today = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
 
   if (collapsed) return (
@@ -491,15 +492,16 @@ function CoverSection({title,subtitle,blocks,collapsed,onToggle}:{title:string;s
    ═══════════════════════════════════════════════════════════════════════════ */
 
 export function ReportDocumentCanvas({
-  blocks, onUpdateBlock, onReorderBlock, onDeleteBlock, onInsertBlock,
+  blocks: rawBlocks, onUpdateBlock, onReorderBlock, onDeleteBlock, onInsertBlock,
   readOnly=false, className, reportTitle, reportSubtitle,
 }: ReportDocumentCanvasProps) {
+  const blocks = rawBlocks || [];
   const [selectedId, setSelectedId] = useState<string|null>(null);
   const [coverCollapsed, setCoverCollapsed] = useState(false);
-  const done = blocks.filter(b=>b.status==='done').length;
-  const total = blocks.filter(b=>b.kind!=='divider'&&b.kind!=='spacer').length;
-  const gen = blocks.filter(b=>b.status==='generating').length;
-  const wc = wordCount(blocks);
+  const done = blocks.filter(b=>b?.status==='done').length;
+  const total = blocks.filter(b=>b?.kind!=='divider'&&b?.kind!=='spacer').length;
+  const gen = blocks.filter(b=>b?.status==='generating').length;
+  const wc = wordCount(blocks) || 0;
 
   // Deselect when clicking the canvas background
   const handleBgClick = useCallback(() => setSelectedId(null), []);
