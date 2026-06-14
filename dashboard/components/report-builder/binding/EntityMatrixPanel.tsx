@@ -680,6 +680,38 @@ export function EntityMatrixPanel({
       {/* ── Dataset-first tab ── */}
       {tab === 'dataset' && (
         <div className="space-y-3">
+          {/* Column role distribution */}
+          {filteredColumns.length > 0 && filterStatus === 'all' && !search && (
+            <div className="flex items-center gap-1 rounded-lg bg-surface px-3 py-2 text-[10px]">
+              {(() => {
+                const roles = { measure: 0, dimension: 0, time: 0, metadata: 0, other: 0 };
+                for (const col of columns) {
+                  const r = col.role as keyof typeof roles;
+                  if (r in roles) roles[r]++;
+                  else roles.other++;
+                }
+                const total = columns.length || 1;
+                return (
+                  <>
+                    <span className="font-semibold text-text">{columns.length} columns</span>
+                    <span className="text-text-muted">·</span>
+                    <span className="flex h-2 flex-1 overflow-hidden rounded-full">
+                      {roles.measure > 0 && <span className="bg-success/60" style={{ width: `${(roles.measure / total) * 100}%` }} title={`${roles.measure} measures`} />}
+                      {roles.dimension > 0 && <span className="bg-warning/60" style={{ width: `${(roles.dimension / total) * 100}%` }} title={`${roles.dimension} dimensions`} />}
+                      {roles.time > 0 && <span className="bg-primary/60" style={{ width: `${(roles.time / total) * 100}%` }} title={`${roles.time} time`} />}
+                      {(roles.metadata + roles.other) > 0 && <span className="bg-border" style={{ width: `${((roles.metadata + roles.other) / total) * 100}%` }} title={`${roles.metadata + roles.other} metadata`} />}
+                    </span>
+                    <span className="flex gap-2 text-text-muted">
+                      <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-success/60" />{roles.measure}m</span>
+                      <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-warning/60" />{roles.dimension}d</span>
+                      <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-primary/60" />{roles.time}t</span>
+                    </span>
+                  </>
+                );
+              })()}
+            </div>
+          )}
+
           {filteredColumns.length === 0 ? (
             <div className="rounded-xl border border-border bg-surface px-4 py-6 text-center text-sm text-text-muted">
               No columns match your filter.

@@ -349,24 +349,45 @@ export function StructureCanvas({
   const renderComponentCard = (node: ReviewedPlanNode, comp: ReviewedPlanComponent) => {
     const Icon = componentIcon(comp.componentType);
     const focused = initialComponentId === comp.componentId;
+    const hasFormula = comp.formulaSpec && Object.keys(comp.formulaSpec).length > 0;
+    const hasAnalytics = comp.analyticsSpec && Object.keys(comp.analyticsSpec).length > 0;
     return (
-      <div key={comp.componentId} className={`rounded-lg border p-3 ${focused ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-surface-card'}`}>
+      <div key={comp.componentId} className={`rounded-lg border p-3 transition-all ${focused ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-surface-card hover:border-primary/30'}`}>
         <div className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-2">
-            <Icon className="h-4 w-4 text-text-muted" />
-            <span className="text-xs font-semibold text-text">{componentLabel(comp.componentType, componentDefinitions)}</span>
+            <span className={`flex h-7 w-7 items-center justify-center rounded-lg ${comp.componentType === 'chart' ? 'bg-blue-50 text-blue-500' : comp.componentType === 'table' ? 'bg-emerald-50 text-emerald-500' : comp.componentType === 'formula_metric' ? 'bg-violet-50 text-violet-500' : 'bg-slate-50 text-slate-400'}`}>
+              <Icon className="h-3.5 w-3.5" />
+            </span>
+            <div>
+              <span className="text-xs font-semibold text-text">{componentLabel(comp.componentType, componentDefinitions)}</span>
+              <div className="flex flex-wrap gap-1 mt-0.5">
+                {comp.slotIds.length > 0 && <span className="rounded bg-border/60 px-1 py-0.5 text-[8px] text-text-muted">{comp.slotIds.length} slot{comp.slotIds.length > 1 ? 's' : ''}</span>}
+                {hasFormula && <span className="rounded bg-violet-100 px-1 py-0.5 text-[8px] font-semibold text-violet-600">{String(comp.formulaSpec?.type || 'FORMULA')}</span>}
+                {hasAnalytics && <span className="rounded bg-blue-100 px-1 py-0.5 text-[8px] text-blue-600">{String(comp.analyticsSpec?.operation || 'analytics')}</span>}
+              </div>
+            </div>
           </span>
-          {comp.slotIds.length > 0 && <Badge variant="muted" className="text-[9px]">{comp.slotIds.length} slot{comp.slotIds.length > 1 ? 's' : ''}</Badge>}
         </div>
+        {/* Required entities */}
+        {comp.requiredEntities.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {comp.requiredEntities.map((e, i) => (
+              <span key={i} className="rounded bg-primary/8 px-1.5 py-0.5 text-[9px] font-medium text-primary">
+                {String(e.entityId || e.entityRef || '')}
+                <span className="ml-0.5 text-primary/50">:{String(e.role || '')}</span>
+              </span>
+            ))}
+          </div>
+        )}
         <div className="mt-2 flex flex-wrap gap-2">
           <button type="button" disabled={busy} onClick={() => onEditComponentEntities(node, comp)} className="text-[10px] font-semibold text-primary hover:underline disabled:opacity-50">Entities</button>
-          {(comp.formulaSpec && Object.keys(comp.formulaSpec).length > 0) || comp.componentType === 'formula_metric' ? (
-            <button type="button" disabled={busy} onClick={() => onEditFormula(node, comp)} className="text-[10px] font-semibold text-primary hover:underline disabled:opacity-50">
-              {Object.keys(comp.formulaSpec || {}).length > 0 ? 'Edit formula' : 'Configure formula'}
+          {(hasFormula || comp.componentType === 'formula_metric') && (
+            <button type="button" disabled={busy} onClick={() => onEditFormula(node, comp)} className="text-[10px] font-semibold text-violet-600 hover:underline disabled:opacity-50">
+              {hasFormula ? 'Edit formula' : 'Configure formula'}
             </button>
-          ) : null}
+          )}
           {['chart', 'table', 'formula_metric'].includes(comp.componentType) && (
-            <button type="button" disabled={busy} onClick={() => onEditAnalytics(node, comp)} className="text-[10px] font-semibold text-primary hover:underline disabled:opacity-50">Analytics</button>
+            <button type="button" disabled={busy} onClick={() => onEditAnalytics(node, comp)} className="text-[10px] font-semibold text-blue-600 hover:underline disabled:opacity-50">Analytics</button>
           )}
         </div>
       </div>
@@ -514,22 +535,85 @@ export function StructureCanvas({
     if (!selectedNode) return null;
     return (
       <div className="space-y-4">
+        {/* Entity / Column / Link grid */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="space-y-1"><p className="text-[10px] font-semibold uppercase text-text-muted">Entities</p><div className="rounded-lg border border-border bg-surface px-3 py-2">{selectedNode.requiredEntities.length ? <div className="flex flex-wrap gap-1">{selectedNode.requiredEntities.map((e, i) => <span key={i} className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">{String(e.entityId || e.entityRef || '')}:{String(e.role || '')}</span>)}</div> : <span className="text-[10px] text-text-muted">None</span>}</div></div>
-          <div className="space-y-1"><p className="text-[10px] font-semibold uppercase text-text-muted">Columns</p><div className="rounded-lg border border-border bg-surface px-3 py-2">{selectedColumns.length ? <div className="flex flex-wrap gap-1">{selectedColumns.map((c) => <span key={c} className="rounded bg-border px-1.5 py-0.5 font-mono text-[10px] text-text-muted">{c}</span>)}</div> : <span className="text-[10px] text-text-muted">None</span>}</div></div>
-          <div className="space-y-1"><p className="text-[10px] font-semibold uppercase text-text-muted">Entity links</p><div className="rounded-lg border border-border bg-surface px-3 py-2">{selectedEntities.length ? <div className="flex flex-wrap gap-1">{selectedEntities.map((eid) => <span key={eid} className="rounded bg-border px-1.5 py-0.5 font-mono text-[10px] text-text-muted">{eid}</span>)}</div> : <span className="text-[10px] text-text-muted">None</span>}</div></div>
+          <div className="space-y-1.5">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-text-muted">
+              <span className="flex h-4 w-4 items-center justify-center rounded bg-primary/10 text-primary"><FunctionSquare className="h-2.5 w-2.5" /></span>
+              Required entities
+            </p>
+            <div className="rounded-lg border border-border bg-surface px-3 py-2">
+              {selectedNode.requiredEntities.length ? (
+                <div className="flex flex-wrap gap-1">
+                  {selectedNode.requiredEntities.map((e, i) => (
+                    <span key={i} className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                      {String(e.entityId || e.entityRef || '')}
+                      <span className="ml-0.5 text-primary/50">:{String(e.role || '')}</span>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-[10px] text-text-muted">None — add entities to enable generation</span>
+              )}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-text-muted">
+              <span className="flex h-4 w-4 items-center justify-center rounded bg-border text-text-muted"><Table2 className="h-2.5 w-2.5" /></span>
+              Bound columns
+            </p>
+            <div className="rounded-lg border border-border bg-surface px-3 py-2">
+              {selectedColumns.length ? (
+                <div className="flex flex-wrap gap-1">
+                  {selectedColumns.map((c) => <span key={c} className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">{c}</span>)}
+                </div>
+              ) : (
+                <span className="text-[10px] text-text-muted">None</span>
+              )}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-text-muted">
+              <span className="flex h-4 w-4 items-center justify-center rounded bg-accent/10 text-accent"><ListTree className="h-2.5 w-2.5" /></span>
+              Entity links
+            </p>
+            <div className="rounded-lg border border-border bg-surface px-3 py-2">
+              {selectedEntities.length ? (
+                <div className="flex flex-wrap gap-1">
+                  {selectedEntities.map((eid) => <span key={eid} className="rounded bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-accent">{eid}</span>)}
+                </div>
+              ) : (
+                <span className="text-[10px] text-text-muted">None</span>
+              )}
+            </div>
+          </div>
         </div>
+
         {/* Components listed vertically */}
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Components</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Components</p>
+            <Badge variant="muted" className="text-[9px]">{selectedNode.components.length}</Badge>
+          </div>
           {selectedNode.components.length ? (
-            <div className="space-y-2">{selectedNode.components.map((comp) => renderComponentCard(selectedNode, comp))}</div>
-          ) : <p className="text-xs text-text-muted">No components yet. Click + to add one.</p>}
+            <div className="grid gap-2 sm:grid-cols-2">{selectedNode.components.map((comp) => renderComponentCard(selectedNode, comp))}</div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border bg-surface p-4 text-center">
+              <Plus className="mx-auto h-5 w-5 text-text-muted" />
+              <p className="mt-1 text-xs text-text-muted">No components yet. Click + to add chart, table, metric, or narrative.</p>
+            </div>
+          )}
         </div>
+
         {selectedIssues.length > 0 && (
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase text-text-muted">Issues</p>
-            {selectedIssues.map((issue, i) => <div key={issue.issueId || `i-${i}`} className="rounded-lg border border-warning/30 bg-warning/5 px-3 py-2 text-xs"><p className="font-semibold text-text">{issue.code || 'Issue'}</p><p className="mt-0.5 text-text-muted">{issue.message}</p></div>)}
+            <p className="text-xs font-semibold uppercase text-text-muted">Issues ({selectedIssues.length})</p>
+            {selectedIssues.map((issue, i) => (
+              <div key={issue.issueId || `i-${i}`} className={`rounded-lg border px-3 py-2 text-xs ${issue.severity === 'error' || issue.severity === 'danger' ? 'border-danger/30 bg-danger/5' : 'border-warning/30 bg-warning/5'}`}>
+                <p className="font-semibold text-text">{issue.code || 'Issue'}</p>
+                <p className="mt-0.5 text-text-muted">{issue.message}</p>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -549,12 +633,27 @@ export function StructureCanvas({
   return (
     <div className="space-y-4">
       {/* Summary stats */}
-      <div className="grid gap-3 rounded-xl border border-border bg-surface p-3 text-sm sm:grid-cols-5">
-        <div className="text-center"><p className="text-[10px] uppercase text-text-muted">Topics</p><p className="font-semibold text-text">{plan.topicCount}</p></div>
-        <div className="text-center"><p className="text-[10px] uppercase text-text-muted">Chapters</p><p className="font-semibold text-text">{plan.planTree.reduce((s, t) => s + t.children.length, 0)}</p></div>
-        <div className="text-center"><p className="text-[10px] uppercase text-text-muted">Questions</p><p className="font-semibold text-text">{plan.questionCount}</p></div>
-        <div className="text-center"><p className="text-[10px] uppercase text-text-muted">Components</p><p className="font-semibold text-text">{plan.componentCount}</p></div>
-        <div className="text-center"><p className="text-[10px] uppercase text-text-muted">Slots</p><p className="font-semibold text-text">{plan.semanticSlotCount}</p></div>
+      <div className="grid gap-2 rounded-xl border border-border bg-gradient-to-r from-surface to-surface-card p-3 text-sm sm:grid-cols-5">
+        <div className="text-center">
+          <p className="text-[10px] uppercase text-text-muted">Topics</p>
+          <p className="mt-0.5 text-lg font-bold text-text">{plan.topicCount}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-[10px] uppercase text-text-muted">Chapters</p>
+          <p className="mt-0.5 text-lg font-bold text-text">{plan.planTree.reduce((s, t) => s + t.children.length, 0)}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-[10px] uppercase text-text-muted">Questions</p>
+          <p className="mt-0.5 text-lg font-bold text-text">{plan.questionCount}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-[10px] uppercase text-text-muted">Components</p>
+          <p className="mt-0.5 text-lg font-bold text-text">{plan.componentCount}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-[10px] uppercase text-text-muted">Slots</p>
+          <p className="mt-0.5 text-lg font-bold text-text">{plan.semanticSlotCount}</p>
+        </div>
       </div>
 
       {editorSlot}

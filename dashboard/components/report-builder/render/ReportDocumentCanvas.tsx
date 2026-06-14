@@ -2,20 +2,22 @@
 
 /**
  * ReportDocumentCanvas — A4 page-based document editor for generated reports.
- * 
+ *
  * Features:
- * - A4-proportioned pages stacked vertically
- * - Blocks appear with soft fade-in animation
- * - Double-click text to edit inline
- * - Floating toolbar on text selection (bold, italic, size)
- * - Hover chart → gear icon → config modal
- * - Drag handles + Ctrl+↑/↓ for reorder
+ * - A4-proportioned pages stacked vertically with page numbers
+ * - Blocks appear with soft fade-in animation as they generate
+ * - Double-click text to edit inline with floating toolbar (B/I/U)
+ * - Hover chart/table → gear icon → config modal
+ * - Drag handles + ↑/↓ for reorder
  * - '+' button between blocks to insert new content
- * - Page breaks with page numbers
+ * - Error state rendering with retry suggestion
+ * - Generating pulse animation
+ * - Print-optimized CSS
  */
 
 import { useEffect, useRef, useState } from 'react';
 import {
+  AlertCircle,
   BarChart3,
   Bold,
   ChevronDown,
@@ -24,6 +26,7 @@ import {
   FunctionSquare,
   GripVertical,
   Italic,
+  Loader2,
   MessageSquare,
   Minus,
   Plus,
@@ -33,8 +36,6 @@ import {
   Type,
   Underline,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -65,13 +66,10 @@ interface ReportDocumentCanvasProps {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function blockIcon(kind: string) {
-  if (kind === 'chart') return BarChart3;
-  if (kind === 'table') return Table2;
-  if (kind === 'metric' || kind === 'formula_metric') return FunctionSquare;
-  if (kind === 'heading' || kind === 'narrative' || kind === 'key_finding') return FileText;
-  return MessageSquare;
-}
+const TEXT_KINDS = new Set([
+  'heading', 'narrative', 'key_finding', 'source_note',
+  'methodology_note', 'data_caveat', 'footnote', 'glossary_term',
+]);
 
 function blockLabel(kind: string): string {
   return kind.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -90,7 +88,6 @@ function InlineEditor({ value, onChange, onBlur, level }: {
   useEffect(() => {
     if (ref.current) {
       ref.current.focus();
-      // Place cursor at end
       const range = document.createRange();
       const sel = window.getSelection();
       range.selectNodeContents(ref.current);
@@ -105,18 +102,18 @@ function InlineEditor({ value, onChange, onBlur, level }: {
   return (
     <div className="relative">
       {/* Floating toolbar */}
-      <div className="absolute -top-10 left-0 z-20 flex items-center gap-0.5 rounded-lg border border-border bg-surface-card px-1 py-0.5 shadow-lg">
-        <button type="button" className="rounded p-1.5 text-text-muted hover:bg-border/40 hover:text-text" onClick={() => document.execCommand('bold')}><Bold className="h-3.5 w-3.5" /></button>
-        <button type="button" className="rounded p-1.5 text-text-muted hover:bg-border/40 hover:text-text" onClick={() => document.execCommand('italic')}><Italic className="h-3.5 w-3.5" /></button>
-        <button type="button" className="rounded p-1.5 text-text-muted hover:bg-border/40 hover:text-text" onClick={() => document.execCommand('underline')}><Underline className="h-3.5 w-3.5" /></button>
-        <div className="mx-1 h-4 w-px bg-border" />
-        <button type="button" className="rounded p-1.5 text-text-muted hover:bg-border/40 hover:text-text" title="Heading"><Type className="h-3.5 w-3.5" /></button>
+      <div className="absolute -top-10 left-0 z-20 flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white px-1 py-0.5 shadow-lg print:hidden">
+        <button type="button" className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" onClick={() => document.execCommand('bold')}><Bold className="h-3.5 w-3.5" /></button>
+        <button type="button" className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" onClick={() => document.execCommand('italic')}><Italic className="h-3.5 w-3.5" /></button>
+        <button type="button" className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" onClick={() => document.execCommand('underline')}><Underline className="h-3.5 w-3.5" /></button>
+        <div className="mx-1 h-4 w-px bg-slate-200" />
+        <button type="button" className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Heading"><Type className="h-3.5 w-3.5" /></button>
       </div>
       <div
         ref={ref}
         contentEditable
         suppressContentEditableWarning
-        className={`min-h-[1.5em] rounded-md px-1 py-0.5 outline-none ring-2 ring-primary/30 ${fontSize} leading-relaxed text-slate-700`}
+        className={`min-h-[1.5em] rounded-md px-1 py-0.5 outline-none ring-2 ring-blue-200 ${fontSize} leading-relaxed text-slate-700`}
         onInput={(e) => onChange((e.target as HTMLDivElement).innerText)}
         onBlur={onBlur}
         onKeyDown={(e) => { if (e.key === 'Escape') onBlur(); }}
@@ -132,6 +129,7 @@ function InsertMenu({ onInsert, onClose }: { onInsert: (kind: DocBlock['kind']) 
   const items: { kind: DocBlock['kind']; label: string; icon: typeof FileText }[] = [
     { kind: 'narrative', label: 'Text paragraph', icon: FileText },
     { kind: 'heading', label: 'Heading', icon: Type },
+    { kind: 'key_finding', label: 'Key finding', icon: FileText },
     { kind: 'chart', label: 'Chart placeholder', icon: BarChart3 },
     { kind: 'table', label: 'Table placeholder', icon: Table2 },
     { kind: 'metric', label: 'Metric value', icon: FunctionSquare },
@@ -140,14 +138,14 @@ function InsertMenu({ onInsert, onClose }: { onInsert: (kind: DocBlock['kind']) 
   ];
 
   return (
-    <div className="absolute left-1/2 z-30 -translate-x-1/2 rounded-xl border border-border bg-surface-card p-2 shadow-xl" onClick={(e) => e.stopPropagation()}>
+    <div className="absolute left-1/2 z-30 -translate-x-1/2 rounded-xl border border-slate-200 bg-white p-2 shadow-xl print:hidden" onClick={(e) => e.stopPropagation()}>
       <div className="grid grid-cols-2 gap-1">
         {items.map(({ kind, label, icon: Icon }) => (
           <button
             key={kind}
             type="button"
             onClick={() => { onInsert(kind); onClose(); }}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-text-muted transition-colors hover:bg-surface hover:text-text"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800"
           >
             <Icon className="h-3.5 w-3.5" />
             {label}
@@ -158,11 +156,42 @@ function InsertMenu({ onInsert, onClose }: { onInsert: (kind: DocBlock['kind']) 
   );
 }
 
+// ─── Generating Skeleton ────────────────────────────────────────────────────
+
+function GeneratingSkeleton({ title }: { title?: string }) {
+  return (
+    <div className="space-y-2 py-1">
+      <div className="flex items-center gap-2">
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-400" />
+        <span className="text-xs font-medium text-blue-500">Generating{title ? `: ${title}` : ''}...</span>
+      </div>
+      <div className="space-y-1.5">
+        <div className="h-3 w-full animate-pulse rounded bg-slate-100" />
+        <div className="h-3 w-4/5 animate-pulse rounded bg-slate-100" style={{ animationDelay: '0.1s' }} />
+        <div className="h-3 w-3/5 animate-pulse rounded bg-slate-100" style={{ animationDelay: '0.2s' }} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Error Block ────────────────────────────────────────────────────────────
+
+function ErrorBlock({ title }: { title?: string }) {
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2">
+      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+      <div>
+        <p className="text-xs font-medium text-red-600">Failed to generate{title ? `: ${title}` : ''}</p>
+        <p className="mt-0.5 text-[10px] text-red-400">This component encountered an error. Use &quot;Redo&quot; to retry.</p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Document Block ─────────────────────────────────────────────────────────
 
 function DocumentBlock({
   block,
-  isFirst,
   onUpdate,
   onReorder,
   onDelete,
@@ -170,7 +199,6 @@ function DocumentBlock({
   readOnly,
 }: {
   block: DocBlock;
-  isFirst: boolean;
   onUpdate?: (updates: Partial<DocBlock>) => void;
   onReorder?: (dir: 'up' | 'down') => void;
   onDelete?: () => void;
@@ -181,30 +209,30 @@ function DocumentBlock({
   const [showInsert, setShowInsert] = useState(false);
   const [hovered, setHovered] = useState(false);
 
-  const isTextBlock = ['heading', 'narrative', 'key_finding', 'source_note', 'methodology_note', 'data_caveat', 'footnote', 'glossary_term'].includes(block.kind);
-
-  // Animation class for fade-in
-  const fadeClass = block.status === 'done' ? 'animate-in fade-in duration-500' : block.status === 'generating' ? 'opacity-50' : '';
+  const isTextBlock = TEXT_KINDS.has(block.kind);
 
   // Divider
   if (block.kind === 'divider') {
-    return <div className="my-4 border-t border-slate-200" />;
+    return <div className="my-6 border-t border-slate-200" />;
   }
 
   // Spacer
   if (block.kind === 'spacer') {
-    return <div className="h-8" />;
+    return <div className="h-10" />;
   }
+
+  // Animation classes
+  const animClass = block.status === 'done' ? 'animate-in fade-in slide-in-from-bottom-2 duration-500' : '';
 
   return (
     <div
-      className={`group relative ${fadeClass}`}
+      className={`group relative ${animClass}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => { setHovered(false); setShowInsert(false); }}
     >
       {/* Drag handle + controls (appear on hover) */}
       {!readOnly && hovered && (
-        <div className="absolute -left-10 top-1 flex flex-col items-center gap-0.5">
+        <div className="absolute -left-10 top-1 flex flex-col items-center gap-0.5 print:hidden">
           <button type="button" className="rounded p-0.5 text-slate-300 hover:text-slate-500" onClick={() => onReorder?.('up')} title="Move up">
             <ChevronUp className="h-3 w-3" />
           </button>
@@ -217,28 +245,122 @@ function DocumentBlock({
 
       {/* Delete button (top right on hover) */}
       {!readOnly && hovered && (
-        <button type="button" onClick={onDelete} className="absolute -right-8 top-1 rounded p-1 text-slate-300 hover:text-danger" title="Remove block">
+        <button type="button" onClick={onDelete} className="absolute -right-8 top-1 rounded p-1 text-slate-300 hover:text-red-400 print:hidden" title="Remove block">
           <Trash2 className="h-3 w-3" />
         </button>
       )}
 
       {/* Block content */}
       <div
-        className={`rounded-md px-1 py-1 transition-all ${hovered && !readOnly ? 'bg-slate-50 ring-1 ring-slate-200' : ''} ${block.status === 'pending' ? 'opacity-30' : ''}`}
-        onDoubleClick={() => { if (isTextBlock && !readOnly) setEditing(true); }}
+        className={`rounded-md px-1 py-1 transition-all ${hovered && !readOnly ? 'bg-slate-50 ring-1 ring-slate-200' : ''} ${block.status === 'pending' ? 'opacity-20' : ''}`}
+        onDoubleClick={() => { if (isTextBlock && !readOnly && block.status === 'done') setEditing(true); }}
       >
-        {/* Heading */}
-        {block.kind === 'heading' && !editing && (
-          <h2 className={`font-bold text-slate-800 ${block.level === 1 ? 'text-2xl' : block.level === 2 ? 'text-xl' : block.level === 3 ? 'text-lg' : 'text-base'}`}>
-            {block.content || 'Untitled'}
-          </h2>
+        {/* ─ Generating state ─ */}
+        {block.status === 'generating' && <GeneratingSkeleton title={block.title} />}
+
+        {/* ─ Error state ─ */}
+        {block.status === 'error' && <ErrorBlock title={block.title} />}
+
+        {/* ─ Pending ghost ─ */}
+        {block.status === 'pending' && (
+          <div className="flex items-center gap-2 py-1">
+            <span className="h-2 w-2 rounded-full bg-slate-200" />
+            <span className="text-[10px] text-slate-300">{block.title || blockLabel(block.kind)}</span>
+          </div>
         )}
 
-        {/* Narrative / text blocks */}
-        {isTextBlock && block.kind !== 'heading' && !editing && (
-          <p className={`leading-relaxed ${block.kind === 'key_finding' ? 'text-sm font-medium text-slate-700 border-l-2 border-primary pl-3' : block.kind === 'source_note' || block.kind === 'footnote' ? 'text-xs italic text-slate-400' : 'text-sm text-slate-600'}`}>
-            {block.content || (readOnly ? '' : 'Double-click to edit...')}
-          </p>
+        {/* ─ Done content ─ */}
+        {block.status === 'done' && !editing && (
+          <>
+            {/* Heading */}
+            {block.kind === 'heading' && (
+              <h2 className={`font-bold text-slate-800 ${block.level === 1 ? 'mt-6 text-2xl' : block.level === 2 ? 'mt-4 text-xl' : block.level === 3 ? 'mt-3 text-lg' : 'mt-2 text-base'}`}>
+                {block.content || 'Untitled'}
+              </h2>
+            )}
+
+            {/* Narrative */}
+            {block.kind === 'narrative' && (
+              <p className="text-sm leading-relaxed text-slate-600">
+                {block.content || (readOnly ? '' : 'Double-click to edit...')}
+              </p>
+            )}
+
+            {/* Key finding */}
+            {block.kind === 'key_finding' && (
+              <div className="rounded-lg border-l-3 border-blue-400 bg-blue-50/50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-500">Key Finding</p>
+                <p className="mt-1 text-sm font-medium leading-relaxed text-slate-700">
+                  {block.content || 'Key finding content'}
+                </p>
+              </div>
+            )}
+
+            {/* Source note */}
+            {(block.kind === 'source_note' || block.kind === 'footnote') && (
+              <p className="text-[11px] italic text-slate-400">
+                {block.kind === 'source_note' ? 'Source: ' : ''}{block.content}
+              </p>
+            )}
+
+            {/* Methodology / data caveat / glossary */}
+            {(block.kind === 'methodology_note' || block.kind === 'data_caveat' || block.kind === 'glossary_term') && (
+              <div className={`rounded-md px-3 py-2 text-xs ${block.kind === 'data_caveat' ? 'border border-amber-100 bg-amber-50 text-amber-700' : 'bg-slate-50 text-slate-500'}`}>
+                <span className="font-semibold">{blockLabel(block.kind)}:</span> {block.content}
+              </div>
+            )}
+
+            {/* Chart block */}
+            {block.kind === 'chart' && (
+              <div className="relative my-3 overflow-hidden rounded-xl border border-slate-100 bg-gradient-to-br from-slate-50 to-white">
+                <div className="flex h-48 items-center justify-center">
+                  <div className="text-center">
+                    <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
+                      <BarChart3 className="h-7 w-7 text-blue-300" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-500">{block.title || 'Chart'}</p>
+                    <p className="mt-1 text-[10px] text-slate-300">Chart visualization will render here</p>
+                  </div>
+                </div>
+                {!readOnly && hovered && (
+                  <button type="button" className="absolute right-3 top-3 rounded-full border border-slate-200 bg-white p-2 text-slate-400 shadow-sm hover:text-slate-600 print:hidden" title="Configure chart">
+                    <Settings className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Table block */}
+            {block.kind === 'table' && (
+              <div className="relative my-3 overflow-hidden rounded-xl border border-slate-100 bg-slate-50/50">
+                <div className="flex h-28 items-center justify-center">
+                  <div className="text-center">
+                    <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
+                      <Table2 className="h-5 w-5 text-emerald-300" />
+                    </div>
+                    <p className="text-xs font-medium text-slate-500">{block.title || 'Data table'}</p>
+                  </div>
+                </div>
+                {!readOnly && hovered && (
+                  <button type="button" className="absolute right-3 top-3 rounded-full border border-slate-200 bg-white p-2 text-slate-400 shadow-sm hover:text-slate-600 print:hidden" title="Configure table">
+                    <Settings className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Metric block */}
+            {block.kind === 'metric' && (
+              <div className="my-3 rounded-xl border border-slate-100 bg-gradient-to-br from-blue-50/50 to-white px-5 py-4">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{block.title || 'Metric'}</p>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="text-3xl font-bold tabular-nums text-blue-600">{block.metricValue || '—'}</span>
+                  {block.metricUnit && <span className="text-sm text-slate-400">{block.metricUnit}</span>}
+                </div>
+                {block.content && <p className="mt-2 text-xs text-slate-400">{block.content}</p>}
+              </div>
+            )}
+          </>
         )}
 
         {/* Inline editor */}
@@ -250,65 +372,16 @@ function DocumentBlock({
             onBlur={() => setEditing(false)}
           />
         )}
-
-        {/* Chart block */}
-        {block.kind === 'chart' && (
-          <div className="relative my-2 rounded-lg border border-slate-100 bg-gradient-to-br from-slate-50 to-white p-4">
-            <div className="flex h-40 items-center justify-center">
-              <div className="text-center">
-                <BarChart3 className="mx-auto h-8 w-8 text-blue-300" />
-                <p className="mt-2 text-xs text-slate-400">{block.title || 'Chart'}</p>
-              </div>
-            </div>
-            {!readOnly && hovered && (
-              <button type="button" className="absolute right-2 top-2 rounded-full border border-border bg-white p-1.5 text-slate-400 shadow-sm hover:text-text" title="Configure chart">
-                <Settings className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Table block */}
-        {block.kind === 'table' && (
-          <div className="relative my-2 rounded-lg border border-slate-100 bg-slate-50 p-3">
-            <div className="flex h-20 items-center justify-center">
-              <Table2 className="h-6 w-6 text-emerald-300" />
-              <p className="ml-2 text-xs text-slate-400">{block.title || 'Data table'}</p>
-            </div>
-            {!readOnly && hovered && (
-              <button type="button" className="absolute right-2 top-2 rounded-full border border-border bg-white p-1.5 text-slate-400 shadow-sm hover:text-text" title="Configure table">
-                <Settings className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Metric block */}
-        {block.kind === 'metric' && (
-          <div className="my-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-primary">{block.metricValue || '—'}</span>
-            {block.metricUnit && <span className="text-sm text-slate-400">{block.metricUnit}</span>}
-            {block.title && <span className="text-xs text-slate-400">— {block.title}</span>}
-          </div>
-        )}
-
-        {/* Status indicator */}
-        {block.status === 'generating' && (
-          <div className="mt-1 flex items-center gap-1 text-[10px] text-primary">
-            <div className="h-1 w-1 animate-pulse rounded-full bg-primary" />
-            Generating...
-          </div>
-        )}
       </div>
 
       {/* Insert button between blocks */}
       {!readOnly && (
-        <div className="relative flex h-4 items-center justify-center">
+        <div className="relative flex h-4 items-center justify-center print:hidden">
           {hovered && (
             <button
               type="button"
               onClick={() => setShowInsert(!showInsert)}
-              className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-all hover:border-primary hover:text-primary"
+              className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-all hover:border-blue-300 hover:text-blue-500"
             >
               <Plus className="h-3 w-3" />
             </button>
@@ -331,7 +404,7 @@ export function ReportDocumentCanvas({
   readOnly = false,
   className,
 }: ReportDocumentCanvasProps) {
-  // Split blocks into pages (~10 blocks per page for A4)
+  // Split blocks into pages (~10 blocks per page for A4 proportion)
   const BLOCKS_PER_PAGE = 8;
   const pages: DocBlock[][] = [];
   for (let i = 0; i < blocks.length; i += BLOCKS_PER_PAGE) {
@@ -339,21 +412,32 @@ export function ReportDocumentCanvas({
   }
   if (pages.length === 0) pages.push([]);
 
+  // Count done vs total for progress indicator
+  const doneCount = blocks.filter((b) => b.status === 'done').length;
+  const totalContent = blocks.filter((b) => b.kind !== 'heading' && b.kind !== 'divider' && b.kind !== 'spacer').length;
+
   return (
     <div className={`space-y-8 ${className || ''}`}>
+      {/* Document info bar (print-hidden) */}
+      {totalContent > 0 && (
+        <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-2 text-[10px] text-slate-400 print:hidden">
+          <span>{blocks.length} blocks across {pages.length} page{pages.length !== 1 ? 's' : ''}</span>
+          <span>{doneCount}/{totalContent} content blocks generated</span>
+        </div>
+      )}
+
       {pages.map((pageBlocks, pageIdx) => (
         <div
           key={pageIdx}
-          className="relative mx-auto w-[210mm] min-h-[297mm] rounded-sm border border-slate-200 bg-white px-[25mm] py-[20mm] shadow-md"
+          className="a4-page relative mx-auto w-[210mm] min-h-[297mm] rounded-sm border border-slate-200 bg-white px-[25mm] py-[20mm] shadow-md print:border-0 print:shadow-none print:m-0 print:rounded-none"
           style={{ maxWidth: '794px' }}
         >
           {/* Page content */}
-          <div className="space-y-3">
-            {pageBlocks.map((block, bIdx) => (
+          <div className="space-y-2">
+            {pageBlocks.map((block) => (
               <DocumentBlock
                 key={block.id}
                 block={block}
-                isFirst={pageIdx === 0 && bIdx === 0}
                 onUpdate={onUpdateBlock ? (u) => onUpdateBlock(block.id, u) : undefined}
                 onReorder={onReorderBlock ? (d) => onReorderBlock(block.id, d) : undefined}
                 onDelete={onDeleteBlock ? () => onDeleteBlock(block.id) : undefined}
@@ -371,7 +455,7 @@ export function ReportDocumentCanvas({
           </div>
 
           {/* Page number */}
-          <div className="absolute bottom-4 left-0 right-0 text-center text-[10px] text-slate-300">
+          <div className="absolute bottom-4 left-0 right-0 text-center text-[10px] text-slate-300 print:text-slate-500">
             Page {pageIdx + 1} of {pages.length}
           </div>
         </div>

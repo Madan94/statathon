@@ -306,7 +306,8 @@ export function TemplatePackagePicker({
                         {rich && <span className="shrink-0 rounded-full bg-accent-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">Rich</span>}
                       </span>
                       <span className="mt-1 block break-words text-xs text-text-muted">
-                        {sourceLabel(pkg)} - {pkg.topics_count} topics - {pkg.questions_count} questions - {pkg.entities_count} entities
+                        {sourceLabel(pkg)} · {pkg.topics_count} topics · {pkg.questions_count} questions · {pkg.entities_count} entities
+                        {pkg.domain ? ` · ${pkg.domain}` : ''}
                       </span>
                     </span>
                     <Badge variant={statusVariant(pkg.status, pkg.source)} className="shrink-0">{pkg.status}</Badge>
@@ -331,6 +332,19 @@ export function TemplatePackagePicker({
                   <p className="break-words text-sm font-semibold leading-snug text-text">{previewPackage.name}</p>
                   <p className="mt-1 break-words text-xs text-text-muted">{previewPackage.description || 'No description provided.'}</p>
                 </div>
+                {/* Richness bar */}
+                <div>
+                  <div className="flex items-center justify-between text-[10px] text-text-muted">
+                    <span>Richness</span>
+                    <span className="font-mono">{Math.round(richness(previewPackage))}</span>
+                  </div>
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-border/30">
+                    <div
+                      className={cn('h-full rounded-full transition-all', richness(previewPackage) >= 80 ? 'bg-success' : richness(previewPackage) >= 40 ? 'bg-warning' : 'bg-danger')}
+                      style={{ width: `${Math.min(100, richness(previewPackage))}%` }}
+                    />
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 gap-2 text-xs text-text-muted">
                   {stat('topics', previewPackage.topics_count)}
                   {stat('chapters', previewPackage.chapters_count)}
@@ -339,11 +353,15 @@ export function TemplatePackagePicker({
                   {stat('charts', previewPackage.chart_slots_count)}
                   {stat('tables', previewPackage.table_slots_count)}
                 </div>
+                {/* Domain + metadata */}
                 <div className="space-y-1 text-xs text-text-muted">
-                  <p className="break-words"><span className="font-medium text-text">ID:</span> {previewPackage.template_id}</p>
+                  <p className="break-words"><span className="font-medium text-text">ID:</span> <span className="font-mono text-[10px]">{previewPackage.template_id}</span></p>
                   <p className="break-words"><span className="font-medium text-text">Domain:</span> {previewPackage.domain || 'unspecified'}</p>
+                  {previewPackage.report_type && <p className="break-words"><span className="font-medium text-text">Report type:</span> {previewPackage.report_type}</p>}
                   <p><span className="font-medium text-text">Updated:</span> {dateLabel(previewPackage) || 'bundled'}</p>
                   <p><span className="font-medium text-text">Readiness:</span> {previewPackage.diagnostics_score ?? 'not scored'}</p>
+                  <p><span className="font-medium text-text">Entities:</span> {previewPackage.entities_count} mapped</p>
+                  <p><span className="font-medium text-text">Charts:</span> {previewPackage.chart_slots_count}</p>
                 </div>
                 {previewPackage.template_id !== selectedTemplateId && (
                   <Button
