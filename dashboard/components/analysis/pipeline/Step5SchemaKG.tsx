@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import GraphCanvas, { GraphNode, GraphEdge as GEdge } from '@/components/ui/GraphCanvas';
 import { cn } from '@/lib/cn';
+import { normalizeSchemaGraphEdges, resolveOwlType } from '@/lib/schemaGraph';
 import {
   ChevronLeft, ArrowRight, Download, Network,
   CheckCircle2, Table2, Layers,
@@ -73,7 +74,7 @@ function BlueprintTable({ edges, domainMap }: { edges: GraphEdge[]; domainMap: M
   const groups = useMemo(() => {
     const byType: Record<string, GraphEdge[]> = {};
     for (const e of edges) {
-      const key = e.owl_type ?? e.relationship_type ?? 'other';
+      const key = resolveOwlType(e);
       byType[key] = [...(byType[key] ?? []), e];
     }
     return byType;
@@ -145,37 +146,63 @@ export default function Step5SchemaKG({ results, analysisId, onProceed, onBack }
   const [schemaView, setSchemaView] = useState<'graph' | 'blueprint' | 'table'>('graph');
 
   useEffect(() => {
-    const hasGraph = (results.schema_graph?.edges?.length ?? 0) > 0;
-    if (hasGraph) {
-      setLoading(false);
-      return;
-    }
+    let cancelled = false;
+    setLoading(true);
     analysisApi
       .getGraph(analysisId)
       .then((g) => {
-        if (g) setGraphPayload(g);
+        if (!cancelled && g?.edges?.length) setGraphPayload(g);
       })
       .catch(() => null)
-      .finally(() => setLoading(false));
-  }, [analysisId, results.schema_graph]);
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [analysisId]);
 
-  const edges: GraphEdge[] =
-    (graphPayload?.edges as GraphEdge[] | undefined) ??
-    (results.schema_graph?.edges as GraphEdge[] | undefined) ?? [];
   const domainMap = buildDomainMap(results);
+  const edges: GraphEdge[] = useMemo(() => {
+    const raw =
+      (graphPayload?.edges as GraphEdge[] | undefined) ??
+      (results.schema_graph?.edges as GraphEdge[] | undefined) ??
+      [];
+    return normalizeSchemaGraphEdges(raw, domainMap);
+  }, [graphPayload?.edges, results.schema_graph?.edges, domainMap]);
   const schemaNodes = useMemo(() => {
+    const nodeDomainFromPayload = new Map<string, string>();
+    for (const n of graphPayload?.nodes ?? []) {
+      const name = typeof n.name === 'string' ? n.name : undefined;
+      const domain = typeof n.domain === 'string' ? n.domain : undefined;
+      if (name && domain) nodeDomainFromPayload.set(name, domain);
+    }
     const ids = new Set<string>();
-    for (const e of edges) { ids.add(e.source); ids.add(e.target); }
-    return [...ids].map(id => ({ id, domain: domainMap.get(id) }));
-  }, [edges, domainMap]);
+    for (const e of edges) {
+      ids.add(e.source);
+      ids.add(e.target);
+    }
+    return [...ids].map((id) => ({
+      id,
+      domain: nodeDomainFromPayload.get(id) ?? domainMap.get(id),
+      label: id,
+    }));
+  }, [edges, domainMap, graphPayload?.nodes]);
 
   const schemaEdgesForGraph: GEdge[] = edges.map(e => ({
-    source: e.source, target: e.target, weight: e.weight, relationship_type: e.owl_type ?? e.relationship_type, semantic_reason: e.semantic_reason,
+    source: e.source,
+    target: e.target,
+    weight: e.weight,
+    relationship_type: e.relationship_type,
+    semantic_reason: e.semantic_reason,
   }));
 
   const owlTypeCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const e of edges) { const k = e.owl_type ?? 'unknown'; counts[k] = (counts[k] ?? 0) + 1; }
+    for (const e of edges) {
+      const k = resolveOwlType(e);
+      counts[k] = (counts[k] ?? 0) + 1;
+    }
     return counts;
   }, [edges]);
 
@@ -222,7 +249,7 @@ export default function Step5SchemaKG({ results, analysisId, onProceed, onBack }
                             <td className="px-4 py-2.5 font-mono text-xs font-medium">{edge.source}</td>
                             <td className="px-2"><ArrowRight className="h-3.5 w-3.5 text-text-muted" /></td>
                             <td className="px-4 py-2.5 font-mono text-xs font-medium">{edge.target}</td>
-                            <td className="px-4 py-2.5">{owlBadge(edge.owl_type)}</td>
+                            <td className="px-4 py-2.5">{owlBadge(resolveOwlType(edge))}</td>
                             <td className="px-4 py-2.5">{relBadge(edge.relationship_type)}</td>
                             <td className="px-4 py-2.5 text-xs font-mono text-text-muted">{edge.weight?.toFixed(3) ?? '—'}</td>
                             <td className="px-4 py-2.5 text-xs text-text-muted max-w-[180px] truncate">{edge.semantic_reason ?? '—'}</td>

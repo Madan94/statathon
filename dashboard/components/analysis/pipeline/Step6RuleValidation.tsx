@@ -59,11 +59,21 @@ export default function Step6RuleValidation({
   const [validationProgress, setValidationProgress] = useState({
     reviewed: 0,
     total: 0,
+    reportedTotal: null as number | null,
+    reviewComplete: false,
+    phaseComplete: false,
     complete: false,
   });
 
   const phase3 = results.phase3 ?? {};
   const candidates = (phase3.validation_candidates as ValidationCandidate[] | undefined) ?? [];
+  const validationResults = (phase3.validation_results as {
+    summary?: { gate?: Record<string, unknown>; severity_breakdown?: Record<string, number> };
+    rules_inventory?: RulesInventoryRow[];
+    single_column?: unknown[];
+    multi_column?: unknown[];
+  } | undefined) ?? {};
+  const gateSummary = (validationResults.summary?.gate ?? validationResults.summary ?? {}) as Record<string, unknown>;
   const totalCandidates = Number(
     (phase3 as { validation_candidates_total?: number }).validation_candidates_total
       ?? validationProgress.total
@@ -75,18 +85,24 @@ export default function Step6RuleValidation({
       setValidationProgress({
         reviewed: p.reviewed,
         total: p.total,
+        reportedTotal: p.reported_total ?? null,
+        reviewComplete: p.review_complete ?? (p.total > 0 && p.reviewed >= p.total),
+        phaseComplete: p.phase_complete ?? p.complete,
         complete: p.complete,
       });
+      if (p.acknowledged) setAcknowledged(true);
     }).catch(() => {});
   }, [analysisId, totalCandidates]);
 
-  const validationResults = (phase3.validation_results as {
-    summary?: { gate?: Record<string, unknown> };
-    rules_inventory?: RulesInventoryRow[];
-    single_column?: unknown[];
-    multi_column?: unknown[];
-  } | undefined) ?? {};
-  const gateSummary = (validationResults.summary?.gate ?? validationResults.summary ?? {}) as Record<string, unknown>;
+  const reportedCandidateTotal = Number(
+    (phase3 as { validation_candidates_reported_total?: number }).validation_candidates_reported_total
+      || gateSummary.candidate_count
+      || 0,
+  );
+  const candidatesTruncated = Boolean(
+    (phase3 as { validation_candidates_truncated?: boolean }).validation_candidates_truncated,
+  );
+
   const rulesInventory = validationResults.rules_inventory ?? [];
 
   const domainByColumn = useMemo(() => {
@@ -100,7 +116,17 @@ export default function Step6RuleValidation({
     return map;
   }, [results.semantic_mapping, results.semantic]);
 
-  const severity = countBySeverity(candidates);
+  const gateSeverity = (gateSummary.severity_breakdown ?? validationResults.summary?.severity_breakdown) as
+    | Record<string, number>
+    | undefined;
+  const severity = gateSeverity
+    ? {
+        CRITICAL: Number(gateSeverity.CRITICAL ?? 0),
+        HIGH: Number(gateSeverity.HIGH ?? 0),
+        MEDIUM: Number(gateSeverity.MEDIUM ?? 0),
+        LOW: Number(gateSeverity.LOW ?? 0),
+      }
+    : countBySeverity(candidates);
   const criticalCount = severity.CRITICAL;
   const rulesDiscovered = Number(gateSummary.rules_discovered ?? 0);
   const rulesFired = Number(gateSummary.rules_fired ?? totalCandidates);
@@ -115,10 +141,26 @@ export default function Step6RuleValidation({
 
   const canProceed =
     (approved || acknowledged) &&
-    (validationProgress.complete || totalCandidates === 0) &&
+    (validationProgress.reviewComplete || totalCandidates === 0) &&
     (!needsEmptyReviewAck || emptyReviewAck) &&
     proceedPhase !== 'saving' &&
     proceedPhase !== 'moving';
+
+  const proceedBlockedReason = (() => {
+    if (needsEmptyReviewAck && !emptyReviewAck) {
+      return 'Confirm rules inventory review above';
+    }
+    if (!validationProgress.reviewComplete && totalCandidates > 0) {
+      const remaining = Math.max(0, validationProgress.total - validationProgress.reviewed);
+      return remaining > 0
+        ? `Save decisions for ${remaining} remaining violation(s)`
+        : 'Save validation decisions for all violations';
+    }
+    if (!approved && !acknowledged) {
+      return 'Acknowledge critical violations using the checkbox above';
+    }
+    return null;
+  })();
   const canApply = applyPhase !== 'applying' && !isLoading;
   const applyDisabledReason =
     isLoading
@@ -165,6 +207,9 @@ export default function Step6RuleValidation({
   const handleProceed = async () => {
     setProceedPhase('saving');
     try {
+      if (tableRef.current?.hasPendingChanges()) {
+        await tableRef.current.saveDecisions();
+      }
       const payload = tableRef.current?.getDecisionPayload() ?? [];
       setProceedPhase('moving');
 
@@ -176,11 +221,13 @@ export default function Step6RuleValidation({
         throw new Error('Failed to confirm validation review');
       }
       setSavedDecisionCount(Number(res.saved ?? payload.length));
-      setValidationProgress({
+      setValidationProgress((prev) => ({
+        ...prev,
         reviewed: Number(res.saved ?? payload.length),
-        total: validationProgress.total || totalCandidates,
+        reviewComplete: true,
+        phaseComplete: true,
         complete: true,
-      });
+      }));
       setAcknowledged(true);
       onProceed();
     } catch (err: unknown) {
@@ -296,16 +343,19 @@ export default function Step6RuleValidation({
         domainByColumn={domainByColumn}
         paginated
         totalCandidates={totalCandidates}
+        reportedTotal={reportedCandidateTotal || undefined}
+        candidatesTruncated={candidatesTruncated}
         onSaved={() => {
           void analysisApi.getValidationReviewProgress(analysisId).then((p) => {
             setValidationProgress({
               reviewed: p.reviewed,
               total: p.total,
+              reportedTotal: p.reported_total ?? null,
+              reviewComplete: p.review_complete ?? (p.total > 0 && p.reviewed >= p.total),
+              phaseComplete: p.phase_complete ?? p.complete,
               complete: p.complete,
             });
-            if (p.reviewed > 0) {
-              setSavedDecisionCount(p.reviewed);
-            }
+            if (p.reviewed > 0) setSavedDecisionCount(p.reviewed);
           });
         }}
       />
@@ -313,11 +363,29 @@ export default function Step6RuleValidation({
       {!isLoading && (
         <Card className="p-4">
           <p className="text-sm text-text-muted">
-            Reviewed: <strong>{validationProgress.reviewed} / {validationProgress.total || totalCandidates}</strong>
+            Reviewed:{' '}
+            <strong>
+              {validationProgress.reviewed} / {validationProgress.total || totalCandidates}
+            </strong>
+            {validationProgress.reportedTotal != null
+              && validationProgress.reportedTotal > validationProgress.total && (
+              <span className="text-text-muted">
+                {' '}
+                ({validationProgress.reportedTotal} detected; {validationProgress.total} stored for review)
+              </span>
+            )}
             {' · '}
             Status:{' '}
-            <strong className={validationProgress.complete ? 'text-success' : 'text-warning'}>
-              {validationProgress.complete ? 'Completed' : 'In progress'}
+            <strong className={
+              validationProgress.phaseComplete ? 'text-success'
+                : validationProgress.reviewComplete ? 'text-accent'
+                : 'text-warning'
+            }>
+              {validationProgress.phaseComplete
+                ? 'Completed'
+                : validationProgress.reviewComplete
+                  ? 'Ready to proceed'
+                  : 'In progress'}
             </strong>
           </p>
         </Card>
@@ -383,12 +451,10 @@ export default function Step6RuleValidation({
             )}
             Apply to dataset
           </Button>
-          {!canProceed && !isLoading && (
+          {!canProceed && !isLoading && proceedBlockedReason && (
             <span className="text-xs text-text-muted flex items-center gap-1">
               <AlertTriangle className="h-3.5 w-3.5" />
-              {needsEmptyReviewAck && !emptyReviewAck
-                ? 'Confirm rules inventory review above'
-                : 'Review all violations or acknowledge critical issues'}
+              {proceedBlockedReason}
             </span>
           )}
           <Button

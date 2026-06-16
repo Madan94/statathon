@@ -174,6 +174,7 @@ async def _startup_db() -> None:
     from database.migrate_auth import migrate_auth_schema
     from database.migrate_report_builder import migrate_report_builder_schema
     from database.migrate_dataset_columns import migrate_dataset_columns_schema
+    from database.migrate_schema_graph_edges import migrate_schema_graph_edges_schema
     from database.migrate_weight_application import migrate_weight_application_schema
 
     try:
@@ -182,6 +183,7 @@ async def _startup_db() -> None:
         migrate_report_builder_schema()
         migrate_dataset_columns_schema()
         migrate_weight_application_schema()
+        migrate_schema_graph_edges_schema()
         logger.info("DB schema initialised (create_all + migrations OK)")
     except Exception as _db_exc:
         # Log clearly but do NOT re-raise — app still starts, DB-dependent

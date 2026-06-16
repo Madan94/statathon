@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { analysisApi } from '@/lib/api';
 import { analysisRoutes } from '@/lib/analysisPipeline';
@@ -21,9 +21,11 @@ import {
   ArrowLeft,
   Download,
   BarChart3,
+  RefreshCw,
 } from 'lucide-react';
 
 type WeightPayload = Awaited<ReturnType<typeof analysisApi.getWeightApplication>>;
+type ColumnValidation = WeightPayload['validations'][string];
 
 interface Props {
   analysisId: number;
@@ -36,24 +38,45 @@ function formatMetric(value: number | null | undefined, type?: string) {
   return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
+const CHECK_LABELS: Record<string, string> = {
+  positive_values: 'Positive values',
+  no_negative_weights: 'No negative weights',
+  missing_below_threshold: 'Missing below threshold',
+  reasonable_variance: 'Reasonable variance',
+  no_extreme_inflation: 'No extreme inflation',
+};
+
 export default function WeightApplicationLayout({ analysisId, onBack }: Props) {
   const router = useRouter();
   const routes = analysisRoutes(analysisId);
   const [payload, setPayload] = useState<WeightPayload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [detecting, setDetecting] = useState(false);
   const [selectedColumn, setSelectedColumn] = useState<string | null>(null);
   const [compareColumn, setCompareColumn] = useState<string | null>(null);
+  const [manualValidation, setManualValidation] = useState<ColumnValidation | null>(null);
   const [actionPhase, setActionPhase] = useState<'idle' | 'applying' | 'ignoring'>('idle');
+  const compareTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (runDetect = false) => {
     setLoading(true);
     try {
-      const data = await analysisApi.getWeightApplication(analysisId);
+      const data = runDetect
+        ? await analysisApi.detectWeights(analysisId)
+        : await analysisApi.getWeightApplication(analysisId);
       setPayload(data);
       const rec = data.recommendation?.recommended;
       const applied = data.application?.weight_column;
       setSelectedColumn(applied ?? rec ?? data.detected_columns[0]?.column ?? null);
       setCompareColumn(applied ?? rec ?? data.detected_columns[0]?.column ?? null);
+      if (!runDetect && data.detected_columns.length === 0 && !data.application?.applied) {
+        await analysisApi.detectWeights(analysisId).then((detected) => {
+          setPayload(detected);
+          const dRec = detected.recommendation?.recommended;
+          setSelectedColumn(dRec ?? detected.detected_columns[0]?.column ?? null);
+          setCompareColumn(dRec ?? detected.detected_columns[0]?.column ?? null);
+        });
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to load weight application');
     } finally {
@@ -62,7 +85,7 @@ export default function WeightApplicationLayout({ analysisId, onBack }: Props) {
   }, [analysisId]);
 
   useEffect(() => {
-    void load();
+    void load(false);
   }, [load]);
 
   const detectedSet = useMemo(
@@ -70,27 +93,60 @@ export default function WeightApplicationLayout({ analysisId, onBack }: Props) {
     [payload],
   );
 
-  const selectedValidation = selectedColumn
-    ? payload?.validations?.[selectedColumn]
-    : undefined;
+  const selectedValidation = useMemo(() => {
+    if (!selectedColumn) return undefined;
+    return payload?.validations?.[selectedColumn] ?? manualValidation ?? undefined;
+  }, [selectedColumn, payload?.validations, manualValidation]);
 
-  const handleCompare = async (col: string) => {
+  const handleCompare = useCallback(async (col: string) => {
     setCompareColumn(col);
     try {
       const comparison = await analysisApi.compareWeightMetrics(analysisId, col);
       setPayload((prev) => (prev ? { ...prev, comparison } : prev));
+      if (comparison.validation) {
+        setManualValidation(comparison.validation as ColumnValidation);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Comparison failed');
     }
+  }, [analysisId]);
+
+  useEffect(() => {
+    if (!selectedColumn) return;
+    if (payload?.validations?.[selectedColumn]) {
+      setManualValidation(null);
+      return;
+    }
+    if (compareTimer.current) clearTimeout(compareTimer.current);
+    compareTimer.current = setTimeout(() => {
+      void handleCompare(selectedColumn);
+    }, 400);
+    return () => {
+      if (compareTimer.current) clearTimeout(compareTimer.current);
+    };
+  }, [selectedColumn, payload?.validations, handleCompare]);
+
+  const handleDetect = async () => {
+    setDetecting(true);
+    try {
+      const data = await analysisApi.detectWeights(analysisId);
+      setPayload(data);
+      toast.success(`Detected ${data.detected_columns.length} weight column(s)`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Detection failed');
+    } finally {
+      setDetecting(false);
+    }
   };
 
-  const handleApply = async () => {
-    if (!selectedColumn) return;
+  const handleApply = async (column?: string) => {
+    const target = column ?? selectedColumn;
+    if (!target) return;
     setActionPhase('applying');
     try {
-      await analysisApi.applySurveyWeight(analysisId, selectedColumn);
-      toast.success(`Applied weight column: ${selectedColumn}`);
-      await load();
+      await analysisApi.applySurveyWeight(analysisId, target);
+      toast.success(`Applied weight column: ${target}`);
+      await load(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to apply weight');
     } finally {
@@ -119,6 +175,10 @@ export default function WeightApplicationLayout({ analysisId, onBack }: Props) {
     router.push(routes.review);
   };
 
+  const downloadLabel = payload?.application?.applied
+    ? 'Download weighted dataset (v6)'
+    : 'Download imputed dataset (v5)';
+
   const downloadUrl = analysisApi.datasetReviewDownloadUrl(analysisId, 'processed_csv');
 
   if (loading) {
@@ -138,10 +198,18 @@ export default function WeightApplicationLayout({ analysisId, onBack }: Props) {
         description="Detect, validate, and apply survey sampling weights before dataset review."
       />
 
-      {!payload?.detected_columns?.length && (
-        <Alert variant="warning" title="No weight columns detected">
+      {payload?.stale && (
+        <Alert variant="warning" title="Weight application is stale">
           <p className="text-sm">
-            No sampling weight columns were found. You can ignore this step and continue to dataset review.
+            Upstream imputation changed since weights were last applied. Re-run detection and apply again.
+          </p>
+        </Alert>
+      )}
+
+      {!payload?.detected_columns?.length && (
+        <Alert variant="warning" title="No weight columns auto-detected">
+          <p className="text-sm">
+            Select a weight column manually from the sidebar, or refresh detection after semantic mapping.
           </p>
         </Alert>
       )}
@@ -175,6 +243,12 @@ export default function WeightApplicationLayout({ analysisId, onBack }: Props) {
 
         <div className="space-y-4">
           <Card title="Weight detection">
+            <div className="flex justify-end mb-2">
+              <Button size="sm" variant="ghost" onClick={() => void handleDetect()} disabled={detecting}>
+                {detecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                Refresh detection
+              </Button>
+            </div>
             {(payload?.detected_columns ?? []).length === 0 ? (
               <p className="text-sm text-text-muted">No candidate weight columns detected.</p>
             ) : (
@@ -183,22 +257,31 @@ export default function WeightApplicationLayout({ analysisId, onBack }: Props) {
                   <li
                     key={d.column}
                     className={cn(
-                      'flex items-center justify-between rounded-lg border px-3 py-2',
+                      'rounded-lg border px-3 py-2',
                       selectedColumn === d.column ? 'border-accent bg-accent/5' : 'border-border',
                     )}
                   >
-                    <div>
-                      <p className="font-medium text-sm flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-success" />
-                        {d.column}
-                      </p>
-                      <p className="text-xs text-text-muted mt-0.5">
-                        Confidence: {(d.confidence * 100).toFixed(0)}%
-                      </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="font-medium text-sm flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-success" />
+                          {d.column}
+                        </p>
+                        <p className="text-xs text-text-muted mt-0.5">
+                          Confidence: {(d.confidence * 100).toFixed(0)}%
+                        </p>
+                      </div>
+                      <Button size="sm" variant="ghost" onClick={() => void handleCompare(d.column)}>
+                        Compare
+                      </Button>
                     </div>
-                    <Button size="sm" variant="ghost" onClick={() => void handleCompare(d.column)}>
-                      Compare
-                    </Button>
+                    {d.signals && (
+                      <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-text-muted">
+                        <span>name: {((d.signals.name ?? 0) * 100).toFixed(0)}%</span>
+                        <span>semantic: {((d.signals.semantic ?? 0) * 100).toFixed(0)}%</span>
+                        <span>statistics: {((d.signals.statistics ?? 0) * 100).toFixed(0)}%</span>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -231,11 +314,20 @@ export default function WeightApplicationLayout({ analysisId, onBack }: Props) {
                   </p>
                 </div>
               </div>
-              <div className="mt-3">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Badge variant={selectedValidation.valid ? 'success' : 'warning'}>
                   {selectedValidation.valid ? 'Valid weight column' : 'Validation issues'}
                 </Badge>
               </div>
+              {selectedValidation.checks && (
+                <ul className="mt-3 space-y-1 text-xs">
+                  {Object.entries(selectedValidation.checks).map(([key, passed]) => (
+                    <li key={key} className={passed ? 'text-success' : 'text-warning'}>
+                      {passed ? '✓' : '✗'} {CHECK_LABELS[key] ?? key}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Card>
           )}
 
@@ -245,7 +337,7 @@ export default function WeightApplicationLayout({ analysisId, onBack }: Props) {
               {compareColumn ? ` for ${compareColumn}` : ''}
             </p>
             {(payload?.comparison?.metrics ?? []).length === 0 ? (
-              <p className="text-sm text-text-muted">Select a weight column and click Compare metrics.</p>
+              <p className="text-sm text-text-muted">Select a weight column to compare metrics.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -253,7 +345,8 @@ export default function WeightApplicationLayout({ analysisId, onBack }: Props) {
                     <tr className="border-b border-border text-left text-xs uppercase text-text-muted">
                       <th className="pb-2 pr-3">Metric</th>
                       <th className="pb-2 pr-3">Unweighted</th>
-                      <th className="pb-2">Weighted</th>
+                      <th className="pb-2 pr-3">Weighted</th>
+                      <th className="pb-2">Delta</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -261,7 +354,8 @@ export default function WeightApplicationLayout({ analysisId, onBack }: Props) {
                       <tr key={m.column} className="border-b border-border/40">
                         <td className="py-2 pr-3 font-medium">{m.label}</td>
                         <td className="py-2 pr-3 font-mono">{formatMetric(m.unweighted, m.type)}</td>
-                        <td className="py-2 font-mono">{formatMetric(m.weighted, m.type)}</td>
+                        <td className="py-2 pr-3 font-mono">{formatMetric(m.weighted, m.type)}</td>
+                        <td className="py-2 font-mono">{formatMetric(m.delta, m.type)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -297,10 +391,20 @@ export default function WeightApplicationLayout({ analysisId, onBack }: Props) {
           )}
 
           <div className="space-y-2 pt-2">
+            {payload?.recommendation?.recommended && (
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => void handleApply(payload.recommendation!.recommended)}
+                disabled={actionPhase !== 'idle'}
+              >
+                Apply recommendation
+              </Button>
+            )}
             <Button
               className="w-full gap-2"
-              onClick={handleApply}
-              disabled={!selectedColumn || actionPhase !== 'idle'}
+              onClick={() => void handleApply()}
+              disabled={!selectedColumn || !selectedValidation?.valid || actionPhase !== 'idle'}
             >
               {actionPhase === 'applying' ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -331,7 +435,7 @@ export default function WeightApplicationLayout({ analysisId, onBack }: Props) {
               className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-border/30"
             >
               <Download className="h-4 w-4" />
-              Download processed dataset
+              {downloadLabel}
             </a>
           </div>
         </Card>

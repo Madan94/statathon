@@ -85,6 +85,9 @@ class SemanticPersistenceService:
                     "target_column": e["target"],
                     "edge_weight": float(e.get("weight", 0)),
                     "relationship_type": e.get("relationship_type"),
+                    "owl_type": e.get("owl_type"),
+                    "source_domain": e.get("source_domain"),
+                    "target_domain": e.get("target_domain"),
                     "semantic_reason": e.get("semantic_reason"),
                 }
             )

@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from analysis_state.cluster_utils import cluster_from_db_row, normalize_domain_distribution
+from analysis_state.schema_graph_utils import enrich_schema_graph_edges
 
 from sqlalchemy.orm import Session
 
@@ -44,6 +45,8 @@ def build_semantic_results_from_db(db: Session, analysis_id: int) -> dict | None
             entry.update(tags)
         semantic_mapping.append(entry)
 
+    domain_map = {str(p.column_name): str(p.semantic_domain) for p in profiles if p.column_name and p.semantic_domain}
+
     clusters_db = db.query(SemanticCluster).filter(SemanticCluster.analysis_id == analysis_id).all()
     clusters = []
     for c in clusters_db:
@@ -62,22 +65,52 @@ def build_semantic_results_from_db(db: Session, analysis_id: int) -> dict | None
         clusters.append(unified)
 
     edges_db = db.query(SchemaGraphEdge).filter(SchemaGraphEdge.analysis_id == analysis_id).all()
-    edge_list = []
+    raw_edges: list[dict[str, Any]] = []
     nodes_set: set[str] = set()
     for e in edges_db:
         nodes_set.add(e.source_column)
         nodes_set.add(e.target_column)
-        edge_list.append(
+        raw_edges.append(
             {
                 "source": e.source_column,
                 "target": e.target_column,
                 "weight": e.edge_weight,
                 "relationship_type": e.relationship_type,
                 "semantic_reason": e.semantic_reason,
+                "owl_type": getattr(e, "owl_type", None),
+                "source_domain": getattr(e, "source_domain", None),
+                "target_domain": getattr(e, "target_domain", None),
             }
         )
+
+    from services.analysis_query import load_checkpoint_json_key
+
+    checkpoint_graph = load_checkpoint_json_key(db, analysis_id, "schema_graph")
+    checkpoint_edges = (
+        checkpoint_graph.get("edges")
+        if isinstance(checkpoint_graph, dict) and isinstance(checkpoint_graph.get("edges"), list)
+        else None
+    )
+    edge_list = enrich_schema_graph_edges(
+        raw_edges,
+        domain_map=domain_map,
+        checkpoint_edges=checkpoint_edges,
+    )
+    checkpoint_nodes_by_name: dict[str, dict[str, Any]] = {}
+    if isinstance(checkpoint_graph, dict):
+        for node in checkpoint_graph.get("nodes") or []:
+            if isinstance(node, dict) and node.get("name"):
+                checkpoint_nodes_by_name[str(node["name"])] = node
+
     schema_graph = {
-        "nodes": [{"name": n} for n in sorted(nodes_set)],
+        "nodes": [
+            {
+                "name": name,
+                "domain": checkpoint_nodes_by_name.get(name, {}).get("domain") or domain_map.get(name),
+                "cluster": checkpoint_nodes_by_name.get(name, {}).get("cluster"),
+            }
+            for name in sorted(nodes_set)
+        ],
         "edges": edge_list,
     }
 

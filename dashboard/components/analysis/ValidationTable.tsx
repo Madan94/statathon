@@ -51,11 +51,8 @@ interface ValidationTableProps {
   onSaved?: () => void;
   paginated?: boolean;
   totalCandidates?: number;
-}
-
-function rowKey(c: ValidationCandidate, i: number): string {
-  const ruleId = candidateRuleId(c);
-  return `${c.column ?? 'col'}-${c.row ?? i}-${ruleId}`;
+  reportedTotal?: number;
+  candidatesTruncated?: boolean;
 }
 
 function candidateRuleId(c: ValidationCandidate): string {
@@ -69,6 +66,14 @@ function candidateRuleId(c: ValidationCandidate): string {
       c.kind ??
       'rule',
   );
+}
+
+function stableRowKey(c: ValidationCandidate): string {
+  return `${c.column ?? 'col'}-${c.row ?? 'na'}-${candidateRuleId(c)}`;
+}
+
+function rowKey(c: ValidationCandidate, _i?: number): string {
+  return stableRowKey(c);
 }
 
 function ValidationLoadingPanel({ phaseIndex }: { phaseIndex: number }) {
@@ -134,6 +139,8 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
       onSaved,
       paginated = false,
       totalCandidates,
+      reportedTotal,
+      candidatesTruncated = false,
     },
     ref,
   ) {
@@ -154,6 +161,7 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
       paginated ? [] : candidates,
     );
     const [pageLoading, setPageLoading] = useState(false);
+    const [selectingAll, setSelectingAll] = useState(false);
     const [candidateCache, setCandidateCache] = useState<Record<string, ValidationCandidate>>({});
 
     const activeCandidates = paginated ? pageCandidates : candidates;
@@ -182,8 +190,8 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
           setPageTotal(res.total);
           setCandidateCache((prev) => {
             const next = { ...prev };
-            res.items.forEach((c, i) => {
-              next[rowKey(c, i)] = c;
+            res.items.forEach((c) => {
+              next[stableRowKey(c)] = c;
             });
             return next;
           });
@@ -225,53 +233,95 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
       });
     }, [activeCandidates, paginated, severityFilter, columnFilter]);
 
-    const payloadSource = useMemo(() => {
-      if (!paginated) return candidates;
-      const cached = Object.values(candidateCache);
-      return cached.length > 0 ? cached : activeCandidates;
-    }, [paginated, candidates, candidateCache, activeCandidates]);
-
     const filteredKeys = useMemo(
-      () => filtered.map((c, i) => rowKey(c, i)),
+      () => filtered.map((c) => stableRowKey(c)),
       [filtered],
     );
 
-    const buildPayload = (keys?: string[]): ValidationDecisionItem[] => {
-      const source = keys ? filtered : payloadSource;
-      const target = keys ?? filteredKeys;
-      return source
-        .map((c) => {
-          const idx = payloadSource.findIndex(
-            (x) =>
-              x.column === c.column &&
-              x.row === c.row &&
-              candidateRuleId(x) === candidateRuleId(c),
-          );
-          const key = rowKey(c, idx >= 0 ? idx : 0);
-          return { c, key, idx: idx >= 0 ? idx : 0 };
-        })
-        .filter(({ key }) => !keys || target.includes(key))
-        .map(({ c, key }) => {
-          const decision = decisions[key] ?? 'KEEP';
-          return {
-            rule_id: candidateRuleId(c),
-            column: c.column ?? '',
-            row_index: c.row ?? null,
-            rule_type: c.kind ?? 'single_column',
-            severity: c.severity,
-            confidence: c.confidence,
-            decision,
-            old_value: c.value ?? null,
-            new_value: decision === 'MODIFY' ? modifyValues[key] ?? null : null,
-          };
-        });
+    const candidateToDecisionItem = (
+      c: ValidationCandidate,
+      decisionMap: Record<string, DecisionValue>,
+    ): ValidationDecisionItem => {
+      const key = stableRowKey(c);
+      const decision = decisionMap[key] ?? 'KEEP';
+      return {
+        rule_id: candidateRuleId(c),
+        column: c.column ?? '',
+        row_index: c.row ?? null,
+        rule_type: c.kind ?? 'single_column',
+        severity: c.severity,
+        confidence: c.confidence,
+        decision,
+        old_value: c.value ?? null,
+        new_value: decision === 'MODIFY' ? modifyValues[key] ?? null : null,
+      };
     };
 
-    const handleSave = async () => {
+    const buildFullPayload = async (
+      decisionMap: Record<string, DecisionValue> = decisions,
+    ): Promise<ValidationDecisionItem[]> => {
+      if (paginated && analysisId) {
+        const { items } = await analysisApi.fetchAllValidationCandidates(analysisId, {
+          severity: severityFilter !== 'all' ? severityFilter : undefined,
+          column: columnFilter || undefined,
+        });
+        return items.map((c) => candidateToDecisionItem(c, decisionMap));
+      }
+      return buildPayload(undefined, decisionMap);
+    };
+
+    const buildPayload = (
+      keys?: Set<string> | string[],
+      decisionMap: Record<string, DecisionValue> = decisions,
+    ): ValidationDecisionItem[] => {
+      const keySet = keys instanceof Set ? keys : keys ? new Set(keys) : null;
+      const sourceEntries = keySet
+        ? Object.entries(candidateCache).filter(([key]) => keySet.has(key))
+        : paginated
+          ? Object.entries(candidateCache)
+          : candidates.map((c) => [stableRowKey(c), c] as const);
+
+      if (keySet && sourceEntries.length === 0 && !paginated) {
+        return candidates
+          .filter((c) => keySet.has(stableRowKey(c)))
+          .map((c) => {
+            const key = stableRowKey(c);
+            const decision = decisionMap[key] ?? 'KEEP';
+            return {
+              rule_id: candidateRuleId(c),
+              column: c.column ?? '',
+              row_index: c.row ?? null,
+              rule_type: c.kind ?? 'single_column',
+              severity: c.severity,
+              confidence: c.confidence,
+              decision,
+              old_value: c.value ?? null,
+              new_value: decision === 'MODIFY' ? modifyValues[key] ?? null : null,
+            };
+          });
+      }
+
+      return sourceEntries.map(([key, c]) => {
+        const decision = decisionMap[key] ?? 'KEEP';
+        return {
+          rule_id: candidateRuleId(c),
+          column: c.column ?? '',
+          row_index: c.row ?? null,
+          rule_type: c.kind ?? 'single_column',
+          severity: c.severity,
+          confidence: c.confidence,
+          decision,
+          old_value: c.value ?? null,
+          new_value: decision === 'MODIFY' ? modifyValues[key] ?? null : null,
+        };
+      });
+    };
+
+    const handleSave = async (decisionMap: Record<string, DecisionValue> = decisions) => {
       if (!analysisId) return { saved: 0 };
-      const payload = buildPayload();
       setSaving(true);
       try {
+        const payload = await buildFullPayload(decisionMap);
         const res = await analysisApi.saveValidationDecisions(analysisId, payload);
         const count = Number(res.saved ?? payload.length);
         setSavedCount(count);
@@ -308,32 +358,67 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
 
     const selectAllFiltered = () => setSelected(new Set(filteredKeys));
 
+    const selectAllViolations = async () => {
+      if (!analysisId || !paginated) {
+        selectAllFiltered();
+        return;
+      }
+      setSelectingAll(true);
+      try {
+        const { items, total } = await analysisApi.fetchAllValidationCandidates(analysisId, {
+          severity: severityFilter !== 'all' ? severityFilter : undefined,
+          column: columnFilter || undefined,
+        });
+        const keys = new Set<string>();
+        const cachePatch: Record<string, ValidationCandidate> = {};
+        for (const c of items) {
+          const key = stableRowKey(c);
+          keys.add(key);
+          cachePatch[key] = c;
+        }
+        setCandidateCache((prev) => ({ ...prev, ...cachePatch }));
+        setSelected(keys);
+        toast.success(`Selected all ${keys.size} of ${total} violation(s)`);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to select all violations');
+      } finally {
+        setSelectingAll(false);
+      }
+    };
+
     const selectBySeverity = (sev: string) => {
       const keys = filtered
         .filter((c) => (c.severity || '').toUpperCase() === sev)
-        .map((c, i) => rowKey(c, i));
+        .map((c) => stableRowKey(c));
       setSelected(new Set(keys));
     };
 
     const selectByColumn = (col: string) => {
       const keys = filtered
         .filter((c) => (c.column || '').toLowerCase() === col.toLowerCase())
-        .map((c, i) => rowKey(c, i));
+        .map((c) => stableRowKey(c));
       setSelected(new Set(keys));
     };
 
-    const applyBulkDecision = () => {
+    const applyBulkDecision = async () => {
       if (!selected.size) {
         toast.error('Select at least one row');
         return;
       }
-      setDecisions((prev) => {
-        const next = { ...prev };
-        selected.forEach((key) => {
-          next[key] = bulkDecision;
-        });
-        return next;
+      const updatedDecisions = { ...decisions };
+      selected.forEach((key) => {
+        updatedDecisions[key] = bulkDecision;
       });
+      setDecisions(updatedDecisions);
+      if (analysisId) {
+        try {
+          await handleSave(updatedDecisions);
+          return;
+        } catch {
+          toast.error('Applied locally but save failed — click Save decisions to retry');
+          return;
+        }
+      }
       toast.success(`Applied "${bulkDecision}" to ${selected.size} row(s)`);
     };
 
@@ -379,15 +464,22 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
 
     const uniqueColumns = [...new Set(activeCandidates.map((c) => c.column).filter(Boolean))] as string[];
     const displayTotal = paginated ? pageTotal : candidates.length;
+    const headlineTotal = reportedTotal && reportedTotal > displayTotal ? reportedTotal : displayTotal;
     const pageStart = displayTotal === 0 ? 0 : (page - 1) * pageSize + 1;
     const pageEnd = Math.min(page * pageSize, displayTotal);
 
     return (
       <>
         <Card
-          title={`Rule validation (${displayTotal})`}
+          title={`Rule validation (${headlineTotal})`}
           description="Review flagged cells and record auditable decisions before proceeding"
         >
+          {candidatesTruncated && reportedTotal != null && reportedTotal > displayTotal && (
+            <p className="text-xs text-warning mb-3">
+              {displayTotal} of {reportedTotal} violations are loaded in the review table. Re-run rule validation
+              to persist the full set ({reportedTotal - displayTotal} not stored from the prior run).
+            </p>
+          )}
           {paginated && displayTotal > pageSize && (
             <p className="text-xs text-text-muted mb-3">
               Showing {pageStart}–{pageEnd} of {displayTotal} violations
@@ -421,7 +513,7 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
               aria-label="Filter by column"
             />
             {analysisId && (
-              <Button variant="secondary" size="sm" onClick={handleSave} disabled={saving} className="gap-1.5">
+              <Button variant="secondary" size="sm" onClick={() => void handleSave()} disabled={saving} className="gap-1.5">
                 <Save className="h-3.5 w-3.5" />
                 {saving ? 'Saving…' : savedCount ? `Saved (${savedCount})` : 'Save decisions'}
               </Button>
@@ -430,7 +522,19 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
 
           <div className="flex flex-wrap items-center gap-2 mb-4 p-3 rounded-lg bg-border/20 border border-border/60">
             <span className="text-xs text-text-muted mr-1">{selected.size} selected</span>
-            <Button variant="ghost" size="sm" onClick={selectAllFiltered}>Select all</Button>
+            {paginated && analysisId ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => void selectAllViolations()}
+                disabled={selectingAll || displayTotal === 0}
+              >
+                {selectingAll
+                  ? 'Selecting…'
+                  : `Select all ${displayTotal} violation${displayTotal !== 1 ? 's' : ''}`}
+              </Button>
+            ) : null}
+            <Button variant="ghost" size="sm" onClick={selectAllFiltered}>Select page</Button>
             <Button variant="ghost" size="sm" onClick={() => selectBySeverity('HIGH')}>Select all HIGH</Button>
             <Button variant="ghost" size="sm" onClick={() => selectBySeverity('LOW')}>Select all LOW</Button>
             {uniqueColumns.slice(0, 3).map((col) => (
@@ -449,7 +553,7 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
-              <Button variant="secondary" size="sm" onClick={applyBulkDecision}>Apply</Button>
+              <Button variant="secondary" size="sm" onClick={() => void applyBulkDecision()}>Apply</Button>
             </div>
           </div>
 
@@ -467,7 +571,7 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
                       type="checkbox"
                       checked={filteredKeys.length > 0 && filteredKeys.every((k) => selected.has(k))}
                       onChange={(e) => (e.target.checked ? selectAllFiltered() : setSelected(new Set()))}
-                      aria-label="Select all visible rows"
+                      aria-label="Select all rows on this page"
                     />
                   </th>
                   <th className="pb-2 pr-3">Column</th>
@@ -480,13 +584,7 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
               </thead>
               <tbody>
                 {filtered.map((c) => {
-                  const idx = payloadSource.findIndex(
-                    (x) =>
-                      x.column === c.column &&
-                      x.row === c.row &&
-                      candidateRuleId(x) === candidateRuleId(c),
-                  );
-                  const key = rowKey(c, idx >= 0 ? idx : 0);
+                  const key = stableRowKey(c);
                   const decision = decisions[key] ?? 'KEEP';
                   const isSelected = selected.has(key);
                   return (
@@ -566,7 +664,7 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
                   }}
                   className="text-sm rounded border border-border px-2 py-1 bg-surface-card"
                 >
-                  {[25, 50, 100, 200].map((n) => (
+                  {[25, 50, 100, 200, 500].map((n) => (
                     <option key={n} value={n}>{n}</option>
                   ))}
                 </select>

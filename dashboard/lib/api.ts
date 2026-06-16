@@ -851,6 +851,7 @@ export const analysisApi = {
           missing_pct?: number;
           variance?: number;
           valid: boolean;
+          checks?: Record<string, boolean>;
         }
       >;
       recommendation: {
@@ -872,11 +873,17 @@ export const analysisApi = {
           type: string;
           unweighted: number | null;
           weighted: number | null;
+          delta?: number | null;
         }>;
       } | null;
       columns: string[];
       weight_application_completed: boolean;
+      stale?: boolean;
     };
+  },
+  detectWeights: async (id: number) => {
+    const { data } = await api.post(`/analysis/${id}/weights/detect`);
+    return data as Awaited<ReturnType<(typeof analysisApi)['getWeightApplication']>>;
   },
   compareWeightMetrics: async (id: number, weightColumn: string) => {
     const { data } = await api.get(`/analysis/${id}/weights/compare`, {
@@ -909,6 +916,10 @@ export const analysisApi = {
         column_count: number;
         columns: string[];
         missing_cells: number;
+        snapshot?: {
+          stage?: string;
+          version?: number;
+        };
       };
       summary: {
         rows_before: number;
@@ -945,9 +956,42 @@ export const analysisApi = {
         ignored?: boolean;
         weight_column: string | null;
         quality_score: number | null;
+        recommendation?: {
+          recommended: string;
+          confidence: number;
+          reason: string;
+        } | null;
+        comparison?: {
+          weight_column: string;
+          metrics: Array<{
+            column: string;
+            label: string;
+            type: string;
+            unweighted: number | null;
+            weighted: number | null;
+            delta?: number | null;
+          }>;
+        } | null;
+        meta?: {
+          weighted_columns?: string[];
+          transform_mode?: string;
+          source_imputed_snapshot_version?: number;
+        } | null;
       };
       can_approve: boolean;
       can_proceed_to_report: boolean;
+      final_dataset?: {
+        stage: string;
+        phase: string;
+        version: number;
+        storage_path?: string | null;
+        object_key?: string | null;
+        csv_export?: string | null;
+        row_count?: number;
+        column_count?: number;
+        approved_at?: string;
+        source_stage?: string;
+      } | null;
     };
   },
   getDatasetReviewRows: async (
@@ -1017,11 +1061,16 @@ export const analysisApi = {
     const { data } = await api.get(`/analysis/${id}/validation/review-progress`);
     return data as {
       total: number;
+      reported_total?: number | null;
       reviewed: number;
       remaining: number;
       progress_pct: number;
+      review_complete?: boolean;
+      phase_complete?: boolean;
       complete: boolean;
       acknowledged: boolean;
+      stored_total?: number;
+      truncated?: boolean;
     };
   },
   getValidationCandidates: async (
@@ -1042,6 +1091,28 @@ export const analysisApi = {
       },
     });
     return data as ValidationCandidatesPage;
+  },
+  fetchAllValidationCandidates: async (
+    id: number,
+    options?: { severity?: string; column?: string; pageSize?: number },
+  ): Promise<{ items: ValidationCandidate[]; total: number }> => {
+    const pageSize = options?.pageSize ?? 200;
+    const all: ValidationCandidate[] = [];
+    let page = 1;
+    let total = 0;
+    for (;;) {
+      const res = await analysisApi.getValidationCandidates(id, {
+        page,
+        pageSize,
+        severity: options?.severity,
+        column: options?.column,
+      });
+      total = res.total;
+      all.push(...res.items);
+      if (!res.has_more || page * pageSize >= res.total) break;
+      page += 1;
+    }
+    return { items: all, total };
   },
   proceedValidation: async (
     id: number,

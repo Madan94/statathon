@@ -9,12 +9,12 @@ import pandas as pd
 from sqlalchemy.orm import Session
 
 from core.ingestion import infer_schema
-from database.models import WeightApplication, WeightAuditLog, WeightProfile
+from database.models import DatasetLineageSnapshot, WeightApplication, WeightAuditLog, WeightProfile
 from review.dataset_snapshot_service import DatasetSnapshotService
 from services.analysis_query import get_analysis_meta, load_analysis_checkpoint
 from services.analysis_payload_cache import invalidate_analysis_cache
+from services.analysis_results_service import build_semantic_results_from_db
 from services.phase_audit_service import PhaseAuditService
-from services.phase_snapshot_service import PhaseSnapshotService, refresh_downstream_with_status
 from services.phase_status_service import PhaseStatusService
 from weights.weight_applier import apply_weight_to_dataset
 from weights.weight_audit import build_audit_record
@@ -27,11 +27,23 @@ from weights.weight_validator import validate_weight_column
 logger = logging.getLogger(__name__)
 
 
-def _semantic_mapping_dict(db: Session, analysis_id: int) -> dict[str, Any]:
+def semantic_mapping_dict(db: Session, analysis_id: int) -> dict[str, Any]:
+    """Load semantic column metadata DB-first, checkpoint fallback."""
+    built = build_semantic_results_from_db(db, analysis_id)
+    if built:
+        mapping = built.get("semantic_mapping") or []
+        if isinstance(mapping, list):
+            out: dict[str, Any] = {}
+            for row in mapping:
+                if isinstance(row, dict) and row.get("column"):
+                    out[str(row["column"])] = row
+            if out:
+                return out
+
     checkpoint = load_analysis_checkpoint(db, analysis_id) or {}
     mapping = checkpoint.get("semantic_mapping") or {}
     if isinstance(mapping, list):
-        out: dict[str, Any] = {}
+        out = {}
         for row in mapping:
             if isinstance(row, dict) and row.get("column"):
                 out[str(row["column"])] = row
@@ -39,6 +51,46 @@ def _semantic_mapping_dict(db: Session, analysis_id: int) -> dict[str, Any]:
     if isinstance(mapping, dict):
         return mapping
     return {}
+
+
+def invalidate_weight_after_upstream_refresh(db: Session, analysis_id: int) -> str | None:
+    """
+    Clear weighted snapshots and phase flags after imputed data changes.
+    Returns weight column to auto-reapply, if any.
+    """
+    app = (
+        db.query(WeightApplication)
+        .filter(WeightApplication.analysis_id == analysis_id)
+        .first()
+    )
+    reapply_column: str | None = None
+    if app and app.applied and app.weight_column and not app.ignored:
+        reapply_column = str(app.weight_column)
+
+    db.query(DatasetLineageSnapshot).filter(
+        DatasetLineageSnapshot.analysis_id == analysis_id,
+        DatasetLineageSnapshot.stage == "weighted",
+    ).delete(synchronize_session=False)
+    db.query(DatasetLineageSnapshot).filter(
+        DatasetLineageSnapshot.analysis_id == analysis_id,
+        DatasetLineageSnapshot.stage == "final",
+    ).delete(synchronize_session=False)
+
+    phase_row = PhaseStatusService(db).get_or_create(analysis_id)
+    phase_row.weight_application_completed = False
+    phase_row.dataset_review_completed = False
+    phase_row.updated_at = datetime.utcnow()
+
+    if app and app.applied:
+        meta = dict(app.meta or {})
+        meta["stale"] = True
+        app.meta = meta
+        app.applied = False
+        app.comparison = None
+        app.updated_at = datetime.utcnow()
+
+    db.flush()
+    return reapply_column
 
 
 class WeightWorkflowService:
@@ -68,6 +120,53 @@ class WeightWorkflowService:
             if df is not None:
                 return df
         raise ValueError("Imputed dataset snapshot unavailable")
+
+    def _latest_imputed_snapshot_meta(self, analysis_id: int) -> dict[str, Any]:
+        snap = self.snapshots._latest_snapshot(analysis_id, "imputed")
+        if not snap:
+            return {}
+        return {
+            "source_imputed_snapshot_id": snap.id,
+            "source_imputed_snapshot_version": snap.version,
+        }
+
+    def _is_stale(self, analysis_id: int, application: WeightApplication | None) -> bool:
+        if not application or not application.meta:
+            return False
+        if application.meta.get("stale"):
+            return True
+        expected_id = application.meta.get("source_imputed_snapshot_id")
+        if not expected_id:
+            return False
+        snap = self.snapshots._latest_snapshot(analysis_id, "imputed")
+        return snap is not None and snap.id != expected_id
+
+    def _profiles_to_detections(self, profiles: list[WeightProfile]) -> list[dict[str, Any]]:
+        detections: list[dict[str, Any]] = []
+        for profile in profiles:
+            detections.append(
+                {
+                    "column": profile.column_name,
+                    "confidence": float(profile.confidence or 0.0),
+                    "signals": profile.signals or {},
+                }
+            )
+        detections.sort(key=lambda item: item["confidence"], reverse=True)
+        return detections
+
+    def _profiles_to_validations(self, profiles: list[WeightProfile]) -> dict[str, dict[str, Any]]:
+        validations: dict[str, dict[str, Any]] = {}
+        for profile in profiles:
+            validations[str(profile.column_name)] = {
+                "column": profile.column_name,
+                "quality_score": profile.quality_score,
+                "coverage": profile.coverage,
+                "missing_pct": profile.missing_pct,
+                "variance": profile.variance,
+                "valid": bool(profile.valid),
+                "checks": profile.checks or {},
+            }
+        return validations
 
     def _persist_profiles(
         self,
@@ -136,37 +235,54 @@ class WeightWorkflowService:
             payload=record,
         )
 
-    def get_payload(self, analysis_id: int) -> dict[str, Any]:
+    def _build_payload(
+        self,
+        analysis_id: int,
+        *,
+        df: pd.DataFrame | None = None,
+        detections: list[dict[str, Any]] | None = None,
+        validations: dict[str, dict[str, Any]] | None = None,
+        recommendation: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         an = get_analysis_meta(self.db, analysis_id)
         if not an:
             raise ValueError("Analysis not found")
-        df = self._load_imputed_df(analysis_id)
-        schema = infer_schema(df)
-        semantic = _semantic_mapping_dict(self.db, analysis_id)
+        if df is None:
+            df = self._load_imputed_df(analysis_id)
 
-        detections = detect_weight_columns(df, schema, semantic_mapping=semantic)
-        validations = {
-            str(d["column"]): validate_weight_column(df, str(d["column"])) for d in detections
-        }
-        self._persist_profiles(analysis_id, an.dataset_id, detections, validations)
-        recommendation = recommend_weight(detections, validations)
+        profiles = (
+            self.db.query(WeightProfile)
+            .filter(WeightProfile.analysis_id == analysis_id)
+            .order_by(WeightProfile.confidence.desc())
+            .all()
+        )
+        if detections is None:
+            detections = self._profiles_to_detections(profiles)
+        if validations is None:
+            validations = self._profiles_to_validations(profiles)
+        if recommendation is None and detections:
+            recommendation = recommend_weight(detections, validations)
 
         application = (
             self.db.query(WeightApplication)
             .filter(WeightApplication.analysis_id == analysis_id)
             .first()
         )
+        if application and application.recommendation and recommendation is None:
+            recommendation = application.recommendation
+
         selected = application.weight_column if application else None
         comparison = None
-        if selected and application and application.comparison:
+        if application and application.comparison:
             comparison = application.comparison
         elif recommendation:
             rec_col = str(recommendation.get("recommended") or "")
-            if rec_col:
+            if rec_col and rec_col in df.columns:
+                schema = infer_schema(df)
                 comparison = compare_weighted_unweighted(df, rec_col, schema)
 
         phase_row = PhaseStatusService(self.db).get_or_create(analysis_id)
-        self.db.commit()
+        stale = self._is_stale(analysis_id, application)
 
         return {
             "analysis_id": analysis_id,
@@ -182,12 +298,66 @@ class WeightWorkflowService:
             "comparison": comparison,
             "columns": [str(c) for c in df.columns],
             "weight_application_completed": bool(phase_row.weight_application_completed),
+            "stale": stale,
         }
+
+    def detect_weights(self, analysis_id: int, *, user_id: int | None = None) -> dict[str, Any]:
+        """Run detection, validate candidates, persist profiles (explicit mutation)."""
+        an = get_analysis_meta(self.db, analysis_id)
+        if not an:
+            raise ValueError("Analysis not found")
+        df = self._load_imputed_df(analysis_id)
+        schema = infer_schema(df)
+        semantic = semantic_mapping_dict(self.db, analysis_id)
+
+        detections = detect_weight_columns(df, schema, semantic_mapping=semantic)
+        validations = {
+            str(d["column"]): validate_weight_column(df, str(d["column"])) for d in detections
+        }
+        self._persist_profiles(analysis_id, an.dataset_id, detections, validations)
+        recommendation = recommend_weight(detections, validations)
+
+        application = (
+            self.db.query(WeightApplication)
+            .filter(WeightApplication.analysis_id == analysis_id)
+            .first()
+        )
+        if not application:
+            application = WeightApplication(analysis_id=analysis_id, dataset_id=an.dataset_id)
+            self.db.add(application)
+        application.recommendation = recommendation
+        application.updated_at = datetime.utcnow()
+
+        self._audit(
+            analysis_id,
+            weight_column=recommendation.get("recommended") if recommendation else None,
+            quality_score=None,
+            user_action="detect_weights",
+            payload={"detected_count": len(detections)},
+            user_id=user_id,
+        )
+        self.db.commit()
+
+        return self._build_payload(
+            analysis_id,
+            df=df,
+            detections=detections,
+            validations=validations,
+            recommendation=recommendation,
+        )
+
+    def get_payload(self, analysis_id: int) -> dict[str, Any]:
+        """Read persisted weight state without mutating profiles."""
+        payload = self._build_payload(analysis_id)
+        self.db.commit()
+        return payload
 
     def compare_metrics(self, analysis_id: int, weight_column: str) -> dict[str, Any]:
         df = self._load_imputed_df(analysis_id)
         schema = infer_schema(df)
-        return compare_weighted_unweighted(df, weight_column, schema)
+        comparison = compare_weighted_unweighted(df, weight_column, schema)
+        validation = validate_weight_column(df, weight_column)
+        return {**comparison, "validation": validation}
 
     def apply_weight(
         self,
@@ -201,12 +371,24 @@ class WeightWorkflowService:
             raise ValueError("Analysis not found")
         df = self._load_imputed_df(analysis_id)
         schema = infer_schema(df)
+        semantic = semantic_mapping_dict(self.db, analysis_id)
         validation = validate_weight_column(df, weight_column)
         if not validation.get("valid"):
             raise ValueError(f"Weight column failed validation: {weight_column}")
 
-        weighted_df, apply_meta = apply_weight_to_dataset(df, weight_column)
+        imputed_meta = self._latest_imputed_snapshot_meta(analysis_id)
+        weighted_df, apply_meta = apply_weight_to_dataset(
+            df,
+            weight_column,
+            semantic_mapping=semantic,
+            schema=schema,
+        )
+        apply_meta = {**apply_meta, **imputed_meta}
         comparison = compare_weighted_unweighted(df, weight_column, schema)
+        recommendation = recommend_weight(
+            detect_weight_columns(df, schema, semantic_mapping=semantic),
+            {weight_column: validation},
+        )
 
         application = (
             self.db.query(WeightApplication)
@@ -222,6 +404,7 @@ class WeightWorkflowService:
         application.ignored = False
         application.quality_score = validation.get("quality_score")
         application.comparison = comparison
+        application.recommendation = recommendation
         application.meta = apply_meta
         application.updated_at = datetime.utcnow()
 
@@ -258,6 +441,7 @@ class WeightWorkflowService:
             "quality_score": validation.get("quality_score"),
             "comparison": comparison,
             "working_dataset_weighted": True,
+            "weighted_columns": apply_meta.get("weighted_columns"),
         }
         an_obj = get_analysis_meta(self.db, analysis_id)
         if an_obj:
@@ -283,6 +467,7 @@ class WeightWorkflowService:
             "comparison": comparison,
             "snapshot": snap,
             "weight_application_completed": True,
+            "weighted_columns": apply_meta.get("weighted_columns"),
         }
 
     def ignore_weight(self, analysis_id: int, *, user_id: int | None = None) -> dict[str, Any]:
@@ -337,3 +522,16 @@ class WeightWorkflowService:
             "ignored": True,
             "weight_application_completed": True,
         }
+
+    def try_auto_reapply(self, analysis_id: int, weight_column: str | None) -> None:
+        if not weight_column:
+            return
+        try:
+            self.apply_weight(analysis_id, weight_column)
+        except Exception as exc:
+            logger.warning(
+                "Auto-reapply weight failed for analysis %s column %s: %s",
+                analysis_id,
+                weight_column,
+                exc,
+            )

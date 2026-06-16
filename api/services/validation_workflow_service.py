@@ -84,9 +84,10 @@ class ValidationWorkflowService:
     ) -> dict[str, Any]:
         self._load(analysis_id)
         progress = PhaseStatusService(self.db).validation_review_progress(analysis_id)
-        if progress["total"] > 0 and progress["reviewed"] < progress["total"]:
+        required = progress.get("stored_total") or progress["total"]
+        if required > 0 and progress["reviewed"] < required:
             raise ValueError(
-                f"Review all violations before proceeding ({progress['reviewed']}/{progress['total']} saved)"
+                f"Review all violations before proceeding ({progress['reviewed']}/{required} saved)"
             )
         overlay: dict[str, Any] = {
             "validation_acknowledged": True,

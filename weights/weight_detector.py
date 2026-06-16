@@ -8,9 +8,10 @@ import numpy as np
 import pandas as pd
 
 _WEIGHT_NAME_RE = re.compile(
-    r"(^weight$|^weights$|^wt$|^wgt$|sample[_\s]?weight|hh[_\s]?weight|"
+    r"(^weight$|^weights$|^wt$|^wgt$|weightage|sample[_\s]?weight|hh[_\s]?weight|"
     r"person[_\s]?weight|survey[_\s]?weight|expansion[_\s]?factor|multiplier|"
-    r"final[_\s]?wt|population[_\s]?weight)",
+    r"final[_\s]?wt|population[_\s]?weight|wt[_\s]?hh|expansion|_factor$|^factor$|"
+    r"survey[_\s]?wt|design[_\s]?weight|rep[_\s]?weight)",
     re.I,
 )
 
@@ -88,9 +89,10 @@ def detect_weight_columns(
     candidates: list[dict[str, Any]] = []
     for col in df.columns:
         col_name = str(col)
-        if schema.get(col_name) == "categorical" and df[col_name].nunique(dropna=True) <= 20:
-            continue
+        nunique = df[col_name].nunique(dropna=True)
         name = _name_score(col_name)
+        if schema.get(col_name) == "categorical" and nunique <= 5 and name <= 0:
+            continue
         semantic = _semantic_score(col_name, semantic_mapping)
         stats = _statistics_score(df[col_name])
         if name <= 0 and semantic <= 0 and stats < 0.4:

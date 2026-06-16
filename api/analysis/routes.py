@@ -231,6 +231,19 @@ def get_weight_application_payload(
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
+@router.post("/{analysis_id}/weights/detect")
+def detect_weight_columns_route(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return WeightWorkflowService(db).detect_weights(analysis_id, user_id=user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
 @router.get("/{analysis_id}/weights/compare")
 def compare_weight_metrics(
     analysis_id: int,

@@ -53,6 +53,22 @@ export default function WeightApplicationPage() {
       >
         <Alert variant="warning" title="Previous phases incomplete">
           <p className="text-sm">{blocked}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="text-sm text-primary underline"
+              onClick={() => router.push(routes.validation)}
+            >
+              Go to rule validation
+            </button>
+            <button
+              type="button"
+              className="text-sm text-primary underline"
+              onClick={() => router.push(routes.columns)}
+            >
+              Go to column analysis
+            </button>
+          </div>
         </Alert>
       </AnalysisPipelineShell>
     );

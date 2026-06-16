@@ -40,12 +40,23 @@ class DatasetReviewService:
             .first()
         )
         if not app:
-            return {"applied": False, "weight_column": None, "quality_score": None}
+            return {
+                "applied": False,
+                "ignored": False,
+                "weight_column": None,
+                "quality_score": None,
+                "recommendation": None,
+                "comparison": None,
+                "meta": None,
+            }
         return {
             "applied": bool(app.applied),
             "ignored": bool(app.ignored),
             "weight_column": app.weight_column,
             "quality_score": app.quality_score,
+            "recommendation": app.recommendation,
+            "comparison": app.comparison,
+            "meta": app.meta,
         }
 
     def get_review_payload(self, analysis_id: int) -> dict[str, Any]:
@@ -72,11 +83,17 @@ class DatasetReviewService:
         )
         can_report = flags["dataset_review_completed"]
         weight_summary = self._weight_summary(analysis_id)
+        final_dataset = (
+            self.snapshots.final_dataset_meta(analysis_id)
+            if flags["dataset_review_completed"]
+            else None
+        )
 
         return {
             "analysis_id": analysis_id,
             "original_dataset": self.snapshots.dataset_meta(original_df, orig_snap),
             "processed_dataset": self.snapshots.dataset_meta(processed_df, proc_snap),
+            "final_dataset": final_dataset,
             "summary": diff_payload["summary"],
             "diff_summary": diff_payload["diff_summary"],
             "weight_application": weight_summary,
@@ -159,9 +176,27 @@ class DatasetReviewService:
                 "can_proceed_to_report": True,
             }
 
+        if flags["dataset_review_completed"]:
+            final_meta = self.snapshots.final_dataset_meta(analysis_id)
+            if final_meta:
+                return {
+                    "success": True,
+                    "analysis_id": analysis_id,
+                    "dataset_review_completed": True,
+                    "can_proceed_to_report": True,
+                    "final_dataset": final_meta,
+                }
+
+        approved_at = datetime.utcnow()
+        final_snapshot = self.snapshots.persist_final_approved_snapshot(
+            analysis_id,
+            user_id=user_id,
+            approved_at=approved_at,
+        )
+
         row = PhaseStatusService(self.db).get_or_create(analysis_id)
         row.dataset_review_completed = True
-        row.updated_at = datetime.utcnow()
+        row.updated_at = approved_at
         PhaseAuditService(self.db).record(
             analysis_id=analysis_id,
             phase="dataset_review",
@@ -169,14 +204,29 @@ class DatasetReviewService:
             user_id=user_id,
             entity_type="dataset",
             entity_id=str(analysis_id),
-            payload={"approved_at": datetime.utcnow().isoformat()},
+            payload={
+                "approved_at": approved_at.isoformat(),
+                "final_snapshot": final_snapshot,
+            },
         )
+
+        from services.analysis_query import get_analysis_meta, load_analysis_checkpoint
+        from services.analysis_payload_cache import invalidate_analysis_cache
+
+        an = get_analysis_meta(self.db, analysis_id)
+        if an:
+            checkpoint = dict(load_analysis_checkpoint(self.db, analysis_id) or {})
+            checkpoint["final_dataset"] = final_snapshot
+            an.checkpoint = checkpoint
+
+        invalidate_analysis_cache(analysis_id)
         self.db.commit()
         return {
             "success": True,
             "analysis_id": analysis_id,
             "dataset_review_completed": True,
             "can_proceed_to_report": True,
+            "final_dataset": final_snapshot,
         }
 
     def build_download(

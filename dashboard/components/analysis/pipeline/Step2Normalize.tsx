@@ -3,7 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnalysisResult } from '@/lib/api';
 import { analysisApi } from '@/lib/api';
-import { buildNormalizationPlan, resolveColumnProfileStats } from '@/lib/columnNormalization';
+import {
+  buildNormalizationPlan,
+  resolveColumnProfileStats,
+  resolvePlanOriginalName,
+  type NormalizationPlanRow,
+} from '@/lib/columnNormalization';
+import type { NormalizationColumnRecord } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -41,6 +47,65 @@ function methodVariant(method: string): 'success' | 'warning' | 'default' | 'mut
   return 'muted';
 }
 
+function defaultDecision(p: NormalizationPlanRow, base?: ColumnDecision): ColumnDecision {
+  return {
+    originalName: p.originalName,
+    displayName: p.displayName,
+    suggestedName: p.displayName,
+    normalizedName: p.normalizedName,
+    domain: p.domain,
+    matchMethod: p.matchMethod,
+    matchConfidence: p.matchConfidence,
+    included: true,
+    isDeleted: false,
+    ...base,
+    originalName: p.originalName,
+  };
+}
+
+function buildColsState(
+  plan: NormalizationPlanRow[],
+  decisions: Record<string, ColumnDecision>,
+  apiColumns: NormalizationColumnRecord[] = [],
+  columnNormalization: AnalysisResult['column_normalization'] = [],
+): Record<string, ColumnDecision> {
+  const out: Record<string, ColumnDecision> = {};
+
+  for (const p of plan) {
+    out[p.originalName] = defaultDecision(p, decisions[p.originalName]);
+  }
+
+  for (const c of apiColumns) {
+    const planKey = resolvePlanOriginalName(
+      c.original_name,
+      plan,
+      columnNormalization ?? [],
+    );
+    if (!planKey || !out[planKey]) continue;
+    out[planKey] = {
+      ...out[planKey],
+      displayName: c.normalized_name || out[planKey].displayName,
+      suggestedName: c.normalized_name || out[planKey].suggestedName,
+      normalizedName: c.normalized_name || out[planKey].normalizedName,
+      included: Boolean(c.is_active ?? (!c.is_deleted && !c.is_excluded)),
+      isDeleted: c.is_deleted,
+    };
+  }
+
+  return out;
+}
+
+function decisionsForPlan(
+  plan: NormalizationPlanRow[],
+  cols: Record<string, ColumnDecision>,
+): Record<string, ColumnDecision> {
+  const out: Record<string, ColumnDecision> = {};
+  for (const p of plan) {
+    if (cols[p.originalName]) out[p.originalName] = cols[p.originalName];
+  }
+  return out;
+}
+
 export default function Step2Normalize({
   results,
   analysisId,
@@ -50,49 +115,32 @@ export default function Step2Normalize({
   saving,
 }: Props) {
   const plan = useMemo(() => buildNormalizationPlan(results), [results]);
+  const columnNormalization = results.column_normalization ?? [];
 
   const health = results.health as { rows?: number } | undefined;
   const totalRows = health?.rows ?? 0;
 
-  const [cols, setCols] = useState<Record<string, ColumnDecision>>(() => {
-    const init: Record<string, ColumnDecision> = {};
-    plan.forEach((p) => {
-      init[p.originalName] = decisions[p.originalName] ?? {
-        originalName: p.originalName,
-        displayName: p.displayName,
-        suggestedName: p.displayName,
-        normalizedName: p.normalizedName,
-        domain: p.domain,
-        matchMethod: p.matchMethod,
-        matchConfidence: p.matchConfidence,
-        included: true,
-        isDeleted: false,
-      };
-    });
-    return init;
-  });
+  const [cols, setCols] = useState<Record<string, ColumnDecision>>(() =>
+    buildColsState(plan, decisions, [], columnNormalization),
+  );
 
   useEffect(() => {
+    setCols(buildColsState(plan, decisions, [], columnNormalization));
+  }, [plan, decisions, columnNormalization]);
+
+  useEffect(() => {
+    let cancelled = false;
     analysisApi
       .getNormalization(analysisId)
       .then((norm) => {
-        if (norm.columns.length > 0) {
-          const fromApi: Record<string, ColumnDecision> = {};
-          for (const c of norm.columns) {
-            fromApi[c.original_name] = {
-              originalName: c.original_name,
-              displayName: c.normalized_name,
-              suggestedName: c.normalized_name,
-              normalizedName: c.normalized_name,
-              included: Boolean(c.is_active ?? (!c.is_deleted && !c.is_excluded)),
-              isDeleted: c.is_deleted,
-            };
-          }
-          setCols((prev) => ({ ...prev, ...fromApi }));
-        }
+        if (cancelled) return;
+        setCols(buildColsState(plan, decisions, norm.columns, columnNormalization));
       })
       .catch(() => {});
-  }, [analysisId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [analysisId, plan, decisions, columnNormalization]);
 
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -130,31 +178,17 @@ export default function Step2Normalize({
     }));
   };
   const resetAll = () => {
-    setCols(() => {
-      const next: Record<string, ColumnDecision> = {};
-      plan.forEach((p) => {
-        next[p.originalName] = {
-          originalName: p.originalName,
-          displayName: p.displayName,
-          suggestedName: p.displayName,
-          normalizedName: p.normalizedName,
-          domain: p.domain,
-          matchMethod: p.matchMethod,
-          matchConfidence: p.matchConfidence,
-          included: true,
-          isDeleted: false,
-        };
-      });
-      return next;
-    });
+    setCols(buildColsState(plan, {}, [], columnNormalization));
   };
 
-  const includedCount = Object.values(cols).filter((c) => c.included && !c.isDeleted).length;
-  const excludedCount = Object.values(cols).filter((c) => !c.included && !c.isDeleted).length;
-  const deletedCount = Object.values(cols).filter((c) => c.isDeleted).length;
-  const renamedCount = Object.values(cols).filter(
-    (c) => c.displayName !== c.suggestedName
-  ).length;
+  const planCols = useMemo(
+    () => plan.map((p) => cols[p.originalName]).filter(Boolean) as ColumnDecision[],
+    [plan, cols],
+  );
+  const includedCount = planCols.filter((c) => c.included && !c.isDeleted).length;
+  const excludedCount = planCols.filter((c) => !c.included && !c.isDeleted).length;
+  const deletedCount = planCols.filter((c) => c.isDeleted).length;
+  const renamedCount = planCols.filter((c) => c.displayName !== c.suggestedName).length;
 
   return (
     <div className="space-y-6">
@@ -213,7 +247,7 @@ export default function Step2Normalize({
               {plan.map((p) => {
                 const col = cols[p.originalName];
                 if (!col) return null;
-                const { type: colType, missingRatio: ratio } = resolveColumnProfileStats(
+                const { type: colType, missingRatio: ratio, missingCount } = resolveColumnProfileStats(
                   p.originalName,
                   p.profileKey,
                   results,
@@ -310,15 +344,11 @@ export default function Step2Normalize({
                                 ? 'bg-text-muted'
                                 : 'bg-success'
                             )}
-                            style={{
-                              width: `${Math.min(Math.max(ratio * 100, 0), 100)}%`,
-                            }}
+                            style={{ width: `${Math.min(ratio * 100, 100)}%` }}
                           />
                         </div>
-                        <span className="text-xs text-text-muted">
-                          {totalRows > 0 || ratio > 0
-                            ? `${(ratio * 100).toFixed(1)}%`
-                            : '0%'}
+                        <span className="text-xs text-text-muted" title={`${missingCount} missing of ${totalRows} rows`}>
+                          {(ratio * 100).toFixed(1)}%
                         </span>
                       </div>
                     </td>
@@ -376,9 +406,9 @@ export default function Step2Normalize({
         <div className="flex items-center gap-3">
           <CheckCircle2 className="h-5 w-5 text-success" aria-hidden />
           <span className="text-sm text-text-muted">
-            {includedCount} of {plan.length} columns confirmed for semantic mapping
+            {includedCount} of {plan.length} columns included for semantic mapping
           </span>
-          <Button onClick={() => onProceed(cols)} size="lg" disabled={saving}>
+          <Button onClick={() => onProceed(decisionsForPlan(plan, cols))} size="lg" disabled={saving}>
             {saving ? 'Saving…' : 'Confirm normalisation & Proceed →'}
           </Button>
         </div>

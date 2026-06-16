@@ -1,48 +1,20 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-
-// ── Domain colours ────────────────────────────────────────────────────────────
-const DOMAIN_COLORS: Record<string, string> = {
-  identifier: '#6366f1',
-  survey_metadata: '#a78bfa',
-  geography: '#14b8a6',
-  demographic: '#f59e0b',
-  household: '#10b981',
-  census: '#3b82f6',
-  population: '#3b82f6',
-  labor: '#f97316',
-  employment: '#f97316',
-  health: '#ef4444',
-  education: '#84cc16',
-  agriculture: '#22c55e',
-  economic_industry: '#06b6d4',
-  uncorrelated: '#94a3b8',
-  uncorrelated_metadata: '#94a3b8',
-  unknown: '#64748b',
-};
+import { domainColor, domainLegendLabel } from '@/lib/domainColors';
 
 // ── Edge colours ──────────────────────────────────────────────────────────────
 const EDGE_COLORS: Record<string, string> = {
+  'owl:equivalentproperty': '#6366f1',
+  'owl:objectproperty': '#14b8a6',
+  'rdfs:subpropertyof': '#8b5cf6',
+  'rdfs:seealso': '#94a3b8',
   intra_domain_association: '#6366f1',
   co_cluster_semantic: '#14b8a6',
   cross_domain_linkage: '#f59e0b',
   strong: '#22c55e',
   weak: '#94a3b8',
 };
-
-function domainColor(domain?: string): string {
-  if (!domain) return DOMAIN_COLORS.unknown;
-  const lower = domain.toLowerCase();
-  for (const key of Object.keys(DOMAIN_COLORS)) {
-    if (lower === key || lower.startsWith(key)) return DOMAIN_COLORS[key];
-  }
-  // Hash-based fallback so dynamic domains get deterministic colors
-  let h = 0;
-  for (let i = 0; i < domain.length; i++) h = (h * 31 + domain.charCodeAt(i)) & 0xffffffff;
-  const hue = Math.abs(h) % 360;
-  return `hsl(${hue},60%,55%)`;
-}
 
 function edgeColor(rel?: string): string {
   if (!rel) return EDGE_COLORS.weak;
@@ -378,7 +350,7 @@ export default function GraphCanvas({ nodes: rawNodes, edges, height = 520 }: Pr
               className="w-2.5 h-2.5 rounded-full shrink-0"
               style={{ backgroundColor: domainColor(d) }}
             />
-            <span className="text-[10px] text-slate-300 font-mono">{d}</span>
+            <span className="text-[10px] text-slate-300 font-mono">{domainLegendLabel(d)}</span>
           </div>
         ))}
       </div>

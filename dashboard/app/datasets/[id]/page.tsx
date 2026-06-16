@@ -13,7 +13,7 @@ import StatCard from '@/components/ui/StatCard';
 import { Alert } from '@/components/ui/Alert';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/cn';
-import { formatIndiaTime } from '@/lib/datetime';
+import { formatIndiaTime, formatUtcTime } from '@/lib/datetime';
 import {
   Rows3,
   Columns3,
@@ -130,8 +130,8 @@ export default function DatasetPage() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-64" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} className="h-24" />
           ))}
         </div>
@@ -172,6 +172,8 @@ export default function DatasetPage() {
   const fileSizeLabel =
     fileSizeMb != null && fileSizeMb > 0 ? `${fileSizeMb} MB` : '—';
 
+  const uploadedAt = dataset.uploaded_at ?? dataset.created_at;
+
   const statusVariant =
     dataset.status === 'ingested'
       ? 'success'
@@ -188,7 +190,7 @@ export default function DatasetPage() {
     {
       icon: Calendar,
       label: 'Uploaded (IST)',
-      value: formatIndiaTime(dataset.created_at),
+      value: formatIndiaTime(uploadedAt),
     },
   ];
 
@@ -206,22 +208,8 @@ export default function DatasetPage() {
         actions={<Badge variant={statusVariant}>{dataset.status}</Badge>}
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {metaItems.map(({ icon: Icon, label, value }) => (
-          <Card key={label} className="!p-4">
-            <div className="flex items-center gap-3">
-              <Icon className="h-8 w-8 text-primary shrink-0" />
-              <div>
-                <p className="text-xl font-bold text-text">{value}</p>
-                <p className="text-xs text-text-muted">{label}</p>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
       <Card title="Dataset summary" className="mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           <StatCard label="Rows" value={fmt(rowCount)} icon={Rows3} />
           <StatCard label="Columns" value={fmt(columnCount)} icon={Columns3} />
           <StatCard label="File size" value={fileSizeLabel} icon={HardDrive} />
@@ -229,6 +217,18 @@ export default function DatasetPage() {
             label="Memory usage"
             value={memoryUsageMb != null ? `${memoryUsageMb} MB` : '—'}
             icon={Database}
+          />
+          <StatCard
+            label="Uploaded"
+            icon={Calendar}
+            highlightedTimes={
+              uploadedAt
+                ? [
+                    { zone: 'IST', time: formatIndiaTime(uploadedAt) },
+                    { zone: 'UTC', time: formatUtcTime(uploadedAt) },
+                  ]
+                : [{ zone: 'IST', time: '—' }, { zone: 'UTC', time: '—' }]
+            }
           />
         </div>
 
