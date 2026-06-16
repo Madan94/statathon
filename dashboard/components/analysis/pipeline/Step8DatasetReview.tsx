@@ -186,6 +186,11 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
     ];
   }, [review]);
 
+  const weightedColumnSet = useMemo(() => {
+    const cols = review?.weight_application?.meta?.weighted_columns ?? [];
+    return new Set(cols);
+  }, [review?.weight_application?.meta?.weighted_columns]);
+
   const handleApprove = async () => {
     setApproving(true);
     try {
@@ -236,7 +241,7 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
     return (
       <div className="pb-24">
         <WorkflowStepper currentStep={3} className="mb-5" />
-        <AnalysisStepper analysisId={analysisId} currentStep={8} className="mb-8" />
+        <AnalysisStepper analysisId={analysisId} currentStep={9} className="mb-8" />
         <p className="text-sm text-text-muted flex items-center gap-2">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading dataset review…
         </p>
@@ -248,9 +253,9 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
     return (
       <div className="pb-24">
         <WorkflowStepper currentStep={3} className="mb-5" />
-        <AnalysisStepper analysisId={analysisId} currentStep={8} className="mb-8" />
+        <AnalysisStepper analysisId={analysisId} currentStep={9} className="mb-8" />
         <Alert variant="error" title="Dataset review unavailable">{error ?? 'Unknown error'}</Alert>
-        <Button variant="ghost" className="mt-4" onClick={onBack}>← Back to column analysis</Button>
+        <Button variant="ghost" className="mt-4" onClick={onBack}>← Back to weight application</Button>
       </div>
     );
   }
@@ -259,10 +264,18 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
     ? review.processed_dataset.columns
     : review.original_dataset.columns;
 
+  const processedStage = review.processed_dataset.snapshot?.stage ?? 'imputed';
+  const processedStageLabel =
+    processedStage === 'final'
+      ? 'v7_dataset_review'
+      : processedStage === 'weighted'
+        ? 'v6_weight_application'
+        : 'v5_missing_value';
+
   return (
     <div className="pb-28">
       <WorkflowStepper currentStep={3} className="mb-5" />
-      <AnalysisStepper analysisId={analysisId} currentStep={8} className="mb-8" />
+      <AnalysisStepper analysisId={analysisId} currentStep={9} className="mb-8" />
       <PageHeader
         title="Dataset review & approval"
         description="Inspect the final transformed dataset after all review phases before entering Report."
@@ -274,7 +287,26 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
         </Alert>
       )}
 
-      {review.dataset_review_completed && (
+      {review.dataset_review_completed && review.final_dataset && (
+        <Alert variant="success" title="Final approved dataset stored" className="mb-6">
+          <p className="text-sm">
+            Canonical snapshot <strong>{review.final_dataset.phase ?? 'v7_dataset_review'}</strong>
+            {' '}(version {review.final_dataset.version}) — all downloads and report use this file.
+          </p>
+          {review.final_dataset.storage_path && (
+            <p className="text-xs text-text-muted mt-1 font-mono break-all">
+              Parquet: {review.final_dataset.storage_path}
+            </p>
+          )}
+          {review.final_dataset.csv_export && (
+            <p className="text-xs text-text-muted mt-1 font-mono break-all">
+              CSV: {review.final_dataset.csv_export}
+            </p>
+          )}
+        </Alert>
+      )}
+
+      {review.dataset_review_completed && !review.final_dataset && (
         <Alert variant="info" title="Dataset approved" className="mb-6">
           This dataset has been approved. You may proceed to the Report phase.
         </Alert>
@@ -295,7 +327,100 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
           <div className="rounded-lg border p-3">Anomalies processed: <strong>{formatNum(review.summary.anomalies_processed)}</strong></div>
           <div className="rounded-lg border p-3">Values imputed: <strong>{formatNum(review.summary.values_imputed)}</strong></div>
         </div>
+        {review.weight_application && (
+          <div className="space-y-3 mt-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <div className="rounded-lg border p-3">
+                Weight applied:{' '}
+                <strong>{review.weight_application.applied ? 'YES' : 'NO'}</strong>
+              </div>
+              <div className="rounded-lg border p-3">
+                Weights skipped:{' '}
+                <strong>{review.weight_application.ignored ? 'YES' : 'NO'}</strong>
+              </div>
+              <div className="rounded-lg border p-3">
+                Weight column:{' '}
+                <strong>{review.weight_application.weight_column ?? '—'}</strong>
+              </div>
+              <div className="rounded-lg border p-3">
+                Quality score:{' '}
+                <strong>
+                  {review.weight_application.quality_score != null
+                    ? `${Math.round(review.weight_application.quality_score * 100)}%`
+                    : '—'}
+                </strong>
+              </div>
+            </div>
+            <div className="rounded-lg border p-3 text-sm">
+              Processed snapshot stage: <strong>{processedStageLabel}</strong>
+              {review.weight_application.meta?.weighted_columns?.length ? (
+                <span className="text-text-muted ml-2">
+                  ({review.weight_application.meta.weighted_columns.length} weighted columns added)
+                </span>
+              ) : null}
+            </div>
+          </div>
+        )}
       </section>
+
+      {review.weight_application?.comparison?.metrics?.length ? (
+        <section className="mb-8">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted mb-3">
+            Weighted vs unweighted metrics
+          </h3>
+          <div className="overflow-x-auto rounded-xl border border-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs uppercase text-text-muted">
+                  <th className="p-3">Metric</th>
+                  <th className="p-3">Unweighted</th>
+                  <th className="p-3">Weighted</th>
+                  <th className="p-3">Delta</th>
+                </tr>
+              </thead>
+              <tbody>
+                {review.weight_application.comparison.metrics.map((m) => (
+                  <tr key={m.column} className="border-b border-border/40">
+                    <td className="p-3 font-medium">{m.label}</td>
+                    <td className="p-3 font-mono">
+                      {m.type === 'rate' && m.unweighted != null
+                        ? `${(m.unweighted * 100).toFixed(1)}%`
+                        : m.unweighted?.toLocaleString() ?? '—'}
+                    </td>
+                    <td className="p-3 font-mono">
+                      {m.type === 'rate' && m.weighted != null
+                        ? `${(m.weighted * 100).toFixed(1)}%`
+                        : m.weighted?.toLocaleString() ?? '—'}
+                    </td>
+                    <td className="p-3 font-mono">
+                      {m.delta != null ? m.delta.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
+      {review.snapshots?.length ? (
+        <section className="mb-8">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted mb-3">
+            Dataset lineage
+          </h3>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-2">
+            {review.snapshots.map((snap, idx) => (
+              <div key={`${String(snap.stage)}-${idx}`} className="rounded-lg border p-3 text-xs">
+                <p className="font-semibold">{String(snap.stage ?? snap.phase ?? 'snapshot')}</p>
+                <p className="text-text-muted mt-1">
+                  v{String(snap.version ?? '?')} · {formatNum(Number(snap.row_count))} rows ·{' '}
+                  {formatNum(Number(snap.column_count))} cols
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="mb-8">
         <div className="flex flex-wrap gap-3 mb-4">
@@ -315,7 +440,10 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
           >
             <option value="">All columns</option>
             {allColumns.map((col) => (
-              <option key={col} value={col}>{col}</option>
+              <option key={col} value={col}>
+                {col}
+                {weightedColumnSet.has(col) ? ' (weighted)' : ''}
+              </option>
             ))}
           </select>
         </div>
@@ -329,7 +457,7 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
             columnFilter={columnFilter}
           />
           <DatasetTable
-            title="Processed dataset"
+            title={`Processed dataset (${processedStageLabel})`}
             side="processed"
             analysisId={analysisId}
             columns={review.processed_dataset.columns}
@@ -391,7 +519,7 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-surface-card/95 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
           <Button variant="ghost" onClick={onBack} className="gap-1">
-            <ArrowLeft className="h-4 w-4" /> Back to column analysis
+            <ArrowLeft className="h-4 w-4" /> Back to weight application
           </Button>
           <div className="flex gap-2">
             <Button

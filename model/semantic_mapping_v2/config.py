@@ -176,11 +176,13 @@ UNCORRELATED_THRESHOLD = float(os.getenv("SEMV2_UNCORRELATED_THRESHOLD", "0.35")
 # STEP 9 — Domain Clustering feature-vector block weights (must sum to 1.0)
 # --------------------------------------------------------------------------
 CLUSTER_FEATURE_WEIGHTS = {
-    "embedding": float(os.getenv("SEMV2_CW_EMBEDDING", "0.40")),
-    "domain": float(os.getenv("SEMV2_CW_DOMAIN", "0.25")),
-    "sample_values": float(os.getenv("SEMV2_CW_SAMPLES", "0.15")),
+    "embedding": float(os.getenv("SEMV2_CW_EMBEDDING", "0.35")),
+    "domain": float(os.getenv("SEMV2_CW_DOMAIN", "0.22")),
+    "sample_values": float(os.getenv("SEMV2_CW_SAMPLES", "0.13")),
     "statistics": float(os.getenv("SEMV2_CW_STATS", "0.10")),
     "column_type": float(os.getenv("SEMV2_CW_TYPE", "0.10")),
+    "graph_affinity": float(os.getenv("SEMV2_CW_GRAPH", "0.05")),
+    "correlation": float(os.getenv("SEMV2_CW_CORRELATION", "0.05")),
 }
 
 # HDBSCAN sizing (uses scikit-learn's native HDBSCAN; no external package).

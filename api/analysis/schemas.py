@@ -61,6 +61,14 @@ class ValidationProceedRequest(BaseModel):
     candidate_count: int = 0
 
 
+class ValidationCandidatesPageResponse(BaseModel):
+    items: list[dict[str, Any]] = Field(default_factory=list)
+    total: int = 0
+    page: int = 1
+    page_size: int = 50
+    has_more: bool = False
+
+
 class ImputationMethodRequest(BaseModel):
     column: str
     method: str
@@ -81,3 +89,7 @@ class NormalizationColumnUpdate(BaseModel):
 
 class NormalizationSaveRequest(BaseModel):
     columns: list[NormalizationColumnUpdate] = Field(default_factory=list)
+
+
+class WeightApplyRequest(BaseModel):
+    weight_column: str = Field(..., max_length=512)

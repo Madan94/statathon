@@ -28,8 +28,10 @@ export default function ReviewPage() {
           !status.missing_value_completed
         ) {
           setBlocked(
-            'Complete rule validation (including Apply to dataset), anomaly review, and missing-value imputation before dataset review.'
+            'Complete rule validation, anomaly review, and missing-value imputation before dataset review.',
           );
+        } else if (!status.weight_application_completed) {
+          setBlocked('Complete weight application (apply or ignore) before dataset review.');
         }
       })
       .catch(() => setBlocked('Could not verify phase status.'))
@@ -48,7 +50,7 @@ export default function ReviewPage() {
     return (
       <AnalysisPipelineShell
         analysisId={analysisId}
-        currentStep={8}
+        currentStep={9}
         title="Dataset review"
         description="Compare original and processed datasets before approval."
       >
@@ -69,6 +71,13 @@ export default function ReviewPage() {
             >
               Go to column analysis
             </button>
+            <button
+              type="button"
+              className="text-sm text-primary underline"
+              onClick={() => router.push(routes.weights)}
+            >
+              Go to weight application
+            </button>
           </div>
         </Alert>
       </AnalysisPipelineShell>
@@ -78,7 +87,7 @@ export default function ReviewPage() {
   return (
     <Step8DatasetReview
       analysisId={analysisId}
-      onBack={() => router.push(routes.columns)}
+      onBack={() => router.push(routes.weights)}
     />
   );
 }

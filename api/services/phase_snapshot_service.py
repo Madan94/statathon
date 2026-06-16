@@ -28,7 +28,7 @@ from services.normalization_transform_service import (
     resolve_validation_decisions,
 )
 
-STAGE_PRIORITY = ("imputed", "anomaly_reviewed", "validated", "normalized", "original")
+STAGE_PRIORITY = ("weighted", "imputed", "anomaly_reviewed", "validated", "normalized", "original")
 
 logger = logging.getLogger(__name__)
 
@@ -234,4 +234,24 @@ class PhaseSnapshotService:
             last = self.snapshot_imputation(analysis_id)
         elif phase in ("imputation", "imputed", "missing_values"):
             last = self.snapshot_imputation(analysis_id)
+
+        if phase in (
+            "validation",
+            "validated",
+            "normalization",
+            "anomaly",
+            "anomaly_reviewed",
+            "imputation",
+            "imputed",
+            "missing_values",
+        ):
+            from services.weight_workflow_service import (
+                WeightWorkflowService,
+                invalidate_weight_after_upstream_refresh,
+            )
+
+            reapply_column = invalidate_weight_after_upstream_refresh(self.db, analysis_id)
+            if reapply_column:
+                WeightWorkflowService(self.db).try_auto_reapply(analysis_id, reapply_column)
+
         return last

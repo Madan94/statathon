@@ -77,7 +77,8 @@ WORKING_STAGE_BY_PHASE: dict[str, str] = {
     "validation": "normalized",
     "anomaly": "validated",
     "imputation": "anomaly_reviewed",
-    "review": "imputed",
+    "weight": "imputed",
+    "review": "weighted",
 }
 
 _STAGE_FALLBACKS: dict[str, tuple[str, ...]] = {
@@ -85,6 +86,7 @@ _STAGE_FALLBACKS: dict[str, tuple[str, ...]] = {
     "validated": ("normalized", "original"),
     "anomaly_reviewed": ("validated", "normalized", "original"),
     "imputed": ("anomaly_reviewed", "validated", "normalized", "original"),
+    "weighted": ("imputed", "anomaly_reviewed", "validated", "normalized", "original"),
 }
 
 
@@ -92,7 +94,7 @@ def load_snapshot_dataframe(db: Session, analysis_id: int, stage: str | None = N
     """Load the latest parquet snapshot for an analysis stage."""
     from database.models import DatasetLineageSnapshot
 
-    stage_priority = ("imputed", "anomaly_reviewed", "validated", "normalized", "original", "final")
+    stage_priority = ("weighted", "imputed", "anomaly_reviewed", "validated", "normalized", "original", "final")
     stages = [stage] if stage else list(stage_priority)
     for st in stages:
         snap = (
@@ -143,5 +145,16 @@ def load_phase_dataframe(
 
 
 def load_analysis_dataframe(db: Session, analysis_id: int) -> tuple[pd.DataFrame, dict[str, Any]]:
-    """Load the latest approved working dataset for reporting (imputed stage)."""
-    return load_phase_dataframe(db, analysis_id, "review")
+    """Load the canonical approved processed dataset for reporting when available."""
+    from review.dataset_snapshot_service import resolve_processed_stage
+
+    stage = resolve_processed_stage(db, analysis_id)
+    snap_df = load_snapshot_dataframe(db, analysis_id, stage)
+    if snap_df is None:
+        snap_df = load_snapshot_dataframe(db, analysis_id, None)
+    if snap_df is None:
+        from services.normalization_transform_service import load_working_dataframe as build_working
+
+        snap_df, _, _ = build_working(db, analysis_id, apply_user_norm=True)
+    schema = infer_schema(snap_df)
+    return normalize_schema(snap_df, schema), schema

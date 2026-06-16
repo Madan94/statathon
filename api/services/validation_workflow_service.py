@@ -10,7 +10,9 @@ from sqlalchemy.orm import Session
 from database.models import ValidationDecision
 from services.analysis_query import (
     build_phase3_from_relational,
+    count_validation_candidates,
     get_analysis_meta,
+    load_all_validation_candidate_dicts,
     merge_checkpoint_phase3_overlay,
 )
 from services.analysis_payload_cache import invalidate_analysis_cache
@@ -82,9 +84,10 @@ class ValidationWorkflowService:
     ) -> dict[str, Any]:
         self._load(analysis_id)
         progress = PhaseStatusService(self.db).validation_review_progress(analysis_id)
-        if progress["total"] > 0 and progress["reviewed"] < progress["total"]:
+        required = progress.get("stored_total") or progress["total"]
+        if required > 0 and progress["reviewed"] < required:
             raise ValueError(
-                f"Review all violations before proceeding ({progress['reviewed']}/{progress['total']} saved)"
+                f"Review all violations before proceeding ({progress['reviewed']}/{required} saved)"
             )
         overlay: dict[str, Any] = {
             "validation_acknowledged": True,
@@ -131,10 +134,7 @@ class ValidationWorkflowService:
     ) -> dict[str, Any]:
         """Atomic: save all decisions, acknowledge gate, mark phase complete."""
         self._load(analysis_id)
-        phase3 = build_phase3_from_relational(self.db, analysis_id)
-        candidates = [
-            c for c in (phase3.get("validation_candidates") or []) if isinstance(c, dict)
-        ]
+        candidates = load_all_validation_candidate_dicts(self.db, analysis_id)
         total = len(candidates)
         decisions = _merge_decisions_with_candidates(candidates, decisions)
         saved = self._persist_decisions(analysis_id, decisions, user_id=user_id, commit=False)
@@ -188,6 +188,9 @@ class ValidationWorkflowService:
         user_id: int | None,
     ) -> dict[str, Any]:
         self._load(analysis_id)
+        candidates = load_all_validation_candidate_dicts(self.db, analysis_id)
+        if candidates:
+            decisions = _merge_decisions_with_candidates(candidates, decisions)
         saved = self._persist_decisions(analysis_id, decisions, user_id=user_id, commit=False)
         snapshot, snapshot_error = refresh_downstream_with_status(
             self.db, analysis_id, "validation"

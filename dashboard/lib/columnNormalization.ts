@@ -32,18 +32,84 @@ export function formatMatchMethod(method?: string): string {
   return MATCH_METHOD_LABELS[method] ?? method.replace(/_/g, ' ');
 }
 
-function profileLookupKeys(originalName: string, normalizedName: string, results: AnalysisResult): string[] {
-  const keys = new Set<string>();
-  keys.add(normalizedName);
-  keys.add(originalName);
-  for (const row of results.column_normalization ?? []) {
-    if (row.original_name !== originalName && row.normalized_name !== normalizedName) continue;
-    keys.add(row.normalized_name);
-    keys.add(row.original_name);
-    const canonical = row.canonical_name as string | undefined;
-    if (canonical) keys.add(canonical);
+/** Map DB/API column name (often canonical) back to plan `original_name`. */
+export function resolvePlanOriginalName(
+  dbColumnName: string,
+  plan: NormalizationPlanRow[],
+  columnNormalization: ColumnNormalizationRow[] = [],
+): string | null {
+  const norm = columnNormalization.find(
+    (r) =>
+      r.original_name === dbColumnName
+      || r.normalized_name === dbColumnName
+      || (r.canonical_name as string | undefined) === dbColumnName,
+  );
+  if (norm?.original_name) return norm.original_name;
+
+  const row = plan.find(
+    (p) =>
+      p.originalName === dbColumnName
+      || p.profileKey === dbColumnName
+      || p.normalizedName === dbColumnName,
+  );
+  return row?.originalName ?? null;
+}
+
+function profileLookupKeys(originalName: string, profileKey: string, results: AnalysisResult): string[] {
+  const seen = new Set<string>();
+  const add = (k?: string | null) => {
+    if (k) seen.add(k);
+  };
+
+  const normRow = (results.column_normalization ?? []).find(
+    (r) => r.original_name === originalName,
+  );
+
+  add(normRow?.canonical_name as string | undefined);
+  add(normRow?.normalized_name);
+  add(profileKey);
+  add(originalName);
+
+  return [...seen];
+}
+
+/** Same resolution order as Step 1 `missingCount(col)`. */
+function resolveMissingCount(
+  keys: string[],
+  columnProfiles: Record<string, ColumnProfile> | undefined,
+  missingPerCol: Record<string, number> | undefined,
+  totalRows: number,
+): { missingCount: number; profile?: ColumnProfile } {
+  for (const key of keys) {
+    const fromHealth = missingPerCol?.[key];
+    if (fromHealth != null && fromHealth > 0) {
+      return { missingCount: Number(fromHealth), profile: columnProfiles?.[key] };
+    }
   }
-  return [...keys];
+
+  for (const key of keys) {
+    const profile = columnProfiles?.[key];
+    if (profile?.missing_ratio != null && totalRows > 0) {
+      return {
+        missingCount: Math.round(Number(profile.missing_ratio) * totalRows),
+        profile,
+      };
+    }
+    if (profile?.missing_count != null) {
+      return { missingCount: Number(profile.missing_count), profile };
+    }
+  }
+
+  for (const key of keys) {
+    if (missingPerCol?.[key] != null) {
+      return {
+        missingCount: Number(missingPerCol[key]),
+        profile: columnProfiles?.[key],
+      };
+    }
+  }
+
+  return { missingCount: 0, profile: undefined };
 }
 
 /** Resolve type and missing stats when profiles/schema use canonical column names. */
@@ -61,17 +127,12 @@ export function resolveColumnProfileStats(
   const columnProfiles = results.column_profiles as Record<string, ColumnProfile> | undefined;
   const totalRows = health?.rows ?? 0;
   const keys = profileLookupKeys(originalName, profileKey, results);
+  const missingPerCol = health?.missing_per_column ?? {};
 
-  let profile: ColumnProfile | undefined;
-  let missingFromHealth: number | undefined;
   let typeFromSchema: string | undefined;
   let typeFromDtypes: string | undefined;
 
   for (const key of keys) {
-    if (!profile && columnProfiles?.[key]) profile = columnProfiles[key];
-    if (missingFromHealth == null && health?.missing_per_column?.[key] != null) {
-      missingFromHealth = Number(health.missing_per_column[key]);
-    }
     if (!typeFromSchema && schema[key]) typeFromSchema = schema[key];
     if (!typeFromDtypes && health?.dtypes?.[key]) typeFromDtypes = health.dtypes[key];
   }
@@ -83,14 +144,12 @@ export function resolveColumnProfileStats(
   );
   const typeFromMapping = (mapRow as { dtype?: string } | undefined)?.dtype;
 
-  const missingCount =
-    missingFromHealth != null
-      ? missingFromHealth
-      : profile?.missing_count != null
-        ? Number(profile.missing_count)
-        : profile?.missing_ratio != null && totalRows > 0
-          ? Math.round(Number(profile.missing_ratio) * totalRows)
-          : 0;
+  const { missingCount, profile } = resolveMissingCount(
+    keys,
+    columnProfiles,
+    missingPerCol,
+    totalRows,
+  );
 
   const missingRatio =
     totalRows > 0
@@ -160,7 +219,7 @@ export function buildNormalizationPlan(results: AnalysisResult): NormalizationPl
     return {
       originalName,
       normalizedName,
-      profileKey: normalizedName,
+      profileKey: originalName,
       displayName,
       domain,
       matchMethod: 'Legacy analysis (re-run for dynamic names)',

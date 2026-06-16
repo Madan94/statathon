@@ -17,7 +17,8 @@ from database.models import (
 )
 
 VALIDATION_CANDIDATE_READ_LIMIT = int(os.getenv("VALIDATION_CANDIDATE_READ_LIMIT", "250"))
-VALIDATION_CANDIDATE_PERSIST_LIMIT = int(os.getenv("VALIDATION_CANDIDATE_PERSIST_LIMIT", "500"))
+# 0 = persist all validation candidates (no cap)
+VALIDATION_CANDIDATE_PERSIST_LIMIT = int(os.getenv("VALIDATION_CANDIDATE_PERSIST_LIMIT", "0"))
 
 _ANALYSIS_META_COLS = (
     Analysis.id,
@@ -135,14 +136,122 @@ def load_checkpoint_phase3_overlay(db: Session, analysis_id: int) -> dict[str, A
     return overlay
 
 
-def _validation_candidate_rows(db: Session, analysis_id: int, *, limit: int) -> tuple[list[Phase3ValidationCandidate], int | None]:
-    sev_rank = case(
+def _validation_severity_rank():
+    return case(
         (Phase3ValidationCandidate.severity == "CRITICAL", 0),
         (Phase3ValidationCandidate.severity == "HIGH", 1),
         (Phase3ValidationCandidate.severity == "MEDIUM", 2),
         (Phase3ValidationCandidate.severity == "LOW", 3),
         else_=4,
     )
+
+
+def _validation_candidates_query(
+    db: Session,
+    analysis_id: int,
+    *,
+    severity: str | None = None,
+    column: str | None = None,
+    rule_id: str | None = None,
+):
+    q = db.query(Phase3ValidationCandidate).filter(
+        Phase3ValidationCandidate.analysis_id == analysis_id
+    )
+    if severity:
+        q = q.filter(Phase3ValidationCandidate.severity == severity.upper())
+    if column:
+        q = q.filter(Phase3ValidationCandidate.column_name.ilike(f"%{column}%"))
+    return q
+
+
+def count_validation_candidates(
+    db: Session,
+    analysis_id: int,
+    *,
+    severity: str | None = None,
+    column: str | None = None,
+    rule_id: str | None = None,
+) -> int:
+    return (
+        _validation_candidates_query(
+            db,
+            analysis_id,
+            severity=severity,
+            column=column,
+            rule_id=rule_id,
+        ).count()
+    )
+
+
+def list_validation_candidates_paginated(
+    db: Session,
+    analysis_id: int,
+    *,
+    page: int = 1,
+    page_size: int = 50,
+    severity: str | None = None,
+    column: str | None = None,
+    rule_id: str | None = None,
+) -> dict[str, Any]:
+    page = max(1, int(page))
+    page_size = max(1, min(int(page_size), 200))
+    q = _validation_candidates_query(
+        db,
+        analysis_id,
+        severity=severity,
+        column=column,
+        rule_id=rule_id,
+    )
+    total = q.count()
+    rows = (
+        q.options(
+            load_only(
+                Phase3ValidationCandidate.id,
+                Phase3ValidationCandidate.kind,
+                Phase3ValidationCandidate.column_name,
+                Phase3ValidationCandidate.row_index,
+                Phase3ValidationCandidate.severity,
+                Phase3ValidationCandidate.candidate_action,
+                Phase3ValidationCandidate.detail,
+            )
+        )
+        .order_by(_validation_severity_rank(), Phase3ValidationCandidate.id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    items = [_candidate_to_dict(row) for row in rows]
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "has_more": page * page_size < total,
+    }
+
+
+def load_all_validation_candidate_dicts(db: Session, analysis_id: int) -> list[dict[str, Any]]:
+    rows = (
+        _validation_candidates_query(db, analysis_id)
+        .options(
+            load_only(
+                Phase3ValidationCandidate.id,
+                Phase3ValidationCandidate.kind,
+                Phase3ValidationCandidate.column_name,
+                Phase3ValidationCandidate.row_index,
+                Phase3ValidationCandidate.severity,
+                Phase3ValidationCandidate.candidate_action,
+                Phase3ValidationCandidate.detail,
+            )
+        )
+        .order_by(_validation_severity_rank(), Phase3ValidationCandidate.id)
+        .all()
+    )
+    return [_candidate_to_dict(row) for row in rows]
+
+
+def _validation_candidate_rows(db: Session, analysis_id: int, *, limit: int) -> tuple[list[Phase3ValidationCandidate], int | None]:
+    sev_rank = _validation_severity_rank()
     rows = (
         db.query(Phase3ValidationCandidate)
         .options(
@@ -242,13 +351,17 @@ def build_phase3_from_relational(db: Session, analysis_id: int) -> dict[str, Any
     candidates, candidate_total = _validation_candidate_rows(
         db, analysis_id, limit=VALIDATION_CANDIDATE_READ_LIMIT
     )
+    total_count = count_validation_candidates(db, analysis_id)
+    if total_count:
+        phase3["validation_candidates_total"] = total_count
     if candidates:
         phase3["validation_candidates"] = [_candidate_to_dict(c) for c in candidates]
-        if candidate_total is None:
+        if total_count > len(candidates):
+            phase3["validation_candidates_truncated"] = True
+        elif candidate_total is None:
             phase3["validation_candidates_truncated"] = True
         elif candidate_total > len(candidates):
             phase3["validation_candidates_truncated"] = True
-            phase3["validation_candidates_total"] = candidate_total
 
     val_row = (
         db.query(ValidationResult)
@@ -259,6 +372,11 @@ def build_phase3_from_relational(db: Session, analysis_id: int) -> dict[str, Any
     )
     if val_row and isinstance(val_row.payload, dict):
         phase3["validation_results"] = val_row.payload
+        if val_row.payload.get("candidates_truncated"):
+            phase3["validation_candidates_truncated"] = True
+            reported = val_row.payload.get("candidate_count")
+            if reported is not None:
+                phase3["validation_candidates_reported_total"] = int(reported)
     elif not phase3.get("validation_results"):
         try:
             summary = (

@@ -159,7 +159,7 @@ export default function ColumnAnalysisLayout({
       toast.error('Complete anomaly and missing-value review before proceeding');
       return;
     }
-    router.push(`/report/report-builder?analysisId=${analysisId}`);
+    router.push(routes.weights);
   };
 
   const missingForSelected = selectedColumn ? resolveMissingCount(selectedColumn, results) : 0;
@@ -369,8 +369,8 @@ export default function ColumnAnalysisLayout({
           </div>
 
           <Button onClick={handleProceed} size="lg" className="gap-2" disabled={!canProceedToDatasetReview}>
-            <ClipboardCheck className="h-4 w-4" />
-            Complete review & proceed to Dataset Review →
+            Proceed to weight application
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>

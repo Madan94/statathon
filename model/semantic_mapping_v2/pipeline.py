@@ -170,7 +170,10 @@ class SemanticPipelineV2:
 
         # STEP 9-11 — clustering, labeling, validation ----------------------
         clusters, column_clusters = self.clusterer.cluster(
-            features=features, mappings=mappings, column_vectors=column_vectors
+            features=features,
+            mappings=mappings,
+            column_vectors=column_vectors,
+            df=df,
         )
 
         # Schema graph + Knowledge graph ------------------------------------

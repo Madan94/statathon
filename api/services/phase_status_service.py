@@ -15,8 +15,10 @@ from database.models import (
 )
 from services.analysis_query import (
     build_phase3_from_relational,
+    count_validation_candidates,
     get_analysis_meta,
     get_normalization_version,
+    load_all_validation_candidate_dicts,
     load_analysis_checkpoint,
     load_checkpoint_phase3_overlay,
 )
@@ -110,6 +112,29 @@ def ensure_phase_status_schema() -> None:
                                 "ADD COLUMN dataset_review_completed BOOLEAN NOT NULL DEFAULT 0"
                             )
                         )
+            if "weight_application_completed" not in cols:
+                dialect = engine.dialect.name
+                with engine.begin() as conn:
+                    if dialect == "postgresql":
+                        conn.execute(
+                            text(
+                                "ALTER TABLE analysis_phase_status "
+                                "ADD COLUMN IF NOT EXISTS weight_application_completed BOOLEAN NOT NULL DEFAULT FALSE"
+                            )
+                        )
+                    else:
+                        conn.execute(
+                            text(
+                                "ALTER TABLE analysis_phase_status "
+                                "ADD COLUMN weight_application_completed BOOLEAN NOT NULL DEFAULT 0"
+                            )
+                        )
+        WeightProfile = __import__("database.models", fromlist=["WeightProfile"]).WeightProfile
+        WeightApplication = __import__("database.models", fromlist=["WeightApplication"]).WeightApplication
+        WeightAuditLog = __import__("database.models", fromlist=["WeightAuditLog"]).WeightAuditLog
+        WeightProfile.__table__.create(bind=engine, checkfirst=True)
+        WeightApplication.__table__.create(bind=engine, checkfirst=True)
+        WeightAuditLog.__table__.create(bind=engine, checkfirst=True)
     except Exception:
         pass
     _schema_ready = True
@@ -135,36 +160,58 @@ class PhaseStatusService:
 
     def validation_review_progress(self, analysis_id: int) -> dict[str, Any]:
         phase3 = build_phase3_from_relational(self.db, analysis_id)
-        candidates = [
-            c for c in (phase3.get("validation_candidates") or []) if isinstance(c, dict)
-        ]
-        total = len(candidates)
-        candidate_keys = {_candidate_key(c) for c in candidates if c.get("column")}
+        db_total = count_validation_candidates(self.db, analysis_id)
+        reported_total = int(phase3.get("validation_candidates_reported_total") or 0)
+        if not reported_total:
+            val_payload = phase3.get("validation_results") or {}
+            if isinstance(val_payload, dict):
+                reported_total = int(val_payload.get("candidate_count") or 0)
+
+        all_candidates = load_all_validation_candidate_dicts(self.db, analysis_id)
+        candidate_keys = {_candidate_key(c) for c in all_candidates if c.get("column")}
+        reviewable = db_total or len(candidate_keys)
+        total = reported_total if reported_total > reviewable else reviewable
+        if total <= 0:
+            total = reviewable
+
         saved = self.db.query(ValidationDecision).filter(
             ValidationDecision.analysis_id == analysis_id
         ).all()
         reviewed_keys = {_decision_key(d) for d in saved}
-        reviewed = len(candidate_keys & reviewed_keys) if candidate_keys else len(saved)
-        if candidate_keys and reviewed < total and len(saved) >= total:
-            cand_pos = {_position_key(k[0], k[1]) for k in candidate_keys}
-            dec_pos = {_position_key(d.column_name, d.row_index) for d in saved}
-            reviewed = len(cand_pos & dec_pos)
+        if candidate_keys:
+            reviewed = len(candidate_keys & reviewed_keys)
+            if reviewed < reviewable and len(saved) >= reviewable:
+                cand_pos = {_position_key(k[0], k[1]) for k in candidate_keys}
+                dec_pos = {_position_key(d.column_name, d.row_index) for d in saved}
+                reviewed = len(cand_pos & dec_pos)
+        else:
+            reviewed = len(saved)
+
         overlay = load_checkpoint_phase3_overlay(self.db, analysis_id)
         acknowledged = bool(overlay.get("validation_acknowledged"))
         status_row = self.get_or_create(analysis_id)
-        complete = (
-            status_row.rule_validation_completed
-            or (total == 0 and acknowledged)
-            or (reviewed >= total and total > 0 and acknowledged)
+        truncated = reported_total > reviewable > 0
+        complete_threshold = reviewable if reviewable else total
+        progress_total = reviewable or total
+        review_complete = (
+            progress_total == 0
+            or (reviewed >= complete_threshold and complete_threshold > 0)
         )
+        phase_complete = bool(status_row.rule_validation_completed)
+        complete = phase_complete or (review_complete and acknowledged)
         return {
             "analysis_id": analysis_id,
-            "total": total,
+            "total": progress_total,
+            "reported_total": reported_total if truncated else None,
             "reviewed": reviewed,
-            "remaining": max(0, total - reviewed),
-            "progress_pct": round((reviewed / total) * 100, 1) if total else 100.0,
+            "remaining": max(0, progress_total - reviewed),
+            "progress_pct": round((reviewed / progress_total) * 100, 1) if progress_total else 100.0,
+            "review_complete": review_complete,
+            "phase_complete": phase_complete,
             "acknowledged": acknowledged,
             "complete": complete,
+            "stored_total": reviewable,
+            "truncated": truncated,
         }
 
     def mark_rule_validation_complete(self, analysis_id: int) -> AnalysisPhaseStatus:
@@ -394,6 +441,7 @@ class PhaseStatusService:
             "rule_validation_completed": row.rule_validation_completed or val["complete"],
             "anomaly_completed": row.anomaly_completed,
             "missing_value_completed": row.missing_value_completed,
+            "weight_application_completed": row.weight_application_completed,
             "dataset_review_completed": row.dataset_review_completed,
             "validation": val,
             "anomaly": anomaly,

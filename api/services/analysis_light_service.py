@@ -5,13 +5,15 @@ from typing import Any
 
 from sqlalchemy.orm import Session, load_only
 
-from analysis_state.cluster_utils import normalize_domain_distribution
+from analysis_state.cluster_utils import cluster_from_db_row, normalize_domain_distribution
+from analysis_state.schema_graph_utils import enrich_schema_graph_edges
 from database.models import (
     DatasetContextRecord,
     DatasetIntelligenceRecord,
     PriorityDependency,
     SchemaGraphEdge,
     SemanticCluster,
+    SemanticProfile,
 )
 from services.analysis_query import get_analysis_meta, load_checkpoint_json_key
 
@@ -196,24 +198,37 @@ def build_clusters_response(db: Session, analysis_id: int) -> dict[str, Any]:
     clusters = []
     for c in rows:
         meta = c.cluster_metadata or {}
-        clusters.append(
-            {
-                "cluster_id": c.cluster_name,
-                "domain": c.semantic_domain,
-                "support_score": c.support_score,
-                "support": meta.get("support"),
-                "columns": meta.get("columns"),
-                "domain_distribution": normalize_domain_distribution(
-                    meta.get("domain_distribution"),
-                    fallback_domain=c.semantic_domain,
-                    column_count=len(meta.get("columns") or []),
-                ),
-            }
+        unified = cluster_from_db_row(
+            c.cluster_name,
+            c.semantic_domain,
+            c.support_score,
+            meta if isinstance(meta, dict) else {},
         )
+        unified["domain_distribution"] = normalize_domain_distribution(
+            unified.get("domain_distribution"),
+            fallback_domain=unified.get("domain"),
+            column_count=len(unified.get("columns") or []),
+        )
+        clusters.append(unified)
     return {"meta": {"analysis_id": analysis_id}, "clusters": clusters}
 
 
 def build_graph_response(db: Session, analysis_id: int) -> dict[str, Any]:
+    profiles = (
+        db.query(SemanticProfile)
+        .options(load_only(SemanticProfile.column_name, SemanticProfile.semantic_domain))
+        .filter(SemanticProfile.analysis_id == analysis_id)
+        .all()
+    )
+    domain_map = {str(p.column_name): str(p.semantic_domain) for p in profiles if p.column_name and p.semantic_domain}
+
+    checkpoint_graph = load_checkpoint_json_key(db, analysis_id, "schema_graph")
+    checkpoint_edges = (
+        checkpoint_graph.get("edges")
+        if isinstance(checkpoint_graph, dict) and isinstance(checkpoint_graph.get("edges"), list)
+        else None
+    )
+
     edges_db = (
         db.query(SchemaGraphEdge)
         .options(
@@ -222,6 +237,9 @@ def build_graph_response(db: Session, analysis_id: int) -> dict[str, Any]:
                 SchemaGraphEdge.target_column,
                 SchemaGraphEdge.edge_weight,
                 SchemaGraphEdge.relationship_type,
+                SchemaGraphEdge.owl_type,
+                SchemaGraphEdge.source_domain,
+                SchemaGraphEdge.target_domain,
                 SchemaGraphEdge.semantic_reason,
             )
         )
@@ -230,16 +248,42 @@ def build_graph_response(db: Session, analysis_id: int) -> dict[str, Any]:
     )
     edge_list: list[dict[str, Any]] = []
     nodes_set: set[str] = set()
+    raw_edges: list[dict[str, Any]] = []
     for e in edges_db:
         nodes_set.add(e.source_column)
         nodes_set.add(e.target_column)
-        edge_list.append(
+        raw_edges.append(
             {
                 "source": e.source_column,
                 "target": e.target_column,
                 "weight": e.edge_weight,
                 "relationship_type": e.relationship_type,
                 "semantic_reason": e.semantic_reason,
+                "owl_type": e.owl_type,
+                "source_domain": e.source_domain,
+                "target_domain": e.target_domain,
+            }
+        )
+    edge_list = enrich_schema_graph_edges(
+        raw_edges,
+        domain_map=domain_map,
+        checkpoint_edges=checkpoint_edges,
+    )
+
+    checkpoint_nodes_by_name: dict[str, dict[str, Any]] = {}
+    if isinstance(checkpoint_graph, dict):
+        for node in checkpoint_graph.get("nodes") or []:
+            if isinstance(node, dict) and node.get("name"):
+                checkpoint_nodes_by_name[str(node["name"])] = node
+
+    graph_nodes = []
+    for name in sorted(nodes_set):
+        cp = checkpoint_nodes_by_name.get(name, {})
+        graph_nodes.append(
+            {
+                "name": name,
+                "domain": cp.get("domain") or domain_map.get(name),
+                "cluster": cp.get("cluster"),
             }
         )
 
@@ -272,7 +316,7 @@ def build_graph_response(db: Session, analysis_id: int) -> dict[str, Any]:
     summary = _semantic_summary(_context_row(db, analysis_id))
     return {
         "meta": {"analysis_id": analysis_id},
-        "nodes": [{"name": n} for n in sorted(nodes_set)],
+        "nodes": graph_nodes,
         "edges": edge_list,
         "priority_dependencies": priority_flat,
         "dataset_metadata": summary.get("dataset_metadata") or {},

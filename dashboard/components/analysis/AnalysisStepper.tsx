@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { stepHref } from '@/lib/analysisPipeline';
+import { analysisApi } from '@/lib/api';
 
 export const PIPELINE_STEPS = [
   { id: 1, label: 'Summary', sublabel: 'Dataset overview' },
@@ -13,7 +15,8 @@ export const PIPELINE_STEPS = [
   { id: 5, label: 'Schema', sublabel: 'Graph view' },
   { id: 6, label: 'Rule Validation', sublabel: 'Single & multi column' },
   { id: 7, label: 'Column Analysis', sublabel: 'Anomaly & missing' },
-  { id: 8, label: 'Dataset Review', sublabel: 'Approve & proceed' },
+  { id: 8, label: 'Weight Application', sublabel: 'Survey weights' },
+  { id: 9, label: 'Dataset Review', sublabel: 'Approve & proceed' },
 ] as const;
 
 interface AnalysisStepperProps {
@@ -22,11 +25,53 @@ interface AnalysisStepperProps {
   className?: string;
 }
 
+function stepUnlocked(
+  stepId: number,
+  status: Awaited<ReturnType<typeof analysisApi.getPhaseStatus>> | null,
+): boolean {
+  if (!status) return true;
+  if (stepId <= 6) return true;
+  if (stepId === 7) {
+    return Boolean(
+      status.rule_validation_completed && status.anomaly_completed && status.missing_value_completed,
+    );
+  }
+  if (stepId === 8) {
+    return Boolean(
+      status.rule_validation_completed && status.anomaly_completed && status.missing_value_completed,
+    );
+  }
+  if (stepId === 9) {
+    return Boolean(status.weight_application_completed);
+  }
+  return true;
+}
+
 export default function AnalysisStepper({
   currentStep,
   analysisId,
   className,
 }: AnalysisStepperProps) {
+  const [phaseStatus, setPhaseStatus] = useState<Awaited<
+    ReturnType<typeof analysisApi.getPhaseStatus>
+  > | null>(null);
+
+  useEffect(() => {
+    if (!analysisId) return;
+    analysisApi
+      .getPhaseStatus(analysisId)
+      .then(setPhaseStatus)
+      .catch(() => setPhaseStatus(null));
+  }, [analysisId, currentStep]);
+
+  const unlockedByStep = useMemo(() => {
+    const map = new Map<number, boolean>();
+    for (const step of PIPELINE_STEPS) {
+      map.set(step.id, stepUnlocked(step.id, phaseStatus));
+    }
+    return map;
+  }, [phaseStatus]);
+
   return (
     <nav
       className={cn(
@@ -41,6 +86,7 @@ export default function AnalysisStepper({
           const active = step.id === currentStep;
           const last = idx === PIPELINE_STEPS.length - 1;
           const href = analysisId ? stepHref(analysisId, step.id) : undefined;
+          const unlocked = unlockedByStep.get(step.id) ?? true;
 
           const inner = (
             <>
@@ -50,7 +96,8 @@ export default function AnalysisStepper({
                   active && 'border-accent bg-accent text-white shadow-sm shadow-accent/30',
                   done && 'border-success bg-success text-white',
                   !active && !done && 'border-border bg-surface text-text-muted',
-                  href && !active && 'hover:border-accent/50'
+                  href && unlocked && !active && 'hover:border-accent/50',
+                  !unlocked && 'opacity-40 cursor-not-allowed',
                 )}
                 aria-current={active ? 'step' : undefined}
               >
@@ -72,15 +119,20 @@ export default function AnalysisStepper({
                   'flex flex-col items-center gap-1 flex-1 min-w-0',
                   active && 'text-primary',
                   done && 'text-success',
-                  !active && !done && 'text-text-muted'
+                  !active && !done && 'text-text-muted',
                 )}
               >
-                {href ? (
+                {href && unlocked ? (
                   <Link href={href} className="flex flex-col items-center gap-1 min-w-0">
                     {inner}
                   </Link>
                 ) : (
-                  inner
+                  <span
+                    className="flex flex-col items-center gap-1 min-w-0"
+                    title={!unlocked ? 'Complete previous phases first' : undefined}
+                  >
+                    {inner}
+                  </span>
                 )}
               </div>
               {!last && (

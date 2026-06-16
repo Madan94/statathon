@@ -66,6 +66,9 @@ class SchemaGraphRepository:
                     target_column=edge["target_column"],
                     edge_weight=float(edge["edge_weight"]),
                     relationship_type=edge.get("relationship_type"),
+                    owl_type=edge.get("owl_type"),
+                    source_domain=edge.get("source_domain"),
+                    target_domain=edge.get("target_domain"),
                     semantic_reason=edge.get("semantic_reason"),
                 )
             )

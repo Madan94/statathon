@@ -26,3 +26,20 @@ export function formatIndiaTime(iso?: string | null): string {
     hour12: true,
   }).format(date);
 }
+
+/** UTC / global reference time for the same API timestamp. */
+export function formatUtcTime(iso?: string | null): string {
+  if (!iso) return '—';
+  const date = parseApiUtcTimestamp(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'UTC',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).format(date);
+}

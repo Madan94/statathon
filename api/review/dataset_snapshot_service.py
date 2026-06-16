@@ -17,10 +17,45 @@ STAGE_LABELS: dict[str, str] = {
     "validated": "v3_rule_validation",
     "anomaly_reviewed": "v4_anomaly",
     "imputed": "v5_missing_value",
-    "final": "v6_review",
+    "weighted": "v6_weight_application",
+    "final": "v7_dataset_review",
 }
 
 WORKING_STAGE = "imputed"
+FINAL_STAGE = "final"
+
+
+def resolve_working_stage(db: Session, analysis_id: int) -> str:
+    from database.models import WeightApplication
+
+    app = (
+        db.query(WeightApplication)
+        .filter(WeightApplication.analysis_id == analysis_id, WeightApplication.applied.is_(True))
+        .first()
+    )
+    if app:
+        return "weighted"
+    return WORKING_STAGE
+
+
+def resolve_processed_stage(db: Session, analysis_id: int) -> str:
+    """Return canonical processed stage: approved final snapshot, else latest working."""
+    from services.phase_status_service import PhaseStatusService
+
+    row = PhaseStatusService(db).get_or_create(analysis_id)
+    if row.dataset_review_completed:
+        snap = (
+            db.query(DatasetLineageSnapshot)
+            .filter(
+                DatasetLineageSnapshot.analysis_id == analysis_id,
+                DatasetLineageSnapshot.stage == FINAL_STAGE,
+            )
+            .order_by(DatasetLineageSnapshot.version.desc())
+            .first()
+        )
+        if snap is not None:
+            return FINAL_STAGE
+    return resolve_working_stage(db, analysis_id)
 
 
 class DatasetSnapshotService:
@@ -101,9 +136,12 @@ class DatasetSnapshotService:
 
         raise ValueError("Original dataset snapshot unavailable")
 
-    def load_processed_dataframe(self, analysis_id: int) -> tuple[pd.DataFrame, DatasetLineageSnapshot | None]:
-        """Latest working dataset snapshot (imputed stage) — read parquet, rebuild chain only if missing."""
-        snap = self._latest_snapshot(analysis_id, WORKING_STAGE)
+    def load_working_processed_dataframe(
+        self, analysis_id: int
+    ) -> tuple[pd.DataFrame, DatasetLineageSnapshot | None]:
+        """Pre-approval working snapshot — weighted if applied, else imputed."""
+        stage = resolve_working_stage(self.db, analysis_id)
+        snap = self._latest_snapshot(analysis_id, stage)
         if snap:
             df = self._read_snapshot_df(snap)
             if df is not None:
@@ -113,13 +151,89 @@ class DatasetSnapshotService:
 
         PhaseSnapshotService(self.db).snapshot_imputation(analysis_id)
         self.db.flush()
-        snap = self._latest_snapshot(analysis_id, WORKING_STAGE)
+        stage = resolve_working_stage(self.db, analysis_id)
+        snap = self._latest_snapshot(analysis_id, stage)
         if snap:
             df = self._read_snapshot_df(snap)
             if df is not None:
                 return df, snap
 
         raise ValueError("Working dataset snapshot unavailable — complete missing value review first")
+
+    def load_processed_dataframe(self, analysis_id: int) -> tuple[pd.DataFrame, DatasetLineageSnapshot | None]:
+        """Canonical processed dataset — approved final snapshot when present, else working."""
+        stage = resolve_processed_stage(self.db, analysis_id)
+        if stage == FINAL_STAGE:
+            snap = self._latest_snapshot(analysis_id, FINAL_STAGE)
+            if snap:
+                df = self._read_snapshot_df(snap)
+                if df is not None:
+                    return df, snap
+        return self.load_working_processed_dataframe(analysis_id)
+
+    def persist_final_approved_snapshot(
+        self,
+        analysis_id: int,
+        *,
+        user_id: int | None = None,
+        approved_at: datetime | None = None,
+    ) -> dict[str, Any]:
+        """Materialize the approved processed dataset as the single canonical final snapshot."""
+        from services.analysis_query import get_analysis_meta
+        from services.apply_service import _derived_dir, _persist_snapshot
+        from object_storage.object_store import try_build_default_store
+
+        an = get_analysis_meta(self.db, analysis_id)
+        if not an:
+            raise ValueError("Analysis not found")
+
+        existing = self._latest_snapshot(analysis_id, FINAL_STAGE)
+        if existing:
+            df = self._read_snapshot_df(existing)
+            if df is not None:
+                return {
+                    "stage": FINAL_STAGE,
+                    "version": existing.version,
+                    "storage_path": existing.storage_path,
+                    "object_key": existing.object_key,
+                    "row_count": existing.row_count,
+                    "column_count": existing.column_count,
+                    "phase": STAGE_LABELS[FINAL_STAGE],
+                    "already_exists": True,
+                }
+
+        df, source_snap = self.load_working_processed_dataframe(analysis_id)
+        from database.models import Dataset
+
+        ds = self.db.query(Dataset).filter(Dataset.id == an.dataset_id).first()
+        store = try_build_default_store() if ds and ds.object_key else None
+        source_stage = source_snap.stage if source_snap else resolve_working_stage(self.db, analysis_id)
+        approved_at = approved_at or datetime.utcnow()
+
+        meta: dict[str, Any] = {
+            "phase": STAGE_LABELS[FINAL_STAGE],
+            "approved_at": approved_at.isoformat(),
+            "source_stage": source_stage,
+            "source_snapshot_id": source_snap.id if source_snap else None,
+            "source_snapshot_version": source_snap.version if source_snap else None,
+            "approved_by_user_id": user_id,
+        }
+        snap_meta = _persist_snapshot(
+            self.db,
+            analysis_id=analysis_id,
+            dataset_id=an.dataset_id,
+            stage=FINAL_STAGE,
+            df=df,
+            store=store,
+            meta=meta,
+        )
+
+        final_csv = _derived_dir() / f"analysis_{analysis_id}_final.csv"
+        df.to_csv(final_csv, index=False)
+        snap_meta["csv_export"] = str(final_csv)
+        snap_meta["phase"] = STAGE_LABELS[FINAL_STAGE]
+        snap_meta["already_exists"] = False
+        return snap_meta
 
     @staticmethod
     def missing_cell_count(df: pd.DataFrame) -> int:
@@ -234,17 +348,38 @@ class DatasetSnapshotService:
         raise ValueError(f"Unsupported export format: {fmt}")
 
     def ensure_review_snapshot(self, analysis_id: int) -> dict[str, Any] | None:
-        """Alias latest working snapshot as review-ready metadata (no duplicate write)."""
-        snap = self._latest_snapshot(analysis_id, WORKING_STAGE)
+        """Return metadata for the canonical processed snapshot (final if approved)."""
+        stage = resolve_processed_stage(self.db, analysis_id)
+        snap = self._latest_snapshot(analysis_id, stage)
         if not snap:
             return None
+        phase_label = STAGE_LABELS.get(snap.stage, snap.stage)
         return {
             "analysis_id": analysis_id,
-            "phase": "latest_review_version",
+            "phase": phase_label,
             "stage": snap.stage,
             "version": snap.version,
             "row_count": snap.row_count,
             "column_count": snap.column_count,
             "dataset_path": snap.storage_path,
             "created_at": snap.created_at.isoformat() if snap.created_at else datetime.utcnow().isoformat(),
+            "meta": snap.meta or {},
+        }
+
+    def final_dataset_meta(self, analysis_id: int) -> dict[str, Any] | None:
+        snap = self._latest_snapshot(analysis_id, FINAL_STAGE)
+        if not snap:
+            return None
+        meta = snap.meta or {}
+        return {
+            "stage": FINAL_STAGE,
+            "phase": STAGE_LABELS[FINAL_STAGE],
+            "version": snap.version,
+            "storage_path": snap.storage_path,
+            "object_key": snap.object_key,
+            "csv_export": meta.get("csv_export"),
+            "row_count": snap.row_count,
+            "column_count": snap.column_count,
+            "approved_at": meta.get("approved_at"),
+            "source_stage": meta.get("source_stage"),
         }

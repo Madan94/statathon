@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
+from analysis_state.cluster_utils import unify_cluster_record
 from core.state import AnalysisState
 from api.repositories.intelligence_repository import DatasetIntelligenceRepository
 from api.repositories.semantic_repository import (
@@ -52,15 +53,25 @@ class SemanticPersistenceService:
 
         cluster_rows: list[dict] = []
         for c in state.semantic_clusters or []:
+            if not isinstance(c, dict):
+                continue
+            unified = unify_cluster_record(c)
             cluster_rows.append(
                 {
-                    "cluster_name": c.get("cluster_id") or c.get("cluster_name"),
-                    "semantic_domain": c.get("domain"),
-                    "support_score": c.get("support_score"),
+                    "cluster_name": unified.get("cluster_id") or unified.get("cluster_name"),
+                    "semantic_domain": unified.get("domain"),
+                    "support_score": unified.get("support_score"),
                     "cluster_metadata": {
-                        "support": c.get("support"),
-                        "columns": c.get("columns"),
-                        "domain_distribution": c.get("domain_distribution"),
+                        "support": unified.get("support"),
+                        "columns": unified.get("columns"),
+                        "domain_distribution": unified.get("domain_distribution"),
+                        "domain_purity": unified.get("domain_purity"),
+                        "embedding_coherence": unified.get("embedding_coherence"),
+                        "avg_domain_confidence": unified.get("avg_domain_confidence"),
+                        "purity": unified.get("purity"),
+                        "cluster_confidence": unified.get("cluster_confidence"),
+                        "dominant_domain": unified.get("dominant_domain"),
+                        "explainability": unified.get("explainability"),
                     },
                 }
             )
@@ -74,6 +85,9 @@ class SemanticPersistenceService:
                     "target_column": e["target"],
                     "edge_weight": float(e.get("weight", 0)),
                     "relationship_type": e.get("relationship_type"),
+                    "owl_type": e.get("owl_type"),
+                    "source_domain": e.get("source_domain"),
+                    "target_domain": e.get("target_domain"),
                     "semantic_reason": e.get("semantic_reason"),
                 }
             )

@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from analysis_state.cluster_utils import unify_cluster_record
+
 # Validation rule discovery expects scored archetype dicts (not raw usecase strings).
 _USECASE_TO_ARCHETYPE: dict[str, str] = {
     "industry": "economic",
@@ -60,9 +62,10 @@ def v2_to_legacy_bundle(v2: dict[str, Any]) -> dict[str, Any]:
     clusters_list: list[dict[str, Any]] = []
     for cid, cl in (v2.get("clusters") or {}).items():
         if isinstance(cl, dict):
-            clusters_list.append(cl)
-            for col in cl.get("columns") or []:
-                column_cluster_map[str(col)] = str(cid)
+            unified = unify_cluster_record({**cl, "cluster_id": cl.get("cluster_id") or cid})
+            clusters_list.append(unified)
+            for col in unified.get("columns") or []:
+                column_cluster_map[str(col)] = str(unified.get("cluster_id") or cid)
 
     uc = v2.get("usecase") or {}
     usecase_name = _usecase_name(uc)

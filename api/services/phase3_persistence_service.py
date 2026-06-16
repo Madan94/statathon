@@ -31,7 +31,12 @@ class Phase3PersistenceService:
             c for c in (state.validation_candidates or []) if isinstance(c, dict)
         ]
         total_candidates = len(raw_candidates)
-        for cand in raw_candidates[:VALIDATION_CANDIDATE_PERSIST_LIMIT]:
+        slice_end = (
+            total_candidates
+            if VALIDATION_CANDIDATE_PERSIST_LIMIT <= 0
+            else VALIDATION_CANDIDATE_PERSIST_LIMIT
+        )
+        for cand in raw_candidates[:slice_end]:
             batch.append(
                 Phase3ValidationCandidate(
                     dataset_id=dataset_id,
