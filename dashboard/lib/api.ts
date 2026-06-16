@@ -223,10 +223,6 @@ export interface AnomalyColumnBlock {
   recommended?: string;
   z_score_confidence?: number;
   iqr_confidence?: number;
-  z_score_pros?: string[];
-  z_score_cons?: string[];
-  iqr_pros?: string[];
-  iqr_cons?: string[];
   reason?: string[];
   method_selected?: string | null;
   detection_run?: boolean;
@@ -463,7 +459,6 @@ export interface WeightedProfile {
 export interface ColumnNormalizationRow {
   original_name: string;
   normalized_name: string;
-  canonical_name?: string;
   display_name: string;
   domain?: string;
   match_method?: string;
@@ -482,7 +477,6 @@ export interface AnalysisResult {
   column_normalization?: ColumnNormalizationRow[];
   domain_registry?: DomainRegistry;
   dataset_context?: Record<string, unknown>;
-  dataset_profile?: Record<string, unknown>;
   clusters?: Array<Record<string, unknown>>;
   schema_graph?: { nodes?: unknown[]; edges?: unknown[] };
   knowledge_graph?: Record<string, unknown>;
@@ -503,6 +497,8 @@ export interface AnalysisResult {
   content_hash?: string;
   effective_schema?: string[];
   normalization_version?: number | null;
+  /** Optional profiling snapshot folded in by some result builders. */
+  dataset_profile?: Record<string, unknown>;
 }
 
 export interface NormalizationColumnRecord {
@@ -1070,7 +1066,6 @@ export interface ReportTemplate {
 
 export interface ReportTemplateWithAst extends ReportTemplate {
   ast: Record<string, unknown>;
-  filter_config?: DataFilterSpec | null;
 }
 
 export interface TemplateExtractionJob {
@@ -1296,7 +1291,7 @@ export const reportBuilderApi = {
     }
     throw new Error('Template extraction timed out');
   },
-  getTemplate: async (id: number): Promise<ReportTemplateWithAst> => {
+  getTemplate: async (id: number) => {
     const { data } = await api.get(`/report-builder/templates/${id}`);
     return data;
   },
@@ -1484,7 +1479,6 @@ export type BindingMethod =
   | 'glossary'
   | 'synonym'
   | 'embedding'
-  | 'columnExpr'
   | 'manual';
 export type BindingStatus =
   | 'proposed'
@@ -1538,21 +1532,6 @@ export interface ColumnOwnershipConflict {
 export interface ColumnOwnershipMap {
   columns: Record<string, ColumnOwnershipEntry>;
   conflicts: ColumnOwnershipConflict[];
-}
-
-export type ColumnDecisionStatus =
-  | 'matched'
-  | 'added_as_entity'
-  | 'ignored_metadata'
-  | 'ignored_duplicate'
-  | 'ignored_out_of_scope'
-  | 'needs_question';
-
-export interface ColumnDecision {
-  column: string;
-  status: ColumnDecisionStatus;
-  entityId?: string;
-  note?: string;
 }
 
 export interface ResolvedFilter {
@@ -1610,7 +1589,6 @@ export interface BindingStartResult {
   confirmations: Record<string, unknown>;
   pending: string[];
   column_ownership: ColumnOwnershipMap;
-  column_decisions: Record<string, ColumnDecision>;
 }
 
 export interface BindingTemplatePackage {
@@ -1623,20 +1601,21 @@ export interface BindingTemplatePackage {
   blueprint_available: boolean;
   semantic_slot_graph_available: boolean;
   topics_count: number;
-  chapters_count?: number;
-  sections_count?: number;
   questions_count: number;
   entities_count: number;
   chart_slots_count: number;
   table_slots_count: number;
   external_refs_count: number;
   diagnostics_score?: number | null;
-  richness_score?: number | null;
   description?: string | null;
+  // Optional catalogue metadata — may be absent depending on the package source;
+  // consumers guard with ?? / || so undefined is safe.
   domain?: string | null;
   report_type?: string | null;
   updated_at?: string | null;
-  readiness_label?: string | null;
+  richness_score?: number;
+  chapters_count?: number;
+  sections_count?: number;
 }
 
 export interface BindingProposalsResult {
@@ -1647,7 +1626,6 @@ export interface BindingProposalsResult {
   confirmations: Record<string, unknown>;
   pending: string[];
   column_ownership: ColumnOwnershipMap;
-  column_decisions: Record<string, ColumnDecision>;
 }
 
 export interface BindingRecordResult {
@@ -1657,7 +1635,6 @@ export interface BindingRecordResult {
   proposals: EntityBinding[];
   confirmations: Record<string, unknown>;
   column_ownership: ColumnOwnershipMap;
-  column_decisions: Record<string, ColumnDecision>;
   updated_at: number;
 }
 
@@ -1700,7 +1677,6 @@ export interface BindingWorkspace {
   confirmations: Record<string, unknown>;
   pending: string[];
   column_ownership: ColumnOwnershipMap;
-  column_decisions: Record<string, ColumnDecision>;
   reviewed_plan?: ReviewedPlanSummary | null;
   dependency_graph: BindingDependencyGraph;
   issues: BindingWorkspaceIssue[];
@@ -1865,13 +1841,6 @@ export interface ManualEntityPayload {
   share_reason?: string;
 }
 
-export interface ColumnDecisionPayload {
-  column: string;
-  status: ColumnDecisionStatus;
-  entity_id?: string;
-  note?: string;
-}
-
 export const bindingPhaseApi = {
   /** Binder-native template package list with blueprint/AST/slot metadata. */
   listTemplatePackages: async (): Promise<BindingTemplatePackage[]> => {
@@ -1931,18 +1900,6 @@ export const bindingPhaseApi = {
   ): Promise<BindingRecordResult> => {
     const { data } = await api.post(
       `/report-builder/binding-phase/${templateId}/${signature}/entities`,
-      body
-    );
-    return data;
-  },
-  /** Record how one dataset column is used in this binder session. */
-  decideColumn: async (
-    templateId: string,
-    signature: string,
-    body: ColumnDecisionPayload
-  ): Promise<BindingRecordResult> => {
-    const { data } = await api.post(
-      `/report-builder/binding-phase/${templateId}/${signature}/column-decision`,
       body
     );
     return data;
@@ -2077,7 +2034,7 @@ export const generatePhaseApi = {
   generate: async (
     templateId: string,
     signature: string,
-    body: { period?: string; report_id?: string; use_llm?: boolean; publish_mode?: string; [k: string]: unknown } = {}
+    body: { period?: string; report_id?: string; use_llm?: boolean; publish_mode?: 'strict' | 'draft' } = {}
   ): Promise<GenerateResult> => {
     const { data } = await api.post(
       `/report-builder/generate-phase/${templateId}/${signature}/generate`,
@@ -2192,26 +2149,93 @@ export const generatePhaseApi = {
     );
     return data;
   },
-
-  /** Get the ordered queue of components to generate with metadata. */
+  /** Ordered queue of components to generate (canvas auto-draft + manual fill). */
   getGenerationQueue: async (
     templateId: string,
     signature: string
-  ): Promise<Array<{ index: number; plan_id: string; question_id: string; component_type: string; title: string; section_path: string[]; status: string }>> => {
+  ): Promise<Array<{
+    index: number;
+    plan_id: string;
+    question_id: string;
+    component_type: string;
+    title: string;
+    section_path: string[];
+    status: string;
+  }>> => {
     const { data } = await api.get(
       `/report-builder/generate-phase/${templateId}/${signature}/generation-queue`
     );
     return data;
   },
-
-  /** Generate a single component by index. */
+  /** Generate (or redo) a single component by its queue index. */
   generateComponent: async (
     templateId: string,
     signature: string,
     body: { index: number; use_llm?: boolean; redo?: boolean }
-  ): Promise<{ index: number; plan_id: string; component_type: string; title: string; content: Record<string, unknown>; narrative: string; status: string; next_index: number | null; next_preview: Record<string, unknown> | null; total: number; progress_pct: number }> => {
+  ): Promise<{
+    index: number;
+    plan_id: string;
+    component_type: string;
+    title: string;
+    content: Record<string, unknown>;
+    narrative: string;
+    status: string;
+    next_index: number | null;
+    next_preview: Record<string, unknown> | null;
+    total: number;
+    progress_pct: number;
+  }> => {
     const { data } = await api.post(
       `/report-builder/generate-phase/${templateId}/${signature}/generate-component`,
+      body
+    );
+    return data;
+  },
+  /** Saved canvas layout (officer's free placement). Empty doc if none saved. */
+  getCanvasLayout: async (
+    templateId: string,
+    signature: string
+  ): Promise<{
+    blocks: Record<string, { x?: number; y?: number; w?: number; h?: number; pageIndex?: number }>;
+    pages: Array<Record<string, unknown>>;
+    updatedAt: string | null;
+  }> => {
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/canvas-layout`
+    );
+    return data;
+  },
+  /** Persist the canvas layout (full replace; autosaved by the canvas). */
+  putCanvasLayout: async (
+    templateId: string,
+    signature: string,
+    body: { blocks: Record<string, unknown>; pages: Array<Record<string, unknown>>; updatedAt?: string }
+  ): Promise<{ blocks: Record<string, unknown>; pages: Array<Record<string, unknown>>; updatedAt: string | null }> => {
+    const { data } = await api.put(
+      `/report-builder/generate-phase/${templateId}/${signature}/canvas-layout`,
+      body
+    );
+    return data;
+  },
+  /** Canvas Co-Pilot deep-BI chat — free-form question → DeepAgent turn. */
+  canvasChat: async (
+    templateId: string,
+    signature: string,
+    body: { query: string; selected_question_id?: string }
+  ): Promise<{
+    role: string;
+    text: string;
+    blocks: Array<Record<string, unknown>>;
+    plan?: Record<string, unknown>;
+    analytics?: { table?: { columns?: string[]; rows?: Array<Record<string, unknown>> } } & Record<string, unknown>;
+    context_used?: { resolved_columns?: string[]; dataset_rows?: number } & Record<string, unknown>;
+    verifier?: Record<string, unknown> | null;
+    route?: { engine?: string; bound?: boolean; boundTerms?: number; reason?: string };
+    turn_id?: string;
+    degraded?: boolean;
+  }> => {
+    const { data } = await api.post(
+      `/report-builder/generate-phase/${templateId}/${signature}/chat`,
       body
     );
     return data;
