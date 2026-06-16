@@ -1197,3 +1197,237 @@ def get_versions(template_id: str, signature: str) -> dict[str, Any]:
     if path.exists():
         current = current_version(json.loads(path.read_text(encoding="utf-8")))
     return {"versions": versions, "current": current}
+
+
+# ───────────────────────── Canvas Deep BI chat bridge ─────────────────────────
+
+
+class CanvasChatIn(BaseModel):
+    query: str
+    selected_question_id: Optional[str] = None
+
+
+def _payload_from_stash(
+    dataset: DatasetAST,
+    blueprint: dict[str, Any],
+    binding: "BindingAST | None" = None,
+) -> dict[str, Any]:
+    """Build a DeepAgent ``analysis_payload`` from the generate-phase stash so the
+    canvas chat can reuse the full Planner→Retrieval→Analytics→Scribe→Verifier
+    pipeline without a persisted ``Analysis`` row.
+
+    When a finalized ``binding`` is supplied (bound-first policy, decision B), the
+    officer's **confirmed** entity→column decisions are injected two ways:
+
+    * ``binding_glossary`` — {alias_or_entityName_lc: [columns]} so a query term
+      like *"LFPR"* resolves to the confirmed column even when the physical name
+      shares no words. The planner consumes this as its step-0 resolution.
+    * ``semantic_mapping`` rows are tagged ``bound=True`` + carry the entityName so
+      retrieval/scribe prefer confirmed columns. Unbound columns remain available
+      for *exploratory* (clearly non-bound) discovery.
+    """
+    # Map column → confirmed entity (name + aliases) from the binding.
+    col_entity: dict[str, dict[str, Any]] = {}
+    binding_glossary: dict[str, list[str]] = {}
+    if binding is not None:
+        # Blueprint entities carry the rich detail (aliases/glossary) that the
+        # binding's EntityBinding does not — index them by id + canonical name so
+        # the glossary can expand every alias the template extraction captured.
+        bp_aliases: dict[str, list[str]] = {}
+        for ent in (blueprint.get("entities") or []):
+            if not isinstance(ent, dict):
+                continue
+            aliases = [str(a) for a in (ent.get("aliases") or []) if a]
+            for k in (ent.get("entityId"), ent.get("canonicalName"), ent.get("entityName")):
+                key = str(k or "").strip().lower()
+                if key:
+                    bp_aliases[key] = aliases
+
+        for eb in binding.entityBindings:
+            if eb.status not in ("confirmed", "overridden"):
+                continue
+            cols = [bc.column for bc in eb.columns if bc.column]
+            if not cols:
+                continue
+            # Glossary: entity name + every captured alias → the confirmed columns.
+            extra = bp_aliases.get(str(eb.entityId).lower()) or \
+                bp_aliases.get(str(eb.entityName).strip().lower()) or []
+            terms = [eb.entityName, *extra]
+            for term in terms:
+                key = str(term or "").strip().lower()
+                if key:
+                    binding_glossary.setdefault(key, [])
+                    for c in cols:
+                        if c not in binding_glossary[key]:
+                            binding_glossary[key].append(c)
+            for c in cols:
+                col_entity[c] = {"entityName": eb.entityName, "entityType": eb.entityType}
+
+    semantic_mapping = []
+    for c in dataset.columns:
+        row: dict[str, Any] = {
+            "column": c.name,
+            "domain": c.role,            # measure/dimension/time/id → domain bucket
+            "dtype": c.dtype,
+            "unit": c.unit,
+            "cardinality": c.cardinality,
+        }
+        ent = col_entity.get(c.name)
+        if ent:
+            row["bound"] = True
+            row["entityName"] = ent["entityName"]
+        semantic_mapping.append(row)
+
+    return {
+        "semantic_mapping": semantic_mapping,
+        "binding_glossary": binding_glossary,
+        "dataset_context": {
+            "dataset_type": dataset.archetype or "generic",
+            "source_file": dataset.sourceFile,
+        },
+        "health": {
+            "row_count": dataset.rowCount,
+            "column_count": len(dataset.columns),
+        },
+        "statistical_context": blueprint.get("statisticalContext") or {},
+    }
+
+
+@router.post("/{template_id}/{signature}/chat")
+def canvas_chat(template_id: str, signature: str, body: CanvasChatIn) -> dict[str, Any]:
+    """Deep BI chat for the report canvas.
+
+    Routes the officer's question through the full ``DeepAgent`` pipeline
+    (Planner → Retrieval → Analytics → Scribe → Verifier) using the binding
+    stash (dataset + blueprint + CSV) as the data source. Returns the
+    ``deep_chat``-shaped payload: a primary narrative plus draggable, verified
+    ``RenderedBlock``s with row-level evidence.
+
+    Degrades gracefully: if the DeepAgent stack is unavailable the endpoint
+    returns a structured notice instead of raising, so the canvas chat keeps
+    working in offline/deterministic mode.
+    """
+    if not body.query or not body.query.strip():
+        raise HTTPException(status_code=400, detail="Empty query")
+
+    dataset, blueprint, df = _read_stash(template_id, signature)
+
+    # Bound-first (decision B): reuse the officer's CONFIRMED entity bindings so
+    # chat honors decisions made in the binder instead of re-resolving columns.
+    # Best-effort — if the binding record is missing the chat still works in
+    # explore-only mode (unbound columns are fair game, clearly non-bound).
+    binding = None
+    try:
+        binding = _rebuild_binding(template_id, signature, dataset, blueprint, df)
+    except HTTPException:
+        binding = None
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[canvas-chat] binding rebuild skipped: %s", exc)
+        binding = None
+
+    analysis_payload = _payload_from_stash(dataset, blueprint, binding=binding)
+    bound_terms = len(analysis_payload.get("binding_glossary") or {})
+
+    try:
+        from agents.deep_agent import DeepAgent
+
+        agent = DeepAgent(db=None)
+        turn = agent.run(
+            query=body.query.strip(),
+            analysis_id=0,                      # no persisted Analysis row in canvas session
+            analysis_payload=analysis_payload,
+            df_loader=lambda: df,
+            stm=None,
+            ledger=None,
+        )
+    except Exception as exc:  # noqa: BLE001 — chat must never 500 the canvas
+        logger.warning("[canvas-chat] DeepAgent unavailable: %s", exc)
+        return {
+            "role": "assistant",
+            "text": (
+                "The deep analysis engine is unavailable in this environment. "
+                "Inline edit commands (inspect, outline, shorter, remove) still work."
+            ),
+            "blocks": [],
+            "analytics": {},
+            "verifier": None,
+            "route": {"engine": "unavailable", "reason": str(exc)[:200]},
+            "degraded": True,
+        }
+
+    primary_text = ""
+    verifier_out = None
+    for block in turn.blocks:
+        if block.get("kind") == "narrative":
+            primary_text = (block.get("payload") or {}).get("text", "")
+            verifier_out = block.get("verifier")
+            break
+    if not primary_text:
+        primary_text = turn.narrative_hints or f"Analysis complete ({turn.analytics.get('mode', '')})."
+
+    logger.info("[canvas-chat] %s__%s — q=%r blocks=%d mode=%s bound_terms=%d",
+                template_id, signature, body.query[:60], len(turn.blocks),
+                turn.analytics.get("mode"), bound_terms)
+
+    return {
+        "role": "assistant",
+        "text": primary_text,
+        "blocks": turn.blocks,
+        "plan": turn.plan,
+        "analytics": turn.analytics,
+        "context_used": turn.context_used,
+        "verifier": verifier_out,
+        "route": {"engine": "deep_agent", "bound": bound_terms > 0, "boundTerms": bound_terms},
+        "turn_id": turn.turn_id,
+    }
+
+
+# ───────────────────────── Canvas layout persistence ──────────────────────────
+# The report canvas lets an officer freely place / size blocks (Canva-style).
+# That spatial intent (x/y/w/h + page assignment per block) is a *presentation*
+# concern owned by the canvas, so it is stashed as its own JSON document keyed by
+# (template_id, signature) — separate from the typed ReportOverrides (prose/number
+# edits) and the value-free template. It is loaded on canvas mount and autosaved
+# on change, so the officer's layout survives reloads and feeds the renderer.
+
+
+def _canvas_layout_path(template_id: str, signature: str) -> Path:
+    return _stash_path(template_id, signature, "canvas_layout.json")
+
+
+class CanvasLayoutIn(BaseModel):
+    # Opaque, frontend-owned shape: {"blocks": {id: {kind,title,content,x,y,w,h,
+    # pageIndex,...}}, "pages": [...], "updatedAt": "..."}. Persisted verbatim.
+    blocks: dict[str, Any] = {}
+    pages: list[dict[str, Any]] = []
+    updatedAt: Optional[str] = None
+
+
+@router.get("/{template_id}/{signature}/canvas-layout")
+def get_canvas_layout(template_id: str, signature: str) -> dict[str, Any]:
+    """Return the saved canvas layout (empty doc if none saved yet)."""
+    path = _canvas_layout_path(template_id, signature)
+    if not path.exists():
+        return {"blocks": {}, "pages": [], "updatedAt": None}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("[canvas-layout] read failed %s: %s", path, exc)
+        return {"blocks": {}, "pages": [], "updatedAt": None}
+
+
+@router.put("/{template_id}/{signature}/canvas-layout")
+def put_canvas_layout(template_id: str, signature: str, body: CanvasLayoutIn) -> dict[str, Any]:
+    """Persist the canvas layout (full replace). Autosaved by the canvas."""
+    from datetime import datetime, timezone
+
+    doc = {
+        "blocks": body.blocks or {},
+        "pages": body.pages or [],
+        "updatedAt": body.updatedAt or datetime.now(timezone.utc).isoformat(),
+    }
+    path = _canvas_layout_path(template_id, signature)
+    path.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
+    logger.info("[canvas-layout] saved %s__%s — %d blocks, %d pages",
+                template_id, signature, len(doc["blocks"]), len(doc["pages"]))
+    return {"ok": True, "updatedAt": doc["updatedAt"]}

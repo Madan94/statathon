@@ -44,7 +44,11 @@ def _bound_plfs():
 
 
 def _question_leaves(node):
-    """All question-type nodes under a node, regardless of nesting depth."""
+    """All question-type nodes under a node, regardless of nesting depth.
+
+    The gold blueprint nests questions under subtopics (topic → subtopic →
+    question), so navigation must recurse rather than assume a flat tree.
+    """
     found = [node] if getattr(node, "nodeType", None) == "question" else []
     for child in node.children:
         found.extend(_question_leaves(child))
@@ -79,7 +83,7 @@ def test_reviewed_plan_fast_path_builds_topic_tree():
     assert plan.planId.startswith("rplan_tpl_plfs_annual_v1_sig_")
     assert plan.status in {"READY", "DEGRADED", "BLOCKED"}
     assert plan.planTree
-    # Blueprint may nest questions under subtopics/chapters/sections; count leaves recursively.
+    # Blueprint nests questions under subtopics; count question leaves recursively.
     assert len(_all_question_leaves(plan)) == len(binding.questionBindings)
     first_question = _first_question(plan)
     assert first_question.nodeType == "question"
@@ -163,7 +167,7 @@ def test_reviewed_plan_add_component_creates_virtual_slot():
         blueprint=blueprint,
         binding=binding,
     )
-    question = plan.planTree[0].children[0]
+    question = _first_question(plan)
     before_components = len(question.components)
 
     component = add_component_to_plan_node(

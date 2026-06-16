@@ -34,8 +34,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/report-builder/binding-phase", tags=["binding-phase"])
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_GOLD_STANDARD_DIR = _REPO_ROOT / "report_builder" / "gold_standard"
-_GOLD_BLUEPRINT = _GOLD_STANDARD_DIR / "template.blueprint.json"
+_GOLD_BLUEPRINT = _REPO_ROOT / "report_builder" / "gold_standard" / "template.blueprint.json"
 # Built-in template ids that map to the bundled gold PLFS blueprint (zero-config demo path).
 _GOLD_TEMPLATE_IDS = {"tpl_plfs_annual_v1", "gold", "default", ""}
 
@@ -64,13 +63,6 @@ class ManualEntityIn(BaseModel):
     note: Optional[str] = None
     share_policy: Optional[str] = None
     share_reason: Optional[str] = None
-
-
-class ColumnDecisionIn(BaseModel):
-    column: str
-    status: str  # matched | added_as_entity | ignored_metadata | ignored_duplicate | ignored_out_of_scope | needs_question
-    entity_id: Optional[str] = None
-    note: Optional[str] = None
 
 
 class ReviewedPlanNodePatchIn(BaseModel):
@@ -120,8 +112,6 @@ class TemplatePackageOut(BaseModel):
     blueprint_available: bool = False
     semantic_slot_graph_available: bool = False
     topics_count: int = 0
-    chapters_count: int = 0
-    sections_count: int = 0
     questions_count: int = 0
     entities_count: int = 0
     chart_slots_count: int = 0
@@ -129,9 +119,6 @@ class TemplatePackageOut(BaseModel):
     external_refs_count: int = 0
     diagnostics_score: float | None = None
     description: str | None = None
-    domain: str | None = None
-    updated_at: str | None = None
-    readiness_label: str | None = None
 
 
 class ProposalsOut(BaseModel):
@@ -142,7 +129,6 @@ class ProposalsOut(BaseModel):
     confirmations: dict[str, dict[str, Any]]
     pending: list[str]
     column_ownership: dict[str, Any]
-    column_decisions: dict[str, dict[str, Any]] = {}
 
 
 class RecordOut(BaseModel):
@@ -152,7 +138,6 @@ class RecordOut(BaseModel):
     proposals: list[dict[str, Any]]
     confirmations: dict[str, dict[str, Any]]
     column_ownership: dict[str, Any]
-    column_decisions: dict[str, dict[str, Any]] = {}
     updated_at: float
 
 
@@ -165,7 +150,6 @@ class StartOut(BaseModel):
     confirmations: dict[str, dict[str, Any]]
     pending: list[str]
     column_ownership: dict[str, Any]
-    column_decisions: dict[str, dict[str, Any]] = {}
     blueprint_qa: dict[str, Any] | None = None
     statistical_qa: dict[str, Any] | None = None
 
@@ -190,7 +174,6 @@ class WorkspaceOut(BaseModel):
     confirmations: dict[str, dict[str, Any]]
     pending: list[str]
     column_ownership: dict[str, Any]
-    column_decisions: dict[str, dict[str, Any]] = {}
     reviewed_plan: dict[str, Any] | None = None
     dependency_graph: dict[str, Any]
     issues: list[dict[str, Any]]
@@ -227,10 +210,6 @@ def _ownership(record: R.ReviewRecord) -> dict[str, Any]:
     return R.compute_column_ownership(record)
 
 
-def _column_decisions(record: R.ReviewRecord) -> dict[str, dict[str, Any]]:
-    return {k: v.to_dict() for k, v in record.columnDecisions.items()}
-
-
 def _columns_for_decision(record: R.ReviewRecord, entity_id: str, columns: list[str] | None) -> list[str]:
     if columns is not None:
         return [c for c in columns if c]
@@ -259,13 +238,7 @@ def _stash_path(template_id: str, signature: str, suffix: str) -> Path:
 
 
 def _write_stash(
-    template_id: str,
-    signature: str,
-    dataset: DatasetAST,
-    blueprint: dict[str, Any],
-    csv_bytes: bytes,
-    template_ast: dict[str, Any] | None = None,
-    semantic_slot_graph: dict[str, Any] | None = None,
+    template_id: str, signature: str, dataset: DatasetAST, blueprint: dict[str, Any], csv_bytes: bytes
 ) -> None:
     R._DEFAULT_STORE.mkdir(parents=True, exist_ok=True)
     _stash_path(template_id, signature, "dataset.json").write_text(
@@ -274,14 +247,6 @@ def _write_stash(
     _stash_path(template_id, signature, "blueprint.json").write_text(
         json.dumps(blueprint, ensure_ascii=False), encoding="utf-8"
     )
-    if template_ast is not None:
-        _stash_path(template_id, signature, "template_ast.json").write_text(
-            json.dumps(template_ast, ensure_ascii=False), encoding="utf-8"
-        )
-    if semantic_slot_graph is not None:
-        _stash_path(template_id, signature, "semantic_slot_graph.json").write_text(
-            json.dumps(semantic_slot_graph, ensure_ascii=False), encoding="utf-8"
-        )
     _stash_path(template_id, signature, "data.csv").write_bytes(csv_bytes)
 
 
@@ -445,7 +410,6 @@ def _build_dependency_graph(
 
 def _workspace_issues(
     record: R.ReviewRecord,
-    dataset: DatasetAST,
     binding: BindingAST,
     ownership: dict[str, Any],
     reviewed_plan: "Any" = None,
@@ -481,16 +445,6 @@ def _workspace_issues(
             "message": f"{pending_id} still needs officer review.",
             "targetMode": "entities",
         })
-    for column in getattr(dataset, "columns", []) or []:
-        name = str(getattr(column, "name", "") or "")
-        if name and name not in record.columnDecisions:
-            issues.append({
-                "severity": "info",
-                "code": "COLUMN_NEEDS_REVIEW",
-                "column": name,
-                "message": f"Dataset column '{name}' needs a binder decision: match, add as entity, ignore, or mark for a new question.",
-                "targetMode": "entities",
-            })
     if reviewed_plan is not None:
         for issue in (getattr(reviewed_plan, "coverage", {}) or {}).get("issues") or []:
             normalized = dict(issue)
@@ -705,52 +659,9 @@ def _component_recommendations_for_node(node: "Any") -> list[dict[str, Any]]:
 
 def _count_questions(blueprint: dict[str, Any]) -> int:
     count = len(blueprint.get("questions") or [])
-
-    def walk(node: dict[str, Any]) -> None:
-        nonlocal count
-        count += len(node.get("questions") or [])
-        for key in ("topics", "chapters", "subtopics", "sections", "subsections", "children"):
-            for child in node.get(key) or []:
-                if isinstance(child, dict):
-                    walk(child)
-
     for topic in blueprint.get("topics") or []:
-        if isinstance(topic, dict):
-            walk(topic)
+        count += len(topic.get("questions") or [])
     return count
-
-
-def _count_chapters(blueprint: dict[str, Any]) -> int:
-    count = 0
-    for topic in blueprint.get("topics") or []:
-        if isinstance(topic, dict):
-            count += len(topic.get("chapters") or [])
-    return count
-
-
-def _count_sections(blueprint: dict[str, Any]) -> int:
-    count = 0
-    for topic in blueprint.get("topics") or []:
-        if isinstance(topic, dict):
-            for chapter in topic.get("chapters") or []:
-                if isinstance(chapter, dict):
-                    count += len(chapter.get("sections") or [])
-    return count
-
-
-def _count_slot_types(slot_graph: dict[str, Any] | None) -> tuple[int, int]:
-    """Count chart and table slots from the semantic slot graph."""
-    if not isinstance(slot_graph, dict):
-        return 0, 0
-    charts = 0
-    tables = 0
-    for slot in slot_graph.get("slots") or []:
-        st = slot.get("slotType") or slot.get("outputContract", {}).get("type", "")
-        if st == "chart" or (isinstance(slot.get("outputContract"), dict) and slot["outputContract"].get("chartType")):
-            charts += 1
-        elif st == "table":
-            tables += 1
-    return charts, tables
 
 
 def _package_from_ast_json(template_id: str, name: str, source: str, ast_json: dict[str, Any], description: str | None = None) -> TemplatePackageOut:
@@ -759,10 +670,8 @@ def _package_from_ast_json(template_id: str, name: str, source: str, ast_json: d
     slot_graph = ast_json.get("semantic_slot_graph") or ast_json.get("semanticSlotGraph") or ast_json.get("semanticSlotGraph")
     diagnostics = ast_json.get("diagnostics") or ast_json.get("template_diagnostics") or ast_json.get("templateDiagnostics") or {}
     meta = blueprint.get("templateMeta") or ast_json.get("metadata") or ast_json.get("templateMeta") or {}
-    # Chart/table counts: prefer slot graph, fall back to AST sections
-    sg_charts, sg_tables = _count_slot_types(slot_graph if isinstance(slot_graph, dict) and slot_graph.get("slots") else None)
-    chart_slots = sg_charts or (len((template_ast.get("chartAST") or {}).get("charts") or []) if isinstance(template_ast, dict) else 0)
-    table_slots = sg_tables or (len((template_ast.get("tableAST") or {}).get("tables") or []) if isinstance(template_ast, dict) else 0)
+    chart_slots = len((template_ast.get("chartAST") or {}).get("charts") or []) if isinstance(template_ast, dict) else 0
+    table_slots = len((template_ast.get("tableAST") or {}).get("tables") or []) if isinstance(template_ast, dict) else 0
     score = diagnostics.get("binderReadinessScore") if isinstance(diagnostics, dict) else None
     return TemplatePackageOut(
         template_id=str(template_id),
@@ -774,157 +683,14 @@ def _package_from_ast_json(template_id: str, name: str, source: str, ast_json: d
         blueprint_available=bool(isinstance(blueprint, dict) and blueprint.get("entities")),
         semantic_slot_graph_available=bool(isinstance(slot_graph, dict) and slot_graph.get("slots")),
         topics_count=len(blueprint.get("topics") or []) if isinstance(blueprint, dict) else 0,
-        chapters_count=_count_chapters(blueprint) if isinstance(blueprint, dict) else 0,
-        sections_count=_count_sections(blueprint) if isinstance(blueprint, dict) else 0,
         questions_count=_count_questions(blueprint) if isinstance(blueprint, dict) else 0,
         entities_count=len(blueprint.get("entities") or []) if isinstance(blueprint, dict) else 0,
         chart_slots_count=chart_slots,
         table_slots_count=table_slots,
         external_refs_count=len(blueprint.get("externalTableReferences") or []) if isinstance(blueprint, dict) else 0,
         diagnostics_score=float(score) if score is not None else None,
-        description=description or meta.get("description"),
-        domain=meta.get("domain"),
-        updated_at=meta.get("lastUpdated") or "bundled",
-        readiness_label=meta.get("releaseStage") or (f"{score:.0f}%" if score else "not scored"),
+        description=description,
     )
-
-
-def _load_builtin_gold_package(template_id: str) -> tuple[dict[str, Any], dict[str, Any] | None, dict[str, Any] | None, Path] | None:
-    """Load a built-in gold-standard package by templateMeta.templateId.
-
-    A package is keyed by the blueprint's templateId and may have companion
-    ``*.template.ast.json`` and ``*.semantic_slot_graph.json`` files sharing
-    the same filename prefix.
-    """
-    for blueprint_path in sorted(_GOLD_STANDARD_DIR.glob("**/*.template.blueprint.json")):
-        try:
-            blueprint = json.loads(blueprint_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        meta = blueprint.get("templateMeta") if isinstance(blueprint.get("templateMeta"), dict) else {}
-        if meta.get("templateId") != template_id:
-            continue
-        prefix = blueprint_path.name.removesuffix(".template.blueprint.json")
-        ast_path = blueprint_path.with_name(f"{prefix}.template.ast.json")
-        slot_path = blueprint_path.with_name(f"{prefix}.semantic_slot_graph.json")
-        template_ast = None
-        slot_graph = None
-        if ast_path.exists():
-            template_ast = json.loads(ast_path.read_text(encoding="utf-8"))
-        if slot_path.exists():
-            slot_graph = json.loads(slot_path.read_text(encoding="utf-8"))
-        return blueprint, template_ast, slot_graph, blueprint_path
-    return None
-
-
-def _load_db_template_package(template_id: str) -> tuple[dict[str, Any], dict[str, Any] | None, dict[str, Any] | None, dict[str, Any], str] | None:
-    """Load an extracted DB template package.
-
-    Explicit package columns are authoritative. Embedded ``ast_json`` companion
-    fields remain the compatibility fallback for templates created before the
-    additive migration.
-    """
-    if not str(template_id).isdigit():
-        return None
-    from database.database import SessionLocal
-    from database.models import ReportTemplate
-
-    db = SessionLocal()
-    try:
-        tpl = db.query(ReportTemplate).filter(ReportTemplate.id == int(template_id)).first()
-        if not tpl:
-            return None
-        ast_json = tpl.ast_json if isinstance(tpl.ast_json, dict) else {}
-        blueprint = (
-            tpl.blueprint_json
-            if isinstance(getattr(tpl, "blueprint_json", None), dict)
-            else ast_json.get("blueprint")
-        )
-        if not isinstance(blueprint, dict):
-            return None
-        template_ast = (
-            tpl.ast_json
-            if isinstance(getattr(tpl, "ast_json", None), dict)
-            else ast_json.get("template_ast") or ast_json.get("templateAst")
-        )
-        embedded_template_ast = ast_json.get("template_ast") or ast_json.get("templateAst")
-        if isinstance(embedded_template_ast, dict):
-            template_ast = embedded_template_ast
-        slot_graph = (
-            tpl.semantic_slot_graph_json
-            if isinstance(getattr(tpl, "semantic_slot_graph_json", None), dict)
-            else ast_json.get("semantic_slot_graph") or ast_json.get("semanticSlotGraph")
-        )
-        diagnostics = (
-            tpl.extraction_diagnostics_json
-            if isinstance(getattr(tpl, "extraction_diagnostics_json", None), dict)
-            else ast_json.get("diagnostics") or ast_json.get("template_diagnostics") or {}
-        )
-        name = str(tpl.name or f"Template {template_id}")
-        return (
-            blueprint,
-            template_ast if isinstance(template_ast, dict) else None,
-            slot_graph if isinstance(slot_graph, dict) else None,
-            diagnostics if isinstance(diagnostics, dict) else {},
-            name,
-        )
-    finally:
-        db.close()
-
-
-def _iter_builtin_gold_packages() -> list[TemplatePackageOut]:
-    packages: list[TemplatePackageOut] = []
-    seen: set[str] = set()
-
-    try:
-        gold_bp = json.loads(_GOLD_BLUEPRINT.read_text(encoding="utf-8"))
-        packages.append(_package_from_ast_json(
-            "tpl_plfs_annual_v1",
-            "Built-in PLFS demo",
-            "built_in",
-            {"blueprint": gold_bp},
-            "Bundled value-free PLFS blueprint for demo binding.",
-        ))
-        seen.add("tpl_plfs_annual_v1")
-    except Exception as exc:
-        logger.warning("[binding-phase] failed to summarize built-in PLFS package: %s", exc)
-
-    for blueprint_path in sorted(_GOLD_STANDARD_DIR.glob("**/*.template.blueprint.json")):
-        try:
-            blueprint = json.loads(blueprint_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            logger.warning("[binding-phase] failed to read built-in package blueprint %s: %s", blueprint_path, exc)
-            continue
-        meta = blueprint.get("templateMeta") if isinstance(blueprint.get("templateMeta"), dict) else {}
-        template_id = str(meta.get("templateId") or "")
-        if not template_id or template_id in seen:
-            continue
-        prefix = blueprint_path.name.removesuffix(".template.blueprint.json")
-        ast_path = blueprint_path.with_name(f"{prefix}.template.ast.json")
-        slot_path = blueprint_path.with_name(f"{prefix}.semantic_slot_graph.json")
-        template_ast = None
-        slot_graph = None
-        try:
-            if ast_path.exists():
-                template_ast = json.loads(ast_path.read_text(encoding="utf-8"))
-            if slot_path.exists():
-                slot_graph = json.loads(slot_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            logger.warning("[binding-phase] failed to read built-in package companions for %s: %s", template_id, exc)
-        packages.append(_package_from_ast_json(
-            template_id,
-            str(meta.get("name") or template_id),
-            "built_in",
-            {
-                "blueprint": blueprint,
-                "template_ast": template_ast,
-                "semantic_slot_graph": slot_graph,
-            },
-            meta.get("description"),
-        ))
-        seen.add(template_id)
-
-    return packages
 
 
 async def _resolve_blueprint(template_id: str, blueprint_file: Optional[UploadFile]) -> dict[str, Any]:
@@ -943,21 +709,27 @@ async def _resolve_blueprint(template_id: str, blueprint_file: Optional[UploadFi
 
     # 2. Try loading from DB if template_id is numeric (extracted template)
     if template_id.isdigit():
-        package = _load_db_template_package(template_id)
-        if package is not None:
-            db_blueprint, _template_ast, _slot_graph, _diagnostics, _name = package
-            if db_blueprint.get("entities"):
-                logger.info("[binding-phase] Blueprint auto-loaded from DB template %s", template_id)
-                return db_blueprint
+        try:
+            from database.database import SessionLocal
+            from database.models import ReportTemplate
+            db = SessionLocal()
+            try:
+                tpl = db.query(ReportTemplate).filter(ReportTemplate.id == int(template_id)).first()
+                if tpl and tpl.ast_json:
+                    ast_json = tpl.ast_json if isinstance(tpl.ast_json, dict) else {}
+                    # Blueprint lives at ast_json.blueprint
+                    bp = ast_json.get("blueprint")
+                    if bp and isinstance(bp, dict) and bp.get("entities"):
+                        logger.info("[binding-phase] Blueprint auto-loaded from DB template %s", template_id)
+                        return bp
+            finally:
+                db.close()
+        except Exception as exc:
+            logger.warning("[binding-phase] DB blueprint load failed for %s: %s", template_id, exc)
 
     # 3. Bundled gold templates
     if template_id in _GOLD_TEMPLATE_IDS:
         return json.loads(_GOLD_BLUEPRINT.read_text(encoding="utf-8"))
-    package = _load_builtin_gold_package(template_id)
-    if package is not None:
-        blueprint, _template_ast, _slot_graph, blueprint_path = package
-        logger.info("[binding-phase] Blueprint auto-loaded from built-in package %s", blueprint_path.name)
-        return blueprint
 
     raise HTTPException(
         status_code=400,
@@ -973,7 +745,19 @@ async def _resolve_blueprint(template_id: str, blueprint_file: Optional[UploadFi
 @router.get("/template-packages", response_model=list[TemplatePackageOut])
 def list_template_packages() -> list[TemplatePackageOut]:
     """List template packages suitable for binder start screen."""
-    packages: list[TemplatePackageOut] = _iter_builtin_gold_packages()
+    packages: list[TemplatePackageOut] = []
+
+    try:
+        gold_bp = json.loads(_GOLD_BLUEPRINT.read_text(encoding="utf-8"))
+        packages.append(_package_from_ast_json(
+            "tpl_plfs_annual_v1",
+            "Built-in PLFS demo",
+            "built_in",
+            {"blueprint": gold_bp},
+            "Bundled value-free PLFS blueprint for demo binding.",
+        ))
+    except Exception as exc:
+        logger.warning("[binding-phase] failed to summarize built-in PLFS package: %s", exc)
 
     try:
         from database.database import SessionLocal
@@ -984,33 +768,11 @@ def list_template_packages() -> list[TemplatePackageOut]:
             rows = db.query(ReportTemplate).order_by(ReportTemplate.id.desc()).limit(100).all()
             for row in rows:
                 ast_json = row.ast_json if isinstance(row.ast_json, dict) else {}
-                blueprint = (
-                    row.blueprint_json
-                    if isinstance(getattr(row, "blueprint_json", None), dict)
-                    else ast_json.get("blueprint")
-                )
-                slot_graph = (
-                    row.semantic_slot_graph_json
-                    if isinstance(getattr(row, "semantic_slot_graph_json", None), dict)
-                    else ast_json.get("semantic_slot_graph") or ast_json.get("semanticSlotGraph")
-                )
-                diagnostics = (
-                    row.extraction_diagnostics_json
-                    if isinstance(getattr(row, "extraction_diagnostics_json", None), dict)
-                    else ast_json.get("diagnostics") or ast_json.get("template_diagnostics") or {}
-                )
-                template_ast = ast_json.get("template_ast") or ast_json.get("templateAst") or ast_json
                 packages.append(_package_from_ast_json(
                     str(row.id),
                     row.name,
                     "db",
-                    {
-                        **ast_json,
-                        "blueprint": blueprint,
-                        "template_ast": template_ast,
-                        "semantic_slot_graph": slot_graph,
-                        "diagnostics": diagnostics,
-                    },
+                    ast_json,
                     row.description,
                 ))
         finally:
@@ -1039,8 +801,6 @@ async def start_binding(
     from report_builder.binding.profiler import profile_dataframe
     from report_builder.binding.resolver import resolve_entities
 
-    builtin_package = None if blueprint is not None else _load_builtin_gold_package(template_id)
-    db_package = None if blueprint is not None or builtin_package is not None else _load_db_template_package(template_id)
     bp = await _resolve_blueprint(template_id, blueprint)
 
     # ── BlueprintQA gate: validate before binding starts ──
@@ -1074,15 +834,7 @@ async def start_binding(
     )
     binding, record, _deltas = R.open_review(binding, profile)
     R.save_record(record)
-    template_ast = None
-    semantic_slot_graph = None
-    if builtin_package is not None:
-        template_ast = builtin_package[1]
-        semantic_slot_graph = builtin_package[2]
-    elif db_package is not None:
-        template_ast = db_package[1]
-        semantic_slot_graph = db_package[2]
-    _write_stash(binding.templateId, signature, profile, bp, raw, template_ast, semantic_slot_graph)
+    _write_stash(binding.templateId, signature, profile, bp, raw)
 
     logger.info(
         "[binding-phase] start %s__%s — %d entities proposed (%d pending)",
@@ -1097,7 +849,6 @@ async def start_binding(
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         pending=_pending_ids(record),
         column_ownership=_ownership(record),
-        column_decisions=_column_decisions(record),
         blueprint_qa=blueprint_qa.to_dict(),
         statistical_qa=statistical_qa.to_dict(),
     )
@@ -1115,7 +866,6 @@ def get_proposals(template_id: str, signature: str) -> ProposalsOut:
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         pending=_pending_ids(record),
         column_ownership=_ownership(record),
-        column_decisions=_column_decisions(record),
     )
 
 
@@ -1131,16 +881,17 @@ def post_confirm(template_id: str, signature: str, body: ConfirmIn) -> RecordOut
     elif action in ("confirm", "override", "share"):
         selected_columns = _columns_for_decision(record, body.entity_id, body.columns)
         share_policy = body.share_policy or ("shared" if action == "share" else "exclusive")
-        if share_policy == "shared" and not (body.share_reason or "").strip():
+        conflicts = R.find_exclusive_column_conflicts(record, body.entity_id, selected_columns)
+        if conflicts and share_policy == "shared" and not body.share_reason:
             raise HTTPException(
                 status_code=400,
                 detail={
                     "code": "SHARE_REASON_REQUIRED",
-                    "message": "shared column ownership requires a reason",
+                    "message": "sharing an already-owned column requires a reason",
+                    "conflicts": conflicts,
                     "column_ownership": _ownership(record),
                 },
             )
-        conflicts = R.find_exclusive_column_conflicts(record, body.entity_id, selected_columns)
         if conflicts and share_policy != "shared":
             if body.force_transfer:
                 transfer_from = body.transfer_from_entity_ids or sorted({
@@ -1197,7 +948,6 @@ def post_confirm(template_id: str, signature: str, body: ConfirmIn) -> RecordOut
         proposals=record.proposals,
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         column_ownership=_ownership(record),
-        column_decisions=_column_decisions(record),
         updated_at=record.updatedAt,
     )
 
@@ -1213,35 +963,6 @@ def get_record(template_id: str, signature: str) -> RecordOut:
         proposals=record.proposals,
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         column_ownership=_ownership(record),
-        column_decisions=_column_decisions(record),
-        updated_at=record.updatedAt,
-    )
-
-
-@router.post("/{template_id}/{signature}/column-decision", response_model=RecordOut)
-def post_column_decision(template_id: str, signature: str, body: ColumnDecisionIn) -> RecordOut:
-    """Record one dataset-column lifecycle decision for dataset-first binder review."""
-    record = _load_or_404(template_id, signature)
-    try:
-        R.set_column_decision(
-            record,
-            column=body.column,
-            status=body.status,
-            entity_id=body.entity_id or "",
-            note=body.note or "",
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    path = R.save_record(record)
-    logger.info("[binding-phase] column decision %s=%s on %s → %s", body.column, body.status, signature, path.name)
-    return RecordOut(
-        template_id=record.templateId,
-        signature=record.datasetSignature,
-        dataset_id=record.datasetId,
-        proposals=record.proposals,
-        confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
-        column_ownership=_ownership(record),
-        column_decisions=_column_decisions(record),
         updated_at=record.updatedAt,
     )
 
@@ -1251,8 +972,6 @@ def get_workspace(template_id: str, signature: str) -> WorkspaceOut:
     """Return the consolidated binder workbench state for one session."""
     record = _load_or_404(template_id, signature)
     dataset, blueprint, _df = _read_stash(template_id, signature)
-    template_ast = _read_optional_stash_json(template_id, signature, "template_ast.json")
-    semantic_slot_graph = _read_optional_stash_json(template_id, signature, "semantic_slot_graph.json")
     binding = _binding_for_workspace(record, signature)
     ownership = _ownership(record)
     reviewed_plan = _load_reviewed_plan_optional(template_id, signature)
@@ -1261,14 +980,10 @@ def get_workspace(template_id: str, signature: str) -> WorkspaceOut:
         template_id,
         (blueprint.get("templateMeta") or {}).get("name") or template_id,
         "session",
-        {
-            "blueprint": blueprint,
-            "template_ast": template_ast,
-            "semantic_slot_graph": semantic_slot_graph,
-        },
+        {"blueprint": blueprint},
     ).dict()
     dependency_graph = _build_dependency_graph(blueprint, binding, reviewed_plan)
-    issues = _workspace_issues(record, dataset, binding, ownership, reviewed_plan)
+    issues = _workspace_issues(record, binding, ownership, reviewed_plan)
     return WorkspaceOut(
         template_id=record.templateId,
         signature=record.datasetSignature,
@@ -1279,7 +994,6 @@ def get_workspace(template_id: str, signature: str) -> WorkspaceOut:
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         pending=_pending_ids(record),
         column_ownership=ownership,
-        column_decisions=_column_decisions(record),
         reviewed_plan=reviewed_payload,
         dependency_graph=dependency_graph,
         issues=issues,
@@ -1306,8 +1020,6 @@ def post_manual_entity(template_id: str, signature: str, body: ManualEntityIn) -
             share_policy=body.share_policy or "exclusive",
             share_reason=body.share_reason or "",
         )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except R.ColumnOwnershipConflict as exc:
         raise HTTPException(
             status_code=409,
@@ -1327,7 +1039,6 @@ def post_manual_entity(template_id: str, signature: str, body: ManualEntityIn) -
         proposals=record.proposals,
         confirmations={k: v.to_dict() for k, v in record.confirmations.items()},
         column_ownership=_ownership(record),
-        column_decisions=_column_decisions(record),
         updated_at=record.updatedAt,
     )
 
@@ -1603,21 +1314,6 @@ def get_execution_bundle(template_id: str, signature: str) -> ExecutionReadyOut:
 
     record = _load_or_404(template_id, signature)
     dataset, blueprint, df = _read_stash(template_id, signature)
-
-    # ── BlueprintQA gate: re-validate before the S4 handoff ──
-    # The gate also runs at /start, but the stashed blueprint can change between
-    # start and handoff; never freeze a bundle from a structurally invalid blueprint.
-    from report_builder.binding.blueprint_qa import validate_blueprint_qa
-    blueprint_qa = validate_blueprint_qa(blueprint)
-    if blueprint_qa.status == "INVALID":
-        raise HTTPException(
-            status_code=422,
-            detail={
-                "code": "BLUEPRINT_INVALID_FOR_HANDOFF",
-                "message": "Blueprint is INVALID — cannot build ExecutionBundle",
-                "errors": blueprint_qa.errors,
-            },
-        )
 
     # Resolve dataframe path from stash
     df_path = str(_stash_path(template_id, signature, "data.csv"))

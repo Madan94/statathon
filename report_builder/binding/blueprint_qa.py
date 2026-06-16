@@ -15,19 +15,27 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from report_builder.template_traversal import iter_components, iter_questions
-
 logger = logging.getLogger(__name__)
 
 
-def _iter_blueprint_questions(blueprint: Any) -> list[dict[str, Any]]:
-    """Return all questions from a blueprint regardless of nesting depth.
+def _iter_section_questions(section: dict[str, Any]) -> list[dict[str, Any]]:
+    """Recursively collect questions from a topic/section and nested children."""
+    out: list[dict[str, Any]] = list(section.get("questions") or [])
+    for key in ("subtopics", "sections", "children", "subsections"):
+        for child in section.get(key) or []:
+            if isinstance(child, dict):
+                out.extend(_iter_section_questions(child))
+    return out
 
-    Delegates to the single canonical traversal (``template_traversal``) so QA,
-    binder, diagnostics, and emission share one outline contract and cannot drift
-    on which nesting keys (chapters/sections/subtopics/...) are walked.
-    """
-    return iter_questions(blueprint)
+
+def _iter_blueprint_questions(blueprint: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return all questions from a blueprint regardless of nesting depth."""
+    if blueprint.get("questions"):
+        return list(blueprint["questions"])
+    out: list[dict[str, Any]] = []
+    for topic in (blueprint.get("topics") or blueprint.get("sections") or []):
+        out.extend(_iter_section_questions(topic))
+    return out
 
 
 @dataclass
@@ -119,17 +127,17 @@ def validate_blueprint_qa(blueprint: dict[str, Any]) -> BlueprintQAResult:
                     result.missingEntities.append(f"{qid}→{ref_id}")
 
         # Check analyticsSpec. Enterprise/legacy demo packages may express the
-        # analytic contract as formulaSpec + requiredEntities instead of a
-        # full analyticsSpec; treat that as binder-usable instead of producing
-        # a false warning.
+        # analytic contract as formulaSpec + requiredEntities instead of a full
+        # analyticsSpec; treat that as binder-usable, not a false warning.
         q_type = q.get("questionType", "")
         has_formula_contract = bool(q.get("formulaSpec") and q.get("requiredEntities"))
         if q_type not in ("describe",) and not q.get("analyticsSpec") and not has_formula_contract:
             result.missingAnalyticsSpec.append(qid)
 
-        # Check outputContract / answerStructure / legacy answerComponents
+        # Check outputContract / answerStructure / legacy answerComponents.
         ans = q.get("answerStructure") or q.get("outputContract")
-        if not ans and not iter_components(q):
+        has_components = bool(q.get("answerComponents") or (ans or {}).get("components"))
+        if not ans and not has_components:
             result.missingOutputContract.append(qid)
 
     # ── Determine final status ──

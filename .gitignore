@@ -1,5 +1,6 @@
 .env
 .env.backup
+.venv
 # write_clean_env.py contains API keys — never commit it
 scripts/write_clean_env.py
 __pycache__/

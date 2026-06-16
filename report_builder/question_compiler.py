@@ -433,7 +433,12 @@ def _questions_from_table(table: Any, entities: list[Any] | None, families: list
 
 
 def _questions_from_figures(figures: list[Any], entities: list[Any] | None) -> list[QuestionPlan]:
-    """Generate questions from chart semantic models."""
+    """Generate questions from chart semantic models.
+
+    Measure-less figures still produce a question (with an empty measure spec) so
+    the validation stage can drop them with explicit NO_MEASURE/EMPTY_MEASURE_SPEC
+    codes rather than silently skipping them.
+    """
     questions: list[QuestionPlan] = []
 
     for fig in figures:
@@ -551,39 +556,6 @@ _VALID_QTYPES = frozenset({"comparison", "trend", "composition", "ranking", "sum
 _VALID_KINDS = frozenset({"narrative", "table", "chart", "metric_card"})
 
 
-def _question_requires_measure(question: QuestionPlan) -> bool:
-    operation = str(question.analyticsSpec.get("operation") or "").lower()
-    if question.questionType in ("descriptive", "summary"):
-        return False
-    if operation in ("describe", "summary", "summary_stats"):
-        return False
-    return True
-
-
-def _first_required_measure(question: QuestionPlan) -> str:
-    for req in question.requiredEntities:
-        if req.get("role") == "measure":
-            return str(req.get("entityId") or req.get("entityRef") or "")
-    return ""
-
-
-def _has_measure_spec(question: QuestionPlan) -> bool:
-    spec = question.analyticsSpec or {}
-    measure = spec.get("measure")
-    if _has_measure_ref(measure):
-        return True
-    measures = spec.get("measures")
-    if isinstance(measures, list):
-        return any(_has_measure_ref(m) for m in measures)
-    return _has_measure_ref(measures)
-
-
-def _has_measure_ref(value: Any) -> bool:
-    if isinstance(value, dict):
-        return bool(value.get("entityRef") or value.get("entityId") or value.get("column"))
-    return bool(value)
-
-
 def validate_question(question: QuestionPlan, entity_ids: set[str]) -> list[QuestionDiagnostic]:
     """Validate one question. Returns diagnostics (empty = valid)."""
     diags: list[QuestionDiagnostic] = []
@@ -603,11 +575,13 @@ def validate_question(question: QuestionPlan, entity_ids: set[str]) -> list[Ques
             diags.append(QuestionDiagnostic(qid, "error", "BROKEN_ENTITY_REF", f"Entity {eid} not found"))
 
     has_measure = any(r.get("role") == "measure" for r in question.requiredEntities)
-    if _question_requires_measure(question):
-        if not has_measure:
-            diags.append(QuestionDiagnostic(qid, "error", "NO_MEASURE", "No measure entity"))
-        if not _has_measure_spec(question):
-            diags.append(QuestionDiagnostic(qid, "error", "EMPTY_MEASURE_SPEC", "analyticsSpec.measure is empty"))
+    if not has_measure and question.questionType not in ("descriptive", "summary"):
+        diags.append(QuestionDiagnostic(qid, "error", "NO_MEASURE", "No measure entity"))
+
+    # A measure-requiring question must carry a resolved measure in analyticsSpec.
+    measure_spec = question.analyticsSpec.get("measure") if isinstance(question.analyticsSpec, dict) else None
+    if question.questionType not in ("descriptive", "summary") and not (isinstance(measure_spec, dict) and measure_spec.get("entityRef")):
+        diags.append(QuestionDiagnostic(qid, "error", "EMPTY_MEASURE_SPEC", "analyticsSpec.measure has no entityRef"))
 
     # AnalyticsSpec
     if not question.analyticsSpec.get("operation"):
@@ -651,12 +625,6 @@ def repair_question(question: QuestionPlan) -> QuestionPlan:
     # Fix missing sort for ranking
     if question.questionType == "ranking" and "sort" not in question.analyticsSpec:
         question.analyticsSpec["sort"] = {"by": "measure", "order": "desc"}
-
-    # Fix missing analyticsSpec.measure when the role contract already names one.
-    if _question_requires_measure(question) and not _has_measure_spec(question):
-        measure_ref = _first_required_measure(question)
-        if measure_ref:
-            question.analyticsSpec["measure"] = {"entityRef": measure_ref}
 
     # Fix missing questionId
     if not question.questionId:
@@ -922,7 +890,7 @@ def compile_questions(
 
     # 4. Apply budget
     kept, dropped = _apply_budget(all_questions, budget)
-    result.droppedQuestions = dropped
+    result.droppedQuestions = list(dropped)
 
     # 5. Validate + repair
     entity_ids = set()
@@ -936,12 +904,15 @@ def compile_questions(
         q = repair_question(q)
         diags = validate_question(q, entity_ids)
         result.diagnostics.extend(diags)
-        errors = [d for d in diags if d.severity == "error"]
-        if errors:
+        # A question that fails a binder-blocking measure check is not executable —
+        # drop it (with its codes) rather than emitting a question S4 can't run.
+        blocking_codes = [d.code for d in diags if d.severity == "error" and d.code in ("NO_MEASURE", "EMPTY_MEASURE_SPEC")]
+        if blocking_codes:
             result.droppedQuestions.append({
                 "questionId": q.questionId,
+                "intent": q.intent,
                 "reason": "validation_error",
-                "codes": [d.code for d in errors],
+                "codes": blocking_codes,
             })
             continue
         result.questions.append(q)
@@ -955,7 +926,6 @@ def compile_questions(
         "kept": len(result.questions),
         "dropped": len(result.droppedQuestions),
         "withErrors": sum(1 for d in result.diagnostics if d.severity == "error"),
-        "droppedValidation": sum(1 for d in result.droppedQuestions if d.get("reason") == "validation_error"),
     }
 
     return result

@@ -85,18 +85,53 @@ def _detect_filter_conditions(
     Scans every categorical column's unique values against the query text.
     Returns {column_name: matched_value} for each column that has a match.
     Zero hardcoding — all matching is driven by the live dataset.
+
+    Reuses the binder's :func:`value_resolver.resolve_filter_value` so a query
+    term and the stored code don't have to be literally identical — e.g. the
+    officer types *"rural"* but the dataset stores ``"R"`` (decision A:
+    reuse-value-map + widen-on-missing). The cascade is exact → synonym/code →
+    fuzzy; a non-match simply isn't added (the filter widens), never guessed.
     """
     if not available_values:
         return {}
 
+    try:
+        from report_builder.binding.value_resolver import resolve_filter_value
+    except Exception:  # noqa: BLE001 — keep planner importable without binder
+        resolve_filter_value = None
+
     q = query.lower()
+    # Candidate value tokens from the query: split on non-word, keep 2+ char words.
+    q_tokens = [t for t in re.split(r"[^a-z0-9]+", q) if len(t) >= 2]
+    q_token_set = set(q_tokens)
     filters: dict[str, str | None] = {}
 
     for col, vals in available_values.items():
+        # 1. Literal match. Long values (3+) may match as a substring; short
+        #    values/codes must match a whole query token (so code "R" doesn't
+        #    fire on the "r" inside "for"/"lfpr").
+        matched: str | None = None
         for val in (vals or []):
-            if val and str(val).lower() in q:
-                filters[col] = val
-                break  # first match per column
+            if not val:
+                continue
+            v = str(val).lower()
+            if len(v) >= 3 and v in q:
+                matched = val
+                break
+            if v in q_token_set:
+                matched = val
+                break
+        # 2. Code/synonym via the binder's resolver (e.g. "rural" → "R").
+        #    fuzzy=False: free-text tokens must match exactly or via known codes,
+        #    never by fuzzy similarity (which false-matches short codes).
+        if matched is None and resolve_filter_value is not None and vals:
+            for tok in q_tokens:
+                resolved, applied = resolve_filter_value(tok, vals, fuzzy=False)
+                if applied:
+                    matched = resolved
+                    break
+        if matched is not None:
+            filters[col] = matched
 
     return filters
 
@@ -473,6 +508,20 @@ class PlannerAgent:
                 words = set(re.split(r"[\s_\-]+", camel_split.lower())) - stop_words
                 return words
 
+            # 0. BOUND-FIRST — confirmed entity bindings win over heuristics.
+            #    The binder already matched (and the officer confirmed) entity→column;
+            #    a ``binding_glossary`` {alias_or_name_lc: [columns]} lets a query term
+            #    like "LFPR" resolve to the confirmed column even when the physical
+            #    name (``labor_force_participation_rate_rural_f``) shares no words.
+            #    Longest alias first so multi-word entities beat partial overlaps.
+            glossary_cols: list[str] = []
+            binding_glossary = (analysis_payload or {}).get("binding_glossary") or {}
+            for alias_lc in sorted(binding_glossary, key=len, reverse=True):
+                if alias_lc and alias_lc in q_lower:
+                    for col in binding_glossary[alias_lc]:
+                        if col in available_columns and col not in glossary_cols:
+                            glossary_cols.append(col)
+
             # 1. Exact column-name substring match
             target_columns = [c for c in available_columns if c.lower() in q_lower]
 
@@ -501,6 +550,11 @@ class PlannerAgent:
             # 5. If still empty, include all columns for general queries
             if not target_columns and available_columns:
                 target_columns = list(available_columns)
+
+            # Bound-first ordering: confirmed columns rank ahead of heuristics
+            # (explore-fallback heuristics still contribute the remainder).
+            if glossary_cols:
+                target_columns = glossary_cols + target_columns
 
             target_columns = list(dict.fromkeys(target_columns))[:20]
 
