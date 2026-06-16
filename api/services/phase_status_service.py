@@ -15,6 +15,7 @@ from database.models import (
 )
 from services.analysis_query import (
     build_phase3_from_relational,
+    count_validation_candidates,
     get_analysis_meta,
     get_normalization_version,
     load_analysis_checkpoint,
@@ -110,6 +111,29 @@ def ensure_phase_status_schema() -> None:
                                 "ADD COLUMN dataset_review_completed BOOLEAN NOT NULL DEFAULT 0"
                             )
                         )
+            if "weight_application_completed" not in cols:
+                dialect = engine.dialect.name
+                with engine.begin() as conn:
+                    if dialect == "postgresql":
+                        conn.execute(
+                            text(
+                                "ALTER TABLE analysis_phase_status "
+                                "ADD COLUMN IF NOT EXISTS weight_application_completed BOOLEAN NOT NULL DEFAULT FALSE"
+                            )
+                        )
+                    else:
+                        conn.execute(
+                            text(
+                                "ALTER TABLE analysis_phase_status "
+                                "ADD COLUMN weight_application_completed BOOLEAN NOT NULL DEFAULT 0"
+                            )
+                        )
+        WeightProfile = __import__("database.models", fromlist=["WeightProfile"]).WeightProfile
+        WeightApplication = __import__("database.models", fromlist=["WeightApplication"]).WeightApplication
+        WeightAuditLog = __import__("database.models", fromlist=["WeightAuditLog"]).WeightAuditLog
+        WeightProfile.__table__.create(bind=engine, checkfirst=True)
+        WeightApplication.__table__.create(bind=engine, checkfirst=True)
+        WeightAuditLog.__table__.create(bind=engine, checkfirst=True)
     except Exception:
         pass
     _schema_ready = True
@@ -138,7 +162,11 @@ class PhaseStatusService:
         candidates = [
             c for c in (phase3.get("validation_candidates") or []) if isinstance(c, dict)
         ]
-        total = len(candidates)
+        total = int(phase3.get("validation_candidates_total") or 0)
+        if total <= 0:
+            total = count_validation_candidates(self.db, analysis_id)
+        if total <= 0:
+            total = len(candidates)
         candidate_keys = {_candidate_key(c) for c in candidates if c.get("column")}
         saved = self.db.query(ValidationDecision).filter(
             ValidationDecision.analysis_id == analysis_id
@@ -394,6 +422,7 @@ class PhaseStatusService:
             "rule_validation_completed": row.rule_validation_completed or val["complete"],
             "anomaly_completed": row.anomaly_completed,
             "missing_value_completed": row.missing_value_completed,
+            "weight_application_completed": row.weight_application_completed,
             "dataset_review_completed": row.dataset_review_completed,
             "validation": val,
             "anomaly": anomaly,

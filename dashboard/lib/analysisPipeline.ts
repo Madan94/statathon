@@ -8,6 +8,7 @@ export function analysisRoutes(analysisId: number) {
     hubStep: (step: number) => `/analysis/${analysisId}?step=${step}`,
     validation: `/analysis/${analysisId}/validation`,
     columns: `/analysis/${analysisId}/columns`,
+    weights: `/analysis/${analysisId}/weights`,
     review: `/analysis/${analysisId}/review`,
   };
 }
@@ -34,5 +35,6 @@ export function stepHref(analysisId: number, stepId: number): string {
   if (stepId <= HUB_STEP_COUNT) return routes.hubStep(stepId);
   if (stepId === 6) return routes.validation;
   if (stepId === 7) return routes.columns;
+  if (stepId === 8) return routes.weights;
   return routes.review;
 }

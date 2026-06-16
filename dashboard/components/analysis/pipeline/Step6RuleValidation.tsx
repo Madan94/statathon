@@ -64,6 +64,11 @@ export default function Step6RuleValidation({
 
   const phase3 = results.phase3 ?? {};
   const candidates = (phase3.validation_candidates as ValidationCandidate[] | undefined) ?? [];
+  const totalCandidates = Number(
+    (phase3 as { validation_candidates_total?: number }).validation_candidates_total
+      ?? validationProgress.total
+      ?? candidates.length,
+  );
 
   useEffect(() => {
     analysisApi.getValidationReviewProgress(analysisId).then((p) => {
@@ -73,7 +78,7 @@ export default function Step6RuleValidation({
         complete: p.complete,
       });
     }).catch(() => {});
-  }, [analysisId, candidates.length]);
+  }, [analysisId, totalCandidates]);
 
   const validationResults = (phase3.validation_results as {
     summary?: { gate?: Record<string, unknown> };
@@ -98,42 +103,54 @@ export default function Step6RuleValidation({
   const severity = countBySeverity(candidates);
   const criticalCount = severity.CRITICAL;
   const rulesDiscovered = Number(gateSummary.rules_discovered ?? 0);
-  const rulesFired = Number(gateSummary.rules_fired ?? candidates.length);
+  const rulesFired = Number(gateSummary.rules_fired ?? totalCandidates);
   const singleCount = Number(
     gateSummary.rules_matched_columns
       ?? candidates.filter((c) => (c.kind ?? '').includes('single')).length,
   );
   const multiCount = (validationResults.multi_column ?? []).length;
   const approved = gateSummary.approved !== false && criticalCount === 0;
-  const needsEmptyReviewAck = candidates.length === 0;
+  const needsEmptyReviewAck = totalCandidates === 0;
+  const isLoading = loadState === 'loading' || loadState === 'idle';
 
   const canProceed =
     (approved || acknowledged) &&
-    (validationProgress.complete || candidates.length === 0) &&
+    (validationProgress.complete || totalCandidates === 0) &&
     (!needsEmptyReviewAck || emptyReviewAck) &&
     proceedPhase !== 'saving' &&
     proceedPhase !== 'moving';
-  const canApply =
-    applyPhase !== 'applying' &&
-    (savedDecisionCount > 0 || validationProgress.complete || Boolean(phase3.validation_acknowledged));
-  const isLoading = loadState === 'loading' || loadState === 'idle';
+  const canApply = applyPhase !== 'applying' && !isLoading;
+  const applyDisabledReason =
+    isLoading
+      ? 'Loading validation results…'
+      : applyPhase === 'applying'
+        ? 'Applying…'
+        : null;
 
   const handleApplyToDataset = async () => {
     setApplyPhase('applying');
     setApplyMessage(null);
     try {
+      if (tableRef.current?.hasPendingChanges()) {
+        await tableRef.current.saveDecisions();
+      }
       const res = await analysisApi.applyLineage(analysisId);
-      const applied = (res as { applied?: Record<string, unknown> })?.applied;
       const snapshotError = (res as { snapshot_error?: string })?.snapshot_error;
       if (snapshotError) {
         toast.info(`Apply completed with warnings: ${snapshotError}`);
       } else {
         toast.success('Validation decisions applied to working dataset snapshots.');
       }
+      const lineage = await analysisApi.getLineage(analysisId);
+      const stages = Array.isArray((lineage as { lineage?: Array<{ stage?: string }> }).lineage)
+        ? ((lineage as { lineage?: Array<{ stage?: string }> }).lineage ?? [])
+            .map((row) => row.stage)
+            .filter(Boolean)
+        : [];
       setApplyMessage(
-        applied
-          ? `Applied: ${JSON.stringify(applied).slice(0, 120)}…`
-          : 'Dataset snapshots rebuilt from saved decisions.'
+        stages.length
+          ? `Snapshots updated: ${stages.join(' → ')}`
+          : 'Dataset snapshots rebuilt from saved decisions.',
       );
       setApplyPhase('done');
     } catch (err: unknown) {
@@ -153,7 +170,7 @@ export default function Step6RuleValidation({
 
       const res = await analysisApi.proceedValidation(analysisId, payload, {
         critical_count: criticalCount,
-        candidate_count: validationProgress.total || candidates.length,
+        candidate_count: validationProgress.total || totalCandidates,
       });
       if (res.success === false) {
         throw new Error('Failed to confirm validation review');
@@ -161,7 +178,7 @@ export default function Step6RuleValidation({
       setSavedDecisionCount(Number(res.saved ?? payload.length));
       setValidationProgress({
         reviewed: Number(res.saved ?? payload.length),
-        total: validationProgress.total || candidates.length,
+        total: validationProgress.total || totalCandidates,
         complete: true,
       });
       setAcknowledged(true);
@@ -277,6 +294,8 @@ export default function Step6RuleValidation({
         loadState={loadState}
         loadError={loadError}
         domainByColumn={domainByColumn}
+        paginated
+        totalCandidates={totalCandidates}
         onSaved={() => {
           void analysisApi.getValidationReviewProgress(analysisId).then((p) => {
             setValidationProgress({
@@ -294,7 +313,7 @@ export default function Step6RuleValidation({
       {!isLoading && (
         <Card className="p-4">
           <p className="text-sm text-text-muted">
-            Reviewed: <strong>{validationProgress.reviewed} / {validationProgress.total || candidates.length}</strong>
+            Reviewed: <strong>{validationProgress.reviewed} / {validationProgress.total || totalCandidates}</strong>
             {' · '}
             Status:{' '}
             <strong className={validationProgress.complete ? 'text-success' : 'text-warning'}>
@@ -335,6 +354,16 @@ export default function Step6RuleValidation({
         </Alert>
       )}
 
+      {!isLoading && (
+        <Card className="p-4 bg-surface/40">
+          <p className="text-sm text-text-muted">
+            <strong className="text-text">Apply to dataset</strong> rebuilds working snapshots from saved validation
+            decisions. <strong className="text-text">Proceed</strong> saves your review, marks this phase complete,
+            and unlocks column analysis.
+          </p>
+        </Card>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border">
         <Button variant="ghost" onClick={onBack} disabled={proceedPhase === 'saving' || proceedPhase === 'moving'}>
           ← Back to schema graph
@@ -343,7 +372,8 @@ export default function Step6RuleValidation({
           <Button
             variant="outline"
             onClick={handleApplyToDataset}
-            disabled={!canApply || isLoading}
+            disabled={!canApply}
+            title={applyDisabledReason ?? undefined}
             className="gap-2"
           >
             {applyPhase === 'applying' ? (

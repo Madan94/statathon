@@ -28,7 +28,7 @@ from services.normalization_transform_service import (
     resolve_validation_decisions,
 )
 
-STAGE_PRIORITY = ("imputed", "anomaly_reviewed", "validated", "normalized", "original")
+STAGE_PRIORITY = ("weighted", "imputed", "anomaly_reviewed", "validated", "normalized", "original")
 
 logger = logging.getLogger(__name__)
 

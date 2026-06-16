@@ -8,7 +8,7 @@ import Card from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn } from '@/lib/cn';
-import { formatDistributionPct, normalizeDomainDistribution } from '@/lib/clusterUtils';
+import { formatDistributionPct, normalizeClusterGroup, normalizeDomainDistribution, clusterScoreBarValue } from '@/lib/clusterUtils';
 import { ChevronLeft, Layers, CheckCircle2, Info } from 'lucide-react';
 
 interface ExtendedCluster extends ClusterGroup {
@@ -47,20 +47,25 @@ const CLUSTER_COLORS = [
   'bg-amber-500/15 border-amber-500/30 text-amber-700',
 ];
 
-function scoreBar(score: number) {
+function scoreBar(score: number | null | undefined, fallback = 0) {
+  const val = clusterScoreBarValue(score, fallback);
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-2 rounded-full bg-border overflow-hidden">
-        <div
-          className={cn(
-            'h-full rounded-full',
-            score >= 0.7 ? 'bg-success' : score >= 0.4 ? 'bg-warning' : 'bg-danger'
-          )}
-          style={{ width: `${Math.min(score * 100, 100)}%` }}
-        />
+        {score != null && Number.isFinite(Number(score)) ? (
+          <div
+            className={cn(
+              'h-full rounded-full',
+              val >= 0.7 ? 'bg-success' : val >= 0.4 ? 'bg-warning' : 'bg-danger'
+            )}
+            style={{ width: `${Math.min(val * 100, 100)}%` }}
+          />
+        ) : (
+          <div className="h-full w-0" />
+        )}
       </div>
       <span className="text-xs font-mono text-text-muted w-8 text-right">
-        {(score * 100).toFixed(0)}
+        {score != null && Number.isFinite(Number(score)) ? (val * 100).toFixed(0) : '—'}
       </span>
     </div>
   );
@@ -71,21 +76,29 @@ export default function Step4Cluster({ results, analysisId, onProceed, onBack }:
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const existing = results.clusters as ClusterGroup[] | undefined;
-    if (existing?.length) {
-      setLoading(false);
-      return;
-    }
+    let cancelled = false;
+    setLoading(true);
     analysisApi
       .getClusters(analysisId)
-      .then(setPayload)
-      .finally(() => setLoading(false));
-  }, [analysisId, results.clusters]);
+      .then((data) => {
+        if (!cancelled) setPayload(data);
+      })
+      .catch(() => {
+        if (!cancelled) setPayload(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [analysisId]);
 
-  const rawClusters =
-    (payload?.clusters ??
-      (results.clusters as ClusterGroup[] | undefined) ??
-      []) as ExtendedCluster[];
+  const rawClusters = (
+    payload?.clusters?.length
+      ? payload.clusters
+      : (results.clusters as ClusterGroup[] | undefined) ?? []
+  ).map((cl) => normalizeClusterGroup(cl as ExtendedCluster));
 
   return (
     <div className="space-y-6">
@@ -204,9 +217,9 @@ export default function Step4Cluster({ results, analysisId, onProceed, onBack }:
                     <td className="px-4 py-2 font-mono text-xs">{cl.cluster_id}</td>
                     <td className="px-4 py-2 text-xs font-semibold text-primary">{cl.domain}</td>
                     <td className="px-4 py-2 text-xs text-text-muted">{cl.columns.join(', ')}</td>
-                    <td className="px-4 py-2 w-24">{scoreBar(cl.domain_purity ?? cl.support ?? 0)}</td>
-                    <td className="px-4 py-2 w-24">{scoreBar(cl.embedding_coherence ?? 1)}</td>
-                    <td className="px-4 py-2 w-24">{scoreBar(cl.support_score ?? 0)}</td>
+                    <td className="px-4 py-2 w-24">{scoreBar(cl.domain_purity)}</td>
+                    <td className="px-4 py-2 w-24">{scoreBar(cl.embedding_coherence)}</td>
+                    <td className="px-4 py-2 w-24">{scoreBar(cl.support_score)}</td>
                   </tr>
                 ))}
               </tbody>

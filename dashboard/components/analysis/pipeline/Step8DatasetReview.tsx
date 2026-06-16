@@ -236,7 +236,7 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
     return (
       <div className="pb-24">
         <WorkflowStepper currentStep={3} className="mb-5" />
-        <AnalysisStepper analysisId={analysisId} currentStep={8} className="mb-8" />
+        <AnalysisStepper analysisId={analysisId} currentStep={9} className="mb-8" />
         <p className="text-sm text-text-muted flex items-center gap-2">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading dataset review…
         </p>
@@ -248,7 +248,7 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
     return (
       <div className="pb-24">
         <WorkflowStepper currentStep={3} className="mb-5" />
-        <AnalysisStepper analysisId={analysisId} currentStep={8} className="mb-8" />
+        <AnalysisStepper analysisId={analysisId} currentStep={9} className="mb-8" />
         <Alert variant="error" title="Dataset review unavailable">{error ?? 'Unknown error'}</Alert>
         <Button variant="ghost" className="mt-4" onClick={onBack}>← Back to column analysis</Button>
       </div>
@@ -262,7 +262,7 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
   return (
     <div className="pb-28">
       <WorkflowStepper currentStep={3} className="mb-5" />
-      <AnalysisStepper analysisId={analysisId} currentStep={8} className="mb-8" />
+      <AnalysisStepper analysisId={analysisId} currentStep={9} className="mb-8" />
       <PageHeader
         title="Dataset review & approval"
         description="Inspect the final transformed dataset after all review phases before entering Report."
@@ -295,6 +295,26 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
           <div className="rounded-lg border p-3">Anomalies processed: <strong>{formatNum(review.summary.anomalies_processed)}</strong></div>
           <div className="rounded-lg border p-3">Values imputed: <strong>{formatNum(review.summary.values_imputed)}</strong></div>
         </div>
+        {review.weight_application && (
+          <div className="grid grid-cols-3 gap-3 mt-3 text-sm">
+            <div className="rounded-lg border p-3">
+              Weight applied:{' '}
+              <strong>{review.weight_application.applied ? 'YES' : 'NO'}</strong>
+            </div>
+            <div className="rounded-lg border p-3">
+              Weight column:{' '}
+              <strong>{review.weight_application.weight_column ?? '—'}</strong>
+            </div>
+            <div className="rounded-lg border p-3">
+              Quality score:{' '}
+              <strong>
+                {review.weight_application.quality_score != null
+                  ? `${Math.round(review.weight_application.quality_score * 100)}%`
+                  : '—'}
+              </strong>
+            </div>
+          </div>
+        )}
       </section>
 
       <section className="mb-8">

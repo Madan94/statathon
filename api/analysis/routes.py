@@ -25,8 +25,10 @@ from analysis.schemas import (
     OutlierMethodSelectRequest,
     OutlierRowDecisionsRequest,
     ValidationAcknowledgeRequest,
+    ValidationCandidatesPageResponse,
     ValidationDecisionsRequest,
     ValidationProceedRequest,
+    WeightApplyRequest,
 )
 from auth.permissions import require_analysis_owner, require_analysis_owner_meta, require_dataset_owner
 from deps import get_current_user_id
@@ -46,6 +48,7 @@ from services.decision_service import DecisionService
 from services.normalization_service import NormalizationService
 from services.outlier_workflow_service import OutlierWorkflowService
 from services.validation_workflow_service import ValidationWorkflowService
+from services.weight_workflow_service import WeightWorkflowService
 from services.imputation_workflow_service import ImputationWorkflowService
 from services.phase_audit_service import PhaseAuditService
 from services.phase_status_service import PhaseStatusService
@@ -215,6 +218,64 @@ def get_phase_status(
     return PhaseStatusService(db).get_status_payload(analysis_id)
 
 
+@router.get("/{analysis_id}/weights")
+def get_weight_application_payload(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return WeightWorkflowService(db).get_payload(analysis_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/{analysis_id}/weights/compare")
+def compare_weight_metrics(
+    analysis_id: int,
+    weight_column: str,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return WeightWorkflowService(db).compare_metrics(analysis_id, weight_column)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.post("/{analysis_id}/weights/apply")
+def apply_survey_weight(
+    analysis_id: int,
+    body: WeightApplyRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return WeightWorkflowService(db).apply_weight(
+            analysis_id,
+            body.weight_column,
+            user_id=user_id,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.post("/{analysis_id}/weights/ignore")
+def ignore_survey_weight(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return WeightWorkflowService(db).ignore_weight(analysis_id, user_id=user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
 @router.get("/{analysis_id}/dataset-review")
 def get_dataset_review(
     analysis_id: int,
@@ -315,6 +376,31 @@ def download_dataset_review_artifact(
         content=data,
         media_type=mime,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/{analysis_id}/validation/candidates", response_model=ValidationCandidatesPageResponse)
+def list_validation_candidates(
+    analysis_id: int,
+    page: int = 1,
+    page_size: int = 50,
+    severity: str | None = None,
+    column: str | None = None,
+    rule_id: str | None = None,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    from services.analysis_query import list_validation_candidates_paginated
+
+    return list_validation_candidates_paginated(
+        db,
+        analysis_id,
+        page=page,
+        page_size=page_size,
+        severity=severity,
+        column=column,
+        rule_id=rule_id,
     )
 
 

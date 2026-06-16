@@ -221,6 +221,11 @@ class Analysis(Base):
     schema_graph_edges_rel = relationship("SchemaGraphEdge", back_populates="analysis", cascade="all, delete-orphan")
     priority_dependencies_rel = relationship("PriorityDependency", back_populates="analysis", cascade="all, delete-orphan")
     dataset_contexts_rel = relationship("DatasetContextRecord", back_populates="analysis", cascade="all, delete-orphan")
+    weight_profiles_rel = relationship("WeightProfile", back_populates="analysis", cascade="all, delete-orphan")
+    weight_application = relationship(
+        "WeightApplication", back_populates="analysis", uselist=False, cascade="all, delete-orphan"
+    )
+    weight_audit_logs = relationship("WeightAuditLog", back_populates="analysis", cascade="all, delete-orphan")
 
 
 class DatasetIntelligenceRecord(Base):
@@ -501,9 +506,68 @@ class AnalysisPhaseStatus(Base):
     rule_validation_completed = Column(Boolean, nullable=False, default=False)
     anomaly_completed = Column(Boolean, nullable=False, default=False)
     missing_value_completed = Column(Boolean, nullable=False, default=False)
+    weight_application_completed = Column(Boolean, nullable=False, default=False)
     dataset_review_completed = Column(Boolean, nullable=False, default=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     analysis = relationship("Analysis", back_populates="phase_status")
+
+
+class WeightProfile(Base):
+    """Detected and validated weight column candidates per analysis."""
+
+    __tablename__ = "weight_profiles"
+    __table_args__ = (
+        UniqueConstraint("analysis_id", "column_name", name="uq_weight_profile_column"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    column_name = Column(String(512), nullable=False)
+    confidence = Column(Float, nullable=False, default=0.0)
+    signals = Column(JSON, nullable=True)
+    quality_score = Column(Float, nullable=True)
+    coverage = Column(Float, nullable=True)
+    missing_pct = Column(Float, nullable=True)
+    variance = Column(Float, nullable=True)
+    valid = Column(Boolean, nullable=False, default=False)
+    checks = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    analysis = relationship("Analysis", back_populates="weight_profiles_rel")
+
+
+class WeightApplication(Base):
+    """User weight selection for an analysis."""
+
+    __tablename__ = "weight_applications"
+    __table_args__ = (UniqueConstraint("analysis_id", name="uq_weight_application_analysis"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    dataset_id = Column(Integer, ForeignKey("datasets.id"), nullable=False, index=True)
+    weight_column = Column(String(512), nullable=True)
+    applied = Column(Boolean, nullable=False, default=False)
+    ignored = Column(Boolean, nullable=False, default=False)
+    quality_score = Column(Float, nullable=True)
+    recommendation = Column(JSON, nullable=True)
+    comparison = Column(JSON, nullable=True)
+    meta = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    analysis = relationship("Analysis", back_populates="weight_application")
+
+
+class WeightAuditLog(Base):
+    __tablename__ = "weight_audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    analysis_id = Column(Integer, ForeignKey("analyses.id"), nullable=False, index=True)
+    weight_column = Column(String(512), nullable=True)
+    quality_score = Column(Float, nullable=True)
+    user_action = Column(String(64), nullable=False)
+    payload = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    analysis = relationship("Analysis", back_populates="weight_audit_logs")
 
 
 class ColumnPhaseReview(Base):

@@ -311,13 +311,13 @@ export default function Step2Normalize({
                                 : 'bg-success'
                             )}
                             style={{
-                              width: `${Math.min(Math.max(ratio * 100, ratio === 0 ? 100 : 0), 100)}%`,
+                              width: `${Math.min(Math.max(ratio * 100, 0), 100)}%`,
                             }}
                           />
                         </div>
                         <span className="text-xs text-text-muted">
                           {totalRows > 0 || ratio > 0
-                            ? `${(ratio * 100).toFixed(0)}%`
+                            ? `${(ratio * 100).toFixed(1)}%`
                             : '0%'}
                         </span>
                       </div>

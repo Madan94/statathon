@@ -49,6 +49,8 @@ interface ValidationTableProps {
   loadError?: string | null;
   domainByColumn?: Record<string, string>;
   onSaved?: () => void;
+  paginated?: boolean;
+  totalCandidates?: number;
 }
 
 function rowKey(c: ValidationCandidate, i: number): string {
@@ -123,7 +125,16 @@ function ValidationLoadingPanel({ phaseIndex }: { phaseIndex: number }) {
 
 const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
   function ValidationTable(
-    { candidates, analysisId, loadState = 'loaded', loadError, domainByColumn, onSaved },
+    {
+      candidates,
+      analysisId,
+      loadState = 'loaded',
+      loadError,
+      domainByColumn,
+      onSaved,
+      paginated = false,
+      totalCandidates,
+    },
     ref,
   ) {
     const [severityFilter, setSeverityFilter] = useState<string>('all');
@@ -136,6 +147,57 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
     const [savedCount, setSavedCount] = useState(0);
     const [detailRow, setDetailRow] = useState<ValidationCandidate | null>(null);
     const [phaseIndex, setPhaseIndex] = useState(0);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(50);
+    const [pageTotal, setPageTotal] = useState(totalCandidates ?? candidates.length);
+    const [pageCandidates, setPageCandidates] = useState<ValidationCandidate[]>(
+      paginated ? [] : candidates,
+    );
+    const [pageLoading, setPageLoading] = useState(false);
+    const [candidateCache, setCandidateCache] = useState<Record<string, ValidationCandidate>>({});
+
+    const activeCandidates = paginated ? pageCandidates : candidates;
+
+    useEffect(() => {
+      if (!paginated) {
+        setPageCandidates(candidates);
+        setPageTotal(totalCandidates ?? candidates.length);
+      }
+    }, [paginated, candidates, totalCandidates]);
+
+    useEffect(() => {
+      if (!paginated || !analysisId || loadState !== 'loaded') return;
+      let cancelled = false;
+      setPageLoading(true);
+      analysisApi
+        .getValidationCandidates(analysisId, {
+          page,
+          pageSize,
+          severity: severityFilter !== 'all' ? severityFilter : undefined,
+          column: columnFilter || undefined,
+        })
+        .then((res) => {
+          if (cancelled) return;
+          setPageCandidates(res.items);
+          setPageTotal(res.total);
+          setCandidateCache((prev) => {
+            const next = { ...prev };
+            res.items.forEach((c, i) => {
+              next[rowKey(c, i)] = c;
+            });
+            return next;
+          });
+        })
+        .catch(() => {
+          if (!cancelled) setPageCandidates([]);
+        })
+        .finally(() => {
+          if (!cancelled) setPageLoading(false);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [paginated, analysisId, loadState, page, pageSize, severityFilter, columnFilter]);
 
     useEffect(() => {
       if (loadState !== 'loading') return;
@@ -147,12 +209,13 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
     }, [loadState]);
 
     const severities = useMemo(() => {
-      const set = new Set(candidates.map((c) => (c.severity || 'REVIEW').toUpperCase()));
+      const set = new Set(activeCandidates.map((c) => (c.severity || 'REVIEW').toUpperCase()));
       return ['all', ...Array.from(set)];
-    }, [candidates]);
+    }, [activeCandidates]);
 
     const filtered = useMemo(() => {
-      return candidates.filter((c) => {
+      if (paginated) return activeCandidates;
+      return activeCandidates.filter((c) => {
         const sev = (c.severity || 'REVIEW').toUpperCase();
         if (severityFilter !== 'all' && sev !== severityFilter) return false;
         if (columnFilter && !(c.column || '').toLowerCase().includes(columnFilter.toLowerCase())) {
@@ -160,7 +223,13 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
         }
         return true;
       });
-    }, [candidates, severityFilter, columnFilter]);
+    }, [activeCandidates, paginated, severityFilter, columnFilter]);
+
+    const payloadSource = useMemo(() => {
+      if (!paginated) return candidates;
+      const cached = Object.values(candidateCache);
+      return cached.length > 0 ? cached : activeCandidates;
+    }, [paginated, candidates, candidateCache, activeCandidates]);
 
     const filteredKeys = useMemo(
       () => filtered.map((c, i) => rowKey(c, i)),
@@ -168,11 +237,11 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
     );
 
     const buildPayload = (keys?: string[]): ValidationDecisionItem[] => {
-      const source = keys ? filtered : candidates;
+      const source = keys ? filtered : payloadSource;
       const target = keys ?? filteredKeys;
       return source
         .map((c) => {
-          const idx = candidates.findIndex(
+          const idx = payloadSource.findIndex(
             (x) =>
               x.column === c.column &&
               x.row === c.row &&
@@ -288,7 +357,7 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
       );
     }
 
-    if (!candidates.length) {
+    if (!paginated && !candidates.length) {
       return (
         <EmptyState
           icon={ShieldAlert}
@@ -298,18 +367,39 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
       );
     }
 
-    const uniqueColumns = [...new Set(candidates.map((c) => c.column).filter(Boolean))] as string[];
+    if (paginated && pageTotal === 0 && !pageLoading) {
+      return (
+        <EmptyState
+          icon={ShieldAlert}
+          title="No validation issues flagged"
+          description="Rule validation found no candidates requiring review."
+        />
+      );
+    }
+
+    const uniqueColumns = [...new Set(activeCandidates.map((c) => c.column).filter(Boolean))] as string[];
+    const displayTotal = paginated ? pageTotal : candidates.length;
+    const pageStart = displayTotal === 0 ? 0 : (page - 1) * pageSize + 1;
+    const pageEnd = Math.min(page * pageSize, displayTotal);
 
     return (
       <>
         <Card
-          title={`Rule validation (${candidates.length})`}
+          title={`Rule validation (${displayTotal})`}
           description="Review flagged cells and record auditable decisions before proceeding"
         >
+          {paginated && displayTotal > pageSize && (
+            <p className="text-xs text-text-muted mb-3">
+              Showing {pageStart}–{pageEnd} of {displayTotal} violations
+            </p>
+          )}
           <div className="flex flex-wrap gap-3 mb-4">
             <select
               value={severityFilter}
-              onChange={(e) => setSeverityFilter(e.target.value)}
+              onChange={(e) => {
+                setSeverityFilter(e.target.value);
+                setPage(1);
+              }}
               className="text-sm rounded-lg border border-border px-3 py-2 bg-surface-card"
               aria-label="Filter by severity"
             >
@@ -323,7 +413,10 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
               type="search"
               placeholder="Filter by column…"
               value={columnFilter}
-              onChange={(e) => setColumnFilter(e.target.value)}
+              onChange={(e) => {
+                setColumnFilter(e.target.value);
+                setPage(1);
+              }}
               className="text-sm rounded-lg border border-border px-3 py-2 flex-1 min-w-[160px] bg-surface-card"
               aria-label="Filter by column"
             />
@@ -361,6 +454,11 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
           </div>
 
           <div className="overflow-x-auto max-h-[28rem]">
+            {pageLoading ? (
+              <div className="py-8 flex justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-accent" />
+              </div>
+            ) : (
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-surface-card z-10">
                 <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-text-muted">
@@ -381,8 +479,8 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
                 </tr>
               </thead>
               <tbody>
-                {filtered.slice(0, 250).map((c) => {
-                  const idx = candidates.findIndex(
+                {filtered.map((c) => {
+                  const idx = payloadSource.findIndex(
                     (x) =>
                       x.column === c.column &&
                       x.row === c.row &&
@@ -453,7 +551,49 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
                 })}
               </tbody>
             </table>
+            )}
           </div>
+
+          {paginated && displayTotal > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-border">
+              <div className="flex items-center gap-2 text-sm text-text-muted">
+                <span>Rows per page</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="text-sm rounded border border-border px-2 py-1 bg-surface-card"
+                >
+                  {[25, 50, 100, 200].map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1 || pageLoading}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-text-muted">
+                  Page {page} of {Math.max(1, Math.ceil(displayTotal / pageSize))}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page * pageSize >= displayTotal || pageLoading}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
 
         <ValidationDetailDrawer

@@ -39,7 +39,7 @@ export default function ColumnsPage() {
       results={results}
       analysisId={analysisId}
       onBack={() => router.push(routes.validation)}
-      onProceedToDatasetReview={() => router.push(routes.review)}
+      onProceedToDatasetReview={() => router.push(routes.weights)}
     />
   );
 }

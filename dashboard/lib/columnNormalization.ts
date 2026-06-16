@@ -34,16 +34,76 @@ export function formatMatchMethod(method?: string): string {
 
 function profileLookupKeys(originalName: string, normalizedName: string, results: AnalysisResult): string[] {
   const keys = new Set<string>();
-  keys.add(normalizedName);
-  keys.add(originalName);
+  const add = (k?: string | null) => {
+    if (k) keys.add(k);
+  };
+  add(normalizedName);
+  add(originalName);
   for (const row of results.column_normalization ?? []) {
     if (row.original_name !== originalName && row.normalized_name !== normalizedName) continue;
-    keys.add(row.normalized_name);
-    keys.add(row.original_name);
-    const canonical = row.canonical_name as string | undefined;
-    if (canonical) keys.add(canonical);
+    add(row.original_name);
+    add(row.normalized_name);
+    add(row.canonical_name as string | undefined);
+    add(row.display_name as string | undefined);
+  }
+  for (const row of results.semantic_mapping ?? []) {
+    const orig = (row as { original_name?: string }).original_name;
+    if (row.column === originalName || row.column === normalizedName || orig === originalName) {
+      add(row.column);
+      add(orig);
+    }
+  }
+  for (const pk of Object.keys(results.column_profiles ?? {})) {
+    const normRow = (results.column_normalization ?? []).find(
+      (r) =>
+        r.canonical_name === pk
+        || r.original_name === originalName
+        || r.normalized_name === normalizedName,
+    );
+    if (normRow?.original_name === originalName || pk === normalizedName || pk === originalName) {
+      add(pk);
+    }
   }
   return [...keys];
+}
+
+/** Step 1 parity: prefer health when > 0, else derive from profile missing_ratio. */
+function resolveMissingCount(
+  keys: string[],
+  columnProfiles: Record<string, ColumnProfile> | undefined,
+  missingPerCol: Record<string, number> | undefined,
+  totalRows: number,
+): { missingCount: number; profile?: ColumnProfile } {
+  let profile: ColumnProfile | undefined;
+  for (const key of keys) {
+    if (!profile && columnProfiles?.[key]) profile = columnProfiles[key];
+  }
+
+  let fromHealth: number | undefined;
+  for (const key of keys) {
+    if (missingPerCol?.[key] != null) {
+      const val = Number(missingPerCol[key]);
+      if (val > 0) {
+        fromHealth = val;
+        break;
+      }
+      if (fromHealth == null) fromHealth = val;
+    }
+  }
+
+  if (fromHealth != null && fromHealth > 0) {
+    return { missingCount: fromHealth, profile };
+  }
+  if (profile?.missing_ratio != null && totalRows > 0) {
+    return {
+      missingCount: Math.round(Number(profile.missing_ratio) * totalRows),
+      profile,
+    };
+  }
+  if (profile?.missing_count != null) {
+    return { missingCount: Number(profile.missing_count), profile };
+  }
+  return { missingCount: fromHealth ?? 0, profile };
 }
 
 /** Resolve type and missing stats when profiles/schema use canonical column names. */
@@ -61,17 +121,12 @@ export function resolveColumnProfileStats(
   const columnProfiles = results.column_profiles as Record<string, ColumnProfile> | undefined;
   const totalRows = health?.rows ?? 0;
   const keys = profileLookupKeys(originalName, profileKey, results);
+  const missingPerCol = health?.missing_per_column ?? {};
 
-  let profile: ColumnProfile | undefined;
-  let missingFromHealth: number | undefined;
   let typeFromSchema: string | undefined;
   let typeFromDtypes: string | undefined;
 
   for (const key of keys) {
-    if (!profile && columnProfiles?.[key]) profile = columnProfiles[key];
-    if (missingFromHealth == null && health?.missing_per_column?.[key] != null) {
-      missingFromHealth = Number(health.missing_per_column[key]);
-    }
     if (!typeFromSchema && schema[key]) typeFromSchema = schema[key];
     if (!typeFromDtypes && health?.dtypes?.[key]) typeFromDtypes = health.dtypes[key];
   }
@@ -83,14 +138,12 @@ export function resolveColumnProfileStats(
   );
   const typeFromMapping = (mapRow as { dtype?: string } | undefined)?.dtype;
 
-  const missingCount =
-    missingFromHealth != null
-      ? missingFromHealth
-      : profile?.missing_count != null
-        ? Number(profile.missing_count)
-        : profile?.missing_ratio != null && totalRows > 0
-          ? Math.round(Number(profile.missing_ratio) * totalRows)
-          : 0;
+  const { missingCount, profile } = resolveMissingCount(
+    keys,
+    columnProfiles,
+    missingPerCol,
+    totalRows,
+  );
 
   const missingRatio =
     totalRows > 0
@@ -160,7 +213,7 @@ export function buildNormalizationPlan(results: AnalysisResult): NormalizationPl
     return {
       originalName,
       normalizedName,
-      profileKey: normalizedName,
+      profileKey: originalName,
       displayName,
       domain,
       matchMethod: 'Legacy analysis (re-run for dynamic names)',

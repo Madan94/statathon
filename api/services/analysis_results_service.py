@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from analysis_state.cluster_utils import normalize_domain_distribution
+from analysis_state.cluster_utils import cluster_from_db_row, normalize_domain_distribution
 
 from sqlalchemy.orm import Session
 
@@ -48,20 +48,18 @@ def build_semantic_results_from_db(db: Session, analysis_id: int) -> dict | None
     clusters = []
     for c in clusters_db:
         meta = c.cluster_metadata or {}
-        clusters.append(
-            {
-                "cluster_id": c.cluster_name,
-                "domain": c.semantic_domain,
-                "support_score": c.support_score,
-                "support": (meta or {}).get("support"),
-                "columns": (meta or {}).get("columns"),
-                "domain_distribution": normalize_domain_distribution(
-                    (meta or {}).get("domain_distribution"),
-                    fallback_domain=c.semantic_domain,
-                    column_count=len((meta or {}).get("columns") or []),
-                ),
-            }
+        unified = cluster_from_db_row(
+            c.cluster_name,
+            c.semantic_domain,
+            c.support_score,
+            meta if isinstance(meta, dict) else {},
         )
+        unified["domain_distribution"] = normalize_domain_distribution(
+            unified.get("domain_distribution"),
+            fallback_domain=unified.get("domain"),
+            column_count=len(unified.get("columns") or []),
+        )
+        clusters.append(unified)
 
     edges_db = db.query(SchemaGraphEdge).filter(SchemaGraphEdge.analysis_id == analysis_id).all()
     edge_list = []

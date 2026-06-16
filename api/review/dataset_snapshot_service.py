@@ -17,10 +17,24 @@ STAGE_LABELS: dict[str, str] = {
     "validated": "v3_rule_validation",
     "anomaly_reviewed": "v4_anomaly",
     "imputed": "v5_missing_value",
-    "final": "v6_review",
+    "weighted": "v6_weight_application",
+    "final": "v7_dataset_review",
 }
 
 WORKING_STAGE = "imputed"
+
+
+def resolve_working_stage(db: Session, analysis_id: int) -> str:
+    from database.models import WeightApplication
+
+    app = (
+        db.query(WeightApplication)
+        .filter(WeightApplication.analysis_id == analysis_id, WeightApplication.applied.is_(True))
+        .first()
+    )
+    if app:
+        return "weighted"
+    return WORKING_STAGE
 
 
 class DatasetSnapshotService:
@@ -102,8 +116,9 @@ class DatasetSnapshotService:
         raise ValueError("Original dataset snapshot unavailable")
 
     def load_processed_dataframe(self, analysis_id: int) -> tuple[pd.DataFrame, DatasetLineageSnapshot | None]:
-        """Latest working dataset snapshot (imputed stage) — read parquet, rebuild chain only if missing."""
-        snap = self._latest_snapshot(analysis_id, WORKING_STAGE)
+        """Latest working dataset snapshot — weighted if applied, else imputed."""
+        stage = resolve_working_stage(self.db, analysis_id)
+        snap = self._latest_snapshot(analysis_id, stage)
         if snap:
             df = self._read_snapshot_df(snap)
             if df is not None:
@@ -113,7 +128,8 @@ class DatasetSnapshotService:
 
         PhaseSnapshotService(self.db).snapshot_imputation(analysis_id)
         self.db.flush()
-        snap = self._latest_snapshot(analysis_id, WORKING_STAGE)
+        stage = resolve_working_stage(self.db, analysis_id)
+        snap = self._latest_snapshot(analysis_id, stage)
         if snap:
             df = self._read_snapshot_df(snap)
             if df is not None:
@@ -235,7 +251,8 @@ class DatasetSnapshotService:
 
     def ensure_review_snapshot(self, analysis_id: int) -> dict[str, Any] | None:
         """Alias latest working snapshot as review-ready metadata (no duplicate write)."""
-        snap = self._latest_snapshot(analysis_id, WORKING_STAGE)
+        stage = resolve_working_stage(self.db, analysis_id)
+        snap = self._latest_snapshot(analysis_id, stage)
         if not snap:
             return None
         return {

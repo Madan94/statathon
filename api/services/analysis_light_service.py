@@ -5,7 +5,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session, load_only
 
-from analysis_state.cluster_utils import normalize_domain_distribution
+from analysis_state.cluster_utils import cluster_from_db_row, normalize_domain_distribution
 from database.models import (
     DatasetContextRecord,
     DatasetIntelligenceRecord,
@@ -196,20 +196,18 @@ def build_clusters_response(db: Session, analysis_id: int) -> dict[str, Any]:
     clusters = []
     for c in rows:
         meta = c.cluster_metadata or {}
-        clusters.append(
-            {
-                "cluster_id": c.cluster_name,
-                "domain": c.semantic_domain,
-                "support_score": c.support_score,
-                "support": meta.get("support"),
-                "columns": meta.get("columns"),
-                "domain_distribution": normalize_domain_distribution(
-                    meta.get("domain_distribution"),
-                    fallback_domain=c.semantic_domain,
-                    column_count=len(meta.get("columns") or []),
-                ),
-            }
+        unified = cluster_from_db_row(
+            c.cluster_name,
+            c.semantic_domain,
+            c.support_score,
+            meta if isinstance(meta, dict) else {},
         )
+        unified["domain_distribution"] = normalize_domain_distribution(
+            unified.get("domain_distribution"),
+            fallback_domain=unified.get("domain"),
+            column_count=len(unified.get("columns") or []),
+        )
+        clusters.append(unified)
     return {"meta": {"analysis_id": analysis_id}, "clusters": clusters}
 
 

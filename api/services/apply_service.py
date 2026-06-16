@@ -42,6 +42,7 @@ LINEAGE_STAGES = (
     "validated",
     "anomaly_reviewed",
     "imputed",
+    "weighted",
     "final",
 )
 
@@ -548,7 +549,26 @@ def apply_analysis_decisions(
         )
     )
 
-    df_final = df_imputed.copy()
+    from review.dataset_snapshot_service import resolve_working_stage
+    from services.analysis_dataframe_service import load_snapshot_dataframe
+
+    working_stage = resolve_working_stage(db, analysis_id)
+    weighted_df = load_snapshot_dataframe(db, analysis_id, "weighted")
+    if working_stage == "weighted" and weighted_df is not None:
+        df_final = weighted_df.copy()
+        lineage.append(
+            _persist_snapshot(
+                db,
+                analysis_id=analysis_id,
+                dataset_id=ds.id,
+                stage="weighted",
+                df=df_final,
+                store=store,
+                meta={"phase": "v6_weight_application", "source": "apply_lineage"},
+            )
+        )
+    else:
+        df_final = df_imputed.copy()
     final_path = _derived_dir() / f"analysis_{analysis_id}_final.csv"
     df_final.to_csv(final_path, index=False)
     lineage.append(
