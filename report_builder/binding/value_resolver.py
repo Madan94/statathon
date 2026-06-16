@@ -55,18 +55,11 @@ def _synonym_forms(label: str) -> set[str]:
 def resolve_filter_value(
     canonical_value: Any,
     distinct_values: list[Any],
-    *,
-    fuzzy: bool = True,
 ) -> tuple[Any, bool]:
     """Map a canonical member label to the actual stored value in a column.
 
     Returns ``(resolved_value, applied)``. ``applied=False`` means the value was
     not found among ``distinct_values`` — the caller should widen the filter.
-
-    ``fuzzy`` (default True) enables the SequenceMatcher stage. Disable it when
-    resolving **arbitrary** query tokens (not a known canonical member), because
-    fuzzy-matching free text against short survey codes (e.g. "coastal" vs "R")
-    produces false positives.
     """
     if canonical_value is None:
         return None, False
@@ -87,15 +80,14 @@ def resolve_filter_value(
         if fn in by_norm:
             return by_norm[fn], True
 
-    # 3. fuzzy (opt-out for free-text token scanning)
-    if fuzzy:
-        best_v, best_score = None, 0.0
-        for vn, original in by_norm.items():
-            score = SequenceMatcher(None, target_norm, vn).ratio()
-            if score > best_score:
-                best_v, best_score = original, score
-        if best_v is not None and best_score >= _FUZZY_FLOOR:
-            return best_v, True
+    # 3. fuzzy
+    best_v, best_score = None, 0.0
+    for vn, original in by_norm.items():
+        score = SequenceMatcher(None, target_norm, vn).ratio()
+        if score > best_score:
+            best_v, best_score = original, score
+    if best_v is not None and best_score >= _FUZZY_FLOOR:
+        return best_v, True
 
     # 4. not found → widen
     return canonical_value, False

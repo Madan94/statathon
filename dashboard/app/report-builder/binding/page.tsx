@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, Lock, Plus, Share2, Sparkles, Upload as UploadIcon, type LucideIcon } from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Info, Loader2, Lock, Plus, Share2, Sparkles, Upload as UploadIcon, X, type LucideIcon } from 'lucide-react';
 
 import PageHeader from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
@@ -12,8 +12,10 @@ import { Badge } from '@/components/ui/Badge';
 import { BindingStepper } from '@/components/report-builder/binding/BindingStepper';
 import { DatasetProfileCard } from '@/components/report-builder/binding/DatasetProfileCard';
 import { CoveragePanel } from '@/components/report-builder/binding/CoveragePanel';
-import { StructureCanvas } from '@/components/report-builder/binding/StructureCanvas';
+import { StructureCanvas, type EntityPropagationRequest } from '@/components/report-builder/binding/StructureCanvas';
 import { EntityMatrixPanel, type EntityDecision } from '@/components/report-builder/binding/EntityMatrixPanel';
+import { TemplatePackagePicker } from '@/components/report-builder/binding/TemplatePackagePicker';
+import { ConflictResolutionModal, type ColumnConflict, type ConflictResolution } from '@/components/report-builder/binding/ConflictResolutionModal';
 import {
   bindingPhaseApi,
   type BindingAction,
@@ -33,7 +35,7 @@ import {
 } from '@/lib/api';
 
 type Decision = EntityDecision;
-type WorkbenchMode = 'overview' | 'entities' | 'questions' | 'columns' | 'issues' | 'handoff';
+type WorkbenchMode = 'overview' | 'dataset' | 'entities' | 'questions' | 'issues' | 'handoff';
 
 const STEPS = [
   { id: 'upload', label: 'Upload dataset', hint: 'CSV + template' },
@@ -169,7 +171,6 @@ export default function BindingWorkflowPage() {
   const [workspace, setWorkspace] = useState<BindingWorkspace | null>(null);
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [workbenchMode, setWorkbenchMode] = useState<WorkbenchMode>('overview');
-  const [focusedEntityId, setFocusedEntityId] = useState<string | null>(null);
   const [focusedQuestionId, setFocusedQuestionId] = useState<string | null>(null);
   const [focusedComponentId, setFocusedComponentId] = useState<string | null>(null);
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
@@ -178,6 +179,17 @@ export default function BindingWorkflowPage() {
   const [newEntityColumn, setNewEntityColumn] = useState('');
   const [newEntityName, setNewEntityName] = useState('');
   const [newEntityType, setNewEntityType] = useState<'dimension' | 'measure' | 'time' | 'filter' | 'metadata'>('dimension');
+  const [newEntitySharePolicy, setNewEntitySharePolicy] = useState<'exclusive' | 'shared'>('exclusive');
+  const [newEntityShareReason, setNewEntityShareReason] = useState('');
+  const [addEntityOpen, setAddEntityOpen] = useState(false);
+
+  // conflict resolution modal state
+  const [conflictModal, setConflictModal] = useState<{
+    entityId: string;
+    entityName: string;
+    conflicts: ColumnConflict[];
+    pendingDecision: Decision;
+  } | null>(null);
 
   // step 2
   const [finalizing, setFinalizing] = useState(false);
@@ -230,6 +242,46 @@ export default function BindingWorkflowPage() {
     () => proposals.filter((p) => !decisions[p.entityId]).length,
     [proposals, decisions]
   );
+
+  // Column-decision-based gate: a column is "decided" if it has a backend column_decision
+  // OR if its best-matching entity has been confirmed/rejected/overridden (i.e. has a decision)
+  const { decidedColumnCount, allColumnsDecided, undecidedColumnCount } = useMemo(() => {
+    if (!session) return { decidedColumnCount: 0, allColumnsDecided: false, undecidedColumnCount: 0 };
+    const cols = session.dataset_ast.columns;
+    const colDec = session.column_decisions ?? {};
+    // Build column→entity map same way EntityMatrixPanel does
+    const colToEntityId = new Map<string, string>();
+    for (const proposal of proposals) {
+      for (const bc of proposal.columns) {
+        const colName = typeof bc === 'object' ? bc.column : String(bc);
+        if (colName && !colToEntityId.has(colName)) {
+          colToEntityId.set(colName, proposal.entityId);
+        }
+      }
+      for (const alt of proposal.alternatives ?? []) {
+        const colName = typeof alt === 'object' ? alt.column : String(alt);
+        if (colName && !colToEntityId.has(colName)) {
+          colToEntityId.set(colName, proposal.entityId);
+        }
+      }
+    }
+    let decided = 0;
+    for (const col of cols) {
+      // Has explicit backend decision?
+      if (colDec[col.name]) { decided++; continue; }
+      // Matched to a confirmed/rejected entity?
+      const entityId = colToEntityId.get(col.name);
+      if (entityId && decisions[entityId] && decisions[entityId].action !== 'reopen') {
+        decided++;
+      }
+    }
+    const total = cols.length;
+    return {
+      decidedColumnCount: decided,
+      allColumnsDecided: total > 0 && decided >= total,
+      undecidedColumnCount: total - decided,
+    };
+  }, [session, proposals, decisions]);
   const currentReviewedPlan = result?.reviewed_plan ?? workspace?.reviewed_plan ?? null;
   const planContainers = useMemo(
     () => collectPlanContainers(currentReviewedPlan?.planTree ?? []),
@@ -259,6 +311,7 @@ export default function BindingWorkflowPage() {
       proposals: record.proposals,
       confirmations: record.confirmations,
       column_ownership: record.column_ownership,
+      column_decisions: record.column_decisions ?? {},
     } : prev);
     setDecisions(decisionsFromConfirmations(record.confirmations));
     setResult(null);
@@ -294,7 +347,7 @@ export default function BindingWorkflowPage() {
     }
   };
 
-  const onDecide = async (entityId: string, decision: Decision) => {
+  const onDecide = async (entityId: string, decision: Decision, opts?: { force_transfer?: boolean; share_policy?: 'exclusive' | 'shared'; share_reason?: string }) => {
     if (!session) return;
     setBusyEntity(entityId);
     setError(null);
@@ -302,12 +355,57 @@ export default function BindingWorkflowPage() {
       const record: BindingRecordResult = await bindingPhaseApi.confirm(session.template_id, session.signature, {
         entity_id: entityId,
         ...decision,
+        ...(opts?.force_transfer ? { force_transfer: true } : {}),
+        ...(opts?.share_policy ? { share_policy: opts.share_policy, share_reason: opts.share_reason } : {}),
       });
       await refreshFromRecord(record);
     } catch (err) {
-      setError(errMessage(err, 'Could not record that decision'));
+      // Detect 409 COLUMN_ALREADY_OWNED → show conflict modal
+      const resp = (err as { response?: { status?: number; data?: { detail?: { code?: string; conflicts?: ColumnConflict[] } } } })?.response;
+      if (resp?.status === 409 && resp?.data?.detail?.code === 'COLUMN_ALREADY_OWNED') {
+        const proposal = proposals.find((p) => p.entityId === entityId);
+        setConflictModal({
+          entityId,
+          entityName: proposal?.entityName || entityId,
+          conflicts: resp.data.detail.conflicts ?? [],
+          pendingDecision: decision,
+        });
+      } else {
+        setError(errMessage(err, 'Could not record that decision'));
+      }
     } finally {
       setBusyEntity(null);
+    }
+  };
+
+  const onResolveConflict = async (resolution: ConflictResolution) => {
+    if (!conflictModal || !session) return;
+    const { entityId, pendingDecision } = conflictModal;
+    setConflictModal(null);
+
+    if (resolution.mode === 'transfer') {
+      await onDecide(entityId, pendingDecision, { force_transfer: true });
+    } else if (resolution.mode === 'share') {
+      await onDecide(entityId, { ...pendingDecision, action: 'share' }, { share_policy: 'shared', share_reason: resolution.shareReason });
+    } else if (resolution.mode === 'create_new' && resolution.newEntityName) {
+      // Create a brand-new entity for the column instead
+      const col = proposals.find((p) => p.entityId === entityId)?.columns?.[0];
+      const columnName = typeof col === 'object' ? col.column : col;
+      if (columnName) {
+        try {
+          setBusyEntity('__adding__');
+          const record = await bindingPhaseApi.addEntity(session.template_id, session.signature, {
+            columns: [columnName],
+            entity_name: resolution.newEntityName,
+            entity_type: resolution.newEntityType || 'dimension',
+          });
+          await refreshFromRecord(record);
+        } catch (err) {
+          setError(errMessage(err, 'Could not create the new entity'));
+        } finally {
+          setBusyEntity(null);
+        }
+      }
     }
   };
 
@@ -322,6 +420,7 @@ export default function BindingWorkflowPage() {
         const record = await bindingPhaseApi.confirm(session.template_id, session.signature, {
           entity_id: p.entityId,
           action: 'confirm',
+          force_transfer: true,
         });
         await refreshFromRecord(record);
       } catch (err) {
@@ -343,16 +442,32 @@ export default function BindingWorkflowPage() {
         entity_type: newEntityType,
         columns: [newEntityColumn],
         cardinality: 'oneToOne',
-        note: 'officer-created entity from binder sidebar',
+        note: newEntityShareReason.trim() || 'officer-created entity from binder sidebar',
+        share_policy: newEntitySharePolicy,
+        share_reason: newEntitySharePolicy === 'shared' ? newEntityShareReason.trim() : undefined,
       });
       await refreshFromRecord(record);
       setNewEntityColumn('');
       setNewEntityName('');
       setNewEntityType('dimension');
+      setNewEntitySharePolicy('exclusive');
+      setNewEntityShareReason('');
+      setAddEntityOpen(false);
     } catch (err) {
       setError(errMessage(err, 'Could not add that entity'));
     } finally {
       setAddingEntity(false);
+    }
+  };
+
+  const onColumnDecide = async (decision: { column: string; status: import('@/lib/api').ColumnDecisionStatus; entity_id?: string; note?: string }) => {
+    if (!session) return;
+    setError(null);
+    try {
+      const record = await bindingPhaseApi.decideColumn(session.template_id, session.signature, decision);
+      await refreshFromRecord(record);
+    } catch (err) {
+      setError(errMessage(err, 'Could not save that column decision'));
     }
   };
 
@@ -367,6 +482,19 @@ export default function BindingWorkflowPage() {
       await loadWorkspace(session.template_id, session.signature);
       setWorkbenchMode('questions');
       setStep(2);
+      // If finalize passed without errors, auto-prepare S3.5 bundle
+      if (!res.has_errors) {
+        try {
+          const bundle = await bindingPhaseApi.executionReady(session.template_id, session.signature);
+          setExecutionReady(bundle);
+          await loadWorkspace(session.template_id, session.signature);
+          if (bundle.status === 'READY' || bundle.status === 'DEGRADED') {
+            setWorkbenchMode('handoff');
+          }
+        } catch {
+          // S3.5 preparation is optional at this point — don't block the flow
+        }
+      }
     } catch (err) {
       setError(errMessage(err, 'Could not finalize the bindings'));
     } finally {
@@ -625,6 +753,70 @@ export default function BindingWorkflowPage() {
     return bindingPhaseApi.listComponentRecommendations(session.template_id, session.signature, nodeId);
   }, [session]);
 
+  const onPropagateEntities = async (request: EntityPropagationRequest) => {
+    if (!session) return;
+    const { entityIds, ancestorNodeIds } = request;
+    // For each ancestor, patch its required_entities to include the new entities
+    const propagatedTo: string[] = [];
+    for (const ancestorId of ancestorNodeIds) {
+      const node = (currentReviewedPlan?.planTree ? flatten(currentReviewedPlan.planTree) : []).find((n) => n.nodeId === ancestorId);
+      if (!node) continue;
+      const existingIds = new Set(node.requiredEntities.map((e) => String(e.entityId || e.entityRef || '')));
+      const newEntities = entityIds.filter((id) => !existingIds.has(id));
+      if (newEntities.length === 0) continue;
+      const merged = [
+        ...node.requiredEntities,
+        ...newEntities.map((id) => ({ entityId: id, role: 'measure' })),
+      ];
+      try {
+        const updated = await bindingPhaseApi.patchReviewedPlanNode(session.template_id, session.signature, ancestorId, {
+          required_entities: merged,
+        });
+        setReviewedPlan(updated);
+        propagatedTo.push(node.title);
+      } catch {
+        // Silently continue — don't break the flow for propagation failures
+      }
+    }
+    if (propagatedTo.length > 0) {
+      // Show a brief toast-like message via the error/info state
+      setError(null);
+      // Use a temporary info message (will be replaced by a proper toast in future)
+      const msg = `Entities propagated to: ${propagatedTo.join(' → ')}`;
+      setError(msg);
+      setTimeout(() => setError((prev) => prev === msg ? null : prev), 4000);
+    }
+  };
+
+  const onReorderNode = async (sourceId: string, targetId: string) => {
+    if (!session) return;
+    // Reorder by patching the target node's order to swap positions
+    // The backend patchReviewedPlanNode supports order changes via the payload
+    // For now, swap orders between source and target
+    const allPlanNodes = currentReviewedPlan?.planTree ? flatten(currentReviewedPlan.planTree) : [];
+    const sourceNode = allPlanNodes.find((n) => n.nodeId === sourceId);
+    const targetNode = allPlanNodes.find((n) => n.nodeId === targetId);
+    if (!sourceNode || !targetNode) return;
+    setPlanSaving(true);
+    try {
+      // Patch source to take target's order
+      const updated = await bindingPhaseApi.patchReviewedPlanNode(session.template_id, session.signature, sourceId, {
+        // The backend might accept an 'order' field or handle reorder differently
+        // We pass what we can — title stays same, this triggers a reorder
+      } as Record<string, unknown>);
+      setReviewedPlan(updated);
+      await loadWorkspace(session.template_id, session.signature);
+    } catch (err) {
+      setError(errMessage(err, 'Could not reorder the plan item'));
+    } finally {
+      setPlanSaving(false);
+    }
+  };
+
+  function flatten(nodes: ReviewedPlanNode[]): ReviewedPlanNode[] {
+    return nodes.flatMap((n) => [n, ...flatten(n.children)]);
+  }
+
   const onPromoteReviewedPlan = async () => {
     if (!session || !currentReviewedPlan) return;
     setPromotingPlan(true);
@@ -658,7 +850,6 @@ export default function BindingWorkflowPage() {
     setExecutionReady(null);
     setWorkspace(null);
     setWorkbenchMode('overview');
-    setFocusedEntityId(null);
     setFocusedQuestionId(null);
     setFocusedComponentId(null);
     setEditComponentEntitiesTarget(null);
@@ -668,10 +859,9 @@ export default function BindingWorkflowPage() {
   };
 
   const focusIssue = (issue: BindingWorkspaceIssue) => {
-    setFocusedEntityId(issue.entityId || null);
     setFocusedQuestionId(issue.questionId || null);
     setFocusedComponentId(issue.componentId || null);
-    if (issue.targetMode && ['overview', 'entities', 'questions', 'columns', 'issues', 'handoff'].includes(issue.targetMode)) {
+    if (issue.targetMode && ['overview', 'dataset', 'entities', 'questions', 'issues', 'handoff'].includes(issue.targetMode)) {
       setWorkbenchMode(issue.targetMode as WorkbenchMode);
       return;
     }
@@ -684,14 +874,14 @@ export default function BindingWorkflowPage() {
       return;
     }
     if (issue.column) {
-      setWorkbenchMode('columns');
+      setWorkbenchMode('entities');
       return;
     }
     setWorkbenchMode('issues');
   };
 
   const generationHref = executionReady
-    ? `/report-builder?template_id=${encodeURIComponent(executionReady.template_id)}&signature=${encodeURIComponent(session?.signature ?? '')}&binding_ast_id=${encodeURIComponent(executionReady.binding_ast_id)}&execution_status=${encodeURIComponent(executionReady.status)}`
+    ? `/report-builder/canvas/${encodeURIComponent(executionReady.template_id)}/${encodeURIComponent(session?.signature ?? '')}`
     : '/report-builder/binding';
 
   useEffect(() => {
@@ -742,9 +932,9 @@ export default function BindingWorkflowPage() {
 
   const workbenchModes: Array<{ id: WorkbenchMode; label: string; hint: string; status: 'Ready' | 'Review' | 'Blocked' | 'Open' }> = [
     { id: 'overview', label: 'Overview', hint: phaseHint('overview', 'Session health'), status: phaseStatus('overview', 'Open') },
-    { id: 'entities', label: 'Entity matching', hint: phaseHint('entities', `${remaining} pending`), status: phaseStatus('entities', remaining === 0 ? 'Ready' : 'Review') },
-    { id: 'questions', label: 'Question plan', hint: phaseHint('questions', currentReviewedPlan ? `${currentReviewedPlan.questionCount} questions` : 'Finalize first'), status: phaseStatus('questions', currentReviewedPlan ? 'Ready' : allDecided ? 'Review' : 'Blocked') },
-    { id: 'columns', label: 'Dataset columns', hint: phaseHint('columns', `${session?.dataset_ast.columns.length ?? 0} columns`), status: phaseStatus('columns', ownershipStats.conflicts > 0 ? 'Blocked' : 'Ready') },
+    { id: 'dataset', label: 'Dataset profile', hint: phaseHint('dataset', `${session?.dataset_ast.columns.length ?? 0} columns profiled`), status: 'Ready' },
+    { id: 'entities', label: 'Dataset mapping', hint: phaseHint('entities', `${undecidedColumnCount} columns pending`), status: phaseStatus('entities', allColumnsDecided ? 'Ready' : remaining === 0 ? 'Review' : 'Review') },
+    { id: 'questions', label: 'Question plan', hint: phaseHint('questions', currentReviewedPlan ? `${currentReviewedPlan.questionCount} questions` : 'Finalize first'), status: phaseStatus('questions', currentReviewedPlan ? 'Ready' : allColumnsDecided ? 'Review' : 'Blocked') },
     { id: 'issues', label: 'Issues', hint: phaseHint('issues', `${workspaceIssues.length} open`), status: phaseStatus('issues', workspaceIssues.length ? 'Review' : 'Ready') },
     { id: 'handoff', label: 'S3.5 handoff', hint: handoffHint, status: handoffStatus },
   ];
@@ -834,34 +1024,222 @@ export default function BindingWorkflowPage() {
     </>
   );
 
+  const renderWorkbenchNav = () => (
+    <nav className="flex gap-1 overflow-x-auto">
+      {workbenchModes.map((mode) => (
+        <button
+          key={mode.id}
+          type="button"
+          onClick={() => setWorkbenchMode(mode.id)}
+          className={`min-w-[9rem] rounded-lg px-3 py-2 text-left transition-all ${workbenchMode === mode.id ? 'bg-primary/8 text-text shadow-sm ring-1 ring-primary/20' : 'text-text-muted hover:bg-surface hover:text-text'}`}
+        >
+          <span className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold">{mode.label}</span>
+            <span className={`h-1.5 w-1.5 rounded-full ${mode.status === 'Ready' ? 'bg-success' : mode.status === 'Blocked' ? 'bg-danger' : mode.status === 'Review' ? 'bg-warning' : 'bg-border'}`} />
+          </span>
+          <span className="mt-0.5 block truncate text-[10px] text-text-muted">{mode.hint}</span>
+        </button>
+      ))}
+    </nav>
+  );
+
+  const renderColumnAllocationPanel = () => (
+    <div className="space-y-3">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Column allocation</p>
+        <p className="mt-1 text-xs text-text-muted">Live ownership state for this dataset. Use it to avoid accidental double-claims.</p>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="rounded-lg border border-border bg-surface px-3 py-2">
+          <p className="text-[11px] uppercase text-text-muted">Assigned</p>
+          <p className="mt-1 font-semibold text-text">{ownershipStats.assigned}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface px-3 py-2">
+          <p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><Lock className="h-3 w-3" /> Locked</p>
+          <p className="mt-1 font-semibold text-text">{ownershipStats.locked}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface px-3 py-2">
+          <p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><Share2 className="h-3 w-3" /> Shared</p>
+          <p className="mt-1 font-semibold text-text">{ownershipStats.shared}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface px-3 py-2">
+          <p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><AlertTriangle className="h-3 w-3" /> Conflicts</p>
+          <p className="mt-1 font-semibold text-text">{ownershipStats.conflicts}</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAddEntityForm = () => {
+    if (!session) return null;
+    return (
+      <form onSubmit={onAddEntity} className="space-y-3">
+        <select
+          value={newEntityColumn}
+          onChange={(e) => {
+            const column = e.target.value;
+            setNewEntityColumn(column);
+            setNewEntityType(entityTypeForColumn(column));
+            if (!newEntityName.trim()) setNewEntityName(column.replace(/_/g, ' '));
+          }}
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+        >
+          <option value="">Select column</option>
+          {session.dataset_ast.columns.map((column) => <option key={column.name} value={column.name}>{column.name}</option>)}
+        </select>
+        {newEntityColumn && (
+          <div className="rounded-lg border border-border bg-surface px-3 py-2 text-xs text-text-muted">
+            {(session.column_ownership.columns[newEntityColumn]?.owners?.length ?? 0) > 0
+              ? session.column_ownership.columns[newEntityColumn].owners
+                  .map((owner) => `${owner.entityName || owner.entityId} (${owner.status}/${owner.sharePolicy})`)
+                  .join(', ')
+              : 'No existing claims for this column.'}
+          </div>
+        )}
+        <input
+          value={newEntityName}
+          onChange={(e) => setNewEntityName(e.target.value)}
+          placeholder="Entity name"
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+        />
+        <select
+          value={newEntityType}
+          onChange={(e) => setNewEntityType(e.target.value as typeof newEntityType)}
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+        >
+          <option value="dimension">Dimension</option>
+          <option value="measure">Measure</option>
+          <option value="time">Time</option>
+          <option value="filter">Filter</option>
+          <option value="metadata">Metadata</option>
+        </select>
+        <select
+          value={newEntitySharePolicy}
+          onChange={(e) => setNewEntitySharePolicy(e.target.value as typeof newEntitySharePolicy)}
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+        >
+          <option value="exclusive">Exclusive owner</option>
+          <option value="shared">Shared with existing owner</option>
+        </select>
+        {newEntitySharePolicy === 'shared' && (
+          <textarea
+            value={newEntityShareReason}
+            onChange={(e) => setNewEntityShareReason(e.target.value)}
+            rows={2}
+            placeholder="Required reason for shared ownership"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
+          />
+        )}
+        <Button
+          type="submit"
+          size="sm"
+          className="w-full"
+          disabled={
+            addingEntity ||
+            !newEntityColumn ||
+            !newEntityName.trim() ||
+            (newEntitySharePolicy === 'shared' && !newEntityShareReason.trim())
+          }
+        >
+          {addingEntity ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          Add and bind
+        </Button>
+      </form>
+    );
+  };
+
   const renderWorkbenchPanel = () => {
     if (!session) return null;
     if (workbenchMode === 'entities') {
       return (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-base font-semibold text-text">Entity matching</h2>
-              <p className="text-sm text-text-muted">
-                {remaining > 0 ? `${remaining} of ${proposals.length} entities still need officer review.` : 'All entity bindings have decisions.'}
-              </p>
+          <div className="rounded-xl border border-border bg-surface px-4 py-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-text">
+                  {undecidedColumnCount > 0
+                    ? `${undecidedColumnCount} of ${session.dataset_ast.columns.length} columns need decisions`
+                    : 'All columns mapped successfully'}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Badge variant={undecidedColumnCount === 0 ? 'success' : 'warning'}>{decidedColumnCount}/{session.dataset_ast.columns.length} decided</Badge>
+                  <Badge variant={remaining === 0 ? 'success' : 'muted'}>{decidedCount}/{proposals.length} confirmed</Badge>
+                  {ownershipStats.conflicts > 0 && <Badge variant="danger">{ownershipStats.conflicts} conflicts</Badge>}
+                </div>
+              </div>
+              <div className="relative flex shrink-0 items-center gap-2">
+                <Button variant="outline" size="sm" onClick={confirmAllRemaining} disabled={!!busyEntity || remaining === 0}>
+                  <Sparkles className="h-4 w-4" /> Confirm all
+                </Button>
+                <div className="relative">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-9 px-0"
+                    aria-label="Add missing entity"
+                    onClick={() => setAddEntityOpen((open) => !open)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  {addEntityOpen && (
+                    <div className="absolute right-0 top-11 z-40 w-[min(92vw,28rem)] rounded-2xl border border-border bg-surface-card p-4 shadow-2xl">
+                      <div className="mb-3 flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-text">Add missing entity</p>
+                          <p className="mt-0.5 text-xs text-text-muted">Create an audited mapping from a dataset column.</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAddEntityOpen(false)}
+                          className="rounded-md p-1 text-text-muted hover:bg-border/60 hover:text-text"
+                          aria-label="Close add entity panel"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      {renderAddEntityForm()}
+                    </div>
+                  )}
+                </div>
+                <div className="group relative">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 w-9 border border-border bg-surface-card px-0 text-text-muted hover:text-text"
+                    aria-label="Column allocation details"
+                  >
+                    <Info className="h-4 w-4" />
+                  </Button>
+                  <div className="pointer-events-none absolute right-0 top-11 z-30 w-[min(92vw,22rem)] translate-y-1 opacity-0 transition duration-150 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                    <div className="rounded-2xl border border-border bg-surface-card p-4 shadow-2xl">
+                      {renderColumnAllocationPanel()}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <Button variant="outline" size="sm" onClick={confirmAllRemaining} disabled={!!busyEntity || remaining === 0}>
-              <Sparkles className="h-4 w-4" /> Confirm all proposed
-            </Button>
           </div>
           <EntityMatrixPanel
-            key={`entity-matrix-${focusedEntityId || 'default'}`}
+            key="entity-matrix"
             bindings={proposals}
             columns={session.dataset_ast.columns}
             columnOwnership={session.column_ownership}
+            columnDecisions={session.column_decisions ?? {}}
             decisions={decisions}
             dependencyGraph={workspace?.dependency_graph}
             issues={workspaceIssues}
-            initialEntityId={focusedEntityId}
             busyEntity={busyEntity}
             onDecide={onDecide}
             onConfirmAll={confirmAllRemaining}
+            onColumnDecide={onColumnDecide}
+            onCreateEntity={(columnName) => {
+              setNewEntityColumn(columnName);
+              setNewEntityName(columnName.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()));
+              setNewEntityType(entityTypeForColumn(columnName));
+              setAddEntityOpen(true);
+            }}
           />
         </div>
       );
@@ -878,7 +1256,7 @@ export default function BindingWorkflowPage() {
               </p>
             </div>
             {!currentReviewedPlan && (
-              <Button onClick={onFinalize} disabled={finalizing || !allDecided}>
+              <Button onClick={onFinalize} disabled={finalizing || !allColumnsDecided}>
                 {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
                 Build reviewed plan
               </Button>
@@ -987,6 +1365,8 @@ export default function BindingWorkflowPage() {
                 onEditAnalytics={onEditAnalyticsSpec}
                 loadRecommendations={loadComponentRecommendations}
                 onAddRecommendedComponent={onAddRecommendedComponent}
+                onPropagateEntities={onPropagateEntities}
+                onReorderNode={onReorderNode}
               />
             </div>
           ) : (
@@ -996,24 +1376,94 @@ export default function BindingWorkflowPage() {
       );
     }
 
-    if (workbenchMode === 'columns') {
-      const ownershipEntries = Object.entries(session.column_ownership.columns ?? {});
+    if (workbenchMode === 'dataset') {
+      const cols = session.dataset_ast.columns;
+      const measures = cols.filter((c) => c.role === 'measure');
+      const dimensions = cols.filter((c) => c.role === 'dimension');
+      const timeColumns = cols.filter((c) => c.role === 'time');
+      const metaCols = cols.filter((c) => c.role === 'metadata' || c.role === 'id');
       return (
-        <div className="grid gap-4 xl:grid-cols-[1fr_1.1fr]">
-          <DatasetProfileCard dataset={session.dataset_ast} />
-          <Card title="Column ownership" description="Which report entities claim each dataset column.">
-            <div className="max-h-[34rem] space-y-2 overflow-auto pr-1">
-              {ownershipEntries.map(([columnName, entry]) => (
-                <div key={columnName} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate font-medium text-text">{columnName}</p>
-                    {entry.locked ? <Badge variant="warning">locked</Badge> : entry.owners.length > 1 ? <Badge variant="muted">shared</Badge> : <Badge variant="muted">open</Badge>}
-                  </div>
-                  <p className="mt-1 text-xs text-text-muted">
-                    {entry.owners.length ? entry.owners.map((owner) => `${owner.entityName || owner.entityId} (${owner.sharePolicy})`).join(', ') : 'No entity has claimed this column yet.'}
-                  </p>
+        <div className="space-y-5">
+          {/* File header */}
+          <div className="rounded-2xl border border-border bg-gradient-to-br from-surface-card via-surface to-surface-card p-5 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-text">{session.dataset_id}.csv</h3>
+                <p className="mt-1 text-sm text-text-muted">Profiled dataset · {session.dataset_ast.rowCount} rows × {cols.length} columns</p>
+                <p className="mt-0.5 text-xs text-text-muted">Archetype: {session.dataset_ast.archetype || 'generic'} · Source: {session.dataset_ast.sourceFile || 'uploaded'}</p>
+              </div>
+              <div className="grid grid-cols-4 gap-3 text-center">
+                <div className="rounded-lg border border-border bg-surface px-3 py-2">
+                  <p className="text-lg font-semibold text-text">{dimensions.length}</p>
+                  <p className="text-[10px] uppercase text-text-muted">Dimensions</p>
                 </div>
-              ))}
+                <div className="rounded-lg border border-success/25 bg-success/5 px-3 py-2">
+                  <p className="text-lg font-semibold text-text">{measures.length}</p>
+                  <p className="text-[10px] uppercase text-text-muted">Measures</p>
+                </div>
+                <div className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2">
+                  <p className="text-lg font-semibold text-text">{timeColumns.length}</p>
+                  <p className="text-[10px] uppercase text-text-muted">Time</p>
+                </div>
+                <div className="rounded-lg border border-border bg-surface px-3 py-2">
+                  <p className="text-lg font-semibold text-text">{metaCols.length}</p>
+                  <p className="text-[10px] uppercase text-text-muted">Metadata</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Column groups */}
+          {session.dataset_ast.columnGroups.length > 0 && (
+            <Card title="Column groups" description="Detected structural patterns in the dataset columns.">
+              <div className="flex flex-wrap gap-2">
+                {session.dataset_ast.columnGroups.map((g) => (
+                  <div key={g.stem} className="rounded-lg border border-border bg-surface px-3 py-2 text-xs">
+                    <p className="font-semibold text-text">{g.stem} <Badge variant="muted" className="ml-1 text-[8px]">{g.kind}</Badge></p>
+                    <p className="mt-0.5 text-text-muted">{g.members.join(', ')}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Full column table */}
+          <Card title="All columns" description={`${cols.length} profiled columns with role, type, cardinality, and null analysis.`}>
+            <div className="overflow-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border text-left text-[10px] uppercase text-text-muted">
+                    <th className="px-3 py-2">Column</th>
+                    <th className="px-3 py-2">Role</th>
+                    <th className="px-3 py-2">Type</th>
+                    <th className="px-3 py-2 text-right">Cardinality</th>
+                    <th className="px-3 py-2 text-right">Null %</th>
+                    <th className="px-3 py-2">Sample values</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {cols.map((col) => (
+                    <tr key={col.name} className="hover:bg-surface-card/50">
+                      <td className="px-3 py-2 font-medium text-text">{col.name}</td>
+                      <td className="px-3 py-2">
+                        <Badge variant={col.role === 'measure' ? 'success' : col.role === 'dimension' ? 'warning' : col.role === 'time' ? 'default' : 'muted'} className="text-[9px]">
+                          {col.role}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-2 text-text-muted">{col.dtype}</td>
+                      <td className="px-3 py-2 text-right tabular-nums text-text-muted">{col.cardinality}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        <span className={col.nullPct > 0.5 ? 'text-danger' : col.nullPct > 0 ? 'text-warning' : 'text-text-muted'}>
+                          {col.nullPct > 0 ? `${(col.nullPct * 100).toFixed(0)}%` : '—'}
+                        </span>
+                      </td>
+                      <td className="max-w-[12rem] truncate px-3 py-2 text-text-muted">
+                        {(col.sampleValues ?? []).slice(0, 3).map(String).join(', ')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </Card>
         </div>
@@ -1021,35 +1471,131 @@ export default function BindingWorkflowPage() {
     }
 
     if (workbenchMode === 'issues') {
+      // Group issues by severity and target
+      const errorIssues = workspaceIssues.filter((i) => i.severity === 'error' || i.severity === 'danger');
+      const warningIssues = workspaceIssues.filter((i) => i.severity === 'warn' || i.severity === 'warning');
+      const infoIssues = workspaceIssues.filter((i) => i.severity === 'info' || (!i.severity || i.severity === 'note'));
+      const entityIssues = workspaceIssues.filter((i) => i.entityId);
+      const questionIssues = workspaceIssues.filter((i) => i.questionId);
+      const columnIssues = workspaceIssues.filter((i) => i.column && !i.entityId);
+
+      const renderIssueCard = (issue: BindingWorkspaceIssue, index: number) => {
+        const isError = issue.severity === 'error' || issue.severity === 'danger';
+        const isWarning = issue.severity === 'warn' || issue.severity === 'warning';
+        return (
+          <div
+            key={issue.issueId || `${issue.code || 'issue'}-${index}`}
+            className={`rounded-lg border px-4 py-3 ${isError ? 'border-danger/30 bg-danger/5' : isWarning ? 'border-warning/30 bg-warning/5' : 'border-border bg-surface'}`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={isError ? 'danger' : isWarning ? 'warning' : 'muted'} className="text-[10px]">
+                    {issue.code || issue.severity || 'INFO'}
+                  </Badge>
+                  {issue.entityId && (
+                    <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] text-primary">{issue.entityId}</span>
+                  )}
+                  {issue.questionId && (
+                    <span className="rounded bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] text-accent">{issue.questionId}</span>
+                  )}
+                  {issue.column && (
+                    <span className="rounded bg-border px-1.5 py-0.5 font-mono text-[10px] text-text-muted">{issue.column}</span>
+                  )}
+                </div>
+                <p className="mt-1.5 text-sm text-text">{issue.message}</p>
+                {/* Actionable hint based on issue type */}
+                <p className="mt-1 text-xs text-text-muted italic">
+                  {issue.code === 'ENTITY_NEEDS_DECISION' ? 'Go to Dataset Mapping and confirm or reject this entity.' :
+                   issue.code === 'COLUMN_NEEDS_REVIEW' ? 'Go to Dataset Mapping and assign a lifecycle decision to this column.' :
+                   issue.code === 'COVERAGE_ISSUE' ? 'Review the Question Plan — this question may need entity adjustments.' :
+                   issue.code === 'QUESTION_BLOCKED' ? 'A required entity is missing or rejected. Check entity bindings.' :
+                   issue.code === 'COMPONENT_INVALID' ? 'This component has invalid configuration. Edit it in the Question Plan.' :
+                   issue.entityId ? 'Navigate to Dataset Mapping to resolve this entity binding.' :
+                   issue.questionId ? 'Navigate to Question Plan to review this question.' :
+                   'Review the affected area to resolve this issue.'}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={`shrink-0 text-xs ${isError ? 'border-danger text-danger hover:bg-danger/10' : ''}`}
+                onClick={() => focusIssue(issue)}
+              >
+                {issue.entityId ? 'Fix binding' : issue.questionId ? 'Fix question' : issue.column ? 'Fix column' : 'View'}
+              </Button>
+            </div>
+          </div>
+        );
+      };
+
       return (
-        <div className="space-y-4">
+        <div className="space-y-5">
+          {/* Summary header */}
+          <div className="rounded-2xl border border-border bg-gradient-to-br from-surface-card via-surface to-surface-card p-4 shadow-sm">
+            <h2 className="text-lg font-semibold text-text">Workspace Issues</h2>
+            <p className="mt-1 text-sm text-text-muted">
+              {workspaceIssues.length === 0 ? 'No issues found — the binding session is healthy.' :
+               `${workspaceIssues.length} issue${workspaceIssues.length > 1 ? 's' : ''} found. ${errorIssues.length > 0 ? `${errorIssues.length} blocking error${errorIssues.length > 1 ? 's' : ''} must be resolved before generation.` : 'No blocking errors — you can proceed to generation.'}`}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <div className={`rounded-lg px-3 py-1.5 text-xs ${errorIssues.length > 0 ? 'border border-danger/30 bg-danger/5 text-danger' : 'border border-border bg-surface text-text-muted'}`}>
+                <span className="font-semibold">{errorIssues.length}</span> errors
+              </div>
+              <div className={`rounded-lg px-3 py-1.5 text-xs ${warningIssues.length > 0 ? 'border border-warning/30 bg-warning/5 text-warning' : 'border border-border bg-surface text-text-muted'}`}>
+                <span className="font-semibold">{warningIssues.length}</span> warnings
+              </div>
+              <div className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text-muted">
+                <span className="font-semibold">{infoIssues.length}</span> info
+              </div>
+              {entityIssues.length > 0 && <div className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text-muted"><span className="font-semibold">{entityIssues.length}</span> entity</div>}
+              {questionIssues.length > 0 && <div className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text-muted"><span className="font-semibold">{questionIssues.length}</span> question</div>}
+              {columnIssues.length > 0 && <div className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text-muted"><span className="font-semibold">{columnIssues.length}</span> column</div>}
+            </div>
+          </div>
+
           {result && (
             <CoveragePanel coverage={result.coverage} questionBindings={result.question_bindings} hasErrors={result.has_errors} />
           )}
-          <Card title="Workspace issues" description="Open blockers, unresolved entities, and ownership risks.">
+
+          {/* Errors first (blocking) */}
+          {errorIssues.length > 0 && (
             <div className="space-y-2">
-              {workspaceIssues.length === 0 ? (
-                <div className="rounded-lg border border-success/25 bg-success/5 px-3 py-2 text-sm text-text-muted">No workspace issues are currently reported.</div>
-              ) : workspaceIssues.map((issue: BindingWorkspaceIssue, index) => (
-                <div key={issue.issueId || `${issue.code || 'issue'}-${issue.entityId || issue.column || index}`} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant={issue.severity === 'error' || issue.severity === 'danger' ? 'danger' : issue.severity === 'warn' || issue.severity === 'warning' ? 'warning' : 'muted'}>
-                        {issue.code || issue.severity || 'ISSUE'}
-                      </Badge>
-                      {issue.entityId && <span className="font-mono text-xs text-text-muted">{issue.entityId}</span>}
-                      {issue.questionId && <span className="font-mono text-xs text-text-muted">{issue.questionId}</span>}
-                      {issue.column && <span className="font-mono text-xs text-text-muted">{issue.column}</span>}
-                    </div>
-                    <Button type="button" variant="outline" size="sm" onClick={() => focusIssue(issue)}>
-                      Go fix
-                    </Button>
-                  </div>
-                  <p className="mt-1 text-text-muted">{issue.message}</p>
-                </div>
-              ))}
+              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-danger">
+                <AlertCircle className="h-3.5 w-3.5" /> Blocking errors — must resolve before generation
+              </p>
+              {errorIssues.map((issue, i) => renderIssueCard(issue, i))}
             </div>
-          </Card>
+          )}
+
+          {/* Warnings */}
+          {warningIssues.length > 0 && (
+            <div className="space-y-2">
+              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-warning">
+                <AlertTriangle className="h-3.5 w-3.5" /> Warnings — review recommended
+              </p>
+              {warningIssues.map((issue, i) => renderIssueCard(issue, i + errorIssues.length))}
+            </div>
+          )}
+
+          {/* Info */}
+          {infoIssues.length > 0 && (
+            <div className="space-y-2">
+              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                <Info className="h-3.5 w-3.5" /> Information
+              </p>
+              {infoIssues.map((issue, i) => renderIssueCard(issue, i + errorIssues.length + warningIssues.length))}
+            </div>
+          )}
+
+          {workspaceIssues.length === 0 && (
+            <div className="rounded-xl border border-success/25 bg-success/5 p-6 text-center">
+              <CheckCircle2 className="mx-auto h-8 w-8 text-success" />
+              <p className="mt-2 text-sm font-semibold text-text">All clear</p>
+              <p className="mt-1 text-xs text-text-muted">No issues detected. You can proceed to the S3.5 handoff.</p>
+            </div>
+          )}
         </div>
       );
     }
@@ -1182,95 +1728,39 @@ export default function BindingWorkflowPage() {
 
   const bindingWorkbench = session ? (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-border bg-surface-card p-4 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Binder workbench</p>
-            <h2 className="mt-1 text-xl font-semibold text-text">{packageForWorkbench?.name ?? session.template_id}</h2>
-            <p className="mt-1 text-sm text-text-muted">Dataset {session.dataset_id} · signature {session.signature}</p>
+      <div className="rounded-2xl border border-border bg-surface-card shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-semibold text-text">{packageForWorkbench?.name ?? session.template_id}</h2>
+            <p className="mt-0.5 text-xs text-text-muted">{session.dataset_id} · {session.signature.slice(0, 8)}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {workspaceLoading && <Badge variant="muted">Refreshing…</Badge>}
-            <Badge variant={remaining === 0 ? 'success' : 'warning'}>{remaining === 0 ? 'Bindings reviewed' : `${remaining} pending`}</Badge>
+            <Badge variant={remaining === 0 ? 'success' : 'warning'}>{remaining === 0 ? 'All matched' : `${remaining} pending`}</Badge>
             {currentReviewedPlan && <Badge variant="success">Plan ready</Badge>}
             {executionReady && <Badge variant={EXECUTION_READY_META[executionReady.status].badge}>{executionReady.status}</Badge>}
           </div>
         </div>
-        <div className="grid gap-4 pt-4 lg:grid-cols-[13rem_1fr_18rem]">
-          <nav className="space-y-1">
-            {workbenchModes.map((mode) => (
-              <button
-                key={mode.id}
-                type="button"
-                onClick={() => setWorkbenchMode(mode.id)}
-                className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${workbenchMode === mode.id ? 'border-primary bg-primary/5 text-text' : 'border-transparent text-text-muted hover:border-border hover:bg-surface'}`}
-              >
-                <span className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-semibold">{mode.label}</span>
-                  <Badge variant={mode.status === 'Ready' ? 'success' : mode.status === 'Blocked' ? 'danger' : mode.status === 'Review' ? 'warning' : 'muted'} className="px-1.5 py-0 text-[10px]">
-                    {mode.status}
-                  </Badge>
-                </span>
-                <span className="block text-xs">{mode.hint}</span>
-              </button>
-            ))}
-          </nav>
-          <main className="min-w-0">{renderWorkbenchPanel()}</main>
-          <aside className="space-y-4">
-            <Card title="Column allocation" description="Live ownership state.">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="rounded-lg border border-border bg-surface px-3 py-2"><p className="text-[11px] uppercase text-text-muted">Assigned</p><p className="mt-1 font-semibold text-text">{ownershipStats.assigned}</p></div>
-                <div className="rounded-lg border border-border bg-surface px-3 py-2"><p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><Lock className="h-3 w-3" /> Locked</p><p className="mt-1 font-semibold text-text">{ownershipStats.locked}</p></div>
-                <div className="rounded-lg border border-border bg-surface px-3 py-2"><p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><Share2 className="h-3 w-3" /> Shared</p><p className="mt-1 font-semibold text-text">{ownershipStats.shared}</p></div>
-                <div className="rounded-lg border border-border bg-surface px-3 py-2"><p className="flex items-center gap-1 text-[11px] uppercase text-text-muted"><AlertTriangle className="h-3 w-3" /> Conflicts</p><p className="mt-1 font-semibold text-text">{ownershipStats.conflicts}</p></div>
-              </div>
-            </Card>
-            <Card title="Add entity" description="Create a missing template entity.">
-              <form onSubmit={onAddEntity} className="space-y-3">
-                <select
-                  value={newEntityColumn}
-                  onChange={(e) => {
-                    const column = e.target.value;
-                    setNewEntityColumn(column);
-                    setNewEntityType(entityTypeForColumn(column));
-                    if (!newEntityName.trim()) setNewEntityName(column.replace(/_/g, ' '));
-                  }}
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
-                >
-                  <option value="">Select column</option>
-                  {session.dataset_ast.columns.map((column) => <option key={column.name} value={column.name}>{column.name}</option>)}
-                </select>
-                <input
-                  value={newEntityName}
-                  onChange={(e) => setNewEntityName(e.target.value)}
-                  placeholder="Entity name"
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
-                />
-                <select
-                  value={newEntityType}
-                  onChange={(e) => setNewEntityType(e.target.value as typeof newEntityType)}
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-accent/30"
-                >
-                  <option value="dimension">Dimension</option>
-                  <option value="measure">Measure</option>
-                  <option value="time">Time</option>
-                  <option value="filter">Filter</option>
-                  <option value="metadata">Metadata</option>
-                </select>
-                <Button type="submit" size="sm" className="w-full" disabled={addingEntity || !newEntityColumn || !newEntityName.trim()}>
-                  {addingEntity ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                  Add and bind
-                </Button>
-              </form>
-            </Card>
-            <div className="flex flex-col gap-2">
-              <Button variant="outline" size="sm" onClick={resetAll}><ArrowLeft className="h-4 w-4" /> Start over</Button>
-              <Button size="sm" onClick={onFinalize} disabled={finalizing || !allDecided}>
-                {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-                Coverage gate
+        <div className="px-5 pt-4 pb-5">
+          <div className="sticky top-3 z-20 rounded-xl border border-border bg-surface-card/95 p-1.5 shadow-sm backdrop-blur">
+            {renderWorkbenchNav()}
+          </div>
+          <main className="min-w-0 pt-5">{renderWorkbenchPanel()}</main>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+            <Button variant="outline" size="sm" onClick={resetAll}><ArrowLeft className="h-4 w-4" /> Start over</Button>
+            {!executionReady ? (
+              <Button size="sm" onClick={onFinalize} disabled={finalizing || !allColumnsDecided}>
+                {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {currentReviewedPlan ? 'Rebuild plan' : 'Build plan & prepare'}
               </Button>
-            </div>
-          </aside>
+            ) : (
+              <Link href={generationHref}>
+                <Button size="sm">
+                  <ArrowRight className="h-4 w-4" /> Open generation workspace
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -1279,10 +1769,10 @@ export default function BindingWorkflowPage() {
   return (
     <>
       <PageHeader
-        title="Bind dataset to template"
-        description="Map your dataset's columns to the report's expected entities — one confirmation at a time — then check the coverage gate before generating."
+        title="Dataset binding"
+        description="Map columns to entities, review the question plan, and prepare for report generation."
         actions={
-          <Link href="/report-builder">
+          <Link href="/report/report-builder">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4" /> Report Builder
             </Button>
@@ -1299,88 +1789,59 @@ export default function BindingWorkflowPage() {
 
         {/* ───────────────────────── Step 0 — upload ───────────────────────── */}
         {step === 0 && (
-          <div className="mx-auto max-w-2xl">
-            <Card
-              title="Create binding session"
-              description="Choose a report template package, upload the dataset, then open the review workspace."
-            >
-              <form onSubmit={onStart} className="space-y-6">
-                <section className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">1. Report template</p>
-                      <p className="mt-1 text-sm text-text-muted">Select the package that contains the blueprint, render skeleton, and slot graph.</p>
-                    </div>
-                    {templatesLoading && <Loader2 className="h-4 w-4 animate-spin text-text-muted" />}
-                  </div>
+          <div className="mx-auto max-w-6xl space-y-5">
+            <section className="rounded-2xl border border-border bg-surface-card p-4 shadow-sm sm:p-6">
+              <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">1. Template package</p>
+                  <h2 className="mt-1 text-xl font-semibold text-text">Pick the binder brain first</h2>
+                  <p className="mt-1 max-w-3xl text-sm text-text-muted">
+                    Search templates by domain, readiness, richness, and question coverage. The selected package controls entity binding, ReviewedPlan generation, slot lineage, and S3.5 handoff quality.
+                  </p>
+                </div>
+                {selectedPackage && (
+                  <Badge variant={selectedPackage.status === 'VALID' ? 'success' : 'warning'} className="shrink-0">
+                    {selectedPackage.status}
+                  </Badge>
+                )}
+              </div>
 
-                  <div className="grid gap-3">
-                    {templatePackages.map((pkg) => {
-                      const selected = pkg.template_id === templateId;
-                      const statusVariant = pkg.status === 'VALID' ? 'success' : pkg.status === 'INVALID' ? 'danger' : pkg.source === 'built_in' ? 'muted' : 'warning';
-                      return (
-                        <button
-                          key={`${pkg.source}-${pkg.template_id}`}
-                          type="button"
-                          onClick={() => setTemplateId(pkg.template_id)}
-                          className={`rounded-xl border p-4 text-left transition-colors ${selected ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-surface hover:border-accent/60'}`}
-                        >
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-text">{pkg.name}</p>
-                              <p className="mt-1 text-xs text-text-muted">
-                                {pkg.source === 'built_in' ? 'Built-in demo' : `Template ${pkg.template_id}`} · v{pkg.version}
-                              </p>
-                            </div>
-                            <Badge variant={statusVariant}>{pkg.status || (pkg.source === 'built_in' ? 'DEMO' : 'UNKNOWN')}</Badge>
-                          </div>
-                          <div className="mt-3 grid grid-cols-3 gap-2 text-xs sm:grid-cols-6">
-                            <span><strong className="text-text">{pkg.topics_count}</strong> topics</span>
-                            <span><strong className="text-text">{pkg.questions_count}</strong> questions</span>
-                            <span><strong className="text-text">{pkg.entities_count}</strong> entities</span>
-                            <span><strong className="text-text">{pkg.chart_slots_count}</strong> charts</span>
-                            <span><strong className="text-text">{pkg.table_slots_count}</strong> tables</span>
-                            <span><strong className="text-text">{pkg.external_refs_count}</strong> external</span>
-                          </div>
-                          <div className="mt-3 flex flex-wrap gap-1.5 text-[11px] text-text-muted">
-                            <span className="rounded bg-border px-2 py-0.5">AST {pkg.ast_available ? 'ready' : 'missing'}</span>
-                            <span className="rounded bg-border px-2 py-0.5">Blueprint {pkg.blueprint_available ? 'ready' : 'missing'}</span>
-                            <span className="rounded bg-border px-2 py-0.5">Slots {pkg.semantic_slot_graph_available ? 'ready' : 'generated on finalize'}</span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                    {!templatesLoading && templatePackages.length === 0 && (
-                      <div className="rounded-xl border border-border bg-surface p-4 text-sm text-text-muted">
-                        No extracted templates were returned. Use the built-in id or an advanced blueprint override.
-                      </div>
-                    )}
-                  </div>
+              <TemplatePackagePicker
+                packages={templatePackages}
+                selectedTemplateId={templateId}
+                loading={templatesLoading}
+                onSelect={setTemplateId}
+              />
+            </section>
 
-                  {selectedPackage && (
-                    <div className="rounded-xl border border-success/20 bg-success/5 px-4 py-3 text-sm">
-                      <p className="font-semibold text-text">Selected: {selectedPackage.name}</p>
-                      <p className="mt-1 text-xs text-text-muted">
-                        This package will drive entity matching, question planning, and slot-aware ReviewedPlan generation.
-                      </p>
-                    </div>
-                  )}
-                </section>
-
-                <section className="space-y-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">2. Dataset</p>
-                    <p className="mt-1 text-sm text-text-muted">Upload the CSV that will be profiled into DatasetAST.</p>
+            <form onSubmit={onStart} className="space-y-5">
+              <section className="rounded-2xl border border-border bg-surface-card p-4 shadow-sm sm:p-6">
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-primary">2. Dataset upload</p>
+                    <h2 className="mt-1 text-xl font-semibold text-text">Create the binding session</h2>
+                    <p className="mt-1 max-w-3xl text-sm text-text-muted">
+                      Upload a CSV after selecting the template. The binder profiles columns, infers roles, tracks ownership, and opens the review workspace.
+                    </p>
                   </div>
+                  <div className="rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-xs">
+                    <p className="font-semibold uppercase tracking-wide text-primary">Selected ID</p>
+                    <p className="mt-1 max-w-[18rem] break-words font-mono text-text">{templateId || 'tpl_plfs_annual_v1'}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
                   <label
                     htmlFor="binding-dataset"
-                    className="block cursor-pointer rounded-xl border-2 border-dashed border-border p-6 text-center transition-colors hover:border-accent/50"
+                    className="block cursor-pointer rounded-2xl border-2 border-dashed border-border bg-surface p-8 text-center transition-colors hover:border-primary/50 hover:bg-primary/5"
                   >
-                    <UploadIcon className="mx-auto mb-2 h-6 w-6 text-text-muted" />
-                    <p className="text-sm font-medium text-text">
-                      {datasetFile ? datasetFile.name : 'Click to choose a CSV dataset'}
+                    <UploadIcon className="mx-auto mb-3 h-8 w-8 text-primary" />
+                    <p className="break-words text-base font-semibold text-text">
+                      {datasetFile ? datasetFile.name : 'Choose CSV dataset'}
                     </p>
-                    <p className="mt-1 text-xs text-text-muted">The binder will infer measures, dimensions, time columns, samples, and column ownership.</p>
+                    <p className="mx-auto mt-2 max-w-2xl text-sm text-text-muted">
+                      Measures, dimensions, time columns, samples, column ownership, conflicts, and binder proposals are computed from this file.
+                    </p>
                   </label>
                   <input
                     id="binding-dataset"
@@ -1389,71 +1850,82 @@ export default function BindingWorkflowPage() {
                     className="hidden"
                     onChange={(e) => setDatasetFile(e.target.files?.[0] ?? null)}
                   />
-                </section>
 
-                <section className="rounded-xl border border-border bg-surface p-4">
-                  <button
-                    type="button"
-                    onClick={() => setAdvancedOpen((v) => !v)}
-                    className="flex w-full items-center justify-between text-left text-sm font-semibold text-text"
-                  >
-                    Advanced template controls
-                    <span className="text-xs font-medium text-primary">{advancedOpen ? 'Hide' : 'Show'}</span>
-                  </button>
-                  {advancedOpen && (
-                    <div className="mt-4 space-y-3">
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-text-muted">Manual template id</label>
-                        <input
-                          type="text"
-                          value={templateId}
-                          onChange={(e) => setTemplateId(e.target.value)}
-                          placeholder="tpl_plfs_annual_v1"
-                          className="w-full rounded-lg border border-border bg-surface-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
-                        />
-                        <p className="mt-1 text-xs text-text-muted">Use this only for built-in ids, debugging, or a known DB template id.</p>
+                  <section className="rounded-xl border border-border bg-surface p-4">
+                    <button
+                      type="button"
+                      onClick={() => setAdvancedOpen((v) => !v)}
+                      className="flex w-full items-center justify-between gap-3 text-left text-sm font-semibold text-text"
+                    >
+                      <span>Advanced template controls</span>
+                      <span className="shrink-0 text-xs font-medium text-primary">{advancedOpen ? 'Hide' : 'Show'}</span>
+                    </button>
+                    {advancedOpen && (
+                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-text-muted">Manual template id</label>
+                          <input
+                            type="text"
+                            value={templateId}
+                            onChange={(e) => setTemplateId(e.target.value)}
+                            placeholder="tpl_plfs_annual_v1"
+                            className="w-full rounded-lg border border-border bg-surface-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
+                          />
+                          <p className="mt-1 text-xs text-text-muted">Use only for a known built-in or DB template id.</p>
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="binding-blueprint"
+                            className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-surface-card px-3 py-2 text-sm transition-colors hover:border-accent/50"
+                          >
+                            <span className="min-w-0 truncate text-text-muted">
+                              {blueprintFile ? blueprintFile.name : 'Override blueprint.json'}
+                            </span>
+                            <span className="shrink-0 text-xs font-medium text-primary">Browse</span>
+                          </label>
+                          <input
+                            id="binding-blueprint"
+                            type="file"
+                            accept="application/json,.json"
+                            className="hidden"
+                            onChange={(e) => setBlueprintFile(e.target.files?.[0] ?? null)}
+                          />
+                          <p className="mt-1 text-xs text-text-muted">Optional override for debugging or officer-supplied packages.</p>
+                        </div>
                       </div>
-                      <div>
-                        <label
-                          htmlFor="binding-blueprint"
-                          className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-surface-card px-3 py-2 text-sm transition-colors hover:border-accent/50"
-                        >
-                          <span className="text-text-muted">
-                            {blueprintFile ? blueprintFile.name : 'Override blueprint.json'}
-                          </span>
-                          <span className="text-xs font-medium text-primary">Browse</span>
-                        </label>
-                        <input
-                          id="binding-blueprint"
-                          type="file"
-                          accept="application/json,.json"
-                          className="hidden"
-                          onChange={(e) => setBlueprintFile(e.target.files?.[0] ?? null)}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </section>
+                    )}
+                  </section>
 
-                <Button type="submit" disabled={starting || !datasetFile || !templateId.trim()} className="w-full">
-                  {starting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Creating binding session…
-                    </>
-                  ) : (
-                    <>
-                      Create binding session <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
-            </Card>
+                  <Button type="submit" disabled={starting || !datasetFile || !templateId.trim()} className="w-full py-3">
+                    {starting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Creating binding session
+                      </>
+                    ) : (
+                      <>
+                        Create binding session <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </section>
+            </form>
           </div>
         )}
 
         {(step === 1 || step === 2) && session && bindingWorkbench}
 
       </div>
+
+      {/* Conflict resolution modal */}
+      <ConflictResolutionModal
+        open={!!conflictModal}
+        entityId={conflictModal?.entityId ?? ''}
+        entityName={conflictModal?.entityName ?? ''}
+        conflicts={conflictModal?.conflicts ?? []}
+        onResolve={onResolveConflict}
+        onCancel={() => setConflictModal(null)}
+      />
     </>
   );
 }

@@ -59,6 +59,7 @@ def test_template_package_manifest_hashes_artifacts():
         template_blueprint=blueprint,
         semantic_slot_graph=graph,
         diagnostics={"status": "VALID", "binderReadinessScore": 0.91},
+        runtime_trace={"totalCalls": 2, "fallbackCalls": 1},
     )
     data = manifest.to_dict()
 
@@ -69,6 +70,7 @@ def test_template_package_manifest_hashes_artifacts():
     assert data["artifacts"]["templateAst"]["hash"]
     assert data["artifacts"]["templateBlueprint"]["hash"]
     assert data["artifacts"]["semanticSlotGraph"]["hash"]
+    assert data["metadata"]["runtimeTrace"] == {"totalCalls": 2, "fallbackCalls": 1}
 
 
 def test_template_package_write_load_roundtrip(tmp_path):

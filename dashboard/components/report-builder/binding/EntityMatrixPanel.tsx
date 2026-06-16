@@ -1,20 +1,43 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { AlertTriangle, CheckCircle2, CircleDashed, Search, XCircle } from 'lucide-react';
+/**
+ * EntityMatrixPanel — the full binding review matrix.
+ *
+ * Two-layer architecture per the dataset-first binder model:
+ *
+ *  Layer 1 (Dataset matching tab — default):
+ *    Primary rows = dataset columns.
+ *    For each column: show best-matching template entity, confidence,
+ *    role, questions it feeds. Officer confirms, overrides, or assigns
+ *    a lifecycle decision (matched / added_as_entity / ignored_* / needs_question).
+ *
+ *  Layer 2 (Template coverage tab):
+ *    Rows = template entities from the proposals list.
+ *    Shows each entity's status, dependent questions, and whether the
+ *    dataset provided a column. Acts as a health-check / audit trail.
+ *
+ * The onDecide callback operates on entityId (backend contract unchanged).
+ * Column lifecycle decisions go through onColumnDecide (optional — gracefully
+ * absent if the parent hasn't wired it yet).
+ */
 
+import { useMemo, useState } from 'react';
+import { AlertCircle, AlertTriangle, Check, ChevronDown, ChevronUp, Filter, GitPullRequestArrow, Info, Plus, Search, Share2, X } from 'lucide-react';
+import { cn } from '@/lib/cn';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { EntityBindingCard } from '@/components/report-builder/binding/EntityBindingCard';
+import { EntityBindingCard } from './EntityBindingCard';
 import type {
   BindingAction,
   BindingDependencyGraph,
   BindingWorkspaceIssue,
+  ColumnDecisionStatus,
   ColumnOwnershipMap,
   DatasetColumnProfile,
   EntityBinding,
 } from '@/lib/api';
+
+// ─── Exported decision type ────────────────────────────────────────────────
 
 export type EntityDecision = {
   action: BindingAction;
@@ -26,210 +49,820 @@ export type EntityDecision = {
   share_reason?: string;
 };
 
+export type ColumnDecision = {
+  column: string;
+  status: ColumnDecisionStatus;
+  entity_id?: string;
+  note?: string;
+};
+
+// ─── Internals ─────────────────────────────────────────────────────────────
+
+const LIFECYCLE_META: Record<ColumnDecisionStatus, { label: string; badge: 'success' | 'warning' | 'muted' | 'danger' | 'default'; hint: string }> = {
+  matched:              { label: 'Matched',          badge: 'success',  hint: 'Bound to a template entity' },
+  added_as_entity:      { label: 'Added as entity',  badge: 'default',  hint: 'Officer created a new entity for this column' },
+  ignored_metadata:     { label: 'Ignored (metadata)', badge: 'muted',  hint: 'Not used — identified as metadata/code column' },
+  ignored_duplicate:    { label: 'Ignored (duplicate)', badge: 'muted', hint: 'Not used — duplicate or derived column' },
+  ignored_out_of_scope: { label: 'Ignored (scope)',  badge: 'muted',    hint: 'Not used — out of scope for this template' },
+  needs_question:       { label: 'Needs question',   badge: 'warning',  hint: 'Important column — needs a new question/entity' },
+};
+
+const IGNORE_STATUSES: ColumnDecisionStatus[] = [
+  'ignored_metadata',
+  'ignored_duplicate',
+  'ignored_out_of_scope',
+];
+
+type MatrixTab = 'dataset' | 'template';
+
 interface EntityMatrixPanelProps {
+  /** The S1-proposed entity bindings (one per template entity). */
   bindings: EntityBinding[];
+  /** All dataset column profiles from the DatasetAST. */
   columns: DatasetColumnProfile[];
+  /** Live column ownership map from the review record. */
   columnOwnership?: ColumnOwnershipMap;
+  /** Persisted per-column lifecycle decisions. */
+  columnDecisions?: Record<string, ColumnDecision>;
+  /** Current human entity decisions, indexed by entityId. */
   decisions: Record<string, EntityDecision>;
+  /** Dependency graph linking entities → questions → columns. */
   dependencyGraph?: BindingDependencyGraph;
+  /** Open workspace issues (for issue badges on rows). */
   issues?: BindingWorkspaceIssue[];
-  initialEntityId?: string | null;
+  /** entityId currently awaiting a backend response. */
   busyEntity?: string | null;
   onDecide: (entityId: string, decision: EntityDecision) => void;
-  onConfirmAll: () => void;
+  onConfirmAll?: () => void;
+  /** Optional: save a column lifecycle decision. */
+  onColumnDecide?: (decision: ColumnDecision) => void;
+  /** Optional: open add-entity form pre-filled for a specific column. */
+  onCreateEntity?: (columnName: string) => void;
+  className?: string;
 }
 
-function effectiveStatus(binding: EntityBinding, decision?: EntityDecision): EntityBinding['status'] {
-  if (!decision) return binding.status;
-  if (decision.action === 'confirm') return 'confirmed';
-  if (decision.action === 'override' || decision.action === 'share') return 'overridden';
-  if (decision.action === 'reject') return 'rejected';
-  return binding.status;
+// ─── Dataset-first column row ────────────────────────────────────────────────
+
+interface ColumnRowProps {
+  col: DatasetColumnProfile;
+  bestEntity: EntityBinding | null;
+  decision: EntityDecision | null;
+  columnDecision: ColumnDecision | null;
+  ownershipEntry: ColumnOwnershipMap['columns'][string] | undefined;
+  questionCount: number;
+  issueCount: number;
+  busy: boolean;
+  onDecide: (entityId: string, decision: EntityDecision) => void;
+  onColumnDecide?: (decision: ColumnDecision) => void;
+  onCreateEntity?: (columnName: string) => void;
 }
 
-function statusVariant(status: EntityBinding['status']): 'success' | 'warning' | 'danger' | 'muted' {
-  if (status === 'confirmed' || status === 'overridden') return 'success';
-  if (status === 'proposed') return 'warning';
-  if (status === 'rejected' || status === 'unresolved') return 'danger';
-  return 'muted';
+function ColumnRow({
+  col,
+  bestEntity,
+  decision,
+  columnDecision,
+  ownershipEntry,
+  questionCount,
+  issueCount,
+  busy,
+  onDecide,
+  onColumnDecide,
+  onCreateEntity,
+}: ColumnRowProps) {
+  const [showIgnoreMenu, setShowIgnoreMenu] = useState(false);
+  const [ignoreNote, setIgnoreNote] = useState('');
+  const [pendingIgnoreStatus, setPendingIgnoreStatus] = useState<ColumnDecisionStatus | null>(null);
+
+  const lifecycleStatus: ColumnDecisionStatus | null = columnDecision?.status ?? (
+    bestEntity && (decision?.action === 'confirm' || decision?.action === 'override' || decision?.action === 'share')
+      ? 'matched'
+      : bestEntity && decision?.action === 'reject'
+        ? null
+        : null
+  );
+  const lcMeta = lifecycleStatus ? LIFECYCLE_META[lifecycleStatus] : null;
+
+function entityStatusBadge(status: EntityBinding['status']): 'success' | 'default' | 'muted' | 'danger' | 'warning' {
+  if (status === 'confirmed') return 'success';
+  if (status === 'overridden') return 'default';
+  if (status === 'rejected') return 'muted';
+  if (status === 'unresolved') return 'danger';
+  return 'warning'; // proposed
 }
 
-function statusIcon(status: EntityBinding['status']) {
-  if (status === 'confirmed' || status === 'overridden') return CheckCircle2;
-  if (status === 'rejected' || status === 'unresolved') return XCircle;
-  if (status === 'proposed') return CircleDashed;
-  return AlertTriangle;
+  const handleIgnoreSubmit = (status: ColumnDecisionStatus) => {
+    onColumnDecide?.({ column: col.name, status, note: ignoreNote.trim() || undefined });
+    setShowIgnoreMenu(false);
+    setIgnoreNote('');
+    setPendingIgnoreStatus(null);
+  };
+
+  return (
+    <div
+      className={cn(
+        'rounded-xl border bg-surface-card px-4 py-3 text-sm shadow-sm transition-all',
+        issueCount > 0 ? 'border-warning/30' : 'border-border',
+        busy && 'opacity-60 pointer-events-none',
+      )}
+    >
+      {/* Header row: column name + lifecycle badge + issue indicator */}
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-text">{col.name}</span>
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+              {col.role}
+            </span>
+            {col.dtype && (
+              <span className="text-[10px] text-text-muted">{col.dtype}</span>
+            )}
+          </div>
+          <p className="mt-0.5 text-[11px] text-text-muted">
+            {col.cardinality} distinct
+            {col.nullPct > 0 ? ` · ${(col.nullPct * 100).toFixed(1)}% null` : ''}
+            {col.unit ? ` · ${col.unit}` : ''}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {issueCount > 0 && (
+            <span className="flex items-center gap-1 text-xs text-warning">
+              <AlertTriangle className="h-3 w-3" />{issueCount}
+            </span>
+          )}
+          {lcMeta ? (
+            <Badge variant={lcMeta.badge} className="text-[10px]">{lcMeta.label}</Badge>
+          ) : (
+            <Badge variant="muted" className="text-[10px]">Undecided</Badge>
+          )}
+        </div>
+      </div>
+
+      {/* Template entity match */}
+      <div className="mt-3">
+        {bestEntity ? (
+          <div className="rounded-lg border border-border bg-surface px-3 py-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="truncate text-xs font-semibold text-text">{bestEntity.entityName}</span>
+                <Badge variant={entityStatusBadge(decision ? (
+                  decision.action === 'confirm' ? 'confirmed' :
+                  decision.action === 'override' || decision.action === 'share' ? 'overridden' :
+                  decision.action === 'reject' ? 'rejected' : bestEntity.status
+                ) : bestEntity.status)} className="text-[10px]">
+                  {decision?.action === 'confirm' ? 'confirmed' :
+                   decision?.action === 'override' ? 'overridden' :
+                   decision?.action === 'share' ? 'shared' :
+                   decision?.action === 'reject' ? 'skipped' :
+                   bestEntity.status}
+                </Badge>
+                {/* Confidence bar */}
+                <div className="flex items-center gap-1">
+                  <div className="h-1.5 w-14 overflow-hidden rounded-full bg-border">
+                    <div
+                      className={cn('h-full rounded-full', bestEntity.confidence >= 0.85 ? 'bg-success' : bestEntity.confidence >= 0.6 ? 'bg-warning' : 'bg-danger')}
+                      style={{ width: `${Math.round(bestEntity.confidence * 100)}%` }}
+                    />
+                  </div>
+                  <span className={cn('text-[10px] font-semibold tabular-nums', bestEntity.confidence >= 0.85 ? 'text-success' : bestEntity.confidence >= 0.6 ? 'text-warning' : 'text-danger')}>
+                    {Math.round(bestEntity.confidence * 100)}%
+                  </span>
+                </div>
+              </div>
+              {questionCount > 0 && (
+                <span className="text-[10px] text-text-muted">{questionCount} question{questionCount !== 1 ? 's' : ''}</span>
+              )}
+            </div>
+            {/* Confirm / reopen actions on the entity */}
+            {!decision || decision.action === 'reopen' ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-6 px-2 text-[10px]"
+                  onClick={() => onDecide(bestEntity.entityId, { action: 'confirm' })}
+                >
+                  <Check className="h-3 w-3" /> Confirm
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 text-[10px]"
+                  onClick={() => onDecide(bestEntity.entityId, { action: 'reject' })}
+                >
+                  <X className="h-3 w-3" /> Skip entity
+                </Button>
+              </div>
+            ) : decision.action !== 'reject' ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="mt-2 h-6 px-2 text-[10px] text-text-muted"
+                onClick={() => onDecide(bestEntity.entityId, { action: 'reopen' })}
+              >
+                <GitPullRequestArrow className="h-3 w-3" /> Reopen
+              </Button>
+            ) : null}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-border bg-surface px-3 py-2">
+            <p className="text-xs text-text-muted">No template entity matched this column.</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {onCreateEntity && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 text-[10px]"
+                  onClick={() => onCreateEntity(col.name)}
+                >
+                  <Plus className="h-3 w-3" /> Create entity
+                </Button>
+              )}
+              {IGNORE_STATUSES.map((s) => (
+                <Button
+                  key={s}
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-[10px] text-text-muted"
+                  onClick={() => handleIgnoreSubmit(s)}
+                >
+                  {LIFECYCLE_META[s].label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Column lifecycle actions when entity is skipped or column has no match */}
+      {onColumnDecide && (!lifecycleStatus || IGNORE_STATUSES.includes(lifecycleStatus as ColumnDecisionStatus)) && (
+        <div className="relative mt-2">
+          <button
+            type="button"
+            className="flex items-center gap-1 text-[10px] text-text-muted hover:text-text"
+            onClick={() => setShowIgnoreMenu((v) => !v)}
+          >
+            <Filter className="h-3 w-3" />
+            {lifecycleStatus ? `Change: ${LIFECYCLE_META[lifecycleStatus]?.label ?? lifecycleStatus}` : 'Assign lifecycle status'}
+            {showIgnoreMenu ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </button>
+          {showIgnoreMenu && (
+            <div className="absolute left-0 top-6 z-30 w-64 rounded-xl border border-border bg-surface-card p-3 shadow-xl">
+              <p className="mb-2 text-xs font-semibold text-text">Column lifecycle</p>
+              {IGNORE_STATUSES.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={cn(
+                    'block w-full rounded-lg px-2 py-1.5 text-left text-xs text-text-muted transition-colors hover:bg-surface hover:text-text',
+                    lifecycleStatus === s && 'font-semibold text-text',
+                  )}
+                  onClick={() => setPendingIgnoreStatus(s)}
+                >
+                  <span className="font-medium">{LIFECYCLE_META[s].label}</span>
+                  <span className="ml-1 text-[10px] opacity-70">— {LIFECYCLE_META[s].hint}</span>
+                </button>
+              ))}
+              {onCreateEntity && (
+                <button
+                  type="button"
+                  className="mt-1 block w-full rounded-lg px-2 py-1.5 text-left text-xs text-primary transition-colors hover:bg-primary/5"
+                  onClick={() => { setShowIgnoreMenu(false); onCreateEntity(col.name); }}
+                >
+                  <span className="font-medium">Create new entity</span>
+                  <span className="ml-1 text-[10px] opacity-70">— Bind this column to a new entity</span>
+                </button>
+              )}
+              {pendingIgnoreStatus && (
+                <div className="mt-2 space-y-1.5">
+                  <p className="text-[10px] text-text-muted">Optional note for audit trail:</p>
+                  <input
+                    value={ignoreNote}
+                    onChange={(e) => setIgnoreNote(e.target.value)}
+                    placeholder="Reason / note"
+                    className="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-xs text-text outline-none"
+                  />
+                  <div className="flex gap-1.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-6 flex-1 px-2 text-[10px]"
+                      onClick={() => handleIgnoreSubmit(pendingIgnoreStatus)}
+                    >
+                      Confirm
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[10px]"
+                      onClick={() => { setPendingIgnoreStatus(null); setIgnoreNote(''); }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
-function confidenceVariant(confidence: number): 'success' | 'warning' | 'danger' {
-  if (confidence >= 0.85) return 'success';
-  if (confidence >= 0.6) return 'warning';
-  return 'danger';
+// ─── Unmatched entity row (template coverage view) ──────────────────────────
+
+interface UnmatchedEntityRowProps {
+  binding: EntityBinding;
+  questionCount: number;
+  decision: EntityDecision | null;
+  onDecide: (entityId: string, decision: EntityDecision) => void;
 }
 
-function selectedColumn(binding: EntityBinding, decision?: EntityDecision): string {
-  if ((decision?.action === 'override' || decision?.action === 'share') && decision.columns?.[0]) return decision.columns[0];
-  return binding.columns[0]?.column || '';
+function UnmatchedEntityRow({ binding, questionCount, decision, onDecide }: UnmatchedEntityRowProps) {
+  return (
+    <div className="rounded-xl border border-danger/25 bg-danger/5 px-4 py-3 text-sm">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-text">{binding.entityName}</span>
+            <Badge variant="danger" className="text-[10px]">No dataset column</Badge>
+            <span className="text-[10px] text-text-muted">{binding.entityType}</span>
+          </div>
+          <p className="mt-0.5 text-[11px] text-text-muted">
+            {questionCount} question{questionCount !== 1 ? 's' : ''} depend{questionCount === 1 ? 's' : ''} on this entity
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {decision?.action === 'reject' ? (
+            <Badge variant="muted" className="text-[10px]">Deprecated</Badge>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[10px] text-danger"
+              onClick={() => onDecide(binding.entityId, { action: 'reject', note: 'deprecated — no matching dataset column' })}
+            >
+              Deprecate entity
+            </Button>
+          )}
+        </div>
+      </div>
+      {questionCount > 0 && (
+        <p className="mt-2 text-[11px] text-danger/80">
+          <AlertCircle className="mr-1 inline h-3 w-3" />
+          {questionCount} question{questionCount !== 1 ? 's' : ''} will become blocked/deprecated until this entity is bound or removed.
+        </p>
+      )}
+    </div>
+  );
 }
 
-function issueCountFor(binding: EntityBinding, issues: BindingWorkspaceIssue[]): number {
-  return issues.filter((issue) => issue.entityId === binding.entityId).length + (binding.risks?.length || 0);
-}
+// ─── Main component ─────────────────────────────────────────────────────────
 
 export function EntityMatrixPanel({
   bindings,
   columns,
   columnOwnership,
+  columnDecisions = {},
   decisions,
   dependencyGraph,
   issues = [],
-  initialEntityId,
   busyEntity,
   onDecide,
   onConfirmAll,
+  onColumnDecide,
+  onCreateEntity,
+  className,
 }: EntityMatrixPanelProps) {
-  const [query, setQuery] = useState('');
-  const [selectedEntityId, setSelectedEntityId] = useState(initialEntityId || bindings[0]?.entityId || '');
+  const [tab, setTab] = useState<MatrixTab>('dataset');
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'undecided' | 'decided' | 'issues'>('all');
+  const [expandedEntities, setExpandedEntities] = useState<Set<string>>(new Set());
 
+  // Build a reverse-map: column → best-matching entity (highest confidence)
+  const columnToEntity = useMemo(() => {
+    const map = new Map<string, EntityBinding>();
+    for (const binding of bindings) {
+      const cols = Array.isArray(binding.columns) ? binding.columns : [];
+      for (const bc of cols) {
+        const colName = typeof bc === 'object' ? bc.column : String(bc);
+        if (!colName) continue;
+        const existing = map.get(colName);
+        if (!existing || binding.confidence > existing.confidence) {
+          map.set(colName, binding);
+        }
+      }
+      const alts = Array.isArray(binding.alternatives) ? binding.alternatives : [];
+      for (const alt of alts) {
+        const altCol = typeof alt === 'object' ? alt.column : String(alt);
+        if (altCol && !map.has(altCol)) {
+          map.set(altCol, binding);
+        }
+      }
+    }
+    return map;
+  }, [bindings]);
+
+  // Build entity → question count from dependency graph
+  const entityQuestionCount = useMemo(() => {
+    const dg = dependencyGraph?.entityToQuestions ?? {};
+    return Object.fromEntries(Object.entries(dg).map(([eid, qs]) => [eid, qs.length]));
+  }, [dependencyGraph]);
+
+  // Column → question count (via ownership)
+  const columnQuestionCount = useMemo(() => {
+    const dg = dependencyGraph;
+    if (!dg) return {} as Record<string, number>;
+    const map: Record<string, number> = {};
+    for (const [col, entities] of Object.entries(dg.columnToEntities ?? {})) {
+      const count = entities.reduce((sum, eid) => sum + (entityQuestionCount[eid] ?? 0), 0);
+      map[col] = count;
+    }
+    return map;
+  }, [dependencyGraph, entityQuestionCount]);
+
+  // Issues per column / entity
+  const issuesByColumn = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const issue of issues) {
+      if (issue.column) map[issue.column] = (map[issue.column] ?? 0) + 1;
+    }
+    return map;
+  }, [issues]);
+
+  const issuesByEntity = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const issue of issues) {
+      if (issue.entityId) map[issue.entityId] = (map[issue.entityId] ?? 0) + 1;
+    }
+    return map;
+  }, [issues]);
+
+  // Stats
+  const totalColumns = columns.length;
+  // A column is "decided" if it has a backend column_decision OR its best entity has a decision
+  const decidedColumns = useMemo(() => {
+    return columns.filter((col) => {
+      if (columnDecisions[col.name]) return true;
+      const entity = columnToEntity.get(col.name);
+      if (entity) {
+        const dec = decisions[entity.entityId];
+        return !!dec && dec.action !== 'reopen';
+      }
+      return false;
+    }).length;
+  }, [columns, columnDecisions, columnToEntity, decisions]);
+
+  const unmatchedEntities = useMemo(
+    () => bindings.filter((b) => b.status === 'unresolved' || b.columns.length === 0),
+    [bindings],
+  );
+
+  // Filter dataset columns
+  const filteredColumns = useMemo(() => {
+    let list = columns;
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter((col) => {
+        const entity = columnToEntity.get(col.name);
+        return (
+          col.name.toLowerCase().includes(q) ||
+          col.role.toLowerCase().includes(q) ||
+          (entity?.entityName ?? '').toLowerCase().includes(q)
+        );
+      });
+    }
+    if (filterStatus === 'undecided') {
+      list = list.filter((col) => {
+        const entity = columnToEntity.get(col.name);
+        if (entity) {
+          const dec = decisions[entity.entityId];
+          return !dec || dec.action === 'reopen';
+        }
+        return !columnDecisions[col.name];
+      });
+    } else if (filterStatus === 'decided') {
+      list = list.filter((col) => {
+        const entity = columnToEntity.get(col.name);
+        if (entity) {
+          const dec = decisions[entity.entityId];
+          return dec && dec.action !== 'reopen';
+        }
+        return !!columnDecisions[col.name];
+      });
+    } else if (filterStatus === 'issues') {
+      list = list.filter((col) => issuesByColumn[col.name] > 0);
+    }
+    return list;
+  }, [columns, search, filterStatus, columnToEntity, decisions, columnDecisions, issuesByColumn]);
+
+  // Filter template entities
   const filteredBindings = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return bindings;
-    return bindings.filter((binding) => {
-      const haystack = [
-        binding.entityId,
-        binding.entityName,
-        binding.entityType,
-        selectedColumn(binding, decisions[binding.entityId]),
-        ...(dependencyGraph?.entityToQuestions[binding.entityId] || []),
-        ...(dependencyGraph?.entityToComponents[binding.entityId] || []),
-      ].join(' ').toLowerCase();
-      return haystack.includes(needle);
-    });
-  }, [bindings, decisions, dependencyGraph, query]);
+    let list = bindings;
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(
+        (b) =>
+          b.entityName.toLowerCase().includes(q) ||
+          b.entityType.toLowerCase().includes(q) ||
+          b.columns.some((c) => c.column.toLowerCase().includes(q)),
+      );
+    }
+    if (filterStatus === 'undecided') {
+      list = list.filter((b) => {
+        const dec = decisions[b.entityId];
+        return !dec || dec.action === 'reopen';
+      });
+    } else if (filterStatus === 'decided') {
+      list = list.filter((b) => {
+        const dec = decisions[b.entityId];
+        return dec && dec.action !== 'reopen';
+      });
+    } else if (filterStatus === 'issues') {
+      list = list.filter((b) => (issuesByEntity[b.entityId] ?? 0) > 0);
+    }
+    return list;
+  }, [bindings, search, filterStatus, decisions, issuesByEntity]);
 
-  const selectedBinding = bindings.find((binding) => binding.entityId === selectedEntityId) || filteredBindings[0] || bindings[0];
-  const pendingCount = bindings.filter((binding) => !decisions[binding.entityId]).length;
-  const confirmedCount = bindings.length - pendingCount;
+  const toggleEntity = (entityId: string) => {
+    setExpandedEntities((prev) => {
+      const next = new Set(prev);
+      if (next.has(entityId)) next.delete(entityId);
+      else next.add(entityId);
+      return next;
+    });
+  };
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem]">
-      <Card className="p-4" title="Entity-column matrix" description="Review impact, confidence, ownership, and downstream usage before confirming.">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap gap-2 text-xs">
-            <Badge variant={pendingCount === 0 ? 'success' : 'warning'}>{confirmedCount}/{bindings.length} reviewed</Badge>
-            <Badge variant="muted">{columns.length} dataset columns</Badge>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <label className="flex items-center gap-2 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-text-muted">
-              <Search className="h-3.5 w-3.5" />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Find entity, column, question"
-                className="w-44 bg-transparent text-text outline-none placeholder:text-text-muted"
-              />
-            </label>
-            <Button variant="outline" size="sm" onClick={onConfirmAll} disabled={!!busyEntity || pendingCount === 0}>
-              Confirm remaining
-            </Button>
-          </div>
+    <div className={cn('space-y-4', className)}>
+      {/* ── Toolbar ── */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Tab toggle */}
+        <div className="flex rounded-xl border border-border bg-surface p-1 gap-1">
+          <button
+            type="button"
+            onClick={() => setTab('dataset')}
+            className={cn(
+              'rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
+              tab === 'dataset' ? 'bg-primary/10 text-primary' : 'text-text-muted hover:text-text',
+            )}
+          >
+            Column mapping
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('template')}
+            className={cn(
+              'rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
+              tab === 'template' ? 'bg-primary/10 text-primary' : 'text-text-muted hover:text-text',
+            )}
+          >
+            Entity coverage
+          </button>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-border">
-          <div className="grid grid-cols-[1.35fr_0.9fr_0.7fr_0.55fr_0.55fr_0.55fr] gap-2 border-b border-border bg-surface px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-            <span>Entity</span>
-            <span>Column</span>
-            <span>Status</span>
-            <span>Confidence</span>
-            <span>Used by</span>
-            <span>Issues</span>
-          </div>
-          <div className="max-h-[34rem] overflow-auto">
-            {filteredBindings.map((binding) => {
-              const decision = decisions[binding.entityId];
-              const status = effectiveStatus(binding, decision);
-              const StatusIcon = statusIcon(status);
-              const column = selectedColumn(binding, decision);
-              const questions = dependencyGraph?.entityToQuestions[binding.entityId] || [];
-              const components = dependencyGraph?.entityToComponents[binding.entityId] || [];
-              const issueCount = issueCountFor(binding, issues);
-              const selected = selectedBinding?.entityId === binding.entityId;
-              return (
-                <button
-                  key={binding.entityId}
-                  type="button"
-                  onClick={() => setSelectedEntityId(binding.entityId)}
-                  className={`grid w-full grid-cols-[1.35fr_0.9fr_0.7fr_0.55fr_0.55fr_0.55fr] gap-2 border-b border-border px-3 py-2 text-left text-xs transition-colors last:border-b-0 ${selected ? 'bg-primary/5' : 'bg-surface-card hover:bg-surface'}`}
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate font-semibold text-text">{binding.entityName || binding.entityId}</span>
-                    <span className="block truncate font-mono text-[11px] text-text-muted">{binding.entityId} · {binding.entityType}</span>
-                  </span>
-                  <span className="min-w-0 self-center">
-                    {column ? <span className="block truncate font-mono text-text">{column}</span> : <span className="text-text-muted">No match</span>}
-                  </span>
-                  <span className="flex items-center gap-1 self-center">
-                    <StatusIcon className="h-3.5 w-3.5 text-text-muted" />
-                    <Badge variant={statusVariant(status)}>{status}</Badge>
-                  </span>
-                  <span className="self-center">
-                    <Badge variant={confidenceVariant(binding.confidence)}>{Math.round(binding.confidence * 100)}%</Badge>
-                  </span>
-                  <span className="self-center text-text-muted">{questions.length} q / {components.length} c</span>
-                  <span className="self-center">
-                    {issueCount ? <Badge variant="warning">{issueCount}</Badge> : <Badge variant="muted">0</Badge>}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+        {/* Search */}
+        <div className="relative flex-1 min-w-0 max-w-xs">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={tab === 'dataset' ? 'Search columns or entities…' : 'Search entities…'}
+            className="w-full rounded-lg border border-border bg-surface-card py-2 pl-8 pr-3 text-xs text-text outline-none focus:ring-2 focus:ring-accent/30"
+          />
         </div>
-      </Card>
 
-      <div className="space-y-4">
-        {selectedBinding ? (
-          <>
-            <Card className="p-4" title="Impact" description="Downstream objects affected by this entity.">
-              <div className="space-y-3 text-xs">
-                <div>
-                  <p className="font-semibold uppercase tracking-wide text-text-muted">Questions</p>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    {(dependencyGraph?.entityToQuestions[selectedBinding.entityId] || []).length ? (
-                      (dependencyGraph?.entityToQuestions[selectedBinding.entityId] || []).map((questionId) => (
-                        <span key={questionId} className="rounded bg-border px-2 py-0.5 font-mono text-text-muted">{questionId}</span>
-                      ))
-                    ) : <span className="text-text-muted">No linked questions yet.</span>}
-                  </div>
-                </div>
-                <div>
-                  <p className="font-semibold uppercase tracking-wide text-text-muted">Components</p>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    {(dependencyGraph?.entityToComponents[selectedBinding.entityId] || []).length ? (
-                      (dependencyGraph?.entityToComponents[selectedBinding.entityId] || []).map((componentId) => (
-                        <span key={componentId} className="rounded bg-border px-2 py-0.5 font-mono text-text-muted">{componentId}</span>
-                      ))
-                    ) : <span className="text-text-muted">No linked components yet.</span>}
-                  </div>
-                </div>
-              </div>
-            </Card>
-            <EntityBindingCard
-              binding={selectedBinding}
-              columns={columns}
-              columnOwnership={columnOwnership}
-              decided={decisions[selectedBinding.entityId]}
-              busy={busyEntity === selectedBinding.entityId}
-              onDecide={onDecide}
-            />
-          </>
-        ) : (
-          <Card className="p-4" title="Entity inspector" description="Select a row to review the match.">
-            <p className="text-sm text-text-muted">No entity selected.</p>
-          </Card>
-        )}
+        {/* Status filter */}
+        <div className="flex gap-1.5">
+          {(['all', 'undecided', 'decided', 'issues'] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setFilterStatus(s)}
+              className={cn(
+                'rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-colors',
+                filterStatus === s ? 'bg-primary/10 text-primary' : 'text-text-muted hover:text-text',
+              )}
+            >
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* Stats badge row */}
+        <div className="ml-auto flex items-center gap-2">
+          {tab === 'dataset' ? (
+            <>
+              <Badge variant={decidedColumns === totalColumns ? 'success' : 'warning'}>
+                {decidedColumns}/{totalColumns} columns reviewed
+              </Badge>
+              {unmatchedEntities.length > 0 && (
+                <Badge variant="danger">{unmatchedEntities.length} unmatched entities</Badge>
+              )}
+            </>
+          ) : (
+            <>
+              <Badge variant={Object.keys(decisions).length === bindings.length ? 'success' : 'warning'}>
+                {Object.keys(decisions).length}/{bindings.length} entities reviewed
+              </Badge>
+            </>
+          )}
+        </div>
       </div>
+
+      {/* ── Dataset-first tab ── */}
+      {tab === 'dataset' && (
+        <div className="space-y-3">
+          {/* Column role distribution */}
+          {filteredColumns.length > 0 && filterStatus === 'all' && !search && (
+            <div className="flex items-center gap-1 rounded-lg bg-surface px-3 py-2 text-[10px]">
+              {(() => {
+                const roles = { measure: 0, dimension: 0, time: 0, metadata: 0, other: 0 };
+                for (const col of columns) {
+                  const r = col.role as keyof typeof roles;
+                  if (r in roles) roles[r]++;
+                  else roles.other++;
+                }
+                const total = columns.length || 1;
+                return (
+                  <>
+                    <span className="font-semibold text-text">{columns.length} columns</span>
+                    <span className="text-text-muted">·</span>
+                    <span className="flex h-2 flex-1 overflow-hidden rounded-full">
+                      {roles.measure > 0 && <span className="bg-success/60" style={{ width: `${(roles.measure / total) * 100}%` }} title={`${roles.measure} measures`} />}
+                      {roles.dimension > 0 && <span className="bg-warning/60" style={{ width: `${(roles.dimension / total) * 100}%` }} title={`${roles.dimension} dimensions`} />}
+                      {roles.time > 0 && <span className="bg-primary/60" style={{ width: `${(roles.time / total) * 100}%` }} title={`${roles.time} time`} />}
+                      {(roles.metadata + roles.other) > 0 && <span className="bg-border" style={{ width: `${((roles.metadata + roles.other) / total) * 100}%` }} title={`${roles.metadata + roles.other} metadata`} />}
+                    </span>
+                    <span className="flex gap-2 text-text-muted">
+                      <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-success/60" />{roles.measure}m</span>
+                      <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-warning/60" />{roles.dimension}d</span>
+                      <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-primary/60" />{roles.time}t</span>
+                    </span>
+                  </>
+                );
+              })()}
+            </div>
+          )}
+
+          {filteredColumns.length === 0 ? (
+            <div className="rounded-xl border border-border bg-surface px-4 py-6 text-center text-sm text-text-muted">
+              No columns match your filter.
+            </div>
+          ) : (
+            filteredColumns.map((col) => {
+              const entity = columnToEntity.get(col.name) ?? null;
+              const dec = entity ? (decisions[entity.entityId] ?? null) : null;
+              const cdec = columnDecisions[col.name] ?? null;
+              const ownerEntry = columnOwnership?.columns?.[col.name];
+              const qCount = columnQuestionCount[col.name] ?? 0;
+              const issueCount = issuesByColumn[col.name] ?? 0;
+              return (
+                <ColumnRow
+                  key={col.name}
+                  col={col}
+                  bestEntity={entity}
+                  decision={dec}
+                  columnDecision={cdec}
+                  ownershipEntry={ownerEntry}
+                  questionCount={qCount}
+                  issueCount={issueCount}
+                  busy={!!(entity && busyEntity === entity.entityId)}
+                  onDecide={onDecide}
+                  onColumnDecide={onColumnDecide}
+                  onCreateEntity={onCreateEntity}
+                />
+              );
+            })
+          )}
+
+          {/* Unmatched entity section */}
+          {unmatchedEntities.length > 0 && filterStatus === 'all' && !search && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 pt-2">
+                <div className="h-px flex-1 bg-danger/20" />
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-danger/80">
+                  Unmatched template entities
+                </span>
+                <div className="h-px flex-1 bg-danger/20" />
+              </div>
+              <div className="rounded-xl border border-danger/20 bg-danger/5 px-4 py-3 text-xs text-text-muted">
+                <p className="flex items-start gap-2">
+                  <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-danger" />
+                  These template entities have no matching dataset column. Questions depending on them will be blocked until you manually bind them or deprecate them.
+                </p>
+              </div>
+              {unmatchedEntities.map((binding) => (
+                <UnmatchedEntityRow
+                  key={binding.entityId}
+                  binding={binding}
+                  questionCount={entityQuestionCount[binding.entityId] ?? 0}
+                  decision={decisions[binding.entityId] ?? null}
+                  onDecide={onDecide}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Template coverage tab ── */}
+      {tab === 'template' && (
+        <div className="space-y-3">
+          {/* Coverage summary */}
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="rounded-lg border border-success/25 bg-success/5 px-3 py-2">
+              <p className="text-[10px] uppercase text-text-muted">Matched</p>
+              <p className="mt-1 font-semibold text-text">
+                {bindings.filter((b) => b.status !== 'unresolved' && b.columns.length > 0).length}
+              </p>
+            </div>
+            <div className="rounded-lg border border-warning/25 bg-warning/5 px-3 py-2">
+              <p className="text-[10px] uppercase text-text-muted">Pending</p>
+              <p className="mt-1 font-semibold text-text">
+                {bindings.filter((b) => !decisions[b.entityId] || decisions[b.entityId].action === 'reopen').length}
+              </p>
+            </div>
+            <div className="rounded-lg border border-danger/25 bg-danger/5 px-3 py-2">
+              <p className="text-[10px] uppercase text-text-muted">Unmatched</p>
+              <p className="mt-1 font-semibold text-text">{unmatchedEntities.length}</p>
+            </div>
+          </div>
+
+          {filteredBindings.length === 0 ? (
+            <div className="rounded-xl border border-border bg-surface px-4 py-6 text-center text-sm text-text-muted">
+              No entities match your filter.
+            </div>
+          ) : (
+            filteredBindings.map((binding) => {
+              const isExpanded = expandedEntities.has(binding.entityId);
+              return (
+                <div key={binding.entityId} className="rounded-xl border border-border bg-surface-card shadow-sm">
+                  {/* Collapsed header */}
+                  <button
+                    type="button"
+                    className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left"
+                    onClick={() => toggleEntity(binding.entityId)}
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="truncate text-sm font-semibold text-text">{binding.entityName}</span>
+                      <span className="text-[10px] text-text-muted">{binding.entityType}</span>
+                      {binding.status === 'unresolved' || binding.columns.length === 0 ? (
+                        <Badge variant="danger" className="text-[10px]">No match</Badge>
+                      ) : decisions[binding.entityId]?.action === 'confirm' ? (
+                        <Badge variant="success" className="text-[10px]">Confirmed</Badge>
+                      ) : decisions[binding.entityId]?.action === 'reject' ? (
+                        <Badge variant="muted" className="text-[10px]">Deprecated</Badge>
+                      ) : (
+                        <Badge variant="warning" className="text-[10px]">Needs review</Badge>
+                      )}
+                      {(issuesByEntity[binding.entityId] ?? 0) > 0 && (
+                        <span className="flex items-center gap-0.5 text-[10px] text-warning">
+                          <AlertTriangle className="h-3 w-3" />
+                          {issuesByEntity[binding.entityId]}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      {(entityQuestionCount[binding.entityId] ?? 0) > 0 && (
+                        <span className="text-[10px] text-text-muted">
+                          {entityQuestionCount[binding.entityId]} Q
+                        </span>
+                      )}
+                      {binding.columns[0] && (
+                        <span className="max-w-[7rem] truncate rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                          {binding.columns[0].column}
+                        </span>
+                      )}
+                      {isExpanded ? <ChevronUp className="h-4 w-4 text-text-muted" /> : <ChevronDown className="h-4 w-4 text-text-muted" />}
+                    </div>
+                  </button>
+                  {/* Expanded card */}
+                  {isExpanded && (
+                    <div className="border-t border-border px-4 pb-4 pt-3">
+                      <EntityBindingCard
+                        binding={binding}
+                        columns={[]} // columns list for the override picker
+                        columnOwnership={columnOwnership}
+                        decided={decisions[binding.entityId]}
+                        busy={busyEntity === binding.entityId}
+                        onDecide={onDecide}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 }
-
-export default EntityMatrixPanel;

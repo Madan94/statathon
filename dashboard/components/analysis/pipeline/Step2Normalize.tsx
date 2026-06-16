@@ -49,7 +49,6 @@ function methodVariant(method: string): 'success' | 'warning' | 'default' | 'mut
 
 function defaultDecision(p: NormalizationPlanRow, base?: ColumnDecision): ColumnDecision {
   return {
-    originalName: p.originalName,
     displayName: p.displayName,
     suggestedName: p.displayName,
     normalizedName: p.normalizedName,

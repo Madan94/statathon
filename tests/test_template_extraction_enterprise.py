@@ -19,6 +19,9 @@ from report_builder.template_emit import emit_templates
 from report_builder.extraction_diagnostics import build_extraction_diagnostics
 from report_builder.extraction_pipeline import (
     _extract_numbered_sections,
+    _is_footnote_like_heading,
+    _is_promotable_heading,
+    _is_sentence_like_heading,
 )
 from report_builder.llm_router import summarize_provider_call_ledger
 from report_builder.llm_schemas import (
@@ -345,9 +348,12 @@ def test_enterprise_diagnostics_block_broken_fillfrom_and_missing_contracts():
 
 
 def test_heading_hygiene_rejects_footnotes_sentences_and_keeps_chapters():
-    # Heading hygiene is now enforced inside _extract_numbered_sections (the
-    # per-helper predicates were consolidated into its filtering): footnote-like
-    # and sentence-like lines must be dropped while real numbered headings stay.
+    assert _is_footnote_like_heading("2 Total may not tally due to rounding off")
+    assert _is_sentence_like_heading("As of 01-04-2025 there were several reserves reported in the document.")
+    assert not _is_promotable_heading("2 Total may not tally due to rounding off", numbered=True, layout_backed=True)
+    assert not _is_promotable_heading("As of 01-04-2025 there were several reserves reported in the document.", numbered=True, layout_backed=False)
+    assert _is_promotable_heading("Chapter 1: Energy Reserves and Potential", numbered=False, layout_backed=True)
+
     sections = _extract_numbered_sections([
         {
             "raw_text": "\n".join([

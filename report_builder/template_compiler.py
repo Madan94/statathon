@@ -20,23 +20,6 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def _sync_template_ids(skeleton: dict[str, Any], blueprint: dict[str, Any]) -> None:
-    """Keep template.ast and template.blueprint on one binder address.
-
-    The blueprint templateId is authoritative; the skeleton's metadata.templateId
-    and blueprintRef are repaired to match so saved artifacts never trip a systemic
-    TEMPLATE_ID_MISMATCH that would block S3.5.
-    """
-    ast_meta = skeleton.setdefault("metadata", {})
-    bp_meta = blueprint.setdefault("templateMeta", {})
-    tid = str(bp_meta.get("templateId") or ast_meta.get("templateId") or "tpl_document").strip()
-    if not tid:
-        tid = "tpl_document"
-    bp_meta["templateId"] = tid
-    ast_meta["templateId"] = tid
-    ast_meta["blueprintRef"] = tid
-
-
 def compile_template_artifacts(
     *,
     raw_ast: dict[str, Any],
@@ -66,6 +49,7 @@ def compile_template_artifacts(
         page_texts: Optional per-page text for context extraction.
         document_map: Optional document structure for topic context.
         runtime_config: Optional RuntimeConfig for diagnostics.
+        runtime_trace: Optional safe provider/runtime summary for package metadata.
 
     Returns:
         Dict with keys: template_ast, template_blueprint, diagnostics, intermediate
@@ -73,9 +57,6 @@ def compile_template_artifacts(
     # Work on copies to avoid mutating input
     skeleton = copy.deepcopy(raw_ast)
     bp = copy.deepcopy(blueprint)
-
-    # Keep template.ast + template.blueprint on one binder address (the blueprint
-    # templateId wins) so saved artifacts never trip TEMPLATE_ID_MISMATCH in S3.5.
     _sync_template_ids(skeleton, bp)
 
     intermediate: dict[str, Any] = {}
@@ -119,6 +100,7 @@ def compile_template_artifacts(
             _bp_meta_early["reportType"] = "pib_press_release"
         if _bp_meta_early.get("name") in ("Document", "", None):
             _bp_meta_early["name"] = "PLFS Annual Report Press Release"
+        _sync_template_ids(skeleton, bp)
 
         # Inject missing domain pack entities so they survive through hygiene
         try:
@@ -166,6 +148,12 @@ def compile_template_artifacts(
     bp["entities"] = [_entity_to_dict(e) for e in enrichment_result.entities]
     if _early_doc_type == "pib_press_release":
         _apply_plfs_entity_overrides(bp)
+
+    # Thread extraction provenance onto every binder entity. Hygiene/normalize/enrich
+    # drop the raw ``source`` field, leaving entities with no sourceRefs/evidence — the
+    # S3.5 gate then blocks the package (ENTITY_MISSING_SOURCE_REFS). Backfill honest
+    # provenance (how each entity was discovered) so the evidence chain is traceable.
+    _backfill_entity_evidence(bp, raw_entities)
 
     # Add measure families
     if norm_result.measureFamilies:
@@ -263,6 +251,8 @@ def compile_template_artifacts(
             "sourceDocument": stat_ctx.sourceDocument,
             "domain": stat_ctx.domain,
         }
+    if document_map and document_map.get("templateSemanticGraph"):
+        bp["templateSemanticGraph"] = document_map["templateSemanticGraph"]
     _add_external_table_references(bp, page_texts)
 
     logger.info("[template-compiler] I2 done: tables=%d context_units=%d",
@@ -535,6 +525,7 @@ def compile_template_artifacts(
         template_blueprint=bp,
         semantic_slot_graph=semantic_slot_graph.to_dict(),
         diagnostics=diagnostics,
+        runtime_trace=runtime_trace,
     )
 
     return {
@@ -550,6 +541,18 @@ def compile_template_artifacts(
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
+
+def _sync_template_ids(skeleton: dict[str, Any], blueprint: dict[str, Any]) -> None:
+    """Keep template.ast and template.blueprint on one binder address."""
+    ast_meta = skeleton.setdefault("metadata", {})
+    bp_meta = blueprint.setdefault("templateMeta", {})
+    tid = str(bp_meta.get("templateId") or ast_meta.get("templateId") or "tpl_document").strip()
+    if not tid:
+        tid = "tpl_document"
+    bp_meta["templateId"] = tid
+    ast_meta["templateId"] = tid
+    ast_meta["blueprintRef"] = tid
 
 
 def _derive_figure_candidates(skeleton: dict[str, Any], blueprint: dict[str, Any]) -> list[dict[str, Any]]:
@@ -661,6 +664,8 @@ def _prune_pib_duplicate_chart_questions(questions: list[dict[str, Any]]) -> lis
         if str(question.get("generationMethod") or "") != "chart_pattern":
             continue
         measures = _question_measure_ids(question)
+        if not measures:
+            continue
         if measures and any(m in covered_measures for m in measures):
             continue
         signature = measures or (str(question.get("sourceFigure") or question.get("questionId") or ""),)
@@ -865,11 +870,61 @@ def _entity_to_dict(entity: Any) -> dict[str, Any]:
     d: dict[str, Any] = {}
     for attr in ("entityId", "canonicalName", "entityType", "aliases", "unit", "format",
                  "valueDomain", "aggregation", "scope", "confidence", "isTotal", "isDerived",
-                 "cardinalityHint", "familyRef", "normalizationHints"):
+                 "cardinalityHint", "familyRef", "normalizationHints", "sourceRefs",
+                 "roleEvidence", "riskFlags", "runtimeTraceRefs"):
         val = getattr(entity, attr, None)
         if val is not None and val != "" and val != [] and val != {}:
             d[attr] = val
     return d
+
+
+def _backfill_entity_evidence(blueprint: dict[str, Any], raw_entities: list[dict[str, Any]]) -> None:
+    """Attach honest extraction provenance (sourceRefs + evidence) to binder entities.
+
+    Hygiene/normalize/enrich drop the raw ``source`` marker each entity carried
+    (``heading`` / ``vlm`` / ``pre_seeded`` / ``domain_pack`` / ``canonical_mospi``),
+    so the final blueprint entities have no sourceRefs/evidence and the S3.5 gate
+    blocks the package. This records *how* each entity was discovered — it never
+    fabricates a document location it does not have (domain-pack/pre-seeded entities
+    are honestly marked as template seeds, not document evidence).
+    """
+    source_by_name: dict[str, str] = {}
+    for raw in raw_entities or []:
+        if not isinstance(raw, dict):
+            continue
+        src = str(raw.get("source") or "").strip()
+        if not src:
+            continue
+        for key in (raw.get("canonicalName"), raw.get("name")):
+            if key:
+                source_by_name[str(key).strip().lower()] = src
+        for alias in (raw.get("aliases") or []):
+            if alias:
+                source_by_name.setdefault(str(alias).strip().lower(), src)
+
+    for entity in blueprint.get("entities") or []:
+        if not isinstance(entity, dict):
+            continue
+        if entity.get("entityType") not in ("measure", "dimension", "time"):
+            continue
+        name = str(entity.get("canonicalName") or entity.get("name") or "").strip().lower()
+        source = source_by_name.get(name) or "pipeline_extraction"
+        document_derived = source in ("heading", "vlm", "table", "ocr", "pdfplumber")
+        if not entity.get("sourceRefs"):
+            entity["sourceRefs"] = [{
+                "sourceType": source,
+                "discoveredVia": source,
+                "ref": entity.get("canonicalName") or entity.get("name") or entity.get("entityId"),
+                "documentDerived": document_derived,
+                "confidence": entity.get("confidence"),
+            }]
+        if not entity.get("evidence"):
+            entity["evidence"] = {
+                "sourceType": source,
+                "discoveredVia": source,
+                "documentDerived": document_derived,
+                "label": entity.get("canonicalName") or entity.get("name") or entity.get("entityId"),
+            }
 
 
 def _apply_plfs_entity_overrides(blueprint: dict[str, Any]) -> None:
@@ -1225,6 +1280,37 @@ def _repair_spec_refs(spec: dict[str, Any], ref_map: dict[str, str], valid: set[
                     broken.append(ref)
 
 
+def _question_is_executable(q: dict[str, Any]) -> bool:
+    """Whether a question is binder-executable (mirrors the S3.5 gate's measure rule).
+
+    A non-descriptive analytic question must name a measure in BOTH its
+    ``requiredEntities`` (role == measure) AND its ``analyticsSpec.measure`` /
+    ``measures[]``. Gap-fill questions that arrive with empty requiredEntities and an
+    empty measure ref are non-executable — the S3.5 gate flags them as
+    ANALYTIC_QUESTION_NOT_EXECUTABLE with action "Drop or repair before S3.5", so we
+    drop them here instead of letting them block the whole package.
+    """
+    qtype = str(q.get("questionType") or "").lower()
+    spec = q.get("analyticsSpec") or {}
+    operation = str(spec.get("operation") or "").lower() if isinstance(spec, dict) else ""
+    if qtype in ("descriptive", "describe", "summary") or operation in ("describe", "summary", "summary_stats"):
+        return True  # descriptive questions need no measure
+
+    def _ref(v: Any) -> bool:
+        if isinstance(v, dict):
+            return bool(v.get("entityRef") or v.get("entityId") or v.get("column"))
+        return bool(v)
+
+    has_measure_spec = _ref(spec.get("measure")) or (
+        isinstance(spec.get("measures"), list) and any(_ref(m) for m in spec.get("measures"))
+    )
+    has_required_measure = any(
+        r.get("role") == "measure" and (r.get("entityId") or r.get("entityRef"))
+        for r in (q.get("requiredEntities") or [])
+    )
+    return has_measure_spec and has_required_measure
+
+
 def _filter_or_repair_existing_questions(
     questions: list[dict[str, Any]],
     ref_map: dict[str, str],
@@ -1248,6 +1334,10 @@ def _filter_or_repair_existing_questions(
             # Cannot fix — drop
             dropped.append({"questionId": qid, "reason": f"broken_refs: {still_broken[:3]}", "broken_count": len(still_broken)})
             repair_log.append({"questionId": qid, "repaired": False, "broken": still_broken[:3]})
+        elif not _question_is_executable(repaired_q):
+            # No resolvable measure — non-executable; drop so it can't block S3.5.
+            dropped.append({"questionId": qid, "reason": "not_executable: no measure entity/spec"})
+            repair_log.append({"questionId": qid, "repaired": False, "broken": ["no_measure"]})
         else:
             # All refs resolved (either already valid or remapped)
             kept.append(repaired_q)

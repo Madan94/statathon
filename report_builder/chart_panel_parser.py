@@ -7,9 +7,12 @@ labels and common sector/gender/status words.
 """
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass, field
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 _FIG_RE = re.compile(r"\bfig(?:ure)?\.?\s*(?P<number>\d+)\s*(?:\((?P<panel>[a-z])\))?", re.IGNORECASE)
@@ -87,8 +90,12 @@ def parse_chart_panel_title(title: str, entities: list[Any] | None = None) -> Ch
 def group_chart_panels(charts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Group physical chart panels into binder-level analytical groups."""
     groups: dict[tuple[str, str], dict[str, Any]] = {}
+    skipped_unbound: list[str] = []
     for chart in charts:
         measure = chart.get("measureEntityId") or ""
+        if not measure:
+            skipped_unbound.append(str(chart.get("chartId") or chart.get("id") or "<unknown>"))
+            continue
         family = chart.get("chartFamily") or measure or chart.get("chartSubject") or chart.get("chartId") or "unknown"
         fig = str(chart.get("figureNumber") or "")
         key = (measure, fig or str(family).lower())
@@ -104,6 +111,12 @@ def group_chart_panels(charts: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "filters": chart.get("filters") or [],
             "dimensionEntityId": chart.get("dimensionEntityId") or "",
         })
+    if skipped_unbound:
+        logger.warning(
+            "Skipped %d chart panel(s) without measureEntityId while building binder groups: %s",
+            len(skipped_unbound),
+            ", ".join(skipped_unbound[:5]),
+        )
     return list(groups.values())
 
 

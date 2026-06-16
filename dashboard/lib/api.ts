@@ -1747,6 +1747,28 @@ export interface CoverageReport {
   issues: CoverageIssue[];
 }
 
+export type ColumnDecisionStatus =
+  | 'matched'
+  | 'added_as_entity'
+  | 'ignored_metadata'
+  | 'ignored_duplicate'
+  | 'ignored_out_of_scope'
+  | 'needs_question';
+
+export interface ColumnDecision {
+  column: string;
+  status: ColumnDecisionStatus;
+  entityId?: string;
+  note?: string;
+}
+
+export interface ColumnDecisionPayload {
+  column: string;
+  status: ColumnDecisionStatus;
+  entity_id?: string;
+  note?: string;
+}
+
 export interface BindingStartResult {
   template_id: string;
   signature: string;
@@ -1756,6 +1778,7 @@ export interface BindingStartResult {
   confirmations: Record<string, unknown>;
   pending: string[];
   column_ownership: ColumnOwnershipMap;
+  column_decisions: Record<string, ColumnDecision>;
 }
 
 export interface BindingTemplatePackage {
@@ -1793,6 +1816,7 @@ export interface BindingProposalsResult {
   confirmations: Record<string, unknown>;
   pending: string[];
   column_ownership: ColumnOwnershipMap;
+  column_decisions: Record<string, ColumnDecision>;
 }
 
 export interface BindingRecordResult {
@@ -1802,6 +1826,7 @@ export interface BindingRecordResult {
   proposals: EntityBinding[];
   confirmations: Record<string, unknown>;
   column_ownership: ColumnOwnershipMap;
+  column_decisions: Record<string, ColumnDecision>;
   updated_at: number;
 }
 
@@ -1844,6 +1869,7 @@ export interface BindingWorkspace {
   confirmations: Record<string, unknown>;
   pending: string[];
   column_ownership: ColumnOwnershipMap;
+  column_decisions: Record<string, ColumnDecision>;
   reviewed_plan?: ReviewedPlanSummary | null;
   dependency_graph: BindingDependencyGraph;
   issues: BindingWorkspaceIssue[];
@@ -2067,6 +2093,18 @@ export const bindingPhaseApi = {
   ): Promise<BindingRecordResult> => {
     const { data } = await api.post(
       `/report-builder/binding-phase/${templateId}/${signature}/entities`,
+      body
+    );
+    return data;
+  },
+  /** Record how one dataset column is used in this binder session. */
+  decideColumn: async (
+    templateId: string,
+    signature: string,
+    body: ColumnDecisionPayload
+  ): Promise<BindingRecordResult> => {
+    const { data } = await api.post(
+      `/report-builder/binding-phase/${templateId}/${signature}/column-decision`,
       body
     );
     return data;

@@ -117,6 +117,7 @@ def build_template_package_manifest(
     template_blueprint: dict[str, Any],
     semantic_slot_graph: dict[str, Any] | None = None,
     diagnostics: Any | None = None,
+    runtime_trace: dict[str, Any] | None = None,
     ast_path: str = "template.ast.json",
     blueprint_path: str = "template.blueprint.json",
     semantic_slot_graph_path: str | None = "semantic_slot_graph.json",
@@ -129,6 +130,13 @@ def build_template_package_manifest(
     template_id = str(bp_meta.get("templateId") or ast_meta.get("templateId") or "template")
     status = str((diagnostics_dict or {}).get("status") or "VALID")
     score = (diagnostics_dict or {}).get("binderReadinessScore")
+    metadata = {
+        "domain": bp_meta.get("domain"),
+        "locale": bp_meta.get("locale") or ast_meta.get("locale"),
+        "valueFree": bool(bp_meta.get("valueFree") or ast_meta.get("valueFree")),
+    }
+    if runtime_trace:
+        metadata["runtimeTrace"] = runtime_trace
     return TemplatePackageManifest(
         templateId=template_id,
         version=str(bp_meta.get("version") or ast_meta.get("version") or "1.0.0"),
@@ -144,11 +152,7 @@ def build_template_package_manifest(
         diagnosticsHash=stable_json_hash(diagnostics_dict) if diagnostics_dict is not None else None,
         extractionScore=float(score) if score is not None else None,
         sourceDocument=str(bp_meta.get("sourceDocument") or ast_meta.get("generatedFrom") or ""),
-        metadata={
-            "domain": bp_meta.get("domain"),
-            "locale": bp_meta.get("locale") or ast_meta.get("locale"),
-            "valueFree": bool(bp_meta.get("valueFree") or ast_meta.get("valueFree")),
-        },
+        metadata=metadata,
     )
 
 
@@ -159,6 +163,7 @@ def write_template_package(
     template_blueprint: dict[str, Any],
     semantic_slot_graph: dict[str, Any] | None = None,
     diagnostics: Any | None = None,
+    runtime_trace: dict[str, Any] | None = None,
 ) -> TemplatePackageManifest:
     """Write package artifacts and ``template.package.json`` to a directory."""
     base = Path(directory)
@@ -169,6 +174,7 @@ def write_template_package(
         template_blueprint=template_blueprint,
         semantic_slot_graph=semantic_slot_graph,
         diagnostics=diagnostics_dict,
+        runtime_trace=runtime_trace,
     )
     (base / manifest.astPath).write_text(json.dumps(template_ast, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     (base / manifest.blueprintPath).write_text(json.dumps(template_blueprint, indent=2, ensure_ascii=False, default=str), encoding="utf-8")

@@ -98,7 +98,7 @@ export default function Step4Cluster({ results, analysisId, onProceed, onBack }:
     payload?.clusters?.length
       ? payload.clusters
       : (results.clusters as ClusterGroup[] | undefined) ?? []
-  ).map((cl) => normalizeClusterGroup(cl as ExtendedCluster));
+  ).map((cl) => normalizeClusterGroup(cl as ClusterGroup & Record<string, unknown>));
 
   return (
     <div className="space-y-6">

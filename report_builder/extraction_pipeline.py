@@ -70,6 +70,7 @@ from report_builder.llm_router import llm_text_call, llm_vision_call, is_provide
 from report_builder.llm_schemas import (
     ENTITY_BINDING_SCHEMA,
     ENTITY_CLASSIFICATION_SCHEMA,
+    PAGE_ENTITY_STRUCTURE_SCHEMA,
     QUESTION_LIST_SCHEMA,
 )
 
@@ -313,8 +314,6 @@ _COMMON_NOISE_WORDS: frozenset[str] = frozenset({
     "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
     "samrat", "cycle", "areas", "workers", "while", "engaged", "sustained",
     "market", "presented", "long", "mainly", "mainly",
-    "snapshot", "publications", "reports", "overview", "summary", "highlights",
-    "annexure", "appendix", "contents", "introduction", "conclusion",
 })
 
 # D1 fix (loop decision Q6): blocklist of PIB / web-export chrome that leaks as "entities".
@@ -342,45 +341,34 @@ import re as _re_entity_extra
 # Document Type Detection + PLFS Core Entity Seeds
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Pre-seeded entities for PLFS press releases — loaded from domain pack
-def _load_plfs_entities() -> list[dict[str, Any]]:
-    """Load PLFS entities from domain pack (with units, valueDomains, richer aliases)."""
-    try:
-        from report_builder.domain_packs.plfs_press_release import PLFS_ENTITIES
-        return [dict(e) for e in PLFS_ENTITIES]
-    except ImportError:
-        # Fallback minimal set if domain pack not available
-        return [
-            {"name": "Labour Force Participation Rate", "aliases": ["LFPR"], "entityType": "measure", "unit": "percent", "source": "pre_seeded"},
-            {"name": "Worker Population Ratio", "aliases": ["WPR"], "entityType": "measure", "unit": "percent", "source": "pre_seeded"},
-            {"name": "Unemployment Rate", "aliases": ["UR"], "entityType": "measure", "unit": "percent", "source": "pre_seeded"},
-            {"name": "Gender", "aliases": ["Male", "Female", "Persons"], "entityType": "dimension", "source": "pre_seeded"},
-            {"name": "Sector", "aliases": ["Rural", "Urban"], "entityType": "dimension", "source": "pre_seeded"},
-            {"name": "Survey Period", "aliases": ["2024", "2025"], "entityType": "dimension", "source": "pre_seeded"},
-            {"name": "Age Group", "aliases": ["15+", "15-29", "15-59"], "entityType": "dimension", "source": "pre_seeded"},
-            {"name": "Employment Status", "aliases": ["Self-employed", "Regular wage", "Casual labour"], "entityType": "dimension", "source": "pre_seeded"},
-            {"name": "Periodic Labour Force Survey", "aliases": ["PLFS"], "entityType": "metadata", "source": "pre_seeded"},
-        ]
-
-_PLFS_CORE_ENTITIES: list[dict[str, Any]] = _load_plfs_entities()
+# Pre-seeded entities for PLFS press releases — always present regardless of extraction
+_PLFS_CORE_ENTITIES: list[dict[str, Any]] = [
+    {"name": "Labour Force Participation Rate", "aliases": ["LFPR"], "entityType": "measure", "source": "pre_seeded"},
+    {"name": "Worker Population Ratio", "aliases": ["WPR"], "entityType": "measure", "source": "pre_seeded"},
+    {"name": "Unemployment Rate", "aliases": ["UR"], "entityType": "measure", "source": "pre_seeded"},
+    {"name": "Gender", "aliases": ["Male", "Female", "Persons"], "entityType": "dimension", "source": "pre_seeded"},
+    {"name": "Rural/Urban Sector", "aliases": ["Rural", "Urban"], "entityType": "dimension", "source": "pre_seeded"},
+    {"name": "Survey Year", "aliases": ["2022", "2023", "2024", "2025"], "entityType": "dimension", "source": "pre_seeded"},
+    {"name": "Age Group", "aliases": ["15+", "15-29", "15-59", "Youth"], "entityType": "dimension", "source": "pre_seeded"},
+    {"name": "Status in Employment", "aliases": ["Self-employed", "Regular wage", "Casual labour"], "entityType": "dimension", "source": "pre_seeded"},
+    {"name": "Usual Status (ps+ss)", "aliases": ["ps+ss", "usual status"], "entityType": "filter", "source": "pre_seeded"},
+    {"name": "Periodic Labour Force Survey", "aliases": ["PLFS"], "entityType": "metadata", "source": "pre_seeded"},
+    {"name": "MoSPI", "aliases": ["Ministry of Statistics"], "entityType": "metadata", "source": "pre_seeded"},
+]
 
 # Document-type-specific configuration
 _DOC_TYPE_CONFIG: dict[str, dict[str, Any]] = {
     "pib_press_release": {
-        "entity_cap": 30,         # domain pack has ~16 + up to 14 from text extraction
+        "entity_cap": 25,        # pre-seeded 11 + up to 14 from extraction
         "table_cap": 0,           # PIB press releases have NO real data tables
-        "q_per_chapter": 3,
-        "seed_entities": True,    # inject _PLFS_CORE_ENTITIES (from domain pack)
-        "text_first_extraction": True,   # prefer text/heading extraction over VLM
-        "domain": "labour_force",
+        "q_per_chapter": 2,
+        "seed_entities": True,    # inject _PLFS_CORE_ENTITIES
     },
     "statistical_annual_report": {
         "entity_cap": 80,
         "table_cap": 30,
         "q_per_chapter": 3,
         "seed_entities": False,
-        "text_first_extraction": False,
-        "domain": "general",
     },
 }
 
@@ -480,14 +468,10 @@ def _classify_entity_name(name: str) -> str | None:
     # Chapter/section headings: "CHAPTER 1 Energy Reserves...", "Chapter 1: Energy..."
     if _re_entity_extra.match(r'^(?:CHAPTER|Chapter|SECTION|Section|PART|Part)\s', cleaned):
         return "chapter_heading"
-    # Long multi-word phrases (>38 chars AND >=6 real words) that look like headings/sentences
-    # Real entities can be long: "Activity Status - Current Weekly Status" (38 chars, 5 real words)
-    _real_words = [w for w in cleaned.split() if any(c.isalpha() for c in w)]
-    if len(cleaned) > 38 and len(_real_words) >= 6:
+    # Long multi-word phrases (>40 chars) that look like headings/sentences, not entity names
+    # Real entities are short: "Coal Reserves", "LFPR", "State/UT"
+    if len(cleaned) > 40 and len(cleaned.split()) >= 5:
         return "heading_phrase"
-    # Instructional / QR / website action phrases
-    if any(k in low for k in ("scan the", "click here", "visit our", "access the", "qr code", "download the")):
-        return "instructional_phrase"
     # Any entity containing an embedded percentage is a data value fragment, not an entity name
     if _re_entity_extra.search(r'\d+\.?\d*%', cleaned):
         return "embedded_percent"
@@ -502,31 +486,10 @@ def _classify_entity_name(name: str) -> str | None:
         return "paren_abbrev"
     if low in _COMMON_NOISE_WORDS:
         return "noise_word"
-    # Reject entity names ending with incomplete parenthesis: "Samrat (Release I"
-    if "(" in cleaned and ")" not in cleaned:
-        return "incomplete_paren"
-    # Reject entity names that are just a definition/expansion: "Labour Force (LFPR):"
-    if cleaned.endswith(":") or cleaned.endswith(":-"):
-        return "definition_label"
-    # Section-title pattern: "ACRONYM: descriptive text" — e.g., "PLFS: Changes in 2025"
-    if ": " in cleaned and len(cleaned.split()) >= 3:
-        before_colon = cleaned.split(":")[0].strip()
-        if before_colon.isupper() or len(before_colon) <= 6:
-            return "section_title_pattern"
     # D1: multi-word candidate whose every token is a noise word ("Press Re", "Page Back")
     _tokens = [t for t in _phrase.split() if t]
     if len(_tokens) >= 2 and all(t in _COMMON_NOISE_WORDS for t in _tokens):
         return "all_noise_words"
-    # Detect broken word fragments: text starting with lowercase that looks like
-    # a mid-word split from a heading ("erves and Introduction", "pter 1: Reserves")
-    if cleaned[0].islower() and len(cleaned) > 4 and ' ' in cleaned:
-        # Likely a fragment split from a longer heading by ghost table columns
-        return "midword_fragment"
-    # Detect fragments where the first word is an obvious word-piece (no vowels, or ≤3 chars followed by space)
-    if len(_tokens) >= 2:
-        first_tok = _tokens[0]
-        if len(first_tok) <= 3 and first_tok.isalpha() and first_tok not in ("the", "and", "for", "all", "per", "gdp", "gnp"):
-            return "short_prefix_fragment"
     return None
 
 
@@ -804,10 +767,9 @@ def _is_ghost_table(table: list[list]) -> bool:
     background drawing objects. Characteristics:
       - Very wide (>30 columns) AND very sparse (<20% non-null cells)
       - OR first 3 rows are entirely None (no header content at all)
-      - OR headers are fragmented (many short broken word pieces)
       - BUT small tables with genuinely sparse data are preserved
 
-    This filter NEVER rejects tables with ≤30 columns that have well-formed headers.
+    This filter NEVER rejects tables with ≤30 columns (real MoSPI tables are 6-15 cols).
     """
     if not table:
         return True
@@ -815,51 +777,20 @@ def _is_ghost_table(table: list[list]) -> bool:
     cols = len(table[0]) if table else 0
     total_cells = rows * cols
 
-    # Check fill rate for any table
-    non_null = sum(1 for row in table for c in row if c is not None and str(c).strip())
-    fill_rate = non_null / max(total_cells, 1)
-
-    # Very wide tables (>30 cols): original ghost filter
-    if cols > 30:
-        if fill_rate < 0.20:
-            return True
-        # Wide table with all-None first 3 rows = no header
-        header_rows = table[:min(3, rows)]
-        header_non_null = sum(1 for row in header_rows for c in row if c is not None)
-        if header_non_null == 0:
-            return True
+    # Only applies to suspiciously wide tables
+    if cols <= 30:
         return False
 
-    # For narrower tables: detect fragmented header artifacts
-    # Chart-drawn ghost tables have cells with broken word fragments
-    if cols >= 3 and rows >= 2:
-        # Check first 2 rows for fragmented text patterns
-        header_cells = []
-        for r in range(min(2, rows)):
-            for c in table[r]:
-                if c is not None and str(c).strip():
-                    header_cells.append(str(c).strip())
+    # Check fill rate: ghost tables are almost entirely None
+    non_null = sum(1 for row in table for c in row if c is not None)
+    fill_rate = non_null / max(total_cells, 1)
+    if fill_rate < 0.20:
+        return True
 
-        if header_cells:
-            # Count cells that look like word fragments (short, no space, lowercase-starting mid-word)
-            fragments = 0
-            for cell in header_cells:
-                # Fragment indicators: starts with lowercase, or very short (1-4 chars non-numeric)
-                if len(cell) <= 4 and not cell.replace('.', '').replace(',', '').isdigit():
-                    fragments += 1
-                elif cell[0].islower() and not cell.isdigit():
-                    fragments += 1
-                elif '\n' in cell and len(cell.split('\n')) > 3:
-                    # Multi-line collapsed cells (newline-joined garbage)
-                    fragments += 1
-
-            frag_ratio = fragments / max(len(header_cells), 1)
-            # If >50% of header cells are fragments AND table is very sparse → ghost
-            if frag_ratio > 0.5 and fill_rate < 0.30:
-                return True
-
-    # Tables with extremely low fill rate (<5%) regardless of width are likely artifacts
-    if fill_rate < 0.05 and rows > 5:
+    # Wide table with all-None first 3 rows = no header
+    header_rows = table[:min(3, rows)]
+    header_non_null = sum(1 for row in header_rows for c in row if c is not None)
+    if header_non_null == 0:
         return True
 
     return False
@@ -893,14 +824,6 @@ def _fix_unicode_artifacts(text: str) -> str:
     text = text.replace(_A + _S1, _RS)         # a+sup1 -> Rupee
     text = text.replace(_A + _EU, _EM)         # a+euro alone -> em dash
     text = text.replace(_A, _EN)               # lone a -> en dash
-    # Normalize Unicode dashes/quotes to ASCII for clean display
-    text = text.replace('\u2013', '-')    # en dash -> hyphen
-    text = text.replace('\u2014', '-')    # em dash -> hyphen
-    text = text.replace('\u2018', "'")    # left single quote
-    text = text.replace('\u2019', "'")    # right single quote / apostrophe
-    text = text.replace('\u201c', '"')    # left double quote
-    text = text.replace('\u201d', '"')    # right double quote
-    text = text.replace('\u00a0', ' ')    # non-breaking space
     return text
 
 def _extract_toc_hybrid(
@@ -1299,7 +1222,8 @@ def pass0_rasterize(pdf_path: Path) -> tuple[list[bytes], list[dict[str, Any]]]:
     t0 = time.monotonic()
 
     # Rasterize pages to PNG
-    # Try PyMuPDF first (no Poppler install needed), fall back to pdf2image
+    # Try PyMuPDF first (bundled C libs — no Poppler/system install needed),
+    # fall back to pdf2image only if PyMuPDF is unavailable.
     _pdf_dpi = int(os.getenv("PDF_DPI", "150"))
     images: list = []
     try:
@@ -1477,7 +1401,6 @@ def pass2_entity_structure_extraction(
     page_texts: list[dict[str, Any]],
     doc_title: str = "Document",
     doc_type: str = "statistical_annual_report",
-    section_graph: Any = None,
 ) -> list[dict[str, Any]]:
     """Extract ENTITIES + STRUCTURE TYPE + DESCRIPTION per page using Qwen-VL.
 
@@ -1551,39 +1474,26 @@ def pass2_entity_structure_extraction(
 
                 # Build doc-type-aware entity extraction prompt
                 if doc_type == "pib_press_release":
-                    # Section context from SectionGraph (Phase 2)
-                    _sec_ctx = ""
-                    if section_graph:
-                        _sec = section_graph.section_for_page(i)
-                        if _sec:
-                            _sec_ctx = f"Section: \"{_sec.title}\"\n"
-                            if _sec.expectedEntities:
-                                _sec_ctx += f"Expected entities for this section: {', '.join(_sec.expectedEntities[:5])}\n"
-                            if _sec.has_figures():
-                                _sec_ctx += f"This section has {_sec.figure_count()} visual panel(s).\n"
-                            if _sec.isBackMatter:
-                                _sec_ctx += "This is methodology/notes section (backMatter).\n"
-
                     prompt = (
                         f"Page {i + 1}/{total_pages} of \"{doc_title}\" (PIB Press Release).\n"
-                        f"Layout: {region_types}{image_hint}\n"
-                        f"{_sec_ctx}\n"
-                        "This is a government press release. Extract ONLY:\n"
-                        "entities: Statistical indicator names and dimension names ONLY. "
+                        f"Layout: {region_types}{image_hint}\n\n"
+                        "This is a government press release. Extract ONLY value-free template signals:\n"
+                        "entities: objects for statistical indicator names and dimension names ONLY. "
                         "Examples: 'LFPR', 'WPR', 'Unemployment Rate', 'Gender', 'Rural', 'Urban', "
                         "'Age Group', 'Self-employed', 'Regular wage'. "
                         "DO NOT include: website text, dates, percentages, full sentences, "
                         "figure references, or nav-bar fragments.\n"
+                        "For each entity object include name, entityType, sourceType, confidence, "
+                        "and headerPath when visible. Do not include observed numeric values.\n"
                         "section_heading: The numbered section title if visible (e.g. '1. Stable LFPR...'). "
                         "Empty string otherwise.\n"
                         "chart_types: list each DISTINCT chart actually visible, once each "
-                        "(bar_chart, line_chart, pie_chart, infographic_panel, metric_card_panel). "
-                        "[] if none. Do NOT guess and "
+                        "(bar_chart, line_chart, pie_chart, …). [] if none. Do NOT guess and "
                         "do NOT copy the example below.\n"
                         "structure_type: narrative (most pages), chart_page (if chart dominates), "
                         "title_page (cover), appendix (endnote).\n"
                         "Output ONLY this JSON:\n"
-                        '{"entities":["LFPR","WPR","Gender","Rural","Urban"],'
+                        '{"entities":[{"name":"LFPR","entityType":"measure","sourceType":"text_label","confidence":0.85}],'
                         '"structure_type":"narrative|chart_page|title_page|appendix|mixed",'
                         '"description":"one-line summary",'
                         '"table_title":"",'
@@ -1598,12 +1508,14 @@ def pass2_entity_structure_extraction(
                         f"Page {i + 1}/{total_pages} of \"{doc_title}\".\n"
                         f"Detected layout regions: {region_types}{image_hint}\n\n"
                         "Examine this page carefully. Your tasks:\n"
-                        "1. List ONLY entities that appear VERBATIM as column headers, section titles, "
+                        "1. List ONLY value-free entity objects that appear VERBATIM as column headers, section titles, "
                         "or metric names visible on the page. Do NOT invent anything not explicitly "
                         "printed. Examples: 'LFPR', 'State/UT', 'Rural', 'Urban', "
                         "'Labour Force Participation Rate', 'Unemployment Rate', 'MPCE'. "
                         "Exclude articles ('the','a'), prepositions ('of','in'), "
                         "figure references ('Table 1','Figure 2.3'), pure numbers.\n"
+                        "Each entity object must include name, entityType, sourceType, confidence, "
+                        "and headerPath for multi-row table headers when visible. Never include observed values.\n"
                         "2. If a table is present, extract its exact visible title or statement number "
                         "(e.g. 'Statement 5.1', 'Table 3.2 — LFPR by State'). Use empty string if none.\n"
                         "3. If a section/chapter heading is visible, extract it exactly. "
@@ -1613,7 +1525,7 @@ def pass2_entity_structure_extraction(
                         "5. Provide visible chart titles if any.\n"
                         "6. Classify the dominant page structure.\n"
                         "Output ONLY this JSON (no prose, no markdown):\n"
-                        '{"entities":["ExactColumnHeader","MetricName"],'
+                        '{"entities":[{"name":"ExactColumnHeader","entityType":"measure","sourceType":"column_header","headerPath":["Top band","ExactColumnHeader"],"confidence":0.85}],'
                         '"structure_type":"data_table|chart_page|narrative|title_page|appendix|mixed",'
                         '"description":"one-line summary",'
                         '"table_title":"Statement X.Y or table title if present else empty",'
@@ -1630,6 +1542,7 @@ def pass2_entity_structure_extraction(
                     task="entity_extraction",
                     max_tokens=_tok("entity_extraction")[0],
                     temperature=_tok("entity_extraction")[1],
+                    schema=PAGE_ENTITY_STRUCTURE_SCHEMA,
                 )
                 if raw:
                     vlm_result = _extract_json_from_response(raw)
@@ -1650,20 +1563,16 @@ def pass2_entity_structure_extraction(
         pdfplumber_entities = _entities_from_pdfplumber(page_text, i)
 
         if vlm_result:
-            vlm_entities = vlm_result.get("entities") or []
-            # Normalize and validate: VLM returns list of strings; filter noise/stopwords
-            vlm_entity_names = [
-                str(e).strip() for e in vlm_entities
-                if isinstance(e, str) and _is_valid_entity_name(str(e).strip())
-            ]
+            vlm_entities = _normalize_vlm_entity_records(vlm_result.get("entities") or [], i)
             # Merge: VLM + pdfplumber, dedup by lowered name
             seen_lower: set[str] = set()
             merged_entities: list[dict[str, Any]] = []
-            for name in vlm_entity_names:
+            for ent in vlm_entities:
+                name = str(ent.get("name") or "").strip()
                 key = name.lower().strip()
                 if key not in seen_lower:
                     seen_lower.add(key)
-                    merged_entities.append({"name": name, "source": "vlm", "page": i})
+                    merged_entities.append(ent)
             for ent in pdfplumber_entities:
                 key = ent["name"].lower().strip()
                 if key not in seen_lower:
@@ -1727,6 +1636,56 @@ def pass2_entity_structure_extraction(
     return results
 
 
+def _normalize_vlm_entity_records(raw_entities: list[Any], page_index: int) -> list[dict[str, Any]]:
+    """Normalize VLM entity output while preserving evidence hooks.
+
+    Older prompts returned ``["LFPR", ...]``. Enterprise prompts return objects
+    with sourceType/headerPath/confidence. Support both so cached checkpoints and
+    older providers stay usable.
+    """
+    entities: list[dict[str, Any]] = []
+    for raw in raw_entities:
+        if isinstance(raw, str):
+            name = raw.strip()
+            if not _is_valid_entity_name(name):
+                continue
+            entities.append({
+                "name": name,
+                "source": "vlm",
+                "page": page_index,
+                "sourceRefs": [{
+                    "sourceType": "vlm_label",
+                    "page": page_index,
+                    "confidence": 0.65,
+                }],
+            })
+            continue
+        if not isinstance(raw, dict):
+            continue
+        name = str(raw.get("name") or raw.get("canonicalName") or "").strip()
+        if not _is_valid_entity_name(name):
+            continue
+        source_type = str(raw.get("sourceType") or raw.get("source") or "vlm_label").strip() or "vlm_label"
+        confidence = raw.get("confidence", 0.7)
+        ref = {
+            "sourceType": source_type,
+            "page": page_index,
+            "confidence": confidence,
+        }
+        header_path = raw.get("headerPath")
+        if isinstance(header_path, list) and header_path:
+            ref["headerPath"] = [str(part) for part in header_path if str(part).strip()]
+        entities.append({
+            "name": name,
+            "source": "vlm",
+            "page": page_index,
+            "entityType_hint": raw.get("entityType"),
+            "confidence": confidence,
+            "sourceRefs": [ref],
+        })
+    return entities
+
+
 def _entities_from_pdfplumber(page_text: dict[str, Any], page_index: int) -> list[dict[str, Any]]:
     """Extract entity candidates from pdfplumber data (table headers + headings).
 
@@ -1737,37 +1696,32 @@ def _entities_from_pdfplumber(page_text: dict[str, Any], page_index: int) -> lis
     entities: list[dict[str, Any]] = []
     seen: set[str] = set()
 
-    def _add(name: str, source: str):
+    def _add(name: str, source: str, header_path: list[str] | None = None):
         key = name.lower().strip()
         if key and key not in seen and _is_valid_entity_name(name) and len(name) < 100:
             seen.add(key)
-            entities.append({"name": name.strip(), "source": source, "page": page_index})
+            ref: dict[str, Any] = {
+                "sourceType": source,
+                "page": page_index,
+                "confidence": 0.9 if source == "table_header" else 0.75,
+            }
+            if header_path:
+                ref["headerPath"] = header_path
+                ref["physicalColumn"] = header_path[-1]
+            entities.append({
+                "name": name.strip(),
+                "source": source,
+                "page": page_index,
+                "sourceRefs": [ref],
+            })
 
     # Priority 1: Table headers — use multi-row merge to handle MoSPI spanning headers
     for table in (page_text.get("tables") or []):
         if table and len(table) >= 1:
-            # Skip ghost tables
-            if _is_ghost_table(table):
-                continue
             headers, _ = _merge_multirow_headers(table)
-            # Detect split-heading artifact: if most headers share a common suffix word,
-            # they're fragments of a single heading split across ghost table cells.
-            # Operate on DISTINCT headers so a trailing-None duplicate (a real column
-            # repeated to fill an empty cell) never trips the filter on a valid table.
-            distinct_headers = list(dict.fromkeys(h for h in headers if h))
-            if distinct_headers and len(distinct_headers) >= 3:
-                suffix_counts: dict[str, int] = {}
-                for h in distinct_headers:
-                    if h and ' ' in h:
-                        last_word = h.rsplit(' ', 1)[-1].lower()
-                        suffix_counts[last_word] = suffix_counts.get(last_word, 0) + 1
-                # If >50% of headers share the same suffix → fragmented heading, skip all
-                max_shared = max(suffix_counts.values()) if suffix_counts else 0
-                if max_shared >= len(distinct_headers) * 0.5:
-                    continue
             for h in headers:
                 if h:
-                    _add(h, "table_header")
+                    _add(h, "table_header", header_path=[str(h).strip()])
 
     # Priority 2: Headings (section/chapter titles from font analysis)
     for h in (page_text.get("headings") or []):
@@ -1779,6 +1733,135 @@ def _entities_from_pdfplumber(page_text: dict[str, Any], page_index: int) -> lis
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Numbered Section Extraction (used by Pass 2.5 Step 7)
+# ─────────────────────────────────────────────────────────────────────────────
+
+_FOOTNOTE_HEADING_PATTERNS = (
+    r"total\s+may\s+not\s+tally",
+    r"rounding\s+off",
+    r"^\s*source\s*[:\-—]",
+    r"^\s*note[s]?\s*[:\-—]",
+    r"^\s*fig(?:ure)?\s*\.?\s*\d",
+    r"^\s*\*",
+)
+
+
+def _is_footnote_like_heading(text: str) -> bool:
+    """Whether a candidate heading is really a footnote/source/figure-caption artifact.
+
+    Rejects lines like ``2 Total may not tally due to rounding off``, ``Source: ...``,
+    ``Note: ...``, ``Fig. 1.1 ...`` and pure-numeric/page-number artifacts so they never
+    get promoted to chapters/sections.
+    """
+    import re as _re_hh
+    t = (text or "").strip()
+    if not t:
+        return False
+    low = t.lower()
+    # Pure numeric / page-number artifacts: "12", "2 / 11", "1.1"
+    if _re_hh.fullmatch(r"[\d\s/.\-|]+", t):
+        return True
+    for pat in _FOOTNOTE_HEADING_PATTERNS:
+        if _re_hh.search(pat, low):
+            return True
+    return False
+
+
+def _is_sentence_like_heading(text: str) -> bool:
+    """Whether a candidate heading is really a body sentence, not a section title.
+
+    Long prose lines (``As of 01-04-2025 there were several reserves ...``) must remain
+    body text/notes and never become level-1/2 headings.
+    """
+    import re as _re_hh
+    t = (text or "").strip()
+    if not t:
+        return False
+    words = t.split()
+    # Long prose that terminates like a sentence.
+    if len(words) >= 8 and t.rstrip().endswith((".", ";")):
+        return True
+    # Date-led narrative openings ("As of <date> ...", "During <period> ...").
+    if len(words) >= 6 and _re_hh.match(r"(?i)^(as of|during|in the year|over the period)\b", t):
+        return True
+    return False
+
+
+def _is_promotable_heading(
+    text: str,
+    *,
+    numbered: bool = False,
+    layout_backed: bool = False,
+    toc_backed: bool = False,
+) -> bool:
+    """Whether a candidate may be promoted to a real heading/section.
+
+    A heading is promotable only when it is NOT footnote-like and NOT sentence-like, AND
+    it has at least one positive signal: a numbering pattern, a layout heading/title
+    region, or ToC evidence. Font/position contrast is surfaced via ``layout_backed``.
+    """
+    if _is_footnote_like_heading(text) or _is_sentence_like_heading(text):
+        return False
+    return bool(numbered or layout_backed or toc_backed)
+
+
+def _extract_numbered_sections(page_texts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Extract numbered/lettered sections from raw page text without LLM.
+
+    Matches patterns like:
+      "1. Stable LFPR for Persons aged 15 Years..."
+      "A. Introduction"
+      "2.1 Labour Force Participation Rate"
+    Returns list of dicts: {title, number, page_index, level, raw_line}
+
+    Footnote-like and sentence-like candidates are rejected (heading hygiene) so that
+    notes such as "Total may not tally..." or body sentences never become sections.
+    """
+    import re as _re_ns
+    _SECTION_PATS = [
+        (r"^(\d+\.\d+)\s+(.{8,})", 2),                 # 2.1 Sub-section
+        (r"^(\d{1,2})\.\s+(.{8,})", 1),                 # 1. Section (PLFS numbered chapters)
+        (r"^([A-Z])\.\s+([A-Z].{5,})", 2),              # A. Letter section (endnotes)
+        (r"^(Statement\s+\d+[\.\-]\d+)[:\s\-]+(.{5,})", 2),  # Statement 5.1
+    ]
+
+    sections: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    for page_idx, pt in enumerate(page_texts):
+        raw = (pt.get("raw_text") or "").strip()
+        for line in raw.splitlines():
+            line = line.strip()
+            if len(line) < 6 or len(line) > 120:
+                continue
+            for pat, level in _SECTION_PATS:
+                m = _re_ns.match(pat, line)
+                if m:
+                    number = m.group(1).strip()
+                    title = m.group(2).strip()
+                    # Heading hygiene: drop footnotes/sources and body sentences.
+                    if (
+                        _is_footnote_like_heading(line)
+                        or _is_footnote_like_heading(title)
+                        or _is_sentence_like_heading(title)
+                    ):
+                        break
+                    key = title.lower()[:50]
+                    if key not in seen and len(title) >= 5:
+                        seen.add(key)
+                        sections.append({
+                            "number": number,
+                            "title": title,
+                            "page_index": page_idx,
+                            "level": level,
+                            "raw_line": line,
+                        })
+                    break
+
+    return sections
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Binder evidence helpers (template semantic graph + question-local evidence)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _pass_dump_entity(entity: dict[str, Any]) -> dict[str, Any]:
@@ -1930,74 +2013,6 @@ def _question_local_evidence(
     return False, {"reason": "out_of_section_measure", "measureEntityId": matched_measures[0].get("entityId")}
 
 
-def _extract_numbered_sections(page_texts: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Extract numbered/lettered sections from raw page text without LLM.
-
-    Matches patterns like:
-      "1. Stable LFPR for Persons aged 15 Years..."
-      "A. Introduction"
-      "2.1 Labour Force Participation Rate"
-    Returns list of dicts: {title, number, page_index, level, raw_line}
-    """
-    import re as _re_ns
-    _SECTION_PATS = [
-        (r"^(\d+\.\d+)\s+(.{8,})", 2),                 # 2.1 Sub-section
-        (r"^(\d{1,2})\.\s+(.{8,})", 1),                 # 1. Section (PLFS numbered chapters)
-        (r"^([A-Z])\.\s+([A-Z].{5,})", 2),              # A. Letter section (endnotes)
-        (r"^(Statement\s+\d+[\.\-]\d+)[:\s\-]+(.{5,})", 2),  # Statement 5.1
-    ]
-
-    def _is_sentence_like_heading(text: str) -> bool:
-        """A numbered line that is really a body sentence, not a section title.
-
-        Long prose ("As of 01-04-2025 there were several reserves …") and
-        date/period-led narrative openings must stay body text and never be
-        promoted to a heading.
-        """
-        t = (text or "").strip()
-        if not t:
-            return False
-        words = t.split()
-        if len(words) >= 8 and t.rstrip().endswith((".", ";")):
-            return True
-        if len(words) >= 6 and _re_ns.match(r"(?i)^(as of|during|in the year|over the period)\b", t):
-            return True
-        return False
-
-    sections: list[dict[str, Any]] = []
-    seen: set[str] = set()
-
-    for page_idx, pt in enumerate(page_texts):
-        raw = (pt.get("raw_text") or "").strip()
-        for line in raw.splitlines():
-            line = line.strip()
-            if len(line) < 6 or len(line) > 120:
-                continue
-            for pat, level in _SECTION_PATS:
-                m = _re_ns.match(pat, line)
-                if m:
-                    number = m.group(1).strip()
-                    title = m.group(2).strip()
-                    # Reject sentence-like/narrative lines that merely begin with
-                    # a number (footnotes, "As of <date> …" prose) — they are not
-                    # real section headings.
-                    if _is_sentence_like_heading(title):
-                        break
-                    key = title.lower()[:50]
-                    if key not in seen and len(title) >= 5:
-                        seen.add(key)
-                        sections.append({
-                            "number": number,
-                            "title": title,
-                            "page_index": page_idx,
-                            "level": level,
-                            "raw_line": line,
-                        })
-                    break
-
-    return sections
-
-
 def _generate_questions_from_sections(
     numbered_sections: list[dict[str, Any]],
     all_entities: list[dict[str, Any]],
@@ -2127,10 +2142,41 @@ def pass2_5_document_knowledge_graph(
 
     _entity_id_seq = [len(_PLFS_CORE_ENTITIES) + 1]  # start after pre-seeded IDs
 
-    def _register_entity(name: str, source: str, page: int, priority: int):
+    def _default_source_ref(source: str, page: int, confidence: Any = None) -> dict[str, Any]:
+        return {
+            "sourceType": source,
+            "page": page,
+            "confidence": confidence if confidence is not None else (0.9 if source == "table_header" else 0.75),
+        }
+
+    def _ref_key(ref: dict[str, Any]) -> tuple[Any, ...]:
+        return (
+            ref.get("sourceType"),
+            ref.get("page"),
+            ref.get("tableId"),
+            ref.get("figureId"),
+            ref.get("regionRef"),
+            tuple(ref.get("headerPath") or []),
+            ref.get("physicalColumn"),
+            tuple(ref.get("bbox") or []),
+        )
+
+    def _register_entity(
+        name: str,
+        source: str,
+        page: int,
+        priority: int,
+        *,
+        source_refs: list[dict[str, Any]] | None = None,
+        entity_type_hint: str | None = None,
+        confidence: Any = None,
+    ):
         key = name.lower().strip()
         if not key:
             return
+        refs = [dict(ref) for ref in (source_refs or []) if isinstance(ref, dict)]
+        if not refs:
+            refs = [_default_source_ref(source, page, confidence)]
         # Reject stopwords, noise, figure refs, web chrome — quarantine with reason (Q7), don't drop
         reason = _classify_entity_name(name) if len(name) < 100 else "too_long"
         if reason is not None:
@@ -2146,6 +2192,15 @@ def pass2_5_document_knowledge_graph(
             ent = entity_index[key]
             if page not in ent["pages"]:
                 ent["pages"].append(page)
+            seen_refs = {_ref_key(ref) for ref in ent.setdefault("sourceRefs", []) if isinstance(ref, dict)}
+            for ref in refs:
+                if _ref_key(ref) not in seen_refs:
+                    ent["sourceRefs"].append(ref)
+                    seen_refs.add(_ref_key(ref))
+            if entity_type_hint and not ent.get("entityType_hint"):
+                ent["entityType_hint"] = entity_type_hint
+            if confidence is not None and ent.get("confidence") is None:
+                ent["confidence"] = confidence
             # Upgrade source if higher priority
             if priority < ent["_priority"]:
                 ent["source"] = source
@@ -2158,6 +2213,9 @@ def pass2_5_document_knowledge_graph(
                 "name": name.strip(),
                 "source": source,
                 "pages": [page],
+                "sourceRefs": refs,
+                "entityType_hint": entity_type_hint,
+                "confidence": confidence,
                 "_priority": priority,
             }
 
@@ -2200,7 +2258,17 @@ def pass2_5_document_knowledge_graph(
         for ent in (ep.get("entities") or []):
             name = ent.get("name", "") if isinstance(ent, dict) else str(ent)
             if name.strip():
-                _register_entity(name, "vlm", page_idx, 2)
+                source_refs = ent.get("sourceRefs") if isinstance(ent, dict) else None
+                source = str(ent.get("source") or "vlm") if isinstance(ent, dict) else "vlm"
+                _register_entity(
+                    name,
+                    source,
+                    page_idx,
+                    2,
+                    source_refs=source_refs if isinstance(source_refs, list) else None,
+                    entity_type_hint=ent.get("entityType_hint") if isinstance(ent, dict) else None,
+                    confidence=ent.get("confidence") if isinstance(ent, dict) else None,
+                )
 
         # Source 3b (priority 1): VLM table_title and section_heading from Pass 2
         table_title = ep.get("table_title") or ""
@@ -2213,52 +2281,27 @@ def pass2_5_document_knowledge_graph(
     # Source 4 (bold_word) intentionally removed — individual bold words are too
     # noisy and register stopwords ("and", "the"), single letters, and word fragments.
 
-    # Resolve doc-type config early (needed by text-first extraction + pre-seeding)
-    cfg = _DOC_TYPE_CONFIG.get(doc_type, _DOC_TYPE_CONFIG["statistical_annual_report"])
-
-    # Source 5 (text-first): For PIB press releases, extract entities from page text
-    # using domain-specific regex patterns. This catches entities the VLM misses.
-    if cfg.get("text_first_extraction"):
-        try:
-            import re as _re_tf
-            from report_builder.domain_packs.plfs_press_release import PIB_TEXT_ENTITY_PATTERNS
-            _text_entities_found = 0
-            for page_idx, pt in enumerate(page_texts):
-                raw_text = (pt.get("raw_text") or "") if isinstance(pt, dict) else ""
-                for pat in PIB_TEXT_ENTITY_PATTERNS:
-                    if _re_tf.search(pat["pattern"], raw_text, _re_tf.IGNORECASE):
-                        _register_entity(pat["entity"], "text_pattern", page_idx, 1)
-                        _text_entities_found += 1
-            if _text_entities_found:
-                logger.info("[pass2.5]   Text-first extraction: %d pattern matches across %d pages", _text_entities_found, len(page_texts))
-        except Exception as _tf_exc:
-            logger.debug("[pass2.5]   Text-first extraction skipped: %s", _tf_exc)
-
     # ── Pre-seed known entities for PIB press releases ──
     # These entities are guaranteed to appear in PLFS press releases and anchor
     # the entity graph even when extraction quality is poor.
     all_entities: list[dict[str, Any]] = []
     _ent_id_counter = 1
 
+    cfg = _DOC_TYPE_CONFIG.get(doc_type, _DOC_TYPE_CONFIG["statistical_annual_report"])
+
     if cfg.get("seed_entities"):
         for _seed in _PLFS_CORE_ENTITIES:
             _eid = f"ent_{_ent_id_counter:03d}"
             _ent_id_counter += 1
-            _ent_dict: dict[str, Any] = {
+            all_entities.append({
                 "entityId": _eid,
                 "name": _seed["name"],
-                "source": _seed.get("source", "domain_pack"),
+                "source": _seed["source"],
                 "pages": list(range(len(page_texts))),  # appears across all pages
                 "entityType_hint": _seed["entityType"],
                 "aliases": list(_seed.get("aliases") or []),
                 "_priority_protect": True,
-            }
-            # Carry unit and valueDomain from domain pack
-            if _seed.get("unit"):
-                _ent_dict["unit"] = _seed["unit"]
-            if _seed.get("valueDomain"):
-                _ent_dict["valueDomain"] = _seed["valueDomain"]
-            all_entities.append(_ent_dict)
+            })
         logger.info("[pass2.5]   Pre-seeded %d core entities for %s", len(all_entities), doc_type)
 
     # Finalize entities from extraction
@@ -2527,59 +2570,6 @@ def pass2_5_document_knowledge_graph(
     if chapters_before_filter != len(chapters):
         logger.info("[pass2.5]   Chapter filter: %d → %d (removed %d junk chapters)",
                     chapters_before_filter, len(chapters), chapters_before_filter - len(chapters))
-
-    # ── Chapter deduplication ──
-    # Merge chapters that are the same content with different formats:
-    # "CHAPTER 1" + "Energy Reserves and Potential" on same page → merge title
-    # "Energy Reserves and Potential" + "1 Energy Reserves and Potential" → keep numbered one
-    import re as _re_ch_dedup
-    _BARE_CHAPTER_RE = _re_ch_dedup.compile(r'^(?:CHAPTER|Chapter|PART|Part|Section)\s+\d+\s*$', _re_ch_dedup.I)
-
-    # Step 1: Remove bare "CHAPTER N" entries if there's a real title on the same or adjacent page
-    _bare_chapters = [ch for ch in chapters if _BARE_CHAPTER_RE.match(ch["title"].strip())]
-    if _bare_chapters:
-        _real_chapters = [ch for ch in chapters if not _BARE_CHAPTER_RE.match(ch["title"].strip())]
-        for bare in _bare_chapters:
-            bare_page = bare["pageRange"][0]
-            # Check if any real chapter starts on same or next page
-            has_real = any(abs(rc["pageRange"][0] - bare_page) <= 1 for rc in _real_chapters)
-            if has_real:
-                chapters = [ch for ch in chapters if ch is not bare]
-
-    # Step 2: Merge numbered prefix duplicates ONLY if they overlap in page range
-    # "1 Energy Reserves" on p2-p7 vs "Energy Reserves" on p2-p7 → merge (same content)
-    # "1 Energy Reserves" on p9-p9 vs "Energy Reserves" on p2-p7 → KEEP BOTH (different sections)
-    _numbered_prefix_re = _re_ch_dedup.compile(r'^\d{1,2}[\.\s]+(.+)$')
-    _dedup_chapters: list[dict] = []
-    for ch in chapters:
-        title_clean = ch["title"].strip()
-        m = _numbered_prefix_re.match(title_clean)
-        base_title = m.group(1).strip().lower() if m else title_clean.lower()
-        ch_start = ch["pageRange"][0]
-        ch_end = ch["pageRange"][1]
-
-        # Check if an existing chapter with same base title OVERLAPS this one's page range
-        is_duplicate = False
-        for existing in _dedup_chapters:
-            ex_title = existing["title"].strip()
-            ex_m = _numbered_prefix_re.match(ex_title)
-            ex_base = ex_m.group(1).strip().lower() if ex_m else ex_title.lower()
-            if base_title == ex_base:
-                # Check page range overlap
-                ex_start = existing["pageRange"][0]
-                ex_end = existing["pageRange"][1]
-                if (ch_start <= ex_end + 1 and ch_end >= ex_start - 1):
-                    # Overlapping or adjacent → merge (extend the existing range)
-                    existing["pageRange"] = [min(ch_start, ex_start), max(ch_end, ex_end)]
-                    is_duplicate = True
-                    break
-        if not is_duplicate:
-            _dedup_chapters.append(ch)
-
-    if len(_dedup_chapters) < len(chapters):
-        logger.info("[pass2.5]   Chapter dedup: %d → %d (merged duplicates)",
-                    len(chapters), len(_dedup_chapters))
-    chapters = _dedup_chapters
 
     # Re-assign chapterIds after filtering (keep ordering, fix numbering)
     for _i, _ch in enumerate(chapters):
@@ -3130,17 +3120,25 @@ def pass3_two_loop_ast_building(
             f"Typed entities: {typed_entity_context}\n"
             f"Table structures:\n{table_context}\n"
             f"Content preview:\n{section_summary}\n\n"
-            f"Generate 1-3 analytical questions SPECIFICALLY about '{sec_title}'.\n"
+            f"Generate 1-3 enterprise binder questions SPECIFICALLY about '{sec_title}'.\n"
             "CRITICAL RULES:\n"
             f"(1) Questions MUST be about {_topic_hint} — do NOT ask about other sections.\n"
             "(2) Reference the exact entity names listed above.\n"
             "(3) Questions must be quantitative and comparative — MoSPI report style.\n"
+            "(4) Prefer questions that can bind to measure + dimension + optional time entities.\n"
+            "(5) Every question must be value-free: no observed numbers, no prose conclusions.\n"
             "BAD: 'What does this section show?' or generic LFPR questions for a WPR section.\n"
             f"GOOD example for this section: A question specifically asking about {_topic_hint} by gender or Rural/Urban.\n"
-            "Output a JSON array. Each item has keys: questionId, intent, questionType, sourceHeading.\n"
+            "Output a JSON array. Each item has keys: questionId, intent, questionText, questionType, "
+            "sourceHeading, outlinePath, requiredEntityHints, formulaIntent, answerComponentHints.\n"
             "  - intent: a complete, quantitative question ending in '?' that names real entities.\n"
+            "  - questionText: same as intent unless a clearer officer-facing wording is needed.\n"
             "  - questionType: EXACTLY ONE of comparison, trend, ranking, distribution, composition, correlation, describe.\n"
             "  - sourceHeading: the exact section title.\n"
+            "  - outlinePath: [chapter/section headings from this context].\n"
+            "  - requiredEntityHints: exact visible entity names needed to answer the question.\n"
+            "  - formulaIntent: DIRECT, SHARE, RATE, RATIO, GROWTH, INDEX, REPORTED_VALUE, or DESCRIPTIVE.\n"
+            "  - answerComponentHints: include narrative and provenance; add formula_metric, chart, or table when useful.\n"
             "Do NOT copy these instructions or any placeholder text into the output.\n"
             "List 1-3 questions. JSON only."
         )
@@ -3170,8 +3168,10 @@ def pass3_two_loop_ast_building(
                         # CRITICAL: globally unique IDs — Qwen always returns q1/q2/q3
                         # Duplicate IDs cause topic assignment to skip all but chapter 1
                         q["questionId"] = f"sp{sp_idx + 1:02d}_q{q_i + 1:02d}"
+                        q.setdefault("questionText", q.get("intent", ""))
                         q["page"] = page_range[0]
                         q["sectionId"] = sp.get("sectionId", "")
+                        q.setdefault("outlinePath", [sec_title])
                         q["sectionPattern"] = pattern
                     raw_questions.extend(questions)
                     consecutive_failures = 0
@@ -3255,12 +3255,14 @@ def pass3_two_loop_ast_building(
             f"Available entities: {entity_summary}\n"
             f"{table_hint}\n"
             f"Section pattern: {q_pattern}\n\n"
-            "Which entities does this question need and what role does each play? "
-            "What components should the answer have?\n"
+            "Build an enterprise binder contract for this question. Choose only real entities from the list. "
+            "Use roles: measure, grouping/dimension, filter, time. Include a provenance component. "
+            "Use chart/table components only when the table context supports them. Never include observed values.\n"
             "Output JSON:\n"
             '{"requiredEntities":[{"entityRef":"entity_name","role":"groupBy|measure|filter|breakdown"}],'
             '"answerStructure":{"layoutType":"single|split|multi-panel",'
-            '"components":[{"type":"narrative_paragraph|data_table|grouped_bar_chart|line_chart|pie_chart|metric_card","renderOrder":1}]},'
+            '"components":[{"type":"narrative_paragraph|data_table|grouped_bar_chart|line_chart|pie_chart|metric_card|provenance","renderOrder":1}]},'
+            '"formulaIntent":{"type":"DIRECT|SHARE|RATE|RATIO|GROWTH|INDEX|REPORTED_VALUE|DESCRIPTIVE"},'
             '"confidence":0.8}\n'
             "JSON only."
         )
@@ -3279,6 +3281,7 @@ def pass3_two_loop_ast_building(
                     q.update({
                         "requiredEntities": binding.get("requiredEntities") or [],
                         "answerStructure": binding.get("answerStructure") or {},
+                        "formulaIntent": binding.get("formulaIntent") or q.get("formulaIntent"),
                         "inferenceConfidence": float(binding.get("confidence", 0.5)),
                     })
                     enriched_questions.append(q)
@@ -3914,18 +3917,21 @@ def _enrich_entity_aliases(entities: list[dict]) -> list[dict]:
 def _deduplicate_entities(entities: list[dict]) -> list[dict]:
     """Merge duplicate entities by lowercased name (case-insensitive).
 
-    Duplicates are folded into the first occurrence, UNIONing their sourceRefs and
-    pages so binder evidence collected under different surface forms (e.g. a
-    ``table_header`` ref and a ``vlm_entity`` ref for the same measure) is never
-    dropped during dedup.
+    Duplicates are merged rather than dropped so binder evidence is never lost: the
+    survivor accumulates the union of ``sourceRefs`` (deduped by identity), ``pages``
+    and ``aliases`` from every duplicate. This keeps, e.g., both the ``table_header``
+    and ``vlm_entity`` evidence for the same concept.
     """
-    def _ref_key(ref: dict) -> tuple:
+    def _ref_key(r: dict) -> tuple:
         return (
-            ref.get("sourceType"),
-            ref.get("page"),
-            ref.get("regionRef"),
-            ref.get("physicalColumn"),
-            tuple(ref["bbox"]) if isinstance(ref.get("bbox"), list) else ref.get("bbox"),
+            r.get("sourceType"),
+            r.get("page"),
+            r.get("tableId"),
+            r.get("figureId"),
+            r.get("regionRef"),
+            tuple(r.get("headerPath") or []),
+            r.get("physicalColumn"),
+            tuple(r.get("bbox") or []),
         )
 
     by_key: dict[str, dict] = {}
@@ -3935,21 +3941,25 @@ def _deduplicate_entities(entities: list[dict]) -> list[dict]:
         if not key:
             continue
         if key not in by_key:
-            merged = dict(e)
-            merged["sourceRefs"] = [dict(r) for r in (e.get("sourceRefs") or []) if isinstance(r, dict)]
-            merged["pages"] = list(e.get("pages") or [])
-            by_key[key] = merged
+            survivor = dict(e)
+            survivor["sourceRefs"] = [dict(r) for r in (e.get("sourceRefs") or []) if isinstance(r, dict)]
+            survivor["pages"] = list(e.get("pages") or [])
+            survivor["aliases"] = list(e.get("aliases") or [])
+            by_key[key] = survivor
             order.append(key)
-        else:
-            tgt = by_key[key]
-            seen_refs = {_ref_key(r) for r in tgt["sourceRefs"]}
-            for r in (e.get("sourceRefs") or []):
-                if isinstance(r, dict) and _ref_key(r) not in seen_refs:
-                    tgt["sourceRefs"].append(dict(r))
-                    seen_refs.add(_ref_key(r))
-            for p in (e.get("pages") or []):
-                if p not in tgt["pages"]:
-                    tgt["pages"].append(p)
+            continue
+        survivor = by_key[key]
+        seen_refs = {_ref_key(r) for r in survivor["sourceRefs"]}
+        for r in (e.get("sourceRefs") or []):
+            if isinstance(r, dict) and _ref_key(r) not in seen_refs:
+                survivor["sourceRefs"].append(dict(r))
+                seen_refs.add(_ref_key(r))
+        for p in (e.get("pages") or []):
+            if p not in survivor["pages"]:
+                survivor["pages"].append(p)
+        for a in (e.get("aliases") or []):
+            if a not in survivor["aliases"]:
+                survivor["aliases"].append(a)
     return [by_key[k] for k in order]
 
 
@@ -3965,7 +3975,6 @@ def pass4_assemble_ast(
     doc_title: str = "Document",
     source_hash: str = "",
     entity_pages: list[dict[str, Any]] | None = None,
-    doc_type: str = "statistical_annual_report",
 ) -> dict[str, Any]:
     """Assemble Enterprise AST + embedded blueprint subtree (gold-standard shape).
 
@@ -4001,36 +4010,14 @@ def pass4_assemble_ast(
 
     def _resolve_eid(name: str) -> str:
         """Resolve entity name to entityId via fuzzy matching."""
-        if not name:
-            return ""
-        key = name.lower().strip().rstrip(":")
+        key = name.lower().strip()
         if key in entity_name_map:
             return entity_name_map[key]
-        # Try with common suffixes/prefixes stripped
-        key_no_paren = key.split("(")[0].strip()
-        if key_no_paren and key_no_paren in entity_name_map:
-            return entity_name_map[key_no_paren]
-        # Acronym extraction: "SEEA-Energy" → try "seea", "seea energy"
-        key_normalized = key.replace("-", " ").replace("_", " ")
-        if key_normalized in entity_name_map:
-            return entity_name_map[key_normalized]
-        # Substring match (both directions)
+        # Partial match
         for k, v in entity_name_map.items():
             if key in k or k in key:
                 return v
-            # Acronym in canonical name's alias list
-            if key_normalized in k or k in key_normalized:
-                return v
-        # Abbreviated match: "types of fossil" → match entity containing "fossil"
-        key_words = set(key_normalized.split())
-        key_words -= {"of", "the", "in", "for", "and", "by", "to", "a", "an", "types", "class"}
-        if key_words:
-            for k, v in entity_name_map.items():
-                k_words = set(k.split())
-                if key_words & k_words:  # any overlap
-                    return v
-        # Last resort: return empty string instead of ent_unresolved (cleaner in UI)
-        return ""
+        return f"ent_unresolved_{key[:15]}"
 
     # ════════════════════════════════════════════════════════════════════════════
     # styleAST — 4 standard MoSPI styles
@@ -4072,31 +4059,6 @@ def pass4_assemble_ast(
         dimensions_list = ts.get("dimensions") if isinstance(ts.get("dimensions"), list) else []
         measures_list = ts.get("measures") if isinstance(ts.get("measures"), list) else []
         breakdowns = ts.get("breakdowns") if isinstance(ts.get("breakdowns"), list) else []
-
-        # ── Gold-standard enhancement: cross-reference table columns with classified entities ──
-        # If measures_list is empty but columns match known measure entities, reclassify
-        if not measures_list and dimensions_list:
-            _entity_measures = {e.get("name", "").lower() for e in all_entities if e.get("entityType_hint") == "measure"}
-            _entity_dimensions = {e.get("name", "").lower() for e in all_entities if e.get("entityType_hint") == "dimension"}
-            _new_dims = []
-            _new_meas = []
-            for col in dimensions_list:
-                col_low = col.lower().strip()
-                if col_low in _entity_measures or any(m in col_low for m in _entity_measures if len(m) > 3):
-                    _new_meas.append(col)
-                elif col_low in _entity_dimensions or any(d in col_low for d in _entity_dimensions if len(d) > 3):
-                    _new_dims.append(col)
-                else:
-                    # Heuristic: if column name contains numeric keywords, it's likely a measure
-                    _num_kw = ("total", "amount", "value", "rate", "ratio", "percentage", "number", "count",
-                               "production", "capacity", "reserves", "potential", "estimate", "generation")
-                    if any(k in col_low for k in _num_kw):
-                        _new_meas.append(col)
-                    else:
-                        _new_dims.append(col)
-            if _new_meas:
-                dimensions_list = _new_dims
-                measures_list = _new_meas
 
         # Build column groups from breakdowns
         for bd in breakdowns:
@@ -4188,24 +4150,12 @@ def pass4_assemble_ast(
             if bi_query:
                 break
 
-        table_title = (ts.get("tableTitle") or ts.get("description") or "").strip()
-        # Use VLM table_title if available and current is generic
+        table_title = ts.get("description", f"Table on page {ts['page'] + 1}")
+        # Use VLM table_title if available
         if entity_pages and ts["page"] < len(entity_pages):
             vlm_title = (entity_pages[ts["page"]].get("table_title") or "").strip()
             if vlm_title:
                 table_title = vlm_title
-        # If still empty, build from column analysis
-        if not table_title or table_title.startswith("Table with"):
-            dims = ts.get("dimensions") or []
-            meas = ts.get("measures") or []
-            if meas and dims:
-                table_title = f"{meas[0]} by {dims[0]}" + (f" ({len(ts.get('columns',[]))} cols, p.{ts['page']+1})" if len(dims) > 1 else "")
-            elif ts.get("columns"):
-                cols = ts["columns"]
-                col_sample = ", ".join(str(c) for c in cols[:3])
-                table_title = f"Table p.{ts['page']+1}: {col_sample}{'...' if len(cols)>3 else ''} ({len(cols)} cols, {ts.get('row_count',0)} rows)"
-            else:
-                table_title = f"Table on page {ts['page'] + 1}"
 
         tables_ast.append({
             "tableId": t_id,
@@ -4227,8 +4177,8 @@ def pass4_assemble_ast(
             "title": table_title,
             "columnGroups": column_groups,
             "columns": columns,
-            "dimensions": [c["columnId"] for c in columns if c.get("role") == "dimension"],
-            "measures": [c["columnId"] for c in columns if c.get("role") == "measure"],
+            "dimensions": [_resolve_eid(d) for d in dimensions_list],
+            "measures": [_resolve_eid(m) for m in measures_list],
             "breakdowns": [_resolve_eid(bd.get("measure", "")) for bd in breakdowns],
             "footnotes": [
                 {"noteId": f"fn_{tt_id}_src", "marker": "Source", "textTemplate": "Source: {{dataset.title}}, {{period.current}}."},
@@ -4281,21 +4231,11 @@ def pass4_assemble_ast(
                 y_label = entity_map.get(y_entity, {}).get("name", "Value")
                 y_unit = entity_map.get(y_entity, {}).get("unit", "")
 
-                # Build a better title: use question text if y/x labels are generic
-                _chart_title = f"{y_label} by {x_label}"
-                if y_label == "Value" or x_label == "Category":
-                    # Fall back to question text for a meaningful title
-                    _q_text = q.get("questionText", "")
-                    if _q_text and len(_q_text) < 60:
-                        _chart_title = _q_text.rstrip("?.").strip()
-                    elif y_label != "Value":
-                        _chart_title = y_label
-
                 charts_ast.append({
                     "chartId": chart_id,
                     "biQuery": q_id,
                     "chartType": chart_type,
-                    "title": _chart_title,
+                    "title": f"{y_label} by {x_label}",
                     "xAxis": {"entityRef": x_entity, "label": x_label},
                     "yAxis": {"entityRef": y_entity, "label": f"{y_label} ({y_unit})" if y_unit else y_label, "unit": y_unit or None},
                     "paletteRef": "pal_mospi_default",
@@ -4340,13 +4280,9 @@ def pass4_assemble_ast(
         figures_ast.append({
             "figureId": fig_id,
             "templateRef": ft_id,
-            "type": "chart",
-            "title": chart.get("title", ""),
-            "caption": caption_tpl,
+            "caption": "",
             "captionTemplate": caption_tpl,
             "chartRef": chart["chartId"],
-            "chartType": chart.get("chartType", "bar"),
-            "page": chart.get("page"),
             "styleRef": "s_caption",
             "slot": {"status": "empty"},
         })
@@ -4452,67 +4388,10 @@ def pass4_assemble_ast(
     # ════════════════════════════════════════════════════════════════════════════
     # BLUEPRINT — the analytic brain
     # ════════════════════════════════════════════════════════════════════════════
-
-    def _compute_entity_confidence(ent: dict) -> float:
-        """Differentiated confidence based on source and page coverage."""
-        source = ent.get("source", "vlm")
-        pages = ent.get("pages") or []
-        page_count_e = len(pages) if isinstance(pages, list) else 1
-        if source == "table_header":
-            return 0.85
-        if source == "pre_seeded":
-            return 0.65
-        if page_count_e >= 5:
-            return 0.80
-        if page_count_e >= 3:
-            return 0.70
-        if page_count_e >= 2:
-            return 0.60
-        return 0.45  # single-mention VLM entity
-
     # Build blueprint entities with full gold-standard fields
-    # ── Entity deduplication: merge entities whose names are aliases of another ──
-    _dedup_names: dict[str, int] = {}  # lowercase name -> index in all_entities
-    _to_remove: set[int] = set()
-    for idx, ent in enumerate(all_entities):
-        name_low = (ent.get("name") or "").strip().lower().rstrip(":")
-        aliases_low = {a.lower() for a in (ent.get("aliases") or [])}
-        # Check if this entity's name is an alias of an existing one
-        if name_low in _dedup_names:
-            # Merge: keep the first, absorb this one's pages
-            first_idx = _dedup_names[name_low]
-            first_pages = set(all_entities[first_idx].get("pages") or [])
-            first_pages.update(ent.get("pages") or [])
-            all_entities[first_idx]["pages"] = sorted(first_pages)
-            _to_remove.add(idx)
-            continue
-        # Check if any existing entity has this name as an alias
-        for prev_name, prev_idx in _dedup_names.items():
-            prev_aliases = {a.lower() for a in (all_entities[prev_idx].get("aliases") or [])}
-            if name_low in prev_aliases or prev_name in aliases_low:
-                first_pages = set(all_entities[prev_idx].get("pages") or [])
-                first_pages.update(ent.get("pages") or [])
-                all_entities[prev_idx]["pages"] = sorted(first_pages)
-                _to_remove.add(idx)
-                break
-        else:
-            _dedup_names[name_low] = idx
-            # Also register aliases
-            for a in aliases_low:
-                if a and a not in _dedup_names:
-                    _dedup_names[a] = idx
-
-    if _to_remove:
-        all_entities = [e for i, e in enumerate(all_entities) if i not in _to_remove]
-        logger.info("[pass4] Deduplicated %d entities (merged into existing)", len(_to_remove))
-
     blueprint_entities = []
     for ent in all_entities:
         eid = ent.get("entityId", "")
-        # Clean trailing colon/space from entity names
-        _ent_name = (ent.get("canonicalName") or ent.get("name", "")).rstrip(": ")
-        ent["name"] = _ent_name
-        ent["canonicalName"] = _ent_name
         e_type = ent.get("entityType_hint") or ent.get("entityType") or "dimension"
         # Infer from table structures
         if e_type == "dimension":
@@ -4546,7 +4425,7 @@ def pass4_assemble_ast(
             "glossaryRef": ent.get("glossaryRef"),
             "scope": "indicator" if e_type == "measure" else ("classifier" if e_type == "dimension" else "filter" if e_type == "filter" else "time"),
             "cardinalityHint": "high" if "state" in ent.get("name", "").lower() else "low",
-            "confidence": ent.get("confidence") or _compute_entity_confidence(ent),
+            "confidence": ent.get("confidence") or (0.8 if ent.get("source") == "table_header" else 0.5),
         })
 
     # Build blueprint topics with full question structure
@@ -4714,105 +4593,23 @@ def pass4_assemble_ast(
             })
 
         if bp_questions:
-            # ── Topic title improvement: derive meaningful title ──
-            # If title is bare chapter marker ("CHAPTER 1"), use the dominant measure entity
-            _improved_title = topic_title
-            import re as _re_topic_title
-            if _re_topic_title.match(r'^(?:CHAPTER|Chapter|PART|Part|Section)\s+\d+\s*$', topic_title.strip()):
-                # Find the primary measure entity for this topic's questions
-                _topic_measures = []
-                for q in bp_questions:
-                    for re_ent in q.get("requiredEntities", []):
-                        if re_ent.get("role") == "measure" and re_ent.get("entityId"):
-                            _m_name = entity_map.get(re_ent["entityId"], {}).get("name", "")
-                            if _m_name:
-                                _topic_measures.append(_m_name)
-                if _topic_measures:
-                    # Use most common measure as topic title
-                    from collections import Counter as _Counter_tt
-                    _improved_title = _Counter_tt(_topic_measures).most_common(1)[0][0]
-                else:
-                    # Fall back to first sub-heading in that chapter's page range
-                    pass
-
             blueprint_topics.append({
                 "topicId": tid,
-                "title": _improved_title,
+                "title": topic_title,
                 "order": t_idx + 1,
                 "semanticRef": sec_id,
                 "questions": bp_questions,
             })
 
-    # Glossary — domain-enriched with MoSPI/NSSO/PLFS statistical terminology
-    # Seed with known official statistical definitions; augment with extracted entities
-    _MOSPI_GLOSSARY_SEED: dict[str, str] = {
-        "LFPR": "Labour Force Participation Rate - percentage of the population in the labour force (working or seeking work).",
-        "WPR": "Worker Population Ratio - percentage of employed persons in the population of age 15 years and above.",
-        "UR": "Unemployment Rate - percentage of the labour force that is unemployed.",
-        "PLFS": "Periodic Labour Force Survey - annual household survey conducted by NSO for employment/unemployment indicators.",
-        "NSO": "National Statistical Office - apex statistical body under MoSPI, Government of India.",
-        "MoSPI": "Ministry of Statistics and Programme Implementation - responsible for official statistics in India.",
-        "NSSO": "National Sample Survey Office - field survey arm of NSO, conducts large-scale sample surveys.",
-        "CWS": "Current Weekly Status - activity status of a person during the reference week preceding the date of survey.",
-        "usual_status": "Usual Status (ps+ss) - activity status over the 365 days preceding the survey (principal + subsidiary economic activity).",
-        "UNFC": "United Nations Framework Classification for Fossil Energy and Mineral Reserves and Resources (2009) - international standard for resource classification.",
-        "SEEA": "System of Environmental-Economic Accounting - UN statistical framework integrating economic and environmental data.",
-        "GDP": "Gross Domestic Product - total value of goods and services produced within a country in a year.",
-        "GVA": "Gross Value Added - measure of contribution to GDP by individual sectors.",
-        "CPI": "Consumer Price Index - measure of average change in prices paid by consumers for a basket of goods and services.",
-        "WPI": "Wholesale Price Index - measure of average change in prices at the wholesale level.",
-        "NAS": "National Accounts Statistics - official annual compendium of macroeconomic indicators.",
-        "ASI": "Annual Survey of Industries - census of registered manufacturing sector.",
-        "EAC": "Economic Advisory Council - advisory body to the Prime Minister on economic matters.",
-        "MW": "Megawatt - unit of power (1 MW = 1,000 kW), used for energy generation capacity.",
-        "MT": "Million Tonnes - unit of weight used for commodity production/reserves statistics.",
-        "BCM": "Billion Cubic Metres - unit used for natural gas reserves.",
-        "MMT": "Million Metric Tonnes - variant of MT used in energy/mining statistics.",
-        "MTOE": "Million Tonnes of Oil Equivalent - standardized energy measurement unit.",
-    }
-
+    # Glossary — build from measure entities
     glossary: dict[str, str] = {}
-    # Add relevant seed terms based on document entities — strict matching only
-    _ent_names_lower = {e["canonicalName"].lower() for e in blueprint_entities}
-    _ent_aliases_lower = set()
-    for e in blueprint_entities:
-        for a in (e.get("aliases") or []):
-            _ent_aliases_lower.add(a.lower())
-    # Combine all entity text for word-boundary matching
-    _all_ent_text = _ent_names_lower | _ent_aliases_lower
-
-    for term, defn in _MOSPI_GLOSSARY_SEED.items():
-        term_low = term.lower()
-        # Strict: term must be an exact match in entity names/aliases (not substring)
-        if term_low in _all_ent_text:
-            glossary[term] = defn
-        # Or the full expansion in the definition must match an entity name
-        elif len(term_low) <= 5:
-            # For short acronyms, check if any entity alias is this exact acronym
-            if term_low in _ent_aliases_lower:
-                glossary[term] = defn
-
-    # Generate definitions for extracted measure entities not in seed
     for ent in blueprint_entities:
         if ent.get("entityType") == "measure" and ent.get("canonicalName"):
             name = ent["canonicalName"]
             aliases = ent.get("aliases") or []
-            abbrev = aliases[0] if aliases and len(aliases[0]) <= 8 else ""
+            abbrev = aliases[0] if aliases else ""
             glossary_key = abbrev or name
-
-            if glossary_key not in glossary:
-                unit_str = f" ({ent['unit']})" if ent.get("unit") else ""
-                scope_str = "indicator" if ent.get("scope") == "indicator" else "measure"
-                glossary[glossary_key] = f"{name}{unit_str} - statistical {scope_str} extracted from the source document."
-
-    # Add dimension entities with categorical domains
-    for ent in blueprint_entities:
-        if ent.get("entityType") == "dimension" and ent.get("valueDomain"):
-            vd = ent["valueDomain"]
-            if isinstance(vd, dict) and vd.get("members") and isinstance(vd["members"], list):
-                name = ent["canonicalName"]
-                members = ", ".join(str(m) for m in vd["members"][:5])
-                glossary[name] = f"{name} - classification dimension with categories: {members}."
+            glossary[glossary_key] = f"{name} — extracted indicator from the source document."
 
     # Palette
     palette = {
@@ -4847,19 +4644,16 @@ def pass4_assemble_ast(
     # ════════════════════════════════════════════════════════════════════════════
     # ASSEMBLE FINAL OUTPUT
     # ════════════════════════════════════════════════════════════════════════════
-    cfg = _DOC_TYPE_CONFIG.get(doc_type, _DOC_TYPE_CONFIG["statistical_annual_report"])
     blueprint = {
         "$schema": "bharatstat/template-blueprint/v1",
         "templateMeta": {
             "templateId": template_id,
-            "name": doc_title or "Document",
-            "domain": cfg.get("domain", "general"),
-            "reportType": doc_type,
+            "name": doc_title,
             "locale": "en-IN",
             "version": "3.0",
             "valueFree": True,
             "proseFree": True,
-            "sourceDocument": doc_title or "Document",
+            "sourceDocument": doc_title,
         },
         "glossary": glossary,
         "palette": palette,
@@ -4892,11 +4686,7 @@ def pass4_assemble_ast(
             "generatedFrom": doc_title,
         },
         "styleAST": style_ast,
-        "semanticAST": {
-            "sections": semantic_sections,
-            "entities": [{"entityId": e["entityId"], "name": e["canonicalName"], "type": e["entityType"], "confidence": e.get("confidence", 0.5)} for e in blueprint_entities],
-            "topics": [{"topicId": t["topicId"], "title": t["title"]} for t in blueprint_topics],
-        },
+        "semanticAST": {"sections": semantic_sections},
         "contentAST": {"blocks": content_blocks},
         "tableAST": {"tables": tables_ast},
         "chartAST": {"charts": charts_ast},
@@ -4913,18 +4703,7 @@ def pass4_assemble_ast(
         "extracted_assets": {"text_pages": text_pages},
         "pipeline_trace": {},  # filled by orchestrator
         "questions": [q.get("intent", "") for q in questions],
-        # entityGraph: UI expects {entityId, name, type, context} per entity
-        "entityGraph": {"entities": [
-            {
-                "entityId": e["entityId"],
-                "name": e["canonicalName"],
-                "type": e["entityType"],
-                "entityType": e["entityType"],
-                "confidence": e.get("confidence", 0.5),
-                "context": ", ".join(e.get("aliases") or [])[:80] or e["entityType"],
-            }
-            for e in blueprint_entities
-        ]},
+        "entityGraph": {"entities": blueprint_entities},
     }
 
     logger.info(
@@ -4980,9 +4759,7 @@ def run_extraction_pipeline(
     # ── Checkpoint system (Redis primary, file fallback) ──
     from report_builder.checkpoint_store import CheckpointStore
     _ckpt_hash = source_hash if source_hash else pdf_path.stem[:20]
-    # Determine mode: "resume" only when explicitly resuming from a midway break
-    _ckpt_mode = "resume" if resume_from else "fresh"
-    ckpt = CheckpointStore(_ckpt_hash, mode=_ckpt_mode)
+    ckpt = CheckpointStore(_ckpt_hash)
 
     # If resuming from a specific pass, invalidate that pass + all after it
     _PASS_ORDER = ["pass0", "pass1", "pass2_entities", "pass2_5", "pass2_6", "pass3_questions", "pass4", "pass5"]
@@ -5084,21 +4861,6 @@ def run_extraction_pipeline(
     pipeline_trace["passes"]["pass1_layout"]["toc_entries"] = len(toc)
     pipeline_trace["passes"]["pass1_layout"]["toc_l1_chapters"] = sum(1 for e in toc if e.level == 1)
 
-    # ── Pass 1.5: Build SectionGraph from ToC + LayoutLM regions ──
-    from report_builder.chunking import build_section_graph
-    _section_graph = None
-    try:
-        _section_graph = build_section_graph(
-            toc_entries=toc,
-            layout_pages=layout_pages,
-            page_texts=page_texts,
-            doc_type=doc_type,
-            doc_title=doc_title,
-        )
-        pipeline_trace["passes"]["pass1_5_section_graph"] = _section_graph.to_dict()
-    except Exception as _sg_exc:
-        logger.warning("[pipeline] SectionGraph build failed (non-fatal): %s", _sg_exc)
-
     # ── Pass 2: Entity + Structure Extraction ──
     _tick("pass2_entity_extraction", 30)
     t0 = _time.monotonic()
@@ -5106,7 +4868,7 @@ def run_extraction_pipeline(
     if _cached_pass2:
         entity_pages = _cached_pass2
     else:
-        entity_pages = pass2_entity_structure_extraction(page_images, layout_pages, page_texts, doc_title, doc_type=doc_type, section_graph=_section_graph)
+        entity_pages = pass2_entity_structure_extraction(page_images, layout_pages, page_texts, doc_title, doc_type=doc_type)
         ckpt.save("pass2_entities", entity_pages)
     pass2_elapsed = _time.monotonic() - t0
 
@@ -5122,10 +4884,6 @@ def run_extraction_pipeline(
         "total_entities": total_entities,
         "chart_pages_detected": chart_pages_detected,
         "total_chart_types": total_charts,
-        "vlm_provider": (os.getenv("PROVIDER_ENTITY_EXTRACTION") or os.getenv("VLM_PROVIDER", "qwen")).strip().lower(),
-        "vlm_fallback_used": vlm_success > 0 and any(
-            p.get("vlm_used") for p in entity_pages
-        ),
     }
 
     # ── Pass 2.5: Document Knowledge Graph ──
@@ -5137,8 +4895,6 @@ def run_extraction_pipeline(
     pipeline_trace["passes"]["pass2_5_kg"] = {
         "elapsed_s": round(pass25_elapsed, 1),
         "entities": len(document_map.get("all_entities") or []),
-        "total_entities": len(document_map.get("all_entities") or []),
-        "hierarchy_nodes": len(document_map.get("all_entities") or []),
         "table_structures": len(document_map.get("table_structures") or []),
         "chapters": len(document_map.get("chapters") or []),
         "section_patterns": len(document_map.get("section_patterns") or []),
@@ -5214,15 +4970,15 @@ def run_extraction_pipeline(
     # ── Pass 4: AST Assembly + Blueprint ──
     _tick("pass4_ast_assembly", 80)
     t0 = _time.monotonic()
-    ast = pass4_assemble_ast(layout_pages, page_texts, document_map, ast_result, doc_title, source_hash, entity_pages, doc_type=doc_type)
+    ast = pass4_assemble_ast(layout_pages, page_texts, document_map, ast_result, doc_title, source_hash, entity_pages)
     pass4_elapsed = _time.monotonic() - t0
     pipeline_trace["passes"]["pass4_assembly"] = {
         "elapsed_s": round(pass4_elapsed, 1),
-        "paragraphs": len(ast.get("contentAST", {}).get("blocks") or []),
+        "paragraphs": len(ast.get("contentAST", {}).get("paragraphs") or []),
         "tables": len(ast.get("tableAST", {}).get("tables") or []),
         "figures": len(ast.get("figureAST", {}).get("figures") or []),
-        "charts_detected": len(ast.get("chartAST", {}).get("charts") or []),
-        "chart_pages": len(set(f.get("page", -1) for f in (ast.get("chartAST", {}).get("charts") or []) if f.get("chartId"))),
+        "charts_detected": len([f for f in (ast.get("figureAST", {}).get("figures") or []) if f.get("type") == "chart" or f.get("chartType")]),
+        "chart_pages": len(set(f.get("page", -1) for f in (ast.get("figureAST", {}).get("figures") or []) if f.get("type") == "chart" or f.get("chartType"))),
         "blueprint_topics": len(ast.get("blueprint", {}).get("topics") or []),
         "blueprint_entities": len(ast.get("blueprint", {}).get("entities") or []),
     }
@@ -5252,18 +5008,6 @@ def run_extraction_pipeline(
     # Finalize trace
     pipeline_trace["total_elapsed"] = round(_time.monotonic() - pipeline_start, 1)
     ast["pipeline_trace"] = pipeline_trace
-
-    # ── Final Unicode sanitization on all string values in the AST ──
-    def _sanitize_strings(obj: Any) -> Any:
-        if isinstance(obj, str):
-            return obj.replace('\u2013', '-').replace('\u2014', '-').replace('\u2018', "'").replace('\u2019', "'").replace('\u201c', '"').replace('\u201d', '"').replace('\u00a0', ' ')
-        elif isinstance(obj, dict):
-            return {k: _sanitize_strings(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
-            return [_sanitize_strings(v) for v in obj]
-        return obj
-
-    ast = _sanitize_strings(ast)
 
     _tick("completed", 100)
     logger.info("═══════════════════════════════════════════════════════════")
@@ -5442,89 +5186,6 @@ def run_extraction_pipeline(
     # New canonical output (migration plan P1): value-free ① template.ast.json + ② template.blueprint.json
     from report_builder.template_emit import emit_templates, legacy_emit_enabled
     _emit_report = emit_templates(ast, _out_dir)
-
-    # ── I6: Template Compiler V2 (optional, behind feature flag) ──────────────
-    # When EXTRACTION_COMPILER_V2=true, re-processes the emitted artifacts through
-    # the E1-E12 compiler modules for improved entity quality, deterministic
-    # questions, slot wiring, and diagnostics scoring.
-    _compiler_v2 = (os.getenv("EXTRACTION_COMPILER_V2") or "").strip().lower() in ("1", "true", "yes", "on")
-    _compiler_strict = (os.getenv("EXTRACTION_COMPILER_STRICT") or "").strip().lower() in ("1", "true", "yes", "on")
-
-    if _compiler_v2:
-        try:
-            from report_builder.template_compiler import compile_template_artifacts
-
-            # Load the just-emitted value-free artifacts as compiler input
-            _skeleton_path = _out_dir / "template.ast.json"
-            _bp_path = _out_dir / "template.blueprint.json"
-            with open(_skeleton_path, "r", encoding="utf-8") as _fh:
-                _raw_skeleton = json.load(_fh)
-            with open(_bp_path, "r", encoding="utf-8") as _fh:
-                _raw_blueprint = json.load(_fh)
-
-            # Gather table candidates if available from pass 0/2.5
-            _table_candidates = None
-            _page_text_list = None
-            # Build rich table candidates from pass 2.5 + pass 0 raw data
-            if "document_map" in dir() and document_map and document_map.get("table_structures"):
-                from report_builder.table_candidate_adapter import table_candidates_from_pipeline
-                _table_candidates = table_candidates_from_pipeline(
-                    table_structures=document_map.get("table_structures"),
-                    page_texts=page_texts if "page_texts" in dir() else None,
-                )
-                logger.info("[pipeline] Compiler V2: %d table candidates (%d with header_rows)",
-                            len(_table_candidates),
-                            sum(1 for t in _table_candidates if t.get("header_rows")))
-            # page texts from pass 0 if available
-            if "page_texts" in dir() and page_texts:
-                _page_text_list = [p.get("raw_text", "") for p in page_texts if isinstance(p, dict)]
-
-            _compiled = compile_template_artifacts(
-                raw_ast=_raw_skeleton,
-                blueprint=_raw_blueprint,
-                table_candidates=_table_candidates,
-                page_texts=_page_text_list,
-            )
-
-            # Overwrite emitted files with compiled versions
-            with open(_skeleton_path, "w", encoding="utf-8") as _fh:
-                json.dump(_compiled["template_ast"], _fh, ensure_ascii=False, indent=2, default=str)
-            with open(_bp_path, "w", encoding="utf-8") as _fh:
-                json.dump(_compiled["template_blueprint"], _fh, ensure_ascii=False, indent=2, default=str)
-
-            # Write diagnostics
-            _diag = _compiled["diagnostics"]
-            _diag_path = _out_dir / "template.diagnostics.json"
-            with open(_diag_path, "w", encoding="utf-8") as _fh:
-                json.dump(_diag.to_dict(), _fh, ensure_ascii=False, indent=2, default=str)
-
-            _graph_path = _out_dir / "semantic_slot_graph.json"
-            with open(_graph_path, "w", encoding="utf-8") as _fh:
-                json.dump(_compiled["semantic_slot_graph"], _fh, ensure_ascii=False, indent=2, default=str)
-            _package_path = _out_dir / "template.package.json"
-            with open(_package_path, "w", encoding="utf-8") as _fh:
-                json.dump(_compiled["template_package_manifest"], _fh, ensure_ascii=False, indent=2, default=str)
-
-            logger.info(
-                "[pipeline] ✓ Compiler V2: score=%.3f status=%s entities=%d questions=%d",
-                _diag.binderReadinessScore, _diag.status,
-                _diag.counts.entities, _diag.counts.questions,
-            )
-            _emit_report["compiler_v2"] = {
-                "enabled": True,
-                "score": _diag.binderReadinessScore,
-                "status": _diag.status,
-                "tableCandidatesCount": len(_table_candidates) if _table_candidates else 0,
-                "semanticSlotGraphPath": str(_graph_path),
-                "templatePackagePath": str(_package_path),
-            }
-        except Exception as _compiler_exc:
-            if _compiler_strict:
-                raise
-            logger.warning("[pipeline] Compiler V2 failed (non-fatal, using legacy artifacts): %s", _compiler_exc)
-            _emit_report["compiler_v2"] = {"enabled": True, "error": str(_compiler_exc)}
-    else:
-        _emit_report["compiler_v2"] = {"enabled": False}
 
     # Legacy blended AST — emitted only when EXTRACTION_EMIT_LEGACY is set (loop decision Q3).
     if legacy_emit_enabled():
