@@ -52,7 +52,7 @@ def _blueprint() -> dict:
     }
 
 
-def _template_ast() -> dict:
+def _template_ast(template_id: str = "") -> dict:
     return {
         "metadata": {"templateId": TEMPLATE_ID},
         "semanticAST": {"sections": [{
