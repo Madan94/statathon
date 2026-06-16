@@ -266,35 +266,45 @@ def _pick_table_value_column(caption: str, columns: list[str]) -> int | None:
     cap = caption.lower()
     cols_l = [str(c).lower() for c in columns]
 
+    # Prefer the LATEST year present in the column headers (not a hardcoded year),
+    # so the chart tracks the most recent period the dataset actually carries.
+    latest_year = ""
+    year_tokens = sorted({m.group(0) for name in cols_l for m in re.finditer(r"\b(?:19|20)\d{2}\b", name)})
+    if year_tokens:
+        latest_year = year_tokens[-1]
+
     def _find(pred) -> int | None:
         for i, name in enumerate(cols_l):
             if pred(name):
                 return i
         return None
 
+    def _latest(measure: str) -> int | None:
+        if latest_year:
+            idx = _find(lambda n: measure in n and latest_year in n)
+            if idx is not None:
+                return idx
+        return _find(lambda n: measure in n)
+
     if "natural gas" in cap:
-        idx = _find(lambda n: "natural gas" in n and "2025" in n)
-        if idx is not None:
-            return idx
-        return _find(lambda n: "natural gas" in n and "2025" not in n)
+        return _latest("natural gas")
     if "crude oil" in cap:
-        idx = _find(lambda n: "crude oil" in n and "2025" in n)
-        if idx is not None:
-            return idx
-        return _find(lambda n: "crude oil" in n and "2025" not in n)
+        return _latest("crude oil")
     if any(k in cap for k in ("renewable", "statewise", "potential", "power")):
         idx = _find(lambda n: n.strip() == "total")
         if idx is not None:
             return idx
-        return _find(lambda n: "distribution" in n and "2025" in n)
+        if latest_year:
+            return _find(lambda n: "distribution" in n and latest_year in n)
+        return _find(lambda n: "distribution" in n)
 
-    # Generic: column whose words overlap caption, prefer 2025
+    # Generic: column whose words overlap caption, prefer the latest year present.
     caption_words = set(re.findall(r"[a-z]+", cap))
     best_i, best_score = None, -1
     for i, name in enumerate(cols_l[1:], start=1):
         words = set(re.findall(r"[a-z]+", name))
         score = len(words & caption_words)
-        if "2025" in name:
+        if latest_year and latest_year in name:
             score += 3
         if score > best_score:
             best_score, best_i = score, i

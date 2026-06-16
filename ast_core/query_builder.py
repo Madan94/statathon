@@ -14,13 +14,12 @@ def dataset_schema_blurb(df: pd.DataFrame) -> str:
         sub = df.copy()
         sub["_y"] = sub["year"].astype(str)
         sub["_m"] = sub["month"].astype(str)
-        if ((sub["_y"] == "2026") & (sub["_m"] == "January")).any():
-            period = " Focus on year=2026 month=January when filtering."
-        else:
-            g = sub.groupby(["_y", "_m"]).size().reset_index(name="n")
-            g = g.sort_values(["_y", "_m"], ascending=[False, False])
-            r = g.iloc[0]
-            period = f" Focus on year={r['_y']} month={r['_m']} when filtering."
+        # Always focus on the LATEST period actually present in the dataset — never
+        # a hardcoded date — so the report tracks whatever data was supplied.
+        g = sub.groupby(["_y", "_m"]).size().reset_index(name="n")
+        g = g.sort_values(["_y", "_m"], ascending=[False, False])
+        r = g.iloc[0]
+        period = f" Focus on year={r['_y']} month={r['_m']} when filtering."
     return f"Columns: {', '.join(cols)}. Dtypes: {dtypes}.{period}"
 
 

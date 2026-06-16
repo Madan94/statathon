@@ -91,9 +91,17 @@ def _slice_df_for_query(df: pd.DataFrame, query: str) -> pd.DataFrame:
                 work = work[work["month"].astype(str).str.lower() == m]
                 break
     if "all india" in q and "state" in work.columns:
-        work = work[work["state"].astype(str).str.lower() == "all india"]
+        # Match the national-aggregate row by any common label the dataset may use
+        # (All India / India / National / Total) rather than a single hardcoded one.
+        _AGG_LABELS = {"all india", "india", "national", "total", "all-india"}
+        sl = work["state"].astype(str).str.strip().str.lower()
+        mask = sl.isin(_AGG_LABELS)
+        if mask.any():
+            work = work[mask]
     elif "state" in work.columns and "statewise" in q:
-        work = work[work["state"].astype(str).str.lower() != "all india"]
+        _AGG_LABELS = {"all india", "india", "national", "total", "all-india"}
+        sl = work["state"].astype(str).str.strip().str.lower()
+        work = work[~sl.isin(_AGG_LABELS)]
     return work
 
 
