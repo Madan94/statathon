@@ -94,12 +94,12 @@ export function useLayoutPersistence({ templateId, signature, draftId, enabled =
   const useNamedDraft = Boolean(draftId && draftId !== '__legacy__');
 
   const loadLayout = useCallback(() => useNamedDraft
-    ? generatePhaseApi.getCanvasDraftLayout(templateId, signature, draftId)
+    ? generatePhaseApi.getCanvasDraftLayout(templateId, signature, draftId!)
     : generatePhaseApi.getCanvasLayout(templateId, signature),
   [draftId, signature, templateId, useNamedDraft]);
 
   const saveLayout = useCallback((body: { blocks: Record<string, unknown>; pages: Array<Record<string, unknown>>; order: string[]; updatedAt?: string }) => useNamedDraft
-    ? generatePhaseApi.putCanvasDraftLayout(templateId, signature, draftId, body)
+    ? generatePhaseApi.putCanvasDraftLayout(templateId, signature, draftId!, body)
     : generatePhaseApi.putCanvasLayout(templateId, signature, body),
   [draftId, signature, templateId, useNamedDraft]);
 

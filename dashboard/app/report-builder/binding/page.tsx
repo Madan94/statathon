@@ -963,7 +963,8 @@ export default function BindingWorkflowPage() {
   // template path) and the dedicated PATH screen (only the chosen path's tabs).
   // The nav renders one set or the other — never both — so picking a template
   // card opens a clean page with just its phases.
-  const setupWorkbenchModes: Array<{ id: WorkbenchMode; label: string; hint: string; status: 'Ready' | 'Review' | 'Blocked' | 'Open' }> = [
+  type WorkbenchModeItem = { id: WorkbenchMode; label: string; hint: string; status: 'Ready' | 'Review' | 'Blocked' | 'Open' };
+  const setupWorkbenchModes: WorkbenchModeItem[] = [
     { id: 'overview', label: 'Overview', hint: phaseHint('overview', 'Session health'), status: phaseStatus('overview', 'Open') },
     { id: 'dataset', label: 'Dataset profile', hint: phaseHint('dataset', `${session?.dataset_ast.columns.length ?? 0} columns profiled`), status: 'Ready' },
     {
@@ -973,17 +974,17 @@ export default function BindingWorkflowPage() {
       status: templatePath ? 'Ready' : 'Review',
     },
   ];
-  const pathWorkbenchModes: Array<{ id: WorkbenchMode; label: string; hint: string; status: 'Ready' | 'Review' | 'Blocked' | 'Open' }> = templatePath
-    ? [
-        ...(templatePath === 'loop'
-          ? ([{ id: 'filters', label: 'Query indicators', hint: sectionConfig.filters.length ? `${sectionConfig.filters.length} filter${sectionConfig.filters.length > 1 ? 's' : ''} · ${sectionConfig.measures.length} measure${sectionConfig.measures.length === 1 ? '' : 's'}` : 'Build section spec', status: 'Open' }] as const)
-          : [
-              { id: 'entities', label: 'Dataset mapping', hint: phaseHint('entities', `${undecidedColumnCount} columns pending`), status: phaseStatus('entities', allColumnsDecided ? 'Ready' : remaining === 0 ? 'Review' : 'Review') },
-              { id: 'questions', label: 'Question plan', hint: phaseHint('questions', currentReviewedPlan ? `${currentReviewedPlan.questionCount} questions` : 'Finalize first'), status: phaseStatus('questions', currentReviewedPlan ? 'Ready' : allColumnsDecided ? 'Review' : 'Blocked') },
-              { id: 'issues', label: 'Issues', hint: phaseHint('issues', `${workspaceIssues.length} open`), status: phaseStatus('issues', workspaceIssues.length ? 'Review' : 'Ready') },
-              { id: 'handoff', label: 'S3.5 handoff', hint: handoffHint, status: handoffStatus },
-            ]),
-      ]
+  const loopWorkbenchModes: WorkbenchModeItem[] = [
+    { id: 'filters', label: 'Query indicators', hint: sectionConfig.filters.length ? `${sectionConfig.filters.length} filter${sectionConfig.filters.length > 1 ? 's' : ''} · ${sectionConfig.measures.length} measure${sectionConfig.measures.length === 1 ? '' : 's'}` : 'Build section spec', status: 'Open' },
+  ];
+  const standardWorkbenchModes: WorkbenchModeItem[] = [
+    { id: 'entities', label: 'Dataset mapping', hint: phaseHint('entities', `${undecidedColumnCount} columns pending`), status: phaseStatus('entities', allColumnsDecided ? 'Ready' : remaining === 0 ? 'Review' : 'Review') },
+    { id: 'questions', label: 'Question plan', hint: phaseHint('questions', currentReviewedPlan ? `${currentReviewedPlan.questionCount} questions` : 'Finalize first'), status: phaseStatus('questions', currentReviewedPlan ? 'Ready' : allColumnsDecided ? 'Review' : 'Blocked') },
+    { id: 'issues', label: 'Issues', hint: phaseHint('issues', `${workspaceIssues.length} open`), status: phaseStatus('issues', workspaceIssues.length ? 'Review' : 'Ready') },
+    { id: 'handoff', label: 'S3.5 handoff', hint: handoffHint, status: handoffStatus },
+  ];
+  const pathWorkbenchModes: WorkbenchModeItem[] = templatePath
+    ? (templatePath === 'loop' ? [...loopWorkbenchModes, ...standardWorkbenchModes] : standardWorkbenchModes)
     : [];
   const workbenchModes = enteredPath ? pathWorkbenchModes : setupWorkbenchModes;
 
