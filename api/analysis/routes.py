@@ -45,6 +45,11 @@ from services.analysis_results_service import (
 )
 from analysis_state.cluster_utils import normalize_clusters_payload
 from services.decision_service import DecisionService
+from services.analysis_query import get_normalization_version
+from services.analysis_payload_cache import (
+    get_cached_enriched_results,
+    set_cached_enriched_results,
+)
 from services.normalization_service import NormalizationService
 from services.outlier_workflow_service import OutlierWorkflowService
 from services.validation_workflow_service import ValidationWorkflowService
@@ -129,15 +134,44 @@ def get_analysis_results(
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
+    norm_version = get_normalization_version(db, analysis_id)
+    cached = get_cached_enriched_results(
+        analysis_id, norm_version, include_phase3=include_phase3
+    )
+    if cached:
+        return cached
     payload = _payload_for_analysis(db, analysis_id, include_phase3=include_phase3)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
-    return enrich_payload_for_dashboard(
+    enriched = enrich_payload_for_dashboard(
         db,
         analysis_id,
         payload,
         include_phase3=include_phase3,
     )
+    set_cached_enriched_results(
+        analysis_id,
+        norm_version,
+        include_phase3=include_phase3,
+        payload=enriched,
+    )
+    return enriched
+
+
+@router.get("/{analysis_id}/bootstrap")
+def get_analysis_bootstrap(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    summary = build_summary_response(db, analysis_id)
+    normalization = NormalizationService(db).get_step2_normalization(analysis_id)
+    return {
+        "analysis_id": analysis_id,
+        "summary": summary,
+        "normalization": normalization,
+    }
 
 
 @router.get("/{analysis_id}/status")
@@ -157,14 +191,14 @@ def get_analysis_status(
 
 
 @router.post("/{analysis_id}/apply")
-def apply_decisions(
+async def apply_decisions(
     analysis_id: int,
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
     try:
-        return apply_analysis_decisions(db, analysis_id, user_id=user_id)
+        return await run_in_threadpool(apply_analysis_decisions, db, analysis_id, user_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
@@ -232,14 +266,18 @@ def get_weight_application_payload(
 
 
 @router.post("/{analysis_id}/weights/detect")
-def detect_weight_columns_route(
+async def detect_weight_columns_route(
     analysis_id: int,
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
     try:
-        return WeightWorkflowService(db).detect_weights(analysis_id, user_id=user_id)
+        return await run_in_threadpool(
+            WeightWorkflowService(db).detect_weights,
+            analysis_id,
+            user_id=user_id,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
@@ -562,7 +600,7 @@ def select_outlier_method(
 
 
 @router.post("/{analysis_id}/outliers/detect")
-def run_outlier_detection(
+async def run_outlier_detection(
     analysis_id: int,
     body: OutlierDetectRequest,
     db: Session = Depends(get_db),
@@ -570,7 +608,11 @@ def run_outlier_detection(
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
     try:
-        return OutlierWorkflowService(db).run_detection(analysis_id, body.column)
+        return await run_in_threadpool(
+            OutlierWorkflowService(db).run_detection,
+            analysis_id,
+            body.column,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
@@ -612,24 +654,23 @@ def get_analysis_normalization(
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
-    saved = NormalizationService(db).get_saved_decisions(analysis_id)
-    if saved:
-        return saved
-    records = NormalizationService(db)._ensure_columns_seeded(analysis_id)
-    return {
-        "normalization_version": None,
-        "columns": [
-            {
-                "column_id": c.id,
-                "original_name": c.name,
-                "normalized_name": c.normalized_name or c.name,
-                "is_deleted": c.is_deleted,
-                "is_excluded": c.is_excluded,
-                "is_active": c.is_active,
-            }
-            for c in records
-        ],
-    }
+    try:
+        return NormalizationService(db).get_step2_normalization(analysis_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+
+
+@router.post("/{analysis_id}/normalization/apply-dictionary")
+def apply_analysis_dictionary(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return NormalizationService(db).apply_dictionary_to_analysis(analysis_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.post("/{analysis_id}/normalization")
@@ -708,7 +749,7 @@ def get_analysis_blueprint(
     user_id: int = Depends(get_current_user_id),
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
-    payload = resolve_semantic_analysis_payload(db, analysis_id)
+    payload = resolve_semantic_analysis_payload(db, analysis_id, include_phase3=False)
     if not payload:
         raise HTTPException(status_code=404, detail="Semantic intelligence payload unavailable")
     bp = payload.get("schema_blueprint")
@@ -751,9 +792,21 @@ async def analyze_async(
 @router.post("/{dataset_id}/analyze")
 def analyze(
     dataset_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user_id),
 ):
+    allow_sync = os.getenv("ALLOW_SYNC_ANALYZE", "false").lower() in ("1", "true", "yes")
+    if not allow_sync:
+        ds = require_dataset_owner(db, dataset_id, user_id)
+        supersede_inflight_analyses(db, dataset_id)
+        an = Analysis(dataset_id=dataset_id, status="pending")
+        db.add(an)
+        db.commit()
+        db.refresh(an)
+        background_tasks.add_task(execute_dataset_analysis_job, dataset_id, an.id)
+        return {"analysis_id": an.id, "id": an.id, "dataset_id": dataset_id, "status": "pending"}
+
     ds = require_dataset_owner(db, dataset_id, user_id)
     an = Analysis(dataset_id=dataset_id, status="running")
     db.add(an)

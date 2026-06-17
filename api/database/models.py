@@ -167,6 +167,18 @@ class ColumnNormalizationAudit(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class ColumnDictionaryGlobal(Base):
+    """Singleton global column name dictionary (source header -> canonical name)."""
+
+    __tablename__ = "column_dictionary_global"
+
+    id = Column(Integer, primary_key=True)
+    mappings = Column(JSON, nullable=False, default=dict)
+    version = Column(Integer, nullable=False, default=0, server_default="0")
+    updated_at = Column(DateTime, nullable=True)
+    updated_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+
 class Analysis(Base):
     __tablename__ = "analyses"
     id = Column(Integer, primary_key=True, index=True)

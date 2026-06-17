@@ -881,7 +881,7 @@ export default function BindingWorkflowPage() {
   };
 
   const generationHref = executionReady
-    ? `/report-builder/generate/${encodeURIComponent(executionReady.template_id)}/${encodeURIComponent(session?.signature ?? '')}`
+    ? `/report-builder/canvas/${encodeURIComponent(executionReady.template_id)}/${encodeURIComponent(session?.signature ?? '')}`
     : '/report-builder/binding';
 
   useEffect(() => {
@@ -1772,9 +1772,9 @@ export default function BindingWorkflowPage() {
         title="Dataset binding"
         description="Map columns to entities, review the question plan, and prepare for report generation."
         actions={
-          <Link href="/report/report-builder">
+          <Link href="/report/report-ast-generator">
             <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4" /> Report Builder
+              <ArrowLeft className="h-4 w-4" /> Template Extraction
             </Button>
           </Link>
         }

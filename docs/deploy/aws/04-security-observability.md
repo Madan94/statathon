@@ -25,7 +25,10 @@
 ## Data protection
 
 - RDS encryption at rest ON
-- S3 bucket encryption ON
+- S3 bucket default encryption: **SSE-KMS** with customer-managed CMK (`S3_KMS_KEY_ID`)
+- S3 bucket policy: deny `PutObject` without `aws:kms` encryption
+- S3 block public access ON; versioning ON
+- CloudTrail data events for S3 + KMS audit trail
 - Redis transit and at-rest encryption ON (if enabled)
 - Secrets Manager rotation policy for SMTP/API secrets
 

@@ -30,6 +30,7 @@ class DatasetRepository:
         file_size: int | None,
         health_summary: dict,
         upload_status: str = "UPLOADED",
+        commit: bool = True,
     ) -> Dataset | None:
         ds = self.get_by_id(dataset_id)
         if not ds:
@@ -41,8 +42,11 @@ class DatasetRepository:
         ds.health_summary = health_summary
         ds.upload_status = upload_status
         ds.status = "ingested"
-        self.db.commit()
-        self.db.refresh(ds)
+        if commit:
+            self.db.commit()
+            self.db.refresh(ds)
+        else:
+            self.db.flush()
         return ds
 
     def get_by_id(self, dataset_id: int) -> Dataset | None:
@@ -58,6 +62,8 @@ class DatasetRepository:
         checksum: str | None,
         storage_provider: str | None = None,
         upload_status: str = "UPLOADED",
+        status: str = "ingested",
+        commit: bool = True,
     ) -> Dataset:
         provider = (storage_provider or os.getenv("STORAGE_PROVIDER") or "s3").strip()
         ds = Dataset(
@@ -69,11 +75,14 @@ class DatasetRepository:
             file_size=file_size,
             checksum=checksum,
             upload_status=upload_status,
-            status="ingested",
+            status=status,
         )
         self.db.add(ds)
-        self.db.commit()
-        self.db.refresh(ds)
+        if commit:
+            self.db.commit()
+            self.db.refresh(ds)
+        else:
+            self.db.flush()
         return ds
 
     def set_upload_status(self, dataset_id: int, status: str) -> None:

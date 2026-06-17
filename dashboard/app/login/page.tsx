@@ -90,30 +90,6 @@ export default function LoginPage() {
         subtitle="Enter your email and password to continue."
         step={1}
       >
-        {IS_DEV && (
-          <div className="mb-4 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3 text-xs text-text-muted space-y-2">
-            <p className="font-semibold text-primary">Dev test officer</p>
-            <p>
-              Email: <code className="text-text">{DEV_EMAIL}</code>
-            </p>
-            <p>
-              Password: <code className="text-text">{DEV_PASSWORD}</code>
-            </p>
-            <p>
-              OTP (if prompted): <code className="text-text">{DEV_OTP}</code>
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="w-full"
-              disabled={loading}
-              onClick={handleDevQuickLogin}
-            >
-              Dev quick login (skip OTP)
-            </Button>
-          </div>
-        )}
         <form onSubmit={handleContinue} className="space-y-3">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-text mb-1">

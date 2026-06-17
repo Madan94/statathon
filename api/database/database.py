@@ -50,9 +50,9 @@ else:
         DATABASE_URL,
         connect_args={"check_same_thread": False} if _is_sqlite else _pg_connect_args,
         pool_pre_ping=not _is_sqlite,
-        pool_recycle=int(os.getenv("DB_POOL_RECYCLE", "60")) if not _is_sqlite else -1,
-        pool_size=int(os.getenv("DB_POOL_SIZE", "2")) if not _is_sqlite else 5,
-        max_overflow=int(os.getenv("DB_POOL_MAX_OVERFLOW", "3")) if not _is_sqlite else 10,
+        pool_recycle=int(os.getenv("DB_POOL_RECYCLE", "280")) if not _is_sqlite else -1,
+        pool_size=int(os.getenv("DB_POOL_SIZE", "5")) if not _is_sqlite else 5,
+        max_overflow=int(os.getenv("DB_POOL_MAX_OVERFLOW", "10")) if not _is_sqlite else 10,
         pool_timeout=int(os.getenv("DB_POOL_TIMEOUT", "30")),
         echo_pool=os.getenv("DB_ECHO_POOL", "false").lower() in ("1", "true", "yes"),
     )

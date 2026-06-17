@@ -24,11 +24,9 @@ export const PLATFORM_NAV: PlatformNavItem[] = [
     label: 'Report',
     icon: FileText,
     items: [
-      { href: '/report-builder', label: 'Report Builder' },
+      { href: '/report/report-ast-generator', label: 'Template Extraction' },
       { href: '/report-builder/binding', label: 'Dataset Binder' },
       { href: '/report-builder/canvas', label: 'Report Canvas' },
-      { href: '/report-builder/new', label: 'Classic Wizard' },
-      { href: '/report/report-ast-generator', label: 'Template Extraction' },
     ],
   },
   { type: 'link', href: '/activity', label: 'All Activity', icon: History },
@@ -49,11 +47,23 @@ export function isNavItemActive(pathname: string, item: PlatformNavItem): boolea
   return item.items.some((child) => isNavActive(pathname, child.href));
 }
 
-/** Legacy report-builder sub-routes (binding, jobs) highlight Report Builder nav. */
+export function isReportBinderActive(pathname: string): boolean {
+  return pathname.startsWith('/report-builder/binding');
+}
+
+export function isReportCanvasActive(pathname: string): boolean {
+  return (
+    pathname.startsWith('/report-builder/canvas') ||
+    pathname.startsWith('/report-builder/preview')
+  );
+}
+
+/** Report section sub-routes (excluding removed report-builder hub). */
 export function isReportSectionActive(pathname: string): boolean {
   return (
-    pathname.startsWith('/report/report-builder') ||
-    pathname.startsWith('/report-builder')
+    isReportAstSectionActive(pathname) ||
+    isReportBinderActive(pathname) ||
+    isReportCanvasActive(pathname)
   );
 }
 

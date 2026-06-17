@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Menu, LogOut, User } from 'lucide-react';
-import { authApi, AuthUser } from '@/lib/api';
+import { authApi } from '@/lib/api';
 import api from '@/lib/api';
+import { useAuthOptional } from '@/components/auth/AuthProvider';
 import Breadcrumbs, { Crumb } from './Breadcrumbs';
 import { cn } from '@/lib/cn';
 
@@ -18,32 +19,42 @@ function autoBreadcrumbs(pathname: string): Crumb[] {
       { label: 'Upload', href: '/upload' },
     ];
   }
-  if (pathname === '/report/report-ast-generator') {
+  if (pathname === '/report/report-ast-generator' || pathname.startsWith('/report/report-ast-generator/')) {
+    const crumbs: Crumb[] = [
+      { label: 'Home', href: '/dashboard' },
+      { label: 'Template Extraction', href: '/report/report-ast-generator' },
+    ];
+    const astTemplate = pathname.match(/^\/report\/report-ast-generator\/([^/]+)$/);
+    if (astTemplate) {
+      const slug = decodeURIComponent(astTemplate[1]).replace(/-/g, ' ');
+      const title = slug.replace(/\b\w/g, (c) => c.toUpperCase());
+      crumbs.push({ label: title });
+    }
+    return crumbs;
+  }
+  if (pathname.startsWith('/report-builder/binding')) {
     return [
       { label: 'Home', href: '/dashboard' },
-      { label: 'Report AST Generator', href: '/report/report-ast-generator' },
+      { label: 'Dataset Binder', href: '/report-builder/binding' },
     ];
   }
-  const astTemplate = pathname.match(/^\/report\/report-ast-generator\/([^/]+)$/);
-  if (astTemplate) {
-    const slug = decodeURIComponent(astTemplate[1]).replace(/-/g, ' ');
-    const title = slug.replace(/\b\w/g, (c) => c.toUpperCase());
+  if (pathname.startsWith('/report-builder/canvas')) {
     return [
       { label: 'Home', href: '/dashboard' },
-      { label: 'Report AST Generator', href: '/report/report-ast-generator' },
-      { label: title },
+      { label: 'Report Canvas', href: '/report-builder/canvas' },
     ];
   }
-  if (pathname === '/report-builder') {
+  if (pathname.startsWith('/report-builder/preview')) {
     return [
       { label: 'Home', href: '/dashboard' },
-      { label: 'Report AST Generator', href: '/report/report-ast-generator' },
+      { label: 'Report Canvas', href: '/report-builder/canvas' },
+      { label: 'Preview' },
     ];
   }
-  if (pathname.startsWith('/report/report-builder') || pathname.startsWith('/report-builder/')) {
+  if (pathname === '/report-builder' || pathname.startsWith('/report/report-builder')) {
     return [
       { label: 'Home', href: '/dashboard' },
-      { label: 'Report Builder', href: '/report/report-builder' },
+      { label: 'Template Extraction', href: '/report/report-ast-generator' },
     ];
   }
   if (pathname === '/profile') {
@@ -91,12 +102,12 @@ export default function TopBar({ breadcrumbs, onMenuClick }: TopBarProps) {
   const pathname = usePathname();
   const crumbs = breadcrumbs?.length ? breadcrumbs : autoBreadcrumbs(pathname);
   const [apiOk, setApiOk] = useState<boolean | null>(null);
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const auth = useAuthOptional();
+  const user = auth?.user ?? null;
 
   useEffect(() => {
     api.get('/health').then(() => setApiOk(true)).catch(() => setApiOk(false));
-    authApi.me().then(setUser).catch(() => setUser(null));
-  }, [pathname]);
+  }, []);
 
   const handleLogout = async () => {
     try {

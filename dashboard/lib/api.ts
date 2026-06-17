@@ -26,6 +26,8 @@ const api = axios.create({
   withCredentials: true,
 });
 
+let refreshInFlight: Promise<unknown> | null = null;
+
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const method = (config.method || 'get').toUpperCase();
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
@@ -51,7 +53,12 @@ api.interceptors.response.use(
     ) {
       original._retry = true;
       try {
-        await api.post('/auth/refresh');
+        if (!refreshInFlight) {
+          refreshInFlight = api.post('/auth/refresh').finally(() => {
+            refreshInFlight = null;
+          });
+        }
+        await refreshInFlight;
         return api(original);
       } catch {
         if (typeof window !== 'undefined') {
@@ -88,7 +95,16 @@ export function formatApiError(err: unknown, fallback = 'Request failed'): strin
     const detail = err.response?.data?.detail;
     if (typeof detail === 'string') return detail;
     if (Array.isArray(detail)) {
-      return detail.map((d) => (typeof d === 'object' && d && 'msg' in d ? String(d.msg) : String(d))).join('; ');
+      return detail
+        .map((d) => {
+          if (typeof d === 'object' && d && 'msg' in d) {
+            const item = d as { msg?: unknown; loc?: unknown };
+            const loc = Array.isArray(item.loc) ? item.loc.filter(Boolean).join('.') : '';
+            return loc ? `${loc}: ${String(item.msg)}` : String(item.msg);
+          }
+          return String(d);
+        })
+        .join('; ');
     }
     if (detail && typeof detail === 'object') return JSON.stringify(detail);
     return err.message || fallback;
@@ -516,6 +532,31 @@ export interface NormalizationColumnRecord {
   is_deleted: boolean;
   is_excluded: boolean;
   is_active?: boolean;
+  dictionary_mapped?: boolean;
+  match_method?: string | null;
+}
+
+export interface ColumnDictionarySummary {
+  version: number;
+  total_keys: number;
+  updated_at?: string | null;
+  matched_count?: number;
+}
+
+export interface ColumnDictionaryUploadResponse {
+  version: number;
+  total_keys: number;
+  added: number;
+  skipped: number;
+  added_keys?: string[];
+  skipped_keys?: string[];
+}
+
+export interface ApplyDictionaryResponse {
+  matched: number;
+  unmatched: number;
+  columns: NormalizationColumnRecord[];
+  dictionary: ColumnDictionarySummary;
 }
 
 export interface NormalizationSaveResponse {
@@ -631,6 +672,41 @@ export const datasetsApi = {
     });
     return data;
   },
+  /** Presigned direct-to-S3 when possible; falls back to server relay on CORS/network errors. */
+  uploadSmart: async (file: File): Promise<UploadResponse> => {
+    const mode = (process.env.NEXT_PUBLIC_UPLOAD_MODE || 'auto').toLowerCase();
+    if (mode === 'relay') {
+      return datasetsApi.upload(file);
+    }
+    if (mode === 'presigned') {
+      return datasetsApi.presignedUpload(file);
+    }
+    try {
+      return await datasetsApi.presignedUpload(file);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const fallback =
+        /cors|failed to fetch|network|403|preflight|direct upload/i.test(msg);
+      if (fallback) {
+        return datasetsApi.upload(file);
+      }
+      throw err;
+    }
+  },
+  importFromUrl: async (
+    url: string,
+    options?: { filename?: string },
+  ): Promise<UploadResponse> => {
+    const { data } = await api.post<UploadResponse>('/datasets/import-from-url', {
+      url,
+      filename: options?.filename?.trim() || undefined,
+    });
+    return {
+      ...data,
+      dataset_id: data.dataset_id ?? data.id,
+      id: data.id ?? data.dataset_id,
+    };
+  },
   presignedUpload: async (file: File): Promise<UploadResponse> => {
     const contentType = datasetPresignedContentType(file.name);
     const { data: urlData } = await api.post<PresignedUploadResponse>('/datasets/upload-url', {
@@ -697,13 +773,15 @@ export const analysisApi = {
     intervalMs = 3000,
     maxAttempts = 400
   ): Promise<AnalysisStatus> => {
+    let delay = intervalMs;
     for (let i = 0; i < maxAttempts; i++) {
       const st = await analysisApi.getStatus(analysisId);
       onTick?.(st);
       if (st.status === 'complete' || st.status === 'failed') {
         return st;
       }
-      await new Promise((r) => setTimeout(r, intervalMs));
+      await new Promise((r) => setTimeout(r, delay));
+      delay = Math.min(Math.round(delay * 1.25), 10000);
     }
     throw new Error('Analysis timed out');
   },
@@ -713,8 +791,18 @@ export const analysisApi = {
     });
     return data;
   },
-  getNormalization: async (id: number): Promise<{ normalization_version: number | null; columns: NormalizationColumnRecord[] }> => {
+  getNormalization: async (
+    id: number,
+  ): Promise<{
+    normalization_version: number | null;
+    columns: NormalizationColumnRecord[];
+    dictionary?: ColumnDictionarySummary;
+  }> => {
     const { data } = await api.get(`/analysis/${id}/normalization`);
+    return data;
+  },
+  applyDictionary: async (id: number): Promise<ApplyDictionaryResponse> => {
+    const { data } = await api.post(`/analysis/${id}/normalization/apply-dictionary`);
     return data;
   },
   saveNormalization: async (
@@ -1205,6 +1293,21 @@ export const analysisApi = {
   },
   getKnowledgeGraph: async (id: number): Promise<{ meta: Record<string, unknown>; knowledge_graph: Record<string, unknown> }> => {
     const { data } = await api.get(`/analysis/${id}/knowledge-graph`);
+    return data;
+  },
+};
+
+export const columnDictionaryApi = {
+  get: async (): Promise<ColumnDictionarySummary> => {
+    const { data } = await api.get('/column-dictionary');
+    return data;
+  },
+  upload: async (file: File): Promise<ColumnDictionaryUploadResponse> => {
+    const form = new FormData();
+    form.append('file', file);
+    const { data } = await api.post('/column-dictionary/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return data;
   },
 };

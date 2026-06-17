@@ -9,6 +9,8 @@ import {
   isNavActive,
   isNavItemActive,
   isReportAstSectionActive,
+  isReportBinderActive,
+  isReportCanvasActive,
   isReportSectionActive,
   type PlatformNavItem,
 } from '@/lib/nav';
@@ -89,8 +91,9 @@ function ReportNavDropdown({
           {item.items.map((child) => {
             const childActive =
               isNavActive(pathname, child.href) ||
-              (child.href === '/report/report-builder' && isReportSectionActive(pathname)) ||
-              (child.href === '/report/report-ast-generator' && isReportAstSectionActive(pathname));
+              (child.href === '/report/report-ast-generator' && isReportAstSectionActive(pathname)) ||
+              (child.href === '/report-builder/binding' && isReportBinderActive(pathname)) ||
+              (child.href === '/report-builder/canvas' && isReportCanvasActive(pathname));
             return (
               <Link
                 key={child.href}

@@ -230,7 +230,7 @@ function ReportBuilderContent({
   return (
     <>
       <PageHeader
-        title={isAstGenerator ? 'Report AST Generator' : 'Report Builder'}
+        title="Template Extraction"
         description={
           isAstGenerator
             ? 'Upload MoSPI PDFs and inspect reverse-engineered template ASTs and blueprints.'

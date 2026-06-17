@@ -8,6 +8,7 @@ from typing import Any
 
 _lock = threading.Lock()
 _cache: dict[tuple[int, int, bool], tuple[float, dict[str, Any]]] = {}
+_enriched_cache: dict[tuple[int, int, bool], tuple[float, dict[str, Any]]] = {}
 TTL_SECONDS = int(os.getenv("ANALYSIS_PAYLOAD_CACHE_TTL", "120"))
 
 
@@ -49,3 +50,35 @@ def invalidate_analysis_cache(analysis_id: int) -> None:
     with _lock:
         for key in [k for k in _cache if k[0] == analysis_id]:
             del _cache[key]
+        for key in [k for k in _enriched_cache if k[0] == analysis_id]:
+            del _enriched_cache[key]
+
+
+def get_cached_enriched_results(
+    analysis_id: int,
+    normalization_version: int | None,
+    *,
+    include_phase3: bool,
+) -> dict[str, Any] | None:
+    key = (analysis_id, int(normalization_version or 0), include_phase3)
+    with _lock:
+        entry = _enriched_cache.get(key)
+        if not entry:
+            return None
+        expires_at, payload = entry
+        if _now() >= expires_at:
+            del _enriched_cache[key]
+            return None
+        return dict(payload)
+
+
+def set_cached_enriched_results(
+    analysis_id: int,
+    normalization_version: int | None,
+    *,
+    include_phase3: bool,
+    payload: dict[str, Any],
+) -> None:
+    key = (analysis_id, int(normalization_version or 0), include_phase3)
+    with _lock:
+        _enriched_cache[key] = (_now() + TTL_SECONDS, dict(payload))

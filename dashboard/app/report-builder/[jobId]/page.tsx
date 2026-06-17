@@ -83,10 +83,24 @@ export default function JobCanvasPage() {
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const pollingRef = useRef<boolean>(false);
 
-  const refresh = async () => {
+  const refresh = async (fullCanvas = false) => {
     try {
-      const d = await reportBuilderApi.getCanvas(jobIdNum);
-      setData(d);
+      if (fullCanvas || !data) {
+        const d = await reportBuilderApi.getCanvas(jobIdNum);
+        setData(d);
+      } else {
+        const job = await reportBuilderApi.getJob(jobIdNum);
+        setData((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: job.status,
+                stage: job.stage ?? prev.stage,
+                progress_pct: job.progress_pct ?? prev.progress_pct,
+              }
+            : prev,
+        );
+      }
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load job');
@@ -97,7 +111,7 @@ export default function JobCanvasPage() {
 
   useEffect(() => {
     if (!Number.isFinite(jobIdNum)) return;
-    refresh();
+    refresh(true);
   }, [jobIdNum]);
 
   useEffect(() => {
@@ -108,12 +122,15 @@ export default function JobCanvasPage() {
       data.status === 'awaiting_verification';
     if (!inProgress) {
       pollingRef.current = false;
+      if (data.status === 'exported' || data.status === 'verified' || data.status === 'failed') {
+        void refresh(true);
+      }
       return;
     }
     if (pollingRef.current) return;
     pollingRef.current = true;
     const interval = setInterval(() => {
-      refresh();
+      void refresh(false);
     }, 2500);
     return () => {
       clearInterval(interval);
@@ -199,7 +216,7 @@ export default function JobCanvasPage() {
     return (
       <>
         <Alert variant="error">{error || 'Job not found'}</Alert>
-        <Button className="mt-4" onClick={() => router.push('/report/report-builder')}>
+        <Button className="mt-4" onClick={() => router.push('/report/report-ast-generator')}>
           ← Back
         </Button>
       </>
@@ -219,7 +236,7 @@ export default function JobCanvasPage() {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => router.push('/report/report-builder')}
+              onClick={() => router.push('/report/report-ast-generator')}
             >
               ← Back
             </Button>

@@ -62,3 +62,19 @@ class RegisterDatasetRequest(BaseModel):
         if ext not in SAFE_DOC_EXT:
             raise ValueError(f"disallowed extension; allowed: {', '.join(sorted(SAFE_DOC_EXT))}")
         return name
+
+
+class ImportFromUrlRequest(BaseModel):
+    url: str = Field(..., max_length=8192)
+    filename: str | None = Field(None, max_length=512)
+
+    @field_validator("filename")
+    @classmethod
+    def optional_basename_safe(cls, v: str | None) -> str | None:
+        if v is None or not str(v).strip():
+            return None
+        name = os.path.basename(str(v).strip())
+        ext = os.path.splitext(name)[1].lower()
+        if ext not in SAFE_DOC_EXT:
+            raise ValueError(f"disallowed extension; allowed: {', '.join(sorted(SAFE_DOC_EXT))}")
+        return name

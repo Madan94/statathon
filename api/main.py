@@ -26,6 +26,7 @@ import uuid
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from auth.csrf import verify_csrf
@@ -58,6 +59,7 @@ from report_builder_api.binding_phase_api import router as binding_phase_router
 from report_builder_api.generate_phase_api import router as generate_phase_router
 from report_builder_api.model_config_api import router as model_config_router
 from dashboard.routes import router as dashboard_router
+from column_dictionary.routes import router as column_dictionary_router
 
 logger = logging.getLogger("bharatstat.api")
 
@@ -75,6 +77,7 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 
 @app.middleware("http")
@@ -176,6 +179,8 @@ async def _startup_db() -> None:
     from database.migrate_dataset_columns import migrate_dataset_columns_schema
     from database.migrate_schema_graph_edges import migrate_schema_graph_edges_schema
     from database.migrate_weight_application import migrate_weight_application_schema
+    from database.migrate_column_dictionary import migrate_column_dictionary_schema
+    from database.migrate_perf_indexes import migrate_perf_indexes
 
     try:
         Base.metadata.create_all(bind=engine)
@@ -184,6 +189,8 @@ async def _startup_db() -> None:
         migrate_dataset_columns_schema()
         migrate_weight_application_schema()
         migrate_schema_graph_edges_schema()
+        migrate_column_dictionary_schema()
+        migrate_perf_indexes()
         logger.info("DB schema initialised (create_all + migrations OK)")
     except Exception as _db_exc:
         # Log clearly but do NOT re-raise — app still starts, DB-dependent
@@ -200,6 +207,16 @@ async def _startup_db() -> None:
             logger.info("Reset %s orphaned analysis job(s) after startup", _orphaned)
     except Exception as _orphan_exc:
         logger.warning("Orphaned analysis reset skipped: %s", _orphan_exc)
+
+    try:
+        from object_storage.object_store import validate_object_storage_config
+
+        validate_object_storage_config()
+        logger.info("Object storage configuration validated (S3 + SSE-KMS)")
+    except Exception as _storage_exc:
+        logger.error("Object storage misconfigured: %s", _storage_exc)
+        if os.getenv("APP_ENV", "development").lower() in ("production", "prod"):
+            raise
 
     # Seed dev test officer (development only)
     if os.getenv("APP_ENV", "development").lower() in ("development", "dev", "local"):
@@ -248,6 +265,7 @@ app.include_router(binding_phase_router)
 app.include_router(generate_phase_router)
 app.include_router(model_config_router)
 app.include_router(dashboard_router)
+app.include_router(column_dictionary_router)
 
 
 @app.get("/health")

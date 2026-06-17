@@ -60,42 +60,47 @@ def google_auth_url():
 
 
 @router.get("/google/callback")
-def google_callback(code: str, state: str, request: Request, db: Session = Depends(get_db)):
+async def google_callback(code: str, state: str, request: Request, db: Session = Depends(get_db)):
     if not _google_configured():
         raise HTTPException(status_code=503, detail="Google OAuth not configured")
     if state not in _pending_states:
         raise HTTPException(status_code=400, detail="Invalid OAuth state")
     _pending_states.pop(state, None)
 
-    redirect_uri = os.getenv("GOOGLE_OAUTH_REDIRECT_URI", "http://localhost:8000/auth/oauth/google/callback")
-    token_url = "https://oauth2.googleapis.com/token"
-    with httpx.Client(timeout=15.0) as client:
-        tok = client.post(
-            token_url,
-            data={
-                "code": code,
-                "client_id": os.getenv("GOOGLE_OAUTH_CLIENT_ID"),
-                "client_secret": os.getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
-                "redirect_uri": redirect_uri,
-                "grant_type": "authorization_code",
-            },
-        )
-        if tok.status_code != 200:
-            raise HTTPException(status_code=400, detail="Token exchange failed")
-        access = tok.json().get("access_token")
-        if not access:
-            raise HTTPException(status_code=400, detail="No access_token from Google")
-        prof = client.get(
-            "https://www.googleapis.com/oauth2/v2/userinfo",
-            headers={"Authorization": f"Bearer {access}"},
-        )
-        if prof.status_code != 200:
-            raise HTTPException(status_code=400, detail="Failed to fetch user profile")
-        email = prof.json().get("email")
-        if not email:
-            raise HTTPException(status_code=400, detail="Google account has no email")
+    from starlette.concurrency import run_in_threadpool
 
-    profile = prof.json()
+    redirect_uri = os.getenv("GOOGLE_OAUTH_REDIRECT_URI", "http://localhost:8000/auth/oauth/google/callback")
+
+    def _exchange() -> tuple[str, dict]:
+        token_url = "https://oauth2.googleapis.com/token"
+        with httpx.Client(timeout=15.0) as client:
+            tok = client.post(
+                token_url,
+                data={
+                    "code": code,
+                    "client_id": os.getenv("GOOGLE_OAUTH_CLIENT_ID"),
+                    "client_secret": os.getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
+                    "redirect_uri": redirect_uri,
+                    "grant_type": "authorization_code",
+                },
+            )
+            if tok.status_code != 200:
+                raise HTTPException(status_code=400, detail="Token exchange failed")
+            access = tok.json().get("access_token")
+            if not access:
+                raise HTTPException(status_code=400, detail="No access_token from Google")
+            prof = client.get(
+                "https://www.googleapis.com/oauth2/v2/userinfo",
+                headers={"Authorization": f"Bearer {access}"},
+            )
+            if prof.status_code != 200:
+                raise HTTPException(status_code=400, detail="Failed to fetch user profile")
+            email = prof.json().get("email")
+            if not email:
+                raise HTTPException(status_code=400, detail="Google account has no email")
+            return email, prof.json()
+
+    email, profile = await run_in_threadpool(_exchange)
     name = profile.get("name") or email.split("@")[0]
     user = db.query(User).filter(User.email == email).first()
     if not user:

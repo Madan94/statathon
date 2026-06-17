@@ -533,7 +533,7 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
             </Button>
             <Button
               disabled={!review.can_proceed_to_report}
-              onClick={() => router.push(`/report-builder?analysisId=${analysisId}`)}
+              onClick={() => router.push(`/report-builder/binding?analysisId=${analysisId}`)}
               className="gap-2"
             >
               <FileText className="h-4 w-4" />

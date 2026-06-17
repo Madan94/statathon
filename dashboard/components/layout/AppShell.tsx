@@ -9,6 +9,7 @@ import { cn } from '@/lib/cn';
 import Link from 'next/link';
 import { X } from 'lucide-react';
 import SessionGuard from '@/components/auth/SessionGuard';
+import { AuthProvider } from '@/components/auth/AuthProvider';
 import PlatformNavLinks from '@/components/layout/PlatformNavLinks';
 
 const PUBLIC_PATHS = ['/', '/login', '/signup'];
@@ -27,7 +28,8 @@ export default function AppShell({ children, breadcrumbs }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
+    <AuthProvider>
+      <div className="min-h-screen bg-[#f8fafc]">
       <Sidebar />
       {mobileOpen && (
         <>
@@ -62,6 +64,7 @@ export default function AppShell({ children, breadcrumbs }: AppShellProps) {
           <SessionGuard>{children}</SessionGuard>
         </main>
       </div>
-    </div>
+      </div>
+    </AuthProvider>
   );
 }

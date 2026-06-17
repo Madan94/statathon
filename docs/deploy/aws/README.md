@@ -22,6 +22,9 @@ This folder contains the production deployment assets for the console-first AWS 
 - [06-colpali-sglang-remote.md](./06-colpali-sglang-remote.md)  
   ColPali + SGLang on EC2 GPU; local Windows API via HTTP endpoints.
 
+- [07-s3-datasets-kms.md](./07-s3-datasets-kms.md)  
+  S3 raw dataset storage with SSE-KMS, bucket policy, IAM, and migration.
+
 ## Templates
 
 - `deploy/ecs/taskdef-api.template.json`

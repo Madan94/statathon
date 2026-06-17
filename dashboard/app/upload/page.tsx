@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { datasetsApi, reportBuilderApi, ReadyAnalysis } from '@/lib/api';
+import { datasetsApi, formatApiError, reportBuilderApi, ReadyAnalysis } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import PageHeader from '@/components/layout/PageHeader';
 import WorkflowStepper from '@/components/layout/WorkflowStepper';
@@ -27,21 +27,12 @@ function inferNameFromUrl(input: string): string {
   }
 }
 
-function inferNameFromType(contentType: string | null): string {
-  const lower = (contentType || '').toLowerCase();
-  if (lower.includes('text/csv')) return `dataset-${Date.now()}.csv`;
-  if (lower.includes('application/vnd.ms-excel')) return `dataset-${Date.now()}.xls`;
-  if (lower.includes('spreadsheetml.sheet')) return `dataset-${Date.now()}.xlsx`;
-  return '';
-}
-
 export default function UploadPage() {
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const [importingFromUrl, setImportingFromUrl] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
-  const [useCloud, setUseCloud] = useState(false);
   const [presignedUrl, setPresignedUrl] = useState('');
   const [remoteFilename, setRemoteFilename] = useState('');
   const [analyses, setAnalyses] = useState<ReadyAnalysis[]>([]);
@@ -58,10 +49,7 @@ export default function UploadPage() {
         setAnalyses(rows);
       } catch (err: unknown) {
         if (!mounted) return;
-        const ax = err as { response?: { data?: { detail?: string } }; message?: string };
-        setHistoryError(
-          ax.response?.data?.detail || ax.message || 'Failed to load analysis history'
-        );
+        setHistoryError(formatApiError(err, 'Failed to load analysis history'));
       } finally {
         if (mounted) setLoadingHistory(false);
       }
@@ -84,22 +72,19 @@ export default function UploadPage() {
       setUploading(true);
       setError(null);
       try {
-        const dataset = useCloud
-          ? await datasetsApi.presignedUpload(file)
-          : await datasetsApi.upload(file);
+        const dataset = await datasetsApi.uploadSmart(file);
         const datasetId = dataset.id ?? dataset.dataset_id;
         toast.success(`${file.name} uploaded successfully`);
         router.push(`/datasets/${datasetId}`);
       } catch (err: unknown) {
-        const ax = err as { response?: { data?: { detail?: string } }; message?: string };
-        const msg = ax.response?.data?.detail || ax.message || 'Upload failed';
+        const msg = formatApiError(err, 'Upload failed');
         setError(msg);
         toast.error(msg);
       } finally {
         setUploading(false);
       }
     },
-    [router, useCloud]
+    [router]
   );
 
   const handleImportFromPresignedUrl = useCallback(async () => {
@@ -123,39 +108,26 @@ export default function UploadPage() {
     setImportingFromUrl(true);
     setError(null);
     try {
-      const res = await fetch(url, { method: 'GET' });
-      if (!res.ok) {
-        throw new Error(`Could not fetch file from URL (${res.status} ${res.statusText})`);
-      }
-
-      const blob = await res.blob();
-      const guessed =
-        remoteFilename.trim() || inferNameFromUrl(url) || inferNameFromType(res.headers.get('content-type'));
-      const filename = guessed || `dataset-${Date.now()}.csv`;
-
-      if (!isSupportedFilename(filename)) {
-        throw new Error('URL must point to .csv, .xls, or .xlsx file');
-      }
-
-      const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
-      const dataset = useCloud
-        ? await datasetsApi.presignedUpload(file)
-        : await datasetsApi.upload(file);
+      const dataset = await datasetsApi.importFromUrl(url, {
+        filename: remoteFilename.trim() || undefined,
+      });
       const datasetId = dataset.id ?? dataset.dataset_id;
-      toast.success(`${filename} imported successfully`);
+      const name =
+        dataset.filename ??
+        (remoteFilename.trim() || inferNameFromUrl(url) || 'dataset');
+      toast.success(`${name} imported successfully`);
       router.push(`/datasets/${datasetId}`);
     } catch (err: unknown) {
-      const ax = err as { response?: { data?: { detail?: string } }; message?: string };
-      const msg =
-        ax.response?.data?.detail ||
-        ax.message ||
-        'Failed to import from URL. Ensure the URL is valid and accessible.';
+      const msg = formatApiError(
+        err,
+        'Failed to import from URL. Ensure the URL is valid and accessible.',
+      );
       setError(msg);
       toast.error(msg);
     } finally {
       setImportingFromUrl(false);
     }
-  }, [presignedUrl, remoteFilename, useCloud, router]);
+  }, [presignedUrl, remoteFilename, router]);
 
   return (
     <div>
@@ -180,7 +152,7 @@ export default function UploadPage() {
             <div>
               <h3 className="font-semibold text-text">Import from presigned URL</h3>
               <p className="text-sm text-text-muted">
-                Paste a temporary file URL to import CSV/Excel directly.
+                Paste a presigned S3 download URL.
               </p>
             </div>
           </div>
@@ -190,13 +162,6 @@ export default function UploadPage() {
               placeholder="Paste your URL here"
               value={presignedUrl}
               onChange={(e) => setPresignedUrl(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/40"
-            />
-            <input
-              type="text"
-              placeholder="Name your file"
-              value={remoteFilename}
-              onChange={(e) => setRemoteFilename(e.target.value)}
               className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/40"
             />
             <Button

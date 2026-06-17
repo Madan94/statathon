@@ -1,7 +1,7 @@
 import os
 import secrets
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
 from auth.cookies import clear_session_cookies, set_session_cookies
@@ -22,6 +22,7 @@ from auth.schemas import (
     SignupStartRequest,
     UserMeResponse,
 )
+from auth.email_tasks import deliver_otp_email_task
 from auth.services import get_user_by_id
 from auth.token_service import (
     access_max_age_seconds,
@@ -69,12 +70,17 @@ def _issue_session(response: Response, db, user, request: Request) -> None:
 
 
 @router.post("/signup/start", response_model=ChallengeResponse)
-def signup_start(body: SignupStartRequest, request: Request, db: Session = Depends(get_db)):
+def signup_start(
+    body: SignupStartRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     email = body.email.lower()
     if not check_rate_limit(_client_key(request, email)):
         raise HTTPException(status_code=429, detail="Too many requests. Try again later.")
     try:
-        challenge_id, expires_in, mail_meta = start_signup(
+        challenge_id, expires_in, otp = start_signup(
             db,
             body.full_name,
             body.officer_role,
@@ -91,10 +97,12 @@ def signup_start(body: SignupStartRequest, request: Request, db: Session = Depen
             status_code=500,
             detail="Signup failed. Ensure the database auth migration completed (restart API).",
         ) from e
+    background_tasks.add_task(deliver_otp_email_task, email, otp, "signup_verify")
+    dev_logged = os.getenv("APP_ENV", "development").lower() == "development"
     return ChallengeResponse(
         challenge_id=challenge_id,
         expires_in=expires_in,
-        dev_otp_logged=mail_meta.get("dev_otp_logged"),
+        dev_otp_logged=dev_logged,
     )
 
 
@@ -114,30 +122,46 @@ def signup_verify_otp(
 
 
 @router.post("/signup/resend-otp", response_model=ChallengeResponse)
-def signup_resend(body: ResendOtpRequest, request: Request, db: Session = Depends(get_db)):
+def signup_resend(
+    body: ResendOtpRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     if not check_rate_limit(_client_key(request)):
         raise HTTPException(status_code=429, detail="Too many requests. Try again later.")
     try:
-        expires_in, mail_meta = resend_otp(db, body.challenge_id)
+        expires_in, otp, purpose = resend_otp(db, body.challenge_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-    ch_id = body.challenge_id
+    from database.models import OtpChallenge
+
+    ch = db.query(OtpChallenge).filter(OtpChallenge.id == body.challenge_id).first()
+    if ch:
+        background_tasks.add_task(deliver_otp_email_task, ch.email, otp, purpose)
     return ChallengeResponse(
-        challenge_id=ch_id,
+        challenge_id=body.challenge_id,
         expires_in=expires_in,
-        dev_otp_logged=mail_meta.get("dev_otp_logged"),
+        dev_otp_logged=os.getenv("APP_ENV", "development").lower() == "development",
     )
 
 
 @router.post("/login/start", response_model=ChallengeResponse)
-def login_start(body: LoginStartRequest, request: Request, db: Session = Depends(get_db)):
+def login_start(
+    body: LoginStartRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     email = body.email.lower()
     if not check_rate_limit(_client_key(request, email)):
         raise HTTPException(status_code=429, detail="Too many requests. Try again later.")
 
-    challenge_id, expires_in, mail_meta = start_login(db, email, body.password)
-    if not challenge_id:
+    challenge_id, expires_in, otp = start_login(db, email, body.password)
+    if not challenge_id or not otp:
         raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    background_tasks.add_task(deliver_otp_email_task, email, otp, "login_verify")
 
     dev_otp = None
     try:
@@ -151,7 +175,7 @@ def login_start(body: LoginStartRequest, request: Request, db: Session = Depends
     return ChallengeResponse(
         challenge_id=challenge_id,
         expires_in=expires_in or 600,
-        dev_otp_logged=mail_meta.get("dev_otp_logged") if mail_meta else None,
+        dev_otp_logged=os.getenv("APP_ENV", "development").lower() == "development",
         dev_otp=dev_otp,
     )
 
@@ -172,17 +196,27 @@ def login_verify_otp(
 
 
 @router.post("/login/resend-otp", response_model=ChallengeResponse)
-def login_resend(body: ResendOtpRequest, request: Request, db: Session = Depends(get_db)):
+def login_resend(
+    body: ResendOtpRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     if not check_rate_limit(_client_key(request)):
         raise HTTPException(status_code=429, detail="Too many requests. Try again later.")
     try:
-        expires_in, mail_meta = resend_otp(db, body.challenge_id)
+        expires_in, otp, purpose = resend_otp(db, body.challenge_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+    from database.models import OtpChallenge
+
+    ch = db.query(OtpChallenge).filter(OtpChallenge.id == body.challenge_id).first()
+    if ch:
+        background_tasks.add_task(deliver_otp_email_task, ch.email, otp, purpose)
     return ChallengeResponse(
         challenge_id=body.challenge_id,
         expires_in=expires_in,
-        dev_otp_logged=mail_meta.get("dev_otp_logged"),
+        dev_otp_logged=os.getenv("APP_ENV", "development").lower() == "development",
     )
 
 
