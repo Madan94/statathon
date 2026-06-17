@@ -141,7 +141,12 @@ def _render_bar_vertical(chart: dict[str, Any], theme: Theme) -> str:
         f'stroke="#999" stroke-width="1"/>'
     )
     parts += _gridlines_v(vmax, unit, theme, base_y=base_y)
-    show_labels = n <= 24
+    # Show value labels only when not too crowded
+    show_value_labels = n <= 12
+    # Show category labels for fewer bars; truncate long names
+    show_cat_labels = n <= 16
+    max_cat_len = max(5, int(60 / n)) if n > 0 else 10  # Adaptive truncation
+
     for i, p in enumerate(points):
         v = p.get("y") or 0
         color = _color_for(p, 0, theme)
@@ -152,15 +157,30 @@ def _render_bar_vertical(chart: dict[str, Any], theme: Theme) -> str:
             f'<rect x="{bx:.1f}" y="{by:.1f}" width="{bar_w:.1f}" height="{bh:.1f}" '
             f'fill="{color}" rx="2"/>'
         )
-        if show_labels:
+        if show_value_labels:
             parts.append(
                 f'<text x="{bx + bar_w / 2:.1f}" y="{by - 5:.1f}" text-anchor="middle" '
-                f'font-size="12" fill="{theme.ink}">{format_value(v, unit=unit)}</text>'
+                f'font-size="11" fill="{theme.ink}">{format_value(v, unit=unit)}</text>'
             )
-            parts.append(
-                f'<text x="{bx + bar_w / 2:.1f}" y="{base_y + 16:.1f}" text-anchor="middle" '
-                f'font-size="12" fill="{theme.ink}">{esc(p.get("x"))}</text>'
-            )
+        if show_cat_labels:
+            cat_text = esc(p.get("x") or "")
+            # Truncate long category names to avoid overlap
+            if len(cat_text) > max_cat_len:
+                cat_text = cat_text[:max_cat_len - 1] + "…"
+            # Rotate labels when there are many bars
+            if n > 8:
+                # Angled labels for better fit
+                parts.append(
+                    f'<text x="{bx + bar_w / 2:.1f}" y="{base_y + 14:.1f}" '
+                    f'text-anchor="end" font-size="10" fill="{theme.ink}" '
+                    f'transform="rotate(-45 {bx + bar_w / 2:.1f} {base_y + 14:.1f})">'
+                    f'{cat_text}</text>'
+                )
+            else:
+                parts.append(
+                    f'<text x="{bx + bar_w / 2:.1f}" y="{base_y + 16:.1f}" text-anchor="middle" '
+                    f'font-size="12" fill="{theme.ink}">{cat_text}</text>'
+                )
     parts.append("</svg>")
     return "".join(parts)
 
@@ -413,6 +433,9 @@ def _render_pie(chart: dict[str, Any], theme: Theme, *, donut: bool = False) -> 
 
     parts = [_svg_open(_W, _H, title=chart.get("title"), chart_type=ctype)]
     angle = -math.pi / 2  # start at top
+
+    # First pass: render slices
+    slice_info: list[tuple[float, float, float, float]] = []  # (amid, frac, lx, ly)
     for i, p in enumerate(points):
         v = p.get("y") or 0
         frac = v / total
@@ -432,27 +455,41 @@ def _render_pie(chart: dict[str, Any], theme: Theme, *, donut: bool = False) -> 
             d = (f"M{cx:.1f},{cy:.1f} L{x0:.1f},{y0:.1f} "
                  f"A{r:.1f},{r:.1f} 0 {large} 1 {x1:.1f},{y1:.1f} Z")
         parts.append(f'<path d="{d}" fill="{color}" stroke="#fff" stroke-width="1"/>')
-        # Slice label at the mid-angle.
+        # Store label info for collision detection
         amid = (a0 + a1) / 2
         lr = r * (0.78 if donut else 0.62)
         lx, ly = cx + lr * math.cos(amid), cy + lr * math.sin(amid)
-        if frac >= 0.05:
+        slice_info.append((amid, frac, lx, ly))
+        angle = a1
+
+    # Second pass: render labels with collision avoidance
+    # Only show labels for slices >= 10% to avoid crowding; percentages also appear in legend
+    min_label_frac = 0.10
+    for i, (amid, frac, lx, ly) in enumerate(slice_info):
+        if frac >= min_label_frac:
+            # Use white text with black outline for visibility on any color
+            pct_text = format_value(round(frac * 100, 1), unit="percent")
             parts.append(
                 f'<text x="{lx:.1f}" y="{ly:.1f}" text-anchor="middle" '
-                f'font-size="11" fill="#fff">{format_value(round(frac * 100, 1), unit="percent")}</text>'
+                f'font-size="11" fill="#fff" stroke="#000" stroke-width="0.3">'
+                f'{pct_text}</text>'
             )
-        angle = a1
-    # Legend on the right.
+
+    # Legend on the right — includes percentages for all slices
     lx = 360
-    ly = int(cy - len(points) * 9)
+    ly = int(cy - len(points) * 11)  # Slightly more spacing
     for i, p in enumerate(points):
+        v = p.get("y") or 0
+        frac = v / total
         color = _color_for(p, i, theme)
         parts.append(f'<rect x="{lx}" y="{ly - 9}" width="11" height="11" fill="{color}" rx="2"/>')
+        label_text = esc(p.get("x"))
+        pct_text = format_value(round(frac * 100, 1), unit="percent")
         parts.append(
             f'<text x="{lx + 16}" y="{ly}" font-size="11" fill="{theme.ink}">'
-            f'{esc(p.get("x"))}</text>'
+            f'{label_text} ({pct_text})</text>'
         )
-        ly += 20
+        ly += 22  # Increased spacing in legend
     parts.append("</svg>")
     return "".join(parts)
 

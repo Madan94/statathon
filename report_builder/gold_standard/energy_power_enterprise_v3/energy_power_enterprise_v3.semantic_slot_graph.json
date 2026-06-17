@@ -108,30 +108,20 @@
       }
     },
     {
-      "slotId": "slot_cap_mix_narrative",
+      "slotId": "slot_cap_regional_narrative",
       "slotType": "narrative",
-      "questionRef": "q_cap_mix",
-      "componentRef": "q_cap_mix_narrative",
-      "sectionRef": "sec_capacity_mix",
+      "questionRef": "q_cap_regional",
+      "componentRef": "q_cap_regional_narrative",
+      "sectionRef": "sec_capacity_regional",
       "chapterRef": "ch_total_capacity",
       "topicRef": "topic_capacity",
       "requiredEntities": [
-        "ent_thermal",
-        "ent_hydro",
-        "ent_nuclear",
-        "ent_solar",
-        "ent_wind",
-        "ent_biomass",
+        "ent_region",
         "ent_installed"
       ],
-      "generationMethod": "SHARE",
+      "generationMethod": "DIRECT",
       "lineageChain": [
-        "ent_thermal → Thermal column",
-        "ent_hydro → Hydro column",
-        "ent_nuclear → Nuclear column",
-        "ent_solar → Solar column",
-        "ent_wind → Wind column",
-        "ent_biomass → Biomass column",
+        "ent_region → Region column",
         "ent_installed → Installed Capacity column"
       ],
       "outputContract": {
@@ -141,86 +131,66 @@
       }
     },
     {
-      "slotId": "slot_cap_mix_chart",
-      "slotType": "chart",
-      "questionRef": "q_cap_mix",
-      "componentRef": "q_cap_mix_chart",
-      "sectionRef": "sec_capacity_mix",
+      "slotId": "slot_cap_regional_table",
+      "slotType": "table",
+      "questionRef": "q_cap_regional",
+      "componentRef": "q_cap_regional_table",
+      "sectionRef": "sec_capacity_regional",
       "chapterRef": "ch_total_capacity",
       "topicRef": "topic_capacity",
       "requiredEntities": [
-        "ent_thermal",
-        "ent_hydro",
-        "ent_nuclear",
-        "ent_solar",
-        "ent_wind",
-        "ent_biomass",
+        "ent_region",
         "ent_installed"
       ],
-      "generationMethod": "SHARE",
+      "generationMethod": "DIRECT",
       "lineageChain": [
-        "ent_thermal → Thermal column",
-        "ent_hydro → Hydro column",
-        "ent_nuclear → Nuclear column",
-        "ent_solar → Solar column",
-        "ent_wind → Wind column",
-        "ent_biomass → Biomass column",
+        "ent_region → Region column",
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_installed"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_installed",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_cap_regional_chart",
+      "slotType": "chart",
+      "questionRef": "q_cap_regional",
+      "componentRef": "q_cap_regional_chart",
+      "sectionRef": "sec_capacity_regional",
+      "chapterRef": "ch_total_capacity",
+      "topicRef": "topic_capacity",
+      "requiredEntities": [
+        "ent_region",
+        "ent_installed"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
         "ent_installed → Installed Capacity column"
       ],
       "outputContract": {
         "type": "visualization",
-        "chartType": "donut",
-        "title": "National Capacity Mix by Source"
+        "chartType": "pie",
+        "title": "Total Capacity by Region (MW)"
       },
-      "chartTitle": "National Capacity Mix by Source",
+      "chartTitle": "Total Capacity by Region (MW)",
       "chartSpec": {
-        "slices": [
-          "ent_thermal",
-          "ent_hydro",
-          "ent_nuclear",
-          "ent_solar",
-          "ent_wind",
-          "ent_biomass"
-        ]
-      }
-    },
-    {
-      "slotId": "slot_cap_mix_metric",
-      "slotType": "metric",
-      "questionRef": "q_cap_mix",
-      "componentRef": "q_cap_mix_metric",
-      "sectionRef": "sec_capacity_mix",
-      "chapterRef": "ch_total_capacity",
-      "topicRef": "topic_capacity",
-      "requiredEntities": [
-        "ent_thermal",
-        "ent_hydro",
-        "ent_nuclear",
-        "ent_solar",
-        "ent_wind",
-        "ent_biomass",
-        "ent_installed"
-      ],
-      "generationMethod": "SHARE",
-      "lineageChain": [
-        "ent_thermal → Thermal column",
-        "ent_hydro → Hydro column",
-        "ent_nuclear → Nuclear column",
-        "ent_solar → Solar column",
-        "ent_wind → Wind column",
-        "ent_biomass → Biomass column",
-        "ent_installed → Installed Capacity column"
-      ],
-      "outputContract": {
-        "type": "computed_metric",
-        "displayFormat": "percentage"
-      },
-      "formulaRef": "f_thermal_share",
-      "formulaSpec": {
-        "formulaType": "SHARE",
-        "numerator": "ent_thermal",
-        "denominator": "ent_installed",
-        "grain": "national"
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_installed"
+        ],
+        "topN": 6
       }
     },
     {
@@ -875,29 +845,21 @@
       }
     },
     {
-      "slotId": "slot_ren_share_narrative",
+      "slotId": "slot_ren_regional_narrative",
       "slotType": "narrative",
-      "questionRef": "q_ren_share",
-      "componentRef": "q_ren_share_narrative",
-      "sectionRef": "sec_ren_share",
+      "questionRef": "q_ren_regional",
+      "componentRef": "q_ren_regional_narrative",
+      "sectionRef": "sec_ren_regional",
       "chapterRef": "ch_ren_share",
       "topicRef": "topic_renewable",
       "requiredEntities": [
-        "ent_solar",
-        "ent_wind",
-        "ent_biomass",
-        "ent_hydro",
-        "ent_renewable",
-        "ent_installed"
+        "ent_region",
+        "ent_renewable"
       ],
-      "generationMethod": "SHARE",
+      "generationMethod": "DIRECT",
       "lineageChain": [
-        "ent_solar → Solar column",
-        "ent_wind → Wind column",
-        "ent_biomass → Biomass column",
-        "ent_hydro → Hydro column",
-        "ent_renewable → Renewable column",
-        "ent_installed → Installed Capacity column"
+        "ent_region → Region column",
+        "ent_renewable → Renewable column"
       ],
       "outputContract": {
         "type": "prose",
@@ -906,80 +868,66 @@
       }
     },
     {
-      "slotId": "slot_ren_share_chart",
-      "slotType": "chart",
-      "questionRef": "q_ren_share",
-      "componentRef": "q_ren_share_chart",
-      "sectionRef": "sec_ren_share",
+      "slotId": "slot_ren_regional_table",
+      "slotType": "table",
+      "questionRef": "q_ren_regional",
+      "componentRef": "q_ren_regional_table",
+      "sectionRef": "sec_ren_regional",
       "chapterRef": "ch_ren_share",
       "topicRef": "topic_renewable",
       "requiredEntities": [
-        "ent_solar",
-        "ent_wind",
-        "ent_biomass",
-        "ent_hydro",
-        "ent_renewable",
-        "ent_installed"
+        "ent_region",
+        "ent_renewable"
       ],
-      "generationMethod": "SHARE",
+      "generationMethod": "DIRECT",
       "lineageChain": [
-        "ent_solar → Solar column",
-        "ent_wind → Wind column",
-        "ent_biomass → Biomass column",
-        "ent_hydro → Hydro column",
-        "ent_renewable → Renewable column",
-        "ent_installed → Installed Capacity column"
+        "ent_region → Region column",
+        "ent_renewable → Renewable column"
       ],
       "outputContract": {
-        "type": "visualization",
-        "chartType": "pie",
-        "title": "Renewable Capacity Composition"
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 6
       },
-      "chartTitle": "Renewable Capacity Composition",
-      "chartSpec": {
-        "slices": [
-          "ent_solar",
-          "ent_wind",
-          "ent_biomass",
-          "ent_hydro"
-        ]
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_renewable"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_renewable",
+        "sortOrder": "descending"
       }
     },
     {
-      "slotId": "slot_ren_share_metric",
-      "slotType": "metric",
-      "questionRef": "q_ren_share",
-      "componentRef": "q_ren_share_metric",
-      "sectionRef": "sec_ren_share",
+      "slotId": "slot_ren_regional_chart",
+      "slotType": "chart",
+      "questionRef": "q_ren_regional",
+      "componentRef": "q_ren_regional_chart",
+      "sectionRef": "sec_ren_regional",
       "chapterRef": "ch_ren_share",
       "topicRef": "topic_renewable",
       "requiredEntities": [
-        "ent_solar",
-        "ent_wind",
-        "ent_biomass",
-        "ent_hydro",
-        "ent_renewable",
-        "ent_installed"
+        "ent_region",
+        "ent_renewable"
       ],
-      "generationMethod": "SHARE",
+      "generationMethod": "DIRECT",
       "lineageChain": [
-        "ent_solar → Solar column",
-        "ent_wind → Wind column",
-        "ent_biomass → Biomass column",
-        "ent_hydro → Hydro column",
-        "ent_renewable → Renewable column",
-        "ent_installed → Installed Capacity column"
+        "ent_region → Region column",
+        "ent_renewable → Renewable column"
       ],
       "outputContract": {
-        "type": "computed_metric",
-        "displayFormat": "percentage"
+        "type": "visualization",
+        "chartType": "donut",
+        "title": "Renewable Endowment by Region (MW)"
       },
-      "formulaRef": "f_renewable_share",
-      "formulaSpec": {
-        "formulaType": "SHARE",
-        "numerator": "ent_renewable",
-        "denominator": "ent_installed",
-        "grain": "national"
+      "chartTitle": "Renewable Endowment by Region (MW)",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_renewable"
+        ],
+        "topN": 6
       }
     },
     {
@@ -2045,10 +1993,10 @@
       "reason": "Narrative cites the visual/metric"
     },
     {
-      "slot": "slot_cap_mix_narrative",
+      "slot": "slot_cap_regional_narrative",
       "dependsOn": [
-        "slot_cap_mix_chart",
-        "slot_cap_mix_metric"
+        "slot_cap_regional_table",
+        "slot_cap_regional_chart"
       ],
       "reason": "Narrative cites the visual/metric"
     },
@@ -2109,10 +2057,10 @@
       "reason": "Narrative cites the visual/metric"
     },
     {
-      "slot": "slot_ren_share_narrative",
+      "slot": "slot_ren_regional_narrative",
       "dependsOn": [
-        "slot_ren_share_chart",
-        "slot_ren_share_metric"
+        "slot_ren_regional_table",
+        "slot_ren_regional_chart"
       ],
       "reason": "Narrative cites the visual/metric"
     },
@@ -2203,9 +2151,9 @@
     "slot_cap_rank_table",
     "slot_cap_rank_chart",
     "slot_cap_rank_narrative",
-    "slot_cap_mix_chart",
-    "slot_cap_mix_metric",
-    "slot_cap_mix_narrative",
+    "slot_cap_regional_table",
+    "slot_cap_regional_chart",
+    "slot_cap_regional_narrative",
     "slot_thermal_rank_table",
     "slot_thermal_rank_chart",
     "slot_thermal_rank_narrative",
@@ -2227,9 +2175,9 @@
     "slot_wind_rank_table",
     "slot_wind_rank_chart",
     "slot_wind_rank_narrative",
-    "slot_ren_share_chart",
-    "slot_ren_share_metric",
-    "slot_ren_share_narrative",
+    "slot_ren_regional_table",
+    "slot_ren_regional_chart",
+    "slot_ren_regional_narrative",
     "slot_biomass_rank_table",
     "slot_biomass_rank_chart",
     "slot_biomass_rank_narrative",

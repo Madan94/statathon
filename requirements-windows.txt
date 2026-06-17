@@ -119,3 +119,11 @@ prophet>=1.1.5                   # Time series forecasting (agents/analytics_age
 statsmodels>=0.14.0              # ARIMA models (agents/analytics_agent)
 pytesseract>=0.3.10              # OCR fallback (services/layoutlm)
 botocore>=1.35.0,<2              # AWS S3 (api/dataset_api) — pulled by boto3 but pinned
+
+# ── Parity with requirements.txt (were Linux-only here by omission) ───────────
+requests>=2.32.0,<3              # HTTP client — hard import in llm_router, extraction_pipeline, gpu_orchestrator (24 files)
+duckdb>=1.0.0,<2                 # SQL analytics backend (analytics_engine/duckdb_adapter, kernel)
+pyarrow>=17.0.0,<22              # Arrow kernel fast-recompute (report_builder/kernel)
+matplotlib>=3.9.0,<4             # PNG charts in legacy PDF exporter + ast_core renderer (lazy, Agg backend)
+rdflib>=7.0.0,<8                 # RDF/Turtle KG export (report_builder/knowledge_graph)
+diptest>=0.6.0,<1                # Hartigan dip test for multimodality (analytics/distribution)

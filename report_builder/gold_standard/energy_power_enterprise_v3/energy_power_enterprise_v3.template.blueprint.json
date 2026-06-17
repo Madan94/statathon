@@ -537,58 +537,28 @@
               ]
             },
             {
-              "sectionId": "sec_capacity_mix",
-              "title": "National Capacity Source Mix",
+              "sectionId": "sec_capacity_regional",
+              "title": "Regional Capacity Distribution",
               "order": 2,
-              "sectionArchetype": "composition_analysis",
+              "sectionArchetype": "ranking_distribution",
               "pagePlan": {
                 "estimatedPages": 1.2
               },
               "questions": [
                 {
-                  "questionId": "q_cap_mix",
-                  "intent": "Decompose installed capacity into thermal, hydro, nuclear and renewable sources.",
-                  "questionText": "How is national installed capacity distributed across thermal, hydro, nuclear, solar, wind and biomass?",
-                  "questionType": "composition",
+                  "questionId": "q_cap_regional",
+                  "intent": "Compare installed capacity across the six regions.",
+                  "questionText": "Aggregate installed capacity by region to show regional endowment.",
+                  "questionType": "ranking",
                   "priority": "P1_must",
-                  "generationMethod": "SHARE",
+                  "generationMethod": "DIRECT",
                   "estimatedPageWeight": 1.2,
                   "requiredEntities": [
                     {
-                      "entityId": "ent_thermal",
-                      "role": "measure",
-                      "columnExpr": "Thermal",
-                      "unit": "MW"
-                    },
-                    {
-                      "entityId": "ent_hydro",
-                      "role": "measure",
-                      "columnExpr": "Hydro",
-                      "unit": "MW"
-                    },
-                    {
-                      "entityId": "ent_nuclear",
-                      "role": "measure",
-                      "columnExpr": "Nuclear",
-                      "unit": "MW"
-                    },
-                    {
-                      "entityId": "ent_solar",
-                      "role": "measure",
-                      "columnExpr": "Solar",
-                      "unit": "MW"
-                    },
-                    {
-                      "entityId": "ent_wind",
-                      "role": "measure",
-                      "columnExpr": "Wind",
-                      "unit": "MW"
-                    },
-                    {
-                      "entityId": "ent_biomass",
-                      "role": "measure",
-                      "columnExpr": "Biomass",
-                      "unit": "MW"
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
                     },
                     {
                       "entityId": "ent_installed",
@@ -598,36 +568,29 @@
                     }
                   ],
                   "analyticsSpec": {
-                    "operation": "composition",
-                    "grain": "national",
+                    "operation": "rank",
+                    "grain": "ent_region",
+                    "sortBy": "ent_installed",
+                    "sortOrder": "descending",
+                    "topN": 6,
                     "aggregation": "sum",
-                    "parts": [
-                      "ent_thermal",
-                      "ent_hydro",
-                      "ent_nuclear",
-                      "ent_solar",
-                      "ent_wind",
-                      "ent_biomass"
-                    ],
-                    "whole": "ent_installed",
-                    "formula": {
-                      "formulaType": "SHARE",
-                      "formulaRef": "f_thermal_share",
-                      "numerator": "ent_thermal",
-                      "denominator": "ent_installed",
-                      "grain": "national"
-                    }
+                    "filters": [
+                      {
+                        "entity": "ent_installed",
+                        "condition": "not_null"
+                      }
+                    ]
                   },
-                  "officerIntent": "Decompose installed capacity into thermal, hydro, nuclear and renewable sources.",
+                  "officerIntent": "Compare installed capacity across the six regions.",
                   "dataRequirements": {
-                    "minRows": 3,
+                    "minRows": 8,
                     "qualityThreshold": 0.7,
                     "nullHandling": "exclude_null_rows"
                   },
                   "binderContract": {
                     "requiredBindings": [
-                      "ent_thermal",
-                      "ent_hydro"
+                      "ent_region",
+                      "ent_installed"
                     ],
                     "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
                     "degradePolicy": "mark_missing_not_fabricate"
@@ -648,7 +611,7 @@
                   "answerStructure": {
                     "components": [
                       {
-                        "componentId": "q_cap_mix_narrative",
+                        "componentId": "q_cap_regional_narrative",
                         "kind": "narrative",
                         "order": 1,
                         "outputContract": {
@@ -662,14 +625,12 @@
                           "tone": "formal-statistical",
                           "pattern": "headline_then_evidence_then_caveat",
                           "mustMention": [
-                            "ent_thermal"
+                            "ent_installed"
                           ]
                         },
                         "requiredEntities": [
-                          "ent_thermal",
-                          "ent_hydro",
-                          "ent_nuclear",
-                          "ent_solar"
+                          "ent_region",
+                          "ent_installed"
                         ],
                         "customization": {
                           "officerEditable": true,
@@ -677,74 +638,76 @@
                         }
                       },
                       {
-                        "componentId": "q_cap_mix_chart",
-                        "kind": "chart",
+                        "componentId": "q_cap_regional_table",
+                        "kind": "table",
                         "order": 2,
                         "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 6,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Installed Capacity by Region",
+                          "rowEntity": "ent_region",
+                          "columns": [
+                            "ent_installed"
+                          ],
+                          "groupRowsBy": null,
+                          "sortBy": "ent_installed",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "MW",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_installed"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_cap_regional_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
                           "type": "visualization",
-                          "chartType": "donut",
+                          "chartType": "pie",
                           "minSeries": 1,
                           "maxCategories": 12
                         },
                         "chartSpec": {
-                          "title": "National Capacity Mix by Source",
-                          "chartType": "donut",
+                          "title": "Total Capacity by Region (MW)",
+                          "chartType": "pie",
                           "unitLabel": "MW",
                           "showDataLabels": true,
-                          "slices": [
-                            "ent_thermal",
-                            "ent_hydro",
-                            "ent_nuclear",
-                            "ent_solar",
-                            "ent_wind",
-                            "ent_biomass"
-                          ]
+                          "xAxis": {
+                            "entity": "ent_region",
+                            "label": "Region"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_installed",
+                              "label": "Installed Capacity"
+                            }
+                          ],
+                          "sortBy": "ent_installed",
+                          "topN": 6
                         },
                         "requiredEntities": [
-                          "ent_thermal",
-                          "ent_hydro",
-                          "ent_nuclear",
-                          "ent_solar",
-                          "ent_wind",
-                          "ent_biomass",
+                          "ent_region",
                           "ent_installed"
                         ],
                         "customization": {
                           "officerEditable": true,
                           "canChangeChartType": true
                         }
-                      },
-                      {
-                        "componentId": "q_cap_mix_metric",
-                        "kind": "metric",
-                        "order": 3,
-                        "outputContract": {
-                          "type": "computed_metric",
-                          "displayFormat": "percentage"
-                        },
-                        "formulaSpec": {
-                          "formulaType": "SHARE",
-                          "formulaRef": "f_thermal_share",
-                          "numerator": "ent_thermal",
-                          "denominator": "ent_installed",
-                          "grain": "national"
-                        },
-                        "requiredEntities": [
-                          "ent_thermal",
-                          "ent_installed"
-                        ],
-                        "customization": {
-                          "officerEditable": true
-                        }
                       }
                     ]
-                  },
-                  "formulaSpec": {
-                    "formulaType": "SHARE",
-                    "formulaRef": "f_thermal_share",
-                    "numerator": "ent_thermal",
-                    "denominator": "ent_installed",
-                    "grain": "national"
                   }
                 }
               ]
@@ -2149,89 +2112,60 @@
           },
           "sections": [
             {
-              "sectionId": "sec_ren_share",
-              "title": "Renewable Share of Capacity",
+              "sectionId": "sec_ren_regional",
+              "title": "Regional Renewable Distribution",
               "order": 1,
-              "sectionArchetype": "composition_analysis",
+              "sectionArchetype": "ranking_distribution",
               "pagePlan": {
                 "estimatedPages": 1.2
               },
               "questions": [
                 {
-                  "questionId": "q_ren_share",
-                  "intent": "Assess how far the capacity mix has greened.",
-                  "questionText": "What share of installed capacity is renewable, and how do solar, wind and biomass compose it?",
-                  "questionType": "composition",
+                  "questionId": "q_ren_regional",
+                  "intent": "Compare renewable capacity concentration across regions.",
+                  "questionText": "Show which regions have invested most heavily in renewable energy capacity.",
+                  "questionType": "ranking",
                   "priority": "P1_must",
-                  "generationMethod": "SHARE",
+                  "generationMethod": "DIRECT",
                   "estimatedPageWeight": 1.2,
                   "requiredEntities": [
                     {
-                      "entityId": "ent_solar",
-                      "role": "measure",
-                      "columnExpr": "Solar",
-                      "unit": "MW"
-                    },
-                    {
-                      "entityId": "ent_wind",
-                      "role": "measure",
-                      "columnExpr": "Wind",
-                      "unit": "MW"
-                    },
-                    {
-                      "entityId": "ent_biomass",
-                      "role": "measure",
-                      "columnExpr": "Biomass",
-                      "unit": "MW"
-                    },
-                    {
-                      "entityId": "ent_hydro",
-                      "role": "measure",
-                      "columnExpr": "Hydro",
-                      "unit": "MW"
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
                     },
                     {
                       "entityId": "ent_renewable",
                       "role": "measure",
                       "columnExpr": "Renewable",
                       "unit": "MW"
-                    },
-                    {
-                      "entityId": "ent_installed",
-                      "role": "measure",
-                      "columnExpr": "Installed Capacity",
-                      "unit": "MW"
                     }
                   ],
                   "analyticsSpec": {
-                    "operation": "composition",
-                    "grain": "national",
+                    "operation": "rank",
+                    "grain": "ent_region",
+                    "sortBy": "ent_renewable",
+                    "sortOrder": "descending",
+                    "topN": 6,
                     "aggregation": "sum",
-                    "parts": [
-                      "ent_solar",
-                      "ent_wind",
-                      "ent_biomass",
-                      "ent_hydro"
-                    ],
-                    "whole": "ent_renewable",
-                    "formula": {
-                      "formulaType": "SHARE",
-                      "formulaRef": "f_renewable_share",
-                      "numerator": "ent_renewable",
-                      "denominator": "ent_installed",
-                      "grain": "national"
-                    }
+                    "filters": [
+                      {
+                        "entity": "ent_renewable",
+                        "condition": "not_null"
+                      }
+                    ]
                   },
-                  "officerIntent": "Assess how far the capacity mix has greened.",
+                  "officerIntent": "Compare renewable capacity concentration across regions.",
                   "dataRequirements": {
-                    "minRows": 3,
+                    "minRows": 8,
                     "qualityThreshold": 0.7,
                     "nullHandling": "exclude_null_rows"
                   },
                   "binderContract": {
                     "requiredBindings": [
-                      "ent_solar",
-                      "ent_wind"
+                      "ent_region",
+                      "ent_renewable"
                     ],
                     "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
                     "degradePolicy": "mark_missing_not_fabricate"
@@ -2252,7 +2186,7 @@
                   "answerStructure": {
                     "components": [
                       {
-                        "componentId": "q_ren_share_narrative",
+                        "componentId": "q_ren_regional_narrative",
                         "kind": "narrative",
                         "order": 1,
                         "outputContract": {
@@ -2266,14 +2200,12 @@
                           "tone": "formal-statistical",
                           "pattern": "headline_then_evidence_then_caveat",
                           "mustMention": [
-                            "ent_solar"
+                            "ent_renewable"
                           ]
                         },
                         "requiredEntities": [
-                          "ent_solar",
-                          "ent_wind",
-                          "ent_biomass",
-                          "ent_hydro"
+                          "ent_region",
+                          "ent_renewable"
                         ],
                         "customization": {
                           "officerEditable": true,
@@ -2281,71 +2213,76 @@
                         }
                       },
                       {
-                        "componentId": "q_ren_share_chart",
-                        "kind": "chart",
+                        "componentId": "q_ren_regional_table",
+                        "kind": "table",
                         "order": 2,
                         "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 6,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Renewable Capacity by Region",
+                          "rowEntity": "ent_region",
+                          "columns": [
+                            "ent_renewable"
+                          ],
+                          "groupRowsBy": null,
+                          "sortBy": "ent_renewable",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "MW",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_renewable"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_ren_regional_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
                           "type": "visualization",
-                          "chartType": "pie",
+                          "chartType": "donut",
                           "minSeries": 1,
                           "maxCategories": 12
                         },
                         "chartSpec": {
-                          "title": "Renewable Capacity Composition",
-                          "chartType": "pie",
+                          "title": "Renewable Endowment by Region (MW)",
+                          "chartType": "donut",
                           "unitLabel": "MW",
                           "showDataLabels": true,
-                          "slices": [
-                            "ent_solar",
-                            "ent_wind",
-                            "ent_biomass",
-                            "ent_hydro"
-                          ]
+                          "xAxis": {
+                            "entity": "ent_region",
+                            "label": "Region"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_renewable",
+                              "label": "Renewable Capacity"
+                            }
+                          ],
+                          "sortBy": "ent_renewable",
+                          "topN": 6
                         },
                         "requiredEntities": [
-                          "ent_solar",
-                          "ent_wind",
-                          "ent_biomass",
-                          "ent_hydro",
-                          "ent_renewable",
-                          "ent_installed"
+                          "ent_region",
+                          "ent_renewable"
                         ],
                         "customization": {
                           "officerEditable": true,
                           "canChangeChartType": true
                         }
-                      },
-                      {
-                        "componentId": "q_ren_share_metric",
-                        "kind": "metric",
-                        "order": 3,
-                        "outputContract": {
-                          "type": "computed_metric",
-                          "displayFormat": "percentage"
-                        },
-                        "formulaSpec": {
-                          "formulaType": "SHARE",
-                          "formulaRef": "f_renewable_share",
-                          "numerator": "ent_renewable",
-                          "denominator": "ent_installed",
-                          "grain": "national"
-                        },
-                        "requiredEntities": [
-                          "ent_renewable",
-                          "ent_installed"
-                        ],
-                        "customization": {
-                          "officerEditable": true
-                        }
                       }
                     ]
-                  },
-                  "formulaSpec": {
-                    "formulaType": "SHARE",
-                    "formulaRef": "f_renewable_share",
-                    "numerator": "ent_renewable",
-                    "denominator": "ent_installed",
-                    "grain": "national"
                   }
                 }
               ]

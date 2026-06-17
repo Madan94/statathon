@@ -157,35 +157,35 @@
               ]
             },
             {
-              "nodeId": "sec_capacity_mix",
+              "nodeId": "sec_capacity_regional",
               "nodeType": "section",
-              "title": "National Capacity Source Mix",
+              "title": "Regional Capacity Distribution",
               "style": "s_h3",
               "order": 2,
               "children": [
                 {
-                  "nodeId": "q_cap_mix",
+                  "nodeId": "q_cap_regional",
                   "nodeType": "question",
-                  "title": "Capacity composition by source",
+                  "title": "Aggregate capacity by region",
                   "style": "s_h4",
                   "order": 1,
                   "slots": [
                     {
-                      "slotId": "slot_cap_mix_narrative",
-                      "componentRef": "q_cap_mix_narrative",
+                      "slotId": "slot_cap_regional_narrative",
+                      "componentRef": "q_cap_regional_narrative",
                       "slotType": "narrative",
                       "placeholder": ""
                     },
                     {
-                      "slotId": "slot_cap_mix_chart",
-                      "componentRef": "q_cap_mix_chart",
-                      "slotType": "chart",
+                      "slotId": "slot_cap_regional_table",
+                      "componentRef": "q_cap_regional_table",
+                      "slotType": "table",
                       "placeholder": ""
                     },
                     {
-                      "slotId": "slot_cap_mix_metric",
-                      "componentRef": "q_cap_mix_metric",
-                      "slotType": "metric",
+                      "slotId": "slot_cap_regional_chart",
+                      "componentRef": "q_cap_regional_chart",
+                      "slotType": "chart",
                       "placeholder": ""
                     }
                   ]
@@ -508,35 +508,35 @@
           "order": 2,
           "children": [
             {
-              "nodeId": "sec_ren_share",
+              "nodeId": "sec_ren_regional",
               "nodeType": "section",
-              "title": "Renewable Share of Capacity",
+              "title": "Regional Renewable Distribution",
               "style": "s_h3",
               "order": 1,
               "children": [
                 {
-                  "nodeId": "q_ren_share",
+                  "nodeId": "q_ren_regional",
                   "nodeType": "question",
-                  "title": "Renewable share of installed capacity",
+                  "title": "Aggregate renewable capacity by region",
                   "style": "s_h4",
                   "order": 1,
                   "slots": [
                     {
-                      "slotId": "slot_ren_share_narrative",
-                      "componentRef": "q_ren_share_narrative",
+                      "slotId": "slot_ren_regional_narrative",
+                      "componentRef": "q_ren_regional_narrative",
                       "slotType": "narrative",
                       "placeholder": ""
                     },
                     {
-                      "slotId": "slot_ren_share_chart",
-                      "componentRef": "q_ren_share_chart",
-                      "slotType": "chart",
+                      "slotId": "slot_ren_regional_table",
+                      "componentRef": "q_ren_regional_table",
+                      "slotType": "table",
                       "placeholder": ""
                     },
                     {
-                      "slotId": "slot_ren_share_metric",
-                      "componentRef": "q_ren_share_metric",
-                      "slotType": "metric",
+                      "slotId": "slot_ren_regional_chart",
+                      "componentRef": "q_ren_regional_chart",
+                      "slotType": "chart",
                       "placeholder": ""
                     }
                   ]

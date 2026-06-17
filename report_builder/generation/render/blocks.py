@@ -94,4 +94,4 @@ def render_question_group(
         parts.append(render_child(child_id, blocks, figures, charts, tables,
                                   theme, locale=locale, number_system=number_system))
     parts.append("</section>")
-    return "".join(parts)"
+    return "".join(parts)

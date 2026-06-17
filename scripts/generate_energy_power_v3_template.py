@@ -153,7 +153,7 @@ TOPICS: list[dict[str, Any]] = [
                 rank_q("q_cap_regional", "Aggregate capacity by region",
                        "Compare installed capacity across the six regions.",
                        "Aggregate installed capacity by region to show regional endowment.",
-                       "ent_installed", "pie", "Installed Capacity by Region (MW)",
+                       "ent_installed", "pie", "Total Capacity by Region (MW)",
                        grain="ent_region", group_by=None, top_n=6)]},
         ]},
         {"cid": "ch_capacity_sources", "title": "Thermal & Hydro Backbone", "sections": [
@@ -214,7 +214,7 @@ TOPICS: list[dict[str, Any]] = [
                 rank_q("q_ren_regional", "Aggregate renewable capacity by region",
                        "Compare renewable capacity concentration across regions.",
                        "Show which regions have invested most heavily in renewable energy capacity.",
-                       "ent_renewable", "donut", "Renewable Capacity by Region (MW)",
+                       "ent_renewable", "donut", "Renewable Endowment by Region (MW)",
                        grain="ent_region", group_by=None, top_n=6)]},
             {"sid": "sec_biomass_rank", "title": "Biomass Capacity Leaders", "archetype": "ranking_distribution", "questions": [
                 rank_q("q_biomass_rank", "Rank States/UTs by biomass capacity",

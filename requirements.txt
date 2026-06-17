@@ -137,6 +137,10 @@ watchfiles==1.1.1
 wcwidth==0.7.0
 websockets==16.0
 
+# ── Missing but required by codebase (parity with requirements-windows.txt) ───
+groq>=1.0.0,<2                   # Groq SDK — fallback provider in report_builder/llm_router
+pytesseract>=0.3.10              # OCR fallback for scanned pages (services/layoutlm)
+
 # --- Optional: Observability & LTM (install as needed) ---
 # qdrant-client>=1.9.0
 # langfuse>=2.0.0
