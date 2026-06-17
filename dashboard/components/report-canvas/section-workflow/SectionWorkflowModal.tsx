@@ -94,6 +94,9 @@ export function SectionWorkflowModal({ templateId, signature, onClose, onAppendB
   const allIssues = [...(validation?.issues || []), ...previewIssues];
   const hasWarnings = allIssues.some(i => i.severity !== 'info');
   const hasErrors = allIssues.some(i => i.severity === 'error') || validation?.status === 'cannot_compute';
+  const measureLabel = request?.scope.columns.measures[0]?.label || request?.scope.columns.measures[0]?.col || 'Measure';
+  const groupLabel = request?.analysis.groupBy?.join(', ') || request?.scope.columns.dimensions.join(', ') || 'All records';
+  const filterLabel = request?.scope.filters.map(f => `${f.col} ${f.op} ${Array.isArray(f.value) ? f.value.join(', ') : String(f.value ?? '')}`).join(' · ') || 'No filters';
 
   const updateRequest = (patch: (req: ReportSectionRequest) => ReportSectionRequest) => {
     if (!request) return;
@@ -173,10 +176,42 @@ export function SectionWorkflowModal({ templateId, signature, onClose, onAppendB
           <button onClick={onClose} className="rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100">Close</button>
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-0 overflow-hidden lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-0 overflow-hidden lg:grid-cols-[1fr_1fr]">
           <div className="min-h-0 overflow-auto border-r border-slate-200 p-4">
-            <label className="mb-1 block text-xs font-semibold text-slate-700">Section request JSON</label>
-            <textarea value={requestText} onChange={e => setRequestText(e.target.value)} className="h-64 w-full rounded border border-slate-200 bg-slate-50 p-3 font-mono text-[11px] text-slate-800 outline-none focus:border-blue-400" />
+            <div className="mb-4 grid grid-cols-2 gap-2">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Target</p>
+                <p className="mt-1 truncate text-xs font-semibold text-slate-800">{request?.target.section?.title || 'No section selected'}</p>
+                <p className="mt-0.5 truncate text-[10px] text-slate-500">{request?.target.chapter?.title || 'No chapter'}</p>
+              </div>
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Dataset</p>
+                <p className="mt-1 truncate text-xs font-semibold text-slate-800">{request?.datasetId || 'Invalid JSON'}</p>
+                <p className="mt-0.5 text-[10px] text-slate-500">{snapshot ? `${snapshot.rowCount.toLocaleString('en-IN')} rows cached` : 'Rows not loaded'}</p>
+              </div>
+              <div className="rounded-lg border border-blue-100 bg-blue-50/70 p-3">
+                <p className="text-[9px] font-bold uppercase tracking-wide text-blue-500">Measure</p>
+                <p className="mt-1 truncate text-xs font-semibold text-blue-900">{measureLabel}</p>
+                <p className="mt-0.5 truncate text-[10px] text-blue-600">Group by {groupLabel}</p>
+              </div>
+              <div className="rounded-lg border border-emerald-100 bg-emerald-50/70 p-3">
+                <p className="text-[9px] font-bold uppercase tracking-wide text-emerald-600">Components</p>
+                <p className="mt-1 text-xs font-semibold text-emerald-900">{request?.components.length || 0} selected</p>
+                <p className="mt-0.5 truncate text-[10px] text-emerald-700">{request?.analysis.type || 'analysis'}</p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Data slice</p>
+              <p className="mt-1 text-xs text-slate-700">{filterLabel}</p>
+            </div>
+
+            <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50">
+              <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-slate-700">Advanced JSON contract</summary>
+              <div className="border-t border-slate-200 p-3">
+                <textarea value={requestText} onChange={e => setRequestText(e.target.value)} className="h-56 w-full rounded border border-slate-200 bg-white p-3 font-mono text-[11px] text-slate-800 outline-none focus:border-blue-400" />
+              </div>
+            </details>
 
             <div className="mt-4">
               <label className="mb-1 block text-xs font-semibold text-slate-700">Preprocessed dataset rows for this datasetId</label>

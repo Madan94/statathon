@@ -31,7 +31,7 @@ export function BlockActionBar({ block, floating, flagged, onAsk, onComment, onF
   if (!onAsk && !onComment && !onFlag && !onToggleFloat && !onDuplicate && !onDelete) return null;
   return (
     <div
-      className="absolute -top-9 left-0 flex items-center gap-0.5 rounded-md border border-slate-200 bg-white px-0.5 py-0.5 shadow-md"
+      className="absolute -top-8 left-7 flex items-center gap-0.5 rounded-md border border-slate-200 bg-white px-0.5 py-0.5 shadow-md"
       style={{ zIndex: Z.actionBar }}
     >
       {onAsk && (

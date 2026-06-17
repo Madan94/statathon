@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { generatePhaseApi } from '@/lib/api';
 import { CONTENT_W, CONTENT_H } from './paginationEngine';
 import type { CanvasPage, PageBlock } from './useCanvasState';
@@ -29,7 +29,7 @@ interface Params {
   /** Re-derive pages from the (freshly restored) order + blocks. */
   repack: () => void;
   /** Fires after the layout/draft restore attempt finishes (success or empty). */
-  onRestored?: () => void;
+  onRestored?: (info: { savedBlockCount: number; restoredCanvasOwnedBlocks: number }) => void;
 }
 
 const SAVE_DEBOUNCE_MS = 900;
@@ -93,13 +93,15 @@ export function useLayoutPersistence({ templateId, signature, draftId, enabled =
 
   const useNamedDraft = Boolean(draftId && draftId !== '__legacy__');
 
-  const loadLayout = () => useNamedDraft
+  const loadLayout = useCallback(() => useNamedDraft
     ? generatePhaseApi.getCanvasDraftLayout(templateId, signature, draftId)
-    : generatePhaseApi.getCanvasLayout(templateId, signature);
+    : generatePhaseApi.getCanvasLayout(templateId, signature),
+  [draftId, signature, templateId, useNamedDraft]);
 
-  const saveLayout = (body: { blocks: Record<string, unknown>; pages: Array<Record<string, unknown>>; order: string[]; updatedAt?: string }) => useNamedDraft
+  const saveLayout = useCallback((body: { blocks: Record<string, unknown>; pages: Array<Record<string, unknown>>; order: string[]; updatedAt?: string }) => useNamedDraft
     ? generatePhaseApi.putCanvasDraftLayout(templateId, signature, draftId, body)
-    : generatePhaseApi.putCanvasLayout(templateId, signature, body);
+    : generatePhaseApi.putCanvasLayout(templateId, signature, body),
+  [draftId, signature, templateId, useNamedDraft]);
 
   // ── Restore once blocks exist ──────────────────────────────────────────
   useEffect(() => {
@@ -120,9 +122,10 @@ export function useLayoutPersistence({ templateId, signature, draftId, enabled =
         const saved = layout.blocks as Record<string, PersistedBlock>;
         const savedOrder = Array.isArray(layout.order) ? layout.order : [];
         if (!Object.keys(saved).length && !savedOrder.length) {
-          onRestored?.();
+          onRestored?.({ savedBlockCount: 0, restoredCanvasOwnedBlocks: 0 });
           return;
         }
+        let restoredCanvasOwnedBlocks = 0;
         savedRef.current = saved;
         savedOrderRef.current = savedOrder;
         setBlocks(prev => {
@@ -134,6 +137,7 @@ export function useLayoutPersistence({ templateId, signature, draftId, enabled =
             const b = m.get(id);
             if (!b) {
               if (isPersistedCanvasOwnedBlock(s)) {
+                restoredCanvasOwnedBlocks += 1;
                 m.set(id, {
                   id,
                   index: typeof s.index === 'number' ? s.index : -1,
@@ -190,11 +194,14 @@ export function useLayoutPersistence({ templateId, signature, draftId, enabled =
           });
           repack();   // pages must be re-derived from the restored order
         }
-        onRestored?.();
+        onRestored?.({
+          savedBlockCount: Object.keys(saved).length,
+          restoredCanvasOwnedBlocks,
+        });
       })
-      .catch(() => { onRestored?.(); });
+      .catch(() => { onRestored?.({ savedBlockCount: 0, restoredCanvasOwnedBlocks: 0 }); });
     return () => { cancelled = true; };
-  }, [enabled, templateId, signature, draftId, setBlocks, setOrder, repack, onRestored]);
+  }, [enabled, templateId, signature, draftId, setBlocks, setOrder, repack, onRestored, loadLayout]);
 
   // ── Debounced autosave on spatial OR order change ──────────────────────
   useEffect(() => {
@@ -219,5 +226,5 @@ export function useLayoutPersistence({ templateId, signature, draftId, enabled =
     }, SAVE_DEBOUNCE_MS);
 
     return () => { if (saveTimer.current) window.clearTimeout(saveTimer.current); };
-  }, [enabled, templateId, signature, draftId, blocks, pages, order]);
+  }, [enabled, templateId, signature, draftId, blocks, pages, order, saveLayout]);
 }

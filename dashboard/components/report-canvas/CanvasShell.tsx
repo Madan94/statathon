@@ -14,7 +14,8 @@ import { buildSuggestions } from './engine/assistantOrchestrator';
 import { rowMarkers } from './engine/statMarkers';
 import { DEFAULT_TYPOGRAPHY, toCSSVars, TYPOGRAPHY_PRESETS, type TypographyConfig } from './engine/typography';
 import type { PageBlock } from './engine/useCanvasState';
-import { CommandBar, type Density } from './toolbar/CommandBar';
+import { CommandBar } from './toolbar/CommandBar';
+import { CanvasViewBar, type Density } from './toolbar/CanvasViewBar';
 import { StatusBar } from './toolbar/StatusBar';
 import { A4Page, type PageSize } from './viewport/A4Page';
 import { CoverPage, ContentsPage } from './viewport/FrontMatter';
@@ -57,6 +58,7 @@ export function CanvasShell({ templateId, signature }: Props) {
   const [showDraftPicker, setShowDraftPicker] = useState(true);
   const [activeDraft, setActiveDraft] = useState<CanvasDraftSummary | null>(null);
   const [restoredDraftKey, setRestoredDraftKey] = useState('');
+  const [restoredCanvasOwnedCount, setRestoredCanvasOwnedCount] = useState(0);
   const [viewMode, setViewMode] = useState<'paged' | 'scroll'>('scroll');
   const [showPalette, setShowPalette] = useState(false);
   const [showCheatsheet, setShowCheatsheet] = useState(false);
@@ -95,6 +97,7 @@ export function CanvasShell({ templateId, signature }: Props) {
   useEffect(() => {
     topicBootRef.current = false;
     setRestoredDraftKey('');
+    setRestoredCanvasOwnedCount(0);
   }, [activeDraftKey]);
 
   // Add a footnote → assign the next running number, store it, return the number.
@@ -197,7 +200,10 @@ export function CanvasShell({ templateId, signature }: Props) {
     setBlocks,
     setOrder: state.setOrder,
     repack: state.repack,
-    onRestored: () => setRestoredDraftKey(activeDraftKey),
+    onRestored: (info) => {
+      setRestoredCanvasOwnedCount(info.restoredCanvasOwnedBlocks);
+      setRestoredDraftKey(activeDraftKey);
+    },
   });
 
   // Load queue on mount
@@ -213,7 +219,11 @@ export function CanvasShell({ templateId, signature }: Props) {
     if (topicBootRef.current) return;
     if (!activeDraft) return;
     if (restoredDraftKey !== activeDraftKey) return;
-    if ((activeDraft.blockCount || 0) > 0) return;
+    // A legacy draft can contain only spatial entries for generated queue blocks
+    // (block-0, block-1, ...). Those entries do not restore content, so they must
+    // not suppress the first auto-build. Only content-bearing canvas-owned blocks
+    // restored from the draft mean "this draft already has authored content".
+    if (restoredCanvasOwnedCount > 0) return;
     if (phase !== 'ready') return;
     if (!queue.length) return;
 
@@ -233,7 +243,7 @@ export function CanvasShell({ templateId, signature }: Props) {
     topicBootRef.current = true;
     if (typeof window !== 'undefined') window.sessionStorage.setItem(bootKey, '1');
     void generation.autoGenerateTopic(topicOne);
-  }, [phase, queue, blocks, generation, activeDraft, activeDraftKey, restoredDraftKey]);
+  }, [phase, queue, blocks, generation, activeDraft, activeDraftKey, restoredDraftKey, restoredCanvasOwnedCount]);
 
   const reportTitle = templateId.replace(/^tpl_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
@@ -632,6 +642,13 @@ export function CanvasShell({ templateId, signature }: Props) {
           onOpenDrafts={() => setShowDraftPicker(true)}
           onOpenSectionGenerator={() => setShowSectionWorkflow(true)}
           onInsertBlock={insertBlankBlock}
+          onToggleFocus={() => setFocusMode(f => !f)}
+          onUndo={state.undo}
+          onRedo={state.redo}
+          canUndo={state.canUndo}
+          canRedo={state.canRedo}
+        />
+        <CanvasViewBar
           pageSize={pageSize}
           onPageSizeChange={setPageSize}
           density={density}
@@ -653,11 +670,6 @@ export function CanvasShell({ templateId, signature }: Props) {
           totalPages={navTotal}
           onGoToPage={navGoTo}
           onAddPage={addPage}
-          onToggleFocus={() => setFocusMode(f => !f)}
-          onUndo={state.undo}
-          onRedo={state.redo}
-          canUndo={state.canUndo}
-          canRedo={state.canRedo}
         />
         </div>
       )}
@@ -678,10 +690,10 @@ export function CanvasShell({ templateId, signature }: Props) {
           )}
           {/* Breadcrumb (U1) — Report › Chapter › current page section */}
           {!focusMode && onContentSheet && docModel.chapterByPage[currentPage] && (
-            <div className="flex items-center gap-1.5 border-b border-slate-100 bg-white/60 px-4 py-1 text-[10px] text-slate-400">
-              <span className="font-medium text-slate-500">{reportTitle}</span>
-              <span>›</span>
-              <span className="text-slate-600">{docModel.chapterByPage[currentPage]}</span>
+            <div className="flex items-center gap-1.5 border-b border-slate-100 bg-white px-4 py-1.5 text-[11px] text-slate-500">
+              <span className="font-medium text-slate-700">{reportTitle}</span>
+              <span className="text-slate-300">›</span>
+              <span className="text-slate-700">{docModel.chapterByPage[currentPage]}</span>
             </div>
           )}
           <div ref={scrollRef} className="relative z-0 flex-1 w-full overflow-auto px-3 py-5">

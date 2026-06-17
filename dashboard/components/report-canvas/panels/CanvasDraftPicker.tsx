@@ -29,6 +29,7 @@ export function CanvasDraftPicker({ templateId, signature, open, currentDraftId,
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [namedDraftsAvailable, setNamedDraftsAvailable] = useState(true);
 
   const defaultName = useMemo(() => {
     const now = new Date();
@@ -40,11 +41,13 @@ export function CanvasDraftPicker({ templateId, signature, open, currentDraftId,
     setError('');
     try {
       const res = await generatePhaseApi.listCanvasDrafts(templateId, signature, nextSort);
+      setNamedDraftsAvailable(true);
       setDrafts(res.drafts || []);
       if (!currentDraftId && res.drafts?.length === 1) {
         // Keep the picker open; the officer still explicitly selects or creates.
       }
-    } catch (err) {
+    } catch {
+      setNamedDraftsAvailable(false);
       try {
         const layout = await generatePhaseApi.getCanvasLayout(templateId, signature);
         setDrafts([{
@@ -74,12 +77,24 @@ export function CanvasDraftPicker({ templateId, signature, open, currentDraftId,
     if (!finalName) return;
     setCreating(true);
     setError('');
+    if (!namedDraftsAvailable) {
+      const fallback = drafts.find(d => d.draftId === '__legacy__') || { draftId: '__legacy__', name: 'Default draft (legacy autosave)', createdAt: null, updatedAt: null, blockCount: 0, pageCount: 0 };
+      onSelect({ ...fallback, name: `${finalName} (legacy autosave)` });
+      setCreating(false);
+      return;
+    }
     try {
       const draft = await generatePhaseApi.createCanvasDraft(templateId, signature, { name: finalName, cloneFrom: currentDraftId && currentDraftId !== '__legacy__' ? currentDraftId : undefined });
       setName('');
       onSelect(draft);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create draft');
+      const fallback = drafts.find(d => d.draftId === '__legacy__');
+      if (fallback) {
+        setNamedDraftsAvailable(false);
+        onSelect({ ...fallback, name: `${finalName} (legacy autosave)` });
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to create draft');
+      }
     } finally {
       setCreating(false);
     }
@@ -88,9 +103,9 @@ export function CanvasDraftPicker({ templateId, signature, open, currentDraftId,
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/40 p-4">
-      <div className="w-full max-w-2xl rounded-xl border border-slate-200 bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-2xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-4">
           <div>
             <h2 className="text-sm font-semibold text-slate-900">Choose report canvas draft</h2>
             <p className="text-xs text-slate-500">Select an existing draft or name a new one before editing. Autosave keeps the latest hand edits, resizing, order and generated sections.</p>
@@ -104,10 +119,10 @@ export function CanvasDraftPicker({ templateId, signature, open, currentDraftId,
             <div className="mt-2 flex gap-2">
               <input value={name} onChange={e => setName(e.target.value)} placeholder={defaultName} className="min-w-0 flex-1 rounded border border-emerald-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500" />
               <button onClick={create} disabled={creating} className="rounded bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:bg-slate-300">
-                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}
+                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : namedDraftsAvailable ? 'Create' : 'Use legacy'}
               </button>
             </div>
-            {currentDraftId && <p className="mt-1 text-[11px] text-emerald-700">New draft will clone the currently selected draft.</p>}
+            {currentDraftId && <p className="mt-1 text-[11px] text-emerald-700">{namedDraftsAvailable ? 'New draft will clone the currently selected draft.' : 'Backend restart is needed for true named drafts; this will continue in the legacy autosave draft.'}</p>}
           </div>
 
           <div className="flex items-center justify-between">
@@ -129,13 +144,13 @@ export function CanvasDraftPicker({ templateId, signature, open, currentDraftId,
           ) : (
             <div className="max-h-80 space-y-2 overflow-auto">
               {drafts.map(draft => (
-                <button key={draft.draftId} onClick={() => onSelect(draft)} className={`flex w-full items-center justify-between rounded-lg border px-3 py-3 text-left transition-colors ${currentDraftId === draft.draftId ? 'border-blue-300 bg-blue-50' : 'border-slate-200 hover:border-blue-200 hover:bg-slate-50'}`}>
+                <button key={draft.draftId} onClick={() => onSelect(draft)} className={`flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors ${currentDraftId === draft.draftId ? 'border-blue-300 bg-blue-50 shadow-sm' : 'border-slate-200 hover:border-blue-200 hover:bg-slate-50'}`}>
                   <div>
                     <p className="text-sm font-semibold text-slate-800">{draft.name}</p>
                     <p className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500"><Clock className="h-3 w-3" /> Last edited {fmt(draft.updatedAt)}</p>
                   </div>
-                  <div className="text-right text-[11px] text-slate-500">
-                    <div>{draft.blockCount} blocks</div>
+                  <div className="rounded-md bg-slate-50 px-2 py-1 text-right text-[11px] text-slate-500">
+                    <div className="font-medium text-slate-700">{draft.blockCount} blocks</div>
                     <div>{draft.pageCount || 0} pages</div>
                   </div>
                 </button>

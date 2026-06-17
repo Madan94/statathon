@@ -414,7 +414,7 @@ export function A4Page({
         )}
 
         {/* Selection toolbar — above-left, clear of the resize grips */}
-        {showChrome && (
+        {showChrome && !dragging && !resizing && (
           <BlockActionBar
             block={block}
             floating={!!block.floating}

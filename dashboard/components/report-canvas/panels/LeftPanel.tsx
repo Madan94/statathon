@@ -48,7 +48,11 @@ export function LeftPanel({ pages, currentPage, onGoToPage, getPageBlocks, onIns
   ];
 
   return (
-    <div className="w-56 shrink-0 border-r border-slate-200 bg-white flex flex-col">
+    <div className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
+      <div className="border-b border-slate-100 bg-slate-50 px-3 py-2">
+        <p className="text-[11px] font-semibold text-slate-700">Document Navigator</p>
+        <p className="text-[9px] text-slate-400">Outline, pages and insertable blocks</p>
+      </div>
       <div className="flex border-b border-slate-100">
         {TABS.map(({ id, icon: Icon, label }) => (
           <button key={id} onClick={() => setTab(id)} title={label}
@@ -57,7 +61,7 @@ export function LeftPanel({ pages, currentPage, onGoToPage, getPageBlocks, onIns
           </button>
         ))}
       </div>
-      <div className="flex-1 overflow-auto p-2">
+      <div className="flex-1 overflow-auto p-2.5">
         {/* OUTLINE — §-numbered navigation tree with "you are here" */}
         {tab === 'outline' && (
           <div className="space-y-0.5">

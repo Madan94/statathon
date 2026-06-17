@@ -18,22 +18,22 @@ interface Props {
 
 export function StatusBar({ sectionLabel, pageNumber, totalPages, wordCount, tableCount, figureCount, saveState }: Props) {
   return (
-    <div className="flex h-6 shrink-0 items-center justify-between border-t border-slate-200 bg-white px-3 text-[9px] text-slate-400">
-      <div className="flex items-center gap-3">
+    <div className="flex h-8 shrink-0 items-center justify-between border-t border-slate-200 bg-slate-50 px-4 text-[11px] text-slate-500">
+      <div className="flex min-w-0 items-center gap-3">
         {sectionLabel && (
-          <span className="flex items-center gap-1"><MapPin className="h-2.5 w-2.5 text-blue-400" /> {sectionLabel}</span>
+          <span className="flex min-w-0 items-center gap-1 truncate font-medium text-slate-700"><MapPin className="h-3 w-3 shrink-0 text-blue-500" /> <span className="truncate">{sectionLabel}</span></span>
         )}
         <span className="tabular-nums">Page {pageNumber} / {totalPages}</span>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-3">
         <span className="tabular-nums">{wordCount.toLocaleString('en-IN')} words</span>
         <span className="tabular-nums">{tableCount} tables</span>
         <span className="tabular-nums">{figureCount} figures</span>
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1 font-medium">
           {saveState === 'saving'
-            ? <><Loader2 className="h-2.5 w-2.5 animate-spin" /> Saving…</>
+            ? <><Loader2 className="h-3 w-3 animate-spin" /> Saving…</>
             : saveState === 'saved'
-            ? <><Check className="h-2.5 w-2.5 text-emerald-500" /> Saved</>
+            ? <><Check className="h-3 w-3 text-emerald-500" /> Saved</>
             : 'Draft'}
         </span>
       </div>
