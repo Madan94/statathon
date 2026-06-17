@@ -2337,6 +2337,22 @@ export interface GenerateResult {
   fill_trace: Array<Record<string, unknown>>;
 }
 
+export interface CanvasDraftSummary {
+  draftId: string;
+  name: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  blockCount: number;
+  pageCount: number;
+}
+
+export interface CanvasLayoutPayload {
+  blocks: Record<string, { id?: string; index?: number; kind?: string; title?: string; content?: string; sectionPath?: string[]; status?: string; tableData?: Record<string, unknown>; metricValue?: string; metricUnit?: string; floating?: boolean; x?: number; y?: number; w?: number; h?: number; pageIndex?: number }>;
+  pages: Array<Record<string, unknown>>;
+  order: string[];
+  updatedAt: string | null;
+}
+
 export const generatePhaseApi = {
   /** Run S4→S6 on a finalized binding: analytics → fill → narrate → assemble → render. */
   generate: async (
@@ -2503,12 +2519,7 @@ export const generatePhaseApi = {
   getCanvasLayout: async (
     templateId: string,
     signature: string
-  ): Promise<{
-    blocks: Record<string, { floating?: boolean; x?: number; y?: number; w?: number; h?: number; pageIndex?: number }>;
-    pages: Array<Record<string, unknown>>;
-    order: string[];
-    updatedAt: string | null;
-  }> => {
+  ): Promise<CanvasLayoutPayload> => {
     const { data } = await api.get(
       `/report-builder/generate-phase/${templateId}/${signature}/canvas-layout`
     );
@@ -2522,6 +2533,62 @@ export const generatePhaseApi = {
   ): Promise<{ blocks: Record<string, unknown>; pages: Array<Record<string, unknown>>; updatedAt: string | null }> => {
     const { data } = await api.put(
       `/report-builder/generate-phase/${templateId}/${signature}/canvas-layout`,
+      body
+    );
+    return data;
+  },
+  listCanvasDrafts: async (
+    templateId: string,
+    signature: string,
+    sort = 'updated_desc'
+  ): Promise<{ defaultDraftId: string | null; drafts: CanvasDraftSummary[] }> => {
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/canvas-drafts`,
+      { params: { sort } }
+    );
+    return data;
+  },
+  createCanvasDraft: async (
+    templateId: string,
+    signature: string,
+    body: { name: string; cloneFrom?: string | null }
+  ): Promise<CanvasDraftSummary> => {
+    const { data } = await api.post(
+      `/report-builder/generate-phase/${templateId}/${signature}/canvas-drafts`,
+      body
+    );
+    return data;
+  },
+  renameCanvasDraft: async (
+    templateId: string,
+    signature: string,
+    draftId: string,
+    name: string
+  ): Promise<CanvasDraftSummary> => {
+    const { data } = await api.patch(
+      `/report-builder/generate-phase/${templateId}/${signature}/canvas-drafts/${draftId}`,
+      { name }
+    );
+    return data;
+  },
+  getCanvasDraftLayout: async (
+    templateId: string,
+    signature: string,
+    draftId: string
+  ): Promise<CanvasLayoutPayload> => {
+    const { data } = await api.get(
+      `/report-builder/generate-phase/${templateId}/${signature}/canvas-drafts/${draftId}/layout`
+    );
+    return data;
+  },
+  putCanvasDraftLayout: async (
+    templateId: string,
+    signature: string,
+    draftId: string,
+    body: { blocks: Record<string, unknown>; pages: Array<Record<string, unknown>>; order?: string[]; updatedAt?: string }
+  ): Promise<{ ok: boolean; updatedAt: string | null }> => {
+    const { data } = await api.put(
+      `/report-builder/generate-phase/${templateId}/${signature}/canvas-drafts/${draftId}/layout`,
       body
     );
     return data;

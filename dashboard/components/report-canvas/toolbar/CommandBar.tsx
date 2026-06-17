@@ -5,6 +5,7 @@ import {
   Layers, ChevronRight, Plus, BarChart3, Table2, Hash, Type, Heading,
   Quote, FileText, Minus, Download, MessageSquare, LayoutDashboard,
   Play, Pause, Loader2, ScrollText, BookOpen, Maximize2, ChevronLeft, ClipboardCheck, Undo2, Redo2,
+  Sparkles,
 } from 'lucide-react';
 import type { Phase, Panel, PageBlock } from '../engine/useCanvasState';
 import type { PageSize } from '../viewport/A4Page';
@@ -39,6 +40,11 @@ interface Props {
   /** Review status badge + open-issue count (U4). */
   reviewStatus?: 'draft' | 'in_review' | 'approved';
   reviewOpenIssues?: number;
+  /** Current named canvas draft and selector trigger. */
+  activeDraftName?: string;
+  onOpenDrafts?: () => void;
+  /** Open the slice-aware section generation workflow. */
+  onOpenSectionGenerator?: () => void;
   // Insert
   onInsertBlock: (kind: PageBlock['kind']) => void;
   // Page + density + theme
@@ -91,7 +97,8 @@ export function CommandBar(props: Props) {
     density, onDensityChange, viewMode, onViewModeChange, showFrontMatter, onToggleFrontMatter,
     zoom, onZoomChange, currentPage, totalPages, onGoToPage, onAddPage, onToggleFocus,
     onOpenReview, reviewStatus = 'draft', reviewOpenIssues = 0, onUndo, onRedo, canUndo, canRedo,
-    typographyPreset, onTypographyPresetChange, typographyPresets, onOpenTypography,
+    typographyPreset, onTypographyPresetChange, typographyPresets, onOpenTypography, onOpenSectionGenerator,
+    activeDraftName, onOpenDrafts,
   } = props;
   const [insertOpen, setInsertOpen] = useState(false);
 
@@ -133,6 +140,13 @@ export function CommandBar(props: Props) {
           <option value="a4-extended">A4+</option>
           <option value="letter">Letter</option>
         </select>
+
+        {onOpenSectionGenerator && (
+          <button onClick={onOpenSectionGenerator} title="Generate section from a filtered data slice"
+            className="flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100">
+            <Sparkles className="h-3.5 w-3.5" /> Generate Section
+          </button>
+        )}
 
         {/* Density */}
         <select value={density} onChange={e => onDensityChange(e.target.value as Density)} title="Density"
@@ -225,6 +239,13 @@ export function CommandBar(props: Props) {
         </button>
 
         <button onClick={onOpenControlPanel} title="Control Panel" className="rounded-md border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50"><LayoutDashboard className="h-3.5 w-3.5" /></button>
+
+        {onOpenDrafts && (
+          <button onClick={onOpenDrafts} title="Open canvas drafts"
+            className="hidden max-w-[150px] truncate rounded-md border border-blue-100 bg-blue-50 px-2 py-1.5 text-[11px] font-medium text-blue-700 hover:bg-blue-100 md:block">
+            {activeDraftName || 'Choose draft'}
+          </button>
+        )}
 
         {/* Review & sign-off (U4) */}
         {onOpenReview && (

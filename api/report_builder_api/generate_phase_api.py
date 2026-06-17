@@ -20,6 +20,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Any, Optional
+from uuid import uuid4
 
 from fastapi import APIRouter, Body, HTTPException, Query
 from fastapi.responses import HTMLResponse, Response
@@ -1560,6 +1561,197 @@ class CanvasLayoutIn(BaseModel):
     pages: list[dict[str, Any]] = []
     order: list[str] = []
     updatedAt: Optional[str] = None
+
+
+class CanvasDraftCreateIn(BaseModel):
+    name: str
+    cloneFrom: Optional[str] = None
+
+
+class CanvasDraftRenameIn(BaseModel):
+    name: str
+
+
+def _empty_canvas_layout() -> dict[str, Any]:
+    return {"blocks": {}, "pages": [], "order": [], "updatedAt": None}
+
+
+def _safe_draft_id(value: str) -> str:
+    import re
+    safe = re.sub(r"[^a-zA-Z0-9_-]+", "-", str(value or "").strip()).strip("-").lower()
+    return safe[:80] or f"draft-{uuid4().hex[:8]}"
+
+
+def _canvas_drafts_index_path(template_id: str, signature: str) -> Path:
+    return _stash_path(template_id, signature, "canvas_drafts.json")
+
+
+def _canvas_draft_layout_path(template_id: str, signature: str, draft_id: str) -> Path:
+    return _stash_path(template_id, signature, f"canvas_draft.{_safe_draft_id(draft_id)}.json")
+
+
+def _read_canvas_layout_file(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return _empty_canvas_layout()
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        return doc if isinstance(doc, dict) else _empty_canvas_layout()
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("[canvas-draft] layout read failed %s: %s", path, exc)
+        return _empty_canvas_layout()
+
+
+def _write_canvas_layout_file(path: Path, doc: dict[str, Any]) -> None:
+    path.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _draft_summary(template_id: str, signature: str, meta: dict[str, Any]) -> dict[str, Any]:
+    draft_id = _safe_draft_id(str(meta.get("draftId") or "default"))
+    layout = _read_canvas_layout_file(_canvas_draft_layout_path(template_id, signature, draft_id))
+    blocks = layout.get("blocks") if isinstance(layout.get("blocks"), dict) else {}
+    pages = layout.get("pages") if isinstance(layout.get("pages"), list) else []
+    return {
+        "draftId": draft_id,
+        "name": meta.get("name") or "Untitled draft",
+        "createdAt": meta.get("createdAt"),
+        "updatedAt": layout.get("updatedAt") or meta.get("updatedAt"),
+        "blockCount": len(blocks),
+        "pageCount": len(pages),
+    }
+
+
+def _load_canvas_draft_index(template_id: str, signature: str) -> dict[str, Any]:
+    path = _canvas_drafts_index_path(template_id, signature)
+    if path.exists():
+        try:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(doc, dict) and isinstance(doc.get("drafts"), list):
+                return doc
+        except (json.JSONDecodeError, OSError):
+            pass
+    return {"defaultDraftId": None, "drafts": []}
+
+
+def _save_canvas_draft_index(template_id: str, signature: str, doc: dict[str, Any]) -> None:
+    _canvas_drafts_index_path(template_id, signature).write_text(
+        json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _ensure_default_canvas_draft(template_id: str, signature: str) -> dict[str, Any]:
+    from datetime import datetime, timezone
+
+    index = _load_canvas_draft_index(template_id, signature)
+    drafts = index.get("drafts") if isinstance(index.get("drafts"), list) else []
+    if drafts:
+        if not index.get("defaultDraftId"):
+            index["defaultDraftId"] = drafts[0].get("draftId")
+            _save_canvas_draft_index(template_id, signature, index)
+        return index
+
+    now = datetime.now(timezone.utc).isoformat()
+    draft_id = "default"
+    legacy_layout = _read_canvas_layout_file(_canvas_layout_path(template_id, signature))
+    legacy_layout["updatedAt"] = legacy_layout.get("updatedAt") or now
+    _write_canvas_layout_file(_canvas_draft_layout_path(template_id, signature, draft_id), legacy_layout)
+    index = {
+        "defaultDraftId": draft_id,
+        "drafts": [{"draftId": draft_id, "name": "Default draft", "createdAt": now, "updatedAt": legacy_layout["updatedAt"]}],
+    }
+    _save_canvas_draft_index(template_id, signature, index)
+    return index
+
+
+def _upsert_draft_meta(template_id: str, signature: str, draft_id: str, patch: dict[str, Any]) -> dict[str, Any]:
+    index = _ensure_default_canvas_draft(template_id, signature)
+    drafts = index.get("drafts") or []
+    did = _safe_draft_id(draft_id)
+    for draft in drafts:
+        if draft.get("draftId") == did:
+            draft.update(patch)
+            _save_canvas_draft_index(template_id, signature, index)
+            return index
+    drafts.append({"draftId": did, **patch})
+    index["drafts"] = drafts
+    index.setdefault("defaultDraftId", did)
+    _save_canvas_draft_index(template_id, signature, index)
+    return index
+
+
+@router.get("/{template_id}/{signature}/canvas-drafts")
+def list_canvas_drafts(template_id: str, signature: str, sort: str = "updated_desc") -> dict[str, Any]:
+    """List saved canvas drafts for this template/signature, migrating legacy layout to a default draft."""
+    index = _ensure_default_canvas_draft(template_id, signature)
+    summaries = [_draft_summary(template_id, signature, d) for d in (index.get("drafts") or [])]
+    reverse = sort not in ("name_asc", "created_asc", "updated_asc")
+    if sort.startswith("name"):
+        summaries.sort(key=lambda d: str(d.get("name") or "").lower(), reverse=reverse)
+    elif sort.startswith("created"):
+        summaries.sort(key=lambda d: str(d.get("createdAt") or ""), reverse=reverse)
+    else:
+        summaries.sort(key=lambda d: str(d.get("updatedAt") or ""), reverse=reverse)
+    return {"defaultDraftId": index.get("defaultDraftId"), "drafts": summaries}
+
+
+@router.post("/{template_id}/{signature}/canvas-drafts")
+def create_canvas_draft(template_id: str, signature: str, body: CanvasDraftCreateIn) -> dict[str, Any]:
+    """Create a named canvas draft, optionally cloning an existing draft or the default layout."""
+    from datetime import datetime, timezone
+
+    name = (body.name or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="draft name is required")
+    index = _ensure_default_canvas_draft(template_id, signature)
+    base_id = _safe_draft_id(body.cloneFrom or index.get("defaultDraftId") or "default")
+    draft_id = _safe_draft_id(f"{name}-{uuid4().hex[:6]}")
+    src = _canvas_draft_layout_path(template_id, signature, base_id)
+    layout = _read_canvas_layout_file(src)
+    now = datetime.now(timezone.utc).isoformat()
+    layout["updatedAt"] = now
+    _write_canvas_layout_file(_canvas_draft_layout_path(template_id, signature, draft_id), layout)
+    index.setdefault("drafts", []).append({"draftId": draft_id, "name": name, "createdAt": now, "updatedAt": now})
+    index["defaultDraftId"] = draft_id
+    _save_canvas_draft_index(template_id, signature, index)
+    logger.info("[canvas-draft] created %s__%s draft=%s name=%r", template_id, signature, draft_id, name)
+    return _draft_summary(template_id, signature, {"draftId": draft_id, "name": name, "createdAt": now, "updatedAt": now})
+
+
+@router.patch("/{template_id}/{signature}/canvas-drafts/{draft_id}")
+def rename_canvas_draft(template_id: str, signature: str, draft_id: str, body: CanvasDraftRenameIn) -> dict[str, Any]:
+    from datetime import datetime, timezone
+
+    name = (body.name or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="draft name is required")
+    now = datetime.now(timezone.utc).isoformat()
+    _upsert_draft_meta(template_id, signature, draft_id, {"name": name, "updatedAt": now})
+    return _draft_summary(template_id, signature, {"draftId": _safe_draft_id(draft_id), "name": name, "updatedAt": now})
+
+
+@router.get("/{template_id}/{signature}/canvas-drafts/{draft_id}/layout")
+def get_canvas_draft_layout(template_id: str, signature: str, draft_id: str) -> dict[str, Any]:
+    """Return one named draft layout."""
+    _ensure_default_canvas_draft(template_id, signature)
+    return _read_canvas_layout_file(_canvas_draft_layout_path(template_id, signature, draft_id))
+
+
+@router.put("/{template_id}/{signature}/canvas-drafts/{draft_id}/layout")
+def put_canvas_draft_layout(template_id: str, signature: str, draft_id: str, body: CanvasLayoutIn) -> dict[str, Any]:
+    """Persist one named draft layout; autosaved by the canvas."""
+    from datetime import datetime, timezone
+
+    did = _safe_draft_id(draft_id)
+    now = body.updatedAt or datetime.now(timezone.utc).isoformat()
+    doc = {
+        "blocks": body.blocks or {},
+        "pages": body.pages or [],
+        "order": body.order or [],
+        "updatedAt": now,
+    }
+    _write_canvas_layout_file(_canvas_draft_layout_path(template_id, signature, did), doc)
+    _upsert_draft_meta(template_id, signature, did, {"updatedAt": now})
+    logger.info("[canvas-draft] saved %s__%s draft=%s — %d blocks, %d pages",
+                template_id, signature, did, len(doc["blocks"]), len(doc["pages"]))
+    return {"ok": True, "updatedAt": now}
 
 
 @router.get("/{template_id}/{signature}/canvas-layout")

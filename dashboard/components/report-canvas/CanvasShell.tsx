@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { generatePhaseApi, authApi } from '@/lib/api';
+import { generatePhaseApi, authApi, type CanvasDraftSummary } from '@/lib/api';
+import type { GeneratedSectionBlock, ReportSectionRequest } from '@/lib/report-section';
 import { useCanvasState } from './engine/useCanvasState';
 import { useGeneration } from './engine/useGeneration';
 import { useCanvasAgent } from './engine/useCanvasAgent';
@@ -21,8 +22,10 @@ import { LeftPanel } from './panels/LeftPanel';
 import { RightPanel } from './panels/RightPanel';
 import { ControlPanel } from './panels/ControlPanel';
 import { ReviewPanel } from './panels/ReviewPanel';
+import { CanvasDraftPicker } from './panels/CanvasDraftPicker';
 import { TypographyPanel } from './panels/TypographyPanel';
 import { CommandPalette, type PaletteCommand } from './panels/CommandPalette';
+import { SectionWorkflowModal } from './section-workflow/SectionWorkflowModal';
 
 /* ═══════════════════════════════════════════════════════════════════
    CanvasShell — main layout orchestrator.
@@ -42,7 +45,7 @@ export function CanvasShell({ templateId, signature }: Props) {
   const { phase, setPhase, queue, setQueue, pages, currentPage, panel, togglePanel,
     addPage, goToPage, addBlockToPage, updateBlock, removeBlock, moveBlock, reorderBlock, setFloating, resizeBlock, blocks,
     selectedBlock, setSelectedBlockId, selectedBlockId,
-    setGenerating, getPageBlocks, setBlocks, order, tableSplits, setLayoutMetrics } = state;
+    setGenerating, getPageBlocks, setBlocks, order, setOrder, tableSplits, setLayoutMetrics } = state;
 
   const [pageSize, setPageSize] = useState<PageSize>('a4');
   const [zoom, setZoom] = useState(100);
@@ -50,6 +53,10 @@ export function CanvasShell({ templateId, signature }: Props) {
   const [showControlPanel, setShowControlPanel] = useState(false);
   const [showReviewPanel, setShowReviewPanel] = useState(false);
   const [showTypography, setShowTypography] = useState(false);
+  const [showSectionWorkflow, setShowSectionWorkflow] = useState(false);
+  const [showDraftPicker, setShowDraftPicker] = useState(true);
+  const [activeDraft, setActiveDraft] = useState<CanvasDraftSummary | null>(null);
+  const [restoredDraftKey, setRestoredDraftKey] = useState('');
   const [viewMode, setViewMode] = useState<'paged' | 'scroll'>('scroll');
   const [showPalette, setShowPalette] = useState(false);
   const [showCheatsheet, setShowCheatsheet] = useState(false);
@@ -83,6 +90,12 @@ export function CanvasShell({ templateId, signature }: Props) {
   /** Stable handle to the latest nav fn + index (for the keyboard handler). */
   const navRef = useRef<{ goTo: (i: number) => void; current: number }>({ goTo: () => {}, current: 0 });
   const topicBootRef = useRef(false);
+  const activeDraftKey = activeDraft ? `${templateId}::${signature}::${activeDraft.draftId}` : '';
+
+  useEffect(() => {
+    topicBootRef.current = false;
+    setRestoredDraftKey('');
+  }, [activeDraftKey]);
 
   // Add a footnote → assign the next running number, store it, return the number.
   const addFootnote = (blockId: string, text: string): number => {
@@ -173,7 +186,19 @@ export function CanvasShell({ templateId, signature }: Props) {
   }, [bundle, docModel.tableCaptions, blocks, layoutDigest]);
 
   // Autosave the officer's free-placement layout + restore it on reload.
-  useLayoutPersistence({ templateId, signature, blocks, pages, order, setBlocks, setOrder: state.setOrder, repack: state.repack });
+  useLayoutPersistence({
+    templateId,
+    signature,
+    draftId: activeDraft?.draftId || null,
+    enabled: Boolean(activeDraft),
+    blocks,
+    pages,
+    order,
+    setBlocks,
+    setOrder: state.setOrder,
+    repack: state.repack,
+    onRestored: () => setRestoredDraftKey(activeDraftKey),
+  });
 
   // Load queue on mount
   useEffect(() => {
@@ -186,8 +211,14 @@ export function CanvasShell({ templateId, signature }: Props) {
   // preserving hierarchy (Topic > Chapter > Section) across pages.
   useEffect(() => {
     if (topicBootRef.current) return;
+    if (!activeDraft) return;
+    if (restoredDraftKey !== activeDraftKey) return;
+    if ((activeDraft.blockCount || 0) > 0) return;
     if (phase !== 'ready') return;
     if (!queue.length) return;
+
+    const bootKey = `canvas:autoBoot:${activeDraftKey}`;
+    if (typeof window !== 'undefined' && window.sessionStorage.getItem(bootKey)) return;
 
     const topicOne = queue[0]?.section_path?.[0];
     if (!topicOne) return;
@@ -200,8 +231,9 @@ export function CanvasShell({ templateId, signature }: Props) {
     if (topicAlreadyComplete) return;
 
     topicBootRef.current = true;
+    if (typeof window !== 'undefined') window.sessionStorage.setItem(bootKey, '1');
     void generation.autoGenerateTopic(topicOne);
-  }, [phase, queue, blocks, generation]);
+  }, [phase, queue, blocks, generation, activeDraft, activeDraftKey, restoredDraftKey]);
 
   const reportTitle = templateId.replace(/^tpl_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
@@ -369,6 +401,84 @@ export function CanvasShell({ templateId, signature }: Props) {
     setSelectedBlockId(newId);
   };
 
+  const appendGeneratedSectionBlocks = useCallback((generatedBlocks: GeneratedSectionBlock[], request: ReportSectionRequest) => {
+    if (!generatedBlocks.length) return;
+    const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'section';
+    const chapterTitle = request.target.chapter?.title || reportTitle;
+    const sectionTitle = request.target.section?.title || request.description.text || 'Generated Section';
+    const targetPath = [chapterTitle, sectionTitle].filter(Boolean);
+    const chapterId = request.target.chapter?.id || `sectiongen-ch-${slug(chapterTitle)}`;
+    const sectionId = request.target.section?.id || `sectiongen-sec-${slug(chapterTitle)}-${slug(sectionTitle)}`;
+
+    setBlocks(prev => {
+      const next = new Map(prev);
+      const sequence: string[] = [];
+      const hasChapter = Array.from(next.values()).some(b => b.kind === 'heading' && b.title === chapterTitle && b.sectionPath[0] === chapterTitle);
+      if (!hasChapter && request.target.chapter?.create !== false) {
+        next.set(chapterId, {
+          id: chapterId,
+          index: -1,
+          kind: 'heading',
+          title: chapterTitle,
+          content: chapterTitle,
+          sectionPath: [chapterTitle],
+          status: 'done',
+          pageIndex: currentPage,
+        });
+        sequence.push(chapterId);
+      }
+
+      const hasSection = Array.from(next.values()).some(b => b.kind === 'heading' && b.title === sectionTitle && b.sectionPath.join('\u001f') === targetPath.join('\u001f'));
+      if (!hasSection && request.target.section?.create !== false) {
+        next.set(sectionId, {
+          id: sectionId,
+          index: -1,
+          kind: 'heading',
+          title: sectionTitle,
+          content: sectionTitle,
+          sectionPath: targetPath,
+          status: 'done',
+          pageIndex: currentPage,
+        });
+        sequence.push(sectionId);
+      }
+
+      for (const block of generatedBlocks) {
+        const normalized: PageBlock = {
+          ...block,
+          sectionPath: targetPath,
+          pageIndex: currentPage,
+        } as PageBlock;
+        next.set(normalized.id, normalized);
+        sequence.push(normalized.id);
+      }
+
+      setOrder(prevOrder => {
+        const clean = prevOrder.filter(id => next.has(id));
+        const additions = sequence.filter(id => !clean.includes(id));
+        if (!additions.length) return clean;
+        const explicitIndex = request.target.insertAfterBlockId ? clean.indexOf(request.target.insertAfterBlockId) : -1;
+        let insertAt = explicitIndex;
+        if (insertAt < 0) {
+          insertAt = -1;
+          clean.forEach((id, idx) => {
+            const b = next.get(id);
+            if (b && targetPath.every((part, i) => b.sectionPath[i] === part)) insertAt = idx;
+          });
+        }
+        const out = [...clean];
+        out.splice(insertAt + 1, 0, ...additions);
+        return out;
+      });
+
+      return next;
+    });
+
+    const firstGenerated = generatedBlocks[0]?.id || sectionId || chapterId;
+    setSelectedBlockId(firstGenerated);
+    requestAnimationFrame(() => state.repack());
+  }, [currentPage, reportTitle, setBlocks, setOrder, setSelectedBlockId, state]);
+
   // Global keyboard shortcuts (U5) — undo/redo, palette, page nav, focus,
   // delete, duplicate, cheatsheet. Typing in a field is never hijacked.
   useEffect(() => {
@@ -518,6 +628,9 @@ export function CanvasShell({ templateId, signature }: Props) {
           onOpenReview={() => setShowReviewPanel(true)}
           reviewStatus={review.status}
           reviewOpenIssues={review.openComments + review.openFlags}
+          activeDraftName={activeDraft?.name}
+          onOpenDrafts={() => setShowDraftPicker(true)}
+          onOpenSectionGenerator={() => setShowSectionWorkflow(true)}
           onInsertBlock={insertBlankBlock}
           pageSize={pageSize}
           onPageSizeChange={setPageSize}
@@ -704,6 +817,24 @@ export function CanvasShell({ templateId, signature }: Props) {
       {/* Typography settings popup (T6) */}
       {showTypography && (
         <TypographyPanel config={typography} onChange={setTypography} onClose={() => setShowTypography(false)} />
-      )}    </div>
+      )}
+
+      {showSectionWorkflow && (
+        <SectionWorkflowModal
+          templateId={templateId}
+          signature={signature}
+          onClose={() => setShowSectionWorkflow(false)}
+          onAppendBlocks={appendGeneratedSectionBlocks}
+        />
+      )}
+      <CanvasDraftPicker
+        templateId={templateId}
+        signature={signature}
+        open={showDraftPicker || !activeDraft}
+        currentDraftId={activeDraft?.draftId || null}
+        onSelect={(draft) => { setActiveDraft(draft); setShowDraftPicker(false); }}
+        onClose={() => setShowDraftPicker(false)}
+      />
+    </div>
   );
 }

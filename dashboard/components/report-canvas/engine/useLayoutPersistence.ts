@@ -11,13 +11,15 @@ import type { CanvasPage, PageBlock } from './useCanvasState';
 
    • Restore runs ONCE after the generation queue has produced blocks
      (it re-applies saved x/y/w/h onto matching block ids).
-   • Save is debounced; it serialises only the spatial fields (not the
-     heavy content) so writes stay small.
+   • Manual/generated canvas-only blocks are persisted with their content too,
+     because they are not recreated by the backend generation queue.
    ═══════════════════════════════════════════════════════════════════ */
 
 interface Params {
   templateId: string;
   signature: string;
+  draftId?: string | null;
+  enabled?: boolean;
   blocks: Map<string, PageBlock>;
   pages: CanvasPage[];
   /** Canonical document order; persisted so manual reorders survive a reload. */
@@ -26,6 +28,8 @@ interface Params {
   setOrder: (updater: (prev: string[]) => string[]) => void;
   /** Re-derive pages from the (freshly restored) order + blocks. */
   repack: () => void;
+  /** Fires after the layout/draft restore attempt finishes (success or empty). */
+  onRestored?: () => void;
 }
 
 const SAVE_DEBOUNCE_MS = 900;
@@ -33,6 +37,35 @@ const SAVE_DEBOUNCE_MS = 900;
 /** Spatial fields we persist per block (presentation only). */
 function spatialOf(b: PageBlock) {
   return { floating: b.floating, x: b.x, y: b.y, w: b.w, h: b.h, pageIndex: b.pageIndex };
+}
+
+type PersistedBlock = ReturnType<typeof spatialOf> & Partial<PageBlock>;
+
+function isCanvasOwnedBlock(b: PageBlock): boolean {
+  return b.index < 0 || b.id.startsWith('sectiongen-') || b.id.startsWith('block-manual-') || b.id.startsWith('block-copy-');
+}
+
+function persistableOf(b: PageBlock): PersistedBlock {
+  const spatial = spatialOf(b);
+  if (!isCanvasOwnedBlock(b)) return spatial;
+  return {
+    ...spatial,
+    id: b.id,
+    index: b.index,
+    kind: b.kind,
+    title: b.title,
+    content: b.content,
+    tableData: b.tableData,
+    metricValue: b.metricValue,
+    metricUnit: b.metricUnit,
+    sectionPath: b.sectionPath,
+    status: b.status,
+    _origId: b._origId,
+  };
+}
+
+function isPersistedCanvasOwnedBlock(s: PersistedBlock): s is PersistedBlock & Pick<PageBlock, 'id' | 'kind' | 'title' | 'content' | 'sectionPath' | 'status'> {
+  return typeof s.id === 'string' && typeof s.kind === 'string' && typeof s.title === 'string' && Array.isArray(s.sectionPath);
 }
 
 /** Full-width structural blocks should never be pinned narrow — a saved table
@@ -51,30 +84,78 @@ function pinIsPlausible(kind: PageBlock['kind'], s: { x?: number; y?: number; w?
   return true;
 }
 
-export function useLayoutPersistence({ templateId, signature, blocks, pages, order, setBlocks, setOrder, repack }: Params) {
+export function useLayoutPersistence({ templateId, signature, draftId, enabled = true, blocks, pages, order, setBlocks, setOrder, repack, onRestored }: Params) {
   const restored = useRef(false);
-  const savedRef = useRef<Record<string, ReturnType<typeof spatialOf>>>({});
+  const restoredKey = useRef('');
+  const savedRef = useRef<Record<string, PersistedBlock>>({});
   const savedOrderRef = useRef<string[]>([]);
   const saveTimer = useRef<number | null>(null);
 
+  const useNamedDraft = Boolean(draftId && draftId !== '__legacy__');
+
+  const loadLayout = () => useNamedDraft
+    ? generatePhaseApi.getCanvasDraftLayout(templateId, signature, draftId)
+    : generatePhaseApi.getCanvasLayout(templateId, signature);
+
+  const saveLayout = (body: { blocks: Record<string, unknown>; pages: Array<Record<string, unknown>>; order: string[]; updatedAt?: string }) => useNamedDraft
+    ? generatePhaseApi.putCanvasDraftLayout(templateId, signature, draftId, body)
+    : generatePhaseApi.putCanvasLayout(templateId, signature, body);
+
   // ── Restore once blocks exist ──────────────────────────────────────────
   useEffect(() => {
-    if (restored.current || blocks.size === 0) return;
+    if (!enabled) return;
+    const key = `${templateId}::${signature}::${draftId || 'legacy'}`;
+    if (restoredKey.current !== key) {
+      restored.current = false;
+      restoredKey.current = key;
+      savedRef.current = {};
+      savedOrderRef.current = [];
+    }
+    if (restored.current) return;
     restored.current = true;
     let cancelled = false;
-    generatePhaseApi.getCanvasLayout(templateId, signature)
+    loadLayout()
       .then(layout => {
         if (cancelled || !layout?.blocks) return;
-        const saved = layout.blocks as Record<string, { floating?: boolean; x?: number; y?: number; w?: number; h?: number; pageIndex?: number }>;
+        const saved = layout.blocks as Record<string, PersistedBlock>;
         const savedOrder = Array.isArray(layout.order) ? layout.order : [];
-        if (!Object.keys(saved).length && !savedOrder.length) return;
-        savedRef.current = saved as Record<string, ReturnType<typeof spatialOf>>;
+        if (!Object.keys(saved).length && !savedOrder.length) {
+          onRestored?.();
+          return;
+        }
+        savedRef.current = saved;
         savedOrderRef.current = savedOrder;
         setBlocks(prev => {
           const m = new Map(prev);
+          for (const [id, b] of Array.from(m.entries())) {
+            if (isCanvasOwnedBlock(b) && !(id in saved)) m.delete(id);
+          }
           for (const [id, s] of Object.entries(saved)) {
             const b = m.get(id);
-            if (!b) continue;
+            if (!b) {
+              if (isPersistedCanvasOwnedBlock(s)) {
+                m.set(id, {
+                  id,
+                  index: typeof s.index === 'number' ? s.index : -1,
+                  kind: s.kind,
+                  title: s.title,
+                  content: s.content || '',
+                  tableData: s.tableData,
+                  metricValue: s.metricValue,
+                  metricUnit: s.metricUnit,
+                  sectionPath: s.sectionPath,
+                  status: s.status || 'done',
+                  pageIndex: typeof s.pageIndex === 'number' ? s.pageIndex : 0,
+                  floating: s.floating,
+                  x: s.x,
+                  y: s.y,
+                  w: s.w,
+                  h: s.h,
+                  _origId: s._origId,
+                } as PageBlock);
+              }
+              continue;
+            }
             if (s.floating && pinIsPlausible(b.kind, s)) {
               // Restore an explicit floating overlay (free placement).
               m.set(id, {
@@ -98,7 +179,10 @@ export function useLayoutPersistence({ templateId, signature, blocks, pages, ord
         // saved sequence), then append any new ids not present in the save.
         if (savedOrder.length) {
           setOrder(curOrder => {
-            const present = new Set(curOrder);
+            const restorable = Object.entries(saved)
+              .filter(([, s]) => isPersistedCanvasOwnedBlock(s))
+              .map(([id]) => id);
+            const present = new Set([...curOrder, ...restorable]);
             const reordered = savedOrder.filter(id => present.has(id));
             const inSaved = new Set(reordered);
             for (const id of curOrder) if (!inSaved.has(id)) reordered.push(id);
@@ -106,17 +190,19 @@ export function useLayoutPersistence({ templateId, signature, blocks, pages, ord
           });
           repack();   // pages must be re-derived from the restored order
         }
+        onRestored?.();
       })
-      .catch(() => { /* best-effort; no saved layout yet */ });
+      .catch(() => { onRestored?.(); });
     return () => { cancelled = true; };
-  }, [templateId, signature, blocks.size, setBlocks, setOrder, repack]);
+  }, [enabled, templateId, signature, draftId, setBlocks, setOrder, repack, onRestored]);
 
   // ── Debounced autosave on spatial OR order change ──────────────────────
   useEffect(() => {
+    if (!enabled) return;
     if (!restored.current || blocks.size === 0) return;
     // Build the sparse spatial map; skip the save if nothing relevant changed.
-    const spatial: Record<string, ReturnType<typeof spatialOf>> = {};
-    for (const [id, b] of blocks) spatial[id] = spatialOf(b);
+    const spatial: Record<string, PersistedBlock> = {};
+    for (const [id, b] of blocks) spatial[id] = persistableOf(b);
     const spatialSame = JSON.stringify(spatial) === JSON.stringify(savedRef.current);
     const orderSame = JSON.stringify(order) === JSON.stringify(savedOrderRef.current);
     if (spatialSame && orderSame) return;
@@ -125,7 +211,7 @@ export function useLayoutPersistence({ templateId, signature, blocks, pages, ord
     saveTimer.current = window.setTimeout(() => {
       savedRef.current = spatial;
       savedOrderRef.current = [...order];
-      generatePhaseApi.putCanvasLayout(templateId, signature, {
+      saveLayout({
         blocks: spatial,
         pages: pages.map(p => ({ id: p.id, index: p.index, blocks: p.blocks })),
         order,
@@ -133,5 +219,5 @@ export function useLayoutPersistence({ templateId, signature, blocks, pages, ord
     }, SAVE_DEBOUNCE_MS);
 
     return () => { if (saveTimer.current) window.clearTimeout(saveTimer.current); };
-  }, [templateId, signature, blocks, pages, order]);
+  }, [enabled, templateId, signature, draftId, blocks, pages, order]);
 }
