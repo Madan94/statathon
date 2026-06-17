@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { generatePhaseApi, authApi } from '@/lib/api';
 import { useCanvasState } from './engine/useCanvasState';
 import { useGeneration } from './engine/useGeneration';
@@ -40,7 +40,7 @@ const FRONT_MATTER_PAGES = 2;
 export function CanvasShell({ templateId, signature }: Props) {
   const state = useCanvasState();
   const { phase, setPhase, queue, setQueue, pages, currentPage, panel, togglePanel,
-    addPage, goToPage, addBlockToPage, updateBlock, removeBlock, moveBlock, resizeBlock, blocks,
+    addPage, goToPage, addBlockToPage, updateBlock, removeBlock, moveBlock, reorderBlock, setFloating, resizeBlock, blocks,
     selectedBlock, setSelectedBlockId, selectedBlockId,
     setGenerating, getPageBlocks, setBlocks, order, tableSplits, setLayoutMetrics } = state;
 
@@ -173,7 +173,7 @@ export function CanvasShell({ templateId, signature }: Props) {
   }, [bundle, docModel.tableCaptions, blocks, layoutDigest]);
 
   // Autosave the officer's free-placement layout + restore it on reload.
-  useLayoutPersistence({ templateId, signature, blocks, pages, setBlocks });
+  useLayoutPersistence({ templateId, signature, blocks, pages, order, setBlocks, setOrder: state.setOrder, repack: state.repack });
 
   // Load queue on mount
   useEffect(() => {
@@ -272,7 +272,7 @@ export function CanvasShell({ templateId, signature }: Props) {
 
   /** Navigate the viewport. In paged mode this flips a single sheet (Cover →
    *  Contents → content) left-to-right; in scroll mode it scrolls to a page. */
-  const navGoTo = (idx: number) => {
+  const navGoTo = useCallback((idx: number) => {
     if (viewMode === 'paged') {
       const total = (showFrontMatter ? FRONT_MATTER_PAGES : 0) + pages.length;
       const target = Math.max(0, Math.min(idx, total - 1));
@@ -290,11 +290,11 @@ export function CanvasShell({ templateId, signature }: Props) {
     requestAnimationFrame(() => {
       document.getElementById(`canvas-page-${target}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
-  };
+  }, [viewMode, showFrontMatter, pages.length, goToPage]);
 
   // Scroll to a section anchor (used by the TOC deep-links). Finds which page
   // the anchored block sits on and navigates there, then scrolls into view.
-  const jumpToAnchor = (anchor: string) => {
+  const jumpToAnchor = useCallback((anchor: string) => {
     const entry = docModel.toc.find(t => t.anchor === anchor);
     if (!entry) return;
     setActiveAnchor(anchor); // highlight the clicked section immediately
@@ -316,7 +316,7 @@ export function CanvasShell({ templateId, signature }: Props) {
         document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
-  };
+  }, [docModel.toc, viewMode, showFrontMatter, navGoTo, goToPage]);
 
   // Navigate to a CONTENT page index (LeftPanel thumbnails, review jumps).
   // In paged mode this offsets past the front-matter sheets.
@@ -324,16 +324,19 @@ export function CanvasShell({ templateId, signature }: Props) {
 
   // Switch view mode. Entering paged mode starts at the Cover (sheet 1) when
   // front matter is shown — the officer flips through the document from page 1.
-  const changeViewMode = (v: 'paged' | 'scroll') => {
+  const changeViewMode = useCallback((v: 'paged' | 'scroll') => {
     if (v === 'paged') {
       setPagedIndex(0);
       setFlip(f => ({ key: f.key + 1, dir: 'next' }));
     }
     setViewMode(v);
-  };
+  }, []);
 
   // Keep the keyboard handler's nav fresh without re-subscribing every render.
-  navRef.current = { goTo: navGoTo, current: navCurrent };
+  // Updated in an effect (not during render) so refs are never written mid-render.
+  useEffect(() => {
+    navRef.current = { goTo: navGoTo, current: navCurrent };
+  });
 
   // Insert a fresh, editable block of the given kind onto the current page —
   // wires the FormatRibbon element buttons so clicking Text/Table/Chart/Metric
@@ -391,8 +394,22 @@ export function CanvasShell({ templateId, signature }: Props) {
       if (mod && e.key === '.') { e.preventDefault(); setFocusMode(f => !f); return; }
       // Shortcut cheatsheet
       if (e.key === '?' || (e.shiftKey && e.key === '/')) { e.preventDefault(); setShowCheatsheet(v => !v); return; }
-      // Delete selected block
+      // Block selection nav (Word-like) — Arrow Up/Down move between blocks.
+      if (!mod && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && selectedBlockId) {
+        const idx = order.indexOf(selectedBlockId);
+        if (idx !== -1) {
+          const next = e.key === 'ArrowDown' ? order[idx + 1] : order[idx - 1];
+          if (next) { e.preventDefault(); setSelectedBlockId(next); }
+        }
+        return;
+      }
+      // Delete a selected block. Delete always removes; Backspace only removes an
+      // EMPTY block — so selecting a block and pressing Backspace can no longer
+      // destroy real content by accident (the old footgun).
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBlockId) {
+        const b = blocks.get(selectedBlockId);
+        const emptyish = !b || (!(b.content && b.content.trim()) && !b.tableData && !b.metricValue);
+        if (e.key === 'Backspace' && !emptyish) return;   // protect non-empty blocks
         e.preventDefault();
         removeBlock(selectedBlockId);
         setSelectedBlockId(null);
@@ -431,7 +448,7 @@ export function CanvasShell({ templateId, signature }: Props) {
       });
     }
     return cmds;
-  }, [generation, bundle, state, panel, togglePanel, viewMode, docModel.toc]);
+  }, [generation, bundle, state, panel, togglePanel, viewMode, docModel.toc, jumpToAnchor, changeViewMode]);
 
   // ── Shared sheet renderers (used by both scroll + paged modes) ──────────
   const renderCover = () => (
@@ -450,6 +467,8 @@ export function CanvasShell({ templateId, signature }: Props) {
       onSelectBlock={setSelectedBlockId}
       onGenerate={(idx) => generation.generateOne(idx)}
       onMoveBlock={moveBlock}
+      onReorderBlock={reorderBlock}
+      onSetFloating={setFloating}
       onUpdateBlock={updateBlock}
       onDeleteBlock={(id) => { removeBlock(id); setSelectedBlockId(null); }}
       onDuplicateBlock={duplicateBlock}
@@ -472,6 +491,7 @@ export function CanvasShell({ templateId, signature }: Props) {
       commentCount={review.commentCount}
       isFlagged={(id) => review.flags.has(id)}
       numerals={typography.numerals}
+      onReportHeights={state.reportHeights}
     />
   );
 
@@ -482,6 +502,7 @@ export function CanvasShell({ templateId, signature }: Props) {
     <div className="flex h-screen flex-col overflow-hidden bg-[#f0f2f5]" role="application" aria-label={`Report canvas — ${reportTitle}`}>
       {/* Unified command bar (U3) — replaces TopNav + FormatRibbon + viewport toolbar */}
       {!focusMode && (
+        <div className="relative z-30 shrink-0 shadow-sm">
         <CommandBar
           title={reportTitle}
           bundle={bundle}
@@ -525,10 +546,11 @@ export function CanvasShell({ templateId, signature }: Props) {
           canUndo={state.canUndo}
           canRedo={state.canRedo}
         />
+        </div>
       )}
 
       {/* Main area */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1 overflow-hidden">
         {/* Left panel */}
         {panel === 'left' && !focusMode && (
           <LeftPanel pages={pages} currentPage={activeContentPage} onGoToPage={goToContentPage} getPageBlocks={getPageBlocks} onInsertBlock={insertBlankBlock} toc={docModel.toc} onJumpToAnchor={jumpToAnchor} activeAnchor={activeAnchor} />
@@ -549,8 +571,8 @@ export function CanvasShell({ templateId, signature }: Props) {
               <span className="text-slate-600">{docModel.chapterByPage[currentPage]}</span>
             </div>
           )}
-          <div ref={scrollRef} className="flex-1 w-full overflow-auto p-6">
-            <div className={`doc-type flex min-h-full w-full flex-col items-center page-flip-perspective ${density === 'compact' ? 'gap-3' : 'gap-6'}`} style={docStyle}>
+          <div ref={scrollRef} className="relative z-0 flex-1 w-full overflow-auto px-3 py-5">
+            <div className={`doc-type mx-auto flex min-h-full w-fit max-w-full flex-col items-center page-flip-perspective ${density === 'compact' ? 'gap-3' : 'gap-5'}`} style={docStyle}>
               {viewMode === 'scroll' ? (
                 // SCROLL — front matter as a prefix, then all content pages stacked.
                 <>

@@ -1,0 +1,2716 @@
+{
+  "$schema": "bharatstat/semantic-slot-graph/v2",
+  "_doc": "Semantic slot wiring for Sixth Economic Census — Establishment & Employment Statistics. Maps each slot to its question, component contract, required entities, chart type and execution order.",
+  "templateId": "tpl_economic_census_establishments_v1",
+  "version": "1.0.0",
+  "totalSlots": 78,
+  "semanticSlots": 78,
+  "virtualSlots": 0,
+  "slots": [
+    {
+      "slotId": "slot_state_estab_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_state_estab",
+      "componentRef": "q_state_estab_narrative",
+      "sectionRef": "sec_state_estab",
+      "chapterRef": "ch_geography",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_establishments",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_establishments → Establishments column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_state_estab_table",
+      "slotType": "table",
+      "questionRef": "q_state_estab",
+      "componentRef": "q_state_estab_table",
+      "sectionRef": "sec_state_estab",
+      "chapterRef": "ch_geography",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_establishments",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_establishments → Establishments column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 6,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_establishments",
+          "ent_persons"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_establishments",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_state_estab_chart",
+      "slotType": "chart",
+      "questionRef": "q_state_estab",
+      "componentRef": "q_state_estab_chart",
+      "sectionRef": "sec_state_estab",
+      "chapterRef": "ch_geography",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_establishments",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_establishments → Establishments column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Establishments by State/UT"
+      },
+      "chartTitle": "Establishments by State/UT",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_establishments"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_region_estab_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_region_estab",
+      "componentRef": "q_region_estab_narrative",
+      "sectionRef": "sec_region_estab",
+      "chapterRef": "ch_geography",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_region",
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_region_estab_table",
+      "slotType": "table",
+      "questionRef": "q_region_estab",
+      "componentRef": "q_region_estab_table",
+      "sectionRef": "sec_region_estab",
+      "chapterRef": "ch_geography",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_region",
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 6,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_establishments"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_establishments",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_region_estab_chart",
+      "slotType": "chart",
+      "questionRef": "q_region_estab",
+      "componentRef": "q_region_estab_chart",
+      "sectionRef": "sec_region_estab",
+      "chapterRef": "ch_geography",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_region",
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "pie",
+        "title": "Establishment Share by Region"
+      },
+      "chartTitle": "Establishment Share by Region",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_establishments"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_rural_urban_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_rural_urban",
+      "componentRef": "q_rural_urban_narrative",
+      "sectionRef": "sec_rural_urban",
+      "chapterRef": "ch_rural_urban",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_rural_estab",
+        "ent_urban_estab",
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_rural_estab → Rural Establishments column",
+        "ent_urban_estab → Urban Establishments column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_rural_urban_chart",
+      "slotType": "chart",
+      "questionRef": "q_rural_urban",
+      "componentRef": "q_rural_urban_chart",
+      "sectionRef": "sec_rural_urban",
+      "chapterRef": "ch_rural_urban",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_rural_estab",
+        "ent_urban_estab",
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_rural_estab → Rural Establishments column",
+        "ent_urban_estab → Urban Establishments column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "donut",
+        "title": "Rural vs Urban Establishment Composition"
+      },
+      "chartTitle": "Rural vs Urban Establishment Composition",
+      "chartSpec": {
+        "slices": [
+          "ent_rural_estab",
+          "ent_urban_estab"
+        ]
+      }
+    },
+    {
+      "slotId": "slot_rural_lead_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_rural_lead",
+      "componentRef": "q_rural_lead_narrative",
+      "sectionRef": "sec_rural_lead",
+      "chapterRef": "ch_rural_urban",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_rural_estab"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_rural_estab → Rural Establishments column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_rural_lead_table",
+      "slotType": "table",
+      "questionRef": "q_rural_lead",
+      "componentRef": "q_rural_lead_table",
+      "sectionRef": "sec_rural_lead",
+      "chapterRef": "ch_rural_urban",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_rural_estab"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_rural_estab → Rural Establishments column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 6,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_rural_estab"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_rural_estab",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_rural_lead_chart",
+      "slotType": "chart",
+      "questionRef": "q_rural_lead",
+      "componentRef": "q_rural_lead_chart",
+      "sectionRef": "sec_rural_lead",
+      "chapterRef": "ch_rural_urban",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_rural_estab"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_rural_estab → Rural Establishments column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Rural Establishments by State/UT"
+      },
+      "chartTitle": "Rural Establishments by State/UT",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_rural_estab"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_urban_lead_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_urban_lead",
+      "componentRef": "q_urban_lead_narrative",
+      "sectionRef": "sec_urban_lead",
+      "chapterRef": "ch_rural_urban",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_urban_estab"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_urban_estab → Urban Establishments column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_urban_lead_table",
+      "slotType": "table",
+      "questionRef": "q_urban_lead",
+      "componentRef": "q_urban_lead_table",
+      "sectionRef": "sec_urban_lead",
+      "chapterRef": "ch_rural_urban",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_urban_estab"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_urban_estab → Urban Establishments column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 6,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_urban_estab"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_urban_estab",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_urban_lead_chart",
+      "slotType": "chart",
+      "questionRef": "q_urban_lead",
+      "componentRef": "q_urban_lead_chart",
+      "sectionRef": "sec_urban_lead",
+      "chapterRef": "ch_rural_urban",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_urban_estab"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_urban_estab → Urban Establishments column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Urban Establishments by State/UT"
+      },
+      "chartTitle": "Urban Establishments by State/UT",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_urban_estab"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_urban_share_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_urban_share",
+      "componentRef": "q_urban_share_narrative",
+      "sectionRef": "sec_urban_share",
+      "chapterRef": "ch_urbanisation",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_urban_share",
+        "ent_urban_estab",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_urban_share → Urban Share column",
+        "ent_urban_estab → Urban Establishments column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_urban_share_table",
+      "slotType": "table",
+      "questionRef": "q_urban_share",
+      "componentRef": "q_urban_share_table",
+      "sectionRef": "sec_urban_share",
+      "chapterRef": "ch_urbanisation",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_urban_share",
+        "ent_urban_estab",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_urban_share → Urban Share column",
+        "ent_urban_estab → Urban Establishments column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 4,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_urban_share"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_urban_share",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_urban_share_chart",
+      "slotType": "chart",
+      "questionRef": "q_urban_share",
+      "componentRef": "q_urban_share_chart",
+      "sectionRef": "sec_urban_share",
+      "chapterRef": "ch_urbanisation",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_urban_share",
+        "ent_urban_estab",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_urban_share → Urban Share column",
+        "ent_urban_estab → Urban Establishments column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Urban Establishment Share by State/UT"
+      },
+      "chartTitle": "Urban Establishment Share by State/UT",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_urban_share"
+        ],
+        "topN": 12
+      }
+    },
+    {
+      "slotId": "slot_rural_share_region_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_rural_share_region",
+      "componentRef": "q_rural_share_region_narrative",
+      "sectionRef": "sec_rural_share_region",
+      "chapterRef": "ch_urbanisation",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_region",
+        "ent_rural_share",
+        "ent_rural_estab",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_rural_share → Rural Share column",
+        "ent_rural_estab → Rural Establishments column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_rural_share_region_chart",
+      "slotType": "chart",
+      "questionRef": "q_rural_share_region",
+      "componentRef": "q_rural_share_region_chart",
+      "sectionRef": "sec_rural_share_region",
+      "chapterRef": "ch_urbanisation",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_region",
+        "ent_rural_share",
+        "ent_rural_estab",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_rural_share → Rural Share column",
+        "ent_rural_estab → Rural Establishments column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Rural Establishment Share by Region"
+      },
+      "chartTitle": "Rural Establishment Share by Region",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_rural_share"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_rural_share_region_table",
+      "slotType": "table",
+      "questionRef": "q_rural_share_region",
+      "componentRef": "q_rural_share_region_table",
+      "sectionRef": "sec_rural_share_region",
+      "chapterRef": "ch_urbanisation",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_region",
+        "ent_rural_share",
+        "ent_rural_estab",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_rural_share → Rural Share column",
+        "ent_rural_estab → Rural Establishments column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 4,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_rural_share"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_rural_share",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_rural_share_region_metric",
+      "slotType": "metric",
+      "questionRef": "q_rural_share_region",
+      "componentRef": "q_rural_share_region_metric",
+      "sectionRef": "sec_rural_share_region",
+      "chapterRef": "ch_urbanisation",
+      "topicRef": "topic_landscape",
+      "requiredEntities": [
+        "ent_region",
+        "ent_rural_share",
+        "ent_rural_estab",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_rural_share → Rural Share column",
+        "ent_rural_estab → Rural Establishments column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "computed_metric",
+        "displayFormat": "percentage"
+      },
+      "formulaRef": "f_rural_share",
+      "formulaSpec": {
+        "formulaType": "SHARE",
+        "numerator": "ent_rural_estab",
+        "denominator": "ent_establishments",
+        "grain": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_state_emp_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_state_emp",
+      "componentRef": "q_state_emp_narrative",
+      "sectionRef": "sec_state_emp",
+      "chapterRef": "ch_emp_volume",
+      "topicRef": "topic_employment",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_persons",
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_persons → Persons Working column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_state_emp_table",
+      "slotType": "table",
+      "questionRef": "q_state_emp",
+      "componentRef": "q_state_emp_table",
+      "sectionRef": "sec_state_emp",
+      "chapterRef": "ch_emp_volume",
+      "topicRef": "topic_employment",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_persons",
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_persons → Persons Working column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 6,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_persons",
+          "ent_establishments"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_persons",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_state_emp_chart",
+      "slotType": "chart",
+      "questionRef": "q_state_emp",
+      "componentRef": "q_state_emp_chart",
+      "sectionRef": "sec_state_emp",
+      "chapterRef": "ch_emp_volume",
+      "topicRef": "topic_employment",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_persons",
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_persons → Persons Working column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Persons Working by State/UT"
+      },
+      "chartTitle": "Persons Working by State/UT",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_persons"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_region_emp_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_region_emp",
+      "componentRef": "q_region_emp_narrative",
+      "sectionRef": "sec_region_emp",
+      "chapterRef": "ch_emp_volume",
+      "topicRef": "topic_employment",
+      "requiredEntities": [
+        "ent_region",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_region_emp_table",
+      "slotType": "table",
+      "questionRef": "q_region_emp",
+      "componentRef": "q_region_emp_table",
+      "sectionRef": "sec_region_emp",
+      "chapterRef": "ch_emp_volume",
+      "topicRef": "topic_employment",
+      "requiredEntities": [
+        "ent_region",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 6,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_persons"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_persons",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_region_emp_chart",
+      "slotType": "chart",
+      "questionRef": "q_region_emp",
+      "componentRef": "q_region_emp_chart",
+      "sectionRef": "sec_region_emp",
+      "chapterRef": "ch_emp_volume",
+      "topicRef": "topic_employment",
+      "requiredEntities": [
+        "ent_region",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Persons Working by Region"
+      },
+      "chartTitle": "Persons Working by Region",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_persons"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_avg_emp_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_avg_emp",
+      "componentRef": "q_avg_emp_narrative",
+      "sectionRef": "sec_avg_emp",
+      "chapterRef": "ch_emp_scale",
+      "topicRef": "topic_employment",
+      "requiredEntities": [
+        "ent_region",
+        "ent_avg_emp",
+        "ent_persons",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_avg_emp → Avg Employment column",
+        "ent_persons → Persons Working column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_avg_emp_chart",
+      "slotType": "chart",
+      "questionRef": "q_avg_emp",
+      "componentRef": "q_avg_emp_chart",
+      "sectionRef": "sec_avg_emp",
+      "chapterRef": "ch_emp_scale",
+      "topicRef": "topic_employment",
+      "requiredEntities": [
+        "ent_region",
+        "ent_avg_emp",
+        "ent_persons",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_avg_emp → Avg Employment column",
+        "ent_persons → Persons Working column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Average Employment per Establishment by Region"
+      },
+      "chartTitle": "Average Employment per Establishment by Region",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_avg_emp"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_avg_emp_table",
+      "slotType": "table",
+      "questionRef": "q_avg_emp",
+      "componentRef": "q_avg_emp_table",
+      "sectionRef": "sec_avg_emp",
+      "chapterRef": "ch_emp_scale",
+      "topicRef": "topic_employment",
+      "requiredEntities": [
+        "ent_region",
+        "ent_avg_emp",
+        "ent_persons",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_avg_emp → Avg Employment column",
+        "ent_persons → Persons Working column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 4,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_avg_emp"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_avg_emp",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_avg_emp_metric",
+      "slotType": "metric",
+      "questionRef": "q_avg_emp",
+      "componentRef": "q_avg_emp_metric",
+      "sectionRef": "sec_avg_emp",
+      "chapterRef": "ch_emp_scale",
+      "topicRef": "topic_employment",
+      "requiredEntities": [
+        "ent_region",
+        "ent_avg_emp",
+        "ent_persons",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_avg_emp → Avg Employment column",
+        "ent_persons → Persons Working column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "computed_metric",
+        "displayFormat": "multiplier"
+      },
+      "formulaRef": "f_avg_employment",
+      "formulaSpec": {
+        "formulaType": "RATIO",
+        "numerator": "ent_persons",
+        "denominator": "ent_establishments",
+        "grain": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_state_scale_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_state_scale",
+      "componentRef": "q_state_scale_narrative",
+      "sectionRef": "sec_state_scale",
+      "chapterRef": "ch_emp_scale",
+      "topicRef": "topic_employment",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_avg_emp"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_avg_emp → Avg Employment column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_state_scale_table",
+      "slotType": "table",
+      "questionRef": "q_state_scale",
+      "componentRef": "q_state_scale_table",
+      "sectionRef": "sec_state_scale",
+      "chapterRef": "ch_emp_scale",
+      "topicRef": "topic_employment",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_avg_emp"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_avg_emp → Avg Employment column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 6,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_avg_emp"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_avg_emp",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_state_scale_chart",
+      "slotType": "chart",
+      "questionRef": "q_state_scale",
+      "componentRef": "q_state_scale_chart",
+      "sectionRef": "sec_state_scale",
+      "chapterRef": "ch_emp_scale",
+      "topicRef": "topic_employment",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_avg_emp"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_avg_emp → Avg Employment column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Average Employment per Establishment by State/UT"
+      },
+      "chartTitle": "Average Employment per Establishment by State/UT",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_avg_emp"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_state_female_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_state_female",
+      "componentRef": "q_state_female_narrative",
+      "sectionRef": "sec_state_female",
+      "chapterRef": "ch_female_volume",
+      "topicRef": "topic_female",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_female",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_female → Female Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_state_female_table",
+      "slotType": "table",
+      "questionRef": "q_state_female",
+      "componentRef": "q_state_female_table",
+      "sectionRef": "sec_state_female",
+      "chapterRef": "ch_female_volume",
+      "topicRef": "topic_female",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_female",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_female → Female Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 6,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_female",
+          "ent_persons"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_female",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_state_female_chart",
+      "slotType": "chart",
+      "questionRef": "q_state_female",
+      "componentRef": "q_state_female_chart",
+      "sectionRef": "sec_state_female",
+      "chapterRef": "ch_female_volume",
+      "topicRef": "topic_female",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_female",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_female → Female Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Female Workers by State/UT"
+      },
+      "chartTitle": "Female Workers by State/UT",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_female"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_region_female_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_region_female",
+      "componentRef": "q_region_female_narrative",
+      "sectionRef": "sec_region_female",
+      "chapterRef": "ch_female_volume",
+      "topicRef": "topic_female",
+      "requiredEntities": [
+        "ent_region",
+        "ent_female"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_female → Female Workers column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_region_female_table",
+      "slotType": "table",
+      "questionRef": "q_region_female",
+      "componentRef": "q_region_female_table",
+      "sectionRef": "sec_region_female",
+      "chapterRef": "ch_female_volume",
+      "topicRef": "topic_female",
+      "requiredEntities": [
+        "ent_region",
+        "ent_female"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_female → Female Workers column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 6,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_female"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_female",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_region_female_chart",
+      "slotType": "chart",
+      "questionRef": "q_region_female",
+      "componentRef": "q_region_female_chart",
+      "sectionRef": "sec_region_female",
+      "chapterRef": "ch_female_volume",
+      "topicRef": "topic_female",
+      "requiredEntities": [
+        "ent_region",
+        "ent_female"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_female → Female Workers column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Female Workers by Region"
+      },
+      "chartTitle": "Female Workers by Region",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_female"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_female_share_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_female_share",
+      "componentRef": "q_female_share_narrative",
+      "sectionRef": "sec_female",
+      "chapterRef": "ch_female_share",
+      "topicRef": "topic_female",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_female_share",
+        "ent_female",
+        "ent_persons"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_female_share → Female Share column",
+        "ent_female → Female Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_female_share_table",
+      "slotType": "table",
+      "questionRef": "q_female_share",
+      "componentRef": "q_female_share_table",
+      "sectionRef": "sec_female",
+      "chapterRef": "ch_female_share",
+      "topicRef": "topic_female",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_female_share",
+        "ent_female",
+        "ent_persons"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_female_share → Female Share column",
+        "ent_female → Female Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 4,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_female_share"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_female_share",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_female_share_chart",
+      "slotType": "chart",
+      "questionRef": "q_female_share",
+      "componentRef": "q_female_share_chart",
+      "sectionRef": "sec_female",
+      "chapterRef": "ch_female_share",
+      "topicRef": "topic_female",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_female_share",
+        "ent_female",
+        "ent_persons"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_female_share → Female Share column",
+        "ent_female → Female Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Female Worker Share by State/UT"
+      },
+      "chartTitle": "Female Worker Share by State/UT",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_female_share"
+        ],
+        "topN": 12
+      }
+    },
+    {
+      "slotId": "slot_female_region_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_female_region",
+      "componentRef": "q_female_region_narrative",
+      "sectionRef": "sec_female_region",
+      "chapterRef": "ch_female_share",
+      "topicRef": "topic_female",
+      "requiredEntities": [
+        "ent_region",
+        "ent_female_share",
+        "ent_female",
+        "ent_persons"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_female_share → Female Share column",
+        "ent_female → Female Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_female_region_chart",
+      "slotType": "chart",
+      "questionRef": "q_female_region",
+      "componentRef": "q_female_region_chart",
+      "sectionRef": "sec_female_region",
+      "chapterRef": "ch_female_share",
+      "topicRef": "topic_female",
+      "requiredEntities": [
+        "ent_region",
+        "ent_female_share",
+        "ent_female",
+        "ent_persons"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_female_share → Female Share column",
+        "ent_female → Female Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Female Worker Share by Region"
+      },
+      "chartTitle": "Female Worker Share by Region",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_female_share"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_state_hired_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_state_hired",
+      "componentRef": "q_state_hired_narrative",
+      "sectionRef": "sec_state_hired",
+      "chapterRef": "ch_hired",
+      "topicRef": "topic_labour",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_hired",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_hired → Hired Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_state_hired_table",
+      "slotType": "table",
+      "questionRef": "q_state_hired",
+      "componentRef": "q_state_hired_table",
+      "sectionRef": "sec_state_hired",
+      "chapterRef": "ch_hired",
+      "topicRef": "topic_labour",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_hired",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_hired → Hired Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 6,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_hired",
+          "ent_persons"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_hired",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_state_hired_chart",
+      "slotType": "chart",
+      "questionRef": "q_state_hired",
+      "componentRef": "q_state_hired_chart",
+      "sectionRef": "sec_state_hired",
+      "chapterRef": "ch_hired",
+      "topicRef": "topic_labour",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_hired",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_hired → Hired Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Hired Workers by State/UT"
+      },
+      "chartTitle": "Hired Workers by State/UT",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_hired"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_hired_share_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_hired_share",
+      "componentRef": "q_hired_share_narrative",
+      "sectionRef": "sec_hired",
+      "chapterRef": "ch_hired",
+      "topicRef": "topic_labour",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_hired_share",
+        "ent_hired",
+        "ent_persons"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_hired_share → Hired Share column",
+        "ent_hired → Hired Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_hired_share_table",
+      "slotType": "table",
+      "questionRef": "q_hired_share",
+      "componentRef": "q_hired_share_table",
+      "sectionRef": "sec_hired",
+      "chapterRef": "ch_hired",
+      "topicRef": "topic_labour",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_hired_share",
+        "ent_hired",
+        "ent_persons"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_hired_share → Hired Share column",
+        "ent_hired → Hired Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 4,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_hired_share"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_hired_share",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_hired_share_chart",
+      "slotType": "chart",
+      "questionRef": "q_hired_share",
+      "componentRef": "q_hired_share_chart",
+      "sectionRef": "sec_hired",
+      "chapterRef": "ch_hired",
+      "topicRef": "topic_labour",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_hired_share",
+        "ent_hired",
+        "ent_persons"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_hired_share → Hired Share column",
+        "ent_hired → Hired Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Hired Worker Share by State/UT"
+      },
+      "chartTitle": "Hired Worker Share by State/UT",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_hired_share"
+        ],
+        "topN": 12
+      }
+    },
+    {
+      "slotId": "slot_type_mix_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_type_mix",
+      "componentRef": "q_type_mix_narrative",
+      "sectionRef": "sec_type_mix",
+      "chapterRef": "ch_self_employment",
+      "topicRef": "topic_labour",
+      "requiredEntities": [
+        "ent_oae",
+        "ent_hired_estab",
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_oae → Own Account Establishments column",
+        "ent_hired_estab → Establishments with Hired Workers column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_type_mix_chart",
+      "slotType": "chart",
+      "questionRef": "q_type_mix",
+      "componentRef": "q_type_mix_chart",
+      "sectionRef": "sec_type_mix",
+      "chapterRef": "ch_self_employment",
+      "topicRef": "topic_labour",
+      "requiredEntities": [
+        "ent_oae",
+        "ent_hired_estab",
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_oae → Own Account Establishments column",
+        "ent_hired_estab → Establishments with Hired Workers column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "pie",
+        "title": "Own-Account vs Hired-Worker Establishment Mix"
+      },
+      "chartTitle": "Own-Account vs Hired-Worker Establishment Mix",
+      "chartSpec": {
+        "slices": [
+          "ent_oae",
+          "ent_hired_estab"
+        ]
+      }
+    },
+    {
+      "slotId": "slot_oae_share_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_oae_share",
+      "componentRef": "q_oae_share_narrative",
+      "sectionRef": "sec_oae_share",
+      "chapterRef": "ch_self_employment",
+      "topicRef": "topic_labour",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_oae_share",
+        "ent_oae",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_oae_share → OAE Share column",
+        "ent_oae → Own Account Establishments column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_oae_share_table",
+      "slotType": "table",
+      "questionRef": "q_oae_share",
+      "componentRef": "q_oae_share_table",
+      "sectionRef": "sec_oae_share",
+      "chapterRef": "ch_self_employment",
+      "topicRef": "topic_labour",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_oae_share",
+        "ent_oae",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_oae_share → OAE Share column",
+        "ent_oae → Own Account Establishments column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 4,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_oae_share"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_oae_share",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_oae_share_chart",
+      "slotType": "chart",
+      "questionRef": "q_oae_share",
+      "componentRef": "q_oae_share_chart",
+      "sectionRef": "sec_oae_share",
+      "chapterRef": "ch_self_employment",
+      "topicRef": "topic_labour",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_oae_share",
+        "ent_oae",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_oae_share → OAE Share column",
+        "ent_oae → Own Account Establishments column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Own-Account Establishment Share by State/UT"
+      },
+      "chartTitle": "Own-Account Establishment Share by State/UT",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_oae_share"
+        ],
+        "topN": 12
+      }
+    },
+    {
+      "slotId": "slot_state_child_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_state_child",
+      "componentRef": "q_state_child_narrative",
+      "sectionRef": "sec_state_child",
+      "chapterRef": "ch_child_volume",
+      "topicRef": "topic_vulnerability",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_child",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_child → Child Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_state_child_table",
+      "slotType": "table",
+      "questionRef": "q_state_child",
+      "componentRef": "q_state_child_table",
+      "sectionRef": "sec_state_child",
+      "chapterRef": "ch_child_volume",
+      "topicRef": "topic_vulnerability",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_child",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_child → Child Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 6,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_child",
+          "ent_persons"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_child",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_state_child_chart",
+      "slotType": "chart",
+      "questionRef": "q_state_child",
+      "componentRef": "q_state_child_chart",
+      "sectionRef": "sec_state_child",
+      "chapterRef": "ch_child_volume",
+      "topicRef": "topic_vulnerability",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_child",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_child → Child Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Child Workers by State/UT"
+      },
+      "chartTitle": "Child Workers by State/UT",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_child"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_region_child_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_region_child",
+      "componentRef": "q_region_child_narrative",
+      "sectionRef": "sec_region_child",
+      "chapterRef": "ch_child_volume",
+      "topicRef": "topic_vulnerability",
+      "requiredEntities": [
+        "ent_region",
+        "ent_child"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_child → Child Workers column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_region_child_table",
+      "slotType": "table",
+      "questionRef": "q_region_child",
+      "componentRef": "q_region_child_table",
+      "sectionRef": "sec_region_child",
+      "chapterRef": "ch_child_volume",
+      "topicRef": "topic_vulnerability",
+      "requiredEntities": [
+        "ent_region",
+        "ent_child"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_child → Child Workers column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 6,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_child"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_child",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_region_child_chart",
+      "slotType": "chart",
+      "questionRef": "q_region_child",
+      "componentRef": "q_region_child_chart",
+      "sectionRef": "sec_region_child",
+      "chapterRef": "ch_child_volume",
+      "topicRef": "topic_vulnerability",
+      "requiredEntities": [
+        "ent_region",
+        "ent_child"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_child → Child Workers column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Child Workers by Region"
+      },
+      "chartTitle": "Child Workers by Region",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_child"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_child_share_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_child_share",
+      "componentRef": "q_child_share_narrative",
+      "sectionRef": "sec_child_share",
+      "chapterRef": "ch_child_share",
+      "topicRef": "topic_vulnerability",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_child_share",
+        "ent_child",
+        "ent_persons"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_child_share → Child Share column",
+        "ent_child → Child Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_child_share_table",
+      "slotType": "table",
+      "questionRef": "q_child_share",
+      "componentRef": "q_child_share_table",
+      "sectionRef": "sec_child_share",
+      "chapterRef": "ch_child_share",
+      "topicRef": "topic_vulnerability",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_child_share",
+        "ent_child",
+        "ent_persons"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_child_share → Child Share column",
+        "ent_child → Child Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 4,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_child_share"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_child_share",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_child_share_chart",
+      "slotType": "chart",
+      "questionRef": "q_child_share",
+      "componentRef": "q_child_share_chart",
+      "sectionRef": "sec_child_share",
+      "chapterRef": "ch_child_share",
+      "topicRef": "topic_vulnerability",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_child_share",
+        "ent_child",
+        "ent_persons"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_child_share → Child Share column",
+        "ent_child → Child Workers column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Child Worker Share by State/UT"
+      },
+      "chartTitle": "Child Worker Share by State/UT",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_child_share"
+        ],
+        "topN": 12
+      }
+    },
+    {
+      "slotId": "slot_region_estab2_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_region_estab2",
+      "componentRef": "q_region_estab2_narrative",
+      "sectionRef": "sec_region_estab2",
+      "chapterRef": "ch_regional_synthesis",
+      "topicRef": "topic_synthesis",
+      "requiredEntities": [
+        "ent_region",
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_region_estab2_table",
+      "slotType": "table",
+      "questionRef": "q_region_estab2",
+      "componentRef": "q_region_estab2_table",
+      "sectionRef": "sec_region_estab2",
+      "chapterRef": "ch_regional_synthesis",
+      "topicRef": "topic_synthesis",
+      "requiredEntities": [
+        "ent_region",
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 6,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_establishments"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_establishments",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_region_estab2_chart",
+      "slotType": "chart",
+      "questionRef": "q_region_estab2",
+      "componentRef": "q_region_estab2_chart",
+      "sectionRef": "sec_region_estab2",
+      "chapterRef": "ch_regional_synthesis",
+      "topicRef": "topic_synthesis",
+      "requiredEntities": [
+        "ent_region",
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Regional Establishment Base (Synthesis)"
+      },
+      "chartTitle": "Regional Establishment Base (Synthesis)",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_establishments"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_region_persons2_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_region_persons2",
+      "componentRef": "q_region_persons2_narrative",
+      "sectionRef": "sec_region_persons2",
+      "chapterRef": "ch_regional_synthesis",
+      "topicRef": "topic_synthesis",
+      "requiredEntities": [
+        "ent_region",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_region_persons2_table",
+      "slotType": "table",
+      "questionRef": "q_region_persons2",
+      "componentRef": "q_region_persons2_table",
+      "sectionRef": "sec_region_persons2",
+      "chapterRef": "ch_regional_synthesis",
+      "topicRef": "topic_synthesis",
+      "requiredEntities": [
+        "ent_region",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 6,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_persons"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_persons",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_region_persons2_chart",
+      "slotType": "chart",
+      "questionRef": "q_region_persons2",
+      "componentRef": "q_region_persons2_chart",
+      "sectionRef": "sec_region_persons2",
+      "chapterRef": "ch_regional_synthesis",
+      "topicRef": "topic_synthesis",
+      "requiredEntities": [
+        "ent_region",
+        "ent_persons"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_persons → Persons Working column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Regional Employment Base (Synthesis)"
+      },
+      "chartTitle": "Regional Employment Base (Synthesis)",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_persons"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_region_scale_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_region_scale",
+      "componentRef": "q_region_scale_narrative",
+      "sectionRef": "sec_region_scale",
+      "chapterRef": "ch_composite",
+      "topicRef": "topic_synthesis",
+      "requiredEntities": [
+        "ent_region",
+        "ent_avg_emp",
+        "ent_persons",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_avg_emp → Avg Employment column",
+        "ent_persons → Persons Working column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_region_scale_chart",
+      "slotType": "chart",
+      "questionRef": "q_region_scale",
+      "componentRef": "q_region_scale_chart",
+      "sectionRef": "sec_region_scale",
+      "chapterRef": "ch_composite",
+      "topicRef": "topic_synthesis",
+      "requiredEntities": [
+        "ent_region",
+        "ent_avg_emp",
+        "ent_persons",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_avg_emp → Avg Employment column",
+        "ent_persons → Persons Working column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Composite Establishment Scale by Region"
+      },
+      "chartTitle": "Composite Establishment Scale by Region",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_avg_emp"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_region_scale_metric",
+      "slotType": "metric",
+      "questionRef": "q_region_scale",
+      "componentRef": "q_region_scale_metric",
+      "sectionRef": "sec_region_scale",
+      "chapterRef": "ch_composite",
+      "topicRef": "topic_synthesis",
+      "requiredEntities": [
+        "ent_region",
+        "ent_avg_emp",
+        "ent_persons",
+        "ent_establishments"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_avg_emp → Avg Employment column",
+        "ent_persons → Persons Working column",
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "computed_metric",
+        "displayFormat": "multiplier"
+      },
+      "formulaRef": "f_avg_employment",
+      "formulaSpec": {
+        "formulaType": "RATIO",
+        "numerator": "ent_persons",
+        "denominator": "ent_establishments",
+        "grain": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_methodology_methodology",
+      "slotType": "methodology",
+      "questionRef": "q_methodology",
+      "componentRef": "q_methodology_methodology",
+      "sectionRef": "sec_methodology",
+      "chapterRef": "ch_methodology",
+      "topicRef": "topic_synthesis",
+      "requiredEntities": [
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "methodology"
+      }
+    },
+    {
+      "slotId": "slot_methodology_source_note",
+      "slotType": "source_note",
+      "questionRef": "q_methodology",
+      "componentRef": "q_methodology_source_note",
+      "sectionRef": "sec_methodology",
+      "chapterRef": "ch_methodology",
+      "topicRef": "topic_synthesis",
+      "requiredEntities": [
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "attribution"
+      }
+    },
+    {
+      "slotId": "slot_methodology_glossary",
+      "slotType": "glossary",
+      "questionRef": "q_methodology",
+      "componentRef": "q_methodology_glossary",
+      "sectionRef": "sec_methodology",
+      "chapterRef": "ch_methodology",
+      "topicRef": "topic_synthesis",
+      "requiredEntities": [
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "definitions"
+      }
+    },
+    {
+      "slotId": "slot_methodology_caveat",
+      "slotType": "caveat",
+      "questionRef": "q_methodology",
+      "componentRef": "q_methodology_caveat",
+      "sectionRef": "sec_methodology",
+      "chapterRef": "ch_methodology",
+      "topicRef": "topic_synthesis",
+      "requiredEntities": [
+        "ent_establishments"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_establishments → Establishments column"
+      ],
+      "outputContract": {
+        "type": "caveat"
+      }
+    }
+  ],
+  "slotDependencies": [
+    {
+      "slot": "slot_state_estab_narrative",
+      "dependsOn": [
+        "slot_state_estab_table",
+        "slot_state_estab_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_region_estab_narrative",
+      "dependsOn": [
+        "slot_region_estab_table",
+        "slot_region_estab_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_rural_urban_narrative",
+      "dependsOn": [
+        "slot_rural_urban_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_rural_lead_narrative",
+      "dependsOn": [
+        "slot_rural_lead_table",
+        "slot_rural_lead_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_urban_lead_narrative",
+      "dependsOn": [
+        "slot_urban_lead_table",
+        "slot_urban_lead_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_urban_share_narrative",
+      "dependsOn": [
+        "slot_urban_share_table",
+        "slot_urban_share_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_rural_share_region_narrative",
+      "dependsOn": [
+        "slot_rural_share_region_chart",
+        "slot_rural_share_region_table",
+        "slot_rural_share_region_metric"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_state_emp_narrative",
+      "dependsOn": [
+        "slot_state_emp_table",
+        "slot_state_emp_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_region_emp_narrative",
+      "dependsOn": [
+        "slot_region_emp_table",
+        "slot_region_emp_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_avg_emp_narrative",
+      "dependsOn": [
+        "slot_avg_emp_chart",
+        "slot_avg_emp_table",
+        "slot_avg_emp_metric"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_state_scale_narrative",
+      "dependsOn": [
+        "slot_state_scale_table",
+        "slot_state_scale_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_state_female_narrative",
+      "dependsOn": [
+        "slot_state_female_table",
+        "slot_state_female_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_region_female_narrative",
+      "dependsOn": [
+        "slot_region_female_table",
+        "slot_region_female_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_female_share_narrative",
+      "dependsOn": [
+        "slot_female_share_table",
+        "slot_female_share_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_female_region_narrative",
+      "dependsOn": [
+        "slot_female_region_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_state_hired_narrative",
+      "dependsOn": [
+        "slot_state_hired_table",
+        "slot_state_hired_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_hired_share_narrative",
+      "dependsOn": [
+        "slot_hired_share_table",
+        "slot_hired_share_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_type_mix_narrative",
+      "dependsOn": [
+        "slot_type_mix_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_oae_share_narrative",
+      "dependsOn": [
+        "slot_oae_share_table",
+        "slot_oae_share_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_state_child_narrative",
+      "dependsOn": [
+        "slot_state_child_table",
+        "slot_state_child_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_region_child_narrative",
+      "dependsOn": [
+        "slot_region_child_table",
+        "slot_region_child_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_child_share_narrative",
+      "dependsOn": [
+        "slot_child_share_table",
+        "slot_child_share_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_region_estab2_narrative",
+      "dependsOn": [
+        "slot_region_estab2_table",
+        "slot_region_estab2_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_region_persons2_narrative",
+      "dependsOn": [
+        "slot_region_persons2_table",
+        "slot_region_persons2_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_region_scale_narrative",
+      "dependsOn": [
+        "slot_region_scale_chart",
+        "slot_region_scale_metric"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    }
+  ],
+  "executionOrder": [
+    "slot_state_estab_table",
+    "slot_state_estab_chart",
+    "slot_state_estab_narrative",
+    "slot_region_estab_table",
+    "slot_region_estab_chart",
+    "slot_region_estab_narrative",
+    "slot_rural_urban_chart",
+    "slot_rural_urban_narrative",
+    "slot_rural_lead_table",
+    "slot_rural_lead_chart",
+    "slot_rural_lead_narrative",
+    "slot_urban_lead_table",
+    "slot_urban_lead_chart",
+    "slot_urban_lead_narrative",
+    "slot_urban_share_table",
+    "slot_urban_share_chart",
+    "slot_urban_share_narrative",
+    "slot_rural_share_region_chart",
+    "slot_rural_share_region_table",
+    "slot_rural_share_region_metric",
+    "slot_rural_share_region_narrative",
+    "slot_state_emp_table",
+    "slot_state_emp_chart",
+    "slot_state_emp_narrative",
+    "slot_region_emp_table",
+    "slot_region_emp_chart",
+    "slot_region_emp_narrative",
+    "slot_avg_emp_chart",
+    "slot_avg_emp_table",
+    "slot_avg_emp_metric",
+    "slot_avg_emp_narrative",
+    "slot_state_scale_table",
+    "slot_state_scale_chart",
+    "slot_state_scale_narrative",
+    "slot_state_female_table",
+    "slot_state_female_chart",
+    "slot_state_female_narrative",
+    "slot_region_female_table",
+    "slot_region_female_chart",
+    "slot_region_female_narrative",
+    "slot_female_share_table",
+    "slot_female_share_chart",
+    "slot_female_share_narrative",
+    "slot_female_region_chart",
+    "slot_female_region_narrative",
+    "slot_state_hired_table",
+    "slot_state_hired_chart",
+    "slot_state_hired_narrative",
+    "slot_hired_share_table",
+    "slot_hired_share_chart",
+    "slot_hired_share_narrative",
+    "slot_type_mix_chart",
+    "slot_type_mix_narrative",
+    "slot_oae_share_table",
+    "slot_oae_share_chart",
+    "slot_oae_share_narrative",
+    "slot_state_child_table",
+    "slot_state_child_chart",
+    "slot_state_child_narrative",
+    "slot_region_child_table",
+    "slot_region_child_chart",
+    "slot_region_child_narrative",
+    "slot_child_share_table",
+    "slot_child_share_chart",
+    "slot_child_share_narrative",
+    "slot_region_estab2_table",
+    "slot_region_estab2_chart",
+    "slot_region_estab2_narrative",
+    "slot_region_persons2_table",
+    "slot_region_persons2_chart",
+    "slot_region_persons2_narrative",
+    "slot_region_scale_chart",
+    "slot_region_scale_metric",
+    "slot_region_scale_narrative",
+    "slot_methodology_methodology",
+    "slot_methodology_source_note",
+    "slot_methodology_glossary",
+    "slot_methodology_caveat"
+  ]
+}

@@ -299,11 +299,28 @@ def compile_execution_plans(
 
     # Index questions by ID for lookup
     bp_questions: dict[str, dict[str, Any]] = {}
-    for topic in (blueprint.get("topics") or []):
-        for q in (topic.get("questions") or []):
+
+    def _index_questions(node: dict[str, Any]) -> None:
+        """Walk a blueprint node at any depth, indexing every question by id.
+
+        Enterprise blueprints nest questions topic → chapter → section → question
+        (4 levels); press-release/flat ones hang them directly off a topic. Walking
+        every level ensures ``answerStructure``/``analyticsSpec`` are found for deeply
+        nested questions — otherwise the readiness gate falsely flags every plan
+        ``OUTPUT_CONTRACT_MISSING`` and the whole bundle degrades.
+        """
+        for q in (node.get("questions") or []):
             qid = q.get("questionId", "")
             if qid:
                 bp_questions[qid] = q
+        for key in ("chapters", "sections", "subsections"):
+            for child in (node.get(key) or []):
+                if isinstance(child, dict):
+                    _index_questions(child)
+
+    for topic in (blueprint.get("topics") or []):
+        if isinstance(topic, dict):
+            _index_questions(topic)
     for q in (blueprint.get("questions") or []):
         qid = q.get("questionId", "")
         if qid:
@@ -356,6 +373,35 @@ def compile_execution_plans(
         formula = FormulaSpec(type=formula_type)
         diagnostics: list[str] = []
 
+        # Honor an EXPLICIT blueprint formula (value-free contract): the template
+        # author may declare numerator/denominator entity ids directly on the
+        # question (``formulaSpec``) or inside ``analyticsSpec.formula``. Resolve
+        # those to columns via the question's requiredEntities so SHARE/RATIO
+        # questions get a real denominator instead of a guess from measures[0]
+        # (which left it unset → "SHARE missing denominator" → BLOCKED).
+        _declared_formula = bp_q.get("formulaSpec") or source_analytics_spec.get("formula") or {}
+        _entity_col = {
+            r.get("entityId") or r.get("entityRef"): r.get("columnExpr")
+            for r in required_entities
+            if (r.get("entityId") or r.get("entityRef")) and r.get("columnExpr")
+        }
+        _valid_cols = {c.name for c in dataset.columns}
+
+        def _col_for_entity(entity_id: str) -> str:
+            col = _entity_col.get(entity_id, "")
+            return col if col in _valid_cols else ""
+
+        _declared_num = _col_for_entity(_declared_formula.get("numerator", ""))
+        _declared_den = _col_for_entity(_declared_formula.get("denominator", ""))
+        # Composition questions express the formula as parts[] / whole instead of
+        # numerator/denominator — map the first part → numerator and the whole →
+        # denominator so the SHARE handler resolves a real denominator.
+        if not _declared_num and source_analytics_spec.get("parts"):
+            _parts = source_analytics_spec.get("parts") or []
+            _declared_num = _col_for_entity(_parts[0]) if _parts else ""
+        if not _declared_den and source_analytics_spec.get("whole"):
+            _declared_den = _col_for_entity(source_analytics_spec.get("whole", ""))
+
         if formula_type == "GROWTH":
             measures = qb.resolvedRoles.measures
             time_periods = qb.resolvedRoles.time.periods
@@ -393,19 +439,40 @@ def compile_execution_plans(
             formula.unitConversion = "percent"
 
         elif formula_type == "SHARE":
-            if qb.resolvedRoles.measures:
-                formula.numeratorColumn = qb.resolvedRoles.measures[0]
-            else:
+            # Prefer the template-declared numerator/denominator; fall back to the
+            # first bound measure for the numerator and the question's whole/total
+            # measure for the denominator.
+            formula.numeratorColumn = _declared_num or (
+                qb.resolvedRoles.measures[0] if qb.resolvedRoles.measures else "")
+            formula.denominatorColumn = _declared_den
+            if not formula.numeratorColumn:
                 diagnostics.append("SHARE_MISSING_NUMERATOR: no measure column for share calculation")
+            if not formula.denominatorColumn:
+                diagnostics.append("SHARE_MISSING_DENOMINATOR: no denominator column for share calculation")
             formula.multiplier = 100.0
             formula.unitConversion = "percent"
 
         elif formula_type == "RATE":
-            if qb.resolvedRoles.measures:
-                formula.numeratorColumn = qb.resolvedRoles.measures[0]
-            else:
+            formula.numeratorColumn = _declared_num or (
+                qb.resolvedRoles.measures[0] if qb.resolvedRoles.measures else "")
+            if _declared_den:
+                formula.denominatorColumn = _declared_den
+            if not formula.numeratorColumn:
                 diagnostics.append("RATE_MISSING_NUMERATOR: no measure column for rate calculation")
             formula.multiplier = 1000.0  # per 1000 default for MoSPI
+
+        elif formula_type in ("RATIO", "INDEX"):
+            # A ratio/index of two declared measures (e.g. peak-met / peak-demand).
+            # Resolve both ends from the template-declared formula; fall back to the
+            # first two bound measures only when the declaration is incomplete.
+            _meas = qb.resolvedRoles.measures
+            formula.numeratorColumn = _declared_num or (_meas[0] if _meas else "")
+            formula.denominatorColumn = _declared_den or (_meas[1] if len(_meas) > 1 else "")
+            if not formula.numeratorColumn:
+                diagnostics.append(f"{formula_type}_MISSING_NUMERATOR: no numerator column")
+            if not formula.denominatorColumn:
+                diagnostics.append(f"{formula_type}_MISSING_DENOMINATOR: no denominator column")
+            formula.multiplier = 1.0
 
         # ── Determine normalization ──
         norm_plan = _infer_normalization(qb, dataset)
@@ -517,28 +584,38 @@ def _infer_normalization(qb: QuestionBinding, dataset: DatasetAST) -> "Any":
     """Infer NormalizationPlan from resolved roles and dataset shape."""
     from report_builder.binding.execution_contracts import NormalizationPlan
 
-    # Check if any measure column belongs to a column group (wide table)
+    measure_set = set(qb.resolvedRoles.measures)
+
+    # Check if any measure column belongs to a column group (wide table).
+    # Only melt when the question genuinely needs MULTIPLE members of that group
+    # (e.g. a composition/grouped query over "Rural"+"Urban"). A simple rank on a
+    # SINGLE member must NOT melt — melting reshapes the member column away and the
+    # single-measure rank/aggregate then finds nothing (empty chart/table).
     for measure_col in qb.resolvedRoles.measures:
         for group in dataset.columnGroups:
-            if measure_col in group.members:
-                # This measure is part of a wide group — needs melt for time-series queries
-                if group.kind == "periodGroup":
-                    id_vars = [c.name for c in dataset.columns if c.role == "dimension"]
-                    return NormalizationPlan(
-                        type="WIDE_TO_LONG",
-                        idVars=id_vars,
-                        valueVar="value",
-                        memberVar="period",
-                        memberLabels=group.members,
-                    )
-                elif group.kind == "measureGroup":
-                    id_vars = [c.name for c in dataset.columns if c.role == "dimension"]
-                    return NormalizationPlan(
-                        type="WIDE_TO_LONG",
-                        idVars=id_vars,
-                        valueVar="value",
-                        memberVar=group.stem or "category",
-                        memberLabels=group.members,
-                    )
+            if measure_col not in group.members:
+                continue
+            members_used = measure_set.intersection(group.members)
+            if len(members_used) < 2:
+                # Single member of a wide group → treat as an ordinary column.
+                continue
+            if group.kind == "periodGroup":
+                id_vars = [c.name for c in dataset.columns if c.role == "dimension"]
+                return NormalizationPlan(
+                    type="WIDE_TO_LONG",
+                    idVars=id_vars,
+                    valueVar="value",
+                    memberVar="period",
+                    memberLabels=group.members,
+                )
+            elif group.kind == "measureGroup":
+                id_vars = [c.name for c in dataset.columns if c.role == "dimension"]
+                return NormalizationPlan(
+                    type="WIDE_TO_LONG",
+                    idVars=id_vars,
+                    valueVar="value",
+                    memberVar=group.stem or "category",
+                    memberLabels=group.members,
+                )
 
     return NormalizationPlan(type="NONE")

@@ -274,6 +274,11 @@ function DocumentBlock({block,onUpdate,onReorder,onDelete,onInsertAfter,readOnly
     navigator.clipboard.writeText(block.content||block.metricValue||'').then(()=>{setCopied(true);setTimeout(()=>setCopied(false),1200);}).catch(()=>{});
   },[block]);
 
+  // Hooks must run on EVERY render (rules-of-hooks): compute table data before
+  // any early return below, even though it's only used in the table branch.
+  const rankItems = useMemo(()=>block.kind==='table'?parseRankItems(block):[],[block]);
+  const aggRows = useMemo(()=>block.kind==='table'?parseAggRows(block):[],[block]);
+
   if (block.kind==='divider') return (
     <div className="group relative my-5 flex items-center cursor-pointer" onClick={onSelect} onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}>
       <div className={`h-px flex-1 transition-colors ${active?'bg-blue-300':'bg-gradient-to-r from-transparent via-slate-200 to-transparent'}`}/>
@@ -281,9 +286,6 @@ function DocumentBlock({block,onUpdate,onReorder,onDelete,onInsertAfter,readOnly
     </div>
   );
   if (block.kind==='spacer') return <div className="h-6"/>;
-
-  const rankItems = useMemo(()=>block.kind==='table'?parseRankItems(block):[],[block]);
-  const aggRows = useMemo(()=>block.kind==='table'?parseAggRows(block):[],[block]);
 
   return (
     <div className={`group/block relative ${isSelected?'z-10':''}`} data-block-id={block.id}

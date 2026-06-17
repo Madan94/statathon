@@ -1,0 +1,20 @@
+{
+  "entities": {
+    "bound": 19,
+    "pending": 0,
+    "unresolved": 0
+  },
+  "questions": {
+    "executable": 0,
+    "blocked": 0,
+    "degraded": 0
+  },
+  "issues": [
+    {
+      "severity": "warn",
+      "code": "TYPE_MISMATCH",
+      "message": "'Census Year' (time) bound to a column of a different role — verify.",
+      "entityId": "ent_census_year"
+    }
+  ]
+}

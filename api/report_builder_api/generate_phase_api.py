@@ -333,13 +333,20 @@ def _question_registry(blueprint: dict[str, Any]) -> dict[str, dict[str, Any]]:
         qid = q.get("questionId")
         if not qid:
             continue
-        # Gather component types from outputContract.components
-        components = []
-        oc = q.get("outputContract") or {}
-        for comp in oc.get("components") or []:
-            ct = comp.get("componentType") or comp.get("type")
-            if ct:
-                components.append(ct)
+        # Gather component types from answerStructure.components (kind) or
+        # outputContract.components (componentType/type) — support both shapes.
+        components: list[str] = []
+        ans = q.get("answerStructure") or {}
+        for comp in ans.get("components") or []:
+            ck = comp.get("kind") or comp.get("componentKind") or comp.get("componentType") or comp.get("type")
+            if ck:
+                components.append(ck)
+        if not components:
+            oc = q.get("outputContract") or {}
+            for comp in oc.get("components") or []:
+                ct = comp.get("componentType") or comp.get("type")
+                if ct:
+                    components.append(ct)
         # Fallback: infer from analyticsSpec
         if not components:
             spec = q.get("analyticsSpec") or {}
@@ -361,6 +368,96 @@ def _question_registry(blueprint: dict[str, Any]) -> dict[str, dict[str, Any]]:
             "intent": q.get("intent") or "",
         }
     return registry
+
+
+# Component kind → frontend block component_type.
+_KIND_TO_COMPONENT_TYPE = {
+    "narrative": "narrative",
+    "table": "table",
+    "chart": "chart",
+    "metric": "formula_metric",
+    "methodology": "narrative",
+    "source_note": "source_note",
+    "glossary": "narrative",
+    "caveat": "narrative",
+}
+
+
+def _build_component_queue(blueprint: dict[str, Any]) -> list[dict[str, Any]]:
+    """One queue item per *component* (narrative/table/chart/metric) in document order.
+
+    This is the single source of truth shared by ``get_generation_queue`` and
+    ``generate_single_component`` so the index↔component mapping is identical on
+    both sides. Expanding by component (not by fanned-out measure) means the canvas
+    builds the SAME rich block set as the full ``generate`` report — narrative +
+    table + chart per question — instead of duplicate measure fan-outs.
+    """
+    items: list[dict[str, Any]] = []
+    for q, section_path in _iter_questions(blueprint):
+        qid = q.get("questionId")
+        if not qid:
+            continue
+        q_title = q.get("questionText") or q.get("intent") or qid
+        ans = q.get("answerStructure") or {}
+        comps = ans.get("components") or []
+        # Order components by their declared 'order' (narrative usually first).
+        comps = sorted(comps, key=lambda c: c.get("order", 99))
+        if not comps:
+            comps = [{"kind": "narrative"}]
+        for comp in comps:
+            kind = (comp.get("kind") or comp.get("componentKind")
+                    or comp.get("componentType") or comp.get("type") or "narrative")
+            ctype = _KIND_TO_COMPONENT_TYPE.get(kind, "narrative")
+            label = {"table": "Table", "chart": "Chart", "metric": "Metric"}.get(kind, "")
+            title = f"{q_title} — {label}" if label and kind != "narrative" else q_title
+            items.append({
+                "index": len(items),
+                "question_id": qid,
+                "component_id": comp.get("componentId") or f"{qid}_{kind}",
+                "component_kind": kind,
+                "component_type": ctype,
+                "title": title,
+                "section_path": section_path,
+            })
+    return items
+
+
+def _pretty(col: str) -> str:
+    """Human label for a column (drop trailing measure noise)."""
+    return str(col or "").strip()
+
+
+def _measure_unit(bp_q: dict[str, Any], dataset: "Any") -> str:
+    """Best-effort unit for a question's primary measure from requiredEntities/dataset."""
+    for r in bp_q.get("requiredEntities") or []:
+        if (r.get("role") or "").lower() == "measure" and r.get("unit"):
+            return str(r["unit"])
+    return ""
+
+
+def _fmt_value(value: Any, unit: str | None = None) -> str:
+    """Compact human number with optional unit (Indian grouping for big ints)."""
+    if value is None:
+        return "—"
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    s = f"{n:,.0f}" if float(n).is_integer() else f"{n:,.2f}"
+    return f"{s}{('%' if unit == 'percent' else (' ' + unit if unit else ''))}"
+
+
+def _NUMBER_DRIFT(original: str, improved: str) -> bool:
+    """True if the LLM-polished prose introduced/changed numbers vs the grounded draft.
+
+    Guards against hallucinated figures: the rewrite must reuse exactly the same set
+    of numeric tokens as the deterministic draft (order-independent).
+    """
+    import re as _re
+    num = _re.compile(r"\d[\d,]*\.?\d*")
+    return sorted(num.findall(original)) != sorted(num.findall(improved))
+
+
 
 
 def _build_component_template(
@@ -823,94 +920,59 @@ class GenerateComponentOut(BaseModel):
 
 @router.get("/{template_id}/{signature}/generation-queue")
 def get_generation_queue(template_id: str, signature: str) -> list[dict[str, Any]]:
-    """Return the ordered queue of components to generate, with metadata for preview."""
-    import pandas as pd
+    """Return the ordered queue of components to generate, with metadata for preview.
 
+    One item per *component* (narrative/table/chart/metric) in document order — the
+    same expansion the full report uses — so the canvas builds the complete rich
+    report (narrative + table + chart per question) rather than duplicate measure
+    fan-outs. Blocked questions are skipped.
+    """
     dataset, blueprint, df = _read_stash(template_id, signature)
+
+    # Honor blocked questions: drop their components from the queue.
     binding = _rebuild_binding(template_id, signature, dataset, blueprint, df)
     data_content_hash = compute_data_content_hash(df)
     bundle = _build_bundle(template_id, signature, dataset, blueprint, df,
                            data_content_hash=data_content_hash)
-    adapted = adapt_bundle(bundle)
-    if not adapted:
-        raise HTTPException(status_code=409, detail="No runnable plans")
+    blocked_qids = {b.get("questionId") for b in (bundle.blockedQuestions or [])}
 
-    # Build rich question registry from the blueprint hierarchy
-    registry = _question_registry(blueprint)
-
+    queue_items = _build_component_queue(blueprint)
     queue: list[dict[str, Any]] = []
-    for i, plan in enumerate(adapted):
-        plan_id = plan.planRec.planId
-        question_id = plan.questionId or plan.planRec.questionId
+    for it in queue_items:
+        if it["question_id"] in blocked_qids:
+            continue
+        queue.append(ComponentQueueItem(
+            index=len(queue),
+            plan_id=it["component_id"],
+            question_id=it["question_id"],
+            component_type=it["component_type"],
+            title=it["title"],
+            section_path=it["section_path"],
+            status="pending",
+        ).dict())
 
-        # Look up rich metadata from the blueprint registry
-        qinfo = registry.get(question_id, {})
-        section_path = qinfo.get("sectionPath", [])
-        question_text = qinfo.get("title", "")
-
-        # Determine component type from outputContract or adapted plan
-        component_types = qinfo.get("componentTypes", [])
-        # For fan-out plans, the measure label gives a better title
-        if plan.fannedOut and plan.measureLabel:
-            title = f"{plan.measureLabel}"
-        else:
-            title = question_text or plan_id
-
-        # Determine primary component type for this adapted plan
-        # If the plan has formula spec, it's a metric; if ranking, table; etc.
-        op = (plan.planRec.operation or "").lower()
-        if plan.formulaSpec and (plan.formulaSpec.type or "DIRECT").upper() != "DIRECT":
-            comp_type = "formula_metric"
-        elif "rank" in op:
-            comp_type = "table"
-        elif "trend" in op or "time_series" in op:
-            comp_type = "chart"
-        elif component_types:
-            comp_type = component_types[0]
-        else:
-            comp_type = "narrative"
-
-        # For multi-measure fan-outs, emit separate entries per component type
-        if component_types and len(component_types) > 1 and not plan.fannedOut:
-            for ci, ct in enumerate(component_types):
-                queue.append(ComponentQueueItem(
-                    index=len(queue),
-                    plan_id=f"{plan_id}__comp{ci}",
-                    question_id=question_id,
-                    component_type=ct,
-                    title=f"{title} ({ct.replace('_', ' ')})" if ct != "narrative" else title,
-                    section_path=section_path,
-                    status="pending",
-                ).dict())
-        else:
-            queue.append(ComponentQueueItem(
-                index=i,
-                plan_id=plan_id,
-                question_id=question_id,
-                component_type=comp_type,
-                title=title,
-                section_path=section_path,
-                status="pending",
-            ).dict())
-
-    logger.info("[generation-queue] %d adapted plans → %d queue items, %d sections in blueprint",
-                len(adapted), len(queue), len(set(str(q.get("sectionPath","")) for q in registry.values())))
+    logger.info("[generation-queue] %d components → %d queue items (%d blocked qids)",
+                len(queue_items), len(queue), len(blocked_qids))
     return queue
+
 
 
 @router.post("/{template_id}/{signature}/generate-component")
 def generate_single_component(
     template_id: str, signature: str, body: GenerateComponentIn
 ) -> GenerateComponentOut:
-    """Generate a single component by index. Returns the content + next preview."""
-    import pandas as pd
+    """Generate ONE component (narrative/table/chart/metric) by queue index.
 
+    The queue expands each question into its declared components (the same shape the
+    full report renders), so this fills a single block with rich content matching
+    the final report: ranking/aggregation items for table+chart, a computed metric
+    for formula slots, and grounded prose for narrative.
+    """
     dataset, blueprint, df = _read_stash(template_id, signature)
     binding = _rebuild_binding(template_id, signature, dataset, blueprint, df)
-    template = _load_template_ast(template_id)
     context = blueprint.get("statisticalContext") or {}
 
-    # Build & adapt bundle
+    # Build & adapt bundle (for the question's plans).
     data_content_hash = compute_data_content_hash(df)
     bundle = _build_bundle(template_id, signature, dataset, blueprint, df,
                            data_content_hash=data_content_hash)
@@ -918,166 +980,141 @@ def generate_single_component(
     if not adapted:
         raise HTTPException(status_code=409, detail="No runnable plans")
 
+    # The component queue is the single source of truth shared with the queue endpoint.
+    blocked_qids = {b.get("questionId") for b in (bundle.blockedQuestions or [])}
+    queue = [it for it in _build_component_queue(blueprint) if it["question_id"] not in blocked_qids]
+    # Re-index after filtering so indices line up with the queue endpoint.
+    for i, it in enumerate(queue):
+        it["index"] = i
+
     idx = body.index
-    if idx < 0 or idx >= len(adapted):
-        raise HTTPException(status_code=400, detail=f"Index {idx} out of range (0..{len(adapted)-1})")
+    if idx < 0 or idx >= len(queue):
+        raise HTTPException(status_code=400, detail=f"Index {idx} out of range (0..{len(queue)-1})")
 
-    # Build rich metadata from the blueprint
-    registry = _question_registry(blueprint)
-    question_id = adapted[idx].questionId or adapted[idx].planRec.questionId
-    plan_id = adapted[idx].planRec.planId
-    qinfo = registry.get(question_id, {})
+    item = queue[idx]
+    question_id = item["question_id"]
+    component_kind = item["component_kind"]
+    component_type = item["component_type"]
+    title = item["title"]
 
-    # Run ONLY this one plan through the coordinator
-    single_plan = [adapted[idx]]
-    analytics_obj, evidence_obj, row_index = run_execution(
-        single_plan, df, question_meta=_question_meta(blueprint))
-    analytics = analytics_obj.to_dict()
-    evidence = evidence_obj.to_dict()
+    # Look up the blueprint question (for composition parts + intent).
+    bp_q: dict[str, Any] = {}
+    for q, _sp in _iter_questions(blueprint):
+        if q.get("questionId") == question_id:
+            bp_q = q
+            break
+    q_title = bp_q.get("questionText") or bp_q.get("intent") or question_id
 
-    # ── Extract raw analytics data (rankings use 'items', aggregations use 'rows') ──
-    aggs = analytics.get("aggregations", [])
-    rankings = analytics.get("rankings", [])
-    metrics = analytics.get("metrics", [])
-    trends = analytics.get("trends", [])
-    executions = analytics.get("executions", [])
+    # Run ALL of this question's plans → analytics (rankings/aggregations/metrics).
+    q_plans = [a for a in adapted if (a.questionId or a.planRec.questionId) == question_id]
+    analytics: dict[str, Any] = {"rankings": [], "aggregations": [], "metrics": [], "trends": []}
+    if q_plans:
+        analytics_obj, evidence_obj, _row_index = run_execution(
+            q_plans, df, question_meta=_question_meta(blueprint))
+        analytics = analytics_obj.to_dict()
 
-    logger.info("[generate-component] plan=%s q=%s — aggs=%d ranks=%d metrics=%d trends=%d exec=%s",
-                plan_id, question_id, len(aggs), len(rankings), len(metrics), len(trends),
-                [(e.get("engine"), e.get("status"), e.get("rowsScanned")) for e in executions])
+    rankings = analytics.get("rankings") or []
+    aggs = analytics.get("aggregations") or []
+    metrics = [m for m in (analytics.get("metrics") or []) if m.get("value") is not None]
 
-    # ── Build a per-component template for narration ──
-    # The static template AST may not have contentAST.blocks matching this
-    # question's ID. We dynamically inject a block so the narrator can work.
-    component_template = _build_component_template(
-        template, question_id, qinfo, adapted[idx])
-
-    # Fill visuals + narrate using the component-specific template
-    visuals = fill_visuals(component_template, analytics, evidence, context=context)
-    prose = _prose_config(blueprint)
-    narrated = narrate(component_template, analytics, evidence, context=context,
-                       questions=prose, use_llm=body.use_llm)
-
-    # Extract narrated content
-    content_blocks = narrated.get("contentAST", {}).get("blocks", [])
-    narrative_text = ""
-    component_content: dict[str, Any] = {}
-
-    if content_blocks:
-        block = content_blocks[0]
-        narrative_text = str(block.get("content") or block.get("text") or block.get("value") or "")
-        component_content = block
-
-    # ── Build structured content from analytics when narration is empty/generic ──
-    narration_failed = (
-        not narrative_text
-        or "could not be computed" in narrative_text.lower()
-        or len(narrative_text) < 20
-    )
-
-    if narration_failed:
+    # ── Build chart/table items (key/value rows the frontend renders both ways) ──
+    def _items_and_measure() -> tuple[list[dict[str, Any]], str]:
         if rankings:
             rk = rankings[0]
-            items = rk.get("items", [])  # rankings use 'items' not 'rows'
-            measure = rk.get("measure", adapted[idx].measureColumn or "value")
-            component_content = {
-                "type": "ranking",
-                "questionId": question_id,
-                "items": items[:12],
-                "measure": measure,
-                "order": rk.get("order", "desc"),
-                "text": f"Top {len(items)} ranked by {measure}",
-            }
-            narrative_text = component_content["text"]
-        elif aggs:
+            return list(rk.get("items") or [])[:12], rk.get("measure") or title
+        if aggs:
             ag = aggs[0]
-            rows = ag.get("rows", ag.get("items", []))
-            component_content = {
-                "type": "aggregation",
-                "questionId": question_id,
-                "rows": rows[:15],
-                "measure": ag.get("measure", adapted[idx].measureColumn or ""),
-                "groupBy": ag.get("groupBy", ""),
-                "text": f"{ag.get('measure', 'Value')} aggregated across {len(rows)} groups",
-            }
-            narrative_text = component_content["text"]
-        elif metrics:
+            rows = ag.get("rows") or []
+            return ([{"key": r.get("key"), "value": r.get("value"), "rowIds": r.get("rowIds")}
+                     for r in rows][:15], ag.get("measure") or title)
+        # Composition / share with no ranking: build slices from the part columns.
+        spec = bp_q.get("analyticsSpec") or {}
+        parts = spec.get("parts") or []
+        ent_col = {(r.get("entityId") or r.get("entityRef")): r.get("columnExpr")
+                   for r in (bp_q.get("requiredEntities") or [])}
+        pts: list[dict[str, Any]] = []
+        for p in parts:
+            col = ent_col.get(p)
+            if col and col in df.columns:
+                pts.append({"key": {"component": _pretty(col)}, "value": float(df[col].sum())})
+        return pts, "Establishments"
+
+    component_content: dict[str, Any] = {"questionId": question_id}
+    narrative_text = ""
+
+    if component_kind in ("table", "chart"):
+        items, measure = _items_and_measure()
+        component_content = {
+            "type": "ranking" if rankings else ("aggregation" if aggs else "composition"),
+            "questionId": question_id,
+            "items": items,
+            "rankingData": items,
+            "measure": measure,
+            "unit": _measure_unit(bp_q, dataset),
+            "source": (context.get("sourceDocument") or ""),
+        }
+        narrative_text = f"{measure} across {len(items)} categories."
+    elif component_kind == "metric":
+        if metrics:
             mt = metrics[0]
             component_content = {
-                "type": "metric",
-                "value": mt.get("value"),
-                "unit": mt.get("unit", ""),
-                "label": mt.get("label", adapted[idx].measureLabel or "Metric"),
-                "text": f"{mt.get('label', 'Metric')}: {mt.get('value', '—')} {mt.get('unit', '')}".strip(),
+                "type": "metric", "questionId": question_id,
+                "value": mt.get("value"), "unit": mt.get("unit", ""),
+                "label": mt.get("label") or title,
             }
-            narrative_text = component_content["text"]
-        elif trends:
-            tr = trends[0]
-            points = tr.get("points", tr.get("items", []))
-            component_content = {
-                "type": "trend",
-                "questionId": question_id,
-                "points": points[:20],
-                "measure": tr.get("measure", ""),
-                "text": f"Trend: {tr.get('measure', 'value')} over {len(points)} periods",
-            }
-            narrative_text = component_content["text"]
-
-    # Also attach raw analytics data to the content for the frontend to render
-    if not component_content.get("type"):
-        component_content["questionId"] = question_id
-
-    # Always include structured analytics data for the frontend
-    if rankings and "items" not in component_content:
-        component_content["rankingData"] = rankings[0].get("items", [])[:12]
-    if aggs and "rows" not in component_content:
-        component_content["aggregationData"] = (aggs[0].get("rows") or aggs[0].get("items", []))[:15]
-
-    # ── Determine component type from analytics ──
-    op = (adapted[idx].planRec.operation or "").lower()
-    fspec = adapted[idx].formulaSpec
-    if fspec and (fspec.type or "DIRECT").upper() != "DIRECT":
-        component_type = "formula_metric"
-    elif "rank" in op:
-        component_type = "table"
-    elif "trend" in op or "time_series" in op:
-        component_type = "chart"
-    elif qinfo.get("componentTypes"):
-        component_type = qinfo["componentTypes"][0]
+            narrative_text = f"{component_content['label']}: {_fmt_value(mt.get('value'), mt.get('unit'))}".strip()
+        else:
+            component_content = {"type": "metric", "questionId": question_id,
+                                 "value": None, "label": title}
+            narrative_text = f"{title}: (not available)"
     else:
-        component_type = "narrative"
-
-    # ── Build title ──
-    if adapted[idx].fannedOut and adapted[idx].measureLabel:
-        title = adapted[idx].measureLabel
-    else:
-        title = qinfo.get("title") or plan_id
+        # Narrative (and appendix kinds): grounded prose from the analytics roll-up.
+        from report_builder.generation.document_map_bridge import _narrative_for
+        roll_kind = "ranking" if rankings else ("aggregation" if aggs else "")
+        rollup = (rankings[0] if rankings else (aggs[0] if aggs else None))
+        narrative_text = _narrative_for(q_title, roll_kind, rollup, metrics)
+        component_content = {"type": "narrative", "questionId": question_id,
+                             "text": narrative_text}
+        # Optional LLM polish (Azure) when enabled.
+        if body.use_llm:
+            try:
+                from report_builder.generation.narrator import _default_llm_caller
+                caller = _default_llm_caller()
+                if caller:
+                    prompt = (
+                        "You are a MoSPI desk officer writing one concise, factual paragraph for "
+                        "an official statistical report. Use ONLY the figures in the draft; do not "
+                        "invent or re-round numbers. Be precise and neutral.\n\n"
+                        f"DRAFT:\n{narrative_text}\n\nReturn only the improved paragraph."
+                    )
+                    improved = caller(prompt)
+                    if improved and len(improved.strip()) > 20 and not _NUMBER_DRIFT(narrative_text, improved):
+                        narrative_text = improved.strip()
+                        component_content["text"] = narrative_text
+            except Exception as _llm_exc:  # noqa: BLE001
+                logger.info("[generate-component] narrative LLM polish skipped: %s", _llm_exc)
 
     # ── Next preview ──
-    next_idx = idx + 1 if idx + 1 < len(adapted) else None
+    next_idx = idx + 1 if idx + 1 < len(queue) else None
     next_preview = None
     if next_idx is not None:
-        nq = adapted[next_idx].questionId or adapted[next_idx].planRec.questionId
-        ninfo = registry.get(nq, {})
+        nxt = queue[next_idx]
         next_preview = {
-            "index": next_idx,
-            "plan_id": adapted[next_idx].planRec.planId,
-            "component_type": "narrative",
-            "title": ninfo.get("title") or adapted[next_idx].planRec.planId,
-            "section_path": ninfo.get("sectionPath", []),
+            "index": next_idx, "plan_id": nxt["component_id"],
+            "component_type": nxt["component_type"], "title": nxt["title"],
+            "section_path": nxt["section_path"],
         }
 
-    total = len(adapted)
+    total = len(queue)
     progress = round(((idx + 1) / total) * 100, 1)
 
-    logger.info("[generate-phase] component %d/%d (%s) q=%s for %s__%s — "
-                "narrative=%d chars, content_type=%s",
-                idx + 1, total, component_type, question_id, template_id, signature,
-                len(narrative_text), component_content.get("type", "block"))
+    logger.info("[generate-component] %d/%d (%s) q=%s — narrative=%d chars, items=%d",
+                idx + 1, total, component_kind, question_id, len(narrative_text),
+                len(component_content.get("items") or []))
 
     return GenerateComponentOut(
         index=idx,
-        plan_id=plan_id,
+        plan_id=item["component_id"],
         component_type=component_type,
         title=title,
         content=component_content,
@@ -1088,6 +1125,7 @@ def generate_single_component(
         total=total,
         progress_pct=progress,
     )
+
 
 
 @router.get("/{template_id}/{signature}/report")
@@ -1515,9 +1553,12 @@ def _canvas_layout_path(template_id: str, signature: str) -> Path:
 
 class CanvasLayoutIn(BaseModel):
     # Opaque, frontend-owned shape: {"blocks": {id: {kind,title,content,x,y,w,h,
-    # pageIndex,...}}, "pages": [...], "updatedAt": "..."}. Persisted verbatim.
+    # pageIndex,...}}, "pages": [...], "order": [id, ...], "updatedAt": "..."}.
+    # Persisted verbatim. ``order`` is the canonical document sequence so a manual
+    # reorder survives a reload.
     blocks: dict[str, Any] = {}
     pages: list[dict[str, Any]] = []
+    order: list[str] = []
     updatedAt: Optional[str] = None
 
 
@@ -1526,12 +1567,12 @@ def get_canvas_layout(template_id: str, signature: str) -> dict[str, Any]:
     """Return the saved canvas layout (empty doc if none saved yet)."""
     path = _canvas_layout_path(template_id, signature)
     if not path.exists():
-        return {"blocks": {}, "pages": [], "updatedAt": None}
+        return {"blocks": {}, "pages": [], "order": [], "updatedAt": None}
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as exc:
         logger.warning("[canvas-layout] read failed %s: %s", path, exc)
-        return {"blocks": {}, "pages": [], "updatedAt": None}
+        return {"blocks": {}, "pages": [], "order": [], "updatedAt": None}
 
 
 @router.put("/{template_id}/{signature}/canvas-layout")
@@ -1542,6 +1583,7 @@ def put_canvas_layout(template_id: str, signature: str, body: CanvasLayoutIn) ->
     doc = {
         "blocks": body.blocks or {},
         "pages": body.pages or [],
+        "order": body.order or [],
         "updatedAt": body.updatedAt or datetime.now(timezone.utc).isoformat(),
     }
     path = _canvas_layout_path(template_id, signature)

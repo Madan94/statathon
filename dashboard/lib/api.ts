@@ -2401,8 +2401,9 @@ export const generatePhaseApi = {
     templateId: string,
     signature: string
   ): Promise<{
-    blocks: Record<string, { x?: number; y?: number; w?: number; h?: number; pageIndex?: number }>;
+    blocks: Record<string, { floating?: boolean; x?: number; y?: number; w?: number; h?: number; pageIndex?: number }>;
     pages: Array<Record<string, unknown>>;
+    order: string[];
     updatedAt: string | null;
   }> => {
     const { data } = await api.get(
@@ -2414,7 +2415,7 @@ export const generatePhaseApi = {
   putCanvasLayout: async (
     templateId: string,
     signature: string,
-    body: { blocks: Record<string, unknown>; pages: Array<Record<string, unknown>>; updatedAt?: string }
+    body: { blocks: Record<string, unknown>; pages: Array<Record<string, unknown>>; order?: string[]; updatedAt?: string }
   ): Promise<{ blocks: Record<string, unknown>; pages: Array<Record<string, unknown>>; updatedAt: string | null }> => {
     const { data } = await api.put(
       `/report-builder/generate-phase/${templateId}/${signature}/canvas-layout`,

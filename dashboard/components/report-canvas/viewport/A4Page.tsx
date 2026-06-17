@@ -3,6 +3,15 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import type { PageBlock } from '../engine/useCanvasState';
 import type { NumberedHeading, TableSplitPart } from '../engine/paginationEngine';
 import { BlockRenderer } from '../blocks/BlockRenderer';
+import {
+  MM_TO_PX, SNAP, PAD, MIN_W, MIN_H, DRAG_THRESHOLD, Z,
+  intrinsicWidth, resizableEdges, type HandleDir,
+} from '../engine/canvasTokens';
+import { ResizeHandles } from '../blocks/chrome/ResizeHandles';
+import { BlockActionBar } from '../blocks/chrome/BlockActionBar';
+import { DragHandle } from '../blocks/chrome/DragHandle';
+import { InsertionCaret } from '../blocks/chrome/InsertionCaret';
+import { useFlip } from '../engine/interaction/useFlip';
 
 /* ═══════════════════════════════════════════════════════════════════
    A4Page — one fixed-size sheet with Canva-style free positioning.
@@ -26,43 +35,6 @@ const PAGE_DIMENSIONS: Record<PageSize, { w: number; h: number; label: string }>
 
 export { PAGE_DIMENSIONS };
 
-const MM_TO_PX = 3.7795;            // 96dpi
-const SNAP = 6;                     // snap threshold (unscaled px)
-const PAD = { top: 18, right: 22, bottom: 20, left: 22 }; // mm
-const MIN_W = 60;                   // min block width (px)
-const MIN_H = 28;                   // min block height (px)
-const LONG_PRESS_MS = 220;          // hold this long before a drag arms
-const PRESS_CANCEL = 8;             // moving more than this before arming cancels the long-press
-
-/** Intrinsic default width (px) per block kind — so a metric card isn't full
- *  width and a table stays wide. ``full`` resolves to the content width. */
-function intrinsicWidth(kind: PageBlock['kind'], contentW: number): number {
-  switch (kind) {
-    case 'metric':       return 190;
-    case 'source_note':  return 320;
-    case 'chart':        return 360;
-    case 'key_finding':  return 440;
-    case 'narrative':    return Math.min(480, contentW);   // ~65ch readable column
-    case 'heading':      return contentW;
-    case 'table':        return contentW;
-    case 'divider':      return contentW;
-    default:             return Math.min(440, contentW);
-  }
-}
-
-/** The 8 resize handles + which edges each drives. */
-type HandleDir = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
-const HANDLES: { dir: HandleDir; cls: string; cursor: string }[] = [
-  { dir: 'nw', cls: 'left-0 top-0 -translate-x-1/2 -translate-y-1/2', cursor: 'nwse-resize' },
-  { dir: 'n',  cls: 'left-1/2 top-0 -translate-x-1/2 -translate-y-1/2', cursor: 'ns-resize' },
-  { dir: 'ne', cls: 'right-0 top-0 translate-x-1/2 -translate-y-1/2', cursor: 'nesw-resize' },
-  { dir: 'e',  cls: 'right-0 top-1/2 translate-x-1/2 -translate-y-1/2', cursor: 'ew-resize' },
-  { dir: 'se', cls: 'right-0 bottom-0 translate-x-1/2 translate-y-1/2', cursor: 'nwse-resize' },
-  { dir: 's',  cls: 'left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2', cursor: 'ns-resize' },
-  { dir: 'sw', cls: 'left-0 bottom-0 -translate-x-1/2 translate-y-1/2', cursor: 'nesw-resize' },
-  { dir: 'w',  cls: 'left-0 top-1/2 -translate-x-1/2 -translate-y-1/2', cursor: 'ew-resize' },
-];
-
 interface A4PageProps {
   blocks: PageBlock[];
   pageNumber: number;
@@ -71,6 +43,10 @@ interface A4PageProps {
   onSelectBlock: (id: string | null) => void;
   onGenerate?: (index: number) => void;
   onMoveBlock?: (id: string, x: number, y: number, w?: number) => void;
+  /** Reorder a flowing block to sit before ``beforeId`` (null = end). */
+  onReorderBlock?: (id: string, beforeId: string | null) => void;
+  /** Toggle a block between flowing and floating (opt-in overlay). */
+  onSetFloating?: (id: string, floating: boolean, x?: number, y?: number) => void;
   onUpdateBlock?: (id: string, updates: Partial<PageBlock>) => void;
   onDeleteBlock?: (id: string) => void;
   onDuplicateBlock?: (id: string) => void;
@@ -102,29 +78,36 @@ interface A4PageProps {
   reportTitle?: string;
   /** Running-footer issuing-organisation line (dynamic, not hardcoded). */
   footerOrg?: string;
+  /** Estimate-then-measure: report each flow block's real rendered height (px)
+   *  so the packer can reflow on the true boundary instead of clipping. */
+  onReportHeights?: (heights: Record<string, number>) => void;
 }
 
 interface DragRef {
   id: string;
   pointerId: number;
-  el: HTMLElement;
-  armed: boolean;          // becomes true only after the long-press fires
+  el: HTMLElement;          // the drag-handle element (holds pointer capture)
+  floating: boolean;        // float-move (absolute) vs flow-reorder
   pointerStartX: number;
   pointerStartY: number;
-  blockStartX: number;
-  blockStartY: number;
+  blockStartX: number;      // floating only
+  blockStartY: number;      // floating only
   w: number;
   h: number;
   moved: boolean;
-  xTargets: number[];
-  yTargets: number[];
+  xTargets: number[];       // floating snap
+  yTargets: number[];       // floating snap
+  // Reorder: flowing siblings on this page in DOM order (content-local px).
+  siblings: { id: string; top: number; mid: number; bottom: number }[];
+  dropBeforeId: string | null;  // current reorder target (null = end of flow)
 }
 
 export function A4Page({
   blocks, pageNumber, totalPages, selectedBlockId, onSelectBlock,
-  onGenerate, onMoveBlock, onUpdateBlock, onDeleteBlock, onDuplicateBlock, onResizeBlock, pageSize = 'a4', zoom = 100,
+  onGenerate, onMoveBlock, onReorderBlock, onSetFloating, onUpdateBlock, onDeleteBlock, onDuplicateBlock, onResizeBlock, pageSize = 'a4', zoom = 100,
   numbering, tableCaptions, tableSplits, chapterLabel, reportTitle = 'MoSPI Statistical Report', onAskBlock, onAddFootnote,
   onCommentBlock, onFlagBlock, commentCount, isFlagged, numerals, footerOrg = 'MoSPI · Government of India',
+  onReportHeights,
 }: A4PageProps) {
   const dim = PAGE_DIMENSIONS[pageSize];
   const scale = zoom / 100;
@@ -135,8 +118,8 @@ export function A4Page({
 
   const contentRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragRef | null>(null);
-  const pressTimer = useRef<number | null>(null);
-  const [pressing, setPressing] = useState<string | null>(null);   // block armed for move
+  const [dragId, setDragId] = useState<string | null>(null);       // block being dragged
+  const [caretY, setCaretY] = useState<number | null>(null);        // reorder insertion caret
   const [live, setLive] = useState<{ id: string; x: number; y: number } | null>(null);
   const [guideX, setGuideX] = useState<number | null>(null);
   const [guideY, setGuideY] = useState<number | null>(null);
@@ -151,32 +134,36 @@ export function A4Page({
 
   const mm = (px: number) => Math.round(px / MM_TO_PX);
 
-  // Clear any pending long-press timer on unmount.
-  useEffect(() => () => { if (pressTimer.current) window.clearTimeout(pressTimer.current); }, []);
-
   /** The effective width of a block (explicit ``w`` or its intrinsic default). */
   const widthOf = (b: PageBlock) => b.w ?? intrinsicWidth(b.kind, contentW);
 
-  // ── Pointer down: select + START LONG-PRESS timer (drag arms only on hold) ─
-  // Deferring pointer capture until the hold fires keeps fast clicks free for
-  // single-click=select and double-click=edit. A quick move cancels the hold.
-  const onPointerDown = useCallback((e: React.PointerEvent, block: PageBlock) => {
-    if (block.status !== 'done') return;       // only finished blocks are movable
-    e.stopPropagation();                        // don't let the page deselect
+  // Smooth FLIP glide when the flow order/heights change (disabled mid-drag so
+  // the live preview isn't fought by an animation).
+  useFlip(contentRef, dragId === null);
+
+  // ── Drag from the gutter grip: reorder (flow) or free-move (floating) ──────
+  // The grip is the ONE drag entry point, leaving the block body free for
+  // click-to-type. Pointer capture lives on the grip element.
+  const onDragHandleDown = useCallback((e: React.PointerEvent, block: PageBlock) => {
+    if (block.status !== 'done') return;
+    e.stopPropagation();
+    e.preventDefault();
     onSelectBlock(block.id);
     const content = contentRef.current;
     if (!content) return;
     const cRect = content.getBoundingClientRect();
-    const el = e.currentTarget as HTMLElement;
-    const bRect = el.getBoundingClientRect();
+    const grip = e.currentTarget as HTMLElement;
+    const sel = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(block.id) : block.id;
+    const bNode = content.querySelector<HTMLElement>(`[data-block-id="${sel}"]`);
+    const bRect = (bNode ?? grip).getBoundingClientRect();
     const startX = (bRect.left - cRect.left) / scale;
     const startY = (bRect.top - cRect.top) / scale;
     const w = bRect.width / scale;
     const h = bRect.height / scale;
 
-    // Gather alignment targets from every OTHER block + the page frame.
     const xTargets: number[] = [0, contentW, contentW / 2];
     const yTargets: number[] = [0, contentH, contentH / 2];
+    const siblings: DragRef['siblings'] = [];
     content.querySelectorAll<HTMLElement>('[data-block-id]').forEach(node => {
       if (node.dataset.blockId === block.id) return;
       const r = node.getBoundingClientRect();
@@ -186,87 +173,82 @@ export function A4Page({
       const hEl = r.height / scale;
       xTargets.push(x0, x0 + wEl / 2, x0 + wEl);
       yTargets.push(y0, y0 + hEl / 2, y0 + hEl);
+      // Only flowing siblings (not absolute) participate in reorder targeting.
+      if (node.style.position !== 'absolute' && node.dataset.blockId) {
+        siblings.push({ id: node.dataset.blockId, top: y0, mid: y0 + hEl / 2, bottom: y0 + hEl });
+      }
     });
+    siblings.sort((a, b) => a.top - b.top);
 
-    const pointerId = e.pointerId;
     dragRef.current = {
-      id: block.id, pointerId, el, armed: false,
+      id: block.id, pointerId: e.pointerId, el: grip, floating: !!block.floating,
       pointerStartX: e.clientX, pointerStartY: e.clientY,
-      blockStartX: startX, blockStartY: startY, w, h, moved: false, xTargets, yTargets,
+      blockStartX: startX, blockStartY: startY, w, h, moved: false,
+      xTargets, yTargets, siblings, dropBeforeId: null,
     };
-    // Arm the drag after a deliberate hold.
-    if (pressTimer.current) window.clearTimeout(pressTimer.current);
-    pressTimer.current = window.setTimeout(() => {
-      const d = dragRef.current;
-      if (!d) return;
-      d.armed = true;
-      try { d.el.setPointerCapture(pointerId); } catch { /* noop */ }
-      setPressing(d.id);
-    }, LONG_PRESS_MS);
+    try { grip.setPointerCapture(e.pointerId); } catch { /* noop */ }
+    setDragId(block.id);
   }, [onSelectBlock, scale, contentW, contentH]);
 
-  // ── Pointer move: cancel hold on a quick drag, else move with snap+guides ──
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
+  // ── Drag move: snap+guides when floating, insertion caret when reordering ──
+  const onDragHandleMove = useCallback((e: React.PointerEvent) => {
     const d = dragRef.current;
     if (!d) return;
     const dx = (e.clientX - d.pointerStartX) / scale;
     const dy = (e.clientY - d.pointerStartY) / scale;
-
-    if (!d.armed) {
-      // Moving before the hold fires = a click/scroll intent, not a move.
-      if (Math.hypot(dx, dy) > PRESS_CANCEL) {
-        if (pressTimer.current) { window.clearTimeout(pressTimer.current); pressTimer.current = null; }
-        dragRef.current = null;
-      }
-      return;
-    }
+    if (!d.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
     d.moved = true;
 
-    let nx = d.blockStartX + dx;
-    let ny = d.blockStartY + dy;
-
-    // Snap X: test left / centre / right edges against targets.
-    let gx: number | null = null;
-    let bestX = SNAP + 1;
-    for (const edge of [nx, nx + d.w / 2, nx + d.w]) {
-      for (const t of d.xTargets) {
-        const dist = Math.abs(edge - t);
-        if (dist <= SNAP && dist < bestX) { bestX = dist; nx += t - edge; gx = t; }
+    if (d.floating) {
+      // Free move with alignment snap (Canva overlay).
+      let nx = d.blockStartX + dx;
+      let ny = d.blockStartY + dy;
+      let gx: number | null = null, bestX = SNAP + 1;
+      for (const edge of [nx, nx + d.w / 2, nx + d.w]) {
+        for (const t of d.xTargets) { const dist = Math.abs(edge - t); if (dist <= SNAP && dist < bestX) { bestX = dist; nx += t - edge; gx = t; } }
       }
-    }
-    // Snap Y: top / middle / bottom.
-    let gy: number | null = null;
-    let bestY = SNAP + 1;
-    for (const edge of [ny, ny + d.h / 2, ny + d.h]) {
-      for (const t of d.yTargets) {
-        const dist = Math.abs(edge - t);
-        if (dist <= SNAP && dist < bestY) { bestY = dist; ny += t - edge; gy = t; }
+      let gy: number | null = null, bestY = SNAP + 1;
+      for (const edge of [ny, ny + d.h / 2, ny + d.h]) {
+        for (const t of d.yTargets) { const dist = Math.abs(edge - t); if (dist <= SNAP && dist < bestY) { bestY = dist; ny += t - edge; gy = t; } }
       }
+      nx = Math.max(0, Math.min(nx, Math.max(0, contentW - d.w)));
+      ny = Math.max(0, Math.min(ny, Math.max(0, contentH - d.h)));
+      setLive({ id: d.id, x: nx, y: ny });
+      setGuideX(gx);
+      setGuideY(gy);
+    } else {
+      // Reorder: drop BEFORE the first flowing sibling whose midpoint is below
+      // the pointer, else at the end of the flow.
+      const content = contentRef.current;
+      if (!content) return;
+      const pointerY = (e.clientY - content.getBoundingClientRect().top) / scale;
+      let beforeId: string | null = null;
+      let caret = 0;
+      let placed = false;
+      for (const s of d.siblings) {
+        if (pointerY < s.mid) { beforeId = s.id; caret = s.top - 6; placed = true; break; }
+      }
+      if (!placed) { const last = d.siblings[d.siblings.length - 1]; caret = last ? last.bottom + 6 : 0; beforeId = null; }
+      d.dropBeforeId = beforeId;
+      setCaretY(Math.max(0, caret));
     }
-
-    // Clamp inside the content frame.
-    nx = Math.max(0, Math.min(nx, Math.max(0, contentW - d.w)));
-    ny = Math.max(0, Math.min(ny, Math.max(0, contentH - d.h)));
-
-    setLive({ id: d.id, x: nx, y: ny });
-    setGuideX(gx);
-    setGuideY(gy);
   }, [scale, contentW, contentH]);
 
-  // ── Pointer up: commit position (or treat as a click if not moved) ───────
-  const onPointerUp = useCallback((e: React.PointerEvent) => {
-    if (pressTimer.current) { window.clearTimeout(pressTimer.current); pressTimer.current = null; }
+  // ── Drag up: commit the reorder or the free position ───────────────────────
+  const onDragHandleUp = useCallback((e: React.PointerEvent) => {
     const d = dragRef.current;
     dragRef.current = null;
-    setPressing(null);
+    setDragId(null);
+    setCaretY(null);
     setGuideX(null);
     setGuideY(null);
     try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* noop */ }
-    if (d && d.armed && d.moved && live && onMoveBlock) {
-      onMoveBlock(d.id, live.x, live.y, d.w);
+    if (d && d.moved) {
+      if (d.floating && live && onMoveBlock) onMoveBlock(d.id, live.x, live.y, d.w);
+      else if (!d.floating && onReorderBlock) onReorderBlock(d.id, d.dropBeforeId);
     }
     setLive(null);
-  }, [live, onMoveBlock]);
+  }, [live, onMoveBlock, onReorderBlock]);
 
   // ── Resize handle drag ───────────────────────────────────────────────────
   const onResizeDown = useCallback((e: React.PointerEvent, block: PageBlock, dir: HandleDir) => {
@@ -305,7 +287,7 @@ export function A4Page({
       y: positioned ? block.y! : (bRect.top - cRect.top) / scale,
       vert: dir.includes('n') || dir.includes('s') });
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  }, [scale]);
+  }, [scale, contentW, contentH]);
 
   const onResizeMove = useCallback((e: React.PointerEvent) => {
     const r = resizeRef.current;
@@ -380,48 +362,74 @@ export function A4Page({
     const rs = resizeLive && resizeLive.id === block.id ? resizeLive : null;
     const x = liveThis ? live!.x : rs ? rs.x : block.x ?? 0;
     const y = liveThis ? live!.y : rs ? rs.y : block.y ?? 0;
-    // `live` is only ever set after a move arms in onPointerMove, so a live
-    // entry for this block means it is actively dragging.
-    const dragging = !!liveThis;
-    const armed = pressing === block.id;          // long-press fired, ready to move
+    // `live` is only ever set after a float-move begins, so a live entry for
+    // this block means it is actively being dragged to a free position.
+    const dragging = dragId === block.id;
     const resizing = !!rs;
     const isSel = selectedBlockId === block.id;
+    const showChrome = isSel && block.status === 'done';
 
+    // Document-first sizing: flowing blocks resize WIDTH only and auto-fit their
+    // height (so nothing is ever clipped); figures and floating blocks may also
+    // carry an explicit height.
+    const allowHeight = positioned || block.kind === 'chart' || block.kind === 'table';
     const width = rs ? rs.w : widthOf(block);
-    const height = rs && rs.vert ? rs.h : block.h;
+    const height = allowHeight ? (rs && rs.vert ? rs.h : block.h) : undefined;
+    const edges = resizableEdges(block.kind, positioned);
 
-    const lift = dragging || armed;
+    const lift = dragging;
     const style: React.CSSProperties = positioned
       ? {
           position: 'absolute', left: x, top: y, width,
           height: height ?? undefined,
-          zIndex: lift || resizing ? 50 : isSel ? 20 : 1,
+          zIndex: lift || resizing ? Z.dragLift : isSel ? Z.selected : Z.content,
           opacity: dragging ? 0.92 : 1,
           boxShadow: lift ? '0 8px 24px rgba(37,99,235,0.18)' : undefined,
           transition: dragging || resizing ? 'none' : 'box-shadow 0.15s',
         }
       : {
           width, height: height ?? undefined,
+          zIndex: dragging ? Z.dragLift : isSel ? Z.selected : undefined,
+          opacity: dragging ? 0.55 : 1,
           boxShadow: lift ? '0 8px 24px rgba(37,99,235,0.18)' : undefined,
-          transition: dragging ? 'none' : 'box-shadow 0.15s',
+          transition: dragging || resizing ? 'none' : 'box-shadow 0.15s, opacity 0.15s',
         };
 
     return (
       <div
         key={block.id}
         data-block-id={block.id}
-        onPointerDown={e => onPointerDown(e, block)}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        className={`relative touch-none ${block.status === 'done' ? (armed ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+        onPointerDown={e => { e.stopPropagation(); if (block.status === 'done') onSelectBlock(block.id); }}
+        className="relative"
         style={style}
       >
-        {/* Hold-to-move hint while the long-press is active */}
-        {armed && !dragging && (
-          <div className="pointer-events-none absolute -top-5 left-1/2 z-[60] -translate-x-1/2 rounded bg-blue-600 px-1.5 py-0.5 text-[8px] font-medium text-white shadow">
-            Drag to move
-          </div>
+        {/* Gutter drag grip — the single drag entry point (keeps body free for typing) */}
+        {showChrome && (
+          <DragHandle
+            active={dragging}
+            onPointerDown={e => onDragHandleDown(e, block)}
+            onPointerMove={onDragHandleMove}
+            onPointerUp={onDragHandleUp}
+          />
         )}
+
+        {/* Selection toolbar — above-left, clear of the resize grips */}
+        {showChrome && (
+          <BlockActionBar
+            block={block}
+            floating={!!block.floating}
+            flagged={isFlagged?.(origId) ?? false}
+            onAsk={onAskBlock}
+            onComment={onCommentBlock}
+            onFlag={onFlagBlock}
+            onToggleFloat={onSetFloating ? (id, fl) => onSetFloating(id, fl, block.x, block.y) : undefined}
+            onDuplicate={onDuplicateBlock}
+            onDelete={onDeleteBlock}
+          />
+        )}
+
+        {/* Content. Flowing blocks never clip (auto height); only an explicitly
+            sized figure / floating block is height-bounded. */}
         <div className={height ? 'h-full overflow-hidden' : ''}>
           <BlockRenderer
             block={block}
@@ -429,12 +437,7 @@ export function A4Page({
             onSelect={() => onSelectBlock(block.id)}
             onGenerate={onGenerate}
             onUpdate={onUpdateBlock}
-            onDelete={onDeleteBlock}
-            onDuplicate={onDuplicateBlock}
-            onAsk={onAskBlock}
             onAddFootnote={onAddFootnote}
-            onComment={onCommentBlock}
-            onFlag={onFlagBlock}
             commentCount={commentCount?.(origId) ?? 0}
             flagged={isFlagged?.(origId) ?? false}
             numerals={numerals}
@@ -444,29 +447,53 @@ export function A4Page({
           />
         </div>
 
-        {/* Resize handles (Canva-style) — only on the selected, finished block */}
-        {isSel && block.status === 'done' && onResizeBlock && !dragging && (
-          <>
-            {HANDLES.map(h => (
-              <div
-                key={h.dir}
-                onPointerDown={e => onResizeDown(e, block, h.dir)}
-                onPointerMove={onResizeMove}
-                onPointerUp={onResizeUp}
-                style={{ cursor: h.cursor }}
-                className={`absolute z-40 h-2 w-2 rounded-[2px] border border-blue-500 bg-white shadow-sm ${h.cls}`}
-              />
-            ))}
-          </>
+        {/* Resize grips — width-only for flowing text, all eight for figures/floats */}
+        {showChrome && onResizeBlock && !dragging && (
+          <ResizeHandles
+            edges={edges}
+            onResizeDown={(e, dir) => onResizeDown(e, block, dir)}
+            onResizeMove={onResizeMove}
+            onResizeUp={onResizeUp}
+          />
         )}
       </div>
     );
   };
 
-  const flowBlocks = blocks.filter(b => (b.x === undefined || b.y === undefined) && live?.id !== b.id);
-  const posBlocks = blocks.filter(b => (b.x !== undefined && b.y !== undefined) || live?.id === b.id);
+  const flowBlocks = blocks.filter(b => !b.floating && live?.id !== b.id);
+  const posBlocks = blocks.filter(b => b.floating || live?.id === b.id);
 
-  const badge = live && dragRef.current?.moved
+  // ── Estimate-then-measure (D-L1): report each flow block's REAL rendered
+  //   height so the packer reflows on the true boundary instead of clipping.
+  //   A signature of the flow ids + content lengths keeps the effect cheap. ─
+  const flowSig = flowBlocks.map(b => `${b.id}:${(b.content || '').length}:${b.status}`).join('|');
+  useEffect(() => {
+    if (!onReportHeights || !contentRef.current) return;
+    const measure = () => {
+      const root = contentRef.current;
+      if (!root) return;
+      const out: Record<string, number> = {};
+      root.querySelectorAll<HTMLElement>('[data-block-id]').forEach(el => {
+        const id = el.getAttribute('data-block-id');
+        // Only measure flow blocks (absolute/pinned ones report their own size).
+        if (!id || el.style.position === 'absolute') return;
+        const h = el.offsetHeight;          // unscaled (CSS transform ignores offsetHeight)
+        if (h > 0) out[id] = h;
+      });
+      if (Object.keys(out).length) onReportHeights(out);
+    };
+    const raf = requestAnimationFrame(measure);
+    // Re-measure on late content/layout shifts (images, fonts, async charts).
+    const ro = new ResizeObserver(() => requestAnimationFrame(measure));
+    contentRef.current.querySelectorAll<HTMLElement>('[data-block-id]').forEach(el => {
+      if (el.style.position !== 'absolute') ro.observe(el);
+    });
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, [flowSig, onReportHeights]);
+
+  // `live` is only ever set in onPointerMove AFTER a move arms, so its presence
+  // already implies the block moved — no render-time ref read needed.
+  const badge = live
     ? { x: live.x, y: Math.max(0, live.y - 20), mmX: mm(live.x), mmY: mm(live.y) }
     : null;
 
@@ -493,8 +520,11 @@ export function A4Page({
         }}
         onPointerDown={() => onSelectBlock(null)}
       >
-        {/* Content area — positioning context for absolute blocks + guides */}
-        <div ref={contentRef} className="relative h-full overflow-hidden">
+        {/* Content area — positioning context for absolute blocks + guides.
+            overflow-visible so the gutter grip / action bar (which sit just
+            outside a block's box) are not clipped; pagination keeps flow
+            content within the page, so nothing spills in normal use. */}
+        <div ref={contentRef} className="relative h-full overflow-visible">
           {isEmpty ? (
             <div className="flex h-full flex-col items-center justify-center text-slate-300">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50">
@@ -505,7 +535,8 @@ export function A4Page({
             </div>
           ) : (
             <>
-              {/* Flow stack (unpositioned blocks) */}
+              {/* Flow stack (document order). FLIP-style transition lets blocks
+                  glide when the order changes instead of jumping. */}
               {flowBlocks.length > 0 && (
                 <div className="space-y-3">
                   {flowBlocks.map(b => renderWrapper(b, false))}
@@ -514,12 +545,15 @@ export function A4Page({
               {/* Free-positioned blocks (absolute overlay) */}
               {posBlocks.map(b => renderWrapper(b, true))}
 
+              {/* Reorder insertion caret (document-first drag) */}
+              {caretY !== null && <InsertionCaret y={caretY} />}
+
               {/* Alignment guides (Canva-style) */}
               {guideX !== null && (
-                <div className="pointer-events-none absolute top-0 bottom-0 w-px bg-pink-500/70" style={{ left: guideX }} />
+                <div className="pointer-events-none absolute top-0 bottom-0 w-px bg-pink-500/70" style={{ left: guideX, zIndex: Z.guides }} />
               )}
               {guideY !== null && (
-                <div className="pointer-events-none absolute left-0 right-0 h-px bg-pink-500/70" style={{ top: guideY }} />
+                <div className="pointer-events-none absolute left-0 right-0 h-px bg-pink-500/70" style={{ top: guideY, zIndex: Z.guides }} />
               )}
 
               {/* Minimal coordinate badge */}

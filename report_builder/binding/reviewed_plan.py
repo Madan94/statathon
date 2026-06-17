@@ -298,7 +298,11 @@ def _question_node(
 
 def _section_children(section: dict[str, Any]) -> list[dict[str, Any]]:
     children: list[dict[str, Any]] = []
-    for key in ("children", "sections", "subtopics", "subsections"):
+    # Enterprise blueprints nest topic → chapters → sections → questions. Older/flat
+    # ones use sections/children/subtopics directly. Include "chapters" so the deep
+    # enterprise hierarchy is walked — otherwise chapters (and everything under them)
+    # are skipped and the reviewed plan tree comes back empty.
+    for key in ("children", "chapters", "sections", "subtopics", "subsections"):
         for child in section.get(key) or []:
             if isinstance(child, dict):
                 children.append(child)

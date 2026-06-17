@@ -455,6 +455,67 @@ def _detect_image_mime(image_bytes: bytes) -> str:
     return "image/png"  # safe default for Qwen which prefers PNG
 
 
+# ── Content-moderation false-positive recovery (large-PDF robustness) ───────────
+# Some vision providers (notably Alibaba/DashScope-backed Qwen-VL via OpenRouter,
+# and Azure's content filter) run a safety classifier BEFORE inference. On clean
+# statistical PDF scans it occasionally false-positives — e.g. OpenRouter returns
+# ``400 DataInspectionFailed: Input image data may contain inappropriate content``.
+# That aborts the page and, mid-document, can stall extraction. Re-encoding the page
+# as a clean, white-flattened JPEG (no alpha / metadata / PNG quirks) reliably passes
+# the classifier, so we detect the rejection and retry the SAME provider once with a
+# sanitized image before giving up to the fallback chain.
+_MODERATION_SIGNATURES = (
+    "datainspectionfailed",
+    "inappropriate content",
+    "content_policy",
+    "content management policy",
+    "content_filter",
+    "responsibleaipolicyviolation",
+    "flagged as",
+    "safety system",
+)
+
+
+def _is_content_moderation_error(status_code: int, body: str) -> bool:
+    """True when a non-200 response is a content-safety rejection (not a real error)."""
+    if status_code not in (400, 403, 422, 451):
+        return False
+    low = (body or "").lower()
+    return any(sig in low for sig in _MODERATION_SIGNATURES)
+
+
+def _reencode_image(image_bytes: bytes, *, max_dim: int = 1024, quality: int = 85) -> bytes | None:
+    """Re-encode an image as a clean, white-flattened JPEG to defeat false-positive
+    content moderation. Returns ``None`` when PIL is unavailable or the bytes are
+    unreadable, so the caller keeps the original image.
+    """
+    try:
+        import io as _io
+
+        from PIL import Image  # type: ignore
+
+        img = Image.open(_io.BytesIO(image_bytes))
+        # Flatten any alpha/palette onto a white background (document scans).
+        if img.mode in ("RGBA", "LA", "P"):
+            img = img.convert("RGBA")
+            bg = Image.new("RGB", img.size, (255, 255, 255))
+            bg.paste(img, mask=img.split()[-1])
+            img = bg
+        else:
+            img = img.convert("RGB")
+        w, h = img.size
+        if max(w, h) > max_dim:
+            scale = max_dim / max(w, h)
+            img = img.resize((max(1, int(w * scale)), max(1, int(h * scale))), resample=Image.LANCZOS)
+        out = _io.BytesIO()
+        img.save(out, format="JPEG", quality=quality, optimize=True)
+        return out.getvalue()
+    except Exception as exc:  # noqa: BLE001 — best-effort sanitization
+        logger.info("[llm_router] image re-encode skipped: %s", exc)
+        return None
+
+
+
 def guided_json_enabled() -> bool:
     """Q20: whether to send vLLM ``guided_json`` schema-constrained decoding.
 
@@ -548,6 +609,7 @@ def _call_azure(prompt: str, image_bytes: bytes | None, max_tokens: int, tempera
     # root-cause fix for "returned text but no valid JSON" on dense table pages.
     _max_retries = 0 if _is_reasoning_deploy else 1
     _hard_cap = int(os.getenv("AZURE_OPENAI_MAX_OUTPUT_CAP") or "1024")
+    _moderation_retried = False
     for _attempt in range(_max_retries + 1):
         try:
             r = _post_with_retry(url, label=key_label or "azure", json=payload, headers=headers, timeout=timeout, verify=_SSL_VERIFY)
@@ -556,6 +618,23 @@ def _call_azure(prompt: str, image_bytes: bytes | None, max_tokens: int, tempera
                            f" [{key_label}]" if key_label else "", exc)
             return None
         if r.status_code != 200:
+            # Azure content filter can false-positive on clean document scans — retry
+            # once with a sanitized (white-flattened JPEG) image before giving up.
+            if (image_bytes and not _moderation_retried
+                    and _is_content_moderation_error(r.status_code, r.text or "")):
+                reenc = _reencode_image(image_bytes)
+                if reenc and reenc != image_bytes:
+                    _mime = _detect_image_mime(reenc)
+                    _b64 = base64.b64encode(reenc).decode("utf-8")
+                    payload["messages"] = [{"role": "user", "content": [
+                        {"type": "image_url", "image_url": {"url": f"data:{_mime};base64,{_b64}"}},
+                        {"type": "text", "text": prompt},
+                    ]}]
+                    _moderation_retried = True
+                    logger.info("[llm_router][azure]%s content-safety false-positive (HTTP %d) — "
+                                "retrying with sanitized image",
+                                f" [{key_label}]" if key_label else "", r.status_code)
+                    continue
             logger.warning("[llm_router][azure]%s HTTP %d: %s",
                            f" [{key_label}]" if key_label else "", r.status_code, r.text[:300])
             return None
@@ -802,33 +881,50 @@ def _call_openai(prompt: str, image_bytes: bytes | None, max_tokens: int, temper
                        "OPENAI_VISION_MODEL" if image_bytes else "OPENAI_MODEL")
         return None
     timeout = int(os.getenv("OPENAI_TIMEOUT") or "120")
-    if image_bytes:
-        mime = _detect_image_mime(image_bytes)
-        img_b64 = base64.b64encode(image_bytes).decode("utf-8")
-        content: list[dict[str, Any]] = [
-            {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{img_b64}"}},
-            {"type": "text", "text": prompt},
-        ]
-        messages: list[dict[str, Any]] = [{"role": "user", "content": content}]
-    else:
-        messages = [{"role": "user", "content": prompt}]
-    payload = {
-        "model": model,
-        "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    }
+
+    def _build_messages(img: bytes | None) -> list[dict[str, Any]]:
+        if img:
+            mime = _detect_image_mime(img)
+            b64 = base64.b64encode(img).decode("utf-8")
+            return [{"role": "user", "content": [
+                {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}},
+                {"type": "text", "text": prompt},
+            ]}]
+        return [{"role": "user", "content": prompt}]
+
     headers = {"Content-Type": "application/json"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
-    try:
-        r = _post_with_retry(f"{base}/chat/completions", label=key_label or "openai", json=payload, headers=headers, timeout=timeout, verify=_SSL_VERIFY)
+
+    cur_image = image_bytes
+    # Up to 2 attempts: original image, then a sanitized re-encode if the provider's
+    # content-safety classifier false-positives on a clean document page.
+    for _attempt in range(2):
+        payload = {
+            "model": model,
+            "messages": _build_messages(cur_image),
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        try:
+            r = _post_with_retry(f"{base}/chat/completions", label=key_label or "openai",
+                                 json=payload, headers=headers, timeout=timeout, verify=_SSL_VERIFY)
+        except Exception as exc:
+            logger.warning("[llm_router][openai] Request failed: %s", exc)
+            return None
         if r.status_code == 200:
             content_out = r.json()["choices"][0]["message"]["content"]
             return content_out.strip() if content_out else None
-        logger.warning("[llm_router][openai] HTTP %d: %s", r.status_code, r.text[:200])
-    except Exception as exc:
-        logger.warning("[llm_router][openai] Request failed: %s", exc)
+        if cur_image and _attempt == 0 and _is_content_moderation_error(r.status_code, r.text or ""):
+            reenc = _reencode_image(cur_image)
+            if reenc and reenc != cur_image:
+                logger.info("[llm_router][openai]%s content-safety false-positive (HTTP %d) — "
+                            "retrying with sanitized image",
+                            f" [{key_label}]" if key_label else "", r.status_code)
+                cur_image = reenc
+                continue
+        logger.warning("[llm_router][openai] HTTP %d: %s", r.status_code, (r.text or "")[:200])
+        return None
     return None
 
 

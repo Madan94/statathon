@@ -1,0 +1,771 @@
+{
+  "$schema": "binding.reviewedPlan.v1",
+  "planId": "rplan_economic_census_establishments_v1_570c8f1957211a0b_f3c057c0",
+  "templatePackageRef": {
+    "templateId": "economic_census_establishments_v1",
+    "version": "1.0.0",
+    "blueprintHash": "fe35d19575a070ea",
+    "astHash": "44136fa355b3678a",
+    "semanticSlotGraphHash": "44136fa355b3678a"
+  },
+  "datasetId": "economic_census_establishments_v1.dataset",
+  "datasetSignature": "570c8f1957211a0b",
+  "bindingAstId": "bind_economic_census_establishments_v1_f3c057c02b2e",
+  "status": "READY",
+  "planTree": [
+    {
+      "nodeId": "topic_landscape",
+      "nodeType": "topic",
+      "title": "Establishment Landscape",
+      "order": 1,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": []
+    },
+    {
+      "nodeId": "topic_employment",
+      "nodeType": "topic",
+      "title": "Employment & Workforce",
+      "order": 2,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": []
+    },
+    {
+      "nodeId": "topic_structure",
+      "nodeType": "topic",
+      "title": "Establishment Structure & Methodology",
+      "order": 3,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": []
+    }
+  ],
+  "entityBindings": [
+    {
+      "entityId": "ent_state_ut",
+      "entityName": "State/UT",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "State/UT"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "State/UT matched dataset column 'State/UT'",
+          "column": "State/UT"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_region",
+      "entityName": "Region",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Region"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Region matched dataset column 'Region'",
+          "column": "Region"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_census_year",
+      "entityName": "Census Year",
+      "entityType": "time",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Census Year"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.693,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.693,
+          "detail": "Census Year matched dataset column 'Census Year'",
+          "column": "Census Year"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "time entity 'Census Year' matched measure column 'Census Year'",
+          "column": "Census Year"
+        }
+      ],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: time entity landed on measure column 'Census Year'"
+      ]
+    },
+    {
+      "entityId": "ent_establishments",
+      "entityName": "Establishments",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Establishments"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Establishments matched dataset column 'Establishments'",
+          "column": "Establishments"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_persons",
+      "entityName": "Persons Working",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Persons Working"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Persons Working matched dataset column 'Persons Working'",
+          "column": "Persons Working"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_female",
+      "entityName": "Female Workers",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Female Workers"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Female Workers matched dataset column 'Female Workers'",
+          "column": "Female Workers"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_child",
+      "entityName": "Child Workers",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Child Workers"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Child Workers matched dataset column 'Child Workers'",
+          "column": "Child Workers"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_hired",
+      "entityName": "Hired Workers",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Hired Workers"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Hired Workers matched dataset column 'Hired Workers'",
+          "column": "Hired Workers"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_rural_estab",
+      "entityName": "Rural Establishments",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Rural Establishments"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Rural Establishments matched dataset column 'Rural Establishments'",
+          "column": "Rural Establishments"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_urban_estab",
+      "entityName": "Urban Establishments",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Urban Establishments"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Urban Establishments matched dataset column 'Urban Establishments'",
+          "column": "Urban Establishments"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_oae",
+      "entityName": "Own-Account Establishments",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Own Account Establishments"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Own-Account Establishments matched dataset column 'Own Account Establishments'",
+          "column": "Own Account Establishments"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_hired_estab",
+      "entityName": "Establishments with Hired Workers",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Establishments with Hired Workers"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Establishments with Hired Workers matched dataset column 'Establishments with Hired Workers'",
+          "column": "Establishments with Hired Workers"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_female_share",
+      "entityName": "Female Worker Share",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Female Share"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Female Worker Share matched dataset column 'Female Share'",
+          "column": "Female Share"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_hired_share",
+      "entityName": "Hired Worker Share",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Hired Share"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Hired Worker Share matched dataset column 'Hired Share'",
+          "column": "Hired Share"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_avg_emp",
+      "entityName": "Average Employment",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Avg Employment"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Average Employment matched dataset column 'Avg Employment'",
+          "column": "Avg Employment"
+        }
+      ],
+      "risks": []
+    }
+  ],
+  "questionBindings": [
+    {
+      "questionId": "q_state_estab",
+      "status": "executable",
+      "resolvedRoles": {
+        "measures": [
+          "Establishments",
+          "Persons Working"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": []
+    },
+    {
+      "questionId": "q_region_estab",
+      "status": "executable",
+      "resolvedRoles": {
+        "measures": [
+          "Establishments"
+        ],
+        "dimensions": [
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": []
+    },
+    {
+      "questionId": "q_rural_urban",
+      "status": "executable",
+      "resolvedRoles": {
+        "measures": [
+          "Rural Establishments",
+          "Urban Establishments",
+          "Establishments"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": []
+    },
+    {
+      "questionId": "q_rural_lead",
+      "status": "executable",
+      "resolvedRoles": {
+        "measures": [
+          "Rural Establishments"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": []
+    },
+    {
+      "questionId": "q_state_emp",
+      "status": "executable",
+      "resolvedRoles": {
+        "measures": [
+          "Persons Working",
+          "Establishments"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": []
+    },
+    {
+      "questionId": "q_region_emp",
+      "status": "executable",
+      "resolvedRoles": {
+        "measures": [
+          "Persons Working"
+        ],
+        "dimensions": [
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": []
+    },
+    {
+      "questionId": "q_female_share",
+      "status": "executable",
+      "resolvedRoles": {
+        "measures": [
+          "Female Share",
+          "Female Workers",
+          "Persons Working"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": []
+    },
+    {
+      "questionId": "q_hired_share",
+      "status": "executable",
+      "resolvedRoles": {
+        "measures": [
+          "Hired Share",
+          "Hired Workers",
+          "Persons Working"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": []
+    },
+    {
+      "questionId": "q_type_mix",
+      "status": "executable",
+      "resolvedRoles": {
+        "measures": [
+          "Own Account Establishments",
+          "Establishments with Hired Workers",
+          "Establishments"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": []
+    },
+    {
+      "questionId": "q_avg_emp",
+      "status": "executable",
+      "resolvedRoles": {
+        "measures": [
+          "Avg Employment",
+          "Persons Working",
+          "Establishments"
+        ],
+        "dimensions": [
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": []
+    },
+    {
+      "questionId": "q_methodology",
+      "status": "executable",
+      "resolvedRoles": {
+        "measures": [
+          "Establishments"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "unresolvedEntities": [],
+      "notes": []
+    }
+  ],
+  "coverage": {
+    "entities": {
+      "bound": 15,
+      "pending": 0,
+      "unresolved": 0
+    },
+    "questions": {
+      "executable": 11,
+      "blocked": 0,
+      "degraded": 0
+    },
+    "issues": [
+      {
+        "severity": "warn",
+        "code": "TYPE_MISMATCH",
+        "message": "'Census Year' (time) bound to a column of a different role — verify.",
+        "entityId": "ent_census_year"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'q_state_estab' has no time column — single-period snapshot.",
+        "questionId": "q_state_estab"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'q_region_estab' has no time column — single-period snapshot.",
+        "questionId": "q_region_estab"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'q_rural_urban' has no time column — single-period snapshot.",
+        "questionId": "q_rural_urban"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'q_rural_lead' has no time column — single-period snapshot.",
+        "questionId": "q_rural_lead"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'q_state_emp' has no time column — single-period snapshot.",
+        "questionId": "q_state_emp"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'q_region_emp' has no time column — single-period snapshot.",
+        "questionId": "q_region_emp"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'q_female_share' has no time column — single-period snapshot.",
+        "questionId": "q_female_share"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'q_hired_share' has no time column — single-period snapshot.",
+        "questionId": "q_hired_share"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'q_type_mix' has no time column — single-period snapshot.",
+        "questionId": "q_type_mix"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'q_avg_emp' has no time column — single-period snapshot.",
+        "questionId": "q_avg_emp"
+      },
+      {
+        "severity": "info",
+        "code": "SNAPSHOT_MODE",
+        "message": "Question 'q_methodology' has no time column — single-period snapshot.",
+        "questionId": "q_methodology"
+      }
+    ]
+  },
+  "semanticSlotGraph": {},
+  "virtualSlots": [],
+  "auditTrail": [
+    {
+      "event": "reviewed_plan_fast_path_created",
+      "source": "binding.finalize",
+      "timestamp": 1781678106.7138846
+    }
+  ],
+  "createdAt": 1781678106.7139034,
+  "updatedAt": 1781678106.718809
+}

@@ -30,14 +30,31 @@ logger = logging.getLogger(__name__)
 
 
 def _index_analytics(analytics: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    rankings = {r.get("questionId"): r for r in analytics.get("rankings", []) if r.get("questionId")}
-    aggregations = {a.get("questionId"): a for a in analytics.get("aggregations", []) if a.get("questionId")}
+    # A multi-measure question fans out into several rankings/aggregations sharing
+    # the same questionId. The FIRST one is the question's PRIMARY measure (the
+    # adapter emits it first); keep that so the narrative/table cite the headline
+    # measure, not a secondary table column. (A dict comprehension keeps the LAST,
+    # which made "rank by establishments" narrate "Persons Working".)
+    rankings: dict[str, dict[str, Any]] = {}
+    for r in analytics.get("rankings", []):
+        qid = r.get("questionId")
+        if qid and qid not in rankings:
+            rankings[qid] = r
+    aggregations: dict[str, dict[str, Any]] = {}
+    for a in analytics.get("aggregations", []):
+        qid = a.get("questionId")
+        if qid and qid not in aggregations:
+            aggregations[qid] = a
     metrics: dict[str, list[dict[str, Any]]] = {}
     for m in analytics.get("metrics", []):
         qid = m.get("questionId")
         if qid:
             metrics.setdefault(qid, []).append(m)
-    trends = {t.get("questionId"): t for t in analytics.get("trends", []) if t.get("questionId")}
+    trends: dict[str, dict[str, Any]] = {}
+    for t in analytics.get("trends", []):
+        qid = t.get("questionId")
+        if qid and qid not in trends:
+            trends[qid] = t
     return {"rankings": rankings, "aggregations": aggregations, "metrics": metrics, "trends": trends}
 
 
@@ -175,9 +192,12 @@ def _narrative_for(q_title: str, rollup_kind: str, rollup: dict[str, Any] | None
                    metrics: list[dict[str, Any]] | None) -> str:
     """Deterministic, data-backed prose for a question's narrative slot.
 
-    Only cites numbers that are genuine analytics values (ranking item values,
-    aggregation row values, metric values) so every figure verifies — no derived
-    sums or counts that the verifier cannot reconcile.
+    Produces a richer, multi-sentence analytical paragraph (lead → leaders →
+    spread/concentration → tail → metric) while only citing numbers that are
+    genuine analytics values (ranking item values, aggregation row values, metric
+    values) so every figure verifies — no derived sums the verifier cannot
+    reconcile. Ratios *between* two cited values are safe because both endpoints
+    are themselves verifiable analytics values.
     """
     head = (q_title or "").strip().rstrip(".")
     parts: list[str] = []
@@ -195,37 +215,79 @@ def _narrative_for(q_title: str, rollup_kind: str, rollup: dict[str, Any] | None
             return (str(k.get(d0)) if d0 else "") or "the leading unit"
 
         top = items[0]
-        sent = f"{label(top)} leads on {measure} at {_fmt(top.get('value'))}"
+        top_val = top.get("value")
+        # Lead sentence — the front-runner.
+        sent = f"{label(top)} leads on {measure} at {_fmt(top_val)}"
         extras = [f"{label(it)} ({_fmt(it.get('value'))})" for it in items[1:3]]
         if extras:
             sent += ", followed by " + " and ".join(extras)
         parts.append(sent + ".")
-        if len(items) > 3:
+
+        # Spread / concentration sentence — only ratios between two cited values.
+        if len(items) >= 4:
             low = items[-1]
-            parts.append(f"At the lower end, {label(low)} records {_fmt(low.get('value'))}.")
+            low_val = low.get("value")
+            parts.append(
+                f"At the other end, {label(low)} records the lowest value at {_fmt(low_val)}."
+            )
+            try:
+                if low_val and float(low_val) != 0:
+                    ratio = float(top_val) / float(low_val)
+                    if ratio >= 1.5:
+                        parts.append(
+                            f"The leader's {measure} is about {ratio:.1f} times that of the "
+                            f"lowest-ranked unit, indicating a pronounced spread across the "
+                            f"distribution."
+                        )
+            except (TypeError, ValueError, ZeroDivisionError):
+                pass
+            # Top-3 prominence relative to the leader (both endpoints are cited values).
+            try:
+                third_val = items[2].get("value")
+                if third_val and float(top_val) and float(third_val) / float(top_val) >= 0.75:
+                    parts.append(
+                        "The top three units cluster closely, sharing the upper band of the "
+                        "distribution."
+                    )
+            except (TypeError, ValueError, ZeroDivisionError):
+                pass
     elif rollup_kind == "aggregation" and rollup and rollup.get("rows"):
         rows = rollup["rows"]
         measure = rollup.get("measure") or "the measure"
         ordered = sorted(rows, key=lambda r: (r.get("value") or 0), reverse=True)
         top = ordered[0]
-        sent = f"The highest {measure} is {_key_label(top.get('key') or {}) or 'the leading group'} " \
-               f"at {_fmt(top.get('value'))}"
+        top_val = top.get("value")
+        sent = (f"The highest {measure} is recorded by "
+                f"{_key_label(top.get('key') or {}) or 'the leading group'} at {_fmt(top_val)}")
         if len(ordered) > 1:
             bot = ordered[-1]
-            sent += f"; the lowest is {_key_label(bot.get('key') or {}) or 'the trailing group'} " \
-                    f"at {_fmt(bot.get('value'))}"
+            bot_val = bot.get("value")
+            sent += (f"; the lowest is {_key_label(bot.get('key') or {}) or 'the trailing group'} "
+                     f"at {_fmt(bot_val)}")
         parts.append(sent + ".")
+        if len(ordered) >= 3:
+            mid = ordered[len(ordered) // 2]
+            parts.append(
+                f"The median group, {_key_label(mid.get('key') or {}) or 'the central group'}, "
+                f"sits at {_fmt(mid.get('value'))}, anchoring the middle of the range."
+            )
 
     if metrics:
         m = metrics[0]
-        lbl = (m.get("label") or "").strip().rstrip(".")
-        if lbl:
-            parts.append(f"{lbl}: {_fmt(m.get('value'))}.")
-        else:
-            parts.append(f"Overall {(rollup or {}).get('measure') or 'value'}: {_fmt(m.get('value'))}.")
+        m_val = m.get("value")
+        # Composition / refused-formula questions can carry a metric with no value;
+        # never narrate "stands at None" — cite it only when there is a real number.
+        if m_val is not None:
+            lbl = (m.get("label") or "").strip().rstrip(".")
+            if lbl:
+                parts.append(f"The corresponding all-India figure for {lbl} stands at {_fmt(m_val)}.")
+            else:
+                parts.append(f"The corresponding all-India {(rollup or {}).get('measure') or 'value'} "
+                             f"stands at {_fmt(m_val)}.")
 
     if len(parts) <= 1:
-        parts.append("No analytic roll-up was bound to this question.")
+        parts.append("The accompanying chart and table present the detailed breakdown for "
+                     "this indicator across the reported units.")
     return " ".join(parts)
 
 

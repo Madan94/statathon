@@ -1,0 +1,1226 @@
+{
+  "$schema": "bharatstat/template-ast/v2",
+  "_doc": "VALUE-FREE render skeleton for Sixth Economic Census — Establishment & Employment Statistics. documentMap drives the documentMap-archetype bridge in generation.",
+  "metadata": {
+    "templateId": "tpl_economic_census_establishments_v1",
+    "blueprintRef": "tpl_economic_census_establishments_v1",
+    "name": "Sixth Economic Census — Establishment & Employment Statistics",
+    "locale": "en-IN",
+    "version": "1.0.0",
+    "valueFree": true,
+    "generatedFrom": "economic_census_establishments_v1_generator",
+    "targetPageRange": "30-38",
+    "standardPageCount": 34,
+    "hardPageCap": 44,
+    "officerReady": true,
+    "auditRequired": true
+  },
+  "styleAST": {
+    "styles": [
+      {
+        "styleId": "s_h1",
+        "role": "heading1",
+        "font": "Noto Sans",
+        "sizePt": 18,
+        "bold": true,
+        "color": "#0B5394"
+      },
+      {
+        "styleId": "s_h2",
+        "role": "heading2",
+        "font": "Noto Sans",
+        "sizePt": 15,
+        "bold": true,
+        "color": "#1155CC"
+      },
+      {
+        "styleId": "s_h3",
+        "role": "heading3",
+        "font": "Noto Sans",
+        "sizePt": 13,
+        "bold": true,
+        "color": "#1C4587"
+      },
+      {
+        "styleId": "s_h4",
+        "role": "heading4",
+        "font": "Noto Sans",
+        "sizePt": 11,
+        "bold": true,
+        "color": "#1C4587"
+      },
+      {
+        "styleId": "s_body",
+        "role": "body",
+        "font": "Noto Sans",
+        "sizePt": 11,
+        "bold": false,
+        "color": "#222222"
+      },
+      {
+        "styleId": "s_metric",
+        "role": "metric",
+        "font": "Noto Sans",
+        "sizePt": 16,
+        "bold": true,
+        "color": "#0B5394"
+      },
+      {
+        "styleId": "s_table",
+        "role": "tableCell",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "align": "right"
+      },
+      {
+        "styleId": "s_table_header",
+        "role": "tableHeader",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "bold": true,
+        "align": "center",
+        "bgColor": "#D9EAD3"
+      },
+      {
+        "styleId": "s_caption",
+        "role": "caption",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "italic": true,
+        "color": "#555555"
+      },
+      {
+        "styleId": "s_note",
+        "role": "sourceNote",
+        "font": "Noto Sans",
+        "sizePt": 8,
+        "color": "#666666"
+      },
+      {
+        "styleId": "s_glossary",
+        "role": "glossary",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "color": "#444444"
+      }
+    ]
+  },
+  "documentMap": [
+    {
+      "nodeId": "topic_landscape",
+      "nodeType": "topic",
+      "title": "Establishment Landscape",
+      "style": "s_h1",
+      "order": 1,
+      "children": [
+        {
+          "nodeId": "ch_geography",
+          "nodeType": "chapter",
+          "title": "Geographic Distribution",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_state_estab",
+              "nodeType": "section",
+              "title": "State-wise Establishment Ranking",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_state_estab",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by number of establishments",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_state_estab_narrative",
+                      "componentRef": "q_state_estab_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_state_estab_table",
+                      "componentRef": "q_state_estab_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_state_estab_chart",
+                      "componentRef": "q_state_estab_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_region_estab",
+              "nodeType": "section",
+              "title": "Regional Establishment Concentration",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_region_estab",
+                  "nodeType": "question",
+                  "title": "Aggregate establishments by region",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_region_estab_narrative",
+                      "componentRef": "q_region_estab_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_region_estab_table",
+                      "componentRef": "q_region_estab_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_region_estab_chart",
+                      "componentRef": "q_region_estab_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_rural_urban",
+          "nodeType": "chapter",
+          "title": "Rural–Urban Spread",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_rural_urban",
+              "nodeType": "section",
+              "title": "Rural vs Urban Establishments",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_rural_urban",
+                  "nodeType": "question",
+                  "title": "Rural versus urban establishment split",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_rural_urban_narrative",
+                      "componentRef": "q_rural_urban_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_rural_urban_chart",
+                      "componentRef": "q_rural_urban_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_rural_lead",
+              "nodeType": "section",
+              "title": "Rural Establishment Leaders",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_rural_lead",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by rural establishments",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_rural_lead_narrative",
+                      "componentRef": "q_rural_lead_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_rural_lead_table",
+                      "componentRef": "q_rural_lead_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_rural_lead_chart",
+                      "componentRef": "q_rural_lead_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_urban_lead",
+              "nodeType": "section",
+              "title": "Urban Establishment Leaders",
+              "style": "s_h3",
+              "order": 3,
+              "children": [
+                {
+                  "nodeId": "q_urban_lead",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by urban establishments",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_urban_lead_narrative",
+                      "componentRef": "q_urban_lead_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_urban_lead_table",
+                      "componentRef": "q_urban_lead_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_urban_lead_chart",
+                      "componentRef": "q_urban_lead_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_urbanisation",
+          "nodeType": "chapter",
+          "title": "Urbanisation of Enterprise",
+          "style": "s_h2",
+          "order": 3,
+          "children": [
+            {
+              "nodeId": "sec_urban_share",
+              "nodeType": "section",
+              "title": "Urban Establishment Share",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_urban_share",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by urban establishment share",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_urban_share_narrative",
+                      "componentRef": "q_urban_share_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_urban_share_table",
+                      "componentRef": "q_urban_share_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_urban_share_chart",
+                      "componentRef": "q_urban_share_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_rural_share_region",
+              "nodeType": "section",
+              "title": "Rural Share by Region",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_rural_share_region",
+                  "nodeType": "question",
+                  "title": "Rank regions by rural establishment share",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_rural_share_region_narrative",
+                      "componentRef": "q_rural_share_region_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_rural_share_region_chart",
+                      "componentRef": "q_rural_share_region_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_rural_share_region_table",
+                      "componentRef": "q_rural_share_region_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_rural_share_region_metric",
+                      "componentRef": "q_rural_share_region_metric",
+                      "slotType": "metric",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_employment",
+      "nodeType": "topic",
+      "title": "Employment Generation",
+      "style": "s_h1",
+      "order": 2,
+      "children": [
+        {
+          "nodeId": "ch_emp_volume",
+          "nodeType": "chapter",
+          "title": "Employment Volume",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_state_emp",
+              "nodeType": "section",
+              "title": "State-wise Employment Ranking",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_state_emp",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by persons employed",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_state_emp_narrative",
+                      "componentRef": "q_state_emp_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_state_emp_table",
+                      "componentRef": "q_state_emp_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_state_emp_chart",
+                      "componentRef": "q_state_emp_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_region_emp",
+              "nodeType": "section",
+              "title": "Regional Employment Aggregate",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_region_emp",
+                  "nodeType": "question",
+                  "title": "Aggregate employment by region",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_region_emp_narrative",
+                      "componentRef": "q_region_emp_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_region_emp_table",
+                      "componentRef": "q_region_emp_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_region_emp_chart",
+                      "componentRef": "q_region_emp_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_emp_scale",
+          "nodeType": "chapter",
+          "title": "Establishment Scale",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_avg_emp",
+              "nodeType": "section",
+              "title": "Average Employment per Establishment (Region)",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_avg_emp",
+                  "nodeType": "question",
+                  "title": "Rank regions by average employment per establishment",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_avg_emp_narrative",
+                      "componentRef": "q_avg_emp_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_avg_emp_chart",
+                      "componentRef": "q_avg_emp_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_avg_emp_table",
+                      "componentRef": "q_avg_emp_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_avg_emp_metric",
+                      "componentRef": "q_avg_emp_metric",
+                      "slotType": "metric",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_state_scale",
+              "nodeType": "section",
+              "title": "Largest-Scale Establishment Economies",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_state_scale",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by average employment",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_state_scale_narrative",
+                      "componentRef": "q_state_scale_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_state_scale_table",
+                      "componentRef": "q_state_scale_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_state_scale_chart",
+                      "componentRef": "q_state_scale_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_female",
+      "nodeType": "topic",
+      "title": "Women in the Workforce",
+      "style": "s_h1",
+      "order": 3,
+      "children": [
+        {
+          "nodeId": "ch_female_volume",
+          "nodeType": "chapter",
+          "title": "Female Employment Volume",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_state_female",
+              "nodeType": "section",
+              "title": "State-wise Female Workers",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_state_female",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by female workers",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_state_female_narrative",
+                      "componentRef": "q_state_female_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_state_female_table",
+                      "componentRef": "q_state_female_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_state_female_chart",
+                      "componentRef": "q_state_female_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_region_female",
+              "nodeType": "section",
+              "title": "Regional Female Employment",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_region_female",
+                  "nodeType": "question",
+                  "title": "Aggregate female workers by region",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_region_female_narrative",
+                      "componentRef": "q_region_female_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_region_female_table",
+                      "componentRef": "q_region_female_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_region_female_chart",
+                      "componentRef": "q_region_female_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_female_share",
+          "nodeType": "chapter",
+          "title": "Female Participation Intensity",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_female",
+              "nodeType": "section",
+              "title": "Female Worker Share by State",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_female_share",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by female worker share",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_female_share_narrative",
+                      "componentRef": "q_female_share_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_female_share_table",
+                      "componentRef": "q_female_share_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_female_share_chart",
+                      "componentRef": "q_female_share_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_female_region",
+              "nodeType": "section",
+              "title": "Female Worker Share by Region",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_female_region",
+                  "nodeType": "question",
+                  "title": "Rank regions by female worker share",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_female_region_narrative",
+                      "componentRef": "q_female_region_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_female_region_chart",
+                      "componentRef": "q_female_region_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_labour",
+      "nodeType": "topic",
+      "title": "Labour Arrangements",
+      "style": "s_h1",
+      "order": 4,
+      "children": [
+        {
+          "nodeId": "ch_hired",
+          "nodeType": "chapter",
+          "title": "Hired Labour",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_state_hired",
+              "nodeType": "section",
+              "title": "State-wise Hired Workers",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_state_hired",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by hired workers",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_state_hired_narrative",
+                      "componentRef": "q_state_hired_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_state_hired_table",
+                      "componentRef": "q_state_hired_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_state_hired_chart",
+                      "componentRef": "q_state_hired_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_hired",
+              "nodeType": "section",
+              "title": "Hired Worker Share by State",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_hired_share",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by hired worker share",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_hired_share_narrative",
+                      "componentRef": "q_hired_share_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_hired_share_table",
+                      "componentRef": "q_hired_share_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_hired_share_chart",
+                      "componentRef": "q_hired_share_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_self_employment",
+          "nodeType": "chapter",
+          "title": "Self-Employment & Own-Account",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_type_mix",
+              "nodeType": "section",
+              "title": "Own-Account vs Hired-Worker Establishments",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_type_mix",
+                  "nodeType": "question",
+                  "title": "Own-account versus hired-worker establishment mix",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_type_mix_narrative",
+                      "componentRef": "q_type_mix_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_type_mix_chart",
+                      "componentRef": "q_type_mix_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_oae_share",
+              "nodeType": "section",
+              "title": "Own-Account Establishment Share",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_oae_share",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by own-account share",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_oae_share_narrative",
+                      "componentRef": "q_oae_share_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_oae_share_table",
+                      "componentRef": "q_oae_share_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_oae_share_chart",
+                      "componentRef": "q_oae_share_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_vulnerability",
+      "nodeType": "topic",
+      "title": "Vulnerability & Social Indicators",
+      "style": "s_h1",
+      "order": 5,
+      "children": [
+        {
+          "nodeId": "ch_child_volume",
+          "nodeType": "chapter",
+          "title": "Child Workers in Establishments",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_state_child",
+              "nodeType": "section",
+              "title": "State-wise Child Workers",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_state_child",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by child workers",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_state_child_narrative",
+                      "componentRef": "q_state_child_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_state_child_table",
+                      "componentRef": "q_state_child_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_state_child_chart",
+                      "componentRef": "q_state_child_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_region_child",
+              "nodeType": "section",
+              "title": "Regional Child-Worker Distribution",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_region_child",
+                  "nodeType": "question",
+                  "title": "Aggregate child workers by region",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_region_child_narrative",
+                      "componentRef": "q_region_child_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_region_child_table",
+                      "componentRef": "q_region_child_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_region_child_chart",
+                      "componentRef": "q_region_child_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_child_share",
+          "nodeType": "chapter",
+          "title": "Child-Worker Intensity",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_child_share",
+              "nodeType": "section",
+              "title": "Child Worker Share by State",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_child_share",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by child worker share",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_child_share_narrative",
+                      "componentRef": "q_child_share_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_child_share_table",
+                      "componentRef": "q_child_share_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_child_share_chart",
+                      "componentRef": "q_child_share_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_synthesis",
+      "nodeType": "topic",
+      "title": "Cross-Cutting Synthesis & Methodology",
+      "style": "s_h1",
+      "order": 6,
+      "children": [
+        {
+          "nodeId": "ch_regional_synthesis",
+          "nodeType": "chapter",
+          "title": "Regional Synthesis",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_region_estab2",
+              "nodeType": "section",
+              "title": "Regional Establishment Base",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_region_estab2",
+                  "nodeType": "question",
+                  "title": "Establishment base by region",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_region_estab2_narrative",
+                      "componentRef": "q_region_estab2_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_region_estab2_table",
+                      "componentRef": "q_region_estab2_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_region_estab2_chart",
+                      "componentRef": "q_region_estab2_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_region_persons2",
+              "nodeType": "section",
+              "title": "Regional Employment Base",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_region_persons2",
+                  "nodeType": "question",
+                  "title": "Employment base by region",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_region_persons2_narrative",
+                      "componentRef": "q_region_persons2_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_region_persons2_table",
+                      "componentRef": "q_region_persons2_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_region_persons2_chart",
+                      "componentRef": "q_region_persons2_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_composite",
+          "nodeType": "chapter",
+          "title": "Composite Scale Indicators",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_region_scale",
+              "nodeType": "section",
+              "title": "Average Establishment Scale by Region",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_region_scale",
+                  "nodeType": "question",
+                  "title": "Average employment per establishment (synthesis)",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_region_scale_narrative",
+                      "componentRef": "q_region_scale_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_region_scale_chart",
+                      "componentRef": "q_region_scale_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_region_scale_metric",
+                      "componentRef": "q_region_scale_metric",
+                      "slotType": "metric",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_methodology",
+          "nodeType": "chapter",
+          "title": "Data Provenance & Methodology",
+          "style": "s_h2",
+          "order": 3,
+          "children": [
+            {
+              "nodeId": "sec_methodology",
+              "nodeType": "section",
+              "title": "Sources, Units & Coverage",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_methodology",
+                  "nodeType": "question",
+                  "title": "Data sources and methodology",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_methodology_methodology",
+                      "componentRef": "q_methodology_methodology",
+                      "slotType": "methodology",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_methodology_source_note",
+                      "componentRef": "q_methodology_source_note",
+                      "slotType": "source_note",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_methodology_glossary",
+                      "componentRef": "q_methodology_glossary",
+                      "slotType": "glossary",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_methodology_caveat",
+                      "componentRef": "q_methodology_caveat",
+                      "slotType": "caveat",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

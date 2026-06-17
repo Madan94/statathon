@@ -21,16 +21,18 @@ const PAD = { top: 18, right: 22, bottom: 20, left: 22 }; // mm
 /** Usable content width / height of one sheet, in unscaled px. */
 export const CONTENT_W = Math.round((A4.w - PAD.left - PAD.right) * MM_TO_PX); // ≈627
 export const CONTENT_H = Math.round((A4.h - PAD.top - PAD.bottom) * MM_TO_PX); // ≈979
-/** Fill target — we pack to ~95% of the sheet, leaving a small tail. */
-export const PAGE_BUDGET = Math.round(CONTENT_H * 0.985);
+/** Fill target — pack to ~92% of the sheet, leaving a safe tail so small
+ *  height under-estimates never overflow the ``overflow-hidden`` content area
+ *  (which would clip a block instead of reflowing it to the next page). */
+export const PAGE_BUDGET = Math.round(CONTENT_H * 0.92);
 
 /* ── Per-kind height model (px) — tuned to BlockRenderer output ────── */
-const ROW_H = 26;          // one table body row
-const TABLE_HEAD_H = 30;   // table header strip + thead row
-const TABLE_CAPTION_H = 22;// numbered caption above a table
-const TABLE_FOOT_H = 24;   // unit/source note + total row padding
-const NARR_LINE_H = 21;    // one wrapped narrative line
-const CHARS_PER_LINE = 92; // ~ at 627px, 10.5px body
+const ROW_H = 28;          // one table body row (matches td py + border)
+const TABLE_HEAD_H = 34;   // table header strip + thead row
+const TABLE_CAPTION_H = 24;// numbered caption above a table
+const TABLE_FOOT_H = 30;   // unit/source note + total row padding
+const NARR_LINE_H = 22;    // one wrapped narrative line
+const CHARS_PER_LINE = 84; // ~ at 627px, 10.5px body (conservative)
 const VSTACK_GAP = 12;     // matches the flow stack space-y-3
 
 /** Estimate a wrapped text block's line count from its length. */
@@ -70,11 +72,23 @@ export interface PackOpts {
   scale?: number;
   /** Body line-height (TypographyConfig.lineHeight); 1.7 = base. */
   lineHeight?: number;
+  /** Real rendered block heights (px), keyed by block id. When a block has a
+   *  measured height the packer trusts it over the estimate — so pages break on
+   *  the TRUE boundary and content never overflows the sheet / hides under the
+   *  footer. Populated by the viewport after each paint (estimate-then-measure). */
+  measured?: Record<string, number>;
 }
 
 const BASE_LINE_HEIGHT = 1.7;
 
 export function estimateHeight(block: PageBlock, opts: PackOpts = {}): number {
+  // Estimate-then-MEASURE: a real rendered height (when known) always wins, so
+  // the packer reflows on the exact boundary instead of clipping a guess.
+  const measured = opts.measured?.[block.id];
+  if (measured && measured > 0 && block.kind !== 'table') {
+    // Tables may be split by the packer, so they keep the row-model estimate.
+    return measured + VSTACK_GAP;
+  }
   const s = opts.scale ?? 1;
   const lhRatio = (opts.lineHeight ?? BASE_LINE_HEIGHT) / BASE_LINE_HEIGHT;
   const narrLine = NARR_LINE_H * s * lhRatio; // wrapped line height tracks type + leading
@@ -91,15 +105,17 @@ export function estimateHeight(block: PageBlock, opts: PackOpts = {}): number {
       return lineCount(block.content) * narrLine + 12 + VSTACK_GAP;
     }
     case 'key_finding':
-      return lineCount(block.content) * narrLine + 28 + VSTACK_GAP;
+      // Rendered in a tinted card with extra padding — count generously so the
+      // highlights block never overflows / clips the page.
+      return lineCount(block.content) * narrLine + 40 * s + VSTACK_GAP;
     case 'metric':
-      return 64 * s + VSTACK_GAP;
+      return 72 * s + VSTACK_GAP;
     case 'source_note':
-      return 20 * s + VSTACK_GAP;
+      return 24 * s + VSTACK_GAP;
     case 'divider':
       return 24 + VSTACK_GAP;
     case 'chart':
-      return 150 + TABLE_CAPTION_H * s + VSTACK_GAP;
+      return 200 + TABLE_CAPTION_H * s + VSTACK_GAP;
     case 'table': {
       const rows = Math.max(1, tableRowCount(block));
       return (

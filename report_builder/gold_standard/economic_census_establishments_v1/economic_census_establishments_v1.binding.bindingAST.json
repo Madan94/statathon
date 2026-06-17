@@ -1,0 +1,550 @@
+{
+  "templateId": "tpl_economic_census_establishments_v1",
+  "datasetId": "economic_census_establishments_v1",
+  "datasetSignature": "e10e667fe2c7ccf5",
+  "entityBindings": [
+    {
+      "entityId": "ent_state_ut",
+      "entityName": "State/UT",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "State/UT"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "State/UT matched dataset column 'State/UT'",
+          "column": "State/UT"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_region",
+      "entityName": "Region",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Region"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Region matched dataset column 'Region'",
+          "column": "Region"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_census_year",
+      "entityName": "Census Year",
+      "entityType": "time",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Census Year"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.693,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.693,
+          "detail": "Census Year matched dataset column 'Census Year'",
+          "column": "Census Year"
+        }
+      ],
+      "risks": [
+        {
+          "code": "TYPE_MISMATCH",
+          "severity": "warn",
+          "message": "time entity 'Census Year' matched measure column 'Census Year'",
+          "column": "Census Year"
+        }
+      ],
+      "typeMismatch": true,
+      "notes": [
+        "type mismatch: time entity landed on measure column 'Census Year'",
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_establishments",
+      "entityName": "Establishments",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Establishments"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Establishments matched dataset column 'Establishments'",
+          "column": "Establishments"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_persons",
+      "entityName": "Persons Working",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Persons Working"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Persons Working matched dataset column 'Persons Working'",
+          "column": "Persons Working"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_female",
+      "entityName": "Female Workers",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Female Workers"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Female Workers matched dataset column 'Female Workers'",
+          "column": "Female Workers"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_child",
+      "entityName": "Child Workers",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Child Workers"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Child Workers matched dataset column 'Child Workers'",
+          "column": "Child Workers"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_hired",
+      "entityName": "Hired Workers",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Hired Workers"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Hired Workers matched dataset column 'Hired Workers'",
+          "column": "Hired Workers"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_rural_estab",
+      "entityName": "Rural Establishments",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Rural Establishments"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Rural Establishments matched dataset column 'Rural Establishments'",
+          "column": "Rural Establishments"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_urban_estab",
+      "entityName": "Urban Establishments",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Urban Establishments"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Urban Establishments matched dataset column 'Urban Establishments'",
+          "column": "Urban Establishments"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_oae",
+      "entityName": "Own-Account Establishments",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Own Account Establishments"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Own-Account Establishments matched dataset column 'Own Account Establishments'",
+          "column": "Own Account Establishments"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_hired_estab",
+      "entityName": "Establishments with Hired Workers",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Establishments with Hired Workers"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Establishments with Hired Workers matched dataset column 'Establishments with Hired Workers'",
+          "column": "Establishments with Hired Workers"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_female_share",
+      "entityName": "Female Worker Share",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Female Share"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Female Worker Share matched dataset column 'Female Share'",
+          "column": "Female Share"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_hired_share",
+      "entityName": "Hired Worker Share",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Hired Share"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Hired Worker Share matched dataset column 'Hired Share'",
+          "column": "Hired Share"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_child_share",
+      "entityName": "Child Worker Share",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Child Share"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Child Worker Share matched dataset column 'Child Share'",
+          "column": "Child Share"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_oae_share",
+      "entityName": "Own-Account Share",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "OAE Share"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Own-Account Share matched dataset column 'OAE Share'",
+          "column": "OAE Share"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_urban_share",
+      "entityName": "Urban Establishment Share",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Urban Share"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Urban Establishment Share matched dataset column 'Urban Share'",
+          "column": "Urban Share"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_rural_share",
+      "entityName": "Rural Establishment Share",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Rural Share"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Rural Establishment Share matched dataset column 'Rural Share'",
+          "column": "Rural Share"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    },
+    {
+      "entityId": "ent_avg_emp",
+      "entityName": "Average Employment",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Avg Employment"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Average Employment matched dataset column 'Avg Employment'",
+          "column": "Avg Employment"
+        }
+      ],
+      "risks": [],
+      "notes": [
+        "auto-accepted (--accept-proposed)"
+      ]
+    }
+  ],
+  "questionBindings": [],
+  "coverage": {}
+}

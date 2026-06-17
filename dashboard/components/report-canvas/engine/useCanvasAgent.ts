@@ -124,6 +124,28 @@ export function useCanvasAgent({
     },
   }), [queue, blocks, updateBlock, removeBlock, regenerate]);
 
+  /** Insert at end of current page (Option C: default behavior). */
+  const insertNarrative = useCallback((text: string, title = 'Deep BI analysis') => {
+    if (!insertBlock) return;
+    const id = `block-deepbi-${Date.now()}`;
+    insertBlock({
+      id, index: -1, kind: 'narrative', title, content: text,
+      sectionPath: [], status: 'done', pageIndex: -1, // -1 = end of current/last page
+    });
+    // Layout-aware confirmation: jump to where the block landed.
+    if (goToPage && layout) goToPage(layout.lastPageHasRoom ? layout.totalPages : layout.totalPages + 1);
+  }, [insertBlock, goToPage, layout]);
+
+  /** Insert at a specific section (officer-controlled via /intermediate [section]). */
+  const insertAtSection = useCallback((text: string, sectionPath: string[], title?: string) => {
+    if (!insertBlock) return;
+    const id = `block-deepbi-${Date.now()}`;
+    insertBlock({
+      id, index: -1, kind: 'narrative', title: title || 'Deep BI analysis', content: text,
+      sectionPath, status: 'done', pageIndex: -1, // resolved based on section structure
+    });
+  }, [insertBlock]);
+
   /** Orchestrator dispatch (S3): classify natural language → tool, falling
    *  through to the DeepAgent for analysis questions. Resolves the target index
    *  from the message, else the selected block. */
@@ -320,29 +342,7 @@ export function useCanvasAgent({
 
     addMessage({ role: 'assistant', content: response, status: 'done', tool: toolUsed || undefined, blocks: deepBlocks, insertText, bound, provenance, resultTable });
     setBusy(false);
-  }, [tools, addMessage, selectedBlock, blocks, templateId, signature, insertBlock, layout, repack, updateBlock, generateTopic, retryFailed]);
-
-  /** Insert at end of current page (Option C: default behavior). */
-  const insertNarrative = useCallback((text: string, title = 'Deep BI analysis') => {
-    if (!insertBlock) return;
-    const id = `block-deepbi-${Date.now()}`;
-    insertBlock({
-      id, index: -1, kind: 'narrative', title, content: text,
-      sectionPath: [], status: 'done', pageIndex: -1, // -1 = end of current/last page
-    });
-    // Layout-aware confirmation: jump to where the block landed.
-    if (goToPage && layout) goToPage(layout.lastPageHasRoom ? layout.totalPages : layout.totalPages + 1);
-  }, [insertBlock, goToPage, layout]);
-
-  /** Insert at a specific section (officer-controlled via /intermediate [section]). */
-  const insertAtSection = useCallback((text: string, sectionPath: string[], title?: string) => {
-    if (!insertBlock) return;
-    const id = `block-deepbi-${Date.now()}`;
-    insertBlock({
-      id, index: -1, kind: 'narrative', title: title || 'Deep BI analysis', content: text,
-      sectionPath, status: 'done', pageIndex: -1, // resolved based on section structure
-    });
-  }, [insertBlock]);
+  }, [tools, addMessage, selectedBlock, blocks, templateId, signature, insertBlock, layout, repack, updateBlock, generateTopic, retryFailed, insertAtSection]);
 
   return { messages, busy, send, insertNarrative, insertAtSection };
 }

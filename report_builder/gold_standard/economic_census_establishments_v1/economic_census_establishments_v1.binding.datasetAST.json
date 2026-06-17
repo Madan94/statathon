@@ -1,0 +1,407 @@
+{
+  "datasetId": "economic_census_establishments_v1",
+  "sourceFile": "economic_census_establishments_v1.dataset.csv",
+  "rowCount": 34,
+  "archetype": "labour_force",
+  "columns": [
+    {
+      "name": "State/UT",
+      "dtype": "string",
+      "role": "dimension",
+      "cardinality": 34,
+      "sampleValues": [
+        "Andhra Pradesh",
+        "Maharashtra",
+        "West Bengal",
+        "Tamil Nadu",
+        "Uttar Pradesh"
+      ],
+      "nullPct": 0.0
+    },
+    {
+      "name": "Region",
+      "dtype": "string",
+      "role": "dimension",
+      "cardinality": 6,
+      "sampleValues": [
+        "South",
+        "West",
+        "East",
+        "Central",
+        "North"
+      ],
+      "nullPct": 0.0
+    },
+    {
+      "name": "Census Year",
+      "dtype": "int",
+      "role": "measure",
+      "cardinality": 1,
+      "sampleValues": [
+        "2013"
+      ],
+      "nullPct": 0.0,
+      "minValue": 2013.0,
+      "maxValue": 2013.0
+    },
+    {
+      "name": "Establishments",
+      "dtype": "int",
+      "role": "measure",
+      "cardinality": 34,
+      "sampleValues": [
+        "611",
+        "582",
+        "525",
+        "512",
+        "473"
+      ],
+      "nullPct": 0.0,
+      "minValue": 9.0,
+      "maxValue": 611.0
+    },
+    {
+      "name": "Persons Working",
+      "dtype": "int",
+      "role": "measure",
+      "cardinality": 33,
+      "sampleValues": [
+        "1704",
+        "1655",
+        "1389",
+        "1378",
+        "1311"
+      ],
+      "nullPct": 0.0,
+      "minValue": 19.0,
+      "maxValue": 1704.0
+    },
+    {
+      "name": "Female Workers",
+      "dtype": "int",
+      "role": "measure",
+      "cardinality": 30,
+      "sampleValues": [
+        "269",
+        "266",
+        "224",
+        "208",
+        "194"
+      ],
+      "nullPct": 0.0,
+      "minValue": 5.0,
+      "maxValue": 269.0
+    },
+    {
+      "name": "Child Workers",
+      "dtype": "int",
+      "role": "measure",
+      "cardinality": 11,
+      "sampleValues": [
+        "10",
+        "11",
+        "6",
+        "7",
+        "2"
+      ],
+      "nullPct": 0.0,
+      "minValue": -1.0,
+      "maxValue": 11.0
+    },
+    {
+      "name": "Hired Workers",
+      "dtype": "int",
+      "role": "measure",
+      "cardinality": 34,
+      "sampleValues": [
+        "985",
+        "941",
+        "733",
+        "741",
+        "758"
+      ],
+      "nullPct": 0.0,
+      "minValue": 9.0,
+      "maxValue": 985.0
+    },
+    {
+      "name": "Rural Establishments",
+      "dtype": "int",
+      "role": "measure",
+      "cardinality": 30,
+      "sampleValues": [
+        "350",
+        "321",
+        "293",
+        "284",
+        "259"
+      ],
+      "nullPct": 0.0,
+      "minValue": 5.0,
+      "maxValue": 350.0
+    },
+    {
+      "name": "Urban Establishments",
+      "dtype": "int",
+      "role": "measure",
+      "cardinality": 30,
+      "sampleValues": [
+        "261",
+        "232",
+        "228",
+        "214",
+        "177"
+      ],
+      "nullPct": 0.0,
+      "minValue": 4.0,
+      "maxValue": 261.0
+    },
+    {
+      "name": "Own Account Establishments",
+      "dtype": "int",
+      "role": "measure",
+      "cardinality": 31,
+      "sampleValues": [
+        "378",
+        "354",
+        "341",
+        "327",
+        "288"
+      ],
+      "nullPct": 0.0,
+      "minValue": 6.0,
+      "maxValue": 378.0
+    },
+    {
+      "name": "Establishments with Hired Workers",
+      "dtype": "int",
+      "role": "measure",
+      "cardinality": 31,
+      "sampleValues": [
+        "233",
+        "228",
+        "184",
+        "185",
+        "146"
+      ],
+      "nullPct": 0.0,
+      "minValue": 3.0,
+      "maxValue": 233.0
+    },
+    {
+      "name": "Female Share",
+      "dtype": "float",
+      "role": "measure",
+      "cardinality": 26,
+      "sampleValues": [
+        15.8,
+        16.1,
+        15.1,
+        14.8,
+        15.9
+      ],
+      "nullPct": 0.0,
+      "minValue": 12.9,
+      "maxValue": 42.1
+    },
+    {
+      "name": "Hired Share",
+      "dtype": "float",
+      "role": "measure",
+      "cardinality": 30,
+      "sampleValues": [
+        57.8,
+        56.9,
+        52.8,
+        53.8,
+        57.1
+      ],
+      "nullPct": 0.0,
+      "minValue": 42.4,
+      "maxValue": 66.3
+    },
+    {
+      "name": "Child Share",
+      "dtype": "float",
+      "role": "measure",
+      "cardinality": 22,
+      "sampleValues": [
+        0.59,
+        0.66,
+        0.43,
+        0.51,
+        0.46
+      ],
+      "nullPct": 0.0,
+      "minValue": -0.47,
+      "maxValue": 1.56
+    },
+    {
+      "name": "OAE Share",
+      "dtype": "float",
+      "role": "measure",
+      "cardinality": 30,
+      "sampleValues": [
+        61.9,
+        60.8,
+        65.0,
+        63.9,
+        60.9
+      ],
+      "nullPct": 0.0,
+      "minValue": 45.2,
+      "maxValue": 71.4
+    },
+    {
+      "name": "Urban Share",
+      "dtype": "float",
+      "role": "measure",
+      "cardinality": 32,
+      "sampleValues": [
+        42.7,
+        44.8,
+        44.2,
+        44.5,
+        45.2
+      ],
+      "nullPct": 0.0,
+      "minValue": 28.6,
+      "maxValue": 58.3
+    },
+    {
+      "name": "Rural Share",
+      "dtype": "float",
+      "role": "measure",
+      "cardinality": 32,
+      "sampleValues": [
+        57.3,
+        55.2,
+        55.8,
+        55.5,
+        54.8
+      ],
+      "nullPct": 0.0,
+      "minValue": 41.7,
+      "maxValue": 71.4
+    },
+    {
+      "name": "Avg Employment",
+      "dtype": "float",
+      "role": "measure",
+      "cardinality": 27,
+      "sampleValues": [
+        2.79,
+        2.84,
+        2.65,
+        2.69,
+        2.77
+      ],
+      "nullPct": 0.0,
+      "minValue": 2.11,
+      "maxValue": 3.26
+    }
+  ],
+  "columnGroups": [
+    {
+      "stem": "worker",
+      "kind": "measureGroup",
+      "members": [
+        "Female Workers",
+        "Child Workers",
+        "Hired Workers"
+      ]
+    },
+    {
+      "stem": "establishment",
+      "kind": "measureGroup",
+      "members": [
+        "Rural Establishments",
+        "Urban Establishments"
+      ]
+    },
+    {
+      "stem": "share",
+      "kind": "measureGroup",
+      "members": [
+        "Female Share",
+        "Hired Share",
+        "Child Share",
+        "OAE Share",
+        "Urban Share",
+        "Rural Share"
+      ]
+    }
+  ],
+  "reshape": [
+    {
+      "groupStem": "worker",
+      "kind": "melt",
+      "idVars": [
+        "State/UT",
+        "Region",
+        "Census Year",
+        "Establishments",
+        "Persons Working",
+        "Rural Establishments",
+        "Urban Establishments",
+        "Own Account Establishments",
+        "Establishments with Hired Workers",
+        "Female Share",
+        "Hired Share",
+        "Child Share",
+        "OAE Share",
+        "Urban Share",
+        "Rural Share",
+        "Avg Employment"
+      ],
+      "valueVar": "value",
+      "memberVar": "worker_type"
+    },
+    {
+      "groupStem": "establishment",
+      "kind": "melt",
+      "idVars": [
+        "State/UT",
+        "Region",
+        "Census Year",
+        "Establishments",
+        "Persons Working",
+        "Female Workers",
+        "Child Workers",
+        "Hired Workers",
+        "Own Account Establishments",
+        "Establishments with Hired Workers",
+        "Female Share",
+        "Hired Share",
+        "Child Share",
+        "OAE Share",
+        "Urban Share",
+        "Rural Share",
+        "Avg Employment"
+      ],
+      "valueVar": "value",
+      "memberVar": "establishment_type"
+    },
+    {
+      "groupStem": "share",
+      "kind": "melt",
+      "idVars": [
+        "State/UT",
+        "Region",
+        "Census Year",
+        "Establishments",
+        "Persons Working",
+        "Female Workers",
+        "Child Workers",
+        "Hired Workers",
+        "Rural Establishments",
+        "Urban Establishments",
+        "Own Account Establishments",
+        "Establishments with Hired Workers",
+        "Avg Employment"
+      ],
+      "valueVar": "value",
+      "memberVar": "share_type"
+    }
+  ]
+}

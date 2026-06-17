@@ -18,10 +18,13 @@ export interface PageBlock {
   sectionPath: string[];
   status: 'pending' | 'generating' | 'done' | 'error';
   pageIndex: number; // which page this block lives on
-  // Free-positioning (Canva-style). Unset = flows in the normal stack; once a
-  // block is dragged it gets absolute coordinates (unscaled px, relative to the
-  // page content area). ``w``/``h`` are the block's width/height (unscaled px);
-  // ``h`` is optional — unset means auto height (content-driven).
+  // Positioning model (document-first). By default a block FLOWS in the normal
+  // vertical stack and is paginated by the height-aware packer. Setting
+  // ``floating`` lifts it OUT of the flow into absolute coordinates (Canva-style
+  // overlay) — an explicit, opt-in action so blocks never overlap by accident.
+  // ``w`` is the block's width (unscaled px); ``h`` is optional — unset means
+  // auto height (content-driven). ``x``/``y`` only apply when ``floating``.
+  floating?: boolean;
   x?: number;
   y?: number;
   w?: number;
@@ -68,6 +71,10 @@ export function useCanvasState() {
    *  document type-scale / line-height (kept in a ref to avoid re-creating
    *  repackFrom; CanvasShell pushes updates via setLayoutMetrics). */
   const layoutMetricsRef = useRef<{ scale: number; lineHeight: number }>({ scale: 1, lineHeight: 1.7 });
+  /** Real rendered block heights (px) reported by the viewport after paint.
+   *  The packer trusts these over estimates so pages break on the true boundary
+   *  and never clip content under the footer. */
+  const measuredHeightsRef = useRef<Record<string, number>>({});
 
   // ── Undo/redo history (U5) ──────────────────────────────────────────────
   // Each snapshot captures the canonical content (blocks + order). Pages are
@@ -92,11 +99,16 @@ export function useCanvasState() {
    *  Pass the freshest blocks map (functional updates may race the state). */
   const repackFrom = useCallback((blockMap: Map<string, PageBlock>, ord: string[]) => {
     const ordered = ord.map(id => blockMap.get(id)).filter(Boolean) as PageBlock[];
-    // Only flow blocks WITHOUT manual coordinates participate in packing; a
-    // dragged block keeps its absolute position and is pinned to its page.
-    const flow = ordered.filter(b => b.x === undefined || b.y === undefined);
-    const pinned = ordered.filter(b => b.x !== undefined && b.y !== undefined);
-    const { pages: packed, splits } = packBlocks(flow, PAGE_BUDGET, layoutMetricsRef.current);
+    // Document-first: only FLOATING blocks (explicitly lifted out of the flow)
+    // keep absolute coordinates and are pinned to their page. Everything else
+    // flows and is paginated by the height-aware packer — so a resize or a
+    // reorder can never make a normal block overlap its neighbours.
+    const flow = ordered.filter(b => !b.floating);
+    const pinned = ordered.filter(b => b.floating && b.x !== undefined && b.y !== undefined);
+    const { pages: packed, splits } = packBlocks(flow, PAGE_BUDGET, {
+      ...layoutMetricsRef.current,
+      measured: measuredHeightsRef.current,
+    });
 
     const nextPages: CanvasPage[] = packed.length
       ? packed.map(p => ({ id: `page-${p.index + 1}`, index: p.index, blocks: [...p.blocks] }))
@@ -135,6 +147,23 @@ export function useCanvasState() {
     if (m.scale === scale && m.lineHeight === lineHeight) return;
     layoutMetricsRef.current = { scale, lineHeight };
     repack();
+  }, [repack]);
+
+  /** Estimate-then-measure: the viewport reports each flow block's REAL rendered
+   *  height (px). When a height changes materially (>2px) we store it and repack
+   *  so the page break lands on the true boundary — fixing content that used to
+   *  overflow and hide under the footer / next-page header. Debounced via rAF in
+   *  the caller; here we only repack when something actually moved. */
+  const reportHeights = useCallback((heights: Record<string, number>) => {
+    const store = measuredHeightsRef.current;
+    let changed = false;
+    for (const [id, h] of Object.entries(heights)) {
+      if (h > 0 && Math.abs((store[id] ?? 0) - h) > 2) {
+        store[id] = h;
+        changed = true;
+      }
+    }
+    if (changed) repack();
   }, [repack]);
 
   /** Undo the last content mutation (U5). Restores blocks + order, repacks. */
@@ -242,22 +271,69 @@ export function useCanvasState() {
       setOrder(o => { snapshot(prev, o); return o; });   // history (U5)
       const m = new Map(prev);
       const b = m.get(id);
-      if (b) m.set(id, { ...b, x, y, ...(w !== undefined ? { w } : {}) });
+      // Moving to a free coordinate implies the block is floating.
+      if (b) m.set(id, { ...b, floating: true, x, y, ...(w !== undefined ? { w } : {}) });
       return m;
     });
   }, [snapshot]);
+
+  /** Reorder a flow block so it sits immediately BEFORE ``beforeId`` in the
+   *  canonical order (or at the end when ``beforeId`` is null). Driven by the
+   *  drag UI, which knows its on-screen neighbour but not the global index.
+   *  Snapshots history and repacks so pages recompute around the move. */
+  const reorderBlock = useCallback((id: string, beforeId: string | null) => {
+    if (id === beforeId) return;
+    setBlocks(prev => {
+      setOrder(prevOrder => {
+        const from = prevOrder.indexOf(id);
+        if (from === -1) return prevOrder;
+        snapshot(prev, prevOrder);                 // history (U5)
+        const ord = prevOrder.filter(x => x !== id);
+        let to = beforeId == null ? ord.length : ord.indexOf(beforeId);
+        if (to === -1) to = ord.length;
+        if (to === from && ord[to] === beforeId) return prevOrder;  // no-op
+        ord.splice(to, 0, id);
+        repackFrom(prev, ord);
+        return ord;
+      });
+      return prev;
+    });
+  }, [snapshot, repackFrom]);
+
+  /** Toggle a block between flowing and floating (opt-in Canva overlay). Turning
+   *  floating OFF strips its coordinates so it rejoins the document flow. */
+  const setFloating = useCallback((id: string, on: boolean, x?: number, y?: number) => {
+    setBlocks(prev => {
+      setOrder(prevOrder => { snapshot(prev, prevOrder); return prevOrder; });   // history (U5)
+      const m = new Map(prev);
+      const b = m.get(id);
+      if (b) {
+        if (on) {
+          m.set(id, { ...b, floating: true, x: x ?? b.x ?? 0, y: y ?? b.y ?? 0 });
+        } else {
+          const next = { ...b, floating: false };
+          delete next.x; delete next.y;
+          m.set(id, next);
+        }
+        setOrder(ord => { repackFrom(m, ord); return ord; });
+      }
+      return m;
+    });
+  }, [snapshot, repackFrom]);
 
   /** Resize a block (Canva-style). May also shift x/y when resizing from a
    *  top/left handle so the opposite edge stays anchored. */
   const resizeBlock = useCallback((id: string, patch: { w?: number; h?: number; x?: number; y?: number }) => {
     setBlocks(prev => {
-      setOrder(o => { snapshot(prev, o); return o; });   // history (U5)
       const m = new Map(prev);
       const b = m.get(id);
       if (b) m.set(id, { ...b, ...patch });
+      // Always re-paginate after a resize: a wider/narrower column changes the
+      // measured height, so the packer must reflow to avoid clipping/overflow.
+      setOrder(o => { snapshot(prev, o); repackFrom(m, o); return o; });
       return m;
     });
-  }, [snapshot]);
+  }, [snapshot, repackFrom]);
 
   const getPageBlocks = useCallback((pageIdx: number): PageBlock[] => {
     const page = pages[pageIdx];
@@ -284,9 +360,9 @@ export function useCanvasState() {
   return {
     phase, setPhase, queue, setQueue, blocks, pages, currentPage, selectedBlockId,
     panel, generating, setGenerating, togglePanel, addPage, goToPage, nextPage, prevPage,
-    addBlockToPage, appendBlockAuto, updateBlock, removeBlock, moveBlock, resizeBlock, getPageBlocks, currentPageBlocks,
+    addBlockToPage, appendBlockAuto, updateBlock, removeBlock, moveBlock, reorderBlock, setFloating, resizeBlock, getPageBlocks, currentPageBlocks,
     selectedBlock, setSelectedBlockId, totalBlocks, doneBlocks, progress, setPages, setBlocks,
-    order, setOrder, repack, setLayoutMetrics, tableSplits,
+    order, setOrder, repack, setLayoutMetrics, reportHeights, tableSplits,
     undo, redo, canUndo: undoStack.current.length > 0, canRedo: redoStack.current.length > 0, historyVer,
   };
 }

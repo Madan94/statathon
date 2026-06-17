@@ -1,0 +1,6916 @@
+{
+  "contractVersion": "binding.executionBundle.v1",
+  "templateId": "tpl_economic_census_establishments_v1",
+  "datasetId": "economic_census_establishments_v1",
+  "bindingAstId": "bind_tpl_economic_census_establishments_v1_21fcc266a54c",
+  "status": "DEGRADED",
+  "datasetAst": {
+    "datasetId": "economic_census_establishments_v1",
+    "sourceFile": "economic_census_establishments_v1.dataset.csv",
+    "rowCount": 34,
+    "archetype": "labour_force",
+    "columns": [
+      {
+        "name": "State/UT",
+        "dtype": "string",
+        "role": "dimension",
+        "cardinality": 34,
+        "sampleValues": [
+          "Andhra Pradesh",
+          "Maharashtra",
+          "West Bengal",
+          "Tamil Nadu",
+          "Uttar Pradesh"
+        ],
+        "nullPct": 0.0
+      },
+      {
+        "name": "Region",
+        "dtype": "string",
+        "role": "dimension",
+        "cardinality": 6,
+        "sampleValues": [
+          "South",
+          "West",
+          "East",
+          "Central",
+          "North"
+        ],
+        "nullPct": 0.0
+      },
+      {
+        "name": "Census Year",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 1,
+        "sampleValues": [
+          "2013"
+        ],
+        "nullPct": 0.0,
+        "minValue": 2013.0,
+        "maxValue": 2013.0
+      },
+      {
+        "name": "Establishments",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 34,
+        "sampleValues": [
+          "611",
+          "582",
+          "525",
+          "512",
+          "473"
+        ],
+        "nullPct": 0.0,
+        "minValue": 9.0,
+        "maxValue": 611.0
+      },
+      {
+        "name": "Persons Working",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 33,
+        "sampleValues": [
+          "1704",
+          "1655",
+          "1389",
+          "1378",
+          "1311"
+        ],
+        "nullPct": 0.0,
+        "minValue": 19.0,
+        "maxValue": 1704.0
+      },
+      {
+        "name": "Female Workers",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 30,
+        "sampleValues": [
+          "269",
+          "266",
+          "224",
+          "208",
+          "194"
+        ],
+        "nullPct": 0.0,
+        "minValue": 5.0,
+        "maxValue": 269.0
+      },
+      {
+        "name": "Child Workers",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 11,
+        "sampleValues": [
+          "10",
+          "11",
+          "6",
+          "7",
+          "2"
+        ],
+        "nullPct": 0.0,
+        "minValue": -1.0,
+        "maxValue": 11.0
+      },
+      {
+        "name": "Hired Workers",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 34,
+        "sampleValues": [
+          "985",
+          "941",
+          "733",
+          "741",
+          "758"
+        ],
+        "nullPct": 0.0,
+        "minValue": 9.0,
+        "maxValue": 985.0
+      },
+      {
+        "name": "Rural Establishments",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 30,
+        "sampleValues": [
+          "350",
+          "321",
+          "293",
+          "284",
+          "259"
+        ],
+        "nullPct": 0.0,
+        "minValue": 5.0,
+        "maxValue": 350.0
+      },
+      {
+        "name": "Urban Establishments",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 30,
+        "sampleValues": [
+          "261",
+          "232",
+          "228",
+          "214",
+          "177"
+        ],
+        "nullPct": 0.0,
+        "minValue": 4.0,
+        "maxValue": 261.0
+      },
+      {
+        "name": "Own Account Establishments",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 31,
+        "sampleValues": [
+          "378",
+          "354",
+          "341",
+          "327",
+          "288"
+        ],
+        "nullPct": 0.0,
+        "minValue": 6.0,
+        "maxValue": 378.0
+      },
+      {
+        "name": "Establishments with Hired Workers",
+        "dtype": "int",
+        "role": "measure",
+        "cardinality": 31,
+        "sampleValues": [
+          "233",
+          "228",
+          "184",
+          "185",
+          "146"
+        ],
+        "nullPct": 0.0,
+        "minValue": 3.0,
+        "maxValue": 233.0
+      },
+      {
+        "name": "Female Share",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 26,
+        "sampleValues": [
+          15.8,
+          16.1,
+          15.1,
+          14.8,
+          15.9
+        ],
+        "nullPct": 0.0,
+        "minValue": 12.9,
+        "maxValue": 42.1
+      },
+      {
+        "name": "Hired Share",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 30,
+        "sampleValues": [
+          57.8,
+          56.9,
+          52.8,
+          53.8,
+          57.1
+        ],
+        "nullPct": 0.0,
+        "minValue": 42.4,
+        "maxValue": 66.3
+      },
+      {
+        "name": "Child Share",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 22,
+        "sampleValues": [
+          0.59,
+          0.66,
+          0.43,
+          0.51,
+          0.46
+        ],
+        "nullPct": 0.0,
+        "minValue": -0.47,
+        "maxValue": 1.56
+      },
+      {
+        "name": "OAE Share",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 30,
+        "sampleValues": [
+          61.9,
+          60.8,
+          65.0,
+          63.9,
+          60.9
+        ],
+        "nullPct": 0.0,
+        "minValue": 45.2,
+        "maxValue": 71.4
+      },
+      {
+        "name": "Urban Share",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 32,
+        "sampleValues": [
+          42.7,
+          44.8,
+          44.2,
+          44.5,
+          45.2
+        ],
+        "nullPct": 0.0,
+        "minValue": 28.6,
+        "maxValue": 58.3
+      },
+      {
+        "name": "Rural Share",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 32,
+        "sampleValues": [
+          57.3,
+          55.2,
+          55.8,
+          55.5,
+          54.8
+        ],
+        "nullPct": 0.0,
+        "minValue": 41.7,
+        "maxValue": 71.4
+      },
+      {
+        "name": "Avg Employment",
+        "dtype": "float",
+        "role": "measure",
+        "cardinality": 27,
+        "sampleValues": [
+          2.79,
+          2.84,
+          2.65,
+          2.69,
+          2.77
+        ],
+        "nullPct": 0.0,
+        "minValue": 2.11,
+        "maxValue": 3.26
+      }
+    ],
+    "columnGroups": [
+      {
+        "stem": "worker",
+        "kind": "measureGroup",
+        "members": [
+          "Female Workers",
+          "Child Workers",
+          "Hired Workers"
+        ]
+      },
+      {
+        "stem": "establishment",
+        "kind": "measureGroup",
+        "members": [
+          "Rural Establishments",
+          "Urban Establishments"
+        ]
+      },
+      {
+        "stem": "share",
+        "kind": "measureGroup",
+        "members": [
+          "Female Share",
+          "Hired Share",
+          "Child Share",
+          "OAE Share",
+          "Urban Share",
+          "Rural Share"
+        ]
+      }
+    ],
+    "reshape": [
+      {
+        "groupStem": "worker",
+        "kind": "melt",
+        "idVars": [
+          "State/UT",
+          "Region",
+          "Census Year",
+          "Establishments",
+          "Persons Working",
+          "Rural Establishments",
+          "Urban Establishments",
+          "Own Account Establishments",
+          "Establishments with Hired Workers",
+          "Female Share",
+          "Hired Share",
+          "Child Share",
+          "OAE Share",
+          "Urban Share",
+          "Rural Share",
+          "Avg Employment"
+        ],
+        "valueVar": "value",
+        "memberVar": "worker_type"
+      },
+      {
+        "groupStem": "establishment",
+        "kind": "melt",
+        "idVars": [
+          "State/UT",
+          "Region",
+          "Census Year",
+          "Establishments",
+          "Persons Working",
+          "Female Workers",
+          "Child Workers",
+          "Hired Workers",
+          "Own Account Establishments",
+          "Establishments with Hired Workers",
+          "Female Share",
+          "Hired Share",
+          "Child Share",
+          "OAE Share",
+          "Urban Share",
+          "Rural Share",
+          "Avg Employment"
+        ],
+        "valueVar": "value",
+        "memberVar": "establishment_type"
+      },
+      {
+        "groupStem": "share",
+        "kind": "melt",
+        "idVars": [
+          "State/UT",
+          "Region",
+          "Census Year",
+          "Establishments",
+          "Persons Working",
+          "Female Workers",
+          "Child Workers",
+          "Hired Workers",
+          "Rural Establishments",
+          "Urban Establishments",
+          "Own Account Establishments",
+          "Establishments with Hired Workers",
+          "Avg Employment"
+        ],
+        "valueVar": "value",
+        "memberVar": "share_type"
+      }
+    ]
+  },
+  "bindingAst": {
+    "templateId": "tpl_economic_census_establishments_v1",
+    "datasetId": "economic_census_establishments_v1",
+    "datasetSignature": "e10e667fe2c7ccf5",
+    "entityBindings": [
+      {
+        "entityId": "ent_state_ut",
+        "entityName": "State/UT",
+        "entityType": "dimension",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "State/UT"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "State/UT matched dataset column 'State/UT'",
+            "column": "State/UT"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_region",
+        "entityName": "Region",
+        "entityType": "dimension",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Region"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Region matched dataset column 'Region'",
+            "column": "Region"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_census_year",
+        "entityName": "Census Year",
+        "entityType": "time",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Census Year"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.693,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.693,
+            "detail": "Census Year matched dataset column 'Census Year'",
+            "column": "Census Year"
+          }
+        ],
+        "risks": [
+          {
+            "code": "TYPE_MISMATCH",
+            "severity": "warn",
+            "message": "time entity 'Census Year' matched measure column 'Census Year'",
+            "column": "Census Year"
+          }
+        ],
+        "typeMismatch": true,
+        "notes": [
+          "type mismatch: time entity landed on measure column 'Census Year'",
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_establishments",
+        "entityName": "Establishments",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Establishments"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Establishments matched dataset column 'Establishments'",
+            "column": "Establishments"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_persons",
+        "entityName": "Persons Working",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Persons Working"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Persons Working matched dataset column 'Persons Working'",
+            "column": "Persons Working"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_female",
+        "entityName": "Female Workers",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Female Workers"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Female Workers matched dataset column 'Female Workers'",
+            "column": "Female Workers"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_child",
+        "entityName": "Child Workers",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Child Workers"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Child Workers matched dataset column 'Child Workers'",
+            "column": "Child Workers"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_hired",
+        "entityName": "Hired Workers",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Hired Workers"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Hired Workers matched dataset column 'Hired Workers'",
+            "column": "Hired Workers"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_rural_estab",
+        "entityName": "Rural Establishments",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Rural Establishments"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Rural Establishments matched dataset column 'Rural Establishments'",
+            "column": "Rural Establishments"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_urban_estab",
+        "entityName": "Urban Establishments",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Urban Establishments"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Urban Establishments matched dataset column 'Urban Establishments'",
+            "column": "Urban Establishments"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_oae",
+        "entityName": "Own-Account Establishments",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Own Account Establishments"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Own-Account Establishments matched dataset column 'Own Account Establishments'",
+            "column": "Own Account Establishments"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_hired_estab",
+        "entityName": "Establishments with Hired Workers",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Establishments with Hired Workers"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Establishments with Hired Workers matched dataset column 'Establishments with Hired Workers'",
+            "column": "Establishments with Hired Workers"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_female_share",
+        "entityName": "Female Worker Share",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Female Share"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Female Worker Share matched dataset column 'Female Share'",
+            "column": "Female Share"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_hired_share",
+        "entityName": "Hired Worker Share",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Hired Share"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Hired Worker Share matched dataset column 'Hired Share'",
+            "column": "Hired Share"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_child_share",
+        "entityName": "Child Worker Share",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Child Share"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Child Worker Share matched dataset column 'Child Share'",
+            "column": "Child Share"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_oae_share",
+        "entityName": "Own-Account Share",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "OAE Share"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Own-Account Share matched dataset column 'OAE Share'",
+            "column": "OAE Share"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_urban_share",
+        "entityName": "Urban Establishment Share",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Urban Share"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Urban Establishment Share matched dataset column 'Urban Share'",
+            "column": "Urban Share"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_rural_share",
+        "entityName": "Rural Establishment Share",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Rural Share"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Rural Establishment Share matched dataset column 'Rural Share'",
+            "column": "Rural Share"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      },
+      {
+        "entityId": "ent_avg_emp",
+        "entityName": "Average Employment",
+        "entityType": "measure",
+        "cardinality": "oneToOne",
+        "columns": [
+          {
+            "column": "Avg Employment"
+          }
+        ],
+        "combine": "none",
+        "confidence": 0.99,
+        "method": "columnExpr",
+        "status": "confirmed",
+        "alternatives": [],
+        "evidence": [
+          {
+            "signal": "columnExpr",
+            "score": 0.99,
+            "detail": "Average Employment matched dataset column 'Avg Employment'",
+            "column": "Avg Employment"
+          }
+        ],
+        "risks": [],
+        "notes": [
+          "auto-accepted (--accept-proposed)"
+        ]
+      }
+    ],
+    "questionBindings": [
+      {
+        "questionId": "q_state_estab",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Establishments",
+            "Persons Working"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_region_estab",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Establishments"
+          ],
+          "dimensions": [
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_rural_urban",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Rural Establishments",
+            "Urban Establishments",
+            "Establishments"
+          ],
+          "dimensions": [],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_rural_lead",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Rural Establishments"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_urban_lead",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Urban Establishments"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_urban_share",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Urban Share",
+            "Urban Establishments",
+            "Establishments"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_rural_share_region",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Rural Share",
+            "Rural Establishments",
+            "Establishments"
+          ],
+          "dimensions": [
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_state_emp",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Persons Working",
+            "Establishments"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_region_emp",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Persons Working"
+          ],
+          "dimensions": [
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_avg_emp",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Avg Employment",
+            "Persons Working",
+            "Establishments"
+          ],
+          "dimensions": [
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_state_scale",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Avg Employment"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_state_female",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Female Workers",
+            "Persons Working"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_region_female",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Female Workers"
+          ],
+          "dimensions": [
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_female_share",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Female Share",
+            "Female Workers",
+            "Persons Working"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_female_region",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Female Share",
+            "Female Workers",
+            "Persons Working"
+          ],
+          "dimensions": [
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_state_hired",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Hired Workers",
+            "Persons Working"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_hired_share",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Hired Share",
+            "Hired Workers",
+            "Persons Working"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_type_mix",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Own Account Establishments",
+            "Establishments with Hired Workers",
+            "Establishments"
+          ],
+          "dimensions": [],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_oae_share",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "OAE Share",
+            "Own Account Establishments",
+            "Establishments"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_state_child",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Child Workers",
+            "Persons Working"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_region_child",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Child Workers"
+          ],
+          "dimensions": [
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_child_share",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Child Share",
+            "Child Workers",
+            "Persons Working"
+          ],
+          "dimensions": [
+            "State/UT",
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_region_estab2",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Establishments"
+          ],
+          "dimensions": [
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_region_persons2",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Persons Working"
+          ],
+          "dimensions": [
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_region_scale",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Avg Employment",
+            "Persons Working",
+            "Establishments"
+          ],
+          "dimensions": [
+            "Region"
+          ],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      },
+      {
+        "questionId": "q_methodology",
+        "status": "executable",
+        "resolvedRoles": {
+          "measures": [
+            "Establishments"
+          ],
+          "dimensions": [],
+          "filters": [],
+          "time": {
+            "column": null,
+            "periods": {},
+            "timeResolved": false
+          }
+        },
+        "unresolvedEntities": [],
+        "notes": []
+      }
+    ],
+    "coverage": {
+      "entities": {
+        "bound": 19,
+        "pending": 0,
+        "unresolved": 0
+      },
+      "questions": {
+        "executable": 26,
+        "blocked": 0,
+        "degraded": 0
+      },
+      "issues": [
+        {
+          "severity": "warn",
+          "code": "TYPE_MISMATCH",
+          "message": "'Census Year' (time) bound to a column of a different role — verify.",
+          "entityId": "ent_census_year"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_state_estab' has no time column — single-period snapshot.",
+          "questionId": "q_state_estab"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_region_estab' has no time column — single-period snapshot.",
+          "questionId": "q_region_estab"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_rural_urban' has no time column — single-period snapshot.",
+          "questionId": "q_rural_urban"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_rural_lead' has no time column — single-period snapshot.",
+          "questionId": "q_rural_lead"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_urban_lead' has no time column — single-period snapshot.",
+          "questionId": "q_urban_lead"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_urban_share' has no time column — single-period snapshot.",
+          "questionId": "q_urban_share"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_rural_share_region' has no time column — single-period snapshot.",
+          "questionId": "q_rural_share_region"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_state_emp' has no time column — single-period snapshot.",
+          "questionId": "q_state_emp"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_region_emp' has no time column — single-period snapshot.",
+          "questionId": "q_region_emp"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_avg_emp' has no time column — single-period snapshot.",
+          "questionId": "q_avg_emp"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_state_scale' has no time column — single-period snapshot.",
+          "questionId": "q_state_scale"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_state_female' has no time column — single-period snapshot.",
+          "questionId": "q_state_female"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_region_female' has no time column — single-period snapshot.",
+          "questionId": "q_region_female"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_female_share' has no time column — single-period snapshot.",
+          "questionId": "q_female_share"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_female_region' has no time column — single-period snapshot.",
+          "questionId": "q_female_region"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_state_hired' has no time column — single-period snapshot.",
+          "questionId": "q_state_hired"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_hired_share' has no time column — single-period snapshot.",
+          "questionId": "q_hired_share"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_type_mix' has no time column — single-period snapshot.",
+          "questionId": "q_type_mix"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_oae_share' has no time column — single-period snapshot.",
+          "questionId": "q_oae_share"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_state_child' has no time column — single-period snapshot.",
+          "questionId": "q_state_child"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_region_child' has no time column — single-period snapshot.",
+          "questionId": "q_region_child"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_child_share' has no time column — single-period snapshot.",
+          "questionId": "q_child_share"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_region_estab2' has no time column — single-period snapshot.",
+          "questionId": "q_region_estab2"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_region_persons2' has no time column — single-period snapshot.",
+          "questionId": "q_region_persons2"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_region_scale' has no time column — single-period snapshot.",
+          "questionId": "q_region_scale"
+        },
+        {
+          "severity": "info",
+          "code": "SNAPSHOT_MODE",
+          "message": "Question 'q_methodology' has no time column — single-period snapshot.",
+          "questionId": "q_methodology"
+        }
+      ]
+    }
+  },
+  "statisticalContext": {
+    "geographyLevel": "state_ut",
+    "sourceNotes": [
+      "Sixth Economic Census of India — MoSPI",
+      "Sixth Economic Census — Establishment & Employment Statistics"
+    ]
+  },
+  "plans": [
+    {
+      "planId": "plan_q_state_estab",
+      "questionId": "q_state_estab",
+      "questionText": "Rank States/UTs by the total number of enumerated establishments.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Establishments",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 12
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_state_ut",
+        "sortBy": "ent_establishments",
+        "sortOrder": "descending",
+        "topN": 12,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_establishments",
+            "condition": "not_null"
+          }
+        ],
+        "groupBy": "ent_region"
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Establishments",
+          "Persons Working"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_state_estab_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_establishments"
+              ]
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_establishments",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_state_estab_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 6,
+              "maxRows": 12,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Establishments by State/UT",
+              "rowEntity": "ent_state_ut",
+              "columns": [
+                "ent_establishments",
+                "ent_persons"
+              ],
+              "groupRowsBy": "ent_region",
+              "sortBy": "ent_establishments",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "count",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_establishments",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_state_estab_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Establishments by State/UT",
+              "chartType": "bar",
+              "unitLabel": "count",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_state_ut",
+                "label": "State/UT"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_establishments",
+                  "label": "Establishments"
+                }
+              ],
+              "groupBy": "ent_region",
+              "sortBy": "ent_establishments",
+              "topN": 12
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_establishments",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_state_estab",
+        "sourceEntityIds": [
+          "ent_state_ut",
+          "ent_region",
+          "ent_establishments",
+          "ent_persons"
+        ],
+        "sourceColumnIds": [
+          "Establishments",
+          "Persons Working",
+          "State/UT",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_region_estab",
+      "questionId": "q_region_estab",
+      "questionText": "Aggregate the establishment count by region to show concentration.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Establishments",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 6
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_region",
+        "sortBy": "ent_establishments",
+        "sortOrder": "descending",
+        "topN": 6,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_establishments",
+            "condition": "not_null"
+          }
+        ]
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Establishments"
+        ],
+        "dimensions": [
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_region_estab_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_establishments"
+              ]
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_region_estab_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 6,
+              "maxRows": 6,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Establishments by Region",
+              "rowEntity": "ent_region",
+              "columns": [
+                "ent_establishments"
+              ],
+              "groupRowsBy": null,
+              "sortBy": "ent_establishments",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "count",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_region_estab_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "pie",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Establishment Share by Region",
+              "chartType": "pie",
+              "unitLabel": "count",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_region",
+                "label": "Region"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_establishments",
+                  "label": "Establishments"
+                }
+              ],
+              "sortBy": "ent_establishments",
+              "topN": 6
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_region_estab",
+        "sourceEntityIds": [
+          "ent_region",
+          "ent_establishments"
+        ],
+        "sourceColumnIds": [
+          "Establishments",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_rural_urban",
+      "questionId": "q_rural_urban",
+      "questionText": "What share of establishments operate in rural versus urban areas?",
+      "status": "DEGRADED",
+      "analyticsSpec": {
+        "operation": "composition",
+        "measure": {
+          "column": "Rural Establishments",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "composition",
+        "grain": "national",
+        "aggregation": "sum",
+        "parts": [
+          "ent_rural_estab",
+          "ent_urban_estab"
+        ],
+        "whole": "ent_establishments"
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Rural Establishments",
+          "Urban Establishments",
+          "Establishments"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "WIDE_TO_LONG",
+        "idVars": [
+          "State/UT",
+          "Region"
+        ],
+        "valueVar": "value",
+        "memberVar": "establishment",
+        "memberLabels": [
+          "Rural Establishments",
+          "Urban Establishments"
+        ]
+      },
+      "formulaSpec": {
+        "type": "SHARE",
+        "numeratorColumn": "Rural Establishments",
+        "denominatorColumn": "Establishments",
+        "multiplier": 100.0,
+        "unitConversion": "percent"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_rural_urban_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_rural_estab"
+              ]
+            },
+            "requiredEntities": [
+              "ent_rural_estab",
+              "ent_urban_estab",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_rural_urban_chart",
+            "kind": "chart",
+            "order": 2,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "donut",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Rural vs Urban Establishment Composition",
+              "chartType": "donut",
+              "unitLabel": "count",
+              "showDataLabels": true,
+              "slices": [
+                "ent_rural_estab",
+                "ent_urban_estab"
+              ]
+            },
+            "requiredEntities": [
+              "ent_rural_estab",
+              "ent_urban_estab",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_rural_urban",
+        "sourceEntityIds": [
+          "ent_rural_estab",
+          "ent_urban_estab",
+          "ent_establishments"
+        ],
+        "sourceColumnIds": [
+          "Rural Establishments",
+          "Urban Establishments",
+          "Establishments"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_rural_lead",
+      "questionId": "q_rural_lead",
+      "questionText": "Rank States/UTs by the number of rural establishments.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Rural Establishments",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 12
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_state_ut",
+        "sortBy": "ent_rural_estab",
+        "sortOrder": "descending",
+        "topN": 12,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_rural_estab",
+            "condition": "not_null"
+          }
+        ],
+        "groupBy": "ent_region"
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Rural Establishments"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_rural_lead_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_rural_estab"
+              ]
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_rural_estab"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_rural_lead_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 6,
+              "maxRows": 12,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Rural Establishments by State/UT",
+              "rowEntity": "ent_state_ut",
+              "columns": [
+                "ent_rural_estab"
+              ],
+              "groupRowsBy": "ent_region",
+              "sortBy": "ent_rural_estab",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "count",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_rural_estab"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_rural_lead_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Rural Establishments by State/UT",
+              "chartType": "bar",
+              "unitLabel": "count",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_state_ut",
+                "label": "State/UT"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_rural_estab",
+                  "label": "Rural Establishments"
+                }
+              ],
+              "groupBy": "ent_region",
+              "sortBy": "ent_rural_estab",
+              "topN": 12
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_rural_estab"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_rural_lead",
+        "sourceEntityIds": [
+          "ent_state_ut",
+          "ent_region",
+          "ent_rural_estab"
+        ],
+        "sourceColumnIds": [
+          "Rural Establishments",
+          "State/UT",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_urban_lead",
+      "questionId": "q_urban_lead",
+      "questionText": "Rank States/UTs by the number of urban establishments.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Urban Establishments",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 12
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_state_ut",
+        "sortBy": "ent_urban_estab",
+        "sortOrder": "descending",
+        "topN": 12,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_urban_estab",
+            "condition": "not_null"
+          }
+        ],
+        "groupBy": "ent_region"
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Urban Establishments"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_urban_lead_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_urban_estab"
+              ]
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_urban_estab"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_urban_lead_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 6,
+              "maxRows": 12,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Urban Establishments by State/UT",
+              "rowEntity": "ent_state_ut",
+              "columns": [
+                "ent_urban_estab"
+              ],
+              "groupRowsBy": "ent_region",
+              "sortBy": "ent_urban_estab",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "count",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_urban_estab"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_urban_lead_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Urban Establishments by State/UT",
+              "chartType": "bar",
+              "unitLabel": "count",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_state_ut",
+                "label": "State/UT"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_urban_estab",
+                  "label": "Urban Establishments"
+                }
+              ],
+              "groupBy": "ent_region",
+              "sortBy": "ent_urban_estab",
+              "topN": 12
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_urban_estab"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_urban_lead",
+        "sourceEntityIds": [
+          "ent_state_ut",
+          "ent_region",
+          "ent_urban_estab"
+        ],
+        "sourceColumnIds": [
+          "Urban Establishments",
+          "State/UT",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_urban_share",
+      "questionId": "q_urban_share",
+      "questionText": "Rank States/UTs by the urban share of all establishments.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Urban Share",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 12
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_state_ut",
+        "sortBy": "ent_urban_share",
+        "sortOrder": "descending",
+        "topN": 12,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_urban_share",
+            "condition": "not_null"
+          }
+        ],
+        "formula": {
+          "formulaType": "SHARE",
+          "formulaRef": "f_urban_share",
+          "numerator": "ent_urban_estab",
+          "denominator": "ent_establishments",
+          "grain": "ent_state_ut"
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Urban Share",
+          "Urban Establishments",
+          "Establishments"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "SHARE",
+        "numeratorColumn": "Urban Establishments",
+        "denominatorColumn": "Establishments",
+        "multiplier": 100.0,
+        "unitConversion": "percent"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_urban_share_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_urban_share"
+              ]
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_urban_share",
+              "ent_urban_estab"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_urban_share_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 4,
+              "maxRows": 12,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Urban Establishment Share by State/UT",
+              "rowEntity": "ent_state_ut",
+              "columns": [
+                "ent_urban_share"
+              ],
+              "groupRowsBy": null,
+              "sortBy": "ent_urban_share",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "percent",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_urban_share",
+              "ent_urban_estab",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_urban_share_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Urban Establishment Share by State/UT",
+              "chartType": "bar",
+              "unitLabel": "percent",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_state_ut",
+                "label": "State/UT"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_urban_share",
+                  "label": "Urban Establishment Share"
+                }
+              ],
+              "sortBy": "ent_urban_share",
+              "topN": 12
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_urban_share",
+              "ent_urban_estab",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_urban_share",
+        "sourceEntityIds": [
+          "ent_state_ut",
+          "ent_region",
+          "ent_urban_share",
+          "ent_urban_estab",
+          "ent_establishments"
+        ],
+        "sourceColumnIds": [
+          "Urban Share",
+          "Urban Establishments",
+          "Establishments",
+          "State/UT",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_rural_share_region",
+      "questionId": "q_rural_share_region",
+      "questionText": "Rank regions by the rural share of all establishments.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Rural Share",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 6
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_region",
+        "sortBy": "ent_rural_share",
+        "sortOrder": "descending",
+        "topN": 6,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_rural_share",
+            "condition": "not_null"
+          }
+        ],
+        "formula": {
+          "formulaType": "SHARE",
+          "formulaRef": "f_rural_share",
+          "numerator": "ent_rural_estab",
+          "denominator": "ent_establishments",
+          "grain": "ent_region"
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Rural Share",
+          "Rural Establishments",
+          "Establishments"
+        ],
+        "dimensions": [
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "SHARE",
+        "numeratorColumn": "Rural Establishments",
+        "denominatorColumn": "Establishments",
+        "multiplier": 100.0,
+        "unitConversion": "percent"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_rural_share_region_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_rural_share"
+              ]
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_rural_share",
+              "ent_rural_estab",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_rural_share_region_chart",
+            "kind": "chart",
+            "order": 2,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Rural Establishment Share by Region",
+              "chartType": "bar",
+              "unitLabel": "percent",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_region",
+                "label": "Region"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_rural_share",
+                  "label": "Rural Establishment Share"
+                }
+              ],
+              "sortBy": "ent_rural_share",
+              "topN": 6
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_rural_share",
+              "ent_rural_estab",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          },
+          {
+            "componentId": "q_rural_share_region_table",
+            "kind": "table",
+            "order": 3,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 4,
+              "maxRows": 6,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Rural Establishment Share by Region",
+              "rowEntity": "ent_region",
+              "columns": [
+                "ent_rural_share"
+              ],
+              "groupRowsBy": null,
+              "sortBy": "ent_rural_share",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "percent",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_rural_share",
+              "ent_rural_estab",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_rural_share_region_metric",
+            "kind": "metric",
+            "order": 4,
+            "outputContract": {
+              "type": "computed_metric",
+              "displayFormat": "percentage"
+            },
+            "formulaSpec": {
+              "formulaType": "SHARE",
+              "formulaRef": "f_rural_share",
+              "numerator": "ent_rural_estab",
+              "denominator": "ent_establishments",
+              "grain": "ent_region"
+            },
+            "requiredEntities": [
+              "ent_rural_estab",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_rural_share_region",
+        "sourceEntityIds": [
+          "ent_region",
+          "ent_rural_share",
+          "ent_rural_estab",
+          "ent_establishments"
+        ],
+        "sourceColumnIds": [
+          "Rural Share",
+          "Rural Establishments",
+          "Establishments",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_state_emp",
+      "questionId": "q_state_emp",
+      "questionText": "Rank States/UTs by the total number of persons usually working.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Persons Working",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 12
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_state_ut",
+        "sortBy": "ent_persons",
+        "sortOrder": "descending",
+        "topN": 12,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_persons",
+            "condition": "not_null"
+          }
+        ],
+        "groupBy": "ent_region"
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Persons Working",
+          "Establishments"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_state_emp_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_persons"
+              ]
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_persons",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_state_emp_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 6,
+              "maxRows": 12,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Persons Working by State/UT",
+              "rowEntity": "ent_state_ut",
+              "columns": [
+                "ent_persons",
+                "ent_establishments"
+              ],
+              "groupRowsBy": "ent_region",
+              "sortBy": "ent_persons",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "persons",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_persons",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_state_emp_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Persons Working by State/UT",
+              "chartType": "bar",
+              "unitLabel": "persons",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_state_ut",
+                "label": "State/UT"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_persons",
+                  "label": "Persons Working"
+                }
+              ],
+              "groupBy": "ent_region",
+              "sortBy": "ent_persons",
+              "topN": 12
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_persons",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_state_emp",
+        "sourceEntityIds": [
+          "ent_state_ut",
+          "ent_region",
+          "ent_persons",
+          "ent_establishments"
+        ],
+        "sourceColumnIds": [
+          "Persons Working",
+          "Establishments",
+          "State/UT",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_region_emp",
+      "questionId": "q_region_emp",
+      "questionText": "Aggregate the persons usually working by region.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Persons Working",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 6
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_region",
+        "sortBy": "ent_persons",
+        "sortOrder": "descending",
+        "topN": 6,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_persons",
+            "condition": "not_null"
+          }
+        ]
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Persons Working"
+        ],
+        "dimensions": [
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_region_emp_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_persons"
+              ]
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_region_emp_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 6,
+              "maxRows": 6,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Persons Working by Region",
+              "rowEntity": "ent_region",
+              "columns": [
+                "ent_persons"
+              ],
+              "groupRowsBy": null,
+              "sortBy": "ent_persons",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "persons",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_region_emp_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Persons Working by Region",
+              "chartType": "bar",
+              "unitLabel": "persons",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_region",
+                "label": "Region"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_persons",
+                  "label": "Persons Working"
+                }
+              ],
+              "sortBy": "ent_persons",
+              "topN": 6
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_region_emp",
+        "sourceEntityIds": [
+          "ent_region",
+          "ent_persons"
+        ],
+        "sourceColumnIds": [
+          "Persons Working",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_avg_emp",
+      "questionId": "q_avg_emp",
+      "questionText": "Rank regions by the average number of persons per establishment.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Avg Employment",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 6
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_region",
+        "sortBy": "ent_avg_emp",
+        "sortOrder": "descending",
+        "topN": 6,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_avg_emp",
+            "condition": "not_null"
+          }
+        ],
+        "formula": {
+          "formulaType": "RATIO",
+          "formulaRef": "f_avg_employment",
+          "numerator": "ent_persons",
+          "denominator": "ent_establishments",
+          "grain": "ent_region"
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Avg Employment",
+          "Persons Working",
+          "Establishments"
+        ],
+        "dimensions": [
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_avg_emp_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_avg_emp"
+              ]
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_avg_emp",
+              "ent_persons",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_avg_emp_chart",
+            "kind": "chart",
+            "order": 2,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Average Employment per Establishment by Region",
+              "chartType": "bar",
+              "unitLabel": "persons",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_region",
+                "label": "Region"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_avg_emp",
+                  "label": "Average Employment"
+                }
+              ],
+              "sortBy": "ent_avg_emp",
+              "topN": 6
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_avg_emp",
+              "ent_persons",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          },
+          {
+            "componentId": "q_avg_emp_table",
+            "kind": "table",
+            "order": 3,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 4,
+              "maxRows": 6,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Average Employment by Region",
+              "rowEntity": "ent_region",
+              "columns": [
+                "ent_avg_emp"
+              ],
+              "groupRowsBy": null,
+              "sortBy": "ent_avg_emp",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "persons",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_avg_emp",
+              "ent_persons",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_avg_emp_metric",
+            "kind": "metric",
+            "order": 4,
+            "outputContract": {
+              "type": "computed_metric",
+              "displayFormat": "multiplier"
+            },
+            "formulaSpec": {
+              "formulaType": "RATIO",
+              "formulaRef": "f_avg_employment",
+              "numerator": "ent_persons",
+              "denominator": "ent_establishments",
+              "grain": "ent_region"
+            },
+            "requiredEntities": [
+              "ent_persons",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_avg_emp",
+        "sourceEntityIds": [
+          "ent_region",
+          "ent_avg_emp",
+          "ent_persons",
+          "ent_establishments"
+        ],
+        "sourceColumnIds": [
+          "Avg Employment",
+          "Persons Working",
+          "Establishments",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_state_scale",
+      "questionId": "q_state_scale",
+      "questionText": "Rank States/UTs by the average persons working per establishment.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Avg Employment",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 12
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_state_ut",
+        "sortBy": "ent_avg_emp",
+        "sortOrder": "descending",
+        "topN": 12,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_avg_emp",
+            "condition": "not_null"
+          }
+        ],
+        "groupBy": "ent_region"
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Avg Employment"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_state_scale_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_avg_emp"
+              ]
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_avg_emp"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_state_scale_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 6,
+              "maxRows": 12,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Average Employment by State/UT",
+              "rowEntity": "ent_state_ut",
+              "columns": [
+                "ent_avg_emp"
+              ],
+              "groupRowsBy": "ent_region",
+              "sortBy": "ent_avg_emp",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "persons",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_avg_emp"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_state_scale_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Average Employment per Establishment by State/UT",
+              "chartType": "bar",
+              "unitLabel": "persons",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_state_ut",
+                "label": "State/UT"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_avg_emp",
+                  "label": "Average Employment"
+                }
+              ],
+              "groupBy": "ent_region",
+              "sortBy": "ent_avg_emp",
+              "topN": 12
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_avg_emp"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_state_scale",
+        "sourceEntityIds": [
+          "ent_state_ut",
+          "ent_region",
+          "ent_avg_emp"
+        ],
+        "sourceColumnIds": [
+          "Avg Employment",
+          "State/UT",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_state_female",
+      "questionId": "q_state_female",
+      "questionText": "Rank States/UTs by the number of female workers.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Female Workers",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 12
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_state_ut",
+        "sortBy": "ent_female",
+        "sortOrder": "descending",
+        "topN": 12,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_female",
+            "condition": "not_null"
+          }
+        ],
+        "groupBy": "ent_region"
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Female Workers",
+          "Persons Working"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_state_female_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_female"
+              ]
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_female",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_state_female_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 6,
+              "maxRows": 12,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Female Workers by State/UT",
+              "rowEntity": "ent_state_ut",
+              "columns": [
+                "ent_female",
+                "ent_persons"
+              ],
+              "groupRowsBy": "ent_region",
+              "sortBy": "ent_female",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "persons",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_female",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_state_female_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Female Workers by State/UT",
+              "chartType": "bar",
+              "unitLabel": "persons",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_state_ut",
+                "label": "State/UT"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_female",
+                  "label": "Female Workers"
+                }
+              ],
+              "groupBy": "ent_region",
+              "sortBy": "ent_female",
+              "topN": 12
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_female",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_state_female",
+        "sourceEntityIds": [
+          "ent_state_ut",
+          "ent_region",
+          "ent_female",
+          "ent_persons"
+        ],
+        "sourceColumnIds": [
+          "Female Workers",
+          "Persons Working",
+          "State/UT",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_region_female",
+      "questionId": "q_region_female",
+      "questionText": "Aggregate the number of female workers by region.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Female Workers",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 6
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_region",
+        "sortBy": "ent_female",
+        "sortOrder": "descending",
+        "topN": 6,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_female",
+            "condition": "not_null"
+          }
+        ]
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Female Workers"
+        ],
+        "dimensions": [
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_region_female_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_female"
+              ]
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_female"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_region_female_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 6,
+              "maxRows": 6,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Female Workers by Region",
+              "rowEntity": "ent_region",
+              "columns": [
+                "ent_female"
+              ],
+              "groupRowsBy": null,
+              "sortBy": "ent_female",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "persons",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_female"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_region_female_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Female Workers by Region",
+              "chartType": "bar",
+              "unitLabel": "persons",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_region",
+                "label": "Region"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_female",
+                  "label": "Female Workers"
+                }
+              ],
+              "sortBy": "ent_female",
+              "topN": 6
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_female"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_region_female",
+        "sourceEntityIds": [
+          "ent_region",
+          "ent_female"
+        ],
+        "sourceColumnIds": [
+          "Female Workers",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_female_share",
+      "questionId": "q_female_share",
+      "questionText": "Rank States/UTs by the female share of persons working.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Female Share",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 12
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_state_ut",
+        "sortBy": "ent_female_share",
+        "sortOrder": "descending",
+        "topN": 12,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_female_share",
+            "condition": "not_null"
+          }
+        ],
+        "formula": {
+          "formulaType": "SHARE",
+          "formulaRef": "f_female_share",
+          "numerator": "ent_female",
+          "denominator": "ent_persons",
+          "grain": "ent_state_ut"
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Female Share",
+          "Female Workers",
+          "Persons Working"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "SHARE",
+        "numeratorColumn": "Female Workers",
+        "denominatorColumn": "Persons Working",
+        "multiplier": 100.0,
+        "unitConversion": "percent"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_female_share_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_female_share"
+              ]
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_female_share",
+              "ent_female"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_female_share_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 4,
+              "maxRows": 12,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Female Worker Share by State/UT",
+              "rowEntity": "ent_state_ut",
+              "columns": [
+                "ent_female_share"
+              ],
+              "groupRowsBy": null,
+              "sortBy": "ent_female_share",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "percent",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_female_share",
+              "ent_female",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_female_share_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Female Worker Share by State/UT",
+              "chartType": "bar",
+              "unitLabel": "percent",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_state_ut",
+                "label": "State/UT"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_female_share",
+                  "label": "Female Worker Share"
+                }
+              ],
+              "sortBy": "ent_female_share",
+              "topN": 12
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_female_share",
+              "ent_female",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_female_share",
+        "sourceEntityIds": [
+          "ent_state_ut",
+          "ent_region",
+          "ent_female_share",
+          "ent_female",
+          "ent_persons"
+        ],
+        "sourceColumnIds": [
+          "Female Share",
+          "Female Workers",
+          "Persons Working",
+          "State/UT",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_female_region",
+      "questionId": "q_female_region",
+      "questionText": "Rank regions by the female share of persons working.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Female Share",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 6
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_region",
+        "sortBy": "ent_female_share",
+        "sortOrder": "descending",
+        "topN": 6,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_female_share",
+            "condition": "not_null"
+          }
+        ],
+        "formula": {
+          "formulaType": "SHARE",
+          "formulaRef": "f_female_share",
+          "numerator": "ent_female",
+          "denominator": "ent_persons",
+          "grain": "ent_region"
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Female Share",
+          "Female Workers",
+          "Persons Working"
+        ],
+        "dimensions": [
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "SHARE",
+        "numeratorColumn": "Female Workers",
+        "denominatorColumn": "Persons Working",
+        "multiplier": 100.0,
+        "unitConversion": "percent"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_female_region_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_female_share"
+              ]
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_female_share",
+              "ent_female",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_female_region_chart",
+            "kind": "chart",
+            "order": 2,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Female Worker Share by Region",
+              "chartType": "bar",
+              "unitLabel": "percent",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_region",
+                "label": "Region"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_female_share",
+                  "label": "Female Worker Share"
+                }
+              ],
+              "sortBy": "ent_female_share",
+              "topN": 6
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_female_share",
+              "ent_female",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_female_region",
+        "sourceEntityIds": [
+          "ent_region",
+          "ent_female_share",
+          "ent_female",
+          "ent_persons"
+        ],
+        "sourceColumnIds": [
+          "Female Share",
+          "Female Workers",
+          "Persons Working",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_state_hired",
+      "questionId": "q_state_hired",
+      "questionText": "Rank States/UTs by the number of hired workers.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Hired Workers",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 12
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_state_ut",
+        "sortBy": "ent_hired",
+        "sortOrder": "descending",
+        "topN": 12,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_hired",
+            "condition": "not_null"
+          }
+        ],
+        "groupBy": "ent_region"
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Hired Workers",
+          "Persons Working"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_state_hired_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_hired"
+              ]
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_hired",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_state_hired_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 6,
+              "maxRows": 12,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Hired Workers by State/UT",
+              "rowEntity": "ent_state_ut",
+              "columns": [
+                "ent_hired",
+                "ent_persons"
+              ],
+              "groupRowsBy": "ent_region",
+              "sortBy": "ent_hired",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "persons",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_hired",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_state_hired_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Hired Workers by State/UT",
+              "chartType": "bar",
+              "unitLabel": "persons",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_state_ut",
+                "label": "State/UT"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_hired",
+                  "label": "Hired Workers"
+                }
+              ],
+              "groupBy": "ent_region",
+              "sortBy": "ent_hired",
+              "topN": 12
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_hired",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_state_hired",
+        "sourceEntityIds": [
+          "ent_state_ut",
+          "ent_region",
+          "ent_hired",
+          "ent_persons"
+        ],
+        "sourceColumnIds": [
+          "Hired Workers",
+          "Persons Working",
+          "State/UT",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_hired_share",
+      "questionId": "q_hired_share",
+      "questionText": "Rank States/UTs by the hired share of persons working.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Hired Share",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 12
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_state_ut",
+        "sortBy": "ent_hired_share",
+        "sortOrder": "descending",
+        "topN": 12,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_hired_share",
+            "condition": "not_null"
+          }
+        ],
+        "formula": {
+          "formulaType": "SHARE",
+          "formulaRef": "f_hired_share",
+          "numerator": "ent_hired",
+          "denominator": "ent_persons",
+          "grain": "ent_state_ut"
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Hired Share",
+          "Hired Workers",
+          "Persons Working"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "SHARE",
+        "numeratorColumn": "Hired Workers",
+        "denominatorColumn": "Persons Working",
+        "multiplier": 100.0,
+        "unitConversion": "percent"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_hired_share_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_hired_share"
+              ]
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_hired_share",
+              "ent_hired"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_hired_share_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 4,
+              "maxRows": 12,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Hired Worker Share by State/UT",
+              "rowEntity": "ent_state_ut",
+              "columns": [
+                "ent_hired_share"
+              ],
+              "groupRowsBy": null,
+              "sortBy": "ent_hired_share",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "percent",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_hired_share",
+              "ent_hired",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_hired_share_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Hired Worker Share by State/UT",
+              "chartType": "bar",
+              "unitLabel": "percent",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_state_ut",
+                "label": "State/UT"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_hired_share",
+                  "label": "Hired Worker Share"
+                }
+              ],
+              "sortBy": "ent_hired_share",
+              "topN": 12
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_hired_share",
+              "ent_hired",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_hired_share",
+        "sourceEntityIds": [
+          "ent_state_ut",
+          "ent_region",
+          "ent_hired_share",
+          "ent_hired",
+          "ent_persons"
+        ],
+        "sourceColumnIds": [
+          "Hired Share",
+          "Hired Workers",
+          "Persons Working",
+          "State/UT",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_type_mix",
+      "questionId": "q_type_mix",
+      "questionText": "What share of establishments are own-account versus those with hired workers?",
+      "status": "DEGRADED",
+      "analyticsSpec": {
+        "operation": "composition",
+        "measure": {
+          "column": "Own Account Establishments",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "composition",
+        "grain": "national",
+        "aggregation": "sum",
+        "parts": [
+          "ent_oae",
+          "ent_hired_estab"
+        ],
+        "whole": "ent_establishments"
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Own Account Establishments",
+          "Establishments with Hired Workers",
+          "Establishments"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "SHARE",
+        "numeratorColumn": "Own Account Establishments",
+        "denominatorColumn": "Establishments",
+        "multiplier": 100.0,
+        "unitConversion": "percent"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_type_mix_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_oae"
+              ]
+            },
+            "requiredEntities": [
+              "ent_oae",
+              "ent_hired_estab",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_type_mix_chart",
+            "kind": "chart",
+            "order": 2,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "pie",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Own-Account vs Hired-Worker Establishment Mix",
+              "chartType": "pie",
+              "unitLabel": "count",
+              "showDataLabels": true,
+              "slices": [
+                "ent_oae",
+                "ent_hired_estab"
+              ]
+            },
+            "requiredEntities": [
+              "ent_oae",
+              "ent_hired_estab",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_type_mix",
+        "sourceEntityIds": [
+          "ent_oae",
+          "ent_hired_estab",
+          "ent_establishments"
+        ],
+        "sourceColumnIds": [
+          "Own Account Establishments",
+          "Establishments with Hired Workers",
+          "Establishments"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_oae_share",
+      "questionId": "q_oae_share",
+      "questionText": "Rank States/UTs by the own-account share of all establishments.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "OAE Share",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 12
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_state_ut",
+        "sortBy": "ent_oae_share",
+        "sortOrder": "descending",
+        "topN": 12,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_oae_share",
+            "condition": "not_null"
+          }
+        ],
+        "formula": {
+          "formulaType": "SHARE",
+          "formulaRef": "f_oae_share",
+          "numerator": "ent_oae",
+          "denominator": "ent_establishments",
+          "grain": "ent_state_ut"
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "OAE Share",
+          "Own Account Establishments",
+          "Establishments"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "SHARE",
+        "numeratorColumn": "Own Account Establishments",
+        "denominatorColumn": "Establishments",
+        "multiplier": 100.0,
+        "unitConversion": "percent"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_oae_share_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_oae_share"
+              ]
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_oae_share",
+              "ent_oae"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_oae_share_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 4,
+              "maxRows": 12,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Own-Account Share by State/UT",
+              "rowEntity": "ent_state_ut",
+              "columns": [
+                "ent_oae_share"
+              ],
+              "groupRowsBy": null,
+              "sortBy": "ent_oae_share",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "percent",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_oae_share",
+              "ent_oae",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_oae_share_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Own-Account Establishment Share by State/UT",
+              "chartType": "bar",
+              "unitLabel": "percent",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_state_ut",
+                "label": "State/UT"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_oae_share",
+                  "label": "Own-Account Share"
+                }
+              ],
+              "sortBy": "ent_oae_share",
+              "topN": 12
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_oae_share",
+              "ent_oae",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_oae_share",
+        "sourceEntityIds": [
+          "ent_state_ut",
+          "ent_region",
+          "ent_oae_share",
+          "ent_oae",
+          "ent_establishments"
+        ],
+        "sourceColumnIds": [
+          "OAE Share",
+          "Own Account Establishments",
+          "Establishments",
+          "State/UT",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_state_child",
+      "questionId": "q_state_child",
+      "questionText": "Rank States/UTs by the number of child workers in establishments.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Child Workers",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 12
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_state_ut",
+        "sortBy": "ent_child",
+        "sortOrder": "descending",
+        "topN": 12,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_child",
+            "condition": "not_null"
+          }
+        ],
+        "groupBy": "ent_region"
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Child Workers",
+          "Persons Working"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_state_child_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_child"
+              ]
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_child",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_state_child_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 6,
+              "maxRows": 12,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Child Workers by State/UT",
+              "rowEntity": "ent_state_ut",
+              "columns": [
+                "ent_child",
+                "ent_persons"
+              ],
+              "groupRowsBy": "ent_region",
+              "sortBy": "ent_child",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "persons",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_child",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_state_child_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Child Workers by State/UT",
+              "chartType": "bar",
+              "unitLabel": "persons",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_state_ut",
+                "label": "State/UT"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_child",
+                  "label": "Child Workers"
+                }
+              ],
+              "groupBy": "ent_region",
+              "sortBy": "ent_child",
+              "topN": 12
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_child",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_state_child",
+        "sourceEntityIds": [
+          "ent_state_ut",
+          "ent_region",
+          "ent_child",
+          "ent_persons"
+        ],
+        "sourceColumnIds": [
+          "Child Workers",
+          "Persons Working",
+          "State/UT",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_region_child",
+      "questionId": "q_region_child",
+      "questionText": "Aggregate the number of child workers by region.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Child Workers",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 6
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_region",
+        "sortBy": "ent_child",
+        "sortOrder": "descending",
+        "topN": 6,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_child",
+            "condition": "not_null"
+          }
+        ]
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Child Workers"
+        ],
+        "dimensions": [
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_region_child_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_child"
+              ]
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_child"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_region_child_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 6,
+              "maxRows": 6,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Child Workers by Region",
+              "rowEntity": "ent_region",
+              "columns": [
+                "ent_child"
+              ],
+              "groupRowsBy": null,
+              "sortBy": "ent_child",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "persons",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_child"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_region_child_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Child Workers by Region",
+              "chartType": "bar",
+              "unitLabel": "persons",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_region",
+                "label": "Region"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_child",
+                  "label": "Child Workers"
+                }
+              ],
+              "sortBy": "ent_child",
+              "topN": 6
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_child"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_region_child",
+        "sourceEntityIds": [
+          "ent_region",
+          "ent_child"
+        ],
+        "sourceColumnIds": [
+          "Child Workers",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_child_share",
+      "questionId": "q_child_share",
+      "questionText": "Rank States/UTs by the child share of persons working.",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Child Share",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "State/UT"
+          },
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 12
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_state_ut",
+        "sortBy": "ent_child_share",
+        "sortOrder": "descending",
+        "topN": 12,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_child_share",
+            "condition": "not_null"
+          }
+        ],
+        "formula": {
+          "formulaType": "SHARE",
+          "formulaRef": "f_child_share",
+          "numerator": "ent_child",
+          "denominator": "ent_persons",
+          "grain": "ent_state_ut"
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Child Share",
+          "Child Workers",
+          "Persons Working"
+        ],
+        "dimensions": [
+          "State/UT",
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "SHARE",
+        "numeratorColumn": "Child Workers",
+        "denominatorColumn": "Persons Working",
+        "multiplier": 100.0,
+        "unitConversion": "percent"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_child_share_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_child_share"
+              ]
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_child_share",
+              "ent_child"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_child_share_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 4,
+              "maxRows": 12,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Child Worker Share by State/UT",
+              "rowEntity": "ent_state_ut",
+              "columns": [
+                "ent_child_share"
+              ],
+              "groupRowsBy": null,
+              "sortBy": "ent_child_share",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "percent",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_child_share",
+              "ent_child",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_child_share_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Child Worker Share by State/UT",
+              "chartType": "bar",
+              "unitLabel": "percent",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_state_ut",
+                "label": "State/UT"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_child_share",
+                  "label": "Child Worker Share"
+                }
+              ],
+              "sortBy": "ent_child_share",
+              "topN": 12
+            },
+            "requiredEntities": [
+              "ent_state_ut",
+              "ent_region",
+              "ent_child_share",
+              "ent_child",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_child_share",
+        "sourceEntityIds": [
+          "ent_state_ut",
+          "ent_region",
+          "ent_child_share",
+          "ent_child",
+          "ent_persons"
+        ],
+        "sourceColumnIds": [
+          "Child Share",
+          "Child Workers",
+          "Persons Working",
+          "State/UT",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_region_estab2",
+      "questionId": "q_region_estab2",
+      "questionText": "Aggregate the establishment count by region (synthesis view).",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Establishments",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 6
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_region",
+        "sortBy": "ent_establishments",
+        "sortOrder": "descending",
+        "topN": 6,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_establishments",
+            "condition": "not_null"
+          }
+        ]
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Establishments"
+        ],
+        "dimensions": [
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_region_estab2_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_establishments"
+              ]
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_region_estab2_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 6,
+              "maxRows": 6,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Establishments by Region",
+              "rowEntity": "ent_region",
+              "columns": [
+                "ent_establishments"
+              ],
+              "groupRowsBy": null,
+              "sortBy": "ent_establishments",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "count",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_region_estab2_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Regional Establishment Base (Synthesis)",
+              "chartType": "bar",
+              "unitLabel": "count",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_region",
+                "label": "Region"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_establishments",
+                  "label": "Establishments"
+                }
+              ],
+              "sortBy": "ent_establishments",
+              "topN": 6
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_region_estab2",
+        "sourceEntityIds": [
+          "ent_region",
+          "ent_establishments"
+        ],
+        "sourceColumnIds": [
+          "Establishments",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_region_persons2",
+      "questionId": "q_region_persons2",
+      "questionText": "Aggregate the persons working by region (synthesis view).",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Persons Working",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 6
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_region",
+        "sortBy": "ent_persons",
+        "sortOrder": "descending",
+        "topN": 6,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_persons",
+            "condition": "not_null"
+          }
+        ]
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Persons Working"
+        ],
+        "dimensions": [
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_region_persons2_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_persons"
+              ]
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_region_persons2_table",
+            "kind": "table",
+            "order": 2,
+            "outputContract": {
+              "type": "structured_data",
+              "minRows": 6,
+              "maxRows": 6,
+              "showTotals": true,
+              "showRank": true
+            },
+            "tableSpec": {
+              "title": "Persons Working by Region",
+              "rowEntity": "ent_region",
+              "columns": [
+                "ent_persons"
+              ],
+              "groupRowsBy": null,
+              "sortBy": "ent_persons",
+              "sortOrder": "descending",
+              "showRank": true,
+              "unitLabel": "persons",
+              "footnote": "Source: Sixth Economic Census, MoSPI"
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canHideColumns": true
+            }
+          },
+          {
+            "componentId": "q_region_persons2_chart",
+            "kind": "chart",
+            "order": 3,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Regional Employment Base (Synthesis)",
+              "chartType": "bar",
+              "unitLabel": "persons",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_region",
+                "label": "Region"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_persons",
+                  "label": "Persons Working"
+                }
+              ],
+              "sortBy": "ent_persons",
+              "topN": 6
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_persons"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_region_persons2",
+        "sourceEntityIds": [
+          "ent_region",
+          "ent_persons"
+        ],
+        "sourceColumnIds": [
+          "Persons Working",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_region_scale",
+      "questionId": "q_region_scale",
+      "questionText": "Rank regions by the average persons per establishment (synthesis).",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "rank",
+        "measure": {
+          "column": "Avg Employment",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [
+          {
+            "column": "Region"
+          }
+        ],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": 6
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "rank",
+        "grain": "ent_region",
+        "sortBy": "ent_avg_emp",
+        "sortOrder": "descending",
+        "topN": 6,
+        "aggregation": "sum",
+        "filters": [
+          {
+            "entity": "ent_avg_emp",
+            "condition": "not_null"
+          }
+        ],
+        "formula": {
+          "formulaType": "RATIO",
+          "formulaRef": "f_avg_employment",
+          "numerator": "ent_persons",
+          "denominator": "ent_establishments",
+          "grain": "ent_region"
+        }
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Avg Employment",
+          "Persons Working",
+          "Establishments"
+        ],
+        "dimensions": [
+          "Region"
+        ],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_region_scale_narrative",
+            "kind": "narrative",
+            "order": 1,
+            "outputContract": {
+              "type": "prose",
+              "minWords": 55,
+              "maxWords": 120,
+              "requiresEvidence": true,
+              "requiresCaveatWhenDegraded": true
+            },
+            "narrativeTemplate": {
+              "tone": "formal-statistical",
+              "pattern": "headline_then_evidence_then_caveat",
+              "mustMention": [
+                "ent_avg_emp"
+              ]
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_avg_emp",
+              "ent_persons",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canOverrideGenerated": true
+            }
+          },
+          {
+            "componentId": "q_region_scale_chart",
+            "kind": "chart",
+            "order": 2,
+            "outputContract": {
+              "type": "visualization",
+              "chartType": "bar",
+              "minSeries": 1,
+              "maxCategories": 12
+            },
+            "chartSpec": {
+              "title": "Composite Establishment Scale by Region",
+              "chartType": "bar",
+              "unitLabel": "persons",
+              "showDataLabels": true,
+              "xAxis": {
+                "entity": "ent_region",
+                "label": "Region"
+              },
+              "yAxes": [
+                {
+                  "entity": "ent_avg_emp",
+                  "label": "Average Employment"
+                }
+              ],
+              "sortBy": "ent_avg_emp",
+              "topN": 6
+            },
+            "requiredEntities": [
+              "ent_region",
+              "ent_avg_emp",
+              "ent_persons",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true,
+              "canChangeChartType": true
+            }
+          },
+          {
+            "componentId": "q_region_scale_metric",
+            "kind": "metric",
+            "order": 3,
+            "outputContract": {
+              "type": "computed_metric",
+              "displayFormat": "multiplier"
+            },
+            "formulaSpec": {
+              "formulaType": "RATIO",
+              "formulaRef": "f_avg_employment",
+              "numerator": "ent_persons",
+              "denominator": "ent_establishments",
+              "grain": "ent_region"
+            },
+            "requiredEntities": [
+              "ent_persons",
+              "ent_establishments"
+            ],
+            "customization": {
+              "officerEditable": true
+            }
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_region_scale",
+        "sourceEntityIds": [
+          "ent_region",
+          "ent_avg_emp",
+          "ent_persons",
+          "ent_establishments"
+        ],
+        "sourceColumnIds": [
+          "Avg Employment",
+          "Persons Working",
+          "Establishments",
+          "Region"
+        ]
+      },
+      "diagnostics": []
+    },
+    {
+      "planId": "plan_q_methodology",
+      "questionId": "q_methodology",
+      "questionText": "What are the data sources, measurement units and coverage of this report?",
+      "status": "EXECUTABLE",
+      "analyticsSpec": {
+        "operation": "metric",
+        "measure": {
+          "column": "Establishments",
+          "agg": "sum",
+          "unit": ""
+        },
+        "groupBy": [],
+        "filters": [],
+        "sort": {
+          "by": "measure",
+          "order": "desc"
+        },
+        "topN": null
+      },
+      "sourceAnalyticsSpec": {
+        "operation": "metric",
+        "grain": "national",
+        "aggregation": "sum"
+      },
+      "resolvedRoles": {
+        "measures": [
+          "Establishments"
+        ],
+        "dimensions": [],
+        "filters": [],
+        "time": {
+          "column": null,
+          "periods": {},
+          "timeResolved": false
+        }
+      },
+      "normalizationPlan": {
+        "type": "NONE"
+      },
+      "formulaSpec": {
+        "type": "DIRECT"
+      },
+      "outputContract": {
+        "components": [
+          {
+            "componentId": "q_methodology_methodology",
+            "kind": "methodology",
+            "order": 1,
+            "outputContract": {
+              "type": "methodology"
+            },
+            "requiredEntities": []
+          },
+          {
+            "componentId": "q_methodology_source_note",
+            "kind": "source_note",
+            "order": 2,
+            "outputContract": {
+              "type": "attribution"
+            },
+            "requiredEntities": []
+          },
+          {
+            "componentId": "q_methodology_glossary",
+            "kind": "glossary",
+            "order": 3,
+            "outputContract": {
+              "type": "definitions"
+            },
+            "requiredEntities": []
+          },
+          {
+            "componentId": "q_methodology_caveat",
+            "kind": "caveat",
+            "order": 4,
+            "outputContract": {
+              "type": "caveat"
+            },
+            "requiredEntities": []
+          }
+        ]
+      },
+      "evidenceRequirements": {
+        "returnRowIds": true,
+        "returnComputedValues": true,
+        "traceToSource": true
+      },
+      "lineage": {
+        "sourceQuestionId": "q_methodology",
+        "sourceEntityIds": [
+          "ent_establishments"
+        ],
+        "sourceColumnIds": [
+          "Establishments"
+        ]
+      },
+      "diagnostics": []
+    }
+  ],
+  "blockedQuestions": [],
+  "readinessReport": {
+    "executableCount": 24,
+    "degradedCount": 2,
+    "blockedCount": 0,
+    "checks": [
+      {
+        "level": "statistical",
+        "severity": "warn",
+        "passed": false,
+        "code": "CHART_MISSING_DIMENSION",
+        "message": "Output contract requires chart but no dimension column is resolved for groupBy/xAxis",
+        "planId": "plan_q_rural_urban",
+        "recommendedAction": "Add a dimension entity binding for chart axis"
+      },
+      {
+        "level": "statistical",
+        "severity": "warn",
+        "passed": false,
+        "code": "CHART_MISSING_DIMENSION",
+        "message": "Output contract requires chart but no dimension column is resolved for groupBy/xAxis",
+        "planId": "plan_q_type_mix",
+        "recommendedAction": "Add a dimension entity binding for chart axis"
+      }
+    ],
+    "warnings": [
+      "Output contract requires chart but no dimension column is resolved for groupBy/xAxis",
+      "Output contract requires chart but no dimension column is resolved for groupBy/xAxis"
+    ],
+    "errors": [],
+    "status": "DEGRADED"
+  },
+  "dataframeRef": {
+    "type": "csv",
+    "path": "C:\\Users\\2504690\\syl\\statathon\\report_builder\\gold_standard\\economic_census_establishments_v1\\economic_census_establishments_v1.dataset.csv",
+    "contentHash": "sha256:50b6aacc688b30df1df3d0bcde9b3c88"
+  },
+  "lineageIndex": {
+    "q_state_estab": {
+      "sourceQuestionId": "q_state_estab",
+      "sourceEntityIds": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_establishments",
+        "ent_persons"
+      ],
+      "sourceColumnIds": [
+        "Establishments",
+        "Persons Working",
+        "State/UT",
+        "Region"
+      ]
+    },
+    "q_region_estab": {
+      "sourceQuestionId": "q_region_estab",
+      "sourceEntityIds": [
+        "ent_region",
+        "ent_establishments"
+      ],
+      "sourceColumnIds": [
+        "Establishments",
+        "Region"
+      ]
+    },
+    "q_rural_urban": {
+      "sourceQuestionId": "q_rural_urban",
+      "sourceEntityIds": [
+        "ent_rural_estab",
+        "ent_urban_estab",
+        "ent_establishments"
+      ],
+      "sourceColumnIds": [
+        "Rural Establishments",
+        "Urban Establishments",
+        "Establishments"
+      ]
+    },
+    "q_rural_lead": {
+      "sourceQuestionId": "q_rural_lead",
+      "sourceEntityIds": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_rural_estab"
+      ],
+      "sourceColumnIds": [
+        "Rural Establishments",
+        "State/UT",
+        "Region"
+      ]
+    },
+    "q_urban_lead": {
+      "sourceQuestionId": "q_urban_lead",
+      "sourceEntityIds": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_urban_estab"
+      ],
+      "sourceColumnIds": [
+        "Urban Establishments",
+        "State/UT",
+        "Region"
+      ]
+    },
+    "q_urban_share": {
+      "sourceQuestionId": "q_urban_share",
+      "sourceEntityIds": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_urban_share",
+        "ent_urban_estab",
+        "ent_establishments"
+      ],
+      "sourceColumnIds": [
+        "Urban Share",
+        "Urban Establishments",
+        "Establishments",
+        "State/UT",
+        "Region"
+      ]
+    },
+    "q_rural_share_region": {
+      "sourceQuestionId": "q_rural_share_region",
+      "sourceEntityIds": [
+        "ent_region",
+        "ent_rural_share",
+        "ent_rural_estab",
+        "ent_establishments"
+      ],
+      "sourceColumnIds": [
+        "Rural Share",
+        "Rural Establishments",
+        "Establishments",
+        "Region"
+      ]
+    },
+    "q_state_emp": {
+      "sourceQuestionId": "q_state_emp",
+      "sourceEntityIds": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_persons",
+        "ent_establishments"
+      ],
+      "sourceColumnIds": [
+        "Persons Working",
+        "Establishments",
+        "State/UT",
+        "Region"
+      ]
+    },
+    "q_region_emp": {
+      "sourceQuestionId": "q_region_emp",
+      "sourceEntityIds": [
+        "ent_region",
+        "ent_persons"
+      ],
+      "sourceColumnIds": [
+        "Persons Working",
+        "Region"
+      ]
+    },
+    "q_avg_emp": {
+      "sourceQuestionId": "q_avg_emp",
+      "sourceEntityIds": [
+        "ent_region",
+        "ent_avg_emp",
+        "ent_persons",
+        "ent_establishments"
+      ],
+      "sourceColumnIds": [
+        "Avg Employment",
+        "Persons Working",
+        "Establishments",
+        "Region"
+      ]
+    },
+    "q_state_scale": {
+      "sourceQuestionId": "q_state_scale",
+      "sourceEntityIds": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_avg_emp"
+      ],
+      "sourceColumnIds": [
+        "Avg Employment",
+        "State/UT",
+        "Region"
+      ]
+    },
+    "q_state_female": {
+      "sourceQuestionId": "q_state_female",
+      "sourceEntityIds": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_female",
+        "ent_persons"
+      ],
+      "sourceColumnIds": [
+        "Female Workers",
+        "Persons Working",
+        "State/UT",
+        "Region"
+      ]
+    },
+    "q_region_female": {
+      "sourceQuestionId": "q_region_female",
+      "sourceEntityIds": [
+        "ent_region",
+        "ent_female"
+      ],
+      "sourceColumnIds": [
+        "Female Workers",
+        "Region"
+      ]
+    },
+    "q_female_share": {
+      "sourceQuestionId": "q_female_share",
+      "sourceEntityIds": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_female_share",
+        "ent_female",
+        "ent_persons"
+      ],
+      "sourceColumnIds": [
+        "Female Share",
+        "Female Workers",
+        "Persons Working",
+        "State/UT",
+        "Region"
+      ]
+    },
+    "q_female_region": {
+      "sourceQuestionId": "q_female_region",
+      "sourceEntityIds": [
+        "ent_region",
+        "ent_female_share",
+        "ent_female",
+        "ent_persons"
+      ],
+      "sourceColumnIds": [
+        "Female Share",
+        "Female Workers",
+        "Persons Working",
+        "Region"
+      ]
+    },
+    "q_state_hired": {
+      "sourceQuestionId": "q_state_hired",
+      "sourceEntityIds": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_hired",
+        "ent_persons"
+      ],
+      "sourceColumnIds": [
+        "Hired Workers",
+        "Persons Working",
+        "State/UT",
+        "Region"
+      ]
+    },
+    "q_hired_share": {
+      "sourceQuestionId": "q_hired_share",
+      "sourceEntityIds": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_hired_share",
+        "ent_hired",
+        "ent_persons"
+      ],
+      "sourceColumnIds": [
+        "Hired Share",
+        "Hired Workers",
+        "Persons Working",
+        "State/UT",
+        "Region"
+      ]
+    },
+    "q_type_mix": {
+      "sourceQuestionId": "q_type_mix",
+      "sourceEntityIds": [
+        "ent_oae",
+        "ent_hired_estab",
+        "ent_establishments"
+      ],
+      "sourceColumnIds": [
+        "Own Account Establishments",
+        "Establishments with Hired Workers",
+        "Establishments"
+      ]
+    },
+    "q_oae_share": {
+      "sourceQuestionId": "q_oae_share",
+      "sourceEntityIds": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_oae_share",
+        "ent_oae",
+        "ent_establishments"
+      ],
+      "sourceColumnIds": [
+        "OAE Share",
+        "Own Account Establishments",
+        "Establishments",
+        "State/UT",
+        "Region"
+      ]
+    },
+    "q_state_child": {
+      "sourceQuestionId": "q_state_child",
+      "sourceEntityIds": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_child",
+        "ent_persons"
+      ],
+      "sourceColumnIds": [
+        "Child Workers",
+        "Persons Working",
+        "State/UT",
+        "Region"
+      ]
+    },
+    "q_region_child": {
+      "sourceQuestionId": "q_region_child",
+      "sourceEntityIds": [
+        "ent_region",
+        "ent_child"
+      ],
+      "sourceColumnIds": [
+        "Child Workers",
+        "Region"
+      ]
+    },
+    "q_child_share": {
+      "sourceQuestionId": "q_child_share",
+      "sourceEntityIds": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_child_share",
+        "ent_child",
+        "ent_persons"
+      ],
+      "sourceColumnIds": [
+        "Child Share",
+        "Child Workers",
+        "Persons Working",
+        "State/UT",
+        "Region"
+      ]
+    },
+    "q_region_estab2": {
+      "sourceQuestionId": "q_region_estab2",
+      "sourceEntityIds": [
+        "ent_region",
+        "ent_establishments"
+      ],
+      "sourceColumnIds": [
+        "Establishments",
+        "Region"
+      ]
+    },
+    "q_region_persons2": {
+      "sourceQuestionId": "q_region_persons2",
+      "sourceEntityIds": [
+        "ent_region",
+        "ent_persons"
+      ],
+      "sourceColumnIds": [
+        "Persons Working",
+        "Region"
+      ]
+    },
+    "q_region_scale": {
+      "sourceQuestionId": "q_region_scale",
+      "sourceEntityIds": [
+        "ent_region",
+        "ent_avg_emp",
+        "ent_persons",
+        "ent_establishments"
+      ],
+      "sourceColumnIds": [
+        "Avg Employment",
+        "Persons Working",
+        "Establishments",
+        "Region"
+      ]
+    },
+    "q_methodology": {
+      "sourceQuestionId": "q_methodology",
+      "sourceEntityIds": [
+        "ent_establishments"
+      ],
+      "sourceColumnIds": [
+        "Establishments"
+      ]
+    }
+  },
+  "frozenAt": "2026-06-17T06:58:28.101216+00:00"
+}
