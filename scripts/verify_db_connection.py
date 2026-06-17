@@ -39,10 +39,14 @@ def main() -> int:
         print(f"Postgres: {str(version).split(',')[0]}")
         print(f"Database size: {db_size}")
         print(f"Public tables: {tables}")
+        backend = pool_stats().get("backend", "unknown")
+        host = pool_stats().get("host_redacted", "")
         if DATABASE_URL.startswith("sqlite"):
-            print("Note: using SQLite — switch DATABASE_URL to Xata for production.")
-        elif ".sql.xata.sh" not in DATABASE_URL.lower() and ".xata.tech" not in DATABASE_URL.lower():
-            print("Note: not a Xata host — update DATABASE_URL if migrating from Supabase.")
+            print("Note: using SQLite — use local Docker Postgres or RDS for production.")
+        elif "localhost" in host or "127.0.0.1" in host:
+            print("Note: local Postgres — fastest for daily dev.")
+        elif backend == "postgresql":
+            print("Note: remote Postgres — see docs/deploy/aws/08-rds-mumbai-staging.md for staging setup.")
         return 0
     except Exception as exc:
         print(f"Connection failed: {exc}", file=sys.stderr)

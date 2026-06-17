@@ -168,7 +168,7 @@ const AnomalyReviewTable = forwardRef<AnomalyReviewTableHandle, Props>(function 
       const count = Number(res.saved ?? payload.length);
       if (res.success === false) throw new Error('Save not confirmed');
       setSavedCount(count);
-      toast.success(`Saved ${count} anomaly decision(s)`);
+      toast.success(`Saved ${count} anomaly decisions`);
       onSaved?.();
       return { saved: count };
     } catch (err) {

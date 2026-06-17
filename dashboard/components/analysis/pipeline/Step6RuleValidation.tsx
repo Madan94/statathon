@@ -441,7 +441,7 @@ export default function Step6RuleValidation({
             {proceedPhase === 'saved' && (
               <>
                 <CheckCircle2 className="h-4 w-4 text-success" />
-                <span>✓ {savedDecisionCount} decision(s) saved</span>
+                <span>✓ {savedDecisionCount} decisions saved</span>
               </>
             )}
             {proceedPhase === 'moving' && (

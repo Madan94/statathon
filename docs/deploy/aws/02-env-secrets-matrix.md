@@ -22,7 +22,7 @@ This maps current app settings from [`.env.example`](d:/statathon-hack/statathon
 - `CORS_ORIGINS=https://<frontend-domain>`
 - `STORAGE_PROVIDER=s3`
 - `S3_BUCKET=<bucket>`
-- `AWS_REGION=<region>`
+- `AWS_REGION=ap-south-1` (must match RDS, S3 bucket, and KMS key — see [09-ap-south-1-colocation.md](./09-ap-south-1-colocation.md))
 - `S3_UPLOAD_PREFIX=datasets`
 - `S3_KMS_KEY_ID=arn:aws:kms:<region>:<account>:key/<key-id>`
 - `S3_VAULT_KMS_KEY_ID=` (optional; defaults to `S3_KMS_KEY_ID`)

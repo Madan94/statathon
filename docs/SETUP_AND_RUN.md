@@ -98,29 +98,49 @@ SGLANG_ENDPOINT=http://localhost:30000
 
 ---
 
-## 4. Database — Supabase / Postgres
+## 4. Database — Local Postgres / RDS Mumbai
 
-### Option A — use hosted Supabase (already configured in .env)
-Nothing to install. Your `DATABASE_URL` points to Supabase cloud.
+### Option A — local Postgres via Docker (recommended for daily dev)
 
-### Option B — local Postgres via Docker
+Fastest option for pipeline work on your laptop (~0–15 ms DB latency).
+
 ```powershell
 docker run -d --name statathon-pg `
+  -e POSTGRES_USER=postgres `
   -e POSTGRES_PASSWORD=postgres `
   -e POSTGRES_DB=statathon `
   -p 5432:5432 `
+  -v statathon_pg_data:/var/lib/postgresql/data `
   postgres:16
 ```
-Then set `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/statathon`
+
+Then in `.env`:
+
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/statathon
+DB_POOL_SIZE=10
+DB_STATEMENT_TIMEOUT_MS=15000
+```
+
+Verify: `python scripts/verify_db_connection.py`
+
+### Option B — RDS Mumbai staging (shared team DB)
+
+Use when teammates need a shared cloud database. Slower than local, faster than remote Xata us-east-1.
+
+See [docs/deploy/aws/08-rds-mumbai-staging.md](../deploy/aws/08-rds-mumbai-staging.md) and copy `.env.rds-staging.example`.
+
+### Option C — production RDS on AWS
+
+ECS + private RDS + S3 all in `ap-south-1`. See [docs/deploy/aws/09-ap-south-1-colocation.md](../deploy/aws/09-ap-south-1-colocation.md).
 
 ### Run DB migrations
 ```powershell
-# If using Alembic:
-alembic upgrade head
-
-# Or run SQL directly:
-psql $env:DATABASE_URL -f scripts/init_db.sql
+python scripts/migrate_db.py --bootstrap
+python scripts/migrate_db.py
 ```
+
+Or restart the API — startup runs `create_all` + migrations automatically.
 
 ---
 

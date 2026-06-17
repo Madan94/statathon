@@ -219,7 +219,7 @@ export default function ImputationReviewTable({ column, analysisId, results, cla
       const res = await analysisApi.saveImputationDecisions(analysisId, column, selectedMethod, decisions);
       if (res.success === false) throw new Error('Save failed');
       setSaved(true);
-      toast.success(`Saved ${decisions.length} missing-value decision(s) for ${column}`);
+      toast.success(`Saved ${decisions.length} missing-value decisions for ${column}`);
       onSaved?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save');
@@ -417,7 +417,7 @@ export default function ImputationReviewTable({ column, analysisId, results, cla
 
       <Button disabled={!selectedMethod || saving} onClick={handleSave} className="gap-2">
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-        {saved ? 'Saved' : saving ? 'Saving…' : `Save ${missingRows.length || 1} decision(s): ${selectedMethod}`}
+        {saved ? 'Saved' : saving ? 'Saving…' : `Save ${missingRows.length || 1} decisions: ${selectedMethod}`}
       </Button>
 
       <ImputationDetailDrawer

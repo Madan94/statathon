@@ -25,6 +25,12 @@ This folder contains the production deployment assets for the console-first AWS 
 - [07-s3-datasets-kms.md](./07-s3-datasets-kms.md)  
   S3 raw dataset storage with SSE-KMS, bucket policy, IAM, and migration.
 
+- [10-rds-only-laptop.md](./10-rds-only-laptop.md)  
+  **Console walkthrough:** create RDS in Mumbai and connect laptop dev (recommended if using RDS only).
+
+- [09-ap-south-1-colocation.md](./09-ap-south-1-colocation.md)  
+  Production checklist: co-locate ECS, RDS, Redis, and S3 in Mumbai.
+
 ## Templates
 
 - `deploy/ecs/taskdef-api.template.json`
@@ -34,3 +40,5 @@ This folder contains the production deployment assets for the console-first AWS 
 
 - `scripts/aws/build_and_push_ecr.ps1`
 - `scripts/aws/render_taskdefs.ps1`
+- `scripts/aws/rds_ssm_tunnel.ps1` — SSM port-forward to private RDS (staging)
+- `scripts/aws/bootstrap_rds_schema.ps1` — run migrations against `DATABASE_URL`
