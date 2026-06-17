@@ -472,7 +472,7 @@ export interface OutlierResult {
   risk: 'low' | 'medium' | 'high';
 }
 
-export interface OutlierResult {
+export interface ColumnNormalizationRow {
   original_name: string;
   normalized_name: string;
   display_name: string;
