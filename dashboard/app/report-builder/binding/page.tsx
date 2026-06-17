@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/Badge';
 import { BindingStepper } from '@/components/report-builder/binding/BindingStepper';
 import { DatasetProfileCard } from '@/components/report-builder/binding/DatasetProfileCard';
 import { DatasetWeightTabs } from '@/components/report-builder/binding/DatasetWeightTabs';
-import { QueryIndicatorFilters, type QueryFilterRule } from '@/components/report-builder/binding/QueryIndicatorFilters';
+import { QueryIndicatorFilters } from '@/components/report-builder/binding/QueryIndicatorFilters';
+import { defaultSectionConfig, type ReportSectionConfig } from '@/lib/reportSection';
 import { CoveragePanel } from '@/components/report-builder/binding/CoveragePanel';
 import { StructureCanvas, type EntityPropagationRequest } from '@/components/report-builder/binding/StructureCanvas';
 import { EntityMatrixPanel, type EntityDecision } from '@/components/report-builder/binding/EntityMatrixPanel';
@@ -180,8 +181,8 @@ export default function BindingWorkflowPage() {
   // Whether the officer has entered the dedicated path workbench (a separate
   // screen with ONLY the path's tabs). false = setup screen (overview/profile/path).
   const [enteredPath, setEnteredPath] = useState(false);
-  const [queryFilterRules, setQueryFilterRules] = useState<QueryFilterRule[]>([]);
-  const [queryFilterCombinator, setQueryFilterCombinator] = useState<'AND' | 'OR'>('AND');
+  // Loop-template section builder config → compiles to report.section.v1 for BI.
+  const [sectionConfig, setSectionConfig] = useState<ReportSectionConfig>(() => defaultSectionConfig());
   // How many columns the dataset dictionary table renders (officer-selectable).
   const [columnDisplayLimit, setColumnDisplayLimit] = useState<number | 'all'>(25);
   const [focusedQuestionId, setFocusedQuestionId] = useState<string | null>(null);
@@ -352,8 +353,7 @@ export default function BindingWorkflowPage() {
       setExecutionReady(null);
       setTemplatePath(null);
       setEnteredPath(false);
-      setQueryFilterRules([]);
-      setQueryFilterCombinator('AND');
+      setSectionConfig(defaultSectionConfig());
       setWorkbenchMode('overview');
       await loadWorkspace(res.template_id, res.signature);
       setStep(1);
@@ -868,8 +868,7 @@ export default function BindingWorkflowPage() {
     setWorkspace(null);
     setTemplatePath(null);
     setEnteredPath(false);
-    setQueryFilterRules([]);
-    setQueryFilterCombinator('AND');
+    setSectionConfig(defaultSectionConfig());
     setWorkbenchMode('overview');
     setFocusedQuestionId(null);
     setFocusedComponentId(null);
@@ -977,7 +976,7 @@ export default function BindingWorkflowPage() {
   const pathWorkbenchModes: Array<{ id: WorkbenchMode; label: string; hint: string; status: 'Ready' | 'Review' | 'Blocked' | 'Open' }> = templatePath
     ? [
         ...(templatePath === 'loop'
-          ? ([{ id: 'filters', label: 'Query indicators', hint: queryFilterRules.length ? `${queryFilterRules.length} filter${queryFilterRules.length > 1 ? 's' : ''}` : 'Optional complex filtering', status: 'Open' }] as const)
+          ? ([{ id: 'filters', label: 'Query indicators', hint: sectionConfig.filters.length ? `${sectionConfig.filters.length} filter${sectionConfig.filters.length > 1 ? 's' : ''} · ${sectionConfig.measures.length} measure${sectionConfig.measures.length === 1 ? '' : 's'}` : 'Build section spec', status: 'Open' }] as const)
           : []),
         { id: 'entities', label: 'Dataset mapping', hint: phaseHint('entities', `${undecidedColumnCount} columns pending`), status: phaseStatus('entities', allColumnsDecided ? 'Ready' : remaining === 0 ? 'Review' : 'Review') },
         { id: 'questions', label: 'Question plan', hint: phaseHint('questions', currentReviewedPlan ? `${currentReviewedPlan.questionCount} questions` : 'Finalize first'), status: phaseStatus('questions', currentReviewedPlan ? 'Ready' : allColumnsDecided ? 'Review' : 'Blocked') },
@@ -1300,12 +1299,11 @@ export default function BindingWorkflowPage() {
           <QueryIndicatorFilters
             file={datasetFile}
             columns={session.dataset_ast.columns}
-            rules={queryFilterRules}
-            combinator={queryFilterCombinator}
-            onChange={(rules, combinator) => {
-              setQueryFilterRules(rules);
-              setQueryFilterCombinator(combinator);
-            }}
+            config={sectionConfig}
+            onChange={setSectionConfig}
+            templateId={session.template_id}
+            signature={session.signature}
+            datasetId={session.dataset_id}
           />
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
             <Button variant="outline" size="sm" onClick={() => goToMode('pathway')}>
