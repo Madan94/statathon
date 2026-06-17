@@ -799,7 +799,7 @@ export function QueryIndicatorFilters({
                 !dimSearch || h.toLowerCase().includes(dimSearch.toLowerCase()),
               );
               if (!filtered.length) return (
-                <p className="px-4 py-6 text-center text-xs text-gray-400">No columns match "{dimSearch}"</p>
+                <p className="px-4 py-6 text-center text-xs text-gray-400">No columns match &quot;{dimSearch}&quot;</p>
               );
               // Group by role
               const groups: Record<string, string[]> = {};
