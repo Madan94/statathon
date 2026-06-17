@@ -1,4 +1,4 @@
-import type { DataRow, SectionIssue, SectionPredicate } from './types';
+import type { DataRow, FilterCombinator, SectionIssue, SectionPredicate } from './types';
 
 function norm(value: unknown): string {
   return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
@@ -55,21 +55,40 @@ export function testPredicate(row: DataRow, predicate: SectionPredicate): boolea
   }
 }
 
-export function applyPredicates(rows: DataRow[], predicates: SectionPredicate[]): { indexes: number[]; filtersApplied: string[]; warnings: SectionIssue[] } {
+export function applyPredicates(
+  rows: DataRow[],
+  predicates: SectionPredicate[],
+  combinator: FilterCombinator = 'AND',
+): { indexes: number[]; filtersApplied: string[]; warnings: SectionIssue[] } {
   const warnings: SectionIssue[] = [];
   const indexes: number[] = [];
+  const usable: SectionPredicate[] = [];
+  const seenMissing = new Set<string>();
+
+  for (const predicate of predicates) {
+    const hasColumn = rows.some(row => predicate.col in row);
+    if (!hasColumn) {
+      const key = `${predicate.col}:${predicate.op}`;
+      if (!seenMissing.has(key)) {
+        warnings.push({ severity: predicate.required ? 'warn' : 'info', code: 'FILTER_COLUMN_MISSING', message: `Filter column '${predicate.col}' is missing; filter was widened.`, column: predicate.col });
+        seenMissing.add(key);
+      }
+      continue;
+    }
+    usable.push(predicate);
+  }
+
+  if (!usable.length) {
+    return { indexes: rows.map((_, index) => index), filtersApplied: predicates.map(predicateToText), warnings };
+  }
+
   for (let index = 0; index < rows.length; index++) {
     const row = rows[index];
-    let keep = true;
-    for (const predicate of predicates) {
-      if (!(predicate.col in row)) {
-        warnings.push({ severity: predicate.required ? 'warn' : 'info', code: 'FILTER_COLUMN_MISSING', message: `Filter column '${predicate.col}' is missing; filter was widened.`, column: predicate.col });
-        continue;
-      }
-      if (!testPredicate(row, predicate)) {
-        keep = false;
-        break;
-      }
+    let keep = testPredicate(row, usable[0]);
+    for (let predicateIndex = 1; predicateIndex < usable.length; predicateIndex += 1) {
+      const connector = usable[predicateIndex - 1]?.connector || combinator;
+      const next = testPredicate(row, usable[predicateIndex]);
+      keep = connector === 'OR' ? keep || next : keep && next;
     }
     if (keep) indexes.push(index);
   }

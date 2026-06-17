@@ -45,7 +45,8 @@ function keyText(key: Record<string, unknown>): string {
 
 export function executeSectionRequest(request: ReportSectionRequest, rows: DataRow[], cacheHit = false): SectionExecutionResult {
   const warnings: SectionIssue[] = [];
-  const filtered = applyPredicates(rows, request.scope.filters || []);
+  const filterCombinator = request.scope.filterCombinator || 'AND';
+  const filtered = applyPredicates(rows, request.scope.filters || [], filterCombinator);
   warnings.push(...filtered.warnings);
   const groupBy = request.analysis.groupBy?.length ? request.analysis.groupBy : request.scope.columns.dimensions;
   const measure = request.scope.columns.measures[0] || null;
@@ -106,11 +107,12 @@ export function executeSectionRequest(request: ReportSectionRequest, rows: DataR
     rows: finalRows,
     measure,
     groupBy,
+    filterCombinator,
     filtersApplied: filtered.filtersApplied,
     rowsScanned: rows.length,
     rowsAfterFilter: filtered.indexes.length,
     cacheHit,
-    sliceSignature: stableHash({ datasetId: request.datasetId, filters: request.scope.filters, include: request.scope.columns.include }),
+    sliceSignature: stableHash({ datasetId: request.datasetId, filters: request.scope.filters, filterCombinator, include: request.scope.columns.include }),
     warnings,
     marginOfError,
   };

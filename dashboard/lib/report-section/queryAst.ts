@@ -14,6 +14,7 @@ export function buildQueryAst(request: ReportSectionRequest): QueryAst {
     datasetId: request.datasetId,
     select,
     where: request.scope.filters || [],
+    filterCombinator: request.scope.filterCombinator || 'AND',
     groupBy,
     orderBy: request.analysis.sort ? { expr: request.analysis.sort.by, direction: request.analysis.sort.order } : null,
     limit: request.analysis.limit ?? null,

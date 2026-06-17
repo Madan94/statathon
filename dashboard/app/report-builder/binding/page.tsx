@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Info, Loader2, Lock, Plus, Share2, Sparkles, Upload as UploadIcon, X, type LucideIcon } from 'lucide-react';
 
 import PageHeader from '@/components/layout/PageHeader';
@@ -9,8 +10,6 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
-import { BindingStepper } from '@/components/report-builder/binding/BindingStepper';
-import { DatasetProfileCard } from '@/components/report-builder/binding/DatasetProfileCard';
 import { DatasetWeightTabs } from '@/components/report-builder/binding/DatasetWeightTabs';
 import { SectionLoopWorkspace } from '@/components/report-builder/binding/SectionLoopWorkspace';
 import { defaultSectionConfig, type ReportSectionConfig } from '@/lib/reportSection';
@@ -40,12 +39,9 @@ import {
 type Decision = EntityDecision;
 type WorkbenchMode = 'overview' | 'dataset' | 'pathway' | 'filters' | 'entities' | 'questions' | 'issues' | 'handoff';
 type TemplatePath = 'pre_existing' | 'loop';
+type WorkflowMode = 'legacy_binding' | 'guided_query';
 
-const STEPS = [
-  { id: 'upload', label: 'Upload dataset', hint: 'CSV + template' },
-  { id: 'confirm', label: 'Confirm bindings', hint: 'Review every match' },
-  { id: 'coverage', label: 'Coverage gate', hint: 'Ready to generate' },
-];
+const PROFILE_TEMPLATE_ID = 'tpl_plfs_annual_v1';
 
 const EXECUTION_READY_META: Record<ExecutionReadyStatus, { label: string; badge: 'success' | 'warning' | 'danger'; wrap: string; icon: LucideIcon }> = {
   READY: {
@@ -158,6 +154,7 @@ function defaultComponentPayload(node: ReviewedPlanNode | undefined, componentTy
 }
 
 export default function BindingWorkflowPage() {
+  const router = useRouter();
   const [step, setStep] = useState(0);
 
   // step 0
@@ -165,7 +162,6 @@ export default function BindingWorkflowPage() {
   const [templatePackages, setTemplatePackages] = useState<BindingTemplatePackage[]>([]);
   const [componentDefinitions, setComponentDefinitions] = useState<ComponentDefinition[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [datasetFile, setDatasetFile] = useState<File | null>(null);
   const [blueprintFile, setBlueprintFile] = useState<File | null>(null);
   const [starting, setStarting] = useState(false);
@@ -175,9 +171,10 @@ export default function BindingWorkflowPage() {
   const [workspace, setWorkspace] = useState<BindingWorkspace | null>(null);
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [workbenchMode, setWorkbenchMode] = useState<WorkbenchMode>('overview');
-  // Template pathway: chosen after dataset profiling. Until a path is picked the
-  // downstream tabs (mapping / question plan / issues / handoff) stay hidden.
+  // Workflow route: chosen after dataset profiling. Standard review then asks
+  // for a template; guided query goes straight to report.section.v1 drafting.
   const [templatePath, setTemplatePath] = useState<TemplatePath | null>(null);
+  const [workflowMode, setWorkflowMode] = useState<WorkflowMode | null>(null);
   // Whether the officer has entered the dedicated path workbench (a separate
   // screen with ONLY the path's tabs). false = setup screen (overview/profile/path).
   const [enteredPath, setEnteredPath] = useState(false);
@@ -250,7 +247,6 @@ export default function BindingWorkflowPage() {
     };
   }, [session?.column_ownership]);
   const decidedCount = Object.keys(decisions).length;
-  const allDecided = proposals.length > 0 && decidedCount >= proposals.length;
 
   const remaining = useMemo(
     () => proposals.filter((p) => !decisions[p.entityId]).length,
@@ -346,19 +342,48 @@ export default function BindingWorkflowPage() {
     setStarting(true);
     setError(null);
     try {
-      const res = await bindingPhaseApi.start(datasetFile, templateId.trim() || 'tpl_plfs_annual_v1', blueprintFile ?? undefined);
+      const res = await bindingPhaseApi.start(datasetFile, PROFILE_TEMPLATE_ID);
       setSession(res);
       setDecisions(decisionsFromConfirmations(res.confirmations));
       setResult(null);
       setExecutionReady(null);
       setTemplatePath(null);
+      setWorkflowMode(null);
       setEnteredPath(false);
       setSectionConfig(defaultSectionConfig());
-      setWorkbenchMode('overview');
+      setWorkbenchMode('dataset');
       await loadWorkspace(res.template_id, res.signature);
       setStep(1);
     } catch (err) {
-      setError(errMessage(err, 'Could not start the binding session'));
+      setError(errMessage(err, 'Could not profile this dataset'));
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const startLegacyBinding = async () => {
+    if (!datasetFile) {
+      setError('Upload a CSV before starting standard template review.');
+      return;
+    }
+    const chosenTemplateId = templateId.trim() || PROFILE_TEMPLATE_ID;
+    setStarting(true);
+    setError(null);
+    try {
+      const res = await bindingPhaseApi.start(datasetFile, chosenTemplateId, blueprintFile ?? undefined);
+      setSession(res);
+      setDecisions(decisionsFromConfirmations(res.confirmations));
+      setResult(null);
+      setExecutionReady(null);
+      setTemplatePath('pre_existing');
+      setWorkflowMode('legacy_binding');
+      setEnteredPath(true);
+      setSectionConfig(defaultSectionConfig());
+      setWorkbenchMode('entities');
+      await loadWorkspace(res.template_id, res.signature);
+      setStep(2);
+    } catch (err) {
+      setError(errMessage(err, 'Could not start standard template review with that template'));
     } finally {
       setStarting(false);
     }
@@ -867,6 +892,7 @@ export default function BindingWorkflowPage() {
     setExecutionReady(null);
     setWorkspace(null);
     setTemplatePath(null);
+    setWorkflowMode(null);
     setEnteredPath(false);
     setSectionConfig(defaultSectionConfig());
     setWorkbenchMode('overview');
@@ -959,19 +985,20 @@ export default function BindingWorkflowPage() {
     ? `Bundle ${executionReady.status}: ${executionReady.plans.length} plans, ${executionReady.blocked_questions.length} blocked`
     : phaseHint('handoff', 'Not prepared');
 
-  // Two separate screens: the SETUP screen (overview / dataset profile /
-  // template path) and the dedicated PATH screen (only the chosen path's tabs).
-  // The nav renders one set or the other — never both — so picking a template
-  // card opens a clean page with just its phases.
+  // Two separate screens: the SETUP screen (dataset profile / choose flow) and
+  // the dedicated PATH screen (only the chosen standard-review tabs).
   type WorkbenchModeItem = { id: WorkbenchMode; label: string; hint: string; status: 'Ready' | 'Review' | 'Blocked' | 'Open' };
   const setupWorkbenchModes: WorkbenchModeItem[] = [
-    { id: 'overview', label: 'Overview', hint: phaseHint('overview', 'Session health'), status: phaseStatus('overview', 'Open') },
     { id: 'dataset', label: 'Dataset profile', hint: phaseHint('dataset', `${session?.dataset_ast.columns.length ?? 0} columns profiled`), status: 'Ready' },
     {
       id: 'pathway',
-      label: 'Template path',
-      hint: templatePath ? (templatePath === 'loop' ? 'Loop template · weighted' : 'Pre-existing template') : 'Choose a template',
-      status: templatePath ? 'Ready' : 'Review',
+      label: 'Choose flow',
+      hint: workflowMode
+        ? (workflowMode === 'guided_query' ? 'Guided query contract' : 'Standard template review')
+        : templatePath
+          ? 'Choose workflow'
+          : 'Standard review or guided query',
+      status: workflowMode ? 'Ready' : 'Review',
     },
   ];
   const loopWorkbenchModes: WorkbenchModeItem[] = [
@@ -1201,55 +1228,80 @@ export default function BindingWorkflowPage() {
     if (!session) return null;
 
     if (workbenchMode === 'pathway') {
-      const choosePath = (path: TemplatePath) => {
-        setTemplatePath(path);
-        setEnteredPath(true);
-        setWorkbenchMode(path === 'loop' ? 'filters' : 'entities');
+      const chooseWorkflowMode = (mode: WorkflowMode) => {
+        setWorkflowMode(mode);
+        if (mode === 'guided_query') {
+          router.push(`/report-builder/query-flow/${encodeURIComponent(session.template_id)}/${encodeURIComponent(session.signature)}?workflowMode=guided_query&returnTo=binding`);
+          return;
+        }
+        setTemplatePath('pre_existing');
       };
-      const PATH_PHASES: Record<TemplatePath, string[]> = {
-        pre_existing: ['Dataset mapping', 'Question plan', 'Issues', 'S3.5 handoff'],
-        loop: ['Query indicator filters', 'Dataset mapping', 'Question plan', 'Issues', 'S3.5 handoff'],
-      };
-      const cards: Array<{
-        id: TemplatePath;
+      const workflowCards: Array<{
+        id: WorkflowMode;
         title: string;
         tagline: string;
         description: string;
+        phases: string[];
+        shortPhases: string[];
         icon: LucideIcon;
         iconWrap: string;
+        cta: string;
         badge?: string;
       }> = [
         {
-          id: 'pre_existing',
-          title: 'Pre-existing template',
-          tagline: 'Curated MoSPI template',
-          description: 'Bind your dataset to a ready-made publication template and run the standard review pipeline.',
-          icon: Lock,
-          iconWrap: 'bg-primary/10 text-primary',
+          id: 'legacy_binding',
+          title: 'Standard Template Review',
+          tagline: 'Choose template · official review',
+          description: 'Pick a publication template, map dataset columns to template entities, review the question plan, resolve issues, and prepare the S3.5 handoff.',
+          phases: ['Choose template', 'Column → entity mapping', 'Question mapping', 'Issues', 'S3.5 handoff'],
+          shortPhases: ['template', 'mapping', 'questions', 'issues', 'handoff'],
+          icon: CheckCircle2,
+          iconWrap: 'bg-success/10 text-success',
+          cta: 'Choose template for review',
         },
         {
-          id: 'loop',
-          title: 'Loop template with weight',
-          tagline: 'Iterated · survey-weighted',
-          description: 'Iterate indicators with survey weighting, and pre-filter rows with a query indicator filter layer before the standard review.',
-          icon: Share2,
-          iconWrap: 'bg-accent/10 text-accent',
-          badge: 'weighted',
+          id: 'guided_query',
+          title: 'Guided Query Contract',
+          tagline: 'Filters JSON · description · components',
+          description: 'Turn filters into report.section.v1 JSON, get description and component recommendations, preview SQL/execution, and send blocks to canvas.',
+          phases: ['Filter JSON', 'Description suggestions', 'Component recommendations', 'SQL preview', 'Execute', 'Canvas draft'],
+          shortPhases: ['json', 'description', 'components', 'execute', 'canvas'],
+          icon: Sparkles,
+          iconWrap: 'bg-primary/10 text-primary',
+          cta: 'Build query contract',
+          badge: 'new',
         },
       ];
       return (
         <div className="space-y-5">
           <div className="rounded-2xl border border-border bg-surface-card p-5 shadow-sm">
-            <h3 className="text-lg font-semibold text-text">Choose a template path</h3>
+            <h3 className="text-lg font-semibold text-text">Choose how to proceed with this dataset</h3>
             <p className="mt-1 text-sm text-text-muted">
-              Profiling is done for <span className="font-medium text-text">{session.dataset_id}.csv</span>. Pick how this
-              report should be built. The downstream review tabs unlock once you choose.
+              Profiling is done for <span className="font-medium text-text">{session.dataset_id}.csv</span>. Choose the standard template review path or build a focused section through guided query JSON.
             </p>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {cards.map((card) => {
+
+          {workflowMode === 'legacy_binding' && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-text">Standard Template Review</p>
+                <p className="mt-0.5 text-xs text-text-muted">Select the template only now. The CSV has already been profiled.</p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => { setTemplatePath(null); setWorkflowMode(null); }}
+              >
+                <ArrowLeft className="h-4 w-4" /> Change flow
+              </Button>
+            </div>
+          )}
+
+          {!workflowMode && <div className="grid gap-4 md:grid-cols-2">
+            {workflowCards.map((card) => {
               const Icon = card.icon;
-              const active = templatePath === card.id;
+              const active = workflowMode === card.id;
               return (
                 <div
                   key={card.id}
@@ -1269,28 +1321,65 @@ export default function BindingWorkflowPage() {
                     </div>
                   </div>
                   <p className="mt-3 text-sm text-text-muted">{card.description}</p>
-                  <div className="mt-4 space-y-1.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Runs these phases</p>
-                    {PATH_PHASES[card.id].map((phase) => (
-                      <div key={phase} className="flex items-center gap-2 text-xs text-text">
-                        <CheckCircle2 className={`h-3.5 w-3.5 ${active ? 'text-primary' : 'text-text-muted'}`} aria-hidden />
-                        {phase}
-                      </div>
-                    ))}
+                  <div className="mt-4 rounded-xl border border-border bg-surface px-3 py-3">
+                    <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-text-muted">Flow</p>
+                    <div className="flex items-start gap-1 overflow-x-auto pb-1">
+                      {card.shortPhases.map((phase, index) => (
+                        <div key={phase} className="flex min-w-[4.8rem] flex-1 items-start gap-1">
+                          <div className="flex flex-col items-center gap-1 text-center">
+                            <span className={`flex h-7 w-7 items-center justify-center rounded-full border text-[10px] font-semibold ${card.id === 'legacy_binding' ? 'border-success/40 bg-success/10 text-success' : 'border-primary/40 bg-primary/10 text-primary'}`}>
+                              {index + 1}
+                            </span>
+                            <span className="max-w-[4.8rem] text-[9px] font-medium uppercase leading-tight text-text-muted">{phase}</span>
+                          </div>
+                          {index < card.shortPhases.length - 1 && (
+                            <span className={`mt-3 h-0.5 min-w-4 flex-1 rounded-full ${card.id === 'legacy_binding' ? 'bg-success/35' : 'bg-primary/35'}`} aria-hidden />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {card.phases.map((phase) => (
+                        <span key={phase} className="rounded-full border border-border bg-surface-card px-2 py-0.5 text-[10px] text-text-muted">
+                          {phase}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                   <div className="mt-5 flex-1" />
                   <Button
                     variant={active ? 'primary' : 'outline'}
                     className="mt-2 w-full"
-                    onClick={() => choosePath(card.id)}
+                    onClick={() => chooseWorkflowMode(card.id)}
                   >
-                    {active ? 'Continue' : `Use ${card.id === 'loop' ? 'loop template' : 'pre-existing template'}`}
+                    {active ? 'Continue' : card.cta}
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </div>
               );
             })}
-          </div>
+          </div>}
+
+          {workflowMode === 'legacy_binding' && (
+            <div className="space-y-4 rounded-2xl border border-border bg-surface-card p-5 shadow-sm">
+              <div>
+                <h4 className="text-base font-semibold text-text">Select publication template</h4>
+                <p className="mt-1 text-sm text-text-muted">This template will drive column-to-entity mapping, question mapping, issues, and the S3.5 handoff.</p>
+              </div>
+              <TemplatePackagePicker
+                packages={templatePackages}
+                selectedTemplateId={templateId}
+                loading={templatesLoading}
+                onSelect={setTemplateId}
+              />
+              <div className="flex justify-end">
+                <Button type="button" onClick={startLegacyBinding} disabled={starting || !templateId.trim()}>
+                  {starting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                  Start standard review
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -1298,6 +1387,18 @@ export default function BindingWorkflowPage() {
     if (workbenchMode === 'filters') {
       return (
         <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-text">Need the full query contract flow?</p>
+              <p className="mt-0.5 text-xs text-text-muted">Open the guided workflow for description, JSON readiness, component review, and canvas handoff.</p>
+            </div>
+            <Link
+              href={`/report-builder/query-flow/${encodeURIComponent(session.template_id)}/${encodeURIComponent(session.signature)}?templatePath=${templatePath || 'loop'}&workflowMode=guided_query&returnTo=binding`}
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-card px-3 py-1.5 text-sm font-medium text-text hover:bg-accent-muted/50"
+            >
+              Open full Query Flow <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
           <SectionLoopWorkspace
             file={datasetFile}
             columns={session.dataset_ast.columns}
@@ -1309,7 +1410,7 @@ export default function BindingWorkflowPage() {
           />
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
             <Button variant="outline" size="sm" onClick={() => goToMode('pathway')}>
-              <ArrowLeft className="h-4 w-4" /> Back to template path
+              <ArrowLeft className="h-4 w-4" /> Back to flow choice
             </Button>
             <Button size="sm" onClick={() => setWorkbenchMode('entities')}>
               Continue to dataset mapping <ArrowRight className="h-4 w-4" />
@@ -1746,12 +1847,12 @@ export default function BindingWorkflowPage() {
               </h4>
               <p className="mt-1 text-xs text-text-muted">
                 {templatePath
-                  ? `Selected: ${templatePath === 'loop' ? 'Loop template with weighting' : 'Pre-existing template'}. You can review or switch on the next step.`
-                  : 'Pick a template path to unlock dataset mapping, the question plan, issues and the S3.5 handoff.'}
+                  ? 'Standard review selected. Continue to choose the publication template.'
+                  : 'Choose Standard Template Review or Guided Query Contract for this dataset.'}
               </p>
             </div>
             <Button onClick={() => goToMode('pathway')} className="shrink-0">
-              {templatePath ? 'Review template path' : 'Continue to next phase'} <ArrowRight className="h-4 w-4" />
+              {workflowMode ? 'Review selected flow' : 'Choose flow'} <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -1999,8 +2100,8 @@ export default function BindingWorkflowPage() {
             </div>
           </Card>
           <Card title="Next action" description="Recommended step from current session state.">
-            {!templatePath ? (
-              <Button className="w-full" onClick={() => goToMode('pathway')}>Choose template path</Button>
+            {!workflowMode ? (
+              <Button className="w-full" onClick={() => goToMode('pathway')}>Choose flow</Button>
             ) : remaining > 0 ? (
               <Button className="w-full" onClick={() => goToMode('entities')}>Review {remaining} entities</Button>
             ) : !currentReviewedPlan ? (
@@ -2025,7 +2126,7 @@ export default function BindingWorkflowPage() {
               <button
                 type="button"
                 onClick={() => goToMode('pathway')}
-                title="Back to template path"
+                title="Back to flow choice"
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border text-text-muted transition-colors hover:border-primary hover:text-primary"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -2036,7 +2137,7 @@ export default function BindingWorkflowPage() {
                 {packageForWorkbench?.name ?? session.template_id}
                 {enteredPath && templatePath && (
                   <Badge variant={templatePath === 'loop' ? 'default' : 'muted'} className="text-[9px]">
-                    {templatePath === 'loop' ? 'Loop template · weighted' : 'Pre-existing template'}
+                    Standard template review
                   </Badge>
                 )}
               </h2>
@@ -2061,7 +2162,7 @@ export default function BindingWorkflowPage() {
             <Button variant="outline" size="sm" onClick={resetAll}><ArrowLeft className="h-4 w-4" /> Start over</Button>
             {!enteredPath ? (
               <Button size="sm" onClick={() => goToMode('pathway')}>
-                <ArrowRight className="h-4 w-4" /> {templatePath ? 'Open template path' : 'Choose template path'}
+                <ArrowRight className="h-4 w-4" /> {workflowMode ? 'Open flow' : 'Choose flow'}
               </Button>
             ) : !executionReady ? (
               <Button size="sm" onClick={onFinalize} disabled={finalizing || !allColumnsDecided}>
@@ -2095,53 +2196,21 @@ export default function BindingWorkflowPage() {
         }
       />
 
-      <div className="mx-auto max-w-3xl">
-        <BindingStepper steps={STEPS} current={step} className="mb-8" />
-      </div>
-
       <div className="space-y-6">
         {error && <Alert variant="error">{error}</Alert>}
 
         {/* ───────────────────────── Step 0 — upload ───────────────────────── */}
         {step === 0 && (
-          <div className="mx-auto max-w-6xl space-y-5">
-            <section className="rounded-2xl border border-border bg-surface-card p-4 shadow-sm sm:p-6">
-              <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">1. Template package</p>
-                  <h2 className="mt-1 text-xl font-semibold text-text">Pick the binder brain first</h2>
-                  <p className="mt-1 max-w-3xl text-sm text-text-muted">
-                    Search templates by domain, readiness, richness, and question coverage. The selected package controls entity binding, ReviewedPlan generation, slot lineage, and S3.5 handoff quality.
-                  </p>
-                </div>
-                {selectedPackage && (
-                  <Badge variant={selectedPackage.status === 'VALID' ? 'success' : 'warning'} className="shrink-0">
-                    {selectedPackage.status}
-                  </Badge>
-                )}
-              </div>
-
-              <TemplatePackagePicker
-                packages={templatePackages}
-                selectedTemplateId={templateId}
-                loading={templatesLoading}
-                onSelect={setTemplateId}
-              />
-            </section>
-
+          <div className="mx-auto max-w-4xl space-y-5">
             <form onSubmit={onStart} className="space-y-5">
               <section className="rounded-2xl border border-border bg-surface-card p-4 shadow-sm sm:p-6">
                 <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-primary">2. Dataset upload</p>
-                    <h2 className="mt-1 text-xl font-semibold text-text">Create the binding session</h2>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-primary">1. Dataset upload</p>
+                    <h2 className="mt-1 text-xl font-semibold text-text">Upload CSV dataset</h2>
                     <p className="mt-1 max-w-3xl text-sm text-text-muted">
-                      Upload a CSV after selecting the template. The binder profiles columns, infers roles, tracks ownership, and opens the review workspace.
+                      Start with the data only. We will profile columns first, then ask whether you want Standard Template Review or Guided Query Contract.
                     </p>
-                  </div>
-                  <div className="rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-xs">
-                    <p className="font-semibold uppercase tracking-wide text-primary">Selected ID</p>
-                    <p className="mt-1 max-w-[18rem] break-words font-mono text-text">{templateId || 'tpl_plfs_annual_v1'}</p>
                   </div>
                 </div>
 
@@ -2155,7 +2224,7 @@ export default function BindingWorkflowPage() {
                       {datasetFile ? datasetFile.name : 'Choose CSV dataset'}
                     </p>
                     <p className="mx-auto mt-2 max-w-2xl text-sm text-text-muted">
-                      Measures, dimensions, time columns, samples, column ownership, conflicts, and binder proposals are computed from this file.
+                      Measures, dimensions, time columns, samples, and column quality are profiled from this file.
                     </p>
                   </label>
                   <input
@@ -2165,60 +2234,14 @@ export default function BindingWorkflowPage() {
                     className="hidden"
                     onChange={(e) => setDatasetFile(e.target.files?.[0] ?? null)}
                   />
-
-                  <section className="rounded-xl border border-border bg-surface p-4">
-                    <button
-                      type="button"
-                      onClick={() => setAdvancedOpen((v) => !v)}
-                      className="flex w-full items-center justify-between gap-3 text-left text-sm font-semibold text-text"
-                    >
-                      <span>Advanced template controls</span>
-                      <span className="shrink-0 text-xs font-medium text-primary">{advancedOpen ? 'Hide' : 'Show'}</span>
-                    </button>
-                    {advancedOpen && (
-                      <div className="mt-4 grid gap-3 md:grid-cols-2">
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-text-muted">Manual template id</label>
-                          <input
-                            type="text"
-                            value={templateId}
-                            onChange={(e) => setTemplateId(e.target.value)}
-                            placeholder="tpl_plfs_annual_v1"
-                            className="w-full rounded-lg border border-border bg-surface-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
-                          />
-                          <p className="mt-1 text-xs text-text-muted">Use only for a known built-in or DB template id.</p>
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="binding-blueprint"
-                            className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-surface-card px-3 py-2 text-sm transition-colors hover:border-accent/50"
-                          >
-                            <span className="min-w-0 truncate text-text-muted">
-                              {blueprintFile ? blueprintFile.name : 'Override blueprint.json'}
-                            </span>
-                            <span className="shrink-0 text-xs font-medium text-primary">Browse</span>
-                          </label>
-                          <input
-                            id="binding-blueprint"
-                            type="file"
-                            accept="application/json,.json"
-                            className="hidden"
-                            onChange={(e) => setBlueprintFile(e.target.files?.[0] ?? null)}
-                          />
-                          <p className="mt-1 text-xs text-text-muted">Optional override for debugging or officer-supplied packages.</p>
-                        </div>
-                      </div>
-                    )}
-                  </section>
-
-                  <Button type="submit" disabled={starting || !datasetFile || !templateId.trim()} className="w-full py-3">
+                  <Button type="submit" disabled={starting || !datasetFile} className="w-full py-3">
                     {starting ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin" /> Creating binding session
+                        <Loader2 className="h-4 w-4 animate-spin" /> Profiling dataset
                       </>
                     ) : (
                       <>
-                        Create binding session <ArrowRight className="h-4 w-4" />
+                        Profile dataset <ArrowRight className="h-4 w-4" />
                       </>
                     )}
                   </Button>

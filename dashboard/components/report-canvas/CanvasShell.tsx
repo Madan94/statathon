@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { BarChart3, FileText, Gauge, Layers, Table2, Type, X } from 'lucide-react';
 import { generatePhaseApi, authApi, type CanvasDraftSummary } from '@/lib/api';
 import type { GeneratedSectionBlock, ReportSectionRequest } from '@/lib/report-section';
 import { useCanvasState } from './engine/useCanvasState';
@@ -27,6 +28,9 @@ import { CanvasDraftPicker } from './panels/CanvasDraftPicker';
 import { TypographyPanel } from './panels/TypographyPanel';
 import { CommandPalette, type PaletteCommand } from './panels/CommandPalette';
 import { SectionWorkflowModal } from './section-workflow/SectionWorkflowModal';
+import { canvasHandoffStorageKey, type ReportCanvasHandoffBundle } from '@/lib/report-section/canvasHandoff';
+
+type HandoffPlacementMode = 'append_end' | 'append_current_chapter' | 'new_chapter' | 'new_section';
 
 /* ═══════════════════════════════════════════════════════════════════
    CanvasShell — main layout orchestrator.
@@ -56,7 +60,12 @@ export function CanvasShell({ templateId, signature }: Props) {
   const [showTypography, setShowTypography] = useState(false);
   const [showSectionWorkflow, setShowSectionWorkflow] = useState(false);
   const [showDraftPicker, setShowDraftPicker] = useState(true);
+  const [draftPickerDismissed, setDraftPickerDismissed] = useState(false);
   const [activeDraft, setActiveDraft] = useState<CanvasDraftSummary | null>(null);
+  const [pendingHandoff, setPendingHandoff] = useState<ReportCanvasHandoffBundle | null>(null);
+  const [handoffPlacement, setHandoffPlacement] = useState<HandoffPlacementMode>('append_end');
+  const [handoffChapterTitle, setHandoffChapterTitle] = useState('Generated Analysis');
+  const [handoffSectionTitle, setHandoffSectionTitle] = useState('Generated Section');
   const [restoredDraftKey, setRestoredDraftKey] = useState('');
   const [restoredCanvasOwnedCount, setRestoredCanvasOwnedCount] = useState(0);
   const [viewMode, setViewMode] = useState<'paged' | 'scroll'>('scroll');
@@ -489,6 +498,73 @@ export function CanvasShell({ templateId, signature }: Props) {
     requestAnimationFrame(() => state.repack());
   }, [currentPage, reportTitle, setBlocks, setOrder, setSelectedBlockId, state]);
 
+  const applyHandoffToCanvas = useCallback(() => {
+    if (!pendingHandoff) return;
+    for (const section of pendingHandoff.sections) {
+      const request = { ...section.request } as ReportSectionRequest;
+      const chapter = request.target.chapter || { title: reportTitle, create: true };
+      const sectionRef = request.target.section || { title: request.description.text || 'Generated Section', create: true };
+      if (handoffPlacement === 'append_end') {
+        request.target = { ...request.target, chapter: { ...chapter, title: chapter.title || reportTitle, create: chapter.create }, section: { ...sectionRef, title: sectionRef.title || 'Generated Section', create: sectionRef.create }, insertAfterBlockId: order[order.length - 1] || null };
+      } else if (handoffPlacement === 'append_current_chapter') {
+        const currentChapter = docModel.chapterByPage[currentPage] || chapter.title || reportTitle;
+        request.target = { ...request.target, chapter: { ...chapter, title: currentChapter, create: false }, section: { ...sectionRef, title: sectionRef.title || 'Generated Section', create: true }, insertAfterBlockId: null };
+      } else if (handoffPlacement === 'new_chapter') {
+        request.target = { ...request.target, chapter: { ...chapter, title: handoffChapterTitle.trim() || 'Generated Analysis', create: true }, section: { ...sectionRef, title: handoffSectionTitle.trim() || 'Generated Section', create: true }, insertAfterBlockId: null };
+      } else if (handoffPlacement === 'new_section') {
+        const currentChapter = docModel.chapterByPage[currentPage] || chapter.title || reportTitle;
+        request.target = { ...request.target, chapter: { ...chapter, title: currentChapter, create: false }, section: { ...sectionRef, title: handoffSectionTitle.trim() || 'Generated Section', create: true }, insertAfterBlockId: null };
+      }
+      appendGeneratedSectionBlocks(section.blocks, request);
+    }
+    setPendingHandoff(null);
+    setShowDraftPicker(false);
+  }, [appendGeneratedSectionBlocks, currentPage, docModel.chapterByPage, handoffChapterTitle, handoffPlacement, handoffSectionTitle, order, pendingHandoff, reportTitle]);
+
+  const cancelHandoff = useCallback(() => {
+    setPendingHandoff(null);
+    sessionStorage.removeItem(canvasHandoffStorageKey(templateId, signature));
+  }, [signature, templateId]);
+
+  const handoffSummary = useMemo(() => {
+    const sections = pendingHandoff?.sections || [];
+    const blockCount = sections.reduce((total, section) => total + section.blocks.length, 0);
+    return { sections, blockCount };
+  }, [pendingHandoff]);
+
+  const blockIconOf = (kind: string) => {
+    if (kind === 'table') return Table2;
+    if (kind === 'chart') return BarChart3;
+    if (kind === 'metric') return Gauge;
+    if (kind === 'heading') return Layers;
+    if (kind === 'narrative' || kind === 'key_finding') return Type;
+    return FileText;
+  };
+
+  useEffect(() => {
+    if (!activeDraft) return;
+    if (restoredDraftKey !== activeDraftKey) return;
+    const key = canvasHandoffStorageKey(templateId, signature);
+    let bundle: ReportCanvasHandoffBundle | null = null;
+    try {
+      const raw = sessionStorage.getItem(key);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as ReportCanvasHandoffBundle;
+      if (parsed.version !== 'report.canvas.handoff.v1' || parsed.templateId !== templateId || parsed.signature !== signature) return;
+      bundle = parsed;
+      sessionStorage.removeItem(key);
+    } catch {
+      sessionStorage.removeItem(key);
+      return;
+    }
+    if (!bundle) return;
+    const firstRequest = bundle.sections[0]?.request;
+    setHandoffChapterTitle(firstRequest?.target.chapter?.title || 'Generated Analysis');
+    setHandoffSectionTitle(firstRequest?.target.section?.title || firstRequest?.description.text || 'Generated Section');
+    setPendingHandoff(bundle);
+    setShowDraftPicker(false);
+  }, [activeDraft, activeDraftKey, restoredDraftKey, signature, templateId]);
+
   // Global keyboard shortcuts (U5) — undo/redo, palette, page nav, focus,
   // delete, duplicate, cheatsheet. Typing in a field is never hijacked.
   useEffect(() => {
@@ -839,13 +915,157 @@ export function CanvasShell({ templateId, signature }: Props) {
           onAppendBlocks={appendGeneratedSectionBlocks}
         />
       )}
+      {pendingHandoff && activeDraft && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+          <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-blue-600">Query Flow handoff</p>
+                <h2 className="mt-1 text-base font-semibold text-slate-900">Place generated section in the report hierarchy</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Draft: <span className="font-medium text-slate-700">{activeDraft.name}</span> · {handoffSummary.sections.length} section(s) · {handoffSummary.blockCount} component block(s)
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={cancelHandoff}
+                className="rounded-lg border border-slate-200 bg-white p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                aria-label="Close handoff placement"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="grid min-h-0 flex-1 gap-0 overflow-hidden lg:grid-cols-[20rem_minmax(0,1fr)]">
+              <aside className="space-y-3 overflow-auto border-r border-slate-200 bg-slate-50/70 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Placement</p>
+                {([
+                  ['append_end', 'Append at report end', 'Simplest: insert after the last current block.'],
+                  ['append_current_chapter', 'Append inside current chapter', `Use ${docModel.chapterByPage[currentPage] || 'current chapter'} as parent.`],
+                  ['new_chapter', 'Create new chapter', 'Create a fresh chapter and section.'],
+                  ['new_section', 'Create new section here', 'Add a new section inside the current chapter.'],
+                ] as const).map(([mode, title, help]) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setHandoffPlacement(mode)}
+                    className={`w-full rounded-xl border px-3 py-3 text-left transition-colors ${handoffPlacement === mode ? 'border-blue-300 bg-blue-50 text-blue-700 shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-white'}`}
+                  >
+                    <p className="text-xs font-semibold">{title}</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{help}</p>
+                  </button>
+                ))}
+
+                {(handoffPlacement === 'new_chapter' || handoffPlacement === 'new_section') && (
+                  <div className="space-y-2 rounded-xl border border-slate-200 bg-white p-3">
+                    {handoffPlacement === 'new_chapter' && (
+                      <label className="block">
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Chapter title</span>
+                        <input
+                          value={handoffChapterTitle}
+                          onChange={(event) => setHandoffChapterTitle(event.target.value)}
+                          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-blue-400"
+                        />
+                      </label>
+                    )}
+                    <label className="block">
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Section title</span>
+                      <input
+                        value={handoffSectionTitle}
+                        onChange={(event) => setHandoffSectionTitle(event.target.value)}
+                        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs outline-none focus:border-blue-400"
+                      />
+                    </label>
+                  </div>
+                )}
+
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-800">
+                  Nothing is inserted until you click <span className="font-semibold">Place in canvas</span>. Close cancels this handoff test.
+                </div>
+              </aside>
+
+              <main className="min-h-0 overflow-auto p-5">
+                <div className="mb-4 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Destination</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-slate-800">{handoffPlacement.replace(/_/g, ' ')}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Current page</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-800">Page {currentPage + 1}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Parent chapter</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-slate-800">{docModel.chapterByPage[currentPage] || handoffChapterTitle || reportTitle}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {handoffSummary.sections.map((section) => (
+                    <div key={section.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Generated section</p>
+                          <h3 className="mt-1 text-sm font-semibold text-slate-900">{section.request.target.section?.title || section.request.description.text || 'Generated Section'}</h3>
+                          <p className="mt-1 text-xs text-slate-500">{section.meta?.rowsAfterFilter?.toLocaleString('en-IN') || 'Computed'} rows after filter · {section.blocks.length} blocks</p>
+                        </div>
+                        <span className="rounded-full bg-blue-50 px-2 py-1 text-[10px] font-semibold uppercase text-blue-600">ready</span>
+                      </div>
+
+                      <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                        {section.blocks.map((block) => {
+                          const Icon = blockIconOf(block.kind);
+                          const rows = Array.isArray(block.tableData?.rows) ? block.tableData.rows.length : 0;
+                          return (
+                            <div key={block.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                              <div className="flex items-start gap-2">
+                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-blue-600 ring-1 ring-slate-200">
+                                  <Icon className="h-4 w-4" />
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <p className="truncate text-xs font-semibold text-slate-900">{block.title}</p>
+                                    <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-slate-600">{block.kind}</span>
+                                  </div>
+                                  {block.kind === 'narrative' || block.kind === 'key_finding' || block.kind === 'source_note' ? (
+                                    <p className="mt-2 max-h-14 overflow-hidden text-[11px] leading-relaxed text-slate-600">{block.content || 'No text yet.'}</p>
+                                  ) : block.kind === 'table' ? (
+                                    <p className="mt-2 text-[11px] text-slate-600">Table with {rows} row groups · measure {String(block.tableData?.measure || 'value')}</p>
+                                  ) : block.kind === 'chart' ? (
+                                    <p className="mt-2 text-[11px] text-slate-600">{String(block.tableData?.chartType || 'bar')} chart · {rows} marks</p>
+                                  ) : block.kind === 'metric' ? (
+                                    <p className="mt-2 text-sm font-semibold text-blue-700">{block.metricValue || block.content || 'Metric'}</p>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </main>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4">
+              <button type="button" onClick={cancelHandoff} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100">
+                Cancel handoff
+              </button>
+              <button type="button" onClick={applyHandoffToCanvas} className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700">
+                Place in canvas
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <CanvasDraftPicker
         templateId={templateId}
         signature={signature}
-        open={showDraftPicker || !activeDraft}
+        open={showDraftPicker || (!activeDraft && !draftPickerDismissed)}
         currentDraftId={activeDraft?.draftId || null}
-        onSelect={(draft) => { setActiveDraft(draft); setShowDraftPicker(false); }}
-        onClose={() => setShowDraftPicker(false)}
+        onSelect={(draft) => { setActiveDraft(draft); setShowDraftPicker(false); setDraftPickerDismissed(false); }}
+        onClose={() => { setShowDraftPicker(false); setDraftPickerDismissed(true); if (pendingHandoff) cancelHandoff(); }}
       />
     </div>
   );

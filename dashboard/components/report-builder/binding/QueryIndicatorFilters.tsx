@@ -45,11 +45,13 @@ import {
 } from '@/lib/reportSection';
 import {
   applyPredicates,
+  buildDatasetSnapshot,
   buildSectionBlocks,
   executeWithSliceCache,
   reportSectionDatasetStore,
   validateSectionRequest,
   type DataRow,
+  type DatasetSnapshot,
   type GeneratedSectionBlock,
   type SectionExecutionResult,
   type SectionIssue,
@@ -161,6 +163,33 @@ function FieldLabel({ children }: { children: ReactNode }) {
   return <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">{children}</span>;
 }
 
+function dtypeToSnapshotType(dtype: string): DatasetSnapshot['columnTypes'][string] {
+  if (/int|float|double|decimal|number|numeric/i.test(dtype)) return 'number';
+  if (/bool/i.test(dtype)) return 'boolean';
+  if (/date|time|year|period/i.test(dtype)) return 'date';
+  if (dtype) return 'string';
+  return 'unknown';
+}
+
+function buildSchemaSnapshot(datasetId: string, columns: DatasetColumnProfile[]): DatasetSnapshot | null {
+  if (!columns.length) return null;
+  const columnTypes: DatasetSnapshot['columnTypes'] = {};
+  const distinctValues: DatasetSnapshot['distinctValues'] = {};
+  columns.forEach((column) => {
+    columnTypes[column.name] = dtypeToSnapshotType(column.dtype);
+    distinctValues[column.name] = column.sampleValues || [];
+  });
+  return {
+    datasetId,
+    rows: [],
+    columns: columns.map((column) => column.name),
+    columnTypes,
+    distinctValues,
+    signature: `schema:${datasetId}:${columns.length}`,
+    rowCount: 0,
+  };
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 
 interface QueryIndicatorFiltersProps {
@@ -173,6 +202,10 @@ interface QueryIndicatorFiltersProps {
   datasetId: string;
   onGenerate?: (blocks: GeneratedSectionBlock[], request: ReportSectionRequest, execution: SectionExecutionResult) => void;
   hidePreview?: boolean;
+  hideTarget?: boolean;
+  hideOutputComponents?: boolean;
+  hideGenerateControls?: boolean;
+  requireMeasure?: boolean;
   generateLabel?: string;
   className?: string;
 }
@@ -187,6 +220,10 @@ export function QueryIndicatorFilters({
   datasetId,
   onGenerate,
   hidePreview = false,
+  hideTarget = false,
+  hideOutputComponents = false,
+  hideGenerateControls = false,
+  requireMeasure = true,
   generateLabel = 'Generate Report Section',
   className,
 }: QueryIndicatorFiltersProps) {
@@ -223,7 +260,14 @@ export function QueryIndicatorFilters({
   }, [file]);
 
   const headerNames = useMemo(() => (parsed ? parsed.headers : columns.map((c) => c.name)), [parsed, columns]);
-  const numericSet = useMemo(() => (parsed ? detectNumericColumns(parsed) : new Set<string>()), [parsed]);
+  const numericSet = useMemo(() => {
+    if (parsed) return detectNumericColumns(parsed);
+    return new Set(
+      columns
+        .filter((c) => c.role === 'measure' || c.role === 'time' || /^int|float|double|decimal|number|numeric/i.test(c.dtype || '') || c.minValue !== undefined || c.maxValue !== undefined)
+        .map((c) => c.name),
+    );
+  }, [parsed, columns]);
   const numericHeaders = headerNames.filter((h) => numericSet.has(h));
   const roleByName = useMemo(() => {
     const map = new Map<string, DatasetColumnProfile['role']>();
@@ -242,7 +286,12 @@ export function QueryIndicatorFilters({
 
   const distinctByColumn = useMemo(() => {
     const map = new Map<string, string[]>();
-    if (!parsed) return map;
+    if (!parsed) {
+      columns.forEach((column) => {
+        map.set(column.name, (column.sampleValues || []).map(String).filter(Boolean).slice(0, MAX_DISTINCT));
+      });
+      return map;
+    }
     parsed.headers.forEach((h, idx) => {
       const seen = new Set<string>();
       for (const row of parsed.rows) {
@@ -273,9 +322,44 @@ export function QueryIndicatorFilters({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parsed]);
 
+  useEffect(() => {
+    if (parsed || config.dimensions.length || config.measures.length || !columns.length) return;
+    const numeric = new Set(columns.filter((c) => numericSet.has(c.name)).map((c) => c.name));
+    const weightCol = detectMultiplierColumn(columns.map((c) => c.name), numeric);
+    const measureCol = columns.find((c) => c.role === 'measure' && c.name !== weightCol)?.name
+      ?? columns.find((c) => numeric.has(c.name) && c.name !== weightCol)?.name
+      ?? columns[0]?.name;
+    const dimensionCol = columns.find((c) => c.role === 'dimension')?.name
+      ?? columns.find((c) => c.role !== 'measure' && c.name !== measureCol)?.name
+      ?? columns[0]?.name;
+    const timeCol = columns.find((c) => c.role === 'time')?.name ?? config.timeCol;
+    onChange({
+      ...config,
+      weightCol: weightCol ?? config.weightCol,
+      timeCol: timeCol ?? null,
+      dimensions: dimensionCol ? [dimensionCol] : [],
+      measures: measureCol
+        ? [{ id: newId('msr'), col: measureCol, label: measureCol, agg: 'reported_value', unit: columns.find((c) => c.name === measureCol)?.unit || '', weighted: false }]
+        : [],
+      sortBy: measureCol ?? null,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parsed, columns, numericSet]);
+
   const spec = useMemo(() => buildReportSectionSpec(config, { templateId, signature, datasetId }), [config, templateId, signature, datasetId]);
   const specJson = useMemo(() => JSON.stringify(spec, null, 2), [spec]);
-  const configIssues = useMemo(() => validateSectionConfig(config), [config]);
+  const configIssues = useMemo(() => validateSectionConfig(config, {
+    requireMeasure,
+    requireDimension: requireMeasure,
+    requireComponents: !hideOutputComponents,
+    requireChartAxis: !hideOutputComponents,
+  }), [config, requireMeasure, hideOutputComponents]);
+  const previewSnapshot = useMemo(
+    () => (dataRows.length ? buildDatasetSnapshot(spec.datasetId, dataRows) : null),
+    [dataRows, spec.datasetId],
+  );
+  const schemaSnapshot = useMemo(() => buildSchemaSnapshot(spec.datasetId, columns), [spec.datasetId, columns]);
+  const validation = useMemo(() => validateSectionRequest(spec, previewSnapshot ?? schemaSnapshot), [spec, previewSnapshot, schemaSnapshot]);
 
   const match = useMemo(() => {
     if (!dataRows.length) return null;
@@ -447,6 +531,7 @@ export function QueryIndicatorFilters({
       {error && <Alert variant="error" title="Could not read the dataset">{error}</Alert>}
 
       {/* ── 1. Section Target ─────────────────────────────────────────────── */}
+      {!hideTarget && (
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="px-6 pt-5 pb-4">
           <SectionHeader
@@ -496,6 +581,7 @@ export function QueryIndicatorFilters({
           </div>
         </div>
       </div>
+      )}
 
       {/* ── 2. Scope Filters ──────────────────────────────────────────────── */}
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -862,7 +948,7 @@ export function QueryIndicatorFilters({
       </div>
 
       {/* ── 4. Analysis + Output ─────────────────────────────────────────── */}
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className={cn('grid gap-5', hideOutputComponents ? 'lg:grid-cols-1' : 'lg:grid-cols-2')}>
 
         {/* Analysis */}
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -911,6 +997,7 @@ export function QueryIndicatorFilters({
         </div>
 
         {/* Output components */}
+        {!hideOutputComponents && (
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="px-6 pt-5 pb-4">
             <SectionHeader icon={<Ruler className="h-4 w-4" />} title="5. Output Components" hint="What gets generated for this section" />
@@ -948,6 +1035,7 @@ export function QueryIndicatorFilters({
             )}
           </div>
         </div>
+        )}
       </div>
 
       {/* ── 6. Filtered Slice Preview ─────────────────────────────────────── */}
@@ -1035,6 +1123,7 @@ export function QueryIndicatorFilters({
       )}
 
       {/* ── 7. Generate ──────────────────────────────────────────────────── */}
+      {!hideGenerateControls && (
       <div className="rounded-xl border-2 border-[#0a1f44]/20 bg-gradient-to-br from-[#0a1f44]/5 to-white p-6">
         <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
           <div className="flex items-center gap-2">
@@ -1088,6 +1177,7 @@ export function QueryIndicatorFilters({
           </button>
         </div>
       </div>
+      )}
 
       {/* ── 8. Generated Preview ─────────────────────────────────────────── */}
       {!hidePreview && execution && (

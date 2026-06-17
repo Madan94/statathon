@@ -1202,13 +1202,13 @@ def _sec_test(actual: Any, op: str, value: Any) -> bool:
     return False
 
 
-def _sec_apply_filters(df, filters: list[dict[str, Any]]):
+def _sec_apply_filters(df, filters: list[dict[str, Any]], combinator: str = "AND"):
     """Return (kept DataFrame, filtersApplied[str], warnings[dict])."""
     import pandas as _pd
 
     warnings: list[dict[str, Any]] = []
     applied: list[str] = []
-    mask = _pd.Series([True] * len(df), index=df.index)
+    masks: list[tuple[Any, str]] = []
     for f in filters or []:
         col = f.get("col")
         op = (f.get("op") or "eq")
@@ -1226,7 +1226,14 @@ def _sec_apply_filters(df, filters: list[dict[str, Any]]):
             })
             continue
         col_mask = df[col].map(lambda x, _op=op, _v=val: _sec_test(x, _op, _v))
-        mask &= col_mask
+        masks.append((col_mask, str(f.get("connector") or combinator or "AND").upper()))
+    if not masks:
+        mask = _pd.Series([True] * len(df), index=df.index)
+    else:
+        mask = masks[0][0]
+        for idx, (col_mask, _connector) in enumerate(masks[1:], start=1):
+            connector = masks[idx - 1][1]
+            mask = (mask | col_mask) if connector == "OR" else (mask & col_mask)
     return df[mask], applied, warnings
 
 
@@ -1287,6 +1294,7 @@ def generate_section(template_id: str, signature: str, body: GenerateSectionIn) 
     columns = scope.get("columns") or {}
     analysis = req.get("analysis") or {}
     filters = scope.get("filters") or []
+    filter_combinator = "OR" if str(scope.get("filterCombinator") or "AND").upper() == "OR" else "AND"
     dimensions = [c for c in (columns.get("dimensions") or []) if c]
     measures = columns.get("measures") or []
     group_by = [c for c in (analysis.get("groupBy") or dimensions) if c]
@@ -1306,7 +1314,7 @@ def generate_section(template_id: str, signature: str, body: GenerateSectionIn) 
         raise HTTPException(status_code=422, detail={"message": "cannot compute section", "issues": warnings})
 
     rows_scanned = len(df)
-    sliced, filters_applied, filter_warnings = _sec_apply_filters(df, filters)
+    sliced, filters_applied, filter_warnings = _sec_apply_filters(df, filters, filter_combinator)
     warnings.extend(filter_warnings)
     rows_after = len(sliced)
 
@@ -1359,6 +1367,7 @@ def generate_section(template_id: str, signature: str, body: GenerateSectionIn) 
     section_path = [chapter_title, section_title]
     request_id = req.get("requestId") or f"req_{_sec_slug(section_title)}"
     a_type = analysis.get("type") or "comparison"
+    description_text = ((req.get("description") or {}).get("text") or "").strip()
 
     def _fmt(v: Any) -> str:
         if v is None:
@@ -1379,6 +1388,7 @@ def generate_section(template_id: str, signature: str, body: GenerateSectionIn) 
         "source": "Section workflow (server)",
         "provenance": {
             "requestId": request_id, "filtersApplied": filters_applied,
+            "filterCombinator": filter_combinator,
             "rowsScanned": rows_scanned, "rowsAfterFilter": rows_after,
             "sourceColumns": [measure_col, *group_by], "warnings": warnings,
         },
@@ -1389,7 +1399,10 @@ def generate_section(template_id: str, signature: str, body: GenerateSectionIn) 
         if not usable:
             return f"No computable {measure_label} value was found for the selected data slice."
         top, tail = usable[0], usable[-1]
-        parts = [f"The selected slice contains {rows_after:,} records after applying {len(filters_applied)} filter(s)."]
+        parts = [
+            f"{description_text.rstrip('.')}." if description_text else "",
+            f"The computation uses {rows_after:,} source rows after applying {len(filters_applied)} filter(s).",
+        ]
         if a_type == "comparison" and len(usable) >= 2:
             diff = abs(top["value"] - tail["value"]) if top["value"] is not None and tail["value"] is not None else None
             parts.append(
@@ -1401,8 +1414,7 @@ def generate_section(template_id: str, signature: str, body: GenerateSectionIn) 
             parts.append(f"{_sec_label(top['key'])} ranks first for {measure_label} with {_fmt(top['value'])}.")
         else:
             parts.append(f"{measure_label} is reported at {_fmt(top['value'])} for {_sec_label(top['key'])}.")
-        caveat = f" Caveat: {warnings[0]['message']}" if warnings else ""
-        return " ".join((" ".join(parts) + caveat).split()[:max_words])
+        return " ".join(" ".join(p for p in parts if p).split()[:max_words])
 
     blocks: list[dict[str, Any]] = []
     components = [c for c in (req.get("components") or []) if c.get("enabled") is not False]
@@ -1452,13 +1464,6 @@ def generate_section(template_id: str, signature: str, body: GenerateSectionIn) 
         else:
             block["content"] = "; ".join(w["message"] for w in warnings) or f"Filters applied: {'; '.join(filters_applied)}"
         blocks.append(block)
-
-    if warnings and not any(b["kind"] == "source_note" for b in blocks):
-        blocks.append({
-            "id": f"sectiongen-{request_id}-caveat", "index": -1, "kind": "source_note",
-            "title": "Caveat", "content": " ".join(w["message"] for w in warnings),
-            "sectionPath": section_path, "status": "done", "pageIndex": 0,
-        })
 
     logger.info("[generate-section] %s — scanned=%d after=%d groups=%d blocks=%d",
                 request_id, rows_scanned, rows_after, len(result_rows), len(blocks))

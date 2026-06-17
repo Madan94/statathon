@@ -26,10 +26,11 @@ def _add_column_if_missing(table: str, column: str, ddl: str) -> bool:
 def migrate_weight_application_schema() -> dict:
     Base.metadata.create_all(bind=engine)
     added: list[str] = []
+    boolean_default = "FALSE" if engine.dialect.name == "postgresql" else "0"
     if _add_column_if_missing(
         "analysis_phase_status",
         "weight_application_completed",
-        "weight_application_completed BOOLEAN NOT NULL DEFAULT 0",
+        f"weight_application_completed BOOLEAN NOT NULL DEFAULT {boolean_default}",
     ):
         added.append("analysis_phase_status.weight_application_completed")
     logger.info("Weight application migration applied; added=%s", added)

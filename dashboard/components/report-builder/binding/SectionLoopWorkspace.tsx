@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
   ArrowDown,
@@ -11,6 +12,7 @@ import {
   LayoutPanelTop,
   Plus,
   RefreshCw,
+  Send,
   Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
@@ -20,6 +22,7 @@ import { QueryIndicatorFilters } from '@/components/report-builder/binding/Query
 import { SectionBlockView } from '@/components/report-builder/binding/SectionBlockView';
 import type { ReportSectionConfig } from '@/lib/reportSection';
 import type { GeneratedSectionBlock, ReportSectionRequest, SectionExecutionResult } from '@/lib/report-section';
+import { canvasHandoffStorageKey, type ReportCanvasHandoffBundle } from '@/lib/report-section/canvasHandoff';
 import type { DatasetColumnProfile } from '@/lib/api';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -67,6 +70,7 @@ export function SectionLoopWorkspace({
   datasetId,
   className,
 }: SectionLoopWorkspaceProps) {
+  const router = useRouter();
   const [tab, setTab] = useState<'interpreter' | 'canvas'>('interpreter');
   const [sections, setSections] = useState<AccumulatedSection[]>([]);
   const hydrated = useRef(false);
@@ -163,6 +167,28 @@ export function SectionLoopWorkspace({
     toast.success(`Downloaded ${sections.length} section(s)`);
   };
 
+  const openReportCanvas = () => {
+    if (!sections.length) {
+      toast.error('Generate at least one section first.');
+      return;
+    }
+    const bundle: ReportCanvasHandoffBundle = {
+      version: 'report.canvas.handoff.v1',
+      templateId,
+      signature,
+      datasetId,
+      generatedAt: new Date().toISOString(),
+      sections,
+    };
+    try {
+      sessionStorage.setItem(canvasHandoffStorageKey(templateId, signature), JSON.stringify(bundle));
+      toast.success(`Queued ${sections.length} section(s) for the report canvas`);
+      router.push(`/report-builder/canvas/${encodeURIComponent(templateId)}/${encodeURIComponent(signature)}`);
+    } catch {
+      toast.error('Could not prepare the report canvas handoff.');
+    }
+  };
+
   const tabButton = (id: 'interpreter' | 'canvas', label: string, icon: React.ReactNode, count?: number) => (
     <button
       type="button"
@@ -193,9 +219,14 @@ export function SectionLoopWorkspace({
             {sections.length} section{sections.length === 1 ? '' : 's'} · {totalBlocks} block{totalBlocks === 1 ? '' : 's'}
           </span>
           {sections.length > 0 && (
-            <Button type="button" variant="outline" size="sm" onClick={downloadBundle}>
-              <Download className="h-3.5 w-3.5" /> Bundle
-            </Button>
+            <>
+              <Button type="button" variant="outline" size="sm" onClick={downloadBundle}>
+                <Download className="h-3.5 w-3.5" /> Bundle
+              </Button>
+              <Button type="button" size="sm" onClick={openReportCanvas}>
+                <Send className="h-3.5 w-3.5" /> Open in Report Canvas
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -237,6 +268,9 @@ export function SectionLoopWorkspace({
                   <Badge variant="muted" className="text-[9px]">{sections.length} section{sections.length === 1 ? '' : 's'}</Badge>
                 </div>
                 <div className="flex items-center gap-1.5">
+                  <Button type="button" variant="outline" size="sm" onClick={openReportCanvas}>
+                    <Send className="h-3.5 w-3.5" /> Open in Report Canvas
+                  </Button>
                   <Button type="button" size="sm" onClick={addAnother}>
                     <Plus className="h-4 w-4" /> Add another section
                   </Button>

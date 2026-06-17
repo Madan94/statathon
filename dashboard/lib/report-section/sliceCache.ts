@@ -8,6 +8,7 @@ export function sliceSignatureOf(request: ReportSectionRequest): string {
   return stableHash({
     datasetId: request.datasetId,
     filters: request.scope.filters,
+    filterCombinator: request.scope.filterCombinator || 'AND',
     include: request.scope.columns.include,
     groupBy: request.analysis.groupBy,
     measures: request.scope.columns.measures,

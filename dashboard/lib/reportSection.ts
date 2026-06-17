@@ -121,6 +121,73 @@ export function defaultSectionConfig(): ReportSectionConfig {
   };
 }
 
+const FILTER_OP_TEXT: Record<FilterOp, string> = {
+  eq: 'equals',
+  ne: 'does not equal',
+  gt: 'is greater than',
+  ge: 'is at least',
+  lt: 'is less than',
+  le: 'is at most',
+  in: 'is one of',
+  not_in: 'is not one of',
+  between: 'is between',
+  contains: 'contains',
+  is_null: 'is empty',
+  not_null: 'is not empty',
+};
+
+function joinHuman(parts: string[]): string {
+  const clean = parts.map((p) => p.trim()).filter(Boolean);
+  if (clean.length <= 1) return clean[0] ?? '';
+  if (clean.length === 2) return `${clean[0]} and ${clean[1]}`;
+  return `${clean.slice(0, -1).join(', ')}, and ${clean[clean.length - 1]}`;
+}
+
+function readableAgg(agg: AggregationKind): string {
+  return agg.replace(/_/g, ' ');
+}
+
+function describeFilter(rule: SectionFilterRule): string {
+  const col = rule.col.trim();
+  if (!col) return '';
+  const op = FILTER_OP_TEXT[rule.op] ?? rule.op;
+  const raw = rule.value.trim();
+  if (NO_VALUE_OPS.includes(rule.op)) return `${col} ${op}`;
+  if (rule.op === 'between') {
+    const [lo, hi] = raw.split(',').map((part) => part.trim()).filter(Boolean);
+    return `${col} ${op} ${lo || 'lower bound'} and ${hi || 'upper bound'}`;
+  }
+  if (rule.op === 'in' || rule.op === 'not_in') {
+    const values = raw.split(',').map((part) => part.trim()).filter(Boolean);
+    return `${col} ${op} ${joinHuman(values) || 'selected values'}`;
+  }
+  return `${col} ${op} ${raw || 'selected value'}`;
+}
+
+function describeFilters(filters: SectionFilterRule[], fallback: 'AND' | 'OR'): string {
+  const parts = filters.map(describeFilter).filter(Boolean);
+  if (!parts.length) return '';
+  return parts.reduce((text, part, index) => {
+    if (index === 0) return part;
+    const connector = filters[index - 1]?.connector || fallback;
+    return `${text} ${connector.toLowerCase()} ${part}`;
+  }, '');
+}
+
+export function buildSectionDescription(config: ReportSectionConfig): string {
+  const measures = config.measures.map((m) => {
+    const label = (m.label || m.col).trim();
+    const weighted = m.weighted && config.weightCol ? ` weighted by ${config.weightCol}` : '';
+    return `${label} (${readableAgg(m.weighted ? 'weighted_mean' : m.agg)}${weighted})`;
+  });
+  const measureText = joinHuman(measures) || 'the selected indicators';
+  const dimensionText = config.dimensions.length ? ` by ${joinHuman(config.dimensions)}` : '';
+  const timeText = config.timeCol ? ` across ${config.timeCol}` : '';
+  const filterText = describeFilters(config.filters, config.combinator);
+  const scopeText = filterText ? ` for rows where ${filterText}` : ' for all rows in scope';
+  return `Generate a ${config.analysisType} section showing ${measureText}${dimensionText}${timeText}${scopeText}.`;
+}
+
 function coerceScalar(raw: string): string | number {
   const t = raw.trim();
   if (t === '') return t;
@@ -206,7 +273,7 @@ export function buildReportSectionSpec(
   const filters: SectionPredicate[] = config.filters
     .filter((f) => f.col)
     .map((f) => {
-      const predicate: SectionPredicate = { col: f.col, op: f.op, required: f.required };
+      const predicate: SectionPredicate = { col: f.col, op: f.op, required: f.required, connector: f.connector };
       const value = coerceFilterValue(f.op, f.value);
       if (value !== undefined) predicate.value = value;
       return predicate;
@@ -220,6 +287,8 @@ export function buildReportSectionSpec(
     weightCol: m.weighted ? config.weightCol : null,
     moe: m.weighted && config.weightCol ? { enabled: true, confidence: 0.95, mode: 'frequency' } : undefined,
   }));
+
+  const descriptionText = config.descriptionText.trim();
 
   return {
     version: 'report.section.v1',
@@ -235,6 +304,7 @@ export function buildReportSectionSpec(
     },
     scope: {
       filters,
+      filterCombinator: config.combinator,
       columns: {
         dimensions: config.dimensions,
         measures,
@@ -242,7 +312,10 @@ export function buildReportSectionSpec(
         include: Array.from(includeSet),
       },
     },
-    description: { text: config.descriptionText.trim(), source: 'user' },
+    description: {
+      text: descriptionText || buildSectionDescription(config),
+      source: descriptionText ? 'user' : 'suggested',
+    },
     analysis: {
       type: config.analysisType,
       groupBy: config.dimensions,
@@ -260,11 +333,33 @@ export function buildReportSectionSpec(
 }
 
 /** Lightweight readiness check for the section config (officer guidance). */
-export function validateSectionConfig(config: ReportSectionConfig): string[] {
+export function validateSectionConfig(
+  config: ReportSectionConfig,
+  options: {
+    requireMeasure?: boolean;
+    requireDimension?: boolean;
+    requireComponents?: boolean;
+    requireChartAxis?: boolean;
+  } = {},
+): string[] {
+  const requireMeasure = options.requireMeasure ?? true;
+  const requireDimension = options.requireDimension ?? true;
+  const requireComponents = options.requireComponents ?? true;
+  const requireChartAxis = options.requireChartAxis ?? true;
   const issues: string[] = [];
   if (!config.sectionTitle.trim()) issues.push('Section title is required.');
-  if (config.measures.length === 0) issues.push('Add at least one measure column.');
-  if (config.dimensions.length === 0) issues.push('Pick at least one dimension to group by.');
-  if (config.components.length === 0) issues.push('Select at least one output component.');
+  if (requireMeasure && config.measures.length === 0) issues.push('Add at least one measure column.');
+  if (requireDimension && !['summary', 'metric'].includes(config.analysisType) && config.dimensions.length === 0) issues.push('Pick at least one dimension to group by.');
+  if (config.analysisType === 'trend' && !config.timeCol) issues.push('Trend analysis needs a time column.');
+  if (requireComponents && config.components.length === 0) issues.push('Select at least one output component.');
+  if (requireChartAxis && config.components.includes('chart') && config.dimensions.length === 0) issues.push('A chart needs at least one dimension for its x-axis.');
+  for (const measure of config.measures) {
+    if (measure.weighted && !config.weightCol) issues.push(`Weighted measure '${measure.label || measure.col}' needs a multiplier column.`);
+  }
+  for (const filter of config.filters) {
+    if (!filter.col) issues.push('Every filter needs a column.');
+    if (!NO_VALUE_OPS.includes(filter.op) && !filter.value.trim()) issues.push(`Filter '${filter.col || 'column'}' needs a value.`);
+    if (filter.op === 'between' && filter.value.split(',').map((part) => part.trim()).filter(Boolean).length < 2) issues.push(`Between filter '${filter.col}' needs two values.`);
+  }
   return issues;
 }

@@ -127,7 +127,7 @@ export function CanvasDraftPicker({ templateId, signature, open, currentDraftId,
             <h2 className="text-sm font-semibold text-slate-900">Choose report canvas draft</h2>
             <p className="text-xs text-slate-500">Select an existing draft or name a new one before editing. Autosave keeps the latest hand edits, resizing, order and generated sections.</p>
           </div>
-          {onClose && currentDraftId && <button onClick={onClose} className="rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100">Close</button>}
+          {onClose && <button onClick={onClose} className="rounded px-2 py-1 text-xs text-slate-500 hover:bg-slate-100">Close</button>}
         </div>
 
         <div className="space-y-4 p-5">

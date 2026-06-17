@@ -1,4 +1,4 @@
-import type { DataRow, DatasetSnapshot, SectionPredicate } from './types';
+import type { DataRow, DatasetSnapshot, FilterCombinator, SectionPredicate } from './types';
 import { applyPredicates } from './predicateEngine';
 
 function stableStringify(value: unknown): string {
@@ -90,7 +90,7 @@ export interface DatasetProvider {
   getSnapshot(datasetId: string): DatasetSnapshot | null;
   getRows(datasetId: string): DataRow[];
   getDistinctValues(datasetId: string, column: string): unknown[];
-  getSlice(datasetId: string, predicates: SectionPredicate[], includeColumns: string[]): { rows: DataRow[]; indexes: number[]; filtersApplied: string[] };
+  getSlice(datasetId: string, predicates: SectionPredicate[], includeColumns: string[], filterCombinator?: FilterCombinator): { rows: DataRow[]; indexes: number[]; filtersApplied: string[] };
   clear(datasetId: string): void;
   clearAll(): void;
 }
@@ -120,10 +120,10 @@ class FrontendMemoryDatasetProvider implements DatasetProvider {
     return this.getSnapshot(datasetId)?.distinctValues[column] ?? [];
   }
 
-  getSlice(datasetId: string, predicates: SectionPredicate[], includeColumns: string[]) {
+  getSlice(datasetId: string, predicates: SectionPredicate[], includeColumns: string[], filterCombinator: FilterCombinator = 'AND') {
     const snapshot = this.getSnapshot(datasetId);
     if (!snapshot) return { rows: [], indexes: [], filtersApplied: [] };
-    const filtered = applyPredicates(snapshot.rows, predicates);
+    const filtered = applyPredicates(snapshot.rows, predicates, filterCombinator);
     const include = includeColumns.filter(c => snapshot.columns.includes(c));
     const rows = filtered.indexes.map(i => {
       const source = snapshot.rows[i];

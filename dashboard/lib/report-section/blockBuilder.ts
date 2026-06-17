@@ -30,8 +30,7 @@ function narrative(request: ReportSectionRequest, result: SectionExecutionResult
   } else {
     parts.push(`${measureLabel} is reported at ${fmt(top.value, unit)} for ${labelOf(top)}.`);
   }
-  const warning = result.warnings.length ? ` Caveat: ${result.warnings[0].message}` : '';
-  return `${parts.join(' ')}${warning}`.split(/\s+/).slice(0, maxWords).join(' ');
+  return parts.join(' ').split(/\s+/).slice(0, maxWords).join(' ');
 }
 
 function tablePayload(request: ReportSectionRequest, result: SectionExecutionResult): Record<string, unknown> {
@@ -110,29 +109,5 @@ export function buildSectionBlocks(request: ReportSectionRequest, result: Sectio
     }
     blocks.push(block);
   });
-  if (result.warnings.length && !blocks.some(b => b.kind === 'source_note')) {
-    blocks.push({
-      id: `sectiongen-${request.requestId}-caveat`,
-      index: -1,
-      kind: 'source_note',
-      title: 'Caveat',
-      content: result.warnings.map(w => w.message).join(' '),
-      sectionPath,
-      status: 'done',
-      pageIndex: 0,
-    });
-  }
-  if (result.marginOfError && !blocks.some(b => b.title.toLowerCase().includes('margin of error'))) {
-    blocks.push({
-      id: `sectiongen-${request.requestId}-moe`,
-      index: -1,
-      kind: 'source_note',
-      title: 'Margin of Error Note',
-      content: moeText(result),
-      sectionPath,
-      status: 'done',
-      pageIndex: 0,
-    });
-  }
   return blocks;
 }

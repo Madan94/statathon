@@ -18,12 +18,14 @@ export type AnalysisType = 'summary' | 'comparison' | 'trend' | 'ranking' | 'dis
 export type SectionComponentType = 'narrative' | 'table' | 'chart' | 'metric' | 'key_finding' | 'source_note' | 'footnote' | 'caveat';
 export type AggregationKind = 'reported_value' | 'mean' | 'sum' | 'count' | 'median' | 'min' | 'max' | 'weighted_mean' | 'weighted_ratio';
 export type WarningSeverity = 'info' | 'warn' | 'error';
+export type FilterCombinator = 'AND' | 'OR';
 
 export interface SectionPredicate {
   col: string;
   op: FilterOp;
   value?: unknown;
   required?: boolean;
+  connector?: FilterCombinator;
 }
 
 export interface SectionMeasure {
@@ -55,6 +57,7 @@ export interface ReportSectionRequest {
   target: SectionTargetRef;
   scope: {
     filters: SectionPredicate[];
+    filterCombinator?: FilterCombinator;
     columns: {
       dimensions: string[];
       measures: SectionMeasure[];
@@ -135,6 +138,7 @@ export interface QueryAst {
   datasetId: string;
   select: Array<{ expr: string; as: string; role: 'dimension' | 'measure' | 'metadata'; agg?: AggregationKind; unit?: string }>;
   where: SectionPredicate[];
+  filterCombinator?: FilterCombinator;
   groupBy: string[];
   orderBy?: { expr: string; direction: 'asc' | 'desc' } | null;
   limit?: number | null;
@@ -154,6 +158,7 @@ export interface SectionExecutionResult {
   rows: SectionResultRow[];
   measure: SectionMeasure | null;
   groupBy: string[];
+  filterCombinator?: FilterCombinator;
   filtersApplied: string[];
   rowsScanned: number;
   rowsAfterFilter: number;
