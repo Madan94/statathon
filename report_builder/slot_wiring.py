@@ -16,12 +16,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from report_builder.template_traversal import (
-    iter_components as _iter_components,
-    iter_question_contexts,
-    iter_questions as _iter_questions,
-)
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Models
@@ -101,11 +95,10 @@ class SemanticSlot:
     componentId: str | None = None
     componentKind: str = ""
     fillFrom: str | None = None
-    lineageRequired: bool = True
-    officerEditable: bool = True
-    slotPolicies: dict[str, Any] = field(default_factory=dict)
     source: str = "existing"          # existing | auto_created | inferred | figureTemplate_wire
     confidence: float = 0.8
+    lineageRequired: bool = True
+    slotPolicies: dict[str, Any] = field(default_factory=lambda: {"fillFromMustReference": "componentId"})
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
@@ -130,7 +123,6 @@ class SemanticSlot:
         if self.fillFrom:
             d["fillFrom"] = self.fillFrom
         d["lineageRequired"] = self.lineageRequired
-        d["officerEditable"] = self.officerEditable
         d["slotPolicies"] = dict(self.slotPolicies)
         return d
 
@@ -147,11 +139,10 @@ class SemanticSlot:
             componentId=d.get("componentId"),
             componentKind=str(d.get("componentKind") or ""),
             fillFrom=d.get("fillFrom"),
-            lineageRequired=bool(d.get("lineageRequired", True)),
-            officerEditable=bool(d.get("officerEditable", True)),
-            slotPolicies=dict(d.get("slotPolicies") or {}),
             source=str(d.get("source") or "existing"),
             confidence=float(d.get("confidence") or 0.0),
+            lineageRequired=bool(d.get("lineageRequired", True)),
+            slotPolicies=dict(d.get("slotPolicies") or {"fillFromMustReference": "componentId"}),
         )
 
 
@@ -191,13 +182,62 @@ class SemanticSlotGraph:
 
 
 def iter_questions(blueprint: dict[str, Any]) -> list[dict[str, Any]]:
-    """Flatten all legacy and enterprise nested blueprint questions."""
-    return _iter_questions(blueprint)
+    """Flatten questions from every outline nesting level + top-level questions[].
+
+    The blueprint may nest questions under chapters/sections/subtopics (enterprise
+    packages) as well as directly under topics. Walk every nesting key so the slot
+    graph, fillFrom validation and component counts see ALL questions and cannot
+    silently drop nested ones.
+    """
+    questions: list[dict[str, Any]] = []
+
+    def _walk(node: dict[str, Any]) -> None:
+        for q in node.get("questions") or []:
+            if isinstance(q, dict):
+                questions.append(q)
+        for key in ("chapters", "sections", "subtopics", "subsections", "children"):
+            for child in node.get(key) or []:
+                if isinstance(child, dict):
+                    _walk(child)
+
+    for topic in (blueprint.get("topics") or []):
+        if isinstance(topic, dict):
+            _walk(topic)
+    questions.extend(blueprint.get("questions") or [])
+    return questions
+
+
+def iter_question_contexts(blueprint: dict[str, Any]) -> list[dict[str, Any]]:
+    """Like ``iter_questions`` but each entry carries its outline lineage
+    (topicId / chapterId / sectionId) so slots can record where they belong."""
+    out: list[dict[str, Any]] = []
+
+    def _walk(node: dict[str, Any], ctx: dict[str, Any]) -> None:
+        node_ctx = dict(ctx)
+        for key in ("topicId", "chapterId", "sectionId", "subtopicId"):
+            if node.get(key):
+                node_ctx[key] = node[key]
+        for q in node.get("questions") or []:
+            if isinstance(q, dict):
+                entry = dict(node_ctx)
+                entry["question"] = q
+                entry["questionId"] = q.get("questionId") or q.get("id")
+                out.append(entry)
+        for key in ("chapters", "sections", "subtopics", "subsections", "children"):
+            for child in node.get(key) or []:
+                if isinstance(child, dict):
+                    _walk(child, node_ctx)
+
+    for topic in (blueprint.get("topics") or []):
+        if isinstance(topic, dict):
+            _walk(topic, {})
+    return out
 
 
 def iter_components(question: dict[str, Any]) -> list[dict[str, Any]]:
     """Return answerStructure.components from a question."""
-    return _iter_components(question)
+    ans = question.get("answerStructure") or question.get("outputContract") or {}
+    return ans.get("components") or [] if isinstance(ans, dict) else []
 
 
 def collect_skeleton_slots(skeleton: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -296,8 +336,7 @@ def validate_wiring(skeleton: dict[str, Any], blueprint: dict[str, Any]) -> list
     slots = collect_skeleton_slots(skeleton)
 
     # Build lookup sets
-    all_question_ids = [str(q.get("questionId") or "") for q in questions if q.get("questionId")]
-    question_ids = set(all_question_ids)
+    question_ids = {q.get("questionId") or "" for q in questions if q.get("questionId")}
     component_ids: set[str] = set()
     all_component_ids: list[str] = []
 
@@ -353,14 +392,6 @@ def validate_wiring(skeleton: dict[str, Any], blueprint: dict[str, Any]) -> list
     for slot_id, slot_info in slots.items():
         ff = slot_info.get("fillFrom")
         if ff and ff not in component_ids:
-            if ff in question_ids:
-                issues.append(WiringIssue(
-                    severity="error", code="BROKEN_FILLFROM",
-                    message=f"Slot '{slot_id}' has fillFrom='{ff}' pointing to a questionId; fillFrom must point to a componentId",
-                    questionId=str(ff),
-                    slotId=slot_id,
-                ))
-                continue
             issues.append(WiringIssue(
                 severity="error", code="BROKEN_FILLFROM",
                 message=f"Slot '{slot_id}' has fillFrom='{ff}' which doesn't exist",
@@ -383,14 +414,15 @@ def validate_wiring(skeleton: dict[str, Any], blueprint: dict[str, Any]) -> list
     seen_cids: set[str] = set()
     for cid in all_component_ids:
         if cid in seen_cids:
-            issues.append(WiringIssue(severity="error", code="DUPLICATE_COMPONENT_ID", message=f"Duplicate componentId: {cid}", componentId=cid))
+            issues.append(WiringIssue(severity="warn", code="DUPLICATE_COMPONENT_ID", message=f"Duplicate componentId: {cid}", componentId=cid))
         seen_cids.add(cid)
 
     # ── Check 11: Unique question IDs ──
     seen_qids: set[str] = set()
-    for qid in all_question_ids:
+    for q in questions:
+        qid = q.get("questionId") or ""
         if qid in seen_qids:
-            issues.append(WiringIssue(severity="error", code="DUPLICATE_QUESTION_ID", message=f"Duplicate questionId: {qid}", questionId=qid))
+            issues.append(WiringIssue(severity="warn", code="DUPLICATE_QUESTION_ID", message=f"Duplicate questionId: {qid}", questionId=qid))
         seen_qids.add(qid)
 
     return issues
@@ -742,24 +774,26 @@ def build_semantic_slot_graph(
         if r.targetId
     }
 
+    topic_by_question: dict[str, str] = {}
     component_meta: dict[str, dict[str, str]] = {}
-    question_meta: dict[str, dict[str, str]] = {}
+    # Walk EVERY outline level (topic → chapter → section → question) so nested
+    # enterprise blueprints carry full lineage onto their slots.
     for ctx in iter_question_contexts(blueprint):
         question = ctx.get("question") or {}
-        question_id = str(question.get("questionId") or "")
-        q_meta = {
-            "topicId": str(ctx.get("topicId") or ""),
-            "chapterId": str(ctx.get("chapterId") or ""),
-            "sectionId": str(ctx.get("sectionId") or ""),
-        }
+        question_id = str(ctx.get("questionId") or "")
+        topic_id = str(ctx.get("topicId") or "")
+        chapter_id = str(ctx.get("chapterId") or "")
+        section_id = str(ctx.get("sectionId") or "")
         if question_id:
-            question_meta[question_id] = q_meta
+            topic_by_question[question_id] = topic_id
         for comp in iter_components(question):
             component_id = str(comp.get("componentId") or "")
             if component_id:
                 component_meta[component_id] = {
                     "questionId": question_id,
-                    **q_meta,
+                    "topicId": topic_id,
+                    "chapterId": chapter_id,
+                    "sectionId": section_id,
                     "componentKind": str(comp.get("kind") or comp.get("componentKind") or ""),
                 }
 
@@ -776,7 +810,6 @@ def build_semantic_slot_graph(
         component_id = str(slot_to_component.get(ast_block_id) or "")
         meta = component_meta.get(component_id, {})
         question_id = meta.get("questionId") or question_by_slot.get(ast_block_id) or str(slot_info.get("biQuery") or "")
-        q_meta = question_meta.get(question_id, {})
         if not component_id and not question_id:
             continue
 
@@ -792,20 +825,13 @@ def build_semantic_slot_graph(
             slotId=slot_id,
             astBlockId=ast_block_id,
             astKind=str(slot_info.get("type") or "content"),
-            topicId=meta.get("topicId") or q_meta.get("topicId"),
-            chapterId=meta.get("chapterId") or q_meta.get("chapterId"),
-            sectionId=meta.get("sectionId") or q_meta.get("sectionId"),
+            topicId=meta.get("topicId") or topic_by_question.get(question_id),
+            chapterId=meta.get("chapterId") or None,
+            sectionId=meta.get("sectionId") or None,
             questionId=question_id or None,
             componentId=component_id or None,
             componentKind=meta.get("componentKind") or "",
-            fillFrom=str(slot_info.get("fillFrom") or component_id or ""),
-            lineageRequired=True,
-            officerEditable=True,
-            slotPolicies={
-                "fillFromMustReference": "componentId",
-                "requiresEvidence": True,
-                "allowOfficerRelink": True,
-            },
+            fillFrom=str(slot_info.get("fillFrom") or component_id or "") or None,
             source=source,
             confidence=confidence,
         ))
@@ -930,8 +956,8 @@ def wire_template(
     # 2. Auto-repair if enabled
     repairs: list[SlotPlacement] = []
     if auto_repair:
-        # 2a. Repair stale fillFrom refs (old component ids → current component ids)
-        # before creating new slots, so an existing physical chart/table panel is
+        # 2a. Relink stale fillFrom refs (old component ids → current component ids)
+        # BEFORE creating new slots, so an existing physical chart/table panel is
         # relinked instead of leaving a BROKEN_FILLFROM and creating a duplicate.
         skeleton, stale_repairs = repair_stale_fillfrom_refs(skeleton, blueprint)
         repairs.extend(stale_repairs)

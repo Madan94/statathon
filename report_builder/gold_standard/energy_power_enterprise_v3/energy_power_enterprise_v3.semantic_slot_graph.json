@@ -1,0 +1,2270 @@
+{
+  "$schema": "bharatstat/semantic-slot-graph/v2",
+  "_doc": "Semantic slot wiring for India Power & Energy Sector — Enterprise Statistical Report v3. Maps each slot to its question, component contract, required entities, chart type and execution order.",
+  "templateId": "tpl_energy_power_enterprise_v3",
+  "version": "3.0.0",
+  "totalSlots": 66,
+  "semanticSlots": 66,
+  "virtualSlots": 0,
+  "slots": [
+    {
+      "slotId": "slot_cap_rank_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_cap_rank",
+      "componentRef": "q_cap_rank_narrative",
+      "sectionRef": "sec_capacity_rank",
+      "chapterRef": "ch_total_capacity",
+      "topicRef": "topic_capacity",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_installed",
+        "ent_generation"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_installed → Installed Capacity column",
+        "ent_generation → Generation column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_cap_rank_table",
+      "slotType": "table",
+      "questionRef": "q_cap_rank",
+      "componentRef": "q_cap_rank_table",
+      "sectionRef": "sec_capacity_rank",
+      "chapterRef": "ch_total_capacity",
+      "topicRef": "topic_capacity",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_installed",
+        "ent_generation"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_installed → Installed Capacity column",
+        "ent_generation → Generation column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_installed",
+          "ent_generation"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_installed",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_cap_rank_chart",
+      "slotType": "chart",
+      "questionRef": "q_cap_rank",
+      "componentRef": "q_cap_rank_chart",
+      "sectionRef": "sec_capacity_rank",
+      "chapterRef": "ch_total_capacity",
+      "topicRef": "topic_capacity",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_installed",
+        "ent_generation"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_installed → Installed Capacity column",
+        "ent_generation → Generation column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Installed Capacity by State/UT (MW)"
+      },
+      "chartTitle": "Installed Capacity by State/UT (MW)",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_installed"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_cap_mix_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_cap_mix",
+      "componentRef": "q_cap_mix_narrative",
+      "sectionRef": "sec_capacity_mix",
+      "chapterRef": "ch_total_capacity",
+      "topicRef": "topic_capacity",
+      "requiredEntities": [
+        "ent_thermal",
+        "ent_hydro",
+        "ent_nuclear",
+        "ent_solar",
+        "ent_wind",
+        "ent_biomass",
+        "ent_installed"
+      ],
+      "generationMethod": "SHARE",
+      "lineageChain": [
+        "ent_thermal → Thermal column",
+        "ent_hydro → Hydro column",
+        "ent_nuclear → Nuclear column",
+        "ent_solar → Solar column",
+        "ent_wind → Wind column",
+        "ent_biomass → Biomass column",
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_cap_mix_chart",
+      "slotType": "chart",
+      "questionRef": "q_cap_mix",
+      "componentRef": "q_cap_mix_chart",
+      "sectionRef": "sec_capacity_mix",
+      "chapterRef": "ch_total_capacity",
+      "topicRef": "topic_capacity",
+      "requiredEntities": [
+        "ent_thermal",
+        "ent_hydro",
+        "ent_nuclear",
+        "ent_solar",
+        "ent_wind",
+        "ent_biomass",
+        "ent_installed"
+      ],
+      "generationMethod": "SHARE",
+      "lineageChain": [
+        "ent_thermal → Thermal column",
+        "ent_hydro → Hydro column",
+        "ent_nuclear → Nuclear column",
+        "ent_solar → Solar column",
+        "ent_wind → Wind column",
+        "ent_biomass → Biomass column",
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "donut",
+        "title": "National Capacity Mix by Source"
+      },
+      "chartTitle": "National Capacity Mix by Source",
+      "chartSpec": {
+        "slices": [
+          "ent_thermal",
+          "ent_hydro",
+          "ent_nuclear",
+          "ent_solar",
+          "ent_wind",
+          "ent_biomass"
+        ]
+      }
+    },
+    {
+      "slotId": "slot_cap_mix_metric",
+      "slotType": "metric",
+      "questionRef": "q_cap_mix",
+      "componentRef": "q_cap_mix_metric",
+      "sectionRef": "sec_capacity_mix",
+      "chapterRef": "ch_total_capacity",
+      "topicRef": "topic_capacity",
+      "requiredEntities": [
+        "ent_thermal",
+        "ent_hydro",
+        "ent_nuclear",
+        "ent_solar",
+        "ent_wind",
+        "ent_biomass",
+        "ent_installed"
+      ],
+      "generationMethod": "SHARE",
+      "lineageChain": [
+        "ent_thermal → Thermal column",
+        "ent_hydro → Hydro column",
+        "ent_nuclear → Nuclear column",
+        "ent_solar → Solar column",
+        "ent_wind → Wind column",
+        "ent_biomass → Biomass column",
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "computed_metric",
+        "displayFormat": "percentage"
+      },
+      "formulaRef": "f_thermal_share",
+      "formulaSpec": {
+        "formulaType": "SHARE",
+        "numerator": "ent_thermal",
+        "denominator": "ent_installed",
+        "grain": "national"
+      }
+    },
+    {
+      "slotId": "slot_thermal_rank_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_thermal_rank",
+      "componentRef": "q_thermal_rank_narrative",
+      "sectionRef": "sec_thermal_rank",
+      "chapterRef": "ch_capacity_sources",
+      "topicRef": "topic_capacity",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_thermal"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_thermal → Thermal column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_thermal_rank_table",
+      "slotType": "table",
+      "questionRef": "q_thermal_rank",
+      "componentRef": "q_thermal_rank_table",
+      "sectionRef": "sec_thermal_rank",
+      "chapterRef": "ch_capacity_sources",
+      "topicRef": "topic_capacity",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_thermal"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_thermal → Thermal column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_thermal"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_thermal",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_thermal_rank_chart",
+      "slotType": "chart",
+      "questionRef": "q_thermal_rank",
+      "componentRef": "q_thermal_rank_chart",
+      "sectionRef": "sec_thermal_rank",
+      "chapterRef": "ch_capacity_sources",
+      "topicRef": "topic_capacity",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_thermal"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_thermal → Thermal column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Thermal Capacity by State/UT (MW)"
+      },
+      "chartTitle": "Thermal Capacity by State/UT (MW)",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_thermal"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_hydro_rank_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_hydro_rank",
+      "componentRef": "q_hydro_rank_narrative",
+      "sectionRef": "sec_hydro_rank",
+      "chapterRef": "ch_capacity_sources",
+      "topicRef": "topic_capacity",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_hydro"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_hydro → Hydro column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_hydro_rank_table",
+      "slotType": "table",
+      "questionRef": "q_hydro_rank",
+      "componentRef": "q_hydro_rank_table",
+      "sectionRef": "sec_hydro_rank",
+      "chapterRef": "ch_capacity_sources",
+      "topicRef": "topic_capacity",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_hydro"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_hydro → Hydro column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_hydro"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_hydro",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_hydro_rank_chart",
+      "slotType": "chart",
+      "questionRef": "q_hydro_rank",
+      "componentRef": "q_hydro_rank_chart",
+      "sectionRef": "sec_hydro_rank",
+      "chapterRef": "ch_capacity_sources",
+      "topicRef": "topic_capacity",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_hydro"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_hydro → Hydro column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Hydro Capacity by State/UT (MW)"
+      },
+      "chartTitle": "Hydro Capacity by State/UT (MW)",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_hydro"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_gen_rank_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_gen_rank",
+      "componentRef": "q_gen_rank_narrative",
+      "sectionRef": "sec_gen_rank",
+      "chapterRef": "ch_gen_volume",
+      "topicRef": "topic_generation",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_generation",
+        "ent_installed"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_generation → Generation column",
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_gen_rank_table",
+      "slotType": "table",
+      "questionRef": "q_gen_rank",
+      "componentRef": "q_gen_rank_table",
+      "sectionRef": "sec_gen_rank",
+      "chapterRef": "ch_gen_volume",
+      "topicRef": "topic_generation",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_generation",
+        "ent_installed"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_generation → Generation column",
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_generation",
+          "ent_installed"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_generation",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_gen_rank_chart",
+      "slotType": "chart",
+      "questionRef": "q_gen_rank",
+      "componentRef": "q_gen_rank_chart",
+      "sectionRef": "sec_gen_rank",
+      "chapterRef": "ch_gen_volume",
+      "topicRef": "topic_generation",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_generation",
+        "ent_installed"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_generation → Generation column",
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Power Generation by State/UT (GWh)"
+      },
+      "chartTitle": "Power Generation by State/UT (GWh)",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_generation"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_gen_regional_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_gen_regional",
+      "componentRef": "q_gen_regional_narrative",
+      "sectionRef": "sec_gen_regional",
+      "chapterRef": "ch_gen_volume",
+      "topicRef": "topic_generation",
+      "requiredEntities": [
+        "ent_region",
+        "ent_generation"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_generation → Generation column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_gen_regional_table",
+      "slotType": "table",
+      "questionRef": "q_gen_regional",
+      "componentRef": "q_gen_regional_table",
+      "sectionRef": "sec_gen_regional",
+      "chapterRef": "ch_gen_volume",
+      "topicRef": "topic_generation",
+      "requiredEntities": [
+        "ent_region",
+        "ent_generation"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_generation → Generation column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_generation"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_generation",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_gen_regional_chart",
+      "slotType": "chart",
+      "questionRef": "q_gen_regional",
+      "componentRef": "q_gen_regional_chart",
+      "sectionRef": "sec_gen_regional",
+      "chapterRef": "ch_gen_volume",
+      "topicRef": "topic_generation",
+      "requiredEntities": [
+        "ent_region",
+        "ent_generation"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_generation → Generation column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Power Generation by Region (GWh)"
+      },
+      "chartTitle": "Power Generation by Region (GWh)",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_generation"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_plf_rank_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_plf_rank",
+      "componentRef": "q_plf_rank_narrative",
+      "sectionRef": "sec_plf_rank",
+      "chapterRef": "ch_gen_efficiency",
+      "topicRef": "topic_generation",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_plf"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_plf → PLF column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_plf_rank_table",
+      "slotType": "table",
+      "questionRef": "q_plf_rank",
+      "componentRef": "q_plf_rank_table",
+      "sectionRef": "sec_plf_rank",
+      "chapterRef": "ch_gen_efficiency",
+      "topicRef": "topic_generation",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_plf"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_plf → PLF column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_plf"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_plf",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_plf_rank_chart",
+      "slotType": "chart",
+      "questionRef": "q_plf_rank",
+      "componentRef": "q_plf_rank_chart",
+      "sectionRef": "sec_plf_rank",
+      "chapterRef": "ch_gen_efficiency",
+      "topicRef": "topic_generation",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_plf"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_plf → PLF column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Plant Load Factor by State/UT (%)"
+      },
+      "chartTitle": "Plant Load Factor by State/UT (%)",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_plf"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_solar_rank_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_solar_rank",
+      "componentRef": "q_solar_rank_narrative",
+      "sectionRef": "sec_solar_rank",
+      "chapterRef": "ch_ren_capacity",
+      "topicRef": "topic_renewable",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_solar"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_solar → Solar column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_solar_rank_table",
+      "slotType": "table",
+      "questionRef": "q_solar_rank",
+      "componentRef": "q_solar_rank_table",
+      "sectionRef": "sec_solar_rank",
+      "chapterRef": "ch_ren_capacity",
+      "topicRef": "topic_renewable",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_solar"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_solar → Solar column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_solar"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_solar",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_solar_rank_chart",
+      "slotType": "chart",
+      "questionRef": "q_solar_rank",
+      "componentRef": "q_solar_rank_chart",
+      "sectionRef": "sec_solar_rank",
+      "chapterRef": "ch_ren_capacity",
+      "topicRef": "topic_renewable",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_solar"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_solar → Solar column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Solar Capacity by State/UT (MW)"
+      },
+      "chartTitle": "Solar Capacity by State/UT (MW)",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_solar"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_wind_rank_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_wind_rank",
+      "componentRef": "q_wind_rank_narrative",
+      "sectionRef": "sec_wind_rank",
+      "chapterRef": "ch_ren_capacity",
+      "topicRef": "topic_renewable",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_wind"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_wind → Wind column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_wind_rank_table",
+      "slotType": "table",
+      "questionRef": "q_wind_rank",
+      "componentRef": "q_wind_rank_table",
+      "sectionRef": "sec_wind_rank",
+      "chapterRef": "ch_ren_capacity",
+      "topicRef": "topic_renewable",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_wind"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_wind → Wind column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_wind"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_wind",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_wind_rank_chart",
+      "slotType": "chart",
+      "questionRef": "q_wind_rank",
+      "componentRef": "q_wind_rank_chart",
+      "sectionRef": "sec_wind_rank",
+      "chapterRef": "ch_ren_capacity",
+      "topicRef": "topic_renewable",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_wind"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_wind → Wind column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Wind Capacity by State/UT (MW)"
+      },
+      "chartTitle": "Wind Capacity by State/UT (MW)",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_wind"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_ren_share_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_ren_share",
+      "componentRef": "q_ren_share_narrative",
+      "sectionRef": "sec_ren_share",
+      "chapterRef": "ch_ren_share",
+      "topicRef": "topic_renewable",
+      "requiredEntities": [
+        "ent_solar",
+        "ent_wind",
+        "ent_biomass",
+        "ent_hydro",
+        "ent_renewable",
+        "ent_installed"
+      ],
+      "generationMethod": "SHARE",
+      "lineageChain": [
+        "ent_solar → Solar column",
+        "ent_wind → Wind column",
+        "ent_biomass → Biomass column",
+        "ent_hydro → Hydro column",
+        "ent_renewable → Renewable column",
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_ren_share_chart",
+      "slotType": "chart",
+      "questionRef": "q_ren_share",
+      "componentRef": "q_ren_share_chart",
+      "sectionRef": "sec_ren_share",
+      "chapterRef": "ch_ren_share",
+      "topicRef": "topic_renewable",
+      "requiredEntities": [
+        "ent_solar",
+        "ent_wind",
+        "ent_biomass",
+        "ent_hydro",
+        "ent_renewable",
+        "ent_installed"
+      ],
+      "generationMethod": "SHARE",
+      "lineageChain": [
+        "ent_solar → Solar column",
+        "ent_wind → Wind column",
+        "ent_biomass → Biomass column",
+        "ent_hydro → Hydro column",
+        "ent_renewable → Renewable column",
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "pie",
+        "title": "Renewable Capacity Composition"
+      },
+      "chartTitle": "Renewable Capacity Composition",
+      "chartSpec": {
+        "slices": [
+          "ent_solar",
+          "ent_wind",
+          "ent_biomass",
+          "ent_hydro"
+        ]
+      }
+    },
+    {
+      "slotId": "slot_ren_share_metric",
+      "slotType": "metric",
+      "questionRef": "q_ren_share",
+      "componentRef": "q_ren_share_metric",
+      "sectionRef": "sec_ren_share",
+      "chapterRef": "ch_ren_share",
+      "topicRef": "topic_renewable",
+      "requiredEntities": [
+        "ent_solar",
+        "ent_wind",
+        "ent_biomass",
+        "ent_hydro",
+        "ent_renewable",
+        "ent_installed"
+      ],
+      "generationMethod": "SHARE",
+      "lineageChain": [
+        "ent_solar → Solar column",
+        "ent_wind → Wind column",
+        "ent_biomass → Biomass column",
+        "ent_hydro → Hydro column",
+        "ent_renewable → Renewable column",
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "computed_metric",
+        "displayFormat": "percentage"
+      },
+      "formulaRef": "f_renewable_share",
+      "formulaSpec": {
+        "formulaType": "SHARE",
+        "numerator": "ent_renewable",
+        "denominator": "ent_installed",
+        "grain": "national"
+      }
+    },
+    {
+      "slotId": "slot_biomass_rank_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_biomass_rank",
+      "componentRef": "q_biomass_rank_narrative",
+      "sectionRef": "sec_biomass_rank",
+      "chapterRef": "ch_ren_share",
+      "topicRef": "topic_renewable",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_biomass"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_biomass → Biomass column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_biomass_rank_table",
+      "slotType": "table",
+      "questionRef": "q_biomass_rank",
+      "componentRef": "q_biomass_rank_table",
+      "sectionRef": "sec_biomass_rank",
+      "chapterRef": "ch_ren_share",
+      "topicRef": "topic_renewable",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_biomass"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_biomass → Biomass column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_biomass"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_biomass",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_biomass_rank_chart",
+      "slotType": "chart",
+      "questionRef": "q_biomass_rank",
+      "componentRef": "q_biomass_rank_chart",
+      "sectionRef": "sec_biomass_rank",
+      "chapterRef": "ch_ren_share",
+      "topicRef": "topic_renewable",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_biomass"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_biomass → Biomass column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Biomass Capacity by State/UT (MW)"
+      },
+      "chartTitle": "Biomass Capacity by State/UT (MW)",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_biomass"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_percap_rank_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_percap_rank",
+      "componentRef": "q_percap_rank_narrative",
+      "sectionRef": "sec_percap_rank",
+      "chapterRef": "ch_consumption",
+      "topicRef": "topic_consumption",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_percap"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_percap → Per Capita Consumption column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_percap_rank_table",
+      "slotType": "table",
+      "questionRef": "q_percap_rank",
+      "componentRef": "q_percap_rank_table",
+      "sectionRef": "sec_percap_rank",
+      "chapterRef": "ch_consumption",
+      "topicRef": "topic_consumption",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_percap"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_percap → Per Capita Consumption column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_percap"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_percap",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_percap_rank_chart",
+      "slotType": "chart",
+      "questionRef": "q_percap_rank",
+      "componentRef": "q_percap_rank_chart",
+      "sectionRef": "sec_percap_rank",
+      "chapterRef": "ch_consumption",
+      "topicRef": "topic_consumption",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_percap"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_percap → Per Capita Consumption column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Per-Capita Consumption by State/UT (kWh)"
+      },
+      "chartTitle": "Per-Capita Consumption by State/UT (kWh)",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_percap"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_consumption_regional_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_consumption_regional",
+      "componentRef": "q_consumption_regional_narrative",
+      "sectionRef": "sec_consumption_regional",
+      "chapterRef": "ch_consumption",
+      "topicRef": "topic_consumption",
+      "requiredEntities": [
+        "ent_region",
+        "ent_percap"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_percap → Per Capita Consumption column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_consumption_regional_table",
+      "slotType": "table",
+      "questionRef": "q_consumption_regional",
+      "componentRef": "q_consumption_regional_table",
+      "sectionRef": "sec_consumption_regional",
+      "chapterRef": "ch_consumption",
+      "topicRef": "topic_consumption",
+      "requiredEntities": [
+        "ent_region",
+        "ent_percap"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_percap → Per Capita Consumption column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_percap"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_percap",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_consumption_regional_chart",
+      "slotType": "chart",
+      "questionRef": "q_consumption_regional",
+      "componentRef": "q_consumption_regional_chart",
+      "sectionRef": "sec_consumption_regional",
+      "chapterRef": "ch_consumption",
+      "topicRef": "topic_consumption",
+      "requiredEntities": [
+        "ent_region",
+        "ent_percap"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_percap → Per Capita Consumption column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Per-Capita Consumption by Region (kWh)"
+      },
+      "chartTitle": "Per-Capita Consumption by Region (kWh)",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_percap"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_elec_rank_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_elec_rank",
+      "componentRef": "q_elec_rank_narrative",
+      "sectionRef": "sec_elec_rank",
+      "chapterRef": "ch_access",
+      "topicRef": "topic_consumption",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_electrification"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_electrification → Electrification column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_elec_rank_table",
+      "slotType": "table",
+      "questionRef": "q_elec_rank",
+      "componentRef": "q_elec_rank_table",
+      "sectionRef": "sec_elec_rank",
+      "chapterRef": "ch_access",
+      "topicRef": "topic_consumption",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_electrification"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_electrification → Electrification column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_electrification"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_electrification",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_elec_rank_chart",
+      "slotType": "chart",
+      "questionRef": "q_elec_rank",
+      "componentRef": "q_elec_rank_chart",
+      "sectionRef": "sec_elec_rank",
+      "chapterRef": "ch_access",
+      "topicRef": "topic_consumption",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_electrification"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_electrification → Electrification column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Electrification Level by State/UT (%)"
+      },
+      "chartTitle": "Electrification Level by State/UT (%)",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_electrification"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_td_rank_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_td_rank",
+      "componentRef": "q_td_rank_narrative",
+      "sectionRef": "sec_td_rank",
+      "chapterRef": "ch_losses",
+      "topicRef": "topic_reliability",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_td_losses"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_td_losses → T&D Losses column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_td_rank_table",
+      "slotType": "table",
+      "questionRef": "q_td_rank",
+      "componentRef": "q_td_rank_table",
+      "sectionRef": "sec_td_rank",
+      "chapterRef": "ch_losses",
+      "topicRef": "topic_reliability",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_td_losses"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_td_losses → T&D Losses column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_td_losses"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_td_losses",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_td_rank_chart",
+      "slotType": "chart",
+      "questionRef": "q_td_rank",
+      "componentRef": "q_td_rank_chart",
+      "sectionRef": "sec_td_rank",
+      "chapterRef": "ch_losses",
+      "topicRef": "topic_reliability",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_td_losses"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_td_losses → T&D Losses column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "T&D Losses by State/UT (%)"
+      },
+      "chartTitle": "T&D Losses by State/UT (%)",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_td_losses"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_peak_demand_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_peak_demand",
+      "componentRef": "q_peak_demand_narrative",
+      "sectionRef": "sec_peak_demand",
+      "chapterRef": "ch_losses",
+      "topicRef": "topic_reliability",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_peak_demand",
+        "ent_peak_met"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_peak_demand → Peak Demand column",
+        "ent_peak_met → Peak Met column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_peak_demand_table",
+      "slotType": "table",
+      "questionRef": "q_peak_demand",
+      "componentRef": "q_peak_demand_table",
+      "sectionRef": "sec_peak_demand",
+      "chapterRef": "ch_losses",
+      "topicRef": "topic_reliability",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_peak_demand",
+        "ent_peak_met"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_peak_demand → Peak Demand column",
+        "ent_peak_met → Peak Met column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 12
+      },
+      "tableSpec": {
+        "rowEntity": "ent_state_ut",
+        "columns": [
+          "ent_peak_demand",
+          "ent_peak_met"
+        ],
+        "groupBy": "ent_region",
+        "sortBy": "ent_peak_demand",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_peak_demand_chart",
+      "slotType": "chart",
+      "questionRef": "q_peak_demand",
+      "componentRef": "q_peak_demand_chart",
+      "sectionRef": "sec_peak_demand",
+      "chapterRef": "ch_losses",
+      "topicRef": "topic_reliability",
+      "requiredEntities": [
+        "ent_state_ut",
+        "ent_region",
+        "ent_peak_demand",
+        "ent_peak_met"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_state_ut → State/UT column",
+        "ent_region → Region column",
+        "ent_peak_demand → Peak Demand column",
+        "ent_peak_met → Peak Met column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Peak Demand by State/UT (MW)"
+      },
+      "chartTitle": "Peak Demand by State/UT (MW)",
+      "chartSpec": {
+        "xAxis": "ent_state_ut",
+        "yAxes": [
+          "ent_peak_demand"
+        ],
+        "topN": 12,
+        "groupBy": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_demand_met_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_demand_met",
+      "componentRef": "q_demand_met_narrative",
+      "sectionRef": "sec_demand_met",
+      "chapterRef": "ch_demand_supply",
+      "topicRef": "topic_reliability",
+      "requiredEntities": [
+        "ent_region",
+        "ent_peak_met",
+        "ent_peak_demand"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_peak_met → Peak Met column",
+        "ent_peak_demand → Peak Demand column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_demand_met_chart",
+      "slotType": "chart",
+      "questionRef": "q_demand_met",
+      "componentRef": "q_demand_met_chart",
+      "sectionRef": "sec_demand_met",
+      "chapterRef": "ch_demand_supply",
+      "topicRef": "topic_reliability",
+      "requiredEntities": [
+        "ent_region",
+        "ent_peak_met",
+        "ent_peak_demand"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_peak_met → Peak Met column",
+        "ent_peak_demand → Peak Demand column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Peak Demand Met Ratio by Region"
+      },
+      "chartTitle": "Peak Demand Met Ratio by Region",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_peak_met"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_demand_met_table",
+      "slotType": "table",
+      "questionRef": "q_demand_met",
+      "componentRef": "q_demand_met_table",
+      "sectionRef": "sec_demand_met",
+      "chapterRef": "ch_demand_supply",
+      "topicRef": "topic_reliability",
+      "requiredEntities": [
+        "ent_region",
+        "ent_peak_met",
+        "ent_peak_demand"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_peak_met → Peak Met column",
+        "ent_peak_demand → Peak Demand column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 4,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_peak_met"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_peak_met",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_demand_met_metric",
+      "slotType": "metric",
+      "questionRef": "q_demand_met",
+      "componentRef": "q_demand_met_metric",
+      "sectionRef": "sec_demand_met",
+      "chapterRef": "ch_demand_supply",
+      "topicRef": "topic_reliability",
+      "requiredEntities": [
+        "ent_region",
+        "ent_peak_met",
+        "ent_peak_demand"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_peak_met → Peak Met column",
+        "ent_peak_demand → Peak Demand column"
+      ],
+      "outputContract": {
+        "type": "computed_metric",
+        "displayFormat": "percentage"
+      },
+      "formulaRef": "f_demand_met_ratio",
+      "formulaSpec": {
+        "formulaType": "RATIO",
+        "numerator": "ent_peak_met",
+        "denominator": "ent_peak_demand",
+        "grain": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_regional_capacity_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_regional_capacity",
+      "componentRef": "q_regional_capacity_narrative",
+      "sectionRef": "sec_regional_capacity",
+      "chapterRef": "ch_regional",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [
+        "ent_region",
+        "ent_installed"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_regional_capacity_table",
+      "slotType": "table",
+      "questionRef": "q_regional_capacity",
+      "componentRef": "q_regional_capacity_table",
+      "sectionRef": "sec_regional_capacity",
+      "chapterRef": "ch_regional",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [
+        "ent_region",
+        "ent_installed"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_installed"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_installed",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_regional_capacity_chart",
+      "slotType": "chart",
+      "questionRef": "q_regional_capacity",
+      "componentRef": "q_regional_capacity_chart",
+      "sectionRef": "sec_regional_capacity",
+      "chapterRef": "ch_regional",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [
+        "ent_region",
+        "ent_installed"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Installed Capacity by Region (MW)"
+      },
+      "chartTitle": "Installed Capacity by Region (MW)",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_installed"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_regional_renewable_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_regional_renewable",
+      "componentRef": "q_regional_renewable_narrative",
+      "sectionRef": "sec_regional_renewable",
+      "chapterRef": "ch_regional",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [
+        "ent_region",
+        "ent_renewable"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_renewable → Renewable column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_regional_renewable_table",
+      "slotType": "table",
+      "questionRef": "q_regional_renewable",
+      "componentRef": "q_regional_renewable_table",
+      "sectionRef": "sec_regional_renewable",
+      "chapterRef": "ch_regional",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [
+        "ent_region",
+        "ent_renewable"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_renewable → Renewable column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 8,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_renewable"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_renewable",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_regional_renewable_chart",
+      "slotType": "chart",
+      "questionRef": "q_regional_renewable",
+      "componentRef": "q_regional_renewable_chart",
+      "sectionRef": "sec_regional_renewable",
+      "chapterRef": "ch_regional",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [
+        "ent_region",
+        "ent_renewable"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_renewable → Renewable column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Renewable Capacity by Region (MW)"
+      },
+      "chartTitle": "Renewable Capacity by Region (MW)",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_renewable"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_ren_thermal_narrative",
+      "slotType": "narrative",
+      "questionRef": "q_ren_thermal",
+      "componentRef": "q_ren_thermal_narrative",
+      "sectionRef": "sec_ren_thermal",
+      "chapterRef": "ch_composite",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [
+        "ent_region",
+        "ent_renewable",
+        "ent_thermal"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_renewable → Renewable column",
+        "ent_thermal → Thermal column"
+      ],
+      "outputContract": {
+        "type": "prose",
+        "minWords": 55,
+        "maxWords": 120
+      }
+    },
+    {
+      "slotId": "slot_ren_thermal_chart",
+      "slotType": "chart",
+      "questionRef": "q_ren_thermal",
+      "componentRef": "q_ren_thermal_chart",
+      "sectionRef": "sec_ren_thermal",
+      "chapterRef": "ch_composite",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [
+        "ent_region",
+        "ent_renewable",
+        "ent_thermal"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_renewable → Renewable column",
+        "ent_thermal → Thermal column"
+      ],
+      "outputContract": {
+        "type": "visualization",
+        "chartType": "bar",
+        "title": "Renewable-to-Thermal Ratio by Region"
+      },
+      "chartTitle": "Renewable-to-Thermal Ratio by Region",
+      "chartSpec": {
+        "xAxis": "ent_region",
+        "yAxes": [
+          "ent_renewable"
+        ],
+        "topN": 6
+      }
+    },
+    {
+      "slotId": "slot_ren_thermal_table",
+      "slotType": "table",
+      "questionRef": "q_ren_thermal",
+      "componentRef": "q_ren_thermal_table",
+      "sectionRef": "sec_ren_thermal",
+      "chapterRef": "ch_composite",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [
+        "ent_region",
+        "ent_renewable",
+        "ent_thermal"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_renewable → Renewable column",
+        "ent_thermal → Thermal column"
+      ],
+      "outputContract": {
+        "type": "structured_data",
+        "minRows": 4,
+        "maxRows": 6
+      },
+      "tableSpec": {
+        "rowEntity": "ent_region",
+        "columns": [
+          "ent_renewable"
+        ],
+        "groupBy": null,
+        "sortBy": "ent_renewable",
+        "sortOrder": "descending"
+      }
+    },
+    {
+      "slotId": "slot_ren_thermal_metric",
+      "slotType": "metric",
+      "questionRef": "q_ren_thermal",
+      "componentRef": "q_ren_thermal_metric",
+      "sectionRef": "sec_ren_thermal",
+      "chapterRef": "ch_composite",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [
+        "ent_region",
+        "ent_renewable",
+        "ent_thermal"
+      ],
+      "generationMethod": "RATIO",
+      "lineageChain": [
+        "ent_region → Region column",
+        "ent_renewable → Renewable column",
+        "ent_thermal → Thermal column"
+      ],
+      "outputContract": {
+        "type": "computed_metric",
+        "displayFormat": "multiplier"
+      },
+      "formulaRef": "f_renewable_thermal_ratio",
+      "formulaSpec": {
+        "formulaType": "RATIO",
+        "numerator": "ent_renewable",
+        "denominator": "ent_thermal",
+        "grain": "ent_region"
+      }
+    },
+    {
+      "slotId": "slot_methodology_methodology",
+      "slotType": "methodology",
+      "questionRef": "q_methodology",
+      "componentRef": "q_methodology_methodology",
+      "sectionRef": "sec_methodology",
+      "chapterRef": "ch_methodology",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [
+        "ent_installed"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "methodology"
+      }
+    },
+    {
+      "slotId": "slot_methodology_source_note",
+      "slotType": "source_note",
+      "questionRef": "q_methodology",
+      "componentRef": "q_methodology_source_note",
+      "sectionRef": "sec_methodology",
+      "chapterRef": "ch_methodology",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [
+        "ent_installed"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "attribution"
+      }
+    },
+    {
+      "slotId": "slot_methodology_glossary",
+      "slotType": "glossary",
+      "questionRef": "q_methodology",
+      "componentRef": "q_methodology_glossary",
+      "sectionRef": "sec_methodology",
+      "chapterRef": "ch_methodology",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [
+        "ent_installed"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "definitions"
+      }
+    },
+    {
+      "slotId": "slot_methodology_caveat",
+      "slotType": "caveat",
+      "questionRef": "q_methodology",
+      "componentRef": "q_methodology_caveat",
+      "sectionRef": "sec_methodology",
+      "chapterRef": "ch_methodology",
+      "topicRef": "topic_crosscutting",
+      "requiredEntities": [
+        "ent_installed"
+      ],
+      "generationMethod": "DIRECT",
+      "lineageChain": [
+        "ent_installed → Installed Capacity column"
+      ],
+      "outputContract": {
+        "type": "caveat"
+      }
+    }
+  ],
+  "slotDependencies": [
+    {
+      "slot": "slot_cap_rank_narrative",
+      "dependsOn": [
+        "slot_cap_rank_table",
+        "slot_cap_rank_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_cap_mix_narrative",
+      "dependsOn": [
+        "slot_cap_mix_chart",
+        "slot_cap_mix_metric"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_thermal_rank_narrative",
+      "dependsOn": [
+        "slot_thermal_rank_table",
+        "slot_thermal_rank_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_hydro_rank_narrative",
+      "dependsOn": [
+        "slot_hydro_rank_table",
+        "slot_hydro_rank_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_gen_rank_narrative",
+      "dependsOn": [
+        "slot_gen_rank_table",
+        "slot_gen_rank_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_gen_regional_narrative",
+      "dependsOn": [
+        "slot_gen_regional_table",
+        "slot_gen_regional_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_plf_rank_narrative",
+      "dependsOn": [
+        "slot_plf_rank_table",
+        "slot_plf_rank_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_solar_rank_narrative",
+      "dependsOn": [
+        "slot_solar_rank_table",
+        "slot_solar_rank_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_wind_rank_narrative",
+      "dependsOn": [
+        "slot_wind_rank_table",
+        "slot_wind_rank_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_ren_share_narrative",
+      "dependsOn": [
+        "slot_ren_share_chart",
+        "slot_ren_share_metric"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_biomass_rank_narrative",
+      "dependsOn": [
+        "slot_biomass_rank_table",
+        "slot_biomass_rank_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_percap_rank_narrative",
+      "dependsOn": [
+        "slot_percap_rank_table",
+        "slot_percap_rank_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_consumption_regional_narrative",
+      "dependsOn": [
+        "slot_consumption_regional_table",
+        "slot_consumption_regional_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_elec_rank_narrative",
+      "dependsOn": [
+        "slot_elec_rank_table",
+        "slot_elec_rank_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_td_rank_narrative",
+      "dependsOn": [
+        "slot_td_rank_table",
+        "slot_td_rank_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_peak_demand_narrative",
+      "dependsOn": [
+        "slot_peak_demand_table",
+        "slot_peak_demand_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_demand_met_narrative",
+      "dependsOn": [
+        "slot_demand_met_chart",
+        "slot_demand_met_table",
+        "slot_demand_met_metric"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_regional_capacity_narrative",
+      "dependsOn": [
+        "slot_regional_capacity_table",
+        "slot_regional_capacity_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_regional_renewable_narrative",
+      "dependsOn": [
+        "slot_regional_renewable_table",
+        "slot_regional_renewable_chart"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    },
+    {
+      "slot": "slot_ren_thermal_narrative",
+      "dependsOn": [
+        "slot_ren_thermal_chart",
+        "slot_ren_thermal_table",
+        "slot_ren_thermal_metric"
+      ],
+      "reason": "Narrative cites the visual/metric"
+    }
+  ],
+  "executionOrder": [
+    "slot_cap_rank_table",
+    "slot_cap_rank_chart",
+    "slot_cap_rank_narrative",
+    "slot_cap_mix_chart",
+    "slot_cap_mix_metric",
+    "slot_cap_mix_narrative",
+    "slot_thermal_rank_table",
+    "slot_thermal_rank_chart",
+    "slot_thermal_rank_narrative",
+    "slot_hydro_rank_table",
+    "slot_hydro_rank_chart",
+    "slot_hydro_rank_narrative",
+    "slot_gen_rank_table",
+    "slot_gen_rank_chart",
+    "slot_gen_rank_narrative",
+    "slot_gen_regional_table",
+    "slot_gen_regional_chart",
+    "slot_gen_regional_narrative",
+    "slot_plf_rank_table",
+    "slot_plf_rank_chart",
+    "slot_plf_rank_narrative",
+    "slot_solar_rank_table",
+    "slot_solar_rank_chart",
+    "slot_solar_rank_narrative",
+    "slot_wind_rank_table",
+    "slot_wind_rank_chart",
+    "slot_wind_rank_narrative",
+    "slot_ren_share_chart",
+    "slot_ren_share_metric",
+    "slot_ren_share_narrative",
+    "slot_biomass_rank_table",
+    "slot_biomass_rank_chart",
+    "slot_biomass_rank_narrative",
+    "slot_percap_rank_table",
+    "slot_percap_rank_chart",
+    "slot_percap_rank_narrative",
+    "slot_consumption_regional_table",
+    "slot_consumption_regional_chart",
+    "slot_consumption_regional_narrative",
+    "slot_elec_rank_table",
+    "slot_elec_rank_chart",
+    "slot_elec_rank_narrative",
+    "slot_td_rank_table",
+    "slot_td_rank_chart",
+    "slot_td_rank_narrative",
+    "slot_peak_demand_table",
+    "slot_peak_demand_chart",
+    "slot_peak_demand_narrative",
+    "slot_demand_met_chart",
+    "slot_demand_met_table",
+    "slot_demand_met_metric",
+    "slot_demand_met_narrative",
+    "slot_regional_capacity_table",
+    "slot_regional_capacity_chart",
+    "slot_regional_capacity_narrative",
+    "slot_regional_renewable_table",
+    "slot_regional_renewable_chart",
+    "slot_regional_renewable_narrative",
+    "slot_ren_thermal_chart",
+    "slot_ren_thermal_table",
+    "slot_ren_thermal_metric",
+    "slot_ren_thermal_narrative",
+    "slot_methodology_methodology",
+    "slot_methodology_source_note",
+    "slot_methodology_glossary",
+    "slot_methodology_caveat"
+  ]
+}

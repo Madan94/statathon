@@ -70,6 +70,9 @@ def render_question_group(
 
     This is the per-question unit both archetypes reuse; the document layer
     stacks these between cover/TOC and the appendix.
+
+    The ``level`` field (1=topic, 2=section) maps to heading tags (h1, h2) and
+    CSS indentation classes for proper document hierarchy.
     """
     get_theme(theme)  # validate/normalise (CSS comes from theme_css upstream)
     blocks = {b.get("blockId"): b for b in (report.get("contentAST") or {}).get("blocks", [])}
@@ -78,13 +81,17 @@ def render_question_group(
     tables = {t.get("tableId"): t for t in (report.get("tableAST") or {}).get("tables", [])}
 
     sec_id = section.get("sectionId")
+    level = section.get("level", 2)  # default to h2 for question sections
+    level_class = f" level-{level}" if level else ""
     id_attr = f' id="{esc(sec_id)}"' if sec_id else ""
-    parts = [f'<section class="report-section"{id_attr}>']
+    parts = [f'<section class="report-section{level_class}"{id_attr}>']
     title = loc(section.get("title"), locale)
     if title:
-        parts.append(f"<h2>{esc(title)}</h2>")
+        # Use h1 for topics (level 1), h2 for sections (level 2), h3 for subsections
+        htag = f"h{min(level, 3)}" if level else "h2"
+        parts.append(f"<{htag}>{esc(title)}</{htag}>")
     for child_id in section.get("children") or []:
         parts.append(render_child(child_id, blocks, figures, charts, tables,
                                   theme, locale=locale, number_system=number_system))
     parts.append("</section>")
-    return "".join(parts)
+    return "".join(parts)"

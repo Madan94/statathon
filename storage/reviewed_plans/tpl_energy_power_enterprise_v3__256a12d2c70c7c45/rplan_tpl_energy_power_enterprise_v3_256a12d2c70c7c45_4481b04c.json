@@ -1,0 +1,566 @@
+{
+  "$schema": "binding.reviewedPlan.v1",
+  "planId": "rplan_tpl_energy_power_enterprise_v3_256a12d2c70c7c45_4481b04c",
+  "templatePackageRef": {
+    "templateId": "tpl_energy_power_enterprise_v3",
+    "version": "3.0.0",
+    "blueprintHash": "5115333660fbec3a",
+    "astHash": "44136fa355b3678a",
+    "semanticSlotGraphHash": "44136fa355b3678a"
+  },
+  "datasetId": "energy_power_enterprise_v3.dataset",
+  "datasetSignature": "256a12d2c70c7c45",
+  "bindingAstId": "bind_tpl_energy_power_enterprise_v3_4481b04c068f",
+  "status": "READY",
+  "planTree": [
+    {
+      "nodeId": "topic_capacity",
+      "nodeType": "topic",
+      "title": "Installed Power Capacity",
+      "order": 1,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": []
+    },
+    {
+      "nodeId": "topic_generation",
+      "nodeType": "topic",
+      "title": "Power Generation & Efficiency",
+      "order": 2,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": []
+    },
+    {
+      "nodeId": "topic_renewable",
+      "nodeType": "topic",
+      "title": "Renewable Energy",
+      "order": 3,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": []
+    },
+    {
+      "nodeId": "topic_consumption",
+      "nodeType": "topic",
+      "title": "Consumption & Electrification",
+      "order": 4,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": []
+    },
+    {
+      "nodeId": "topic_reliability",
+      "nodeType": "topic",
+      "title": "Reliability & System Losses",
+      "order": 5,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": []
+    },
+    {
+      "nodeId": "topic_crosscutting",
+      "nodeType": "topic",
+      "title": "Cross-Cutting Regional Analysis",
+      "order": 6,
+      "source": "extracted",
+      "enabled": true,
+      "requiredEntities": [],
+      "components": [],
+      "readiness": "unknown",
+      "children": []
+    }
+  ],
+  "entityBindings": [
+    {
+      "entityId": "ent_state_ut",
+      "entityName": "State/UT",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "State/UT"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "State/UT matched dataset column 'State/UT'",
+          "column": "State/UT"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_region",
+      "entityName": "Region",
+      "entityType": "dimension",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Region"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Region matched dataset column 'Region'",
+          "column": "Region"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_period",
+      "entityName": "Period",
+      "entityType": "time",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Period"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Period matched dataset column 'Period'",
+          "column": "Period"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_installed",
+      "entityName": "Installed Capacity",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Installed Capacity"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Installed Capacity matched dataset column 'Installed Capacity'",
+          "column": "Installed Capacity"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_thermal",
+      "entityName": "Thermal Capacity",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Thermal"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Thermal Capacity matched dataset column 'Thermal'",
+          "column": "Thermal"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_hydro",
+      "entityName": "Hydro Capacity",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Hydro"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Hydro Capacity matched dataset column 'Hydro'",
+          "column": "Hydro"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_nuclear",
+      "entityName": "Nuclear Capacity",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Nuclear"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Nuclear Capacity matched dataset column 'Nuclear'",
+          "column": "Nuclear"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_solar",
+      "entityName": "Solar Capacity",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Solar"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Solar Capacity matched dataset column 'Solar'",
+          "column": "Solar"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_wind",
+      "entityName": "Wind Capacity",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Wind"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Wind Capacity matched dataset column 'Wind'",
+          "column": "Wind"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_biomass",
+      "entityName": "Biomass Capacity",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Biomass"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Biomass Capacity matched dataset column 'Biomass'",
+          "column": "Biomass"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_renewable",
+      "entityName": "Renewable Capacity",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Renewable"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Renewable Capacity matched dataset column 'Renewable'",
+          "column": "Renewable"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_generation",
+      "entityName": "Power Generation",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Generation"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Power Generation matched dataset column 'Generation'",
+          "column": "Generation"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_percap",
+      "entityName": "Per-Capita Consumption",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Per Capita Consumption"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Per-Capita Consumption matched dataset column 'Per Capita Consumption'",
+          "column": "Per Capita Consumption"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_td_losses",
+      "entityName": "T&D Losses",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "T&D Losses"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "T&D Losses matched dataset column 'T&D Losses'",
+          "column": "T&D Losses"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_electrification",
+      "entityName": "Electrification Level",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Electrification"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Electrification Level matched dataset column 'Electrification'",
+          "column": "Electrification"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_plf",
+      "entityName": "Plant Load Factor",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "PLF"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Plant Load Factor matched dataset column 'PLF'",
+          "column": "PLF"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_peak_demand",
+      "entityName": "Peak Demand",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Peak Demand"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Peak Demand matched dataset column 'Peak Demand'",
+          "column": "Peak Demand"
+        }
+      ],
+      "risks": []
+    },
+    {
+      "entityId": "ent_peak_met",
+      "entityName": "Peak Demand Met",
+      "entityType": "measure",
+      "cardinality": "oneToOne",
+      "columns": [
+        {
+          "column": "Peak Met"
+        }
+      ],
+      "combine": "none",
+      "confidence": 0.99,
+      "method": "columnExpr",
+      "status": "confirmed",
+      "alternatives": [],
+      "evidence": [
+        {
+          "signal": "columnExpr",
+          "score": 0.99,
+          "detail": "Peak Demand Met matched dataset column 'Peak Met'",
+          "column": "Peak Met"
+        }
+      ],
+      "risks": []
+    }
+  ],
+  "questionBindings": [],
+  "coverage": {
+    "entities": {
+      "bound": 18,
+      "pending": 0,
+      "unresolved": 0
+    },
+    "questions": {
+      "executable": 0,
+      "blocked": 0,
+      "degraded": 0
+    },
+    "issues": []
+  },
+  "semanticSlotGraph": {},
+  "virtualSlots": [],
+  "auditTrail": [
+    {
+      "event": "reviewed_plan_fast_path_created",
+      "source": "binding.finalize",
+      "timestamp": 1781666650.8764374
+    }
+  ],
+  "createdAt": 1781666650.8764546,
+  "updatedAt": 1781666650.8895092
+}

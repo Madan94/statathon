@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import copy
 from pathlib import Path
 from typing import Any
 
@@ -98,8 +99,6 @@ def _enterprise_layout_pages(skeleton: dict[str, Any], blueprint: dict[str, Any]
     Produces front-matter, one body page per outline section (chapter/section/topic),
     and back-matter pages. Always returns more than one page.
     """
-    from report_builder.template_traversal import iter_question_contexts
-
     pub = blueprint.get("publicationContract") or {}
     front_matter = pub.get("requiredMatter") or ["title_page", "toc", "source_notes"]
     pages: list[dict[str, Any]] = [{
@@ -110,7 +109,7 @@ def _enterprise_layout_pages(skeleton: dict[str, Any], blueprint: dict[str, Any]
     }]
 
     seen_sections: list[str] = []
-    for ctx in iter_question_contexts(blueprint):
+    for ctx in _iter_question_contexts(blueprint):
         sid = ctx.get("sectionId") or ctx.get("chapterId") or ctx.get("topicId")
         if sid and sid not in seen_sections:
             seen_sections.append(sid)
@@ -127,14 +126,36 @@ def _enterprise_layout_pages(skeleton: dict[str, Any], blueprint: dict[str, Any]
     return pages
 
 
+def _iter_question_contexts(blueprint: dict[str, Any]) -> list[dict[str, Any]]:
+    """Flat list of question contexts (topicId/chapterId/sectionId per question),
+    walking every nesting key so the layout scaffold counts real outline sections."""
+    out: list[dict[str, Any]] = []
+
+    def _walk(node: dict[str, Any], ctx: dict[str, Any]) -> None:
+        node_ctx = dict(ctx)
+        for key in ("topicId", "chapterId", "sectionId", "subtopicId"):
+            if node.get(key):
+                node_ctx[key] = node[key]
+        for q in node.get("questions") or []:
+            if isinstance(q, dict):
+                qc = dict(node_ctx)
+                qc["questionId"] = q.get("questionId") or q.get("id")
+                out.append(qc)
+        for child_key in ("chapters", "sections", "subtopics", "subsections", "children"):
+            for child in node.get(child_key) or []:
+                if isinstance(child, dict):
+                    _walk(child, node_ctx)
+
+    for topic in (blueprint.get("topics") or blueprint.get("sections") or []):
+        if isinstance(topic, dict):
+            _walk(topic, {})
+    return out
+
+
 def build_value_free_skeleton(ast: dict[str, Any]) -> dict[str, Any]:
     """Derive \u2460 template.ast.json (render skeleton) from the assembled AST."""
     meta = dict(ast.get("metadata") or {})
-    # Use the SAME normalizer as the blueprint so ① template.ast and
-    # ② template.blueprint always share one binder address. Falling back to a bare
-    # "tpl_document" here (while the blueprint derived "tpl_<title>_v1") produced a
-    # systemic TEMPLATE_ID_MISMATCH that blocked S3.5 on every extraction.
-    template_id = _normalize_template_id(meta, ast.get("blueprint") or {})
+    template_id = meta.get("documentId") or "tpl_document"
     skeleton: dict[str, Any] = {
         "$schema": "bharatstat/template-ast/v1",
         "_doc": _GOLD_AST_DOC,
@@ -160,15 +181,13 @@ def build_value_free_skeleton(ast: dict[str, Any]) -> dict[str, Any]:
     blueprint = ast.get("blueprint") or {}
     topics = blueprint.get("topics") or []
     skeleton = compact_skeleton_ast(skeleton, topics)
-
-    # Enterprise packages get AST overlays + a multi-page publication scaffold. Legacy
-    # and gold built-in packages keep the compact one-page skeleton (gated, no leak).
+    # Enterprise packages get AST overlays + a multi-page publication scaffold.
+    # Legacy/gold built-ins keep the compact one-page skeleton (gated opt-in).
     if _blueprint_is_enterprise(blueprint):
         from report_builder.enterprise_template_contract import enrich_enterprise_ast
         skeleton = enrich_enterprise_ast(skeleton, blueprint)
         skeleton["layoutAST"] = {"pages": _enterprise_layout_pages(skeleton, blueprint)}
     return skeleton
-
 
 
 def build_value_free_blueprint(ast: dict[str, Any]) -> dict[str, Any]:
@@ -814,14 +833,15 @@ def assert_value_free(template: dict[str, Any], *, label: str = "template") -> l
 def emit_templates(ast: dict[str, Any], out_dir: Path, *, enterprise: bool = True) -> dict[str, Any]:
     """Write \u2460 template.ast.json + \u2461 template.blueprint.json to ``out_dir``.
 
+    When ``enterprise`` is True (default for extraction output) the blueprint is
+    enriched with deterministic enterprise contracts (officerCustomization,
+    binderDeliverableContract, formulaCatalog, …) and the skeleton gains the
+    matching AST overlays + multi-page publication scaffold. Legacy/gold built-in
+    packages can pass ``enterprise=False`` to keep the compact one-page skeleton.
+
     Returns a report dict with the written paths and any value-free violations
     (violations are logged as warnings but do not block writing, so the artifacts
     remain inspectable during migration).
-
-    When ``enterprise`` is True (default for extraction output) the blueprint is
-    enriched with deterministic enterprise contracts, entity evidence and binder-native
-    question contracts, the AST receives publication overlays + a multi-page scaffold,
-    and a ``semantic_slot_graph.json`` is written alongside the two core files.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     blueprint = build_value_free_blueprint(ast)
@@ -829,8 +849,8 @@ def emit_templates(ast: dict[str, Any], out_dir: Path, *, enterprise: bool = Tru
         from report_builder.enterprise_template_contract import enrich_enterprise_blueprint
         blueprint = enrich_enterprise_blueprint(blueprint)
 
-    # Build the skeleton from the (possibly enriched) blueprint so enterprise overlays
-    # and the multi-page scaffold are emitted when the blueprint is enterprise.
+    # Build the skeleton from the (possibly enriched) blueprint so enterprise
+    # overlays + the multi-page scaffold are emitted when the blueprint is enterprise.
     ast_for_skeleton = dict(ast)
     ast_for_skeleton["blueprint"] = blueprint
     skeleton = build_value_free_skeleton(ast_for_skeleton)
@@ -840,26 +860,33 @@ def emit_templates(ast: dict[str, Any], out_dir: Path, *, enterprise: bool = Tru
 
     skeleton_path = out_dir / "template.ast.json"
     blueprint_path = out_dir / "template.blueprint.json"
+    graph_path = out_dir / "semantic_slot_graph.json"
+    package_path = out_dir / "template.package.json"
     with open(skeleton_path, "w", encoding="utf-8") as fh:
         json.dump(skeleton, fh, ensure_ascii=False, indent=2, default=str)
     with open(blueprint_path, "w", encoding="utf-8") as fh:
         json.dump(blueprint, fh, ensure_ascii=False, indent=2, default=str)
 
-    # Emit the component-first semantic slot graph as a first-class artifact.
-    slot_graph_path = out_dir / "semantic_slot_graph.json"
-    try:
-        from report_builder.slot_wiring import wire_template, build_semantic_slot_graph
-        wiring_result = wire_template(skeleton, blueprint, auto_repair=True)
-        skeleton = wiring_result.skeleton
-        graph = build_semantic_slot_graph(skeleton, blueprint, wiring_result)
-        with open(slot_graph_path, "w", encoding="utf-8") as fh:
-            json.dump(graph.to_dict(), fh, ensure_ascii=False, indent=2, default=str)
-        # Re-persist the wired skeleton so its slots match the graph.
-        with open(skeleton_path, "w", encoding="utf-8") as fh:
-            json.dump(skeleton, fh, ensure_ascii=False, indent=2, default=str)
-    except Exception as exc:  # pragma: no cover - defensive; slot graph is best-effort
-        logger.warning("[template_emit] semantic slot graph emission failed: %s", exc)
+    from report_builder.slot_wiring import build_semantic_slot_graph, wire_template
+    from report_builder.template_package import build_template_package_manifest
 
+    # Auto-repair so every question component is wired to a slot (enterprise
+    # packages start from empty content blocks); the slot graph then carries the
+    # full component lineage even though the on-disk skeleton stays value-free.
+    wiring_result = wire_template(copy.deepcopy(skeleton), blueprint, auto_repair=True)
+    semantic_slot_graph = build_semantic_slot_graph(
+        wiring_result.skeleton, blueprint, wiring_result
+    ).to_dict()
+    with open(graph_path, "w", encoding="utf-8") as fh:
+        json.dump(semantic_slot_graph, fh, ensure_ascii=False, indent=2, default=str)
+
+    manifest = build_template_package_manifest(
+        template_ast=skeleton,
+        template_blueprint=blueprint,
+        semantic_slot_graph=semantic_slot_graph,
+    )
+    with open(package_path, "w", encoding="utf-8") as fh:
+        json.dump(manifest.to_dict(), fh, ensure_ascii=False, indent=2, default=str)
 
     # Diagnostic rejected entities are NOT part of the gold template; persist them to a
     # sidecar so the hygiene information remains inspectable without bloating ②.
@@ -882,6 +909,8 @@ def emit_templates(ast: dict[str, Any], out_dir: Path, *, enterprise: bool = Tru
     return {
         "skeleton_path": str(skeleton_path),
         "blueprint_path": str(blueprint_path),
+        "semantic_slot_graph_path": str(graph_path),
+        "package_path": str(package_path),
         "violations": violations,
     }
 

@@ -1,0 +1,4504 @@
+{
+  "$schema": "bharatstat/template-blueprint/v2",
+  "contractVersion": "template.extraction.v2",
+  "_doc": "Enterprise analytic blueprint for India Power & Energy Sector — Enterprise Statistical Report v3. 6 topics, dense state-level power-sector data, 30+ page target.",
+  "templateMeta": {
+    "templateId": "tpl_energy_power_enterprise_v3",
+    "name": "India Power & Energy Sector — Enterprise Statistical Report v3",
+    "domain": "energy",
+    "reportType": "enterprise_power_annual",
+    "locale": "en-IN",
+    "version": "3.0.0",
+    "sourceDocument": "Central Electricity Authority — General Review 2025",
+    "valueFree": true,
+    "proseFree": true,
+    "targetPageCount": "30-36",
+    "standardPageCount": 32,
+    "hardPageCap": 40,
+    "description": "Enterprise power & energy sector report: installed capacity, source mix, generation, renewables, consumption, electrification, system losses, peak demand and cross-cutting regional indices.",
+    "templateClass": "enterprise_publication",
+    "releaseStage": "built_in_officer_ready",
+    "createdBy": "BharatStat template architect",
+    "lastUpdated": "2026-06-17",
+    "compatibleStages": [
+      "S0",
+      "S1",
+      "S2",
+      "S3",
+      "S3.5",
+      "S4",
+      "S5",
+      "S6",
+      "S7"
+    ]
+  },
+  "statisticalContext": {
+    "sourceDocument": "Central Electricity Authority — General Review 2025",
+    "ministry": "Ministry of Power / MNRE",
+    "domain": "energy",
+    "geographyLevel": "state_ut",
+    "regionMapping": {
+      "North": [
+        "Delhi",
+        "Haryana",
+        "Punjab",
+        "Rajasthan",
+        "Himachal Pradesh",
+        "Uttarakhand",
+        "Jammu & Kashmir"
+      ],
+      "South": [
+        "Andhra Pradesh",
+        "Karnataka",
+        "Kerala",
+        "Tamil Nadu",
+        "Telangana"
+      ],
+      "East": [
+        "Bihar",
+        "Jharkhand",
+        "Odisha",
+        "West Bengal"
+      ],
+      "West": [
+        "Goa",
+        "Gujarat",
+        "Maharashtra"
+      ],
+      "Central": [
+        "Chhattisgarh",
+        "Madhya Pradesh",
+        "Uttar Pradesh"
+      ],
+      "North-East": [
+        "Assam",
+        "Arunachal Pradesh",
+        "Manipur",
+        "Meghalaya",
+        "Tripura",
+        "Sikkim",
+        "Nagaland",
+        "Mizoram"
+      ]
+    },
+    "timeCoverage": [
+      "2025"
+    ],
+    "referenceDates": [
+      "As on 1st April 2025"
+    ],
+    "dataSources": [
+      "Central Electricity Authority",
+      "Ministry of New and Renewable Energy",
+      "POSOCO / Grid-India",
+      "State Load Despatch Centres"
+    ],
+    "footnotes": [
+      "P: Provisional",
+      "*: Assessed potential",
+      "#: Includes captive capacity"
+    ],
+    "glossary": {
+      "MW": "Megawatt",
+      "GWh": "Gigawatt-hour",
+      "kWh": "Kilowatt-hour",
+      "PLF": "Plant Load Factor — ratio of actual to maximum possible generation.",
+      "T&D Losses": "Transmission and distribution energy losses as a share of input.",
+      "Installed Capacity": "Total rated generation capacity of all plants.",
+      "Renewable": "Hydro, solar, wind and biomass capacity combined.",
+      "CEA": "Central Electricity Authority",
+      "MNRE": "Ministry of New and Renewable Energy"
+    }
+  },
+  "entities": [
+    {
+      "entityId": "ent_state_ut",
+      "entityName": "State/UT",
+      "entityType": "dimension",
+      "columnExpr": "State/UT",
+      "role": "dimension",
+      "unit": null,
+      "description": "State/UT dimension"
+    },
+    {
+      "entityId": "ent_region",
+      "entityName": "Region",
+      "entityType": "dimension",
+      "columnExpr": "Region",
+      "role": "dimension",
+      "unit": null,
+      "description": "Region dimension"
+    },
+    {
+      "entityId": "ent_period",
+      "entityName": "Period",
+      "entityType": "time",
+      "columnExpr": "Period",
+      "role": "time",
+      "unit": "year",
+      "description": "Period dimension"
+    },
+    {
+      "entityId": "ent_installed",
+      "entityName": "Installed Capacity",
+      "entityType": "measure",
+      "columnExpr": "Installed Capacity",
+      "role": "measure",
+      "unit": "MW",
+      "description": "Installed Capacity (MW)"
+    },
+    {
+      "entityId": "ent_thermal",
+      "entityName": "Thermal Capacity",
+      "entityType": "measure",
+      "columnExpr": "Thermal",
+      "role": "measure",
+      "unit": "MW",
+      "description": "Thermal Capacity (MW)"
+    },
+    {
+      "entityId": "ent_hydro",
+      "entityName": "Hydro Capacity",
+      "entityType": "measure",
+      "columnExpr": "Hydro",
+      "role": "measure",
+      "unit": "MW",
+      "description": "Hydro Capacity (MW)"
+    },
+    {
+      "entityId": "ent_nuclear",
+      "entityName": "Nuclear Capacity",
+      "entityType": "measure",
+      "columnExpr": "Nuclear",
+      "role": "measure",
+      "unit": "MW",
+      "description": "Nuclear Capacity (MW)"
+    },
+    {
+      "entityId": "ent_solar",
+      "entityName": "Solar Capacity",
+      "entityType": "measure",
+      "columnExpr": "Solar",
+      "role": "measure",
+      "unit": "MW",
+      "description": "Solar Capacity (MW)"
+    },
+    {
+      "entityId": "ent_wind",
+      "entityName": "Wind Capacity",
+      "entityType": "measure",
+      "columnExpr": "Wind",
+      "role": "measure",
+      "unit": "MW",
+      "description": "Wind Capacity (MW)"
+    },
+    {
+      "entityId": "ent_biomass",
+      "entityName": "Biomass Capacity",
+      "entityType": "measure",
+      "columnExpr": "Biomass",
+      "role": "measure",
+      "unit": "MW",
+      "description": "Biomass Capacity (MW)"
+    },
+    {
+      "entityId": "ent_renewable",
+      "entityName": "Renewable Capacity",
+      "entityType": "measure",
+      "columnExpr": "Renewable",
+      "role": "measure",
+      "unit": "MW",
+      "description": "Renewable Capacity (MW)"
+    },
+    {
+      "entityId": "ent_generation",
+      "entityName": "Power Generation",
+      "entityType": "measure",
+      "columnExpr": "Generation",
+      "role": "measure",
+      "unit": "GWh",
+      "description": "Power Generation (GWh)"
+    },
+    {
+      "entityId": "ent_percap",
+      "entityName": "Per-Capita Consumption",
+      "entityType": "measure",
+      "columnExpr": "Per Capita Consumption",
+      "role": "measure",
+      "unit": "kWh",
+      "description": "Per-Capita Consumption (kWh)"
+    },
+    {
+      "entityId": "ent_td_losses",
+      "entityName": "T&D Losses",
+      "entityType": "measure",
+      "columnExpr": "T&D Losses",
+      "role": "measure",
+      "unit": "percent",
+      "description": "T&D Losses (percent)"
+    },
+    {
+      "entityId": "ent_electrification",
+      "entityName": "Electrification Level",
+      "entityType": "measure",
+      "columnExpr": "Electrification",
+      "role": "measure",
+      "unit": "percent",
+      "description": "Electrification Level (percent)"
+    },
+    {
+      "entityId": "ent_plf",
+      "entityName": "Plant Load Factor",
+      "entityType": "measure",
+      "columnExpr": "PLF",
+      "role": "measure",
+      "unit": "percent",
+      "description": "Plant Load Factor (percent)"
+    },
+    {
+      "entityId": "ent_peak_demand",
+      "entityName": "Peak Demand",
+      "entityType": "measure",
+      "columnExpr": "Peak Demand",
+      "role": "measure",
+      "unit": "MW",
+      "description": "Peak Demand (MW)"
+    },
+    {
+      "entityId": "ent_peak_met",
+      "entityName": "Peak Demand Met",
+      "entityType": "measure",
+      "columnExpr": "Peak Met",
+      "role": "measure",
+      "unit": "MW",
+      "description": "Peak Demand Met (MW)"
+    }
+  ],
+  "formulaCatalog": [
+    {
+      "formulaId": "f_renewable_share",
+      "formulaType": "SHARE",
+      "label": "Renewable Share of Capacity",
+      "numerator": "ent_renewable",
+      "denominator": "ent_installed",
+      "grain": "ent_state_ut",
+      "displayFormat": "percentage",
+      "precision": 1
+    },
+    {
+      "formulaId": "f_thermal_share",
+      "formulaType": "SHARE",
+      "label": "Thermal Share of Capacity",
+      "numerator": "ent_thermal",
+      "denominator": "ent_installed",
+      "grain": "ent_state_ut",
+      "displayFormat": "percentage",
+      "precision": 1
+    },
+    {
+      "formulaId": "f_demand_met_ratio",
+      "formulaType": "RATIO",
+      "label": "Peak Demand Met Ratio",
+      "numerator": "ent_peak_met",
+      "denominator": "ent_peak_demand",
+      "grain": "ent_state_ut",
+      "displayFormat": "percentage",
+      "precision": 1
+    },
+    {
+      "formulaId": "f_renewable_thermal_ratio",
+      "formulaType": "RATIO",
+      "label": "Renewable-to-Thermal Ratio",
+      "numerator": "ent_renewable",
+      "denominator": "ent_thermal",
+      "grain": "ent_region",
+      "displayFormat": "multiplier",
+      "precision": 2
+    }
+  ],
+  "topics": [
+    {
+      "topicId": "topic_capacity",
+      "title": "Installed Power Capacity",
+      "order": 1,
+      "semanticRef": "topic_capacity",
+      "officerSummary": "State-wise installed generation capacity, its source mix, and the thermal/hydro backbone.",
+      "pageBudget": {
+        "min": 4,
+        "max": 6
+      },
+      "chapters": [
+        {
+          "chapterId": "ch_total_capacity",
+          "title": "Total Installed Capacity",
+          "order": 1,
+          "chapterType": "analytical",
+          "officerSummary": "Total Installed Capacity",
+          "pageBudget": {
+            "min": 2,
+            "max": 3
+          },
+          "sections": [
+            {
+              "sectionId": "sec_capacity_rank",
+              "title": "State-wise Capacity Ranking",
+              "order": 1,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_cap_rank",
+                  "intent": "Establish which states anchor India's generation capacity.",
+                  "questionText": "Rank States/UTs by total installed power capacity and identify the leading contributors.",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_state_ut",
+                      "role": "dimension",
+                      "columnExpr": "State/UT",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_installed",
+                      "role": "measure",
+                      "columnExpr": "Installed Capacity",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_generation",
+                      "role": "measure",
+                      "columnExpr": "Generation",
+                      "unit": "GWh"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_state_ut",
+                    "sortBy": "ent_installed",
+                    "sortOrder": "descending",
+                    "topN": 12,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_installed",
+                        "condition": "not_null"
+                      }
+                    ],
+                    "groupBy": "ent_region"
+                  },
+                  "officerIntent": "Establish which states anchor India's generation capacity.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_state_ut",
+                      "ent_region"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_cap_rank_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_installed"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_installed",
+                          "ent_generation"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_cap_rank_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 12,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Installed Capacity by State/UT",
+                          "rowEntity": "ent_state_ut",
+                          "columns": [
+                            "ent_installed",
+                            "ent_generation"
+                          ],
+                          "groupRowsBy": "ent_region",
+                          "sortBy": "ent_installed",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "MW",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_installed",
+                          "ent_generation"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_cap_rank_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Installed Capacity by State/UT (MW)",
+                          "chartType": "bar",
+                          "unitLabel": "MW",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_state_ut",
+                            "label": "State/UT"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_installed",
+                              "label": "Installed Capacity"
+                            }
+                          ],
+                          "groupBy": "ent_region",
+                          "sortBy": "ent_installed",
+                          "topN": 12
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_installed",
+                          "ent_generation"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "sectionId": "sec_capacity_mix",
+              "title": "National Capacity Source Mix",
+              "order": 2,
+              "sectionArchetype": "composition_analysis",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_cap_mix",
+                  "intent": "Decompose installed capacity into thermal, hydro, nuclear and renewable sources.",
+                  "questionText": "How is national installed capacity distributed across thermal, hydro, nuclear, solar, wind and biomass?",
+                  "questionType": "composition",
+                  "priority": "P1_must",
+                  "generationMethod": "SHARE",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_thermal",
+                      "role": "measure",
+                      "columnExpr": "Thermal",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_hydro",
+                      "role": "measure",
+                      "columnExpr": "Hydro",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_nuclear",
+                      "role": "measure",
+                      "columnExpr": "Nuclear",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_solar",
+                      "role": "measure",
+                      "columnExpr": "Solar",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_wind",
+                      "role": "measure",
+                      "columnExpr": "Wind",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_biomass",
+                      "role": "measure",
+                      "columnExpr": "Biomass",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_installed",
+                      "role": "measure",
+                      "columnExpr": "Installed Capacity",
+                      "unit": "MW"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "composition",
+                    "grain": "national",
+                    "aggregation": "sum",
+                    "parts": [
+                      "ent_thermal",
+                      "ent_hydro",
+                      "ent_nuclear",
+                      "ent_solar",
+                      "ent_wind",
+                      "ent_biomass"
+                    ],
+                    "whole": "ent_installed",
+                    "formula": {
+                      "formulaType": "SHARE",
+                      "formulaRef": "f_thermal_share",
+                      "numerator": "ent_thermal",
+                      "denominator": "ent_installed",
+                      "grain": "national"
+                    }
+                  },
+                  "officerIntent": "Decompose installed capacity into thermal, hydro, nuclear and renewable sources.",
+                  "dataRequirements": {
+                    "minRows": 3,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_thermal",
+                      "ent_hydro"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_cap_mix_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_thermal"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_thermal",
+                          "ent_hydro",
+                          "ent_nuclear",
+                          "ent_solar"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_cap_mix_chart",
+                        "kind": "chart",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "donut",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "National Capacity Mix by Source",
+                          "chartType": "donut",
+                          "unitLabel": "MW",
+                          "showDataLabels": true,
+                          "slices": [
+                            "ent_thermal",
+                            "ent_hydro",
+                            "ent_nuclear",
+                            "ent_solar",
+                            "ent_wind",
+                            "ent_biomass"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_thermal",
+                          "ent_hydro",
+                          "ent_nuclear",
+                          "ent_solar",
+                          "ent_wind",
+                          "ent_biomass",
+                          "ent_installed"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      },
+                      {
+                        "componentId": "q_cap_mix_metric",
+                        "kind": "metric",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "computed_metric",
+                          "displayFormat": "percentage"
+                        },
+                        "formulaSpec": {
+                          "formulaType": "SHARE",
+                          "formulaRef": "f_thermal_share",
+                          "numerator": "ent_thermal",
+                          "denominator": "ent_installed",
+                          "grain": "national"
+                        },
+                        "requiredEntities": [
+                          "ent_thermal",
+                          "ent_installed"
+                        ],
+                        "customization": {
+                          "officerEditable": true
+                        }
+                      }
+                    ]
+                  },
+                  "formulaSpec": {
+                    "formulaType": "SHARE",
+                    "formulaRef": "f_thermal_share",
+                    "numerator": "ent_thermal",
+                    "denominator": "ent_installed",
+                    "grain": "national"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chapterId": "ch_capacity_sources",
+          "title": "Thermal & Hydro Backbone",
+          "order": 2,
+          "chapterType": "analytical",
+          "officerSummary": "Thermal & Hydro Backbone",
+          "pageBudget": {
+            "min": 2,
+            "max": 3
+          },
+          "sections": [
+            {
+              "sectionId": "sec_thermal_rank",
+              "title": "Thermal Capacity Leaders",
+              "order": 1,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_thermal_rank",
+                  "intent": "Identify the thermal generation heartland.",
+                  "questionText": "Rank States/UTs by installed thermal capacity.",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_state_ut",
+                      "role": "dimension",
+                      "columnExpr": "State/UT",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_thermal",
+                      "role": "measure",
+                      "columnExpr": "Thermal",
+                      "unit": "MW"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_state_ut",
+                    "sortBy": "ent_thermal",
+                    "sortOrder": "descending",
+                    "topN": 12,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_thermal",
+                        "condition": "not_null"
+                      }
+                    ],
+                    "groupBy": "ent_region"
+                  },
+                  "officerIntent": "Identify the thermal generation heartland.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_state_ut",
+                      "ent_region"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_thermal_rank_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_thermal"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_thermal"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_thermal_rank_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 12,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Thermal Capacity by State/UT",
+                          "rowEntity": "ent_state_ut",
+                          "columns": [
+                            "ent_thermal"
+                          ],
+                          "groupRowsBy": "ent_region",
+                          "sortBy": "ent_thermal",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "MW",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_thermal"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_thermal_rank_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Thermal Capacity by State/UT (MW)",
+                          "chartType": "bar",
+                          "unitLabel": "MW",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_state_ut",
+                            "label": "State/UT"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_thermal",
+                              "label": "Thermal Capacity"
+                            }
+                          ],
+                          "groupBy": "ent_region",
+                          "sortBy": "ent_thermal",
+                          "topN": 12
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_thermal"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "sectionId": "sec_hydro_rank",
+              "title": "Hydro Capacity Leaders",
+              "order": 2,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_hydro_rank",
+                  "intent": "Locate India's hydropower endowment.",
+                  "questionText": "Rank States/UTs by installed hydropower capacity.",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_state_ut",
+                      "role": "dimension",
+                      "columnExpr": "State/UT",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_hydro",
+                      "role": "measure",
+                      "columnExpr": "Hydro",
+                      "unit": "MW"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_state_ut",
+                    "sortBy": "ent_hydro",
+                    "sortOrder": "descending",
+                    "topN": 12,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_hydro",
+                        "condition": "not_null"
+                      }
+                    ],
+                    "groupBy": "ent_region"
+                  },
+                  "officerIntent": "Locate India's hydropower endowment.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_state_ut",
+                      "ent_region"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_hydro_rank_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_hydro"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_hydro"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_hydro_rank_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 12,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Hydro Capacity by State/UT",
+                          "rowEntity": "ent_state_ut",
+                          "columns": [
+                            "ent_hydro"
+                          ],
+                          "groupRowsBy": "ent_region",
+                          "sortBy": "ent_hydro",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "MW",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_hydro"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_hydro_rank_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Hydro Capacity by State/UT (MW)",
+                          "chartType": "bar",
+                          "unitLabel": "MW",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_state_ut",
+                            "label": "State/UT"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_hydro",
+                              "label": "Hydro Capacity"
+                            }
+                          ],
+                          "groupBy": "ent_region",
+                          "sortBy": "ent_hydro",
+                          "topN": 12
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_hydro"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_generation",
+      "title": "Power Generation & Efficiency",
+      "order": 2,
+      "semanticRef": "topic_generation",
+      "officerSummary": "Generation volume by state and region, and plant-load-factor efficiency.",
+      "pageBudget": {
+        "min": 4,
+        "max": 6
+      },
+      "chapters": [
+        {
+          "chapterId": "ch_gen_volume",
+          "title": "Generation Volume",
+          "order": 1,
+          "chapterType": "analytical",
+          "officerSummary": "Generation Volume",
+          "pageBudget": {
+            "min": 2,
+            "max": 3
+          },
+          "sections": [
+            {
+              "sectionId": "sec_gen_rank",
+              "title": "State-wise Generation Ranking",
+              "order": 1,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_gen_rank",
+                  "intent": "Quantify the generation output leaders.",
+                  "questionText": "Rank States/UTs by annual power generation in GWh.",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_state_ut",
+                      "role": "dimension",
+                      "columnExpr": "State/UT",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_generation",
+                      "role": "measure",
+                      "columnExpr": "Generation",
+                      "unit": "GWh"
+                    },
+                    {
+                      "entityId": "ent_installed",
+                      "role": "measure",
+                      "columnExpr": "Installed Capacity",
+                      "unit": "MW"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_state_ut",
+                    "sortBy": "ent_generation",
+                    "sortOrder": "descending",
+                    "topN": 12,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_generation",
+                        "condition": "not_null"
+                      }
+                    ],
+                    "groupBy": "ent_region"
+                  },
+                  "officerIntent": "Quantify the generation output leaders.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_state_ut",
+                      "ent_region"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_gen_rank_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_generation"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_generation",
+                          "ent_installed"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_gen_rank_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 12,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Power Generation by State/UT",
+                          "rowEntity": "ent_state_ut",
+                          "columns": [
+                            "ent_generation",
+                            "ent_installed"
+                          ],
+                          "groupRowsBy": "ent_region",
+                          "sortBy": "ent_generation",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "GWh",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_generation",
+                          "ent_installed"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_gen_rank_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Power Generation by State/UT (GWh)",
+                          "chartType": "bar",
+                          "unitLabel": "GWh",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_state_ut",
+                            "label": "State/UT"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_generation",
+                              "label": "Power Generation"
+                            }
+                          ],
+                          "groupBy": "ent_region",
+                          "sortBy": "ent_generation",
+                          "topN": 12
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_generation",
+                          "ent_installed"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "sectionId": "sec_gen_regional",
+              "title": "Regional Generation Aggregate",
+              "order": 2,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_gen_regional",
+                  "intent": "Compare total generation across the six regions.",
+                  "questionText": "Aggregate annual power generation by region.",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_generation",
+                      "role": "measure",
+                      "columnExpr": "Generation",
+                      "unit": "GWh"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_region",
+                    "sortBy": "ent_generation",
+                    "sortOrder": "descending",
+                    "topN": 6,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_generation",
+                        "condition": "not_null"
+                      }
+                    ]
+                  },
+                  "officerIntent": "Compare total generation across the six regions.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_region",
+                      "ent_generation"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_gen_regional_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_generation"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_generation"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_gen_regional_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 6,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Power Generation by Region",
+                          "rowEntity": "ent_region",
+                          "columns": [
+                            "ent_generation"
+                          ],
+                          "groupRowsBy": null,
+                          "sortBy": "ent_generation",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "GWh",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_generation"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_gen_regional_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Power Generation by Region (GWh)",
+                          "chartType": "bar",
+                          "unitLabel": "GWh",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_region",
+                            "label": "Region"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_generation",
+                              "label": "Power Generation"
+                            }
+                          ],
+                          "sortBy": "ent_generation",
+                          "topN": 6
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_generation"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chapterId": "ch_gen_efficiency",
+          "title": "Generation Efficiency",
+          "order": 2,
+          "chapterType": "analytical",
+          "officerSummary": "Generation Efficiency",
+          "pageBudget": {
+            "min": 2,
+            "max": 3
+          },
+          "sections": [
+            {
+              "sectionId": "sec_plf_rank",
+              "title": "Plant Load Factor Leaders",
+              "order": 1,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_plf_rank",
+                  "intent": "Surface the most efficient generation fleets.",
+                  "questionText": "Rank States/UTs by average plant load factor (PLF %).",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_state_ut",
+                      "role": "dimension",
+                      "columnExpr": "State/UT",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_plf",
+                      "role": "measure",
+                      "columnExpr": "PLF",
+                      "unit": "percent"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_state_ut",
+                    "sortBy": "ent_plf",
+                    "sortOrder": "descending",
+                    "topN": 12,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_plf",
+                        "condition": "not_null"
+                      }
+                    ],
+                    "groupBy": "ent_region"
+                  },
+                  "officerIntent": "Surface the most efficient generation fleets.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_state_ut",
+                      "ent_region"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_plf_rank_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_plf"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_plf"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_plf_rank_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 12,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Plant Load Factor by State/UT",
+                          "rowEntity": "ent_state_ut",
+                          "columns": [
+                            "ent_plf"
+                          ],
+                          "groupRowsBy": "ent_region",
+                          "sortBy": "ent_plf",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "percent",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_plf"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_plf_rank_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Plant Load Factor by State/UT (%)",
+                          "chartType": "bar",
+                          "unitLabel": "percent",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_state_ut",
+                            "label": "State/UT"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_plf",
+                              "label": "Plant Load Factor"
+                            }
+                          ],
+                          "groupBy": "ent_region",
+                          "sortBy": "ent_plf",
+                          "topN": 12
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_plf"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_renewable",
+      "title": "Renewable Energy",
+      "order": 3,
+      "semanticRef": "topic_renewable",
+      "officerSummary": "Solar, wind and biomass capacity, and the renewable share of the energy mix.",
+      "pageBudget": {
+        "min": 4,
+        "max": 6
+      },
+      "chapters": [
+        {
+          "chapterId": "ch_ren_capacity",
+          "title": "Renewable Capacity",
+          "order": 1,
+          "chapterType": "analytical",
+          "officerSummary": "Renewable Capacity",
+          "pageBudget": {
+            "min": 2,
+            "max": 3
+          },
+          "sections": [
+            {
+              "sectionId": "sec_solar_rank",
+              "title": "Solar Capacity Leaders",
+              "order": 1,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_solar_rank",
+                  "intent": "Map the solar generation frontier.",
+                  "questionText": "Rank States/UTs by installed solar capacity.",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_state_ut",
+                      "role": "dimension",
+                      "columnExpr": "State/UT",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_solar",
+                      "role": "measure",
+                      "columnExpr": "Solar",
+                      "unit": "MW"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_state_ut",
+                    "sortBy": "ent_solar",
+                    "sortOrder": "descending",
+                    "topN": 12,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_solar",
+                        "condition": "not_null"
+                      }
+                    ],
+                    "groupBy": "ent_region"
+                  },
+                  "officerIntent": "Map the solar generation frontier.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_state_ut",
+                      "ent_region"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_solar_rank_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_solar"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_solar"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_solar_rank_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 12,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Solar Capacity by State/UT",
+                          "rowEntity": "ent_state_ut",
+                          "columns": [
+                            "ent_solar"
+                          ],
+                          "groupRowsBy": "ent_region",
+                          "sortBy": "ent_solar",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "MW",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_solar"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_solar_rank_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Solar Capacity by State/UT (MW)",
+                          "chartType": "bar",
+                          "unitLabel": "MW",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_state_ut",
+                            "label": "State/UT"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_solar",
+                              "label": "Solar Capacity"
+                            }
+                          ],
+                          "groupBy": "ent_region",
+                          "sortBy": "ent_solar",
+                          "topN": 12
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_solar"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "sectionId": "sec_wind_rank",
+              "title": "Wind Capacity Leaders",
+              "order": 2,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_wind_rank",
+                  "intent": "Locate the wind-rich corridors.",
+                  "questionText": "Rank States/UTs by installed wind capacity.",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_state_ut",
+                      "role": "dimension",
+                      "columnExpr": "State/UT",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_wind",
+                      "role": "measure",
+                      "columnExpr": "Wind",
+                      "unit": "MW"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_state_ut",
+                    "sortBy": "ent_wind",
+                    "sortOrder": "descending",
+                    "topN": 12,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_wind",
+                        "condition": "not_null"
+                      }
+                    ],
+                    "groupBy": "ent_region"
+                  },
+                  "officerIntent": "Locate the wind-rich corridors.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_state_ut",
+                      "ent_region"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_wind_rank_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_wind"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_wind"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_wind_rank_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 12,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Wind Capacity by State/UT",
+                          "rowEntity": "ent_state_ut",
+                          "columns": [
+                            "ent_wind"
+                          ],
+                          "groupRowsBy": "ent_region",
+                          "sortBy": "ent_wind",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "MW",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_wind"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_wind_rank_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Wind Capacity by State/UT (MW)",
+                          "chartType": "bar",
+                          "unitLabel": "MW",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_state_ut",
+                            "label": "State/UT"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_wind",
+                              "label": "Wind Capacity"
+                            }
+                          ],
+                          "groupBy": "ent_region",
+                          "sortBy": "ent_wind",
+                          "topN": 12
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_wind"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chapterId": "ch_ren_share",
+          "title": "Renewable Penetration",
+          "order": 2,
+          "chapterType": "analytical",
+          "officerSummary": "Renewable Penetration",
+          "pageBudget": {
+            "min": 2,
+            "max": 3
+          },
+          "sections": [
+            {
+              "sectionId": "sec_ren_share",
+              "title": "Renewable Share of Capacity",
+              "order": 1,
+              "sectionArchetype": "composition_analysis",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_ren_share",
+                  "intent": "Assess how far the capacity mix has greened.",
+                  "questionText": "What share of installed capacity is renewable, and how do solar, wind and biomass compose it?",
+                  "questionType": "composition",
+                  "priority": "P1_must",
+                  "generationMethod": "SHARE",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_solar",
+                      "role": "measure",
+                      "columnExpr": "Solar",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_wind",
+                      "role": "measure",
+                      "columnExpr": "Wind",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_biomass",
+                      "role": "measure",
+                      "columnExpr": "Biomass",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_hydro",
+                      "role": "measure",
+                      "columnExpr": "Hydro",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_renewable",
+                      "role": "measure",
+                      "columnExpr": "Renewable",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_installed",
+                      "role": "measure",
+                      "columnExpr": "Installed Capacity",
+                      "unit": "MW"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "composition",
+                    "grain": "national",
+                    "aggregation": "sum",
+                    "parts": [
+                      "ent_solar",
+                      "ent_wind",
+                      "ent_biomass",
+                      "ent_hydro"
+                    ],
+                    "whole": "ent_renewable",
+                    "formula": {
+                      "formulaType": "SHARE",
+                      "formulaRef": "f_renewable_share",
+                      "numerator": "ent_renewable",
+                      "denominator": "ent_installed",
+                      "grain": "national"
+                    }
+                  },
+                  "officerIntent": "Assess how far the capacity mix has greened.",
+                  "dataRequirements": {
+                    "minRows": 3,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_solar",
+                      "ent_wind"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_ren_share_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_solar"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_solar",
+                          "ent_wind",
+                          "ent_biomass",
+                          "ent_hydro"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_ren_share_chart",
+                        "kind": "chart",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "pie",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Renewable Capacity Composition",
+                          "chartType": "pie",
+                          "unitLabel": "MW",
+                          "showDataLabels": true,
+                          "slices": [
+                            "ent_solar",
+                            "ent_wind",
+                            "ent_biomass",
+                            "ent_hydro"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_solar",
+                          "ent_wind",
+                          "ent_biomass",
+                          "ent_hydro",
+                          "ent_renewable",
+                          "ent_installed"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      },
+                      {
+                        "componentId": "q_ren_share_metric",
+                        "kind": "metric",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "computed_metric",
+                          "displayFormat": "percentage"
+                        },
+                        "formulaSpec": {
+                          "formulaType": "SHARE",
+                          "formulaRef": "f_renewable_share",
+                          "numerator": "ent_renewable",
+                          "denominator": "ent_installed",
+                          "grain": "national"
+                        },
+                        "requiredEntities": [
+                          "ent_renewable",
+                          "ent_installed"
+                        ],
+                        "customization": {
+                          "officerEditable": true
+                        }
+                      }
+                    ]
+                  },
+                  "formulaSpec": {
+                    "formulaType": "SHARE",
+                    "formulaRef": "f_renewable_share",
+                    "numerator": "ent_renewable",
+                    "denominator": "ent_installed",
+                    "grain": "national"
+                  }
+                }
+              ]
+            },
+            {
+              "sectionId": "sec_biomass_rank",
+              "title": "Biomass Capacity Leaders",
+              "order": 2,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_biomass_rank",
+                  "intent": "Identify agri-biomass power leaders.",
+                  "questionText": "Rank States/UTs by installed biomass capacity.",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_state_ut",
+                      "role": "dimension",
+                      "columnExpr": "State/UT",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_biomass",
+                      "role": "measure",
+                      "columnExpr": "Biomass",
+                      "unit": "MW"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_state_ut",
+                    "sortBy": "ent_biomass",
+                    "sortOrder": "descending",
+                    "topN": 12,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_biomass",
+                        "condition": "not_null"
+                      }
+                    ],
+                    "groupBy": "ent_region"
+                  },
+                  "officerIntent": "Identify agri-biomass power leaders.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_state_ut",
+                      "ent_region"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_biomass_rank_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_biomass"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_biomass"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_biomass_rank_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 12,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Biomass Capacity by State/UT",
+                          "rowEntity": "ent_state_ut",
+                          "columns": [
+                            "ent_biomass"
+                          ],
+                          "groupRowsBy": "ent_region",
+                          "sortBy": "ent_biomass",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "MW",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_biomass"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_biomass_rank_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Biomass Capacity by State/UT (MW)",
+                          "chartType": "bar",
+                          "unitLabel": "MW",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_state_ut",
+                            "label": "State/UT"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_biomass",
+                              "label": "Biomass Capacity"
+                            }
+                          ],
+                          "groupBy": "ent_region",
+                          "sortBy": "ent_biomass",
+                          "topN": 12
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_biomass"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_consumption",
+      "title": "Consumption & Electrification",
+      "order": 4,
+      "semanticRef": "topic_consumption",
+      "officerSummary": "Per-capita electricity consumption and household electrification access.",
+      "pageBudget": {
+        "min": 4,
+        "max": 6
+      },
+      "chapters": [
+        {
+          "chapterId": "ch_consumption",
+          "title": "Electricity Consumption",
+          "order": 1,
+          "chapterType": "analytical",
+          "officerSummary": "Electricity Consumption",
+          "pageBudget": {
+            "min": 2,
+            "max": 3
+          },
+          "sections": [
+            {
+              "sectionId": "sec_percap_rank",
+              "title": "Per-Capita Consumption Leaders",
+              "order": 1,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_percap_rank",
+                  "intent": "Reveal consumption intensity differences.",
+                  "questionText": "Rank States/UTs by per-capita electricity consumption (kWh).",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_state_ut",
+                      "role": "dimension",
+                      "columnExpr": "State/UT",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_percap",
+                      "role": "measure",
+                      "columnExpr": "Per Capita Consumption",
+                      "unit": "kWh"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_state_ut",
+                    "sortBy": "ent_percap",
+                    "sortOrder": "descending",
+                    "topN": 12,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_percap",
+                        "condition": "not_null"
+                      }
+                    ],
+                    "groupBy": "ent_region"
+                  },
+                  "officerIntent": "Reveal consumption intensity differences.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_state_ut",
+                      "ent_region"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_percap_rank_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_percap"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_percap"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_percap_rank_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 12,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Per-Capita Consumption by State/UT",
+                          "rowEntity": "ent_state_ut",
+                          "columns": [
+                            "ent_percap"
+                          ],
+                          "groupRowsBy": "ent_region",
+                          "sortBy": "ent_percap",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "kWh",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_percap"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_percap_rank_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Per-Capita Consumption by State/UT (kWh)",
+                          "chartType": "bar",
+                          "unitLabel": "kWh",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_state_ut",
+                            "label": "State/UT"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_percap",
+                              "label": "Per-Capita Consumption"
+                            }
+                          ],
+                          "groupBy": "ent_region",
+                          "sortBy": "ent_percap",
+                          "topN": 12
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_percap"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "sectionId": "sec_consumption_regional",
+              "title": "Regional Consumption Profile",
+              "order": 2,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_consumption_regional",
+                  "intent": "Compare consumption intensity across regions.",
+                  "questionText": "Aggregate per-capita electricity consumption by region.",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_percap",
+                      "role": "measure",
+                      "columnExpr": "Per Capita Consumption",
+                      "unit": "kWh"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_region",
+                    "sortBy": "ent_percap",
+                    "sortOrder": "descending",
+                    "topN": 6,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_percap",
+                        "condition": "not_null"
+                      }
+                    ]
+                  },
+                  "officerIntent": "Compare consumption intensity across regions.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_region",
+                      "ent_percap"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_consumption_regional_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_percap"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_percap"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_consumption_regional_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 6,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Per-Capita Consumption by Region",
+                          "rowEntity": "ent_region",
+                          "columns": [
+                            "ent_percap"
+                          ],
+                          "groupRowsBy": null,
+                          "sortBy": "ent_percap",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "kWh",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_percap"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_consumption_regional_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Per-Capita Consumption by Region (kWh)",
+                          "chartType": "bar",
+                          "unitLabel": "kWh",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_region",
+                            "label": "Region"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_percap",
+                              "label": "Per-Capita Consumption"
+                            }
+                          ],
+                          "sortBy": "ent_percap",
+                          "topN": 6
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_percap"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chapterId": "ch_access",
+          "title": "Electrification Access",
+          "order": 2,
+          "chapterType": "analytical",
+          "officerSummary": "Electrification Access",
+          "pageBudget": {
+            "min": 2,
+            "max": 3
+          },
+          "sections": [
+            {
+              "sectionId": "sec_elec_rank",
+              "title": "Electrification Leaders",
+              "order": 1,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_elec_rank",
+                  "intent": "Track household electricity access.",
+                  "questionText": "Rank States/UTs by household electrification level (%).",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_state_ut",
+                      "role": "dimension",
+                      "columnExpr": "State/UT",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_electrification",
+                      "role": "measure",
+                      "columnExpr": "Electrification",
+                      "unit": "percent"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_state_ut",
+                    "sortBy": "ent_electrification",
+                    "sortOrder": "descending",
+                    "topN": 12,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_electrification",
+                        "condition": "not_null"
+                      }
+                    ],
+                    "groupBy": "ent_region"
+                  },
+                  "officerIntent": "Track household electricity access.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_state_ut",
+                      "ent_region"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_elec_rank_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_electrification"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_electrification"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_elec_rank_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 12,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Electrification Level by State/UT",
+                          "rowEntity": "ent_state_ut",
+                          "columns": [
+                            "ent_electrification"
+                          ],
+                          "groupRowsBy": "ent_region",
+                          "sortBy": "ent_electrification",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "percent",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_electrification"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_elec_rank_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Electrification Level by State/UT (%)",
+                          "chartType": "bar",
+                          "unitLabel": "percent",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_state_ut",
+                            "label": "State/UT"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_electrification",
+                              "label": "Electrification Level"
+                            }
+                          ],
+                          "groupBy": "ent_region",
+                          "sortBy": "ent_electrification",
+                          "topN": 12
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_electrification"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_reliability",
+      "title": "Reliability & System Losses",
+      "order": 5,
+      "semanticRef": "topic_reliability",
+      "officerSummary": "Transmission & distribution losses, peak demand and demand-met performance.",
+      "pageBudget": {
+        "min": 4,
+        "max": 6
+      },
+      "chapters": [
+        {
+          "chapterId": "ch_losses",
+          "title": "System Losses",
+          "order": 1,
+          "chapterType": "analytical",
+          "officerSummary": "System Losses",
+          "pageBudget": {
+            "min": 2,
+            "max": 3
+          },
+          "sections": [
+            {
+              "sectionId": "sec_td_rank",
+              "title": "Transmission & Distribution Losses",
+              "order": 1,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_td_rank",
+                  "intent": "Expose the largest distribution-loss systems.",
+                  "questionText": "Rank States/UTs by transmission and distribution losses (%).",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_state_ut",
+                      "role": "dimension",
+                      "columnExpr": "State/UT",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_td_losses",
+                      "role": "measure",
+                      "columnExpr": "T&D Losses",
+                      "unit": "percent"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_state_ut",
+                    "sortBy": "ent_td_losses",
+                    "sortOrder": "descending",
+                    "topN": 12,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_td_losses",
+                        "condition": "not_null"
+                      }
+                    ],
+                    "groupBy": "ent_region"
+                  },
+                  "officerIntent": "Expose the largest distribution-loss systems.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_state_ut",
+                      "ent_region"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_td_rank_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_td_losses"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_td_losses"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_td_rank_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 12,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "T&D Losses by State/UT",
+                          "rowEntity": "ent_state_ut",
+                          "columns": [
+                            "ent_td_losses"
+                          ],
+                          "groupRowsBy": "ent_region",
+                          "sortBy": "ent_td_losses",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "percent",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_td_losses"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_td_rank_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "T&D Losses by State/UT (%)",
+                          "chartType": "bar",
+                          "unitLabel": "percent",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_state_ut",
+                            "label": "State/UT"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_td_losses",
+                              "label": "T&D Losses"
+                            }
+                          ],
+                          "groupBy": "ent_region",
+                          "sortBy": "ent_td_losses",
+                          "topN": 12
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_td_losses"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "sectionId": "sec_peak_demand",
+              "title": "Peak Demand Leaders",
+              "order": 2,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_peak_demand",
+                  "intent": "Size the largest load centres.",
+                  "questionText": "Rank States/UTs by peak electricity demand (MW).",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_state_ut",
+                      "role": "dimension",
+                      "columnExpr": "State/UT",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_peak_demand",
+                      "role": "measure",
+                      "columnExpr": "Peak Demand",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_peak_met",
+                      "role": "measure",
+                      "columnExpr": "Peak Met",
+                      "unit": "MW"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_state_ut",
+                    "sortBy": "ent_peak_demand",
+                    "sortOrder": "descending",
+                    "topN": 12,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_peak_demand",
+                        "condition": "not_null"
+                      }
+                    ],
+                    "groupBy": "ent_region"
+                  },
+                  "officerIntent": "Size the largest load centres.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_state_ut",
+                      "ent_region"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_peak_demand_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_peak_demand"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_peak_demand",
+                          "ent_peak_met"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_peak_demand_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 12,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Peak Demand by State/UT",
+                          "rowEntity": "ent_state_ut",
+                          "columns": [
+                            "ent_peak_demand",
+                            "ent_peak_met"
+                          ],
+                          "groupRowsBy": "ent_region",
+                          "sortBy": "ent_peak_demand",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "MW",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_peak_demand",
+                          "ent_peak_met"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_peak_demand_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Peak Demand by State/UT (MW)",
+                          "chartType": "bar",
+                          "unitLabel": "MW",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_state_ut",
+                            "label": "State/UT"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_peak_demand",
+                              "label": "Peak Demand"
+                            }
+                          ],
+                          "groupBy": "ent_region",
+                          "sortBy": "ent_peak_demand",
+                          "topN": 12
+                        },
+                        "requiredEntities": [
+                          "ent_state_ut",
+                          "ent_region",
+                          "ent_peak_demand",
+                          "ent_peak_met"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chapterId": "ch_demand_supply",
+          "title": "Demand–Supply Balance",
+          "order": 2,
+          "chapterType": "analytical",
+          "officerSummary": "Demand–Supply Balance",
+          "pageBudget": {
+            "min": 2,
+            "max": 3
+          },
+          "sections": [
+            {
+              "sectionId": "sec_demand_met",
+              "title": "Peak Demand Met Performance",
+              "order": 1,
+              "sectionArchetype": "ratio_analysis",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_demand_met",
+                  "intent": "Judge how well peak demand is served.",
+                  "questionText": "What ratio of peak demand is met, and how does it vary by region?",
+                  "questionType": "ratio",
+                  "priority": "P1_must",
+                  "generationMethod": "RATIO",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_peak_met",
+                      "role": "measure",
+                      "columnExpr": "Peak Met",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_peak_demand",
+                      "role": "measure",
+                      "columnExpr": "Peak Demand",
+                      "unit": "MW"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_region",
+                    "sortBy": "ent_peak_met",
+                    "sortOrder": "descending",
+                    "topN": 6,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_peak_met",
+                        "condition": "not_null"
+                      }
+                    ],
+                    "formula": {
+                      "formulaType": "RATIO",
+                      "formulaRef": "f_demand_met_ratio",
+                      "numerator": "ent_peak_met",
+                      "denominator": "ent_peak_demand",
+                      "grain": "ent_region"
+                    }
+                  },
+                  "officerIntent": "Judge how well peak demand is served.",
+                  "dataRequirements": {
+                    "minRows": 4,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_region",
+                      "ent_peak_met"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_demand_met_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_peak_met"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_peak_met",
+                          "ent_peak_demand"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_demand_met_chart",
+                        "kind": "chart",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Peak Demand Met Ratio by Region",
+                          "chartType": "bar",
+                          "unitLabel": "MW",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_region",
+                            "label": "Region"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_peak_met",
+                              "label": "Peak Demand Met"
+                            }
+                          ],
+                          "sortBy": "ent_peak_met",
+                          "topN": 6
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_peak_met",
+                          "ent_peak_demand"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      },
+                      {
+                        "componentId": "q_demand_met_table",
+                        "kind": "table",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 4,
+                          "maxRows": 6,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Peak Demand Met by Region",
+                          "rowEntity": "ent_region",
+                          "columns": [
+                            "ent_peak_met"
+                          ],
+                          "groupRowsBy": null,
+                          "sortBy": "ent_peak_met",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "MW",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_peak_met",
+                          "ent_peak_demand"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_demand_met_metric",
+                        "kind": "metric",
+                        "order": 4,
+                        "outputContract": {
+                          "type": "computed_metric",
+                          "displayFormat": "percentage"
+                        },
+                        "formulaSpec": {
+                          "formulaType": "RATIO",
+                          "formulaRef": "f_demand_met_ratio",
+                          "numerator": "ent_peak_met",
+                          "denominator": "ent_peak_demand",
+                          "grain": "ent_region"
+                        },
+                        "requiredEntities": [
+                          "ent_peak_met",
+                          "ent_peak_demand"
+                        ],
+                        "customization": {
+                          "officerEditable": true
+                        }
+                      }
+                    ]
+                  },
+                  "formulaSpec": {
+                    "formulaType": "RATIO",
+                    "formulaRef": "f_demand_met_ratio",
+                    "numerator": "ent_peak_met",
+                    "denominator": "ent_peak_demand",
+                    "grain": "ent_region"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "topicId": "topic_crosscutting",
+      "title": "Cross-Cutting Regional Analysis",
+      "order": 6,
+      "semanticRef": "topic_crosscutting",
+      "officerSummary": "Regional endowment comparison, the renewable-to-thermal balance, and methodology.",
+      "pageBudget": {
+        "min": 4,
+        "max": 6
+      },
+      "chapters": [
+        {
+          "chapterId": "ch_regional",
+          "title": "Regional Energy Endowment",
+          "order": 1,
+          "chapterType": "analytical",
+          "officerSummary": "Regional Energy Endowment",
+          "pageBudget": {
+            "min": 2,
+            "max": 3
+          },
+          "sections": [
+            {
+              "sectionId": "sec_regional_capacity",
+              "title": "Regional Capacity Distribution",
+              "order": 1,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_regional_capacity",
+                  "intent": "Compare total capacity endowment across regions.",
+                  "questionText": "Aggregate installed power capacity by region.",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_installed",
+                      "role": "measure",
+                      "columnExpr": "Installed Capacity",
+                      "unit": "MW"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_region",
+                    "sortBy": "ent_installed",
+                    "sortOrder": "descending",
+                    "topN": 6,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_installed",
+                        "condition": "not_null"
+                      }
+                    ]
+                  },
+                  "officerIntent": "Compare total capacity endowment across regions.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_region",
+                      "ent_installed"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_regional_capacity_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_installed"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_installed"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_regional_capacity_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 6,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Installed Capacity by Region",
+                          "rowEntity": "ent_region",
+                          "columns": [
+                            "ent_installed"
+                          ],
+                          "groupRowsBy": null,
+                          "sortBy": "ent_installed",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "MW",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_installed"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_regional_capacity_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Installed Capacity by Region (MW)",
+                          "chartType": "bar",
+                          "unitLabel": "MW",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_region",
+                            "label": "Region"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_installed",
+                              "label": "Installed Capacity"
+                            }
+                          ],
+                          "sortBy": "ent_installed",
+                          "topN": 6
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_installed"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "sectionId": "sec_regional_renewable",
+              "title": "Regional Renewable Distribution",
+              "order": 2,
+              "sectionArchetype": "ranking_distribution",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_regional_renewable",
+                  "intent": "Compare renewable endowment across regions.",
+                  "questionText": "Aggregate renewable power capacity by region.",
+                  "questionType": "ranking",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_renewable",
+                      "role": "measure",
+                      "columnExpr": "Renewable",
+                      "unit": "MW"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_region",
+                    "sortBy": "ent_renewable",
+                    "sortOrder": "descending",
+                    "topN": 6,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_renewable",
+                        "condition": "not_null"
+                      }
+                    ]
+                  },
+                  "officerIntent": "Compare renewable endowment across regions.",
+                  "dataRequirements": {
+                    "minRows": 8,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_region",
+                      "ent_renewable"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_regional_renewable_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_renewable"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_renewable"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_regional_renewable_table",
+                        "kind": "table",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 8,
+                          "maxRows": 6,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Renewable Capacity by Region",
+                          "rowEntity": "ent_region",
+                          "columns": [
+                            "ent_renewable"
+                          ],
+                          "groupRowsBy": null,
+                          "sortBy": "ent_renewable",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "MW",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_renewable"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_regional_renewable_chart",
+                        "kind": "chart",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Renewable Capacity by Region (MW)",
+                          "chartType": "bar",
+                          "unitLabel": "MW",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_region",
+                            "label": "Region"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_renewable",
+                              "label": "Renewable Capacity"
+                            }
+                          ],
+                          "sortBy": "ent_renewable",
+                          "topN": 6
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_renewable"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chapterId": "ch_composite",
+          "title": "Composite Energy Indices",
+          "order": 2,
+          "chapterType": "analytical",
+          "officerSummary": "Composite Energy Indices",
+          "pageBudget": {
+            "min": 2,
+            "max": 3
+          },
+          "sections": [
+            {
+              "sectionId": "sec_ren_thermal",
+              "title": "Renewable-to-Thermal Balance",
+              "order": 1,
+              "sectionArchetype": "ratio_analysis",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_ren_thermal",
+                  "intent": "Index the relative greening of each region's fleet.",
+                  "questionText": "What is the renewable-to-thermal capacity ratio across regions?",
+                  "questionType": "ratio",
+                  "priority": "P1_must",
+                  "generationMethod": "RATIO",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_region",
+                      "role": "dimension",
+                      "columnExpr": "Region",
+                      "unit": null
+                    },
+                    {
+                      "entityId": "ent_renewable",
+                      "role": "measure",
+                      "columnExpr": "Renewable",
+                      "unit": "MW"
+                    },
+                    {
+                      "entityId": "ent_thermal",
+                      "role": "measure",
+                      "columnExpr": "Thermal",
+                      "unit": "MW"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "rank",
+                    "grain": "ent_region",
+                    "sortBy": "ent_renewable",
+                    "sortOrder": "descending",
+                    "topN": 6,
+                    "aggregation": "sum",
+                    "filters": [
+                      {
+                        "entity": "ent_renewable",
+                        "condition": "not_null"
+                      }
+                    ],
+                    "formula": {
+                      "formulaType": "RATIO",
+                      "formulaRef": "f_renewable_thermal_ratio",
+                      "numerator": "ent_renewable",
+                      "denominator": "ent_thermal",
+                      "grain": "ent_region"
+                    }
+                  },
+                  "officerIntent": "Index the relative greening of each region's fleet.",
+                  "dataRequirements": {
+                    "minRows": 4,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_region",
+                      "ent_renewable"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_ren_thermal_narrative",
+                        "kind": "narrative",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "prose",
+                          "minWords": 55,
+                          "maxWords": 120,
+                          "requiresEvidence": true,
+                          "requiresCaveatWhenDegraded": true
+                        },
+                        "narrativeTemplate": {
+                          "tone": "formal-statistical",
+                          "pattern": "headline_then_evidence_then_caveat",
+                          "mustMention": [
+                            "ent_renewable"
+                          ]
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_renewable",
+                          "ent_thermal"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canOverrideGenerated": true
+                        }
+                      },
+                      {
+                        "componentId": "q_ren_thermal_chart",
+                        "kind": "chart",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "visualization",
+                          "chartType": "bar",
+                          "minSeries": 1,
+                          "maxCategories": 12
+                        },
+                        "chartSpec": {
+                          "title": "Renewable-to-Thermal Ratio by Region",
+                          "chartType": "bar",
+                          "unitLabel": "MW",
+                          "showDataLabels": true,
+                          "xAxis": {
+                            "entity": "ent_region",
+                            "label": "Region"
+                          },
+                          "yAxes": [
+                            {
+                              "entity": "ent_renewable",
+                              "label": "Renewable Capacity"
+                            }
+                          ],
+                          "sortBy": "ent_renewable",
+                          "topN": 6
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_renewable",
+                          "ent_thermal"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canChangeChartType": true
+                        }
+                      },
+                      {
+                        "componentId": "q_ren_thermal_table",
+                        "kind": "table",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "structured_data",
+                          "minRows": 4,
+                          "maxRows": 6,
+                          "showTotals": true,
+                          "showRank": true
+                        },
+                        "tableSpec": {
+                          "title": "Renewable Capacity by Region",
+                          "rowEntity": "ent_region",
+                          "columns": [
+                            "ent_renewable"
+                          ],
+                          "groupRowsBy": null,
+                          "sortBy": "ent_renewable",
+                          "sortOrder": "descending",
+                          "showRank": true,
+                          "unitLabel": "MW",
+                          "footnote": "Source: CEA / MNRE, As on 1 April 2025"
+                        },
+                        "requiredEntities": [
+                          "ent_region",
+                          "ent_renewable",
+                          "ent_thermal"
+                        ],
+                        "customization": {
+                          "officerEditable": true,
+                          "canHideColumns": true
+                        }
+                      },
+                      {
+                        "componentId": "q_ren_thermal_metric",
+                        "kind": "metric",
+                        "order": 4,
+                        "outputContract": {
+                          "type": "computed_metric",
+                          "displayFormat": "multiplier"
+                        },
+                        "formulaSpec": {
+                          "formulaType": "RATIO",
+                          "formulaRef": "f_renewable_thermal_ratio",
+                          "numerator": "ent_renewable",
+                          "denominator": "ent_thermal",
+                          "grain": "ent_region"
+                        },
+                        "requiredEntities": [
+                          "ent_renewable",
+                          "ent_thermal"
+                        ],
+                        "customization": {
+                          "officerEditable": true
+                        }
+                      }
+                    ]
+                  },
+                  "formulaSpec": {
+                    "formulaType": "RATIO",
+                    "formulaRef": "f_renewable_thermal_ratio",
+                    "numerator": "ent_renewable",
+                    "denominator": "ent_thermal",
+                    "grain": "ent_region"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "chapterId": "ch_methodology",
+          "title": "Data Provenance & Methodology",
+          "order": 3,
+          "chapterType": "analytical",
+          "officerSummary": "Data Provenance & Methodology",
+          "pageBudget": {
+            "min": 2,
+            "max": 3
+          },
+          "sections": [
+            {
+              "sectionId": "sec_methodology",
+              "title": "Sources, Units & Coverage",
+              "order": 1,
+              "sectionArchetype": "methodology",
+              "pagePlan": {
+                "estimatedPages": 1.2
+              },
+              "questions": [
+                {
+                  "questionId": "q_methodology",
+                  "intent": "Document provenance, units and coverage for audit.",
+                  "questionText": "What are the data sources, measurement units and coverage of this report?",
+                  "questionType": "methodology",
+                  "priority": "P1_must",
+                  "generationMethod": "DIRECT",
+                  "estimatedPageWeight": 1.2,
+                  "requiredEntities": [
+                    {
+                      "entityId": "ent_installed",
+                      "role": "measure",
+                      "columnExpr": "Installed Capacity",
+                      "unit": "MW"
+                    }
+                  ],
+                  "analyticsSpec": {
+                    "operation": "metric",
+                    "grain": "national",
+                    "aggregation": "sum"
+                  },
+                  "officerIntent": "Document provenance, units and coverage for audit.",
+                  "dataRequirements": {
+                    "minRows": 1,
+                    "qualityThreshold": 0.7,
+                    "nullHandling": "exclude_null_rows"
+                  },
+                  "binderContract": {
+                    "requiredBindings": [
+                      "ent_installed"
+                    ],
+                    "fallbackBehavior": "DEGRADE_TO_AVAILABLE",
+                    "degradePolicy": "mark_missing_not_fabricate"
+                  },
+                  "qualityGates": {
+                    "minConfidence": 0.85,
+                    "evidenceRequired": true
+                  },
+                  "provenanceRequirements": {
+                    "sourceAttribution": "CEA / MNRE estimates",
+                    "lineageRequired": true,
+                    "auditTrail": true
+                  },
+                  "customization": {
+                    "officerEditable": true,
+                    "toggleable": true
+                  },
+                  "answerStructure": {
+                    "components": [
+                      {
+                        "componentId": "q_methodology_methodology",
+                        "kind": "methodology",
+                        "order": 1,
+                        "outputContract": {
+                          "type": "methodology"
+                        },
+                        "requiredEntities": []
+                      },
+                      {
+                        "componentId": "q_methodology_source_note",
+                        "kind": "source_note",
+                        "order": 2,
+                        "outputContract": {
+                          "type": "attribution"
+                        },
+                        "requiredEntities": []
+                      },
+                      {
+                        "componentId": "q_methodology_glossary",
+                        "kind": "glossary",
+                        "order": 3,
+                        "outputContract": {
+                          "type": "definitions"
+                        },
+                        "requiredEntities": []
+                      },
+                      {
+                        "componentId": "q_methodology_caveat",
+                        "kind": "caveat",
+                        "order": 4,
+                        "outputContract": {
+                          "type": "caveat"
+                        },
+                        "requiredEntities": []
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

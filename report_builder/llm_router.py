@@ -481,17 +481,46 @@ def _call_azure(prompt: str, image_bytes: bytes | None, max_tokens: int, tempera
         # gpt-4o (vision deployment): standard params fully supported
         payload["max_tokens"] = max_tokens
         payload["temperature"] = temperature
+        # Force strict JSON so the model can't emit markdown fences / prose preamble
+        # that eats the (small) token budget and pushes the real JSON past the cap.
+        # Azure requires the word "json" in the prompt for json_object mode — the
+        # extraction prompts already ask for JSON, so only enable it when present.
+        if (os.getenv("AZURE_OPENAI_JSON_MODE", "1").strip().lower() in ("1", "true", "yes", "on")
+                and "json" in prompt.lower()):
+            payload["response_format"] = {"type": "json_object"}
     headers = {"Content-Type": "application/json", "api-key": api_key}
-    try:
-        r = requests.post(url, json=payload, headers=headers, timeout=timeout, verify=_SSL_VERIFY)
-        if r.status_code == 200:
-            content_out = r.json()["choices"][0]["message"]["content"]
-            return content_out.strip() if content_out else None
-        logger.warning("[llm_router][azure]%s HTTP %d: %s",
-                       f" [{key_label}]" if key_label else "", r.status_code, r.text[:300])
-    except Exception as exc:
-        logger.warning("[llm_router][azure]%s Request failed: %s",
-                       f" [{key_label}]" if key_label else "", exc)
+
+    # Up to 2 attempts: if the first response is cut off by the output-token cap
+    # (finish_reason == "length"), retry once with a larger budget so dense pages
+    # return complete, parseable JSON instead of a truncated fragment. This is the
+    # root-cause fix for "returned text but no valid JSON" on dense table pages.
+    _max_retries = 0 if _is_reasoning_deploy else 1
+    _hard_cap = int(os.getenv("AZURE_OPENAI_MAX_OUTPUT_CAP") or "1024")
+    for _attempt in range(_max_retries + 1):
+        try:
+            r = requests.post(url, json=payload, headers=headers, timeout=timeout, verify=_SSL_VERIFY)
+        except Exception as exc:
+            logger.warning("[llm_router][azure]%s Request failed: %s",
+                           f" [{key_label}]" if key_label else "", exc)
+            return None
+        if r.status_code != 200:
+            logger.warning("[llm_router][azure]%s HTTP %d: %s",
+                           f" [{key_label}]" if key_label else "", r.status_code, r.text[:300])
+            return None
+        choice = (r.json().get("choices") or [{}])[0]
+        content_out = (choice.get("message") or {}).get("content")
+        finish = choice.get("finish_reason")
+        if finish == "length" and _attempt < _max_retries and max_tokens < _hard_cap:
+            _bumped = min(max_tokens * 2, _hard_cap)
+            logger.info("[llm_router][azure]%s response truncated (finish_reason=length @ %d tok) — retrying @ %d tok",
+                        f" [{key_label}]" if key_label else "", max_tokens, _bumped)
+            payload["max_tokens"] = _bumped
+            max_tokens = _bumped
+            continue
+        if finish == "length":
+            logger.warning("[llm_router][azure]%s response still truncated after retry (finish_reason=length @ %d tok)",
+                           f" [{key_label}]" if key_label else "", max_tokens)
+        return content_out.strip() if content_out else None
     return None
 
 

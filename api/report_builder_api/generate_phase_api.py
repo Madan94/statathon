@@ -216,6 +216,30 @@ def _load_template_ast(template_id: str = "") -> dict[str, Any]:
     return json.loads(_GOLD_TEMPLATE_AST.read_text(encoding="utf-8-sig"))
 
 
+def _load_slot_graph(template_id: str, signature: str) -> dict[str, Any] | None:
+    """Load the semantic slot graph (declares per-slot chart types, etc.).
+
+    Prefers the binding stash (authoritative for this session), then the gold
+    template directory. Returns ``None`` when no slot graph exists.
+    """
+    stash = _stash_path(template_id, signature, "semantic_slot_graph.json")
+    if stash.exists():
+        try:
+            return json.loads(stash.read_text(encoding="utf-8-sig"))
+        except Exception:  # noqa: BLE001
+            pass
+    if template_id:
+        tid = template_id.replace("tpl_", "")
+        for cand in (_GOLD_DIR / tid / f"{tid}.semantic_slot_graph.json",
+                     _GOLD_DIR / f"{tid}.semantic_slot_graph.json"):
+            if cand.exists():
+                try:
+                    return json.loads(cand.read_text(encoding="utf-8-sig"))
+                except Exception:  # noqa: BLE001
+                    pass
+    return None
+
+
 def _iter_questions(blueprint: dict[str, Any]):
     """Walk the full topic→chapter→section→question hierarchy, yielding
     ``(question_dict, section_path_list)`` for every question found.
@@ -405,6 +429,64 @@ def _block_matches_question(block: dict[str, Any], question_id: str) -> bool:
     return False
 
 
+def _surface_degraded_caveats(report: dict[str, Any], adapted: "list | None") -> None:
+    """Make DEGRADED-plan diagnostics visible in the report (transparency).
+
+    The S4 bundle adapter flags honest analytic caveats (e.g. summing a rate
+    column) on DEGRADED plans. We record them — deduplicated, each tagged with its
+    questionId so the audit can trace them — into ``auditAST.caveats``,
+    ``metadata.warnings`` and a reader-facing ``Caveats & Limitations`` content
+    block. No values are changed; the report simply stops hiding its limitations.
+    """
+    if not adapted:
+        return
+    seen: set[str] = set()
+    caveats: list[dict[str, Any]] = []
+    lines: list[str] = []
+    for plan in adapted:
+        status = (getattr(plan, "status", "") or "").upper()
+        diagnostics = getattr(plan, "diagnostics", None) or []
+        if status != "DEGRADED" and not diagnostics:
+            continue
+        qid = getattr(plan, "questionId", "") or getattr(getattr(plan, "planRec", None), "questionId", "")
+        for diag in diagnostics:
+            text = str(diag).strip()
+            if not text:
+                continue
+            key = f"{qid}::{text}"
+            if key in seen:
+                continue
+            seen.add(key)
+            # Tag the caveat with its question id so CAVEAT_VISIBILITY can trace it.
+            caveats.append({"questionId": qid, "severity": "warn", "message": text})
+            lines.append(f"{qid}: {text}" if qid else text)
+    if not caveats:
+        return
+
+    audit = report.setdefault("auditAST", {})
+    existing_caveats = audit.get("caveats")
+    audit["caveats"] = (existing_caveats or []) + caveats
+    # Plain-text warnings (questionId embedded) — these are what the verifier scans.
+    audit_warnings = audit.get("warnings") or []
+    audit["warnings"] = audit_warnings + lines
+
+    metadata = report.setdefault("metadata", {})
+    meta_warnings = metadata.get("warnings") or []
+    metadata["warnings"] = meta_warnings + lines
+
+    # Reader-facing block so the caveats are visible in the rendered report too.
+    content = report.setdefault("contentAST", {})
+    blocks = content.setdefault("blocks", [])
+    blocks.append({
+        "blockId": "caveats_limitations",
+        "kind": "key_findings",
+        "title": "Caveats & Limitations",
+        "items": [c["message"] for c in caveats],
+        "provenance": {"derivedFrom": "auditAST.caveats"},
+        "slot": {"status": "filled"},
+    })
+
+
 def _rebuild_binding(template_id: str, signature: str, dataset: DatasetAST,
                      blueprint: dict[str, Any], df: "Any") -> BindingAST:
     """Rebuild the finalized binding from the persisted review record + stash."""
@@ -577,6 +659,28 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
     narrated = narrate(template, analytics, evidence, context=context,
                        questions=_prose_config(blueprint), use_llm=body.use_llm)
 
+    # S5a-bridge — documentMap archetype. Templates that ship a ``documentMap``
+    # tree (topic→chapter→section→question→slots) instead of the
+    # ``semanticAST.sections`` + ``tableAST``/``chartAST`` slot archetype yield
+    # nothing from fill_visuals. Synthesize render-ready sections + filled visuals
+    # from the computed analytics (linked by questionId) so the standalone report
+    # renders fully. Gated: only when documentMap is a node list and the template
+    # has no semantic sections — never affects the existing slot archetype.
+    _doc_map = template.get("documentMap")
+    _has_sections = bool((template.get("semanticAST") or {}).get("sections"))
+    if isinstance(_doc_map, list) and _doc_map and not _has_sections:
+        from report_builder.generation.document_map_bridge import bridge_document_map_report
+        _slot_graph = _load_slot_graph(template_id, signature)
+        _bridged = bridge_document_map_report(_doc_map, analytics, evidence, slot_graph=_slot_graph)
+        if _bridged["semanticAST"]["sections"]:
+            template = {**template, "semanticAST": _bridged["semanticAST"]}
+            visuals["tableAST"] = _bridged["tableAST"]
+            visuals["chartAST"] = _bridged["chartAST"]
+            visuals["figureAST"] = _bridged["figureAST"]
+            visuals.setdefault("fillTrace", [])
+            _content = narrated.setdefault("contentAST", {"blocks": []})
+            _content["blocks"] = (_content.get("blocks") or []) + _bridged["blocks"]
+
     # S5c — assemble + validate
     report_id = body.report_id or f"rpt_{template_id or 'generated'}_{signature[:8]}"
     report = assemble_report(
@@ -601,6 +705,13 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
         report, adapted=adapted, evidence=evidence, bundle=bundle,
         content_hash=data_content_hash,
     )
+
+    # S5e-caveats — surface DEGRADED-plan diagnostics as visible caveats. The S4
+    # adapter records honest warnings (e.g. "X is a rate but aggregation is sum") on
+    # DEGRADED plans; make them transparent in the report (auditAST.caveats +
+    # metadata.warnings + a reader-facing "Caveats & Limitations" block) instead of
+    # hiding them. This keeps the report trustworthy and satisfies CAVEAT_VISIBILITY.
+    _surface_degraded_caveats(report, adapted)
 
     # S5d — verify: judge trust without mutating the report's values. The verdict is
     # recorded into auditAST and then enforced by the publish gate below.
@@ -637,7 +748,14 @@ def generate_report(template_id: str, signature: str, body: GenerateIn) -> Gener
     ensure_lifecycle(report)
 
     # S6 — render + persist
-    html_str = render_html(report)
+    _tmeta = template.get("metadata") or {}
+    _bmeta = blueprint.get("templateMeta") or blueprint.get("metadata") or {}
+    _doc_title = (
+        _tmeta.get("name") or _tmeta.get("title")
+        or _bmeta.get("title") or _bmeta.get("name")
+        or blueprint.get("name")
+    )
+    html_str = render_html(report, title=_doc_title) if _doc_title else render_html(report)
     _report_path(template_id, signature).write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     _html_path(template_id, signature).write_text(html_str, encoding="utf-8")

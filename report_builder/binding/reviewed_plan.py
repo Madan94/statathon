@@ -118,7 +118,7 @@ class PlanComponent:
 @dataclass
 class PlanNode:
     nodeId: str
-    nodeType: str = "topic"          # topic | chapter | section | subtopic | subsubtopic | question
+    nodeType: str = "topic"          # topic | subtopic | subsubtopic | question
     title: str = ""
     parentId: str | None = None
     order: int = 0
@@ -296,28 +296,18 @@ def _question_node(
     )
 
 
-def _section_children(section: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
-    children: list[tuple[str, dict[str, Any]]] = []
-    for key in ("children", "chapters", "sections", "subtopics", "subsections"):
+def _section_children(section: dict[str, Any]) -> list[dict[str, Any]]:
+    children: list[dict[str, Any]] = []
+    for key in ("children", "sections", "subtopics", "subsections"):
         for child in section.get(key) or []:
             if isinstance(child, dict):
-                children.append((key, child))
+                children.append(child)
     return children
 
 
-def _section_node_type(
-    section: dict[str, Any],
-    *,
-    depth: int,
-    parent_node_type: str | None,
-    child_key: str | None,
-) -> str:
+def _section_node_type(depth: int) -> str:
     if depth <= 0:
         return "topic"
-    if child_key == "chapters" or section.get("chapterId"):
-        return "chapter"
-    if parent_node_type == "chapter" and (child_key in {"sections", "subsections"} or section.get("sectionId")):
-        return "section"
     if depth == 1:
         return "subtopic"
     return "subsubtopic"
@@ -326,7 +316,6 @@ def _section_node_type(
 def _section_id(section: dict[str, Any], fallback: str) -> str:
     return str(
         section.get("topicId")
-        or section.get("chapterId")
         or section.get("sectionId")
         or section.get("subtopicId")
         or section.get("id")
@@ -343,19 +332,11 @@ def _build_section_node(
     status_by_question: dict[str, str],
     slot_index: dict[str, list[str]],
     valid_questions: set[str],
-    parent_node_type: str | None = None,
-    child_key: str | None = None,
 ) -> PlanNode:
     node_id = _section_id(section, f"section_{depth + 1}_{order}")
-    node_type = _section_node_type(
-        section,
-        depth=depth,
-        parent_node_type=parent_node_type,
-        child_key=child_key,
-    )
     node = PlanNode(
         nodeId=node_id,
-        nodeType=node_type,
+        nodeType=_section_node_type(depth),
         title=str(section.get("title") or section.get("heading") or node_id),
         parentId=parent_id,
         order=int(section.get("order") or order),
@@ -377,14 +358,12 @@ def _build_section_node(
         ))
         child_order += 1
 
-    for child_section_key, child_section in _section_children(section):
+    for child_section in _section_children(section):
         node.children.append(_build_section_node(
             child_section,
             parent_id=node_id,
             order=child_order,
             depth=depth + 1,
-            parent_node_type=node.nodeType,
-            child_key=child_section_key,
             status_by_question=status_by_question,
             slot_index=slot_index,
             valid_questions=valid_questions,

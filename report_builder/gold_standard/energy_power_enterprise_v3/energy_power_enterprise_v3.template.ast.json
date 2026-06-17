@@ -1,0 +1,1055 @@
+{
+  "$schema": "bharatstat/template-ast/v2",
+  "_doc": "VALUE-FREE render skeleton for India Power & Energy Sector — Enterprise Statistical Report v3. documentMap drives the documentMap-archetype bridge in generation.",
+  "metadata": {
+    "templateId": "tpl_energy_power_enterprise_v3",
+    "blueprintRef": "tpl_energy_power_enterprise_v3",
+    "name": "India Power & Energy Sector — Enterprise Statistical Report v3",
+    "locale": "en-IN",
+    "version": "3.0.0",
+    "valueFree": true,
+    "generatedFrom": "enterprise_energy_power_v3_generator",
+    "targetPageRange": "30-36",
+    "standardPageCount": 32,
+    "hardPageCap": 40,
+    "officerReady": true,
+    "auditRequired": true
+  },
+  "styleAST": {
+    "styles": [
+      {
+        "styleId": "s_h1",
+        "role": "heading1",
+        "font": "Noto Sans",
+        "sizePt": 18,
+        "bold": true,
+        "color": "#0B5394"
+      },
+      {
+        "styleId": "s_h2",
+        "role": "heading2",
+        "font": "Noto Sans",
+        "sizePt": 15,
+        "bold": true,
+        "color": "#1155CC"
+      },
+      {
+        "styleId": "s_h3",
+        "role": "heading3",
+        "font": "Noto Sans",
+        "sizePt": 13,
+        "bold": true,
+        "color": "#1C4587"
+      },
+      {
+        "styleId": "s_h4",
+        "role": "heading4",
+        "font": "Noto Sans",
+        "sizePt": 11,
+        "bold": true,
+        "color": "#1C4587"
+      },
+      {
+        "styleId": "s_body",
+        "role": "body",
+        "font": "Noto Sans",
+        "sizePt": 11,
+        "bold": false,
+        "color": "#222222"
+      },
+      {
+        "styleId": "s_metric",
+        "role": "metric",
+        "font": "Noto Sans",
+        "sizePt": 16,
+        "bold": true,
+        "color": "#0B5394"
+      },
+      {
+        "styleId": "s_table",
+        "role": "tableCell",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "align": "right"
+      },
+      {
+        "styleId": "s_table_header",
+        "role": "tableHeader",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "bold": true,
+        "align": "center",
+        "bgColor": "#D9EAD3"
+      },
+      {
+        "styleId": "s_caption",
+        "role": "caption",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "italic": true,
+        "color": "#555555"
+      },
+      {
+        "styleId": "s_note",
+        "role": "sourceNote",
+        "font": "Noto Sans",
+        "sizePt": 8,
+        "color": "#666666"
+      },
+      {
+        "styleId": "s_glossary",
+        "role": "glossary",
+        "font": "Noto Sans",
+        "sizePt": 9,
+        "color": "#444444"
+      }
+    ]
+  },
+  "documentMap": [
+    {
+      "nodeId": "topic_capacity",
+      "nodeType": "topic",
+      "title": "Installed Power Capacity",
+      "style": "s_h1",
+      "order": 1,
+      "children": [
+        {
+          "nodeId": "ch_total_capacity",
+          "nodeType": "chapter",
+          "title": "Total Installed Capacity",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_capacity_rank",
+              "nodeType": "section",
+              "title": "State-wise Capacity Ranking",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_cap_rank",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by installed capacity",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_cap_rank_narrative",
+                      "componentRef": "q_cap_rank_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_cap_rank_table",
+                      "componentRef": "q_cap_rank_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_cap_rank_chart",
+                      "componentRef": "q_cap_rank_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_capacity_mix",
+              "nodeType": "section",
+              "title": "National Capacity Source Mix",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_cap_mix",
+                  "nodeType": "question",
+                  "title": "Capacity composition by source",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_cap_mix_narrative",
+                      "componentRef": "q_cap_mix_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_cap_mix_chart",
+                      "componentRef": "q_cap_mix_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_cap_mix_metric",
+                      "componentRef": "q_cap_mix_metric",
+                      "slotType": "metric",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_capacity_sources",
+          "nodeType": "chapter",
+          "title": "Thermal & Hydro Backbone",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_thermal_rank",
+              "nodeType": "section",
+              "title": "Thermal Capacity Leaders",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_thermal_rank",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by thermal capacity",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_thermal_rank_narrative",
+                      "componentRef": "q_thermal_rank_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_thermal_rank_table",
+                      "componentRef": "q_thermal_rank_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_thermal_rank_chart",
+                      "componentRef": "q_thermal_rank_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_hydro_rank",
+              "nodeType": "section",
+              "title": "Hydro Capacity Leaders",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_hydro_rank",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by hydro capacity",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_hydro_rank_narrative",
+                      "componentRef": "q_hydro_rank_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_hydro_rank_table",
+                      "componentRef": "q_hydro_rank_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_hydro_rank_chart",
+                      "componentRef": "q_hydro_rank_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_generation",
+      "nodeType": "topic",
+      "title": "Power Generation & Efficiency",
+      "style": "s_h1",
+      "order": 2,
+      "children": [
+        {
+          "nodeId": "ch_gen_volume",
+          "nodeType": "chapter",
+          "title": "Generation Volume",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_gen_rank",
+              "nodeType": "section",
+              "title": "State-wise Generation Ranking",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_gen_rank",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by power generation",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_gen_rank_narrative",
+                      "componentRef": "q_gen_rank_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_gen_rank_table",
+                      "componentRef": "q_gen_rank_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_gen_rank_chart",
+                      "componentRef": "q_gen_rank_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_gen_regional",
+              "nodeType": "section",
+              "title": "Regional Generation Aggregate",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_gen_regional",
+                  "nodeType": "question",
+                  "title": "Aggregate generation by region",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_gen_regional_narrative",
+                      "componentRef": "q_gen_regional_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_gen_regional_table",
+                      "componentRef": "q_gen_regional_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_gen_regional_chart",
+                      "componentRef": "q_gen_regional_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_gen_efficiency",
+          "nodeType": "chapter",
+          "title": "Generation Efficiency",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_plf_rank",
+              "nodeType": "section",
+              "title": "Plant Load Factor Leaders",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_plf_rank",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by plant load factor",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_plf_rank_narrative",
+                      "componentRef": "q_plf_rank_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_plf_rank_table",
+                      "componentRef": "q_plf_rank_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_plf_rank_chart",
+                      "componentRef": "q_plf_rank_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_renewable",
+      "nodeType": "topic",
+      "title": "Renewable Energy",
+      "style": "s_h1",
+      "order": 3,
+      "children": [
+        {
+          "nodeId": "ch_ren_capacity",
+          "nodeType": "chapter",
+          "title": "Renewable Capacity",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_solar_rank",
+              "nodeType": "section",
+              "title": "Solar Capacity Leaders",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_solar_rank",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by solar capacity",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_solar_rank_narrative",
+                      "componentRef": "q_solar_rank_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_solar_rank_table",
+                      "componentRef": "q_solar_rank_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_solar_rank_chart",
+                      "componentRef": "q_solar_rank_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_wind_rank",
+              "nodeType": "section",
+              "title": "Wind Capacity Leaders",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_wind_rank",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by wind capacity",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_wind_rank_narrative",
+                      "componentRef": "q_wind_rank_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_wind_rank_table",
+                      "componentRef": "q_wind_rank_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_wind_rank_chart",
+                      "componentRef": "q_wind_rank_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_ren_share",
+          "nodeType": "chapter",
+          "title": "Renewable Penetration",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_ren_share",
+              "nodeType": "section",
+              "title": "Renewable Share of Capacity",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_ren_share",
+                  "nodeType": "question",
+                  "title": "Renewable share of installed capacity",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_ren_share_narrative",
+                      "componentRef": "q_ren_share_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_ren_share_chart",
+                      "componentRef": "q_ren_share_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_ren_share_metric",
+                      "componentRef": "q_ren_share_metric",
+                      "slotType": "metric",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_biomass_rank",
+              "nodeType": "section",
+              "title": "Biomass Capacity Leaders",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_biomass_rank",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by biomass capacity",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_biomass_rank_narrative",
+                      "componentRef": "q_biomass_rank_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_biomass_rank_table",
+                      "componentRef": "q_biomass_rank_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_biomass_rank_chart",
+                      "componentRef": "q_biomass_rank_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_consumption",
+      "nodeType": "topic",
+      "title": "Consumption & Electrification",
+      "style": "s_h1",
+      "order": 4,
+      "children": [
+        {
+          "nodeId": "ch_consumption",
+          "nodeType": "chapter",
+          "title": "Electricity Consumption",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_percap_rank",
+              "nodeType": "section",
+              "title": "Per-Capita Consumption Leaders",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_percap_rank",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by per-capita consumption",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_percap_rank_narrative",
+                      "componentRef": "q_percap_rank_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_percap_rank_table",
+                      "componentRef": "q_percap_rank_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_percap_rank_chart",
+                      "componentRef": "q_percap_rank_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_consumption_regional",
+              "nodeType": "section",
+              "title": "Regional Consumption Profile",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_consumption_regional",
+                  "nodeType": "question",
+                  "title": "Aggregate consumption intensity by region",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_consumption_regional_narrative",
+                      "componentRef": "q_consumption_regional_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_consumption_regional_table",
+                      "componentRef": "q_consumption_regional_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_consumption_regional_chart",
+                      "componentRef": "q_consumption_regional_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_access",
+          "nodeType": "chapter",
+          "title": "Electrification Access",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_elec_rank",
+              "nodeType": "section",
+              "title": "Electrification Leaders",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_elec_rank",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by electrification level",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_elec_rank_narrative",
+                      "componentRef": "q_elec_rank_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_elec_rank_table",
+                      "componentRef": "q_elec_rank_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_elec_rank_chart",
+                      "componentRef": "q_elec_rank_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_reliability",
+      "nodeType": "topic",
+      "title": "Reliability & System Losses",
+      "style": "s_h1",
+      "order": 5,
+      "children": [
+        {
+          "nodeId": "ch_losses",
+          "nodeType": "chapter",
+          "title": "System Losses",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_td_rank",
+              "nodeType": "section",
+              "title": "Transmission & Distribution Losses",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_td_rank",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by T&D losses",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_td_rank_narrative",
+                      "componentRef": "q_td_rank_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_td_rank_table",
+                      "componentRef": "q_td_rank_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_td_rank_chart",
+                      "componentRef": "q_td_rank_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_peak_demand",
+              "nodeType": "section",
+              "title": "Peak Demand Leaders",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_peak_demand",
+                  "nodeType": "question",
+                  "title": "Rank States/UTs by peak demand",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_peak_demand_narrative",
+                      "componentRef": "q_peak_demand_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_peak_demand_table",
+                      "componentRef": "q_peak_demand_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_peak_demand_chart",
+                      "componentRef": "q_peak_demand_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_demand_supply",
+          "nodeType": "chapter",
+          "title": "Demand–Supply Balance",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_demand_met",
+              "nodeType": "section",
+              "title": "Peak Demand Met Performance",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_demand_met",
+                  "nodeType": "question",
+                  "title": "Peak demand met ratio by region",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_demand_met_narrative",
+                      "componentRef": "q_demand_met_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_demand_met_chart",
+                      "componentRef": "q_demand_met_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_demand_met_table",
+                      "componentRef": "q_demand_met_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_demand_met_metric",
+                      "componentRef": "q_demand_met_metric",
+                      "slotType": "metric",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nodeId": "topic_crosscutting",
+      "nodeType": "topic",
+      "title": "Cross-Cutting Regional Analysis",
+      "style": "s_h1",
+      "order": 6,
+      "children": [
+        {
+          "nodeId": "ch_regional",
+          "nodeType": "chapter",
+          "title": "Regional Energy Endowment",
+          "style": "s_h2",
+          "order": 1,
+          "children": [
+            {
+              "nodeId": "sec_regional_capacity",
+              "nodeType": "section",
+              "title": "Regional Capacity Distribution",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_regional_capacity",
+                  "nodeType": "question",
+                  "title": "Aggregate installed capacity by region",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_regional_capacity_narrative",
+                      "componentRef": "q_regional_capacity_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_regional_capacity_table",
+                      "componentRef": "q_regional_capacity_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_regional_capacity_chart",
+                      "componentRef": "q_regional_capacity_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "nodeId": "sec_regional_renewable",
+              "nodeType": "section",
+              "title": "Regional Renewable Distribution",
+              "style": "s_h3",
+              "order": 2,
+              "children": [
+                {
+                  "nodeId": "q_regional_renewable",
+                  "nodeType": "question",
+                  "title": "Aggregate renewable capacity by region",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_regional_renewable_narrative",
+                      "componentRef": "q_regional_renewable_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_regional_renewable_table",
+                      "componentRef": "q_regional_renewable_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_regional_renewable_chart",
+                      "componentRef": "q_regional_renewable_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_composite",
+          "nodeType": "chapter",
+          "title": "Composite Energy Indices",
+          "style": "s_h2",
+          "order": 2,
+          "children": [
+            {
+              "nodeId": "sec_ren_thermal",
+              "nodeType": "section",
+              "title": "Renewable-to-Thermal Balance",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_ren_thermal",
+                  "nodeType": "question",
+                  "title": "Renewable-to-thermal ratio by region",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_ren_thermal_narrative",
+                      "componentRef": "q_ren_thermal_narrative",
+                      "slotType": "narrative",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_ren_thermal_chart",
+                      "componentRef": "q_ren_thermal_chart",
+                      "slotType": "chart",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_ren_thermal_table",
+                      "componentRef": "q_ren_thermal_table",
+                      "slotType": "table",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_ren_thermal_metric",
+                      "componentRef": "q_ren_thermal_metric",
+                      "slotType": "metric",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "nodeId": "ch_methodology",
+          "nodeType": "chapter",
+          "title": "Data Provenance & Methodology",
+          "style": "s_h2",
+          "order": 3,
+          "children": [
+            {
+              "nodeId": "sec_methodology",
+              "nodeType": "section",
+              "title": "Sources, Units & Coverage",
+              "style": "s_h3",
+              "order": 1,
+              "children": [
+                {
+                  "nodeId": "q_methodology",
+                  "nodeType": "question",
+                  "title": "Data sources and methodology",
+                  "style": "s_h4",
+                  "order": 1,
+                  "slots": [
+                    {
+                      "slotId": "slot_methodology_methodology",
+                      "componentRef": "q_methodology_methodology",
+                      "slotType": "methodology",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_methodology_source_note",
+                      "componentRef": "q_methodology_source_note",
+                      "slotType": "source_note",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_methodology_glossary",
+                      "componentRef": "q_methodology_glossary",
+                      "slotType": "glossary",
+                      "placeholder": ""
+                    },
+                    {
+                      "slotId": "slot_methodology_caveat",
+                      "componentRef": "q_methodology_caveat",
+                      "slotType": "caveat",
+                      "placeholder": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

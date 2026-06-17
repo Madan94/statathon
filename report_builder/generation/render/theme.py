@@ -80,8 +80,17 @@ body {{ font-family: {t.font_body};
 .report-header h1 {{ margin: 0 0 4px; font-size: 22px; font-family: {t.font_head}; }}
 .report-meta {{ color: var(--muted); font-size: 13px; }}
 section.report-section {{ margin-bottom: 28px; }}
-section.report-section > h2 {{ font-size: 18px; border-left: 4px solid var(--accent);
+/* Topic dividers (level-1) — prominent heading, no indentation */
+section.report-section.level-1 {{ margin-top: 36px; margin-bottom: 16px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }}
+section.report-section.level-1 > h1 {{ font-size: 20px; font-weight: 600; margin: 0; font-family: {t.font_head}; color: var(--accent); }}
+/* Question sections (level-2) — indented under topics */
+section.report-section.level-2 {{ margin-left: 16px; }}
+section.report-section > h2 {{ font-size: 16px; border-left: 4px solid var(--accent);
        padding-left: 10px; margin: 0 0 12px; font-family: {t.font_head}; }}
+/* Subsections (level-3) — further indented */
+section.report-section.level-3 {{ margin-left: 32px; }}
+section.report-section > h3 {{ font-size: 14px; border-left: 3px solid var(--muted);
+       padding-left: 8px; margin: 0 0 10px; font-family: {t.font_head}; color: var(--muted); }}
 p.block {{ margin: 0 0 12px; text-align: justify; }}
 figure {{ margin: 0 0 18px; }}
 figure figcaption {{ color: var(--muted); font-size: 13px; margin-top: 6px; font-style: italic; }}
