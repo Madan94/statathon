@@ -1930,6 +1930,71 @@ def _question_local_evidence(
     return False, {"reason": "out_of_section_measure", "measureEntityId": matched_measures[0].get("entityId")}
 
 
+def _is_footnote_like_heading(text: str) -> bool:
+    """A numbered line that is actually a footnote / source note, not a heading.
+
+    Footnotes and rounding notes begin with a bare number (no section dot) and
+    continue with explanatory prose — e.g. "2 Total may not tally due to
+    rounding off". These must never be promoted to section titles.
+    """
+    t = (text or "").strip()
+    if not t:
+        return False
+    m = re.match(r"^(\d{1,3})\s+(.{4,})$", t)
+    if not m:
+        return False
+    body = m.group(2).strip()
+    if re.search(
+        r"(?i)\b(may not (tally|add|sum)|due to rounding|rounding off|provisional|"
+        r"estimat|source\s*:|note\s*:|figures? in)\b",
+        body,
+    ):
+        return True
+    # Bare leading number (no dot) followed by a multi-word capitalised clause is
+    # a footnote/endnote marker, not a "1. Section"-style heading.
+    return len(body.split()) >= 4 and body[:1].isupper()
+
+
+def _is_sentence_like_heading(text: str) -> bool:
+    """A numbered line that is really a body sentence, not a section title.
+
+    Long prose ("As of 01-04-2025 there were several reserves …") and
+    date/period-led narrative openings must stay body text and never be
+    promoted to a heading.
+    """
+    t = (text or "").strip()
+    if not t:
+        return False
+    words = t.split()
+    if len(words) >= 8 and t.rstrip().endswith((".", ";")):
+        return True
+    if len(words) >= 6 and re.match(r"(?i)^(as of|during|in the year|over the period)\b", t):
+        return True
+    return False
+
+
+def _is_promotable_heading(text: str, *, numbered: bool, layout_backed: bool) -> bool:
+    """Whether a candidate line may be promoted to a real section heading.
+
+    Footnotes and sentence-like prose are always rejected. Explicit
+    chapter/part/section markers are always accepted. Otherwise a line is
+    promotable when it is layout-backed (LayoutLM heading region) or a clearly
+    numbered, reasonably short title.
+    """
+    t = (text or "").strip()
+    if not t:
+        return False
+    if _is_footnote_like_heading(t) or _is_sentence_like_heading(t):
+        return False
+    if re.match(r"(?i)^(chapter|part|section|annex(?:ure)?|appendix)\b", t):
+        return True
+    if layout_backed and len(t.split()) <= 14:
+        return True
+    if numbered and re.match(r"^\d", t) and len(t.split()) <= 12:
+        return True
+    return False
+
+
 def _extract_numbered_sections(page_texts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Extract numbered/lettered sections from raw page text without LLM.
 
@@ -1947,23 +2012,6 @@ def _extract_numbered_sections(page_texts: list[dict[str, Any]]) -> list[dict[st
         (r"^(Statement\s+\d+[\.\-]\d+)[:\s\-]+(.{5,})", 2),  # Statement 5.1
     ]
 
-    def _is_sentence_like_heading(text: str) -> bool:
-        """A numbered line that is really a body sentence, not a section title.
-
-        Long prose ("As of 01-04-2025 there were several reserves …") and
-        date/period-led narrative openings must stay body text and never be
-        promoted to a heading.
-        """
-        t = (text or "").strip()
-        if not t:
-            return False
-        words = t.split()
-        if len(words) >= 8 and t.rstrip().endswith((".", ";")):
-            return True
-        if len(words) >= 6 and _re_ns.match(r"(?i)^(as of|during|in the year|over the period)\b", t):
-            return True
-        return False
-
     sections: list[dict[str, Any]] = []
     seen: set[str] = set()
 
@@ -1978,10 +2026,9 @@ def _extract_numbered_sections(page_texts: list[dict[str, Any]]) -> list[dict[st
                 if m:
                     number = m.group(1).strip()
                     title = m.group(2).strip()
-                    # Reject sentence-like/narrative lines that merely begin with
-                    # a number (footnotes, "As of <date> …" prose) — they are not
-                    # real section headings.
-                    if _is_sentence_like_heading(title):
+                    # Reject sentence-like/narrative lines and footnotes that
+                    # merely begin with a number — they are not real headings.
+                    if _is_sentence_like_heading(title) or _is_footnote_like_heading(line):
                         break
                     key = title.lower()[:50]
                     if key not in seen and len(title) >= 5:

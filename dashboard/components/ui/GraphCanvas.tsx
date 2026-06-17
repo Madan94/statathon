@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { domainColor, domainLegendLabel } from '@/lib/domainColors';
 
 // ── Edge colours ──────────────────────────────────────────────────────────────
@@ -153,7 +153,7 @@ export default function GraphCanvas({ nodes: rawNodes, edges, height = 520 }: Pr
     setZoom(1);
   }, [rawNodes, edges, dims.w, dims.h]);
 
-  const nodeMap = new Map(simNodes.map((n) => [n.id, n]));
+  const nodeMap = useMemo(() => new Map(simNodes.map((n) => [n.id, n])), [simNodes]);
 
   // Highlight logic
   const connectedIds = new Set<string>();

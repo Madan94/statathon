@@ -147,7 +147,7 @@ export function A4Page({
     x0: number; y0: number; w0: number; h0: number; positioned: boolean;
     xTargets: number[]; yTargets: number[];
   } | null>(null);
-  const [resizeLive, setResizeLive] = useState<{ id: string; w: number; h: number; x: number; y: number } | null>(null);
+  const [resizeLive, setResizeLive] = useState<{ id: string; w: number; h: number; x: number; y: number; vert: boolean } | null>(null);
 
   const mm = (px: number) => Math.round(px / MM_TO_PX);
 
@@ -302,7 +302,8 @@ export function A4Page({
     };
     setResizeLive({ id: block.id, w: bRect.width / scale, h: bRect.height / scale,
       x: positioned ? block.x! : (bRect.left - cRect.left) / scale,
-      y: positioned ? block.y! : (bRect.top - cRect.top) / scale });
+      y: positioned ? block.y! : (bRect.top - cRect.top) / scale,
+      vert: dir.includes('n') || dir.includes('s') });
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }, [scale]);
 
@@ -343,7 +344,7 @@ export function A4Page({
     w = Math.min(w, contentW - (r.positioned ? x : 0));
     if (r.positioned) { x = Math.max(0, x); y = Math.max(0, y); }
 
-    setResizeLive({ id: r.id, w, h, x, y });
+    setResizeLive({ id: r.id, w, h, x, y, vert: r.dir.includes('n') || r.dir.includes('s') });
     setGuideX(gx);
     setGuideY(gy);
   }, [scale, contentW]);
@@ -379,14 +380,15 @@ export function A4Page({
     const rs = resizeLive && resizeLive.id === block.id ? resizeLive : null;
     const x = liveThis ? live!.x : rs ? rs.x : block.x ?? 0;
     const y = liveThis ? live!.y : rs ? rs.y : block.y ?? 0;
-    const dragging = !!liveThis && !!dragRef.current?.moved;
+    // `live` is only ever set after a move arms in onPointerMove, so a live
+    // entry for this block means it is actively dragging.
+    const dragging = !!liveThis;
     const armed = pressing === block.id;          // long-press fired, ready to move
     const resizing = !!rs;
     const isSel = selectedBlockId === block.id;
 
     const width = rs ? rs.w : widthOf(block);
-    const height = rs && (resizeRef.current?.dir.includes('n') || resizeRef.current?.dir.includes('s'))
-      ? rs.h : block.h;
+    const height = rs && rs.vert ? rs.h : block.h;
 
     const lift = dragging || armed;
     const style: React.CSSProperties = positioned
