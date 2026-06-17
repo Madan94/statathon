@@ -53,6 +53,9 @@ interface ValidationTableProps {
   totalCandidates?: number;
   reportedTotal?: number;
   candidatesTruncated?: boolean;
+  displaySampleEnabled?: boolean;
+  displaySampleSize?: number;
+  fullTotal?: number;
 }
 
 function candidateRuleId(c: ValidationCandidate): string {
@@ -141,6 +144,9 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
       totalCandidates,
       reportedTotal,
       candidatesTruncated = false,
+      displaySampleEnabled = false,
+      displaySampleSize,
+      fullTotal,
     },
     ref,
   ) {
@@ -464,7 +470,11 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
 
     const uniqueColumns = [...new Set(activeCandidates.map((c) => c.column).filter(Boolean))] as string[];
     const displayTotal = paginated ? pageTotal : candidates.length;
-    const headlineTotal = reportedTotal && reportedTotal > displayTotal ? reportedTotal : displayTotal;
+    const headlineTotal = displaySampleEnabled && displaySampleSize
+      ? displaySampleSize
+      : reportedTotal && reportedTotal > displayTotal
+        ? reportedTotal
+        : displayTotal;
     const pageStart = displayTotal === 0 ? 0 : (page - 1) * pageSize + 1;
     const pageEnd = Math.min(page * pageSize, displayTotal);
 
@@ -474,7 +484,7 @@ const ValidationTable = forwardRef<ValidationTableHandle, ValidationTableProps>(
           title={`Rule validation (${headlineTotal})`}
           description="Review flagged cells and record auditable decisions before proceeding"
         >
-          {candidatesTruncated && reportedTotal != null && reportedTotal > displayTotal && (
+          {!displaySampleEnabled && candidatesTruncated && reportedTotal != null && reportedTotal > displayTotal && (
             <p className="text-xs text-warning mb-3">
               {displayTotal} of {reportedTotal} violations are loaded in the review table. Re-run rule validation
               to persist the full set ({reportedTotal - displayTotal} not stored from the prior run).

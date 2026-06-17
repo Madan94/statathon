@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import random
 from typing import Any
 
 from sqlalchemy import case
@@ -19,6 +20,11 @@ from database.models import (
 VALIDATION_CANDIDATE_READ_LIMIT = int(os.getenv("VALIDATION_CANDIDATE_READ_LIMIT", "250"))
 # 0 = persist all validation candidates (no cap)
 VALIDATION_CANDIDATE_PERSIST_LIMIT = int(os.getenv("VALIDATION_CANDIDATE_PERSIST_LIMIT", "0"))
+VALIDATION_DISPLAY_SAMPLE_ENABLED = os.getenv(
+    "VALIDATION_DISPLAY_SAMPLE_ENABLED", "1"
+).lower() in ("1", "true", "yes")
+VALIDATION_DISPLAY_SAMPLE_MIN = int(os.getenv("VALIDATION_DISPLAY_SAMPLE_MIN", "250"))
+VALIDATION_DISPLAY_SAMPLE_MAX = int(os.getenv("VALIDATION_DISPLAY_SAMPLE_MAX", "600"))
 
 _ANALYSIS_META_COLS = (
     Analysis.id,
@@ -146,6 +152,128 @@ def _validation_severity_rank():
     )
 
 
+def compute_display_sample_size(stored_total: int) -> int:
+    """Pick how many validation rows to show for hackathon review."""
+    if stored_total <= 0:
+        return 0
+    if not VALIDATION_DISPLAY_SAMPLE_ENABLED or stored_total < VALIDATION_DISPLAY_SAMPLE_MIN:
+        return stored_total
+    return random.randint(
+        VALIDATION_DISPLAY_SAMPLE_MIN,
+        min(VALIDATION_DISPLAY_SAMPLE_MAX, stored_total),
+    )
+
+
+def build_display_sample_fields(all_ids: list[int], stored_total: int) -> dict[str, Any]:
+    """Build display-sample metadata for ValidationResult.payload."""
+    if not VALIDATION_DISPLAY_SAMPLE_ENABLED or stored_total < VALIDATION_DISPLAY_SAMPLE_MIN:
+        return {
+            "display_sample_enabled": False,
+            "display_sample_size": stored_total,
+            "display_sample_ids": None,
+        }
+    sample_size = compute_display_sample_size(stored_total)
+    if sample_size >= stored_total:
+        return {
+            "display_sample_enabled": False,
+            "display_sample_size": stored_total,
+            "display_sample_ids": None,
+        }
+    sample_ids = random.sample(all_ids, sample_size)
+    return {
+        "display_sample_enabled": True,
+        "display_sample_size": sample_size,
+        "display_sample_ids": sample_ids,
+    }
+
+
+def _latest_validation_result_row(db: Session, analysis_id: int) -> ValidationResult | None:
+    return (
+        db.query(ValidationResult)
+        .filter(ValidationResult.analysis_id == analysis_id)
+        .order_by(ValidationResult.id.desc())
+        .first()
+    )
+
+
+def count_all_stored_validation_candidates(db: Session, analysis_id: int) -> int:
+    return (
+        db.query(Phase3ValidationCandidate)
+        .filter(Phase3ValidationCandidate.analysis_id == analysis_id)
+        .count()
+    )
+
+
+def _all_stored_candidate_ids(db: Session, analysis_id: int) -> list[int]:
+    rows = (
+        db.query(Phase3ValidationCandidate.id)
+        .filter(Phase3ValidationCandidate.analysis_id == analysis_id)
+        .order_by(Phase3ValidationCandidate.id)
+        .all()
+    )
+    return [int(row[0]) for row in rows]
+
+
+def ensure_validation_display_sample(db: Session, analysis_id: int) -> dict[str, Any]:
+    """Return display-sample metadata; lazily backfill missing sample IDs once."""
+    stored_total = count_all_stored_validation_candidates(db, analysis_id)
+    if stored_total <= 0:
+        return {
+            "display_sample_enabled": False,
+            "display_sample_size": 0,
+            "display_sample_ids": None,
+            "full_total": 0,
+        }
+
+    if not VALIDATION_DISPLAY_SAMPLE_ENABLED or stored_total < VALIDATION_DISPLAY_SAMPLE_MIN:
+        return {
+            "display_sample_enabled": False,
+            "display_sample_size": stored_total,
+            "display_sample_ids": None,
+            "full_total": stored_total,
+        }
+
+    val_row = _latest_validation_result_row(db, analysis_id)
+    payload = dict(val_row.payload) if val_row and isinstance(val_row.payload, dict) else {}
+    existing_ids = payload.get("display_sample_ids")
+    if isinstance(existing_ids, list) and existing_ids:
+        return {
+            "display_sample_enabled": True,
+            "display_sample_size": len(existing_ids),
+            "display_sample_ids": [int(x) for x in existing_ids],
+            "full_total": stored_total,
+        }
+
+    all_ids = _all_stored_candidate_ids(db, analysis_id)
+    fields = build_display_sample_fields(all_ids, stored_total)
+    merged_payload = make_json_safe({**payload, **fields})
+    if val_row:
+        val_row.payload = merged_payload
+    else:
+        db.add(
+            ValidationResult(
+                analysis_id=analysis_id,
+                stage="phase3_validation",
+                payload=merged_payload,
+            )
+        )
+    db.flush()
+    return {
+        **fields,
+        "full_total": stored_total,
+    }
+
+
+def _display_filter_ids(db: Session, analysis_id: int) -> list[int] | None:
+    meta = ensure_validation_display_sample(db, analysis_id)
+    if not meta.get("display_sample_enabled"):
+        return None
+    ids = meta.get("display_sample_ids")
+    if not isinstance(ids, list) or not ids:
+        return None
+    return [int(x) for x in ids]
+
+
 def _validation_candidates_query(
     db: Session,
     analysis_id: int,
@@ -153,10 +281,13 @@ def _validation_candidates_query(
     severity: str | None = None,
     column: str | None = None,
     rule_id: str | None = None,
+    display_ids: list[int] | None = None,
 ):
     q = db.query(Phase3ValidationCandidate).filter(
         Phase3ValidationCandidate.analysis_id == analysis_id
     )
+    if display_ids is not None:
+        q = q.filter(Phase3ValidationCandidate.id.in_(display_ids))
     if severity:
         q = q.filter(Phase3ValidationCandidate.severity == severity.upper())
     if column:
@@ -172,6 +303,7 @@ def count_validation_candidates(
     column: str | None = None,
     rule_id: str | None = None,
 ) -> int:
+    display_ids = _display_filter_ids(db, analysis_id)
     return (
         _validation_candidates_query(
             db,
@@ -179,6 +311,7 @@ def count_validation_candidates(
             severity=severity,
             column=column,
             rule_id=rule_id,
+            display_ids=display_ids,
         ).count()
     )
 
@@ -195,12 +328,14 @@ def list_validation_candidates_paginated(
 ) -> dict[str, Any]:
     page = max(1, int(page))
     page_size = max(1, min(int(page_size), 200))
+    display_ids = _display_filter_ids(db, analysis_id)
     q = _validation_candidates_query(
         db,
         analysis_id,
         severity=severity,
         column=column,
         rule_id=rule_id,
+        display_ids=display_ids,
     )
     total = q.count()
     rows = (
@@ -231,8 +366,9 @@ def list_validation_candidates_paginated(
 
 
 def load_all_validation_candidate_dicts(db: Session, analysis_id: int) -> list[dict[str, Any]]:
+    display_ids = _display_filter_ids(db, analysis_id)
     rows = (
-        _validation_candidates_query(db, analysis_id)
+        _validation_candidates_query(db, analysis_id, display_ids=display_ids)
         .options(
             load_only(
                 Phase3ValidationCandidate.id,
@@ -251,8 +387,9 @@ def load_all_validation_candidate_dicts(db: Session, analysis_id: int) -> list[d
 
 
 def _validation_candidate_rows(db: Session, analysis_id: int, *, limit: int) -> tuple[list[Phase3ValidationCandidate], int | None]:
+    display_ids = _display_filter_ids(db, analysis_id)
     sev_rank = _validation_severity_rank()
-    rows = (
+    q = (
         db.query(Phase3ValidationCandidate)
         .options(
             load_only(
@@ -266,10 +403,10 @@ def _validation_candidate_rows(db: Session, analysis_id: int, *, limit: int) -> 
             )
         )
         .filter(Phase3ValidationCandidate.analysis_id == analysis_id)
-        .order_by(sev_rank, Phase3ValidationCandidate.id)
-        .limit(limit + 1)
-        .all()
     )
+    if display_ids is not None:
+        q = q.filter(Phase3ValidationCandidate.id.in_(display_ids))
+    rows = q.order_by(sev_rank, Phase3ValidationCandidate.id).limit(limit + 1).all()
     if not rows:
         return [], 0
     truncated = len(rows) > limit
@@ -351,9 +488,18 @@ def build_phase3_from_relational(db: Session, analysis_id: int) -> dict[str, Any
     candidates, candidate_total = _validation_candidate_rows(
         db, analysis_id, limit=VALIDATION_CANDIDATE_READ_LIMIT
     )
+    sample_meta = ensure_validation_display_sample(db, analysis_id)
     total_count = count_validation_candidates(db, analysis_id)
+    full_total = int(sample_meta.get("full_total") or total_count)
     if total_count:
         phase3["validation_candidates_total"] = total_count
+    if full_total and full_total != total_count:
+        phase3["validation_full_total"] = full_total
+    if sample_meta.get("display_sample_enabled"):
+        phase3["validation_display_sample_enabled"] = True
+        phase3["validation_display_sample_size"] = int(
+            sample_meta.get("display_sample_size") or total_count
+        )
     if candidates:
         phase3["validation_candidates"] = [_candidate_to_dict(c) for c in candidates]
         if total_count > len(candidates):

@@ -549,26 +549,7 @@ def apply_analysis_decisions(
         )
     )
 
-    from review.dataset_snapshot_service import resolve_working_stage
-    from services.analysis_dataframe_service import load_snapshot_dataframe
-
-    working_stage = resolve_working_stage(db, analysis_id)
-    weighted_df = load_snapshot_dataframe(db, analysis_id, "weighted")
-    if working_stage == "weighted" and weighted_df is not None:
-        df_final = weighted_df.copy()
-        lineage.append(
-            _persist_snapshot(
-                db,
-                analysis_id=analysis_id,
-                dataset_id=ds.id,
-                stage="weighted",
-                df=df_final,
-                store=store,
-                meta={"phase": "v6_weight_application", "source": "apply_lineage"},
-            )
-        )
-    else:
-        df_final = df_imputed.copy()
+    df_final = df_imputed.copy()
     final_path = _derived_dir() / f"analysis_{analysis_id}_final.csv"
     df_final.to_csv(final_path, index=False)
     lineage.append(
@@ -609,6 +590,16 @@ def apply_analysis_decisions(
         user_id=user_id,
         payload=summary,
     )
+
+    from services.phase_status_cache import invalidate_phase_status
+    from services.phase_status_service import PhaseStatusService
+
+    phase_status = PhaseStatusService(db)
+    progress = phase_status.validation_review_progress(analysis_id)
+    if progress.get("review_complete") or val_decisions:
+        phase_status.mark_rule_validation_complete(analysis_id)
+    invalidate_phase_status(analysis_id)
+
     db.commit()
     return summary
 

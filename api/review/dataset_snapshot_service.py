@@ -17,8 +17,7 @@ STAGE_LABELS: dict[str, str] = {
     "validated": "v3_rule_validation",
     "anomaly_reviewed": "v4_anomaly",
     "imputed": "v5_missing_value",
-    "weighted": "v6_weight_application",
-    "final": "v7_dataset_review",
+    "final": "v6_dataset_review",
 }
 
 WORKING_STAGE = "imputed"
@@ -26,15 +25,6 @@ FINAL_STAGE = "final"
 
 
 def resolve_working_stage(db: Session, analysis_id: int) -> str:
-    from database.models import WeightApplication
-
-    app = (
-        db.query(WeightApplication)
-        .filter(WeightApplication.analysis_id == analysis_id, WeightApplication.applied.is_(True))
-        .first()
-    )
-    if app:
-        return "weighted"
     return WORKING_STAGE
 
 
@@ -139,7 +129,7 @@ class DatasetSnapshotService:
     def load_working_processed_dataframe(
         self, analysis_id: int
     ) -> tuple[pd.DataFrame, DatasetLineageSnapshot | None]:
-        """Pre-approval working snapshot — weighted if applied, else imputed."""
+        """Pre-approval working snapshot — latest imputed lineage stage."""
         stage = resolve_working_stage(self.db, analysis_id)
         snap = self._latest_snapshot(analysis_id, stage)
         if snap:

@@ -63,6 +63,9 @@ export default function Step6RuleValidation({
     reviewComplete: false,
     phaseComplete: false,
     complete: false,
+    displaySampleEnabled: false,
+    displaySampleSize: null as number | null,
+    fullTotal: null as number | null,
   });
 
   const phase3 = results.phase3 ?? {};
@@ -80,6 +83,21 @@ export default function Step6RuleValidation({
       ?? candidates.length,
   );
 
+  const displaySampleEnabled = Boolean(
+    (phase3 as { validation_display_sample_enabled?: boolean }).validation_display_sample_enabled
+      ?? validationProgress.displaySampleEnabled,
+  );
+  const displaySampleSize = Number(
+    (phase3 as { validation_display_sample_size?: number }).validation_display_sample_size
+      ?? validationProgress.displaySampleSize
+      ?? 0,
+  ) || null;
+  const fullValidationTotal = Number(
+    (phase3 as { validation_full_total?: number }).validation_full_total
+      ?? validationProgress.fullTotal
+      ?? 0,
+  ) || null;
+
   useEffect(() => {
     analysisApi.getValidationReviewProgress(analysisId).then((p) => {
       setValidationProgress({
@@ -89,6 +107,9 @@ export default function Step6RuleValidation({
         reviewComplete: p.review_complete ?? (p.total > 0 && p.reviewed >= p.total),
         phaseComplete: p.phase_complete ?? p.complete,
         complete: p.complete,
+        displaySampleEnabled: Boolean(p.display_sample_enabled),
+        displaySampleSize: p.display_sample_size ?? null,
+        fullTotal: p.full_total ?? null,
       });
       if (p.acknowledged) setAcknowledged(true);
     }).catch(() => {});
@@ -305,6 +326,16 @@ export default function Step6RuleValidation({
         </Alert>
       )}
 
+      {!isLoading && displaySampleEnabled && displaySampleSize && fullValidationTotal && fullValidationTotal > displaySampleSize && (
+        <Alert variant="info" title="Hackathon review sample">
+          <p className="text-sm">
+            Showing {displaySampleSize.toLocaleString()} randomly selected violations out of{' '}
+            {fullValidationTotal.toLocaleString()} stored. Review and save decisions for this sample only;
+            remaining violations are left unchanged.
+          </p>
+        </Alert>
+      )}
+
       {!isLoading && (
         <ValidationRulesInventory
           inventory={rulesInventory}
@@ -345,6 +376,9 @@ export default function Step6RuleValidation({
         totalCandidates={totalCandidates}
         reportedTotal={reportedCandidateTotal || undefined}
         candidatesTruncated={candidatesTruncated}
+        displaySampleEnabled={displaySampleEnabled}
+        displaySampleSize={displaySampleSize ?? undefined}
+        fullTotal={fullValidationTotal ?? undefined}
         onSaved={() => {
           void analysisApi.getValidationReviewProgress(analysisId).then((p) => {
             setValidationProgress({
@@ -354,6 +388,9 @@ export default function Step6RuleValidation({
               reviewComplete: p.review_complete ?? (p.total > 0 && p.reviewed >= p.total),
               phaseComplete: p.phase_complete ?? p.complete,
               complete: p.complete,
+              displaySampleEnabled: Boolean(p.display_sample_enabled),
+              displaySampleSize: p.display_sample_size ?? null,
+              fullTotal: p.full_total ?? null,
             });
             if (p.reviewed > 0) setSavedDecisionCount(p.reviewed);
           });
@@ -367,7 +404,8 @@ export default function Step6RuleValidation({
             <strong>
               {validationProgress.reviewed} / {validationProgress.total || totalCandidates}
             </strong>
-            {validationProgress.reportedTotal != null
+            {!validationProgress.displaySampleEnabled
+              && validationProgress.reportedTotal != null
               && validationProgress.reportedTotal > validationProgress.total && (
               <span className="text-text-muted">
                 {' '}

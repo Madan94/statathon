@@ -19,19 +19,29 @@ else:
 _default_sqlite = (_api_root / "statathon.db").resolve().as_posix()
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{_default_sqlite}")
 _is_sqlite = DATABASE_URL.startswith("sqlite")
+_is_xata = ".sql.xata.sh" in DATABASE_URL.lower() or ".xata.tech" in DATABASE_URL.lower()
 
-# For Postgres (Supabase, Neon, RDS):
+# For Postgres (Supabase, Xata, Neon, RDS):
 #  - pool_pre_ping → SELECT 1 before handing out a connection
-#  - pool_recycle  → drop connections older than 280s (Supabase pooler kills idle conns ~300s)
+#  - pool_recycle  → drop idle connections before server-side timeout
 #  - pool_size/max_overflow → keep small for hobby tier, allow burst
 #  - pool_timeout → wait at most 30s to get a connection from the pool
-#  - connect_args.connect_timeout → fail-fast on DNS/network hangs (default psycopg2 blocks ~75s)
-#  - options=-c statement_timeout=30000 → kill queries stuck > 30s
-#  - prepared_statement_cache_size=0 → REQUIRED for Supabase transaction mode (port 6543)
+#  - connect_args.connect_timeout → fail-fast on DNS/network hangs
+#  - options statement_timeout / lock_timeout → avoid runaway queries
+# Xata: use ?sslmode=require; optional -pooler host suffix for serverless workloads
+_default_statement_timeout_ms = os.getenv("DB_STATEMENT_TIMEOUT_MS", "60000" if _is_xata else "15000")
+_default_lock_timeout_ms = os.getenv("DB_LOCK_TIMEOUT_MS", "30000" if _is_xata else "5000")
 _pg_connect_args = {
     "connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", "10")),
-    "options": "-c statement_timeout=15000 -c lock_timeout=5000",
+    "options": (
+        f"-c statement_timeout={_default_statement_timeout_ms} "
+        f"-c lock_timeout={_default_lock_timeout_ms}"
+    ),
 }
+if "sslmode" not in DATABASE_URL.lower() and not _is_sqlite:
+    logger.warning(
+        "DATABASE_URL has no sslmode= — Postgres providers (Xata, Supabase) usually require sslmode=require"
+    )
 
 # Use NullPool if env says so (useful for serverless / extraction workers that
 # open one connection, do one query, close — avoids pool accumulation)
@@ -103,7 +113,7 @@ def pool_stats() -> dict:
         return {"backend": "sqlite", "url": DATABASE_URL}
     p = engine.pool
     stats = {
-        "backend": "postgresql",
+        "backend": "xata" if _is_xata else "postgresql",
         "host_redacted": DATABASE_URL.split("@")[-1].split("/")[0] if "@" in DATABASE_URL else "",
         "pool_class": type(p).__name__,
     }

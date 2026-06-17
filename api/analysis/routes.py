@@ -28,7 +28,6 @@ from analysis.schemas import (
     ValidationCandidatesPageResponse,
     ValidationDecisionsRequest,
     ValidationProceedRequest,
-    WeightApplyRequest,
 )
 from auth.permissions import require_analysis_owner, require_analysis_owner_meta, require_dataset_owner
 from deps import get_current_user_id
@@ -53,7 +52,6 @@ from services.analysis_payload_cache import (
 from services.normalization_service import NormalizationService
 from services.outlier_workflow_service import OutlierWorkflowService
 from services.validation_workflow_service import ValidationWorkflowService
-from services.weight_workflow_service import WeightWorkflowService
 from services.imputation_workflow_service import ImputationWorkflowService
 from services.phase_audit_service import PhaseAuditService
 from services.phase_status_service import PhaseStatusService
@@ -198,7 +196,9 @@ async def apply_decisions(
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
     try:
-        return await run_in_threadpool(apply_analysis_decisions, db, analysis_id, user_id)
+        return await run_in_threadpool(
+            apply_analysis_decisions, db, analysis_id, user_id=user_id
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
@@ -250,81 +250,6 @@ def get_phase_status(
 ):
     _analysis_meta_or_raise(analysis_id, db, user_id)
     return PhaseStatusService(db).get_status_payload(analysis_id)
-
-
-@router.get("/{analysis_id}/weights")
-def get_weight_application_payload(
-    analysis_id: int,
-    db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
-):
-    _analysis_meta_or_raise(analysis_id, db, user_id)
-    try:
-        return WeightWorkflowService(db).get_payload(analysis_id)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-
-
-@router.post("/{analysis_id}/weights/detect")
-async def detect_weight_columns_route(
-    analysis_id: int,
-    db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
-):
-    _analysis_meta_or_raise(analysis_id, db, user_id)
-    try:
-        return await run_in_threadpool(
-            WeightWorkflowService(db).detect_weights,
-            analysis_id,
-            user_id=user_id,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-
-
-@router.get("/{analysis_id}/weights/compare")
-def compare_weight_metrics(
-    analysis_id: int,
-    weight_column: str,
-    db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
-):
-    _analysis_meta_or_raise(analysis_id, db, user_id)
-    try:
-        return WeightWorkflowService(db).compare_metrics(analysis_id, weight_column)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-
-
-@router.post("/{analysis_id}/weights/apply")
-def apply_survey_weight(
-    analysis_id: int,
-    body: WeightApplyRequest,
-    db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
-):
-    _analysis_meta_or_raise(analysis_id, db, user_id)
-    try:
-        return WeightWorkflowService(db).apply_weight(
-            analysis_id,
-            body.weight_column,
-            user_id=user_id,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-
-
-@router.post("/{analysis_id}/weights/ignore")
-def ignore_survey_weight(
-    analysis_id: int,
-    db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
-):
-    _analysis_meta_or_raise(analysis_id, db, user_id)
-    try:
-        return WeightWorkflowService(db).ignore_weight(analysis_id, user_id=user_id)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.get("/{analysis_id}/dataset-review")
@@ -612,6 +537,7 @@ async def run_outlier_detection(
             OutlierWorkflowService(db).run_detection,
             analysis_id,
             body.column,
+            body.method,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e

@@ -18,6 +18,7 @@ class OutlierMethodSelectRequest(BaseModel):
 
 class OutlierDetectRequest(BaseModel):
     column: str
+    method: OutlierMethod | None = None
 
 
 class OutlierRowDecisionItem(BaseModel):
@@ -89,7 +90,3 @@ class NormalizationColumnUpdate(BaseModel):
 
 class NormalizationSaveRequest(BaseModel):
     columns: list[NormalizationColumnUpdate] = Field(default_factory=list)
-
-
-class WeightApplyRequest(BaseModel):
-    weight_column: str = Field(..., max_length=512)

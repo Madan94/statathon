@@ -106,3 +106,52 @@ export function isNumericColumn(column: string, results: AnalysisResult): boolea
   if (profile?.mean_std?.mean != null) return true;
   return false;
 }
+
+/** Merge outlier detection API response into results without refetching full analysis payload. */
+export function mergeOutlierDetection(
+  results: AnalysisResult,
+  column: string,
+  detectRes: {
+    method?: string;
+    candidates?: Array<Record<string, unknown>>;
+    anomaly_block?: Record<string, unknown>;
+  },
+): AnalysisResult {
+  const phase3 = { ...(results.phase3 ?? {}) } as Record<string, unknown>;
+  const blocks = [...((phase3.anomaly_results as AnomalyColumnBlock[] | undefined) ?? [])];
+  const existing = resolveAnomalyBlock(column, results);
+  const mergedBlock = {
+    ...(existing ?? { column }),
+    ...(detectRes.anomaly_block ?? {}),
+    method_selected: detectRes.method ?? detectRes.anomaly_block?.method_selected,
+    detection_run: true,
+  } as AnomalyColumnBlock;
+
+  const blockIdx = blocks.findIndex(
+    (b) => b.column === column
+      || b.column === mergedBlock.column
+      || (b as AnomalyColumnBlock & { original_column?: string }).original_column === column,
+  );
+  if (blockIdx >= 0) {
+    blocks[blockIdx] = { ...blocks[blockIdx], ...mergedBlock };
+  } else {
+    blocks.push(mergedBlock);
+  }
+
+  const uiCol = String(mergedBlock.column ?? column);
+  const prevCandidates = ((phase3.anomaly_candidates as Array<Record<string, unknown>> | undefined) ?? [])
+    .filter((c) => String(c.column ?? '') !== uiCol && String(c.column ?? '') !== column);
+  const nextCandidates = [
+    ...prevCandidates,
+    ...((detectRes.candidates as Array<Record<string, unknown>> | undefined) ?? []),
+  ];
+
+  return {
+    ...results,
+    phase3: {
+      ...phase3,
+      anomaly_results: blocks,
+      anomaly_candidates: nextCandidates,
+    },
+  };
+}

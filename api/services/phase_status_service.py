@@ -16,12 +16,13 @@ from database.models import (
 from services.analysis_query import (
     build_phase3_from_relational,
     count_validation_candidates,
+    ensure_validation_display_sample,
     get_analysis_meta,
     get_normalization_version,
     load_analysis_checkpoint,
     load_checkpoint_phase3_overlay,
 )
-from services.phase_status_cache import get_cached_phase_status, set_cached_phase_status
+from services.phase_status_cache import get_cached_phase_status, invalidate_phase_status, set_cached_phase_status
 from services.analysis_dataframe_service import column_identity_aliases
 
 
@@ -112,29 +113,6 @@ def ensure_phase_status_schema() -> None:
                                 "ADD COLUMN dataset_review_completed BOOLEAN NOT NULL DEFAULT 0"
                             )
                         )
-            if "weight_application_completed" not in cols:
-                dialect = engine.dialect.name
-                with engine.begin() as conn:
-                    if dialect == "postgresql":
-                        conn.execute(
-                            text(
-                                "ALTER TABLE analysis_phase_status "
-                                "ADD COLUMN IF NOT EXISTS weight_application_completed BOOLEAN NOT NULL DEFAULT FALSE"
-                            )
-                        )
-                    else:
-                        conn.execute(
-                            text(
-                                "ALTER TABLE analysis_phase_status "
-                                "ADD COLUMN weight_application_completed BOOLEAN NOT NULL DEFAULT 0"
-                            )
-                        )
-        WeightProfile = __import__("database.models", fromlist=["WeightProfile"]).WeightProfile
-        WeightApplication = __import__("database.models", fromlist=["WeightApplication"]).WeightApplication
-        WeightAuditLog = __import__("database.models", fromlist=["WeightAuditLog"]).WeightAuditLog
-        WeightProfile.__table__.create(bind=engine, checkfirst=True)
-        WeightApplication.__table__.create(bind=engine, checkfirst=True)
-        WeightAuditLog.__table__.create(bind=engine, checkfirst=True)
     except Exception:
         pass
     _schema_ready = True
@@ -166,6 +144,8 @@ class PhaseStatusService:
     ) -> dict[str, Any]:
         if phase3 is None:
             phase3 = build_phase3_from_relational(self.db, analysis_id)
+        sample_meta = ensure_validation_display_sample(self.db, analysis_id)
+        full_total = int(sample_meta.get("full_total") or 0)
         db_total = count_validation_candidates(self.db, analysis_id)
         reported_total = int(phase3.get("validation_candidates_reported_total") or 0)
         if not reported_total:
@@ -186,6 +166,8 @@ class PhaseStatusService:
         acknowledged = bool(overlay.get("validation_acknowledged"))
         status_row = self.get_or_create(analysis_id)
         truncated = reported_total > reviewable > 0
+        display_sample_enabled = bool(sample_meta.get("display_sample_enabled"))
+        display_sample_size = int(sample_meta.get("display_sample_size") or reviewable)
         complete_threshold = reviewable if reviewable else total
         progress_total = reviewable or total
         review_complete = (
@@ -207,12 +189,16 @@ class PhaseStatusService:
             "complete": complete,
             "stored_total": reviewable,
             "truncated": truncated,
+            "full_total": full_total or None,
+            "display_sample_enabled": display_sample_enabled,
+            "display_sample_size": display_sample_size if display_sample_enabled else None,
         }
 
     def mark_rule_validation_complete(self, analysis_id: int) -> AnalysisPhaseStatus:
         row = self.get_or_create(analysis_id)
         row.rule_validation_completed = True
         row.updated_at = datetime.utcnow()
+        invalidate_phase_status(analysis_id)
         return row
 
     def sync_early_phases(self, analysis_id: int) -> AnalysisPhaseStatus:
@@ -474,7 +460,6 @@ class PhaseStatusService:
             "rule_validation_completed": row.rule_validation_completed or val["complete"],
             "anomaly_completed": anomaly["complete"] or row.anomaly_completed,
             "missing_value_completed": imputation["complete"] or row.missing_value_completed,
-            "weight_application_completed": row.weight_application_completed,
             "dataset_review_completed": row.dataset_review_completed,
             "validation": val,
             "anomaly": anomaly,

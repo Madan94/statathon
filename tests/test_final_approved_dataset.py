@@ -44,7 +44,7 @@ def test_persist_final_approved_snapshot_writes_parquet(tmp_path):
 
     service = DatasetSnapshotService(db)
     service.load_working_processed_dataframe = MagicMock(
-        return_value=(df, MagicMock(id=5, stage="weighted", version=2))
+        return_value=(df, MagicMock(id=5, stage="imputed", version=2))
     )
     service._latest_snapshot = MagicMock(return_value=None)
     service._read_snapshot_df = MagicMock(return_value=None)

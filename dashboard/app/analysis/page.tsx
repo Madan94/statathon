@@ -22,7 +22,6 @@ import {
   FileText,
   Gauge,
   Loader2,
-  Scale,
   SlidersHorizontal,
   TriangleAlert,
 } from 'lucide-react';
@@ -53,7 +52,6 @@ import {
   STATUS_META,
   RISK_COLOR,
   CHART_PALETTE_FALLBACK,
-  weightedMeans,
   type AnalysisStatusKey,
   type DatasetAnalysisRow,
 } from '@/lib/analysisInsights';
@@ -404,7 +402,6 @@ function DatasetAnalysisDetail({ row, detail }: { row: DatasetAnalysisRow; detai
   const methods = useMemo(() => groupImputationByMethod(phase3.imputation_candidates), [phase3.imputation_candidates]);
   const missing = useMemo(() => imputationMissingByColumn(phase3.imputation_candidates), [phase3.imputation_candidates]);
   const outliers = useMemo(() => outlierColumns(result.outliers), [result.outliers]);
-  const weighted = useMemo(() => weightedMeans(result.weighted_profile), [result.weighted_profile]);
   const healthTiles = useMemo(
     () => scalarMetrics(result.health ?? result.profiling_summary, 8),
     [result.health, result.profiling_summary],
@@ -447,8 +444,6 @@ function DatasetAnalysisDetail({ row, detail }: { row: DatasetAnalysisRow; detai
     }),
     [outliers],
   );
-
-  const weightApplied = Boolean(result.weighted_profile?.applied);
 
   return (
     <div className="space-y-4">
@@ -545,28 +540,6 @@ function DatasetAnalysisDetail({ row, detail }: { row: DatasetAnalysisRow; detai
           </div>
         </ChartCard>
       </div>
-
-      {weightApplied && (
-        <ChartCard title="Weighted numeric means" icon={Scale} empty={weighted.length === 0}>
-          <p className="mb-2 text-xs text-text-muted">
-            Weight column <span className="font-medium text-text">{result.weighted_profile?.weight_column ?? '—'}</span>
-            {result.weighted_profile?.effective_sample_size != null && (
-              <> · effective sample size <span className="font-medium text-text">{Math.round(result.weighted_profile.effective_sample_size).toLocaleString('en-IN')}</span></>
-            )}
-          </p>
-          <ResponsiveContainer width="100%" height={Math.max(180, weighted.length * 28 + 24)}>
-            <BarChart data={weighted} layout="vertical" margin={{ top: 4, right: 40, left: 8, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} horizontal={false} />
-              <XAxis type="number" tick={{ fill: AXIS_COLOR, fontSize: 11 }} tickLine={false} axisLine={{ stroke: GRID_COLOR }} />
-              <YAxis type="category" dataKey="column" width={140} tick={{ fill: AXIS_COLOR, fontSize: 11 }} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={CHART_TOOLTIP_STYLE} cursor={{ fill: 'rgba(13,148,136,0.06)' }} />
-              <Bar dataKey="value" fill="#0d9488" radius={[0, 4, 4, 0]} barSize={16}>
-                <LabelList dataKey="value" position="right" formatter={(v) => { const n = Number(v); return Number.isInteger(n) ? String(n) : n.toFixed(2); }} style={{ fill: AXIS_COLOR, fontSize: 11 }} />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      )}
 
       {healthTiles.length > 0 && (
         <Card>

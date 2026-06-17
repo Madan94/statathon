@@ -15,8 +15,7 @@ export const PIPELINE_STEPS = [
   { id: 5, label: 'Schema', sublabel: 'Graph view' },
   { id: 6, label: 'Rule Validation', sublabel: 'Single & multi column' },
   { id: 7, label: 'Column Analysis', sublabel: 'Anomaly & missing' },
-  { id: 8, label: 'Weight Application', sublabel: 'Survey weights' },
-  { id: 9, label: 'Dataset Review', sublabel: 'Approve & proceed' },
+  { id: 8, label: 'Dataset Review', sublabel: 'Approve & proceed' },
 ] as const;
 
 interface AnalysisStepperProps {
@@ -32,17 +31,12 @@ function stepUnlocked(
   if (!status) return true;
   if (stepId <= 6) return true;
   if (stepId === 7) {
-    return Boolean(
-      status.rule_validation_completed && status.anomaly_completed && status.missing_value_completed,
-    );
+    return Boolean(status.rule_validation_completed);
   }
   if (stepId === 8) {
     return Boolean(
       status.rule_validation_completed && status.anomaly_completed && status.missing_value_completed,
     );
-  }
-  if (stepId === 9) {
-    return Boolean(status.weight_application_completed);
   }
   return true;
 }
