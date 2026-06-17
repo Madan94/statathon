@@ -14,18 +14,20 @@ def require_dataset_owner(db: Session, dataset_id: int, user_id: int) -> Dataset
 
 
 def require_analysis_owner(db: Session, analysis_id: int, user_id: int) -> Analysis:
-    an = db.query(Analysis).filter(Analysis.id == analysis_id).first()
-    if not an:
+    row = (
+        db.query(Analysis)
+        .join(Dataset, Dataset.id == Analysis.dataset_id)
+        .filter(Analysis.id == analysis_id, Dataset.user_id == user_id)
+        .first()
+    )
+    if not row:
         raise HTTPException(status_code=404, detail="Analysis not found")
-    ds = db.query(Dataset).filter(Dataset.id == an.dataset_id).first()
-    if not ds or ds.user_id != user_id:
-        raise HTTPException(status_code=404, detail="Analysis not found")
-    return an
+    return row
 
 
 def require_analysis_owner_meta(db: Session, analysis_id: int, user_id: int) -> Analysis:
     """Ownership check without loading the large checkpoint JSON blob."""
-    an = (
+    row = (
         db.query(Analysis)
         .options(
             load_only(
@@ -37,12 +39,10 @@ def require_analysis_owner_meta(db: Session, analysis_id: int, user_id: int) -> 
                 Analysis.created_at,
             )
         )
-        .filter(Analysis.id == analysis_id)
+        .join(Dataset, Dataset.id == Analysis.dataset_id)
+        .filter(Analysis.id == analysis_id, Dataset.user_id == user_id)
         .first()
     )
-    if not an:
+    if not row:
         raise HTTPException(status_code=404, detail="Analysis not found")
-    ds = db.query(Dataset).filter(Dataset.id == an.dataset_id).first()
-    if not ds or ds.user_id != user_id:
-        raise HTTPException(status_code=404, detail="Analysis not found")
-    return an
+    return row

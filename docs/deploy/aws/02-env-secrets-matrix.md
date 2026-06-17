@@ -24,10 +24,11 @@ This maps current app settings from [`.env.example`](d:/statathon-hack/statathon
 - `S3_BUCKET=<bucket>`
 - `AWS_REGION=<region>`
 - `S3_UPLOAD_PREFIX=datasets`
+- `S3_KMS_KEY_ID=arn:aws:kms:<region>:<account>:key/<key-id>`
+- `S3_VAULT_KMS_KEY_ID=` (optional; defaults to `S3_KMS_KEY_ID`)
 - `PRESIGNED_UPLOAD_EXPIRES_SECONDS=3600`
 - `REGISTER_SIZE_TOLERANCE_BYTES=8`
-- `UPLOAD_STORAGE_PATH=/tmp/uploads` (fallback path)
-- `REPORT_STORAGE_PATH=/tmp/reports` (fallback path)
+- `REPORT_STORAGE_PATH=/tmp/reports` (derived reports only; raw datasets are S3-only)
 - `REDIS_URL=redis://<elasticache-endpoint>:6379/0`
 - `INFERENCE_MODE=remote`
 - `GPU_WORKER_ENDPOINT=http://<private-worker-endpoint>:8080`

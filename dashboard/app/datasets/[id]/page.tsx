@@ -31,6 +31,11 @@ import {
   ShieldCheck,
   HeartPulse,
 } from 'lucide-react';
+import AnalysisRunningModal, {
+  analysisProgressPct,
+  estimateAnalysisStepIndex,
+  type AnalysisModalPhase,
+} from '@/components/analysis/AnalysisRunningModal';
 
 function fmt(n: number | null | undefined, suffix = '') {
   if (n == null || Number.isNaN(n)) return '—';
@@ -57,8 +62,22 @@ export default function DatasetPage() {
   const [profile, setProfile] = useState<DatasetProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
-  const [progress, setProgress] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalPhase, setModalPhase] = useState<AnalysisModalPhase>('running');
+  const [analysisId, setAnalysisId] = useState<number | undefined>();
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const [pipelineStatus, setPipelineStatus] = useState('pending');
+  const [statusLine, setStatusLine] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!analyzing) return;
+    const started = Date.now();
+    const timer = window.setInterval(() => {
+      setElapsedMs(Date.now() - started);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [analyzing]);
 
   useEffect(() => {
     Promise.all([
@@ -75,23 +94,30 @@ export default function DatasetPage() {
 
   const handleAnalyze = async () => {
     setAnalyzing(true);
+    setModalOpen(true);
+    setModalPhase('running');
+    setAnalysisId(undefined);
+    setElapsedMs(0);
+    setPipelineStatus('pending');
     setError(null);
-    setProgress('Starting analysis…');
-    let analysisId: number | undefined;
+    setStatusLine('Starting analysis…');
+    let currentAnalysisId: number | undefined;
     const startedAt = Date.now();
     try {
       const started = await analysisApi.runAsync(id);
-      analysisId = started.id ?? started.analysis_id;
-      if (!analysisId) throw new Error('No analysis ID returned');
+      currentAnalysisId = started.id ?? started.analysis_id;
+      setAnalysisId(currentAnalysisId);
+      if (!currentAnalysisId) throw new Error('No analysis ID returned');
 
-      const final = await analysisApi.pollUntilComplete(analysisId, (st) => {
+      const final = await analysisApi.pollUntilComplete(currentAnalysisId, (st) => {
+        setPipelineStatus(st.status);
         const elapsedMin = Math.floor((Date.now() - startedAt) / 60000);
         const suffix =
           st.status === 'running' || st.status === 'pending'
-            ? ' — first run can take 10–20 min while models load'
+            ? ' — models may still be loading on first run'
             : '';
-        setProgress(
-          `Status: ${st.status}${st.error_message ? ` — ${st.error_message}` : ''} (${elapsedMin}m)${suffix}`
+        setStatusLine(
+          `Server status: ${st.status}${st.error_message ? ` — ${st.error_message}` : ''} (${elapsedMin}m elapsed)${suffix}`
         );
       });
 
@@ -99,18 +125,21 @@ export default function DatasetPage() {
         throw new Error(final.error_message || 'Analysis failed');
       }
 
+      setModalPhase('success');
+      setPipelineStatus('complete');
       toast.success('Analysis complete — entering pipeline wizard');
-      router.push(`/analysis/${analysisId}`);
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      router.push(`/analysis/${currentAnalysisId}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Analysis failed';
-      if (analysisId && msg.includes('timed out')) {
+      if (currentAnalysisId && msg.includes('timed out')) {
         try {
-          const st = await analysisApi.getStatus(analysisId);
+          const st = await analysisApi.getStatus(currentAnalysisId);
           if (st.status === 'running' || st.status === 'pending') {
             toast.info(
-              `Analysis #${analysisId} is still running on the server. Check back in a few minutes or open the analysis page.`
+              `Analysis #${currentAnalysisId} is still running on the server. Check back in a few minutes or open the analysis page.`
             );
-            setProgress(`Analysis #${analysisId} still running on server…`);
+            setStatusLine(`Analysis #${currentAnalysisId} still running on server…`);
             setError(null);
             return;
           }
@@ -118,13 +147,23 @@ export default function DatasetPage() {
           /* fall through to generic error */
         }
       }
+      setModalPhase('failed');
       setError(msg);
       toast.error(msg);
-      setProgress(null);
     } finally {
       setAnalyzing(false);
     }
   };
+
+  const closeModal = () => {
+    if (analyzing) return;
+    setModalOpen(false);
+    setModalPhase('running');
+    setStatusLine(null);
+  };
+
+  const activeStepIndex = estimateAnalysisStepIndex(elapsedMs, pipelineStatus);
+  const progressPct = analysisProgressPct(activeStepIndex, modalPhase);
 
   if (loading) {
     return (
@@ -200,6 +239,23 @@ export default function DatasetPage() {
 
   return (
     <div>
+      <AnalysisRunningModal
+        open={modalOpen}
+        phase={modalPhase}
+        datasetName={dataset.filename}
+        analysisId={analysisId}
+        elapsedMs={elapsedMs}
+        activeStepIndex={activeStepIndex}
+        progressPct={progressPct}
+        statusLine={statusLine}
+        errorMessage={error}
+        onClose={closeModal}
+        onRetry={() => {
+          closeModal();
+          void handleAnalyze();
+        }}
+      />
+
       <WorkflowStepper currentStep={analyzing ? 2 : 1} className="mb-8" />
 
       <PageHeader
@@ -372,16 +428,7 @@ export default function DatasetPage() {
           </div>
         </div>
 
-        {analyzing && (
-          <div className="mt-6 p-4 rounded-xl bg-accent/5 border border-accent/20" role="status">
-            <div className="flex items-center gap-3 mb-2">
-              <Loader2 className="h-5 w-5 animate-spin text-primary shrink-0" />
-              <p className="text-sm font-medium text-text">{progress}</p>
-            </div>
-          </div>
-        )}
-
-        {error && !analyzing && (
+        {error && !analyzing && !modalOpen && (
           <Alert variant="error" className="mt-4" onRetry={handleAnalyze}>
             {error}
           </Alert>

@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { AnalysisResult } from '@/lib/api';
-import { analysisApi } from '@/lib/api';
+import { analysisApi, columnDictionaryApi } from '@/lib/api';
+import type { ColumnDictionarySummary } from '@/lib/api';
 import {
   buildNormalizationPlan,
   resolveColumnProfileStats,
@@ -14,7 +15,7 @@ import { Button } from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/cn';
-import { Pencil, Trash2, RotateCcw, CheckCircle2, ChevronLeft, Info } from 'lucide-react';
+import { Pencil, Trash2, RotateCcw, CheckCircle2, ChevronLeft, Info, Upload } from 'lucide-react';
 
 export interface ColumnDecision {
   originalName: string;
@@ -24,6 +25,7 @@ export interface ColumnDecision {
   domain?: string;
   matchMethod?: string;
   matchConfidence?: number;
+  dictionaryMapped?: boolean;
   included: boolean;
   isDeleted: boolean;
   typeOverride?: string;
@@ -40,7 +42,7 @@ interface Props {
 
 function methodVariant(method: string): 'success' | 'warning' | 'default' | 'muted' {
   const m = method.toLowerCase();
-  if (m.includes('rapidfuzz') || m.includes('ontology') || m.includes('suffix') || m.includes('lock')) return 'success';
+  if (m.includes('dictionary') || m.includes('rapidfuzz') || m.includes('ontology') || m.includes('suffix') || m.includes('lock')) return 'success';
   if (m.includes('dynamic') || m.includes('cluster')) return 'warning';
   if (m.includes('embedding')) return 'default';
   if (m.includes('legacy')) return 'muted';
@@ -81,6 +83,7 @@ function buildColsState(
       columnNormalization ?? [],
     );
     if (!planKey || !out[planKey]) continue;
+    const dictionaryMapped = Boolean(c.dictionary_mapped || c.match_method === 'column_dictionary');
     out[planKey] = {
       ...out[planKey],
       displayName: c.normalized_name || out[planKey].displayName,
@@ -88,6 +91,8 @@ function buildColsState(
       normalizedName: c.normalized_name || out[planKey].normalizedName,
       included: Boolean(c.is_active ?? (!c.is_deleted && !c.is_excluded)),
       isDeleted: c.is_deleted,
+      dictionaryMapped,
+      matchMethod: dictionaryMapped ? 'Column dictionary' : out[planKey].matchMethod,
     };
   }
 
@@ -122,6 +127,9 @@ export default function Step2Normalize({
   const [cols, setCols] = useState<Record<string, ColumnDecision>>(() =>
     buildColsState(plan, decisions, [], columnNormalization),
   );
+  const [dictionaryStats, setDictionaryStats] = useState<ColumnDictionarySummary | null>(null);
+  const [uploadNotice, setUploadNotice] = useState<string | null>(null);
+  const [dictionaryUploading, setDictionaryUploading] = useState(false);
 
   useEffect(() => {
     setCols(buildColsState(plan, decisions, [], columnNormalization));
@@ -133,6 +141,7 @@ export default function Step2Normalize({
       .getNormalization(analysisId)
       .then((norm) => {
         if (cancelled) return;
+        setDictionaryStats(norm.dictionary ?? null);
         setCols(buildColsState(plan, decisions, norm.columns, columnNormalization));
       })
       .catch(() => {});
@@ -140,6 +149,30 @@ export default function Step2Normalize({
       cancelled = true;
     };
   }, [analysisId, plan, decisions, columnNormalization]);
+
+  const refreshNormalization = async () => {
+    const applied = await analysisApi.applyDictionary(analysisId);
+    setDictionaryStats(applied.dictionary);
+    setCols(buildColsState(plan, decisions, applied.columns, columnNormalization));
+    return applied;
+  };
+
+  const handleDictionaryUpload = async (file: File | null) => {
+    if (!file) return;
+    setDictionaryUploading(true);
+    setUploadNotice(null);
+    try {
+      const result = await columnDictionaryApi.upload(file);
+      const applied = await refreshNormalization();
+      setUploadNotice(
+        `+${result.added} added · ${result.skipped} skipped · ${applied.matched} matched this dataset`,
+      );
+    } catch (err) {
+      setUploadNotice(err instanceof Error ? err.message : 'Dictionary upload failed');
+    } finally {
+      setDictionaryUploading(false);
+    }
+  };
 
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -188,23 +221,47 @@ export default function Step2Normalize({
   const excludedCount = planCols.filter((c) => !c.included && !c.isDeleted).length;
   const deletedCount = planCols.filter((c) => c.isDeleted).length;
   const renamedCount = planCols.filter((c) => c.displayName !== c.suggestedName).length;
+  const dictionaryMatchedCount =
+    dictionaryStats?.matched_count ??
+    planCols.filter((c) => c.dictionaryMapped).length;
 
   return (
     <div className="space-y-6">
-      <Card className="border-primary/20 bg-primary/5">
-        <div className="flex gap-3">
-          <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-          <div className="text-sm text-text-muted">
-            <p className="font-semibold text-text mb-1">Normalisation layer (audit checkpoint)</p>
-            <p>
-              Column names are expanded and normalised here: abbreviation resolution, camelCase
-              splitting, and token title-casing. Domain prefixes such as{' '}
-              <strong>Geography · Sector</strong> are assigned in the{' '}
-              <strong>Semantic Mapping</strong> step (Step 3) — not here. The match method badge
-              shows which normalisation path resolved each token (RapidFuzz ontology lookup,
-              schema suffix detection, or embedding fallback).
+
+      <Card className="border-border">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-text">Column dictionary</p>
+            <p className="text-xs text-text-muted">
+              Upload a flat JSON map of raw column names to canonical labels. Dictionary entries
+              override pipeline suggestions for matching headers (case-insensitive).
+            </p>
+            <p className="text-xs text-text-muted">
+              Dictionary: {dictionaryStats?.total_keys ?? 0} keys · {dictionaryMatchedCount} matched
+              this dataset
+              {uploadNotice ? ` · ${uploadNotice}` : ''}
             </p>
           </div>
+          <label
+            className={cn(
+              'inline-flex items-center gap-2 cursor-pointer rounded-lg border border-border bg-surface-card px-3 py-1.5 text-sm font-medium text-text hover:bg-accent-muted/50 transition-colors',
+              dictionaryUploading && 'pointer-events-none opacity-50',
+            )}
+          >
+            <input
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              disabled={dictionaryUploading}
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null;
+                void handleDictionaryUpload(file);
+                e.target.value = '';
+              }}
+            />
+            <Upload className="h-4 w-4" />
+            {dictionaryUploading ? 'Uploading…' : 'Upload JSON'}
+          </label>
         </div>
       </Card>
 

@@ -1,0 +1,11 @@
+# BharatStat deploy trigger marker
+#
+# This file exists solely to trigger the EC2 backend auto-deploy workflow
+# (.github/workflows/deploy-backend.yml), which fires on pushes to `main` that
+# touch a non-dashboard, non-markdown file. Updating the timestamp below and
+# pushing to main re-runs the deploy (git pull + restart + health check) without
+# changing any application behaviour.
+
+last_deploy: 2026-06-17T07:25Z
+reason: demo deploy trigger
+by: SYLESH-1125

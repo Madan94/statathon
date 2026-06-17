@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from auth.email_client import send_otp_email
 from auth.dev_user import get_dev_fixed_otp, is_dev_test_email, log_test_user_otp, resolve_dev_user
 from auth.utils import hash_password
 from database.models import OtpChallenge, User
@@ -107,10 +106,7 @@ def start_signup(
     db.add(ch)
     db.commit()
 
-    mail_meta = send_otp_email(email, otp, "signup_verify")
-    if mail_meta.get("error") and not mail_meta.get("sent") and not mail_meta.get("dev_otp_logged"):
-        raise ValueError(mail_meta.get("error") or "Failed to send verification email")
-    return challenge_id, OTP_TTL_MINUTES * 60, mail_meta
+    return challenge_id, OTP_TTL_MINUTES * 60, otp
 
 
 def verify_signup_otp(db: Session, challenge_id: str, otp: str) -> User:
@@ -154,8 +150,8 @@ def verify_signup_otp(db: Session, challenge_id: str, otp: str) -> User:
     return user
 
 
-def start_login(db: Session, email: str, password: str) -> tuple[str | None, int | None, dict | None]:
-    """Returns (challenge_id, expires_in, mail_meta) or (None, None, None) on auth failure."""
+def start_login(db: Session, email: str, password: str) -> tuple[str | None, int | None, str | None]:
+    """Returns (challenge_id, expires_in, otp) or (None, None, None) on auth failure."""
     from auth.services import authenticate_user
 
     email = normalize_email(email)
@@ -192,13 +188,10 @@ def start_login(db: Session, email: str, password: str) -> tuple[str | None, int
     user.failed_login_count = 0
     db.commit()
 
-    mail_meta = send_otp_email(email, otp, "login_verify")
     log_dev_otp(email=email, otp=otp, purpose="login_verify", via="otp_service")
     if is_dev_test_email(email):
         log_test_user_otp(purpose="login_verify")
-    if mail_meta.get("error") and not mail_meta.get("sent") and not mail_meta.get("dev_otp_logged"):
-        raise ValueError(mail_meta.get("error") or "Failed to send verification email")
-    return challenge_id, OTP_TTL_MINUTES * 60, mail_meta
+    return challenge_id, OTP_TTL_MINUTES * 60, otp
 
 
 def verify_login_otp(db: Session, challenge_id: str, otp: str) -> User:
@@ -226,7 +219,7 @@ def verify_login_otp(db: Session, challenge_id: str, otp: str) -> User:
     return user
 
 
-def resend_otp(db: Session, challenge_id: str) -> tuple[int, dict]:
+def resend_otp(db: Session, challenge_id: str) -> tuple[int, str, str]:
     ch = _get_challenge(db, challenge_id)
     if not ch:
         raise ValueError("Invalid or expired verification session")
@@ -239,10 +232,7 @@ def resend_otp(db: Session, challenge_id: str) -> tuple[int, dict]:
     ch.expires_at = datetime.utcnow() + timedelta(minutes=OTP_TTL_MINUTES)
     db.commit()
 
-    mail_meta = send_otp_email(ch.email, otp, ch.purpose)
     log_dev_otp(email=ch.email, otp=otp, purpose=ch.purpose, via="resend")
     if is_dev_test_email(ch.email):
         log_test_user_otp(purpose=ch.purpose)
-    if mail_meta.get("error") and not mail_meta.get("sent") and not mail_meta.get("dev_otp_logged"):
-        raise ValueError(mail_meta.get("error") or "Failed to send verification email")
-    return OTP_TTL_MINUTES * 60, mail_meta
+    return OTP_TTL_MINUTES * 60, otp, ch.purpose

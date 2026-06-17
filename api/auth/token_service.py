@@ -25,7 +25,7 @@ def create_access_token(user_id: int) -> str:
     return create_token({"user_id": user_id, "type": "access"})
 
 
-def issue_refresh_token(db: Session, user_id: int, user_agent: str | None = None) -> str:
+def issue_refresh_token(db: Session, user_id: int, user_agent: str | None = None, *, commit: bool = True) -> str:
     raw = secrets.token_urlsafe(48)
     row = RefreshToken(
         user_id=user_id,
@@ -34,7 +34,10 @@ def issue_refresh_token(db: Session, user_id: int, user_agent: str | None = None
         user_agent=(user_agent or "")[:512] or None,
     )
     db.add(row)
-    db.commit()
+    if commit:
+        db.commit()
+    else:
+        db.flush()
     return raw
 
 
@@ -57,10 +60,9 @@ def rotate_refresh_token(db: Session, raw_refresh: str, user_agent: str | None =
         return None
 
     row.revoked_at = datetime.utcnow()
-    db.commit()
-
     access = create_access_token(row.user_id)
-    new_refresh = issue_refresh_token(db, row.user_id, user_agent=user_agent)
+    new_refresh = issue_refresh_token(db, row.user_id, user_agent=user_agent, commit=False)
+    db.commit()
     return access, new_refresh
 
 

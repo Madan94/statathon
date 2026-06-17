@@ -25,6 +25,7 @@ const MATCH_METHOD_LABELS: Record<string, string> = {
   schema_ontology_lock: 'Schema ontology lock',
   embedding_similarity: 'Embedding similarity',
   dynamic_cluster: 'Dynamic cluster',
+  column_dictionary: 'Column dictionary',
 };
 
 export function formatMatchMethod(method?: string): string {

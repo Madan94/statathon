@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { authApi } from '@/lib/api';
 import { PUBLIC_ROUTES } from '@/lib/authConfig';
 import { redirectToLogin } from '@/lib/authSession';
+import { useAuthOptional } from '@/components/auth/AuthProvider';
 
 interface SessionGuardProps {
   children: React.ReactNode;
@@ -13,34 +13,34 @@ interface SessionGuardProps {
 /** Client backup: keep platform pages behind a live session (middleware is primary). */
 export default function SessionGuard({ children }: SessionGuardProps) {
   const pathname = usePathname();
+  const auth = useAuthOptional();
   const [ready, setReady] = useState(
-    () => (PUBLIC_ROUTES as readonly string[]).includes(pathname)
+    () => (PUBLIC_ROUTES as readonly string[]).includes(pathname),
   );
 
   useEffect(() => {
     if ((PUBLIC_ROUTES as readonly string[]).includes(pathname)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- auth gate: sync ready state to the public-route check
       setReady(true);
       return;
     }
 
-    let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- show the loading gate while authApi.me() resolves
-    setReady(false);
+    if (!auth) {
+      setReady(true);
+      return;
+    }
 
-    authApi
-      .me()
-      .then(() => {
-        if (!cancelled) setReady(true);
-      })
-      .catch(() => {
-        if (!cancelled) redirectToLogin(pathname);
-      });
+    if (auth.loading) {
+      setReady(false);
+      return;
+    }
 
-    return () => {
-      cancelled = true;
-    };
-  }, [pathname]);
+    if (auth.user) {
+      setReady(true);
+      return;
+    }
+
+    redirectToLogin(pathname);
+  }, [pathname, auth?.loading, auth?.user]);
 
   if (!ready) {
     return (

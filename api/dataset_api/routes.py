@@ -14,15 +14,19 @@ from services.analysis_runner import execute_registered_analysis_job
 from object_storage.object_store import ObjectStore, StorageConfigError, try_build_default_store
 
 from .metadata import probe_and_persist_dataset_metadata
+from .import_url import import_from_presigned_url
+from .profile_jobs import execute_dataset_profile_job
 from .response_builder import dataset_metadata_response, dataset_upload_response
-from .schemas import RegisterDatasetRequest, UploadUrlRequest
-from .services import profile_registered_dataset, save_upload
+from .schemas import ImportFromUrlRequest, RegisterDatasetRequest, UploadUrlRequest
+from .services import profile_registered_dataset, register_object_quick, save_upload, save_upload_relay
 from .storage_keys import generate_object_key
-from pipelines.storage_paths import upload_storage_dir
 from services.dataset_profile_service import DatasetProfileService
 from services.normalization_service import NormalizationService
 
 router = APIRouter(prefix="/datasets", tags=["datasets"])
+
+SIZE_TOLERANCE = int(os.getenv("REGISTER_SIZE_TOLERANCE_BYTES", "8"))
+ASYNC_DATASET_PROFILE = os.getenv("ASYNC_DATASET_PROFILE", "true").lower() in ("1", "true", "yes")
 
 
 def get_db():
@@ -33,16 +37,47 @@ def get_db():
         db.close()
 
 
-SIZE_TOLERANCE = int(os.getenv("REGISTER_SIZE_TOLERANCE_BYTES", "8"))
+def _queue_profile_job(
+    background_tasks: BackgroundTasks,
+    *,
+    dataset_id: int,
+    filename: str,
+    object_key: str,
+    file_bytes: bytes | None = None,
+    file_size: int | None = None,
+    analysis_id: int | None = None,
+) -> None:
+    background_tasks.add_task(
+        execute_dataset_profile_job,
+        dataset_id,
+        filename=filename,
+        file_bytes=file_bytes,
+        object_key=object_key,
+        file_size=file_size,
+        analysis_id=analysis_id,
+    )
 
 
 @router.post("/upload")
 def upload(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
+    store: ObjectStore = Depends(get_object_store),
     user_id: int = Depends(get_current_user_id),
 ):
-    ds = save_upload(file, str(upload_storage_dir()), user_id=user_id, db=db)
+    if ASYNC_DATASET_PROFILE:
+        ds, file_bytes = save_upload_relay(file, user_id=user_id, db=db, store=store)
+        _queue_profile_job(
+            background_tasks,
+            dataset_id=ds.id,
+            filename=file.filename,
+            object_key=ds.object_key,
+            file_bytes=file_bytes,
+            file_size=len(file_bytes),
+        )
+    else:
+        ds = save_upload(file, user_id=user_id, db=db, store=store)
     return dataset_upload_response(ds)
 
 
@@ -60,6 +95,27 @@ def create_presigned_upload_url(
         return {"upload_url": upload_url, "object_key": key, "expires_in": expires}
     except StorageConfigError as e:
         raise HTTPException(status_code=503, detail=str(e))
+
+
+@router.post("/import-from-url")
+def import_dataset_from_presigned_url(
+    body: ImportFromUrlRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    store: ObjectStore = Depends(get_object_store),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Download CSV/Excel from a presigned S3 GET URL server-side and register dataset."""
+    ds = import_from_presigned_url(
+        db,
+        user_id=user_id,
+        url=body.url,
+        filename=body.filename,
+        store=store,
+        background_tasks=background_tasks,
+        async_profile=ASYNC_DATASET_PROFILE,
+    )
+    return dataset_upload_response(ds)
 
 
 @router.post("/register")
@@ -89,9 +145,9 @@ def register_dataset_after_presigned_upload(
             ),
         )
 
-    repo = DatasetRepository(db)
     try:
-        ds = repo.create_from_object_registration(
+        ds = register_object_quick(
+            db,
             user_id=user_id,
             filename=body.filename,
             object_key=body.object_key,
@@ -102,25 +158,43 @@ def register_dataset_after_presigned_upload(
         db.rollback()
         raise HTTPException(status_code=409, detail="object_key already registered") from e
 
-    try:
-        raw = store.download_object_body(body.object_key)
-    except ClientError as e:
-        raise HTTPException(status_code=502, detail=f"object storage download error: {e}") from e
-
-    ds = profile_registered_dataset(
-        db,
-        ds.id,
-        filename=body.filename,
-        file_bytes=raw,
-        file_size=body.file_size,
-    )
+    if ASYNC_DATASET_PROFILE:
+        _queue_profile_job(
+            background_tasks,
+            dataset_id=ds.id,
+            filename=body.filename,
+            object_key=body.object_key,
+            file_size=body.file_size,
+        )
+    else:
+        try:
+            raw = store.download_object_body(body.object_key)
+        except ClientError as e:
+            raise HTTPException(status_code=502, detail=f"object storage download error: {e}") from e
+        ds = profile_registered_dataset(
+            db,
+            ds.id,
+            filename=body.filename,
+            file_bytes=raw,
+            file_size=body.file_size,
+        )
 
     an = Analysis(dataset_id=ds.id, status="pending")
     db.add(an)
     db.commit()
     db.refresh(an)
 
-    background_tasks.add_task(execute_registered_analysis_job, ds.id, an.id)
+    if ASYNC_DATASET_PROFILE:
+        _queue_profile_job(
+            background_tasks,
+            dataset_id=ds.id,
+            filename=body.filename,
+            object_key=body.object_key,
+            file_size=body.file_size,
+            analysis_id=an.id,
+        )
+    else:
+        background_tasks.add_task(execute_registered_analysis_job, ds.id, an.id)
 
     payload = dataset_upload_response(ds)
     payload["analysis_id"] = an.id

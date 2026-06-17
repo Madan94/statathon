@@ -164,11 +164,11 @@ async def stream_job_progress(
         raise HTTPException(status_code=404, detail="Job not found")
 
     # If job is already done, return final state immediately
-    if job.status in ("done", "failed"):
-        event_type = "complete" if job.status == "done" else "error"
+    if job.status in ("done", "failed", "exported", "verified"):
+        event_type = "complete" if job.status in ("done", "exported", "verified") else "error"
         final = ProgressEvent(
             stage=job.stage or "done",
-            pct=100 if job.status == "done" else -1,
+            pct=100 if job.status in ("done", "exported", "verified") else -1,
             message=job.error_message or "Complete",
             event_type=event_type,
         )

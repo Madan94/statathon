@@ -18,10 +18,10 @@ from services.analysis_query import (
     count_validation_candidates,
     get_analysis_meta,
     get_normalization_version,
-    load_all_validation_candidate_dicts,
     load_analysis_checkpoint,
     load_checkpoint_phase3_overlay,
 )
+from services.phase_status_cache import get_cached_phase_status, set_cached_phase_status
 from services.analysis_dataframe_service import column_identity_aliases
 
 
@@ -158,8 +158,14 @@ class PhaseStatusService:
         self.db.flush()
         return row
 
-    def validation_review_progress(self, analysis_id: int) -> dict[str, Any]:
-        phase3 = build_phase3_from_relational(self.db, analysis_id)
+    def validation_review_progress(
+        self,
+        analysis_id: int,
+        *,
+        phase3: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        if phase3 is None:
+            phase3 = build_phase3_from_relational(self.db, analysis_id)
         db_total = count_validation_candidates(self.db, analysis_id)
         reported_total = int(phase3.get("validation_candidates_reported_total") or 0)
         if not reported_total:
@@ -167,25 +173,14 @@ class PhaseStatusService:
             if isinstance(val_payload, dict):
                 reported_total = int(val_payload.get("candidate_count") or 0)
 
-        all_candidates = load_all_validation_candidate_dicts(self.db, analysis_id)
-        candidate_keys = {_candidate_key(c) for c in all_candidates if c.get("column")}
-        reviewable = db_total or len(candidate_keys)
+        reviewable = db_total
         total = reported_total if reported_total > reviewable else reviewable
         if total <= 0:
             total = reviewable
 
-        saved = self.db.query(ValidationDecision).filter(
+        reviewed = self.db.query(ValidationDecision).filter(
             ValidationDecision.analysis_id == analysis_id
-        ).all()
-        reviewed_keys = {_decision_key(d) for d in saved}
-        if candidate_keys:
-            reviewed = len(candidate_keys & reviewed_keys)
-            if reviewed < reviewable and len(saved) >= reviewable:
-                cand_pos = {_position_key(k[0], k[1]) for k in candidate_keys}
-                dec_pos = {_position_key(d.column_name, d.row_index) for d in saved}
-                reviewed = len(cand_pos & dec_pos)
-        else:
-            reviewed = len(saved)
+        ).count()
 
         overlay = load_checkpoint_phase3_overlay(self.db, analysis_id)
         acknowledged = bool(overlay.get("validation_acknowledged"))
@@ -272,8 +267,15 @@ class PhaseStatusService:
                 )
             )
 
-    def recompute_anomaly_columns(self, analysis_id: int) -> dict[str, Any]:
-        phase3 = build_phase3_from_relational(self.db, analysis_id)
+    def recompute_anomaly_columns(
+        self,
+        analysis_id: int,
+        *,
+        phase3: dict[str, Any] | None = None,
+        persist: bool = True,
+    ) -> dict[str, Any]:
+        if phase3 is None:
+            phase3 = build_phase3_from_relational(self.db, analysis_id)
         blocks = phase3.get("anomaly_results") or []
         candidates = [
             c for c in (phase3.get("anomaly_candidates") or []) if isinstance(c, dict)
@@ -318,17 +320,19 @@ class PhaseStatusService:
             else:
                 status = "pending"
                 pending_cols.append(col)
-            self._upsert_column_review(
-                analysis_id, "anomaly", col,
-                status=status,
-                item_count=item_count,
-                reviewed_count=len(cand_rows & saved_rows) if item_count else 0,
-            )
+            if persist:
+                self._upsert_column_review(
+                    analysis_id, "anomaly", col,
+                    status=status,
+                    item_count=item_count,
+                    reviewed_count=len(cand_rows & saved_rows) if item_count else 0,
+                )
 
         complete = columns_total == 0 or columns_reviewed >= columns_total
-        row = self.get_or_create(analysis_id)
-        row.anomaly_completed = complete
-        row.updated_at = datetime.utcnow()
+        if persist:
+            row = self.get_or_create(analysis_id)
+            row.anomaly_completed = complete
+            row.updated_at = datetime.utcnow()
         return {
             "columns_total": columns_total,
             "columns_reviewed": columns_reviewed,
@@ -337,8 +341,15 @@ class PhaseStatusService:
             "complete": complete,
         }
 
-    def recompute_imputation_columns(self, analysis_id: int) -> dict[str, Any]:
-        phase3 = build_phase3_from_relational(self.db, analysis_id)
+    def recompute_imputation_columns(
+        self,
+        analysis_id: int,
+        *,
+        phase3: dict[str, Any] | None = None,
+        persist: bool = True,
+    ) -> dict[str, Any]:
+        if phase3 is None:
+            phase3 = build_phase3_from_relational(self.db, analysis_id)
         overlay = load_checkpoint_phase3_overlay(self.db, analysis_id)
         user_decisions = overlay.get("imputation_user_decisions") or {}
         groups = _alias_groups(self.db, analysis_id)
@@ -386,19 +397,21 @@ class PhaseStatusService:
             else:
                 status = "pending"
                 pending_cols.append(col)
-            self._upsert_column_review(
-                analysis_id,
-                "imputation",
-                col,
-                status=status,
-                item_count=miss,
-                reviewed_count=1 if col_saved or miss == 0 else 0,
-            )
+            if persist:
+                self._upsert_column_review(
+                    analysis_id,
+                    "imputation",
+                    col,
+                    status=status,
+                    item_count=miss,
+                    reviewed_count=1 if col_saved or miss == 0 else 0,
+                )
 
         complete = columns_total == 0 or columns_reviewed >= columns_total
-        row = self.get_or_create(analysis_id)
-        row.missing_value_completed = complete
-        row.updated_at = datetime.utcnow()
+        if persist:
+            row = self.get_or_create(analysis_id)
+            row.missing_value_completed = complete
+            row.updated_at = datetime.utcnow()
         return {
             "columns_total": columns_total,
             "columns_reviewed": columns_reviewed,
@@ -407,12 +420,30 @@ class PhaseStatusService:
             "complete": complete,
         }
 
+    def _early_phase_flags(self, analysis_id: int) -> dict[str, bool]:
+        an = get_analysis_meta(self.db, analysis_id)
+        if not an:
+            return {}
+        complete = an.status == "complete"
+        return {
+            "summary_completed": complete,
+            "normalization_completed": get_normalization_version(self.db, analysis_id) is not None,
+            "semantic_completed": complete,
+            "clustering_completed": complete,
+            "kg_completed": complete,
+        }
+
     def get_status_payload(self, analysis_id: int) -> dict[str, Any]:
-        self.sync_early_phases(analysis_id)
-        val = self.validation_review_progress(analysis_id)
-        anomaly = self.recompute_anomaly_columns(analysis_id)
-        imputation = self.recompute_imputation_columns(analysis_id)
+        cached = get_cached_phase_status(analysis_id)
+        if cached:
+            return cached
+
+        phase3 = build_phase3_from_relational(self.db, analysis_id)
+        val = self.validation_review_progress(analysis_id, phase3=phase3)
+        anomaly = self.recompute_anomaly_columns(analysis_id, phase3=phase3, persist=False)
+        imputation = self.recompute_imputation_columns(analysis_id, phase3=phase3, persist=False)
         row = self.get_or_create(analysis_id)
+        early = self._early_phase_flags(analysis_id)
 
         column_reviews = (
             self.db.query(ColumnPhaseReview)
@@ -433,14 +464,16 @@ class PhaseStatusService:
 
         payload = {
             "analysis_id": analysis_id,
-            "summary_completed": row.summary_completed,
-            "normalization_completed": row.normalization_completed,
-            "semantic_completed": row.semantic_completed,
-            "clustering_completed": row.clustering_completed,
-            "kg_completed": row.kg_completed,
+            "summary_completed": early.get("summary_completed", row.summary_completed),
+            "normalization_completed": early.get(
+                "normalization_completed", row.normalization_completed
+            ),
+            "semantic_completed": early.get("semantic_completed", row.semantic_completed),
+            "clustering_completed": early.get("clustering_completed", row.clustering_completed),
+            "kg_completed": early.get("kg_completed", row.kg_completed),
             "rule_validation_completed": row.rule_validation_completed or val["complete"],
-            "anomaly_completed": row.anomaly_completed,
-            "missing_value_completed": row.missing_value_completed,
+            "anomaly_completed": anomaly["complete"] or row.anomaly_completed,
+            "missing_value_completed": imputation["complete"] or row.missing_value_completed,
             "weight_application_completed": row.weight_application_completed,
             "dataset_review_completed": row.dataset_review_completed,
             "validation": val,
@@ -449,5 +482,5 @@ class PhaseStatusService:
             "column_reviews": by_phase,
             "updated_at": row.updated_at.isoformat() if row.updated_at else None,
         }
-        self.db.commit()
+        set_cached_phase_status(analysis_id, payload)
         return payload

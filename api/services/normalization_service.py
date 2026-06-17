@@ -21,6 +21,7 @@ from services.analysis_query import (
     load_checkpoint_top_keys,
     set_normalization_meta,
 )
+from services.column_dictionary_service import ColumnDictionaryService, lookup
 
 
 class NormalizationService:
@@ -121,6 +122,79 @@ class NormalizationService:
             return self.columns.list_for_analysis(analysis_id)
 
         return []
+
+    def apply_dictionary_to_analysis(self, analysis_id: int) -> dict[str, Any]:
+        """Apply global dictionary overrides to raw column names for this analysis."""
+        records = self._ensure_columns_seeded(analysis_id)
+        dict_svc = ColumnDictionaryService(self.db)
+        mappings = dict_svc.get_mappings()
+        if not mappings:
+            return {
+                "matched": 0,
+                "unmatched": len(records),
+                "columns": self._column_rows_with_dictionary(records, mappings),
+                "dictionary": dict_svc.get_global_summary(),
+            }
+
+        apply_stats = dict_svc.apply_to_columns(records, mappings)
+        self.db.commit()
+        refreshed = self.columns.list_for_analysis(analysis_id)
+        return {
+            "matched": apply_stats["matched_count"],
+            "unmatched": apply_stats["unmatched_count"],
+            "columns": self._column_rows_with_dictionary(refreshed, mappings),
+            "dictionary": {
+                **dict_svc.get_global_summary(),
+                "matched_count": apply_stats["matched_count"],
+            },
+        }
+
+    def _column_rows_with_dictionary(
+        self,
+        records: list,
+        mappings: dict[str, str],
+    ) -> list[dict[str, Any]]:
+        dict_svc = ColumnDictionaryService(self.db)
+        return [
+            dict_svc.column_payload(col, mappings)
+            for col in records
+        ]
+
+    def _dictionary_matched_count(self, records: list, mappings: dict[str, str]) -> int:
+        count = 0
+        for col in records:
+            target = lookup(col.name, mappings)
+            if target and (col.normalized_name or col.name) == target:
+                count += 1
+        return count
+
+    def get_step2_normalization(self, analysis_id: int) -> dict[str, Any]:
+        """Step 2 GET payload with dictionary auto-apply when not yet saved."""
+        an = get_analysis_meta(self.db, analysis_id)
+        if not an:
+            raise ValueError("Analysis not found")
+
+        version = get_normalization_version(self.db, analysis_id)
+        records = self._ensure_columns_seeded(analysis_id)
+        dict_svc = ColumnDictionaryService(self.db)
+        mappings = dict_svc.get_mappings()
+        summary = dict_svc.get_global_summary()
+
+        if not version and mappings:
+            dict_svc.apply_to_columns(records, mappings)
+            self.db.commit()
+            records = self.columns.list_for_analysis(analysis_id)
+
+        matched_count = self._dictionary_matched_count(records, mappings)
+        return {
+            "normalization_version": version,
+            "dictionary": {
+                "version": summary["version"],
+                "total_keys": summary["total_keys"],
+                "matched_count": matched_count,
+            },
+            "columns": self._column_rows_with_dictionary(records, mappings),
+        }
 
     def get_effective_schema_response(self, analysis_id: int) -> dict[str, Any]:
         an = get_analysis_meta(self.db, analysis_id)

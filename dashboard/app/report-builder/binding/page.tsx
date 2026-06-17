@@ -11,6 +11,8 @@ import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { BindingStepper } from '@/components/report-builder/binding/BindingStepper';
 import { DatasetProfileCard } from '@/components/report-builder/binding/DatasetProfileCard';
+import { DatasetWeightTabs } from '@/components/report-builder/binding/DatasetWeightTabs';
+import { QueryIndicatorFilters, type QueryFilterRule } from '@/components/report-builder/binding/QueryIndicatorFilters';
 import { CoveragePanel } from '@/components/report-builder/binding/CoveragePanel';
 import { StructureCanvas, type EntityPropagationRequest } from '@/components/report-builder/binding/StructureCanvas';
 import { EntityMatrixPanel, type EntityDecision } from '@/components/report-builder/binding/EntityMatrixPanel';
@@ -35,7 +37,8 @@ import {
 } from '@/lib/api';
 
 type Decision = EntityDecision;
-type WorkbenchMode = 'overview' | 'dataset' | 'entities' | 'questions' | 'issues' | 'handoff';
+type WorkbenchMode = 'overview' | 'dataset' | 'pathway' | 'filters' | 'entities' | 'questions' | 'issues' | 'handoff';
+type TemplatePath = 'pre_existing' | 'loop';
 
 const STEPS = [
   { id: 'upload', label: 'Upload dataset', hint: 'CSV + template' },
@@ -171,6 +174,16 @@ export default function BindingWorkflowPage() {
   const [workspace, setWorkspace] = useState<BindingWorkspace | null>(null);
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [workbenchMode, setWorkbenchMode] = useState<WorkbenchMode>('overview');
+  // Template pathway: chosen after dataset profiling. Until a path is picked the
+  // downstream tabs (mapping / question plan / issues / handoff) stay hidden.
+  const [templatePath, setTemplatePath] = useState<TemplatePath | null>(null);
+  // Whether the officer has entered the dedicated path workbench (a separate
+  // screen with ONLY the path's tabs). false = setup screen (overview/profile/path).
+  const [enteredPath, setEnteredPath] = useState(false);
+  const [queryFilterRules, setQueryFilterRules] = useState<QueryFilterRule[]>([]);
+  const [queryFilterCombinator, setQueryFilterCombinator] = useState<'AND' | 'OR'>('AND');
+  // How many columns the dataset dictionary table renders (officer-selectable).
+  const [columnDisplayLimit, setColumnDisplayLimit] = useState<number | 'all'>(25);
   const [focusedQuestionId, setFocusedQuestionId] = useState<string | null>(null);
   const [focusedComponentId, setFocusedComponentId] = useState<string | null>(null);
   const [decisions, setDecisions] = useState<Record<string, Decision>>({});
@@ -337,6 +350,10 @@ export default function BindingWorkflowPage() {
       setDecisions(decisionsFromConfirmations(res.confirmations));
       setResult(null);
       setExecutionReady(null);
+      setTemplatePath(null);
+      setEnteredPath(false);
+      setQueryFilterRules([]);
+      setQueryFilterCombinator('AND');
       setWorkbenchMode('overview');
       await loadWorkspace(res.template_id, res.signature);
       setStep(1);
@@ -849,6 +866,10 @@ export default function BindingWorkflowPage() {
     setBlueprintFile(null);
     setExecutionReady(null);
     setWorkspace(null);
+    setTemplatePath(null);
+    setEnteredPath(false);
+    setQueryFilterRules([]);
+    setQueryFilterCombinator('AND');
     setWorkbenchMode('overview');
     setFocusedQuestionId(null);
     setFocusedComponentId(null);
@@ -858,26 +879,35 @@ export default function BindingWorkflowPage() {
     setError(null);
   };
 
+  // Modes that only exist inside the dedicated path workbench (the separate
+  // screen). Navigating to one of these also switches into the path screen;
+  // navigating to a setup mode (overview/dataset/pathway) leaves it.
+  const PATH_ONLY_MODES: WorkbenchMode[] = ['filters', 'entities', 'questions', 'issues', 'handoff'];
+  const goToMode = (mode: WorkbenchMode) => {
+    setEnteredPath(PATH_ONLY_MODES.includes(mode));
+    setWorkbenchMode(mode);
+  };
+
   const focusIssue = (issue: BindingWorkspaceIssue) => {
     setFocusedQuestionId(issue.questionId || null);
     setFocusedComponentId(issue.componentId || null);
     if (issue.targetMode && ['overview', 'dataset', 'entities', 'questions', 'issues', 'handoff'].includes(issue.targetMode)) {
-      setWorkbenchMode(issue.targetMode as WorkbenchMode);
+      goToMode(issue.targetMode as WorkbenchMode);
       return;
     }
     if (issue.questionId) {
-      setWorkbenchMode('questions');
+      goToMode('questions');
       return;
     }
     if (issue.entityId) {
-      setWorkbenchMode('entities');
+      goToMode('entities');
       return;
     }
     if (issue.column) {
-      setWorkbenchMode('entities');
+      goToMode('entities');
       return;
     }
-    setWorkbenchMode('issues');
+    goToMode('issues');
   };
 
   const generationHref = executionReady
@@ -930,14 +960,32 @@ export default function BindingWorkflowPage() {
     ? `Bundle ${executionReady.status}: ${executionReady.plans.length} plans, ${executionReady.blocked_questions.length} blocked`
     : phaseHint('handoff', 'Not prepared');
 
-  const workbenchModes: Array<{ id: WorkbenchMode; label: string; hint: string; status: 'Ready' | 'Review' | 'Blocked' | 'Open' }> = [
+  // Two separate screens: the SETUP screen (overview / dataset profile /
+  // template path) and the dedicated PATH screen (only the chosen path's tabs).
+  // The nav renders one set or the other — never both — so picking a template
+  // card opens a clean page with just its phases.
+  const setupWorkbenchModes: Array<{ id: WorkbenchMode; label: string; hint: string; status: 'Ready' | 'Review' | 'Blocked' | 'Open' }> = [
     { id: 'overview', label: 'Overview', hint: phaseHint('overview', 'Session health'), status: phaseStatus('overview', 'Open') },
     { id: 'dataset', label: 'Dataset profile', hint: phaseHint('dataset', `${session?.dataset_ast.columns.length ?? 0} columns profiled`), status: 'Ready' },
-    { id: 'entities', label: 'Dataset mapping', hint: phaseHint('entities', `${undecidedColumnCount} columns pending`), status: phaseStatus('entities', allColumnsDecided ? 'Ready' : remaining === 0 ? 'Review' : 'Review') },
-    { id: 'questions', label: 'Question plan', hint: phaseHint('questions', currentReviewedPlan ? `${currentReviewedPlan.questionCount} questions` : 'Finalize first'), status: phaseStatus('questions', currentReviewedPlan ? 'Ready' : allColumnsDecided ? 'Review' : 'Blocked') },
-    { id: 'issues', label: 'Issues', hint: phaseHint('issues', `${workspaceIssues.length} open`), status: phaseStatus('issues', workspaceIssues.length ? 'Review' : 'Ready') },
-    { id: 'handoff', label: 'S3.5 handoff', hint: handoffHint, status: handoffStatus },
+    {
+      id: 'pathway',
+      label: 'Template path',
+      hint: templatePath ? (templatePath === 'loop' ? 'Loop template · weighted' : 'Pre-existing template') : 'Choose a template',
+      status: templatePath ? 'Ready' : 'Review',
+    },
   ];
+  const pathWorkbenchModes: Array<{ id: WorkbenchMode; label: string; hint: string; status: 'Ready' | 'Review' | 'Blocked' | 'Open' }> = templatePath
+    ? [
+        ...(templatePath === 'loop'
+          ? ([{ id: 'filters', label: 'Query indicators', hint: queryFilterRules.length ? `${queryFilterRules.length} filter${queryFilterRules.length > 1 ? 's' : ''}` : 'Optional complex filtering', status: 'Open' }] as const)
+          : []),
+        { id: 'entities', label: 'Dataset mapping', hint: phaseHint('entities', `${undecidedColumnCount} columns pending`), status: phaseStatus('entities', allColumnsDecided ? 'Ready' : remaining === 0 ? 'Review' : 'Review') },
+        { id: 'questions', label: 'Question plan', hint: phaseHint('questions', currentReviewedPlan ? `${currentReviewedPlan.questionCount} questions` : 'Finalize first'), status: phaseStatus('questions', currentReviewedPlan ? 'Ready' : allColumnsDecided ? 'Review' : 'Blocked') },
+        { id: 'issues', label: 'Issues', hint: phaseHint('issues', `${workspaceIssues.length} open`), status: phaseStatus('issues', workspaceIssues.length ? 'Review' : 'Ready') },
+        { id: 'handoff', label: 'S3.5 handoff', hint: handoffHint, status: handoffStatus },
+      ]
+    : [];
+  const workbenchModes = enteredPath ? pathWorkbenchModes : setupWorkbenchModes;
 
   const packageForWorkbench = workspace?.template_package ?? selectedPackage;
   const datasetForWorkbench = workspace?.dataset_ast ?? session?.dataset_ast;
@@ -1150,6 +1198,127 @@ export default function BindingWorkflowPage() {
 
   const renderWorkbenchPanel = () => {
     if (!session) return null;
+
+    if (workbenchMode === 'pathway') {
+      const choosePath = (path: TemplatePath) => {
+        setTemplatePath(path);
+        setEnteredPath(true);
+        setWorkbenchMode(path === 'loop' ? 'filters' : 'entities');
+      };
+      const PATH_PHASES: Record<TemplatePath, string[]> = {
+        pre_existing: ['Dataset mapping', 'Question plan', 'Issues', 'S3.5 handoff'],
+        loop: ['Query indicator filters', 'Dataset mapping', 'Question plan', 'Issues', 'S3.5 handoff'],
+      };
+      const cards: Array<{
+        id: TemplatePath;
+        title: string;
+        tagline: string;
+        description: string;
+        icon: LucideIcon;
+        iconWrap: string;
+        badge?: string;
+      }> = [
+        {
+          id: 'pre_existing',
+          title: 'Pre-existing template',
+          tagline: 'Curated MoSPI template',
+          description: 'Bind your dataset to a ready-made publication template and run the standard review pipeline.',
+          icon: Lock,
+          iconWrap: 'bg-primary/10 text-primary',
+        },
+        {
+          id: 'loop',
+          title: 'Loop template with weight',
+          tagline: 'Iterated · survey-weighted',
+          description: 'Iterate indicators with survey weighting, and pre-filter rows with a query indicator filter layer before the standard review.',
+          icon: Share2,
+          iconWrap: 'bg-accent/10 text-accent',
+          badge: 'weighted',
+        },
+      ];
+      return (
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-border bg-surface-card p-5 shadow-sm">
+            <h3 className="text-lg font-semibold text-text">Choose a template path</h3>
+            <p className="mt-1 text-sm text-text-muted">
+              Profiling is done for <span className="font-medium text-text">{session.dataset_id}.csv</span>. Pick how this
+              report should be built. The downstream review tabs unlock once you choose.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {cards.map((card) => {
+              const Icon = card.icon;
+              const active = templatePath === card.id;
+              return (
+                <div
+                  key={card.id}
+                  className={`flex flex-col rounded-2xl border p-5 shadow-sm transition-all ${active ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/40'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${card.iconWrap}`}>
+                      <Icon className="h-5 w-5" aria-hidden />
+                    </span>
+                    <div className="min-w-0">
+                      <h4 className="flex items-center gap-2 text-sm font-semibold text-text">
+                        {card.title}
+                        {card.badge && <Badge variant="default" className="text-[9px]">{card.badge}</Badge>}
+                        {active && <Badge variant="success" className="text-[9px]">selected</Badge>}
+                      </h4>
+                      <p className="text-[11px] uppercase tracking-wide text-text-muted">{card.tagline}</p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-sm text-text-muted">{card.description}</p>
+                  <div className="mt-4 space-y-1.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Runs these phases</p>
+                    {PATH_PHASES[card.id].map((phase) => (
+                      <div key={phase} className="flex items-center gap-2 text-xs text-text">
+                        <CheckCircle2 className={`h-3.5 w-3.5 ${active ? 'text-primary' : 'text-text-muted'}`} aria-hidden />
+                        {phase}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-5 flex-1" />
+                  <Button
+                    variant={active ? 'primary' : 'outline'}
+                    className="mt-2 w-full"
+                    onClick={() => choosePath(card.id)}
+                  >
+                    {active ? 'Continue' : `Use ${card.id === 'loop' ? 'loop template' : 'pre-existing template'}`}
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    if (workbenchMode === 'filters') {
+      return (
+        <div className="space-y-4">
+          <QueryIndicatorFilters
+            file={datasetFile}
+            columns={session.dataset_ast.columns}
+            rules={queryFilterRules}
+            combinator={queryFilterCombinator}
+            onChange={(rules, combinator) => {
+              setQueryFilterRules(rules);
+              setQueryFilterCombinator(combinator);
+            }}
+          />
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+            <Button variant="outline" size="sm" onClick={() => goToMode('pathway')}>
+              <ArrowLeft className="h-4 w-4" /> Back to template path
+            </Button>
+            <Button size="sm" onClick={() => setWorkbenchMode('entities')}>
+              Continue to dataset mapping <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     if (workbenchMode === 'entities') {
       return (
         <div className="space-y-4">
@@ -1382,8 +1551,19 @@ export default function BindingWorkflowPage() {
       const dimensions = cols.filter((c) => c.role === 'dimension');
       const timeColumns = cols.filter((c) => c.role === 'time');
       const metaCols = cols.filter((c) => c.role === 'metadata' || c.role === 'id');
+      const COLUMN_LIMIT_OPTIONS: Array<number | 'all'> = [10, 25, 50, 100, 'all'];
+      const effectiveLimit = columnDisplayLimit === 'all' ? cols.length : Math.min(columnDisplayLimit, cols.length);
+      const displayedCols = cols.slice(0, effectiveLimit);
       return (
         <div className="space-y-5">
+          {/* CSV preview + survey-weight tabs (Data table / Weight table) */}
+          <DatasetWeightTabs
+            file={datasetFile}
+            columns={cols}
+            datasetName={session.dataset_id}
+            rowCount={session.dataset_ast.rowCount}
+          />
+
           {/* File header */}
           <div className="rounded-2xl border border-border bg-gradient-to-br from-surface-card via-surface to-surface-card p-5 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1427,45 +1607,153 @@ export default function BindingWorkflowPage() {
             </Card>
           )}
 
-          {/* Full column table */}
-          <Card title="All columns" description={`${cols.length} profiled columns with role, type, cardinality, and null analysis.`}>
-            <div className="overflow-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-border text-left text-[10px] uppercase text-text-muted">
-                    <th className="px-3 py-2">Column</th>
-                    <th className="px-3 py-2">Role</th>
-                    <th className="px-3 py-2">Type</th>
-                    <th className="px-3 py-2 text-right">Cardinality</th>
-                    <th className="px-3 py-2 text-right">Null %</th>
-                    <th className="px-3 py-2">Sample values</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {cols.map((col) => (
-                    <tr key={col.name} className="hover:bg-surface-card/50">
-                      <td className="px-3 py-2 font-medium text-text">{col.name}</td>
-                      <td className="px-3 py-2">
-                        <Badge variant={col.role === 'measure' ? 'success' : col.role === 'dimension' ? 'warning' : col.role === 'time' ? 'default' : 'muted'} className="text-[9px]">
-                          {col.role}
-                        </Badge>
-                      </td>
-                      <td className="px-3 py-2 text-text-muted">{col.dtype}</td>
-                      <td className="px-3 py-2 text-right tabular-nums text-text-muted">{col.cardinality}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        <span className={col.nullPct > 0.5 ? 'text-danger' : col.nullPct > 0 ? 'text-warning' : 'text-text-muted'}>
-                          {col.nullPct > 0 ? `${(col.nullPct * 100).toFixed(0)}%` : '—'}
-                        </span>
-                      </td>
-                      <td className="max-w-[12rem] truncate px-3 py-2 text-text-muted">
-                        {(col.sampleValues ?? []).slice(0, 3).map(String).join(', ')}
-                      </td>
+          {/* Full column table — officer-facing data dictionary */}
+          <Card
+            title="Column dictionary"
+            description={`${cols.length} profiled columns — role, type, distribution and data quality at a glance.`}
+          >
+            {/* Officer-selectable number of columns to display */}
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs text-text-muted">
+                Showing <span className="font-semibold text-text">{displayedCols.length}</span> of {cols.length} columns
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] uppercase tracking-wide text-text-muted">Show</span>
+                <div className="inline-flex rounded-lg border border-border bg-surface p-0.5">
+                  {COLUMN_LIMIT_OPTIONS.map((opt) => {
+                    const active = columnDisplayLimit === opt;
+                    const disabled = opt !== 'all' && opt >= cols.length && columnDisplayLimit !== opt;
+                    return (
+                      <button
+                        key={String(opt)}
+                        type="button"
+                        onClick={() => setColumnDisplayLimit(opt)}
+                        disabled={disabled}
+                        className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${active ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text'} ${disabled ? 'cursor-not-allowed opacity-30 hover:text-text-muted' : ''}`}
+                      >
+                        {opt === 'all' ? 'All' : opt}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-border">
+              <div className="max-h-[34rem] overflow-auto">
+                <table className="w-full border-collapse text-xs">
+                  <thead className="sticky top-0 z-10 bg-surface shadow-[0_1px_0_0_var(--color-border)]">
+                    <tr className="text-left text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                      <th className="px-3 py-2.5">#</th>
+                      <th className="px-3 py-2.5">Column</th>
+                      <th className="px-3 py-2.5">Role</th>
+                      <th className="px-3 py-2.5">Type</th>
+                      <th className="px-3 py-2.5 text-right">Distinct</th>
+                      <th className="px-3 py-2.5 text-right">Range</th>
+                      <th className="px-3 py-2.5">Completeness</th>
+                      <th className="px-3 py-2.5">Sample values</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {displayedCols.map((col, idx) => {
+                      const roleDot =
+                        col.role === 'measure' ? 'bg-success'
+                          : col.role === 'dimension' ? 'bg-warning'
+                            : col.role === 'time' ? 'bg-primary'
+                              : 'bg-border';
+                      const fillPct = Math.round((1 - col.nullPct) * 100);
+                      const hasRange = col.role === 'measure' && col.minValue != null && col.maxValue != null;
+                      const samples = (col.sampleValues ?? []).slice(0, 3).map(String).filter((s) => s !== '' && s !== 'null');
+                      return (
+                        <tr
+                          key={col.name}
+                          className="border-b border-border/60 transition-colors even:bg-surface/40 hover:bg-primary/[0.04]"
+                        >
+                          <td className="px-3 py-2 text-[10px] tabular-nums text-text-muted">{idx + 1}</td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <span className={`h-2 w-2 shrink-0 rounded-full ${roleDot}`} aria-hidden />
+                              <span className="font-semibold text-text">{col.name}</span>
+                              {col.unit && (
+                                <span className="rounded bg-border/60 px-1 py-0.5 text-[9px] font-medium text-text-muted">{col.unit}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2">
+                            <Badge variant={col.role === 'measure' ? 'success' : col.role === 'dimension' ? 'warning' : col.role === 'time' ? 'default' : 'muted'} className="text-[9px] capitalize">
+                              {col.role}
+                            </Badge>
+                          </td>
+                          <td className="px-3 py-2 font-mono text-[11px] text-text-muted">{col.dtype}</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-text">{col.cardinality.toLocaleString()}</td>
+                          <td className="px-3 py-2 text-right tabular-nums text-text-muted">
+                            {hasRange
+                              ? `${Number(col.minValue).toLocaleString(undefined, { maximumFractionDigits: 2 })} – ${Number(col.maxValue).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                              : '—'}
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <div className="h-1.5 w-16 overflow-hidden rounded-full bg-border/40">
+                                <div
+                                  className={`h-full rounded-full ${col.nullPct > 0.5 ? 'bg-danger' : col.nullPct > 0.1 ? 'bg-warning' : 'bg-success'}`}
+                                  style={{ width: `${fillPct}%` }}
+                                />
+                              </div>
+                              <span className={`text-[10px] tabular-nums ${col.nullPct > 0.5 ? 'text-danger' : col.nullPct > 0.1 ? 'text-warning' : 'text-text-muted'}`}>
+                                {fillPct}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="flex max-w-[14rem] flex-wrap gap-1">
+                              {samples.length ? (
+                                samples.map((s, i) => (
+                                  <span
+                                    key={i}
+                                    className="max-w-[8rem] truncate rounded bg-surface px-1.5 py-0.5 text-[10px] text-text-muted ring-1 ring-border/60"
+                                    title={s}
+                                  >
+                                    {s}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-[10px] text-text-muted">—</span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {/* Legend */}
+              <div className="flex flex-wrap items-center gap-3 border-t border-border bg-surface/60 px-3 py-2 text-[10px] text-text-muted">
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-success" /> measure</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-warning" /> dimension</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-primary" /> time</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-border" /> id / metadata</span>
+                <span className="ml-auto">Completeness = share of non-null rows</span>
+              </div>
             </div>
           </Card>
+
+          {/* Continue to template-path selection */}
+          <div className="flex flex-col gap-3 rounded-2xl border border-primary/25 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h4 className="flex items-center gap-2 text-sm font-semibold text-text">
+                <Sparkles className="h-4 w-4 text-primary" aria-hidden />
+                Profiling complete — choose how to build
+              </h4>
+              <p className="mt-1 text-xs text-text-muted">
+                {templatePath
+                  ? `Selected: ${templatePath === 'loop' ? 'Loop template with weighting' : 'Pre-existing template'}. You can review or switch on the next step.`
+                  : 'Pick a template path to unlock dataset mapping, the question plan, issues and the S3.5 handoff.'}
+              </p>
+            </div>
+            <Button onClick={() => goToMode('pathway')} className="shrink-0">
+              {templatePath ? 'Review template path' : 'Continue to next phase'} <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       );
     }
@@ -1675,11 +1963,11 @@ export default function BindingWorkflowPage() {
         </div>
         <Card title="Phase readiness" description="Backend-governed transition state for the current binding session.">
           <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-            {workbenchModes.filter((mode) => mode.id !== 'overview').map((mode) => (
+            {[...setupWorkbenchModes, ...pathWorkbenchModes].filter((mode) => mode.id !== 'overview').map((mode) => (
               <button
                 key={mode.id}
                 type="button"
-                onClick={() => setWorkbenchMode(mode.id)}
+                onClick={() => goToMode(mode.id)}
                 className="rounded-lg border border-border bg-surface px-3 py-2 text-left text-sm hover:border-accent/60"
               >
                 <span className="flex items-center justify-between gap-2">
@@ -1711,14 +1999,16 @@ export default function BindingWorkflowPage() {
             </div>
           </Card>
           <Card title="Next action" description="Recommended step from current session state.">
-            {remaining > 0 ? (
-              <Button className="w-full" onClick={() => setWorkbenchMode('entities')}>Review {remaining} entities</Button>
+            {!templatePath ? (
+              <Button className="w-full" onClick={() => goToMode('pathway')}>Choose template path</Button>
+            ) : remaining > 0 ? (
+              <Button className="w-full" onClick={() => goToMode('entities')}>Review {remaining} entities</Button>
             ) : !currentReviewedPlan ? (
               <Button className="w-full" onClick={onFinalize} disabled={finalizing}>Build reviewed plan</Button>
             ) : !executionReady ? (
-              <Button className="w-full" onClick={() => setWorkbenchMode('handoff')}>Prepare handoff</Button>
+              <Button className="w-full" onClick={() => goToMode('handoff')}>Prepare handoff</Button>
             ) : (
-              <Button className="w-full" onClick={() => setWorkbenchMode('issues')}>Inspect readiness</Button>
+              <Button className="w-full" onClick={() => goToMode('issues')}>Inspect readiness</Button>
             )}
           </Card>
         </div>
@@ -1730,9 +2020,28 @@ export default function BindingWorkflowPage() {
     <div className="space-y-4">
       <div className="rounded-2xl border border-border bg-surface-card shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
-          <div className="min-w-0">
-            <h2 className="truncate text-lg font-semibold text-text">{packageForWorkbench?.name ?? session.template_id}</h2>
-            <p className="mt-0.5 text-xs text-text-muted">{session.dataset_id} · {session.signature.slice(0, 8)}</p>
+          <div className="flex min-w-0 items-center gap-3">
+            {enteredPath && (
+              <button
+                type="button"
+                onClick={() => goToMode('pathway')}
+                title="Back to template path"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border text-text-muted transition-colors hover:border-primary hover:text-primary"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            )}
+            <div className="min-w-0">
+              <h2 className="flex items-center gap-2 truncate text-lg font-semibold text-text">
+                {packageForWorkbench?.name ?? session.template_id}
+                {enteredPath && templatePath && (
+                  <Badge variant={templatePath === 'loop' ? 'default' : 'muted'} className="text-[9px]">
+                    {templatePath === 'loop' ? 'Loop template · weighted' : 'Pre-existing template'}
+                  </Badge>
+                )}
+              </h2>
+              <p className="mt-0.5 text-xs text-text-muted">{session.dataset_id} · {session.signature.slice(0, 8)}</p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {workspaceLoading && <Badge variant="muted">Refreshing…</Badge>}
@@ -1748,7 +2057,11 @@ export default function BindingWorkflowPage() {
           <main className="min-w-0 pt-5">{renderWorkbenchPanel()}</main>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
             <Button variant="outline" size="sm" onClick={resetAll}><ArrowLeft className="h-4 w-4" /> Start over</Button>
-            {!executionReady ? (
+            {!enteredPath ? (
+              <Button size="sm" onClick={() => goToMode('pathway')}>
+                <ArrowRight className="h-4 w-4" /> {templatePath ? 'Open template path' : 'Choose template path'}
+              </Button>
+            ) : !executionReady ? (
               <Button size="sm" onClick={onFinalize} disabled={finalizing || !allColumnsDecided}>
                 {finalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 {currentReviewedPlan ? 'Rebuild plan' : 'Build plan & prepare'}
@@ -1772,9 +2085,9 @@ export default function BindingWorkflowPage() {
         title="Dataset binding"
         description="Map columns to entities, review the question plan, and prepare for report generation."
         actions={
-          <Link href="/report/report-builder">
+          <Link href="/report/report-ast-generator">
             <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4" /> Report Builder
+              <ArrowLeft className="h-4 w-4" /> Template Extraction
             </Button>
           </Link>
         }

@@ -102,7 +102,7 @@ export function CommandBar(props: Props) {
         <button onClick={() => onTogglePanel('left')} title="Navigator" className={`shrink-0 rounded p-1.5 transition-colors ${panel === 'left' ? 'bg-blue-50 text-blue-600' : 'text-slate-500 hover:bg-slate-100'}`}>
           <Layers className="h-4 w-4" />
         </button>
-        <Link href="/report-builder" className="text-slate-400 hover:text-slate-600" title="Back"><ChevronLeft className="h-3.5 w-3.5" /></Link>
+        <Link href="/report-builder/canvas" className="text-slate-400 hover:text-slate-600" title="Back"><ChevronLeft className="h-3.5 w-3.5" /></Link>
         <h1 className="max-w-[160px] truncate text-[13px] font-semibold text-slate-800">{title}</h1>
 
         <span className="mx-0.5 h-4 w-px bg-slate-200" />

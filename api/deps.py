@@ -1,6 +1,7 @@
 """FastAPI dependency providers."""
 
 import os
+from functools import lru_cache
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -12,18 +13,21 @@ from auth.utils import ALGORITHM, SECRET_KEY
 from object_storage.object_store import ObjectStore, StorageConfigError, build_default_store
 
 _bearer = HTTPBearer(auto_error=False)
+_AUTH_REQUIRED = os.getenv("AUTH_REQUIRED", "true").lower() in ("1", "true", "yes")
+_ALLOW_LEGACY_ANON = os.getenv("ALLOW_LEGACY_ANON_USER", "false").lower() in ("1", "true", "yes")
+
+
+@lru_cache(maxsize=1)
+def _cached_object_store() -> ObjectStore:
+    return build_default_store()
 
 
 def get_object_store() -> ObjectStore:
     """Expose object storage to routes; turns config gaps into HTTP 503 (not Depends 500)."""
     try:
-        return build_default_store()
+        return _cached_object_store()
     except StorageConfigError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
-
-
-def _auth_required() -> bool:
-    return os.getenv("AUTH_REQUIRED", "true").lower() in ("1", "true", "yes")
 
 
 def _token_from_request(request: Request, credentials: HTTPAuthorizationCredentials | None) -> str | None:
@@ -45,7 +49,7 @@ def get_current_user_id(
         uid = decode_access_token(token)
         if uid is not None:
             return uid
-        if _auth_required():
+        if _AUTH_REQUIRED:
             try:
                 payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
                 legacy_uid = payload.get("user_id")
@@ -55,10 +59,9 @@ def get_current_user_id(
                 pass
             raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    if _auth_required():
+    if _AUTH_REQUIRED:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    allow_legacy = os.getenv("ALLOW_LEGACY_ANON_USER", "false").lower() in ("1", "true", "yes")
-    if allow_legacy:
+    if _ALLOW_LEGACY_ANON:
         return 1
     raise HTTPException(status_code=401, detail="Authentication required")
