@@ -23,26 +23,29 @@ def _severity_pct_beyond(pct: float) -> str | None:
 
 
 def iqr_records(series: pd.Series, column_name: str, multiplier: float = 1.5) -> list[dict[str, Any]]:
-    s = pd.to_numeric(series, errors="coerce").reset_index(drop=True)
-    valid = s.dropna()
+    s = pd.to_numeric(series, errors="coerce")
+    xv = s.to_numpy(dtype=float)
+    finite = np.isfinite(xv)
+    valid = xv[finite]
     if valid.size < 4:
         return []
 
-    q1, q3 = float(valid.quantile(0.25)), float(valid.quantile(0.75))
+    q1, q3 = float(np.quantile(valid, 0.25)), float(np.quantile(valid, 0.75))
     iqr = q3 - q1
     eiqr = max(iqr, 1e-12)
     lo = q1 - multiplier * eiqr
     hi = q3 + multiplier * eiqr
     fence_width = multiplier * eiqr
 
+    below = finite & (xv < lo)
+    above = finite & (xv > hi)
+    hit_indices = np.where(below | above)[0]
+    if hit_indices.size == 0:
+        return []
+
     rows: list[dict[str, Any]] = []
-    for pos in range(len(s)):
-        v = s.iloc[pos]
-        if pd.isna(v):
-            continue
-        vf = float(v)
-        if lo <= vf <= hi:
-            continue
+    for pos in hit_indices:
+        vf = float(xv[pos])
         if vf < lo:
             distance = lo - vf
             boundary = lo

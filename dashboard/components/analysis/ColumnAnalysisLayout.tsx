@@ -66,6 +66,7 @@ export default function ColumnAnalysisLayout({
   const router = useRouter();
   const [results, setResults] = useState(initialResults);
   const [phaseStatus, setPhaseStatus] = useState<PhaseStatus | null>(null);
+  const [validationApplied, setValidationApplied] = useState(false);
   const columns = useMemo(() => orderedColumns(results), [results]);
   const [selectedColumn, setSelectedColumn] = useState<string | null>(columns[0] ?? null);
   const [reviewedColumns, setReviewedColumns] = useState<Set<string>>(new Set());
@@ -83,8 +84,19 @@ export default function ColumnAnalysisLayout({
     ? columns[currentIndex + 1]
     : null;
 
+  const phase3 = results.phase3 ?? {};
+  const validationAcknowledged = Boolean(
+    (phase3 as { validation_acknowledged?: boolean }).validation_acknowledged,
+  );
+
   const routes = analysisRoutes(analysisId);
-  const validationComplete = Boolean(phaseStatus?.rule_validation_completed);
+  const validationComplete = Boolean(
+    phaseStatus?.rule_validation_completed
+    || phaseStatus?.validation?.complete
+    || phaseStatus?.validation?.acknowledged
+    || validationApplied
+    || validationAcknowledged,
+  );
 
   const selectedBlock = selectedColumn ? resolveAnomalyBlock(selectedColumn, results) : null;
   const isNumeric = selectedColumn ? isNumericColumn(selectedColumn, results) : false;
@@ -92,6 +104,14 @@ export default function ColumnAnalysisLayout({
   const showMissing = !isNumeric || (detectionRun && columnDecisionsComplete.has(selectedColumn ?? ''));
 
   const refreshPhaseStatus = useCallback(async () => {
+    void analysisApi
+      .getLineage(analysisId)
+      .then((lineage) => {
+        const snapshots = (lineage as { snapshots?: Array<{ stage?: string }> }).snapshots ?? [];
+        setValidationApplied(snapshots.some((s) => s.stage === 'validated'));
+      })
+      .catch(() => {});
+
     const status = await analysisApi.getPhaseStatus(analysisId);
     setPhaseStatus(status);
 
@@ -159,7 +179,7 @@ export default function ColumnAnalysisLayout({
       toast.error('Complete anomaly and missing-value review before proceeding');
       return;
     }
-    router.push(routes.weights);
+    router.push(routes.review);
   };
 
   const missingForSelected = selectedColumn ? resolveMissingCount(selectedColumn, results) : 0;
@@ -234,11 +254,13 @@ export default function ColumnAnalysisLayout({
               {!validationComplete && (
                 <Alert variant="warning" title="Complete rule validation first">
                   <p className="text-sm">
-                    Save and proceed through{' '}
+                    On the{' '}
                     <Link href={routes.validation} className="text-primary underline font-medium">
                       rule validation
-                    </Link>
-                    , then use <strong>Apply to dataset</strong> before reviewing anomalies.
+                    </Link>{' '}
+                    step, save decisions for all shown violations, then click{' '}
+                    <strong>Apply to dataset</strong> or <strong>Proceed to column analysis</strong>{' '}
+                    before reviewing anomalies here.
                   </p>
                 </Alert>
               )}
@@ -369,7 +391,7 @@ export default function ColumnAnalysisLayout({
           </div>
 
           <Button onClick={handleProceed} size="lg" className="gap-2" disabled={!canProceedToDatasetReview}>
-            Proceed to weight application
+            Proceed to dataset review
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

@@ -26,39 +26,41 @@ def _severity_abs_z(abs_z: float) -> str | None:
 
 
 def zscore_records(series: pd.Series, column_name: str) -> list[dict[str, Any]]:
-    vals = pd.to_numeric(series, errors="coerce").reset_index(drop=True)
-    finite = vals.notna()
+    vals = pd.to_numeric(series, errors="coerce")
     xv = vals.to_numpy(dtype=float)
-    xv_f = xv[finite.to_numpy()]
-    if xv_f.size < 3:
+    finite = np.isfinite(xv)
+    if finite.sum() < 3:
         return []
 
-    mu = float(np.nanmean(xv_f))
-    sd = float(np.nanstd(xv_f, ddof=1))
+    xv_f = xv[finite]
+    mu = float(np.mean(xv_f))
+    sd = float(np.std(xv_f, ddof=1))
     if sd <= 1e-12:
         return []
 
+    z_abs = np.abs((xv - mu) / sd)
+    hit_indices = np.where(finite & (z_abs >= 1.0))[0]
+    if hit_indices.size == 0:
+        return []
+
     rows: list[dict[str, Any]] = []
-    pos = np.where(finite.to_numpy())[0]
-    for ix in pos:
-        v = xv[ix]
-        if np.isnan(v):
-            continue
-        z_abs = abs((float(v) - mu) / sd)
-        sev = _severity_abs_z(z_abs)
+    thresholds = {"low": 1.0, "medium": 2.0, "high": 3.0, "extreme": 4.0}
+    for ix in hit_indices:
+        z = float(z_abs[ix])
+        sev = _severity_abs_z(z)
         if sev is None:
             continue
         rows.append(
             {
                 "row": int(ix),
                 "column": column_name,
-                "value": float(v),
+                "value": float(xv[ix]),
                 "method": "Z_SCORE",
-                "z_abs": float(z_abs),
-                "score": float(z_abs),
+                "z_abs": z,
+                "score": z,
                 "severity": sev,
-                "reason": f"|z|={z_abs:.2f} ({sev} severity band)",
-                "thresholds": {"low": 1.0, "medium": 2.0, "high": 3.0, "extreme": 4.0},
+                "reason": f"|z|={z:.2f} ({sev} severity band)",
+                "thresholds": thresholds,
             }
         )
     return rows

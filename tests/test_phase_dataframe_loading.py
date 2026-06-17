@@ -13,6 +13,5 @@ from services.analysis_dataframe_service import WORKING_STAGE_BY_PHASE
 def test_working_stage_mapping():
     assert WORKING_STAGE_BY_PHASE["anomaly"] == "validated"
     assert WORKING_STAGE_BY_PHASE["imputation"] == "anomaly_reviewed"
-    assert WORKING_STAGE_BY_PHASE["weight"] == "imputed"
-    assert WORKING_STAGE_BY_PHASE["review"] == "weighted"
+    assert WORKING_STAGE_BY_PHASE["review"] == "imputed"
     assert WORKING_STAGE_BY_PHASE["validation"] == "normalized"

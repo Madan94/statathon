@@ -25,9 +25,10 @@ def test_list_validation_candidates_paginated_shape():
     mock_query.all.return_value = [mock_row]
 
     db = MagicMock()
-    with patch("services.analysis_query._validation_candidates_query", return_value=mock_query):
-        with patch("services.analysis_query._candidate_to_dict", return_value={"column": "age", "row": 1}):
-            payload = list_validation_candidates_paginated(db, 42, page=1, page_size=50)
+    with patch("services.analysis_query._display_filter_ids", return_value=None):
+        with patch("services.analysis_query._validation_candidates_query", return_value=mock_query):
+            with patch("services.analysis_query._candidate_to_dict", return_value={"column": "age", "row": 1}):
+                payload = list_validation_candidates_paginated(db, 42, page=1, page_size=50)
 
     assert payload["total"] == 1
     assert payload["page"] == 1

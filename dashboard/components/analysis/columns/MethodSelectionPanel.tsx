@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { AnalysisResult } from '@/lib/api';
 import { analysisApi } from '@/lib/api';
-import { resolveAnomalyBlock } from '@/lib/outlierColumnUtils';
+import { resolveAnomalyBlock, mergeOutlierDetection } from '@/lib/outlierColumnUtils';
 import Card from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -170,10 +170,8 @@ export default function MethodSelectionPanel({
     setLoading(method);
     setError(null);
     try {
-      await analysisApi.selectOutlierMethod(analysisId, column, method);
-      await analysisApi.runOutlierDetection(analysisId, column);
-      const updated = await analysisApi.getResults(analysisId, { includePhase3: true });
-      onComplete(updated);
+      const detectRes = await analysisApi.runOutlierDetection(analysisId, column, method);
+      onComplete(mergeOutlierDetection(results, column, detectRes));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to run detection');
     } finally {

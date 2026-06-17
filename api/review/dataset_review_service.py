@@ -27,44 +27,13 @@ class DatasetReviewService:
             row.missing_value_completed = True
         return {
             "missing_value_completed": bool(row.missing_value_completed),
-            "weight_application_completed": bool(row.weight_application_completed),
             "dataset_review_completed": bool(row.dataset_review_completed),
-        }
-
-    def _weight_summary(self, analysis_id: int) -> dict[str, Any]:
-        from database.models import WeightApplication
-
-        app = (
-            self.db.query(WeightApplication)
-            .filter(WeightApplication.analysis_id == analysis_id)
-            .first()
-        )
-        if not app:
-            return {
-                "applied": False,
-                "ignored": False,
-                "weight_column": None,
-                "quality_score": None,
-                "recommendation": None,
-                "comparison": None,
-                "meta": None,
-            }
-        return {
-            "applied": bool(app.applied),
-            "ignored": bool(app.ignored),
-            "weight_column": app.weight_column,
-            "quality_score": app.quality_score,
-            "recommendation": app.recommendation,
-            "comparison": app.comparison,
-            "meta": app.meta,
         }
 
     def get_review_payload(self, analysis_id: int) -> dict[str, Any]:
         flags = self._phase_flags(analysis_id)
         if not flags["missing_value_completed"]:
             raise ValueError("Complete Missing Value Intelligence before dataset review")
-        if not flags["weight_application_completed"]:
-            raise ValueError("Complete Weight Application before dataset review")
 
         original_df, orig_snap = self.snapshots.load_original_dataframe(analysis_id)
         processed_df, proc_snap = self.snapshots.load_processed_dataframe(analysis_id)
@@ -78,11 +47,9 @@ class DatasetReviewService:
 
         can_approve = (
             flags["missing_value_completed"]
-            and flags["weight_application_completed"]
             and not flags["dataset_review_completed"]
         )
         can_report = flags["dataset_review_completed"]
-        weight_summary = self._weight_summary(analysis_id)
         final_dataset = (
             self.snapshots.final_dataset_meta(analysis_id)
             if flags["dataset_review_completed"]
@@ -96,7 +63,6 @@ class DatasetReviewService:
             "final_dataset": final_dataset,
             "summary": diff_payload["summary"],
             "diff_summary": diff_payload["diff_summary"],
-            "weight_application": weight_summary,
             "snapshots": [
                 {
                     "stage": s.get("stage") or s.get("phase"),
@@ -110,7 +76,6 @@ class DatasetReviewService:
             ],
             "dataset_review_completed": flags["dataset_review_completed"],
             "missing_value_completed": flags["missing_value_completed"],
-            "weight_application_completed": flags["weight_application_completed"],
             "can_approve": can_approve,
             "can_proceed_to_report": can_report,
         }
@@ -130,8 +95,6 @@ class DatasetReviewService:
         flags = self._phase_flags(analysis_id)
         if not flags["missing_value_completed"]:
             raise ValueError("Complete Missing Value Intelligence before dataset review")
-        if not flags["weight_application_completed"]:
-            raise ValueError("Complete Weight Application before dataset review")
 
         if side == "original":
             df, _ = self.snapshots.load_original_dataframe(analysis_id)
@@ -166,8 +129,6 @@ class DatasetReviewService:
         flags = self._phase_flags(analysis_id)
         if not flags["missing_value_completed"]:
             raise ValueError("Complete Missing Value Intelligence before approving the dataset")
-        if not flags["weight_application_completed"]:
-            raise ValueError("Complete Weight Application before approving the dataset")
         if flags["dataset_review_completed"]:
             return {
                 "success": True,

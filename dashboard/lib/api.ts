@@ -472,14 +472,6 @@ export interface OutlierResult {
   risk: 'low' | 'medium' | 'high';
 }
 
-export interface WeightedProfile {
-  applied?: boolean;
-  weight_column?: string | null;
-  weighted_numeric_means?: Record<string, number>;
-  effective_sample_size?: number;
-  reason?: string;
-}
-
 export interface ColumnNormalizationRow {
   original_name: string;
   normalized_name: string;
@@ -515,7 +507,6 @@ export interface AnalysisResult {
     [key: string]: unknown;
   };
   audit_logs?: Array<Record<string, unknown>>;
-  weighted_profile?: WeightedProfile;
   derived_dataset?: Record<string, unknown>;
   outliers?: Record<string, OutlierResult>;
   content_hash?: string;
@@ -831,9 +822,20 @@ export const analysisApi = {
     const { data } = await api.post(`/analysis/${id}/outliers/method`, { column, method });
     return data;
   },
-  runOutlierDetection: async (id: number, column: string) => {
-    const { data } = await api.post(`/analysis/${id}/outliers/detect`, { column });
-    return data;
+  runOutlierDetection: async (
+    id: number,
+    column: string,
+    method?: 'Z_SCORE' | 'IQR',
+  ) => {
+    const { data } = await api.post(`/analysis/${id}/outliers/detect`, { column, method });
+    return data as {
+      analysis_id: number;
+      column: string;
+      method: string;
+      candidates: Array<Record<string, unknown>>;
+      count: number;
+      anomaly_block?: Record<string, unknown>;
+    };
   },
   saveOutlierDecisions: async (
     id: number,
@@ -891,7 +893,6 @@ export const analysisApi = {
       rule_validation_completed: boolean;
       anomaly_completed: boolean;
       missing_value_completed: boolean;
-      weight_application_completed?: boolean;
       dataset_review_completed?: boolean;
       validation: {
         total: number;
@@ -916,74 +917,6 @@ export const analysisApi = {
         imputation?: Array<{ column: string; status: string; item_count: number; reviewed_count: number }>;
       };
     };
-  },
-  getWeightApplication: async (id: number) => {
-    const { data } = await api.get(`/analysis/${id}/weights`);
-    return data as {
-      analysis_id: number;
-      detected_columns: Array<{
-        column: string;
-        confidence: number;
-        signals: Record<string, number>;
-      }>;
-      validations: Record<
-        string,
-        {
-          column: string;
-          quality_score: number;
-          coverage: number;
-          missing_pct?: number;
-          variance?: number;
-          valid: boolean;
-          checks?: Record<string, boolean>;
-        }
-      >;
-      recommendation: {
-        recommended: string;
-        confidence: number;
-        reason: string;
-      } | null;
-      application: {
-        weight_column: string | null;
-        applied: boolean;
-        ignored: boolean;
-        quality_score: number | null;
-      };
-      comparison: {
-        weight_column: string;
-        metrics: Array<{
-          column: string;
-          label: string;
-          type: string;
-          unweighted: number | null;
-          weighted: number | null;
-          delta?: number | null;
-        }>;
-      } | null;
-      columns: string[];
-      weight_application_completed: boolean;
-      stale?: boolean;
-    };
-  },
-  detectWeights: async (id: number) => {
-    const { data } = await api.post(`/analysis/${id}/weights/detect`);
-    return data as Awaited<ReturnType<(typeof analysisApi)['getWeightApplication']>>;
-  },
-  compareWeightMetrics: async (id: number, weightColumn: string) => {
-    const { data } = await api.get(`/analysis/${id}/weights/compare`, {
-      params: { weight_column: weightColumn },
-    });
-    return data;
-  },
-  applySurveyWeight: async (id: number, weightColumn: string) => {
-    const { data } = await api.post(`/analysis/${id}/weights/apply`, {
-      weight_column: weightColumn,
-    });
-    return data;
-  },
-  ignoreSurveyWeight: async (id: number) => {
-    const { data } = await api.post(`/analysis/${id}/weights/ignore`);
-    return data;
   },
   getDatasetReview: async (id: number) => {
     const { data } = await api.get(`/analysis/${id}/dataset-review`);
@@ -1034,34 +967,6 @@ export const analysisApi = {
       snapshots: Array<Record<string, unknown>>;
       dataset_review_completed: boolean;
       missing_value_completed: boolean;
-      weight_application_completed?: boolean;
-      weight_application?: {
-        applied: boolean;
-        ignored?: boolean;
-        weight_column: string | null;
-        quality_score: number | null;
-        recommendation?: {
-          recommended: string;
-          confidence: number;
-          reason: string;
-        } | null;
-        comparison?: {
-          weight_column: string;
-          metrics: Array<{
-            column: string;
-            label: string;
-            type: string;
-            unweighted: number | null;
-            weighted: number | null;
-            delta?: number | null;
-          }>;
-        } | null;
-        meta?: {
-          weighted_columns?: string[];
-          transform_mode?: string;
-          source_imputed_snapshot_version?: number;
-        } | null;
-      };
       can_approve: boolean;
       can_proceed_to_report: boolean;
       final_dataset?: {
@@ -1155,6 +1060,9 @@ export const analysisApi = {
       acknowledged: boolean;
       stored_total?: number;
       truncated?: boolean;
+      full_total?: number | null;
+      display_sample_enabled?: boolean;
+      display_sample_size?: number | null;
     };
   },
   getValidationCandidates: async (

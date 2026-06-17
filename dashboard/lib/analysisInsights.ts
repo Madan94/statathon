@@ -3,7 +3,7 @@
  *
  * Derives a cross-dataset analysis roll-up from the activity feed + dashboard
  * summary, and extracts per-phase calculation series (validation severities,
- * imputation methods, outlier counts, weighting, pipeline completion) from a
+ * imputation methods, outlier counts, pipeline completion) from a
  * single analysis result for charting. Pure functions — no React, no I/O.
  */
 import type {
@@ -12,7 +12,6 @@ import type {
   ImputationCandidate,
   OutlierResult,
   ValidationCandidate,
-  WeightedProfile,
 } from '@/lib/api';
 
 export type AnalysisStatusKey = 'complete' | 'running' | 'failed' | 'none';
@@ -153,7 +152,6 @@ interface PhaseStatusShape {
   validation?: { total?: number; reviewed?: number; complete?: boolean };
   anomaly?: { columns_total?: number; columns_reviewed?: number; complete?: boolean };
   imputation?: { columns_total?: number; columns_reviewed?: number; complete?: boolean };
-  weight_application_completed?: boolean;
 }
 
 function pct(reviewed: number, total: number): number {
@@ -176,7 +174,6 @@ export function phaseCompletion(status: PhaseStatusShape | null | undefined): Ph
     { key: 'validation', label: 'Rule validation', pct: pct(vReviewed, vTotal), reviewed: vReviewed, total: vTotal, complete: Boolean(v.complete) },
     { key: 'anomaly', label: 'Anomaly review', pct: pct(aReviewed, aTotal), reviewed: aReviewed, total: aTotal, complete: Boolean(a.complete) },
     { key: 'imputation', label: 'Missing-value imputation', pct: pct(iReviewed, iTotal), reviewed: iReviewed, total: iTotal, complete: Boolean(i.complete) },
-    { key: 'weighting', label: 'Weight application', pct: status.weight_application_completed ? 100 : 0, reviewed: status.weight_application_completed ? 1 : 0, total: 1, complete: Boolean(status.weight_application_completed) },
   ];
 }
 
@@ -224,14 +221,6 @@ export function outlierColumns(outliers: Record<string, OutlierResult> | undefin
     })
     .filter((c) => c.count > 0)
     .sort((a, b) => b.count - a.count)
-    .slice(0, limit);
-}
-
-export function weightedMeans(wp: WeightedProfile | undefined, limit = 12): Array<{ column: string; value: number }> {
-  if (!wp?.applied || !wp.weighted_numeric_means) return [];
-  return Object.entries(wp.weighted_numeric_means)
-    .map(([column, value]) => ({ column, value: Number(value) }))
-    .filter((c) => Number.isFinite(c.value))
     .slice(0, limit);
 }
 

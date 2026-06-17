@@ -168,7 +168,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 # ── Startup: DB schema + migrations ─────────────────────────────────────────
 # IMPORTANT: do NOT call create_all / migrations at module level.
-# If DATABASE_URL is temporarily unreachable (Supabase paused, DNS failure,
+# If DATABASE_URL is temporarily unreachable (Xata/Supabase paused, DNS failure,
 # network not ready) the entire uvicorn process would crash before serving
 # a single request. Wrapping in a startup event lets the app start and
 # respond to /health even while the DB is recovering.
@@ -178,7 +178,7 @@ async def _startup_db() -> None:
     from database.migrate_report_builder import migrate_report_builder_schema
     from database.migrate_dataset_columns import migrate_dataset_columns_schema
     from database.migrate_schema_graph_edges import migrate_schema_graph_edges_schema
-    from database.migrate_weight_application import migrate_weight_application_schema
+    from database.migrate_drop_weight_application import migrate_drop_weight_application_schema
     from database.migrate_column_dictionary import migrate_column_dictionary_schema
     from database.migrate_perf_indexes import migrate_perf_indexes
 
@@ -187,7 +187,7 @@ async def _startup_db() -> None:
         migrate_auth_schema()
         migrate_report_builder_schema()
         migrate_dataset_columns_schema()
-        migrate_weight_application_schema()
+        migrate_drop_weight_application_schema()
         migrate_schema_graph_edges_schema()
         migrate_column_dictionary_schema()
         migrate_perf_indexes()

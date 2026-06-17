@@ -350,8 +350,6 @@ def enrich_payload_for_dashboard(
 
     meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
     enriched["analysis_id"] = meta.get("analysis_id") or analysis_id
-    if payload.get("weighted_profile"):
-        enriched["weighted_profile"] = payload.get("weighted_profile")
     if payload.get("derived_dataset") or (payload.get("derived_dataset_path")):
         enriched["derived_dataset"] = payload.get("derived_dataset") or {
             "derived_path": payload.get("derived_dataset_path"),

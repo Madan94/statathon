@@ -7,6 +7,7 @@ from typing import Any, Literal
 import pandas as pd
 from sqlalchemy.orm import Session
 
+from core.ingestion import infer_schema
 from core.json_safe import make_json_safe
 from database.models import OutlierDecision, Phase3AnomalyIntel
 from services.analysis_dataframe_service import (
@@ -16,8 +17,9 @@ from services.analysis_dataframe_service import (
 )
 from services.analysis_query import get_analysis_meta, load_analysis_checkpoint
 from outliers.anomaly_handler import detect_outliers_for_column, merge_column_detection
-from services.analysis_query import build_phase3_from_relational, merge_checkpoint_phase3_overlay
+from services.analysis_query import load_checkpoint_phase3_overlay, merge_checkpoint_phase3_overlay
 from services.analysis_payload_cache import invalidate_analysis_cache
+from services.phase_status_cache import invalidate_phase_status
 from services.normalization_service import NormalizationService
 from services.phase_audit_service import PhaseAuditService
 from services.phase_snapshot_service import refresh_downstream_with_status
@@ -156,8 +158,95 @@ class OutlierWorkflowService:
         borig = str(block.get("original_column") or "")
         return bcol in aliases or borig in aliases
 
+    def _load_anomaly_payload(self, analysis_id: int) -> dict[str, Any]:
+        """Load anomaly intel without rebuilding validation/imputation phase3."""
+        intel = (
+            self.db.query(Phase3AnomalyIntel)
+            .filter(Phase3AnomalyIntel.analysis_id == analysis_id)
+            .first()
+        )
+        payload = dict(intel.payload) if intel and isinstance(intel.payload, dict) else {}
+        overlay = load_checkpoint_phase3_overlay(self.db, analysis_id)
+        if overlay.get("method_selections"):
+            payload["method_selections"] = overlay["method_selections"]
+        if overlay.get("outlier_row_decisions"):
+            payload["outlier_row_decisions"] = overlay["outlier_row_decisions"]
+        return {
+            "anomaly_results": payload.get("anomaly_results") or [],
+            "anomaly_candidates": payload.get("anomaly_candidates") or [],
+            "goodness_of_fit": payload.get("goodness_of_fit") or [],
+            "method_selections": payload.get("method_selections") or {},
+            "outlier_row_decisions": payload.get("outlier_row_decisions") or {},
+        }
+
     def _get_phase3(self, analysis_id: int) -> dict[str, Any]:
-        return build_phase3_from_relational(self.db, analysis_id)
+        return self._load_anomaly_payload(analysis_id)
+
+    def _load_detection_series(
+        self,
+        analysis_id: int,
+        column: str,
+        block: dict[str, Any] | None,
+    ) -> tuple[pd.Series, dict[str, Any], str]:
+        """Load only the target column for outlier detection."""
+        from database.models import DatasetLineageSnapshot
+        from services.analysis_dataframe_service import (
+            WORKING_STAGE_BY_PHASE,
+            _STAGE_FALLBACKS,
+            load_snapshot_dataframe,
+        )
+
+        stage = WORKING_STAGE_BY_PHASE.get("anomaly", "validated")
+        stages = [stage, *_STAGE_FALLBACKS.get(stage, ())]
+        df: pd.DataFrame | None = None
+        df_col: str | None = None
+
+        for st in stages:
+            snap = (
+                self.db.query(DatasetLineageSnapshot)
+                .filter(
+                    DatasetLineageSnapshot.analysis_id == analysis_id,
+                    DatasetLineageSnapshot.stage == st,
+                )
+                .order_by(DatasetLineageSnapshot.version.desc())
+                .first()
+            )
+            if not snap or not snap.storage_path:
+                continue
+            try:
+                import pyarrow.parquet as pq
+
+                available = set(pq.read_schema(snap.storage_path).names)
+                df_col = self._resolve_df_column(
+                    type("_Cols", (), {"columns": list(available)})(),
+                    analysis_id,
+                    column,
+                    block,
+                )
+                if not df_col or df_col not in available:
+                    continue
+                df = pd.read_parquet(snap.storage_path, columns=[df_col])
+                break
+            except Exception:
+                snap_df = load_snapshot_dataframe(self.db, analysis_id, st)
+                if snap_df is None:
+                    continue
+                df_col = self._resolve_df_column(snap_df, analysis_id, column, block)
+                if not df_col:
+                    continue
+                df = snap_df[[df_col]]
+                break
+
+        if df is None or not df_col:
+            full_df, schema = self._load_df(analysis_id)
+            df_col = self._resolve_df_column(full_df, analysis_id, column, block)
+            if not df_col:
+                raise ValueError(f"Column {column} not in dataset")
+            schema = infer_schema(full_df[[df_col]])
+            return full_df[df_col], schema, df_col
+
+        schema = infer_schema(df)
+        return df[df_col], schema, df_col
 
     def _save_phase3(self, analysis_id: int, dataset_id: int, phase3: dict[str, Any]) -> None:
         intel = (
@@ -193,9 +282,13 @@ class OutlierWorkflowService:
             },
         )
 
-    def select_method(self, analysis_id: int, column: str, method: MethodChoice) -> dict[str, Any]:
-        an = self._load_analysis(analysis_id)
-        phase3 = self._get_phase3(analysis_id)
+    def _apply_method_selection(
+        self,
+        phase3: dict[str, Any],
+        analysis_id: int,
+        column: str,
+        method: MethodChoice,
+    ) -> str:
         results = phase3.get("anomaly_results") or []
         block = self._find_anomaly_block(results, column, analysis_id)
         if not block:
@@ -226,6 +319,12 @@ class OutlierWorkflowService:
             c for c in (phase3.get("anomaly_candidates") or [])
             if str(c.get("column") or "") not in {column, ui_column}
         ]
+        return ui_column
+
+    def select_method(self, analysis_id: int, column: str, method: MethodChoice) -> dict[str, Any]:
+        an = self._load_analysis(analysis_id)
+        phase3 = self._load_anomaly_payload(analysis_id)
+        self._apply_method_selection(phase3, analysis_id, column, method)
         self._save_phase3(analysis_id, an.dataset_id, phase3)
         PhaseAuditService(self.db).record(
             analysis_id=analysis_id,
@@ -239,25 +338,33 @@ class OutlierWorkflowService:
         self.db.commit()
         return {"analysis_id": analysis_id, "column": column, "method": method}
 
-    def run_detection(self, analysis_id: int, column: str) -> dict[str, Any]:
+    def run_detection(
+        self,
+        analysis_id: int,
+        column: str,
+        method: MethodChoice | None = None,
+    ) -> dict[str, Any]:
         an = self._load_analysis(analysis_id)
-        phase3 = self._get_phase3(analysis_id)
-        selections = phase3.get("method_selections") or {}
-        ui_column = self._ui_column(analysis_id, column)
-
+        phase3 = self._load_anomaly_payload(analysis_id)
         results = phase3.get("anomaly_results") or []
         block = self._find_anomaly_block(results, column, analysis_id)
-        method = self._resolve_method(selections, analysis_id, column, block)
-        if not method:
-            raise ValueError(f"Select Z_SCORE or IQR for column {column} first")
 
-        df, schema = self._load_df(analysis_id)
-        df_col = self._resolve_df_column(df, analysis_id, column, block)
-        if not df_col:
-            raise ValueError(f"Column {column} not in dataset")
+        if method:
+            ui_column = self._apply_method_selection(phase3, analysis_id, column, method)
+        else:
+            ui_column = self._ui_column(analysis_id, column)
+            selections = phase3.get("method_selections") or {}
+            method = self._resolve_method(selections, analysis_id, column, block)
+            if not method:
+                raise ValueError(f"Select Z_SCORE or IQR for column {column} first")
 
+        series, schema, df_col = self._load_detection_series(analysis_id, column, block)
         detection = detect_outliers_for_column(
-            df, schema, df_col, method, column_block=block
+            pd.DataFrame({df_col: series}),
+            schema,
+            df_col,
+            method,
+            column_block=block,
         )
         for cand in detection.get("candidates") or []:
             cand["column"] = ui_column
@@ -289,15 +396,21 @@ class OutlierWorkflowService:
             entity_id=column,
             payload={"method": method, "count": len(detection.get("candidates") or [])},
         )
-        PhaseStatusService(self.db).recompute_anomaly_columns(analysis_id)
+        PhaseStatusService(self.db).recompute_anomaly_columns(analysis_id, phase3=phase3)
         invalidate_analysis_cache(analysis_id)
+        invalidate_phase_status(analysis_id)
         self.db.commit()
+        updated_block = next(
+            (r for r in updated_results if self._match_block_column(r, column, analysis_id)),
+            None,
+        )
         return {
             "analysis_id": analysis_id,
             "column": column,
             "method": method,
             "candidates": detection.get("candidates") or [],
             "count": len(detection.get("candidates") or []),
+            "anomaly_block": updated_block,
         }
 
     def save_row_decisions(

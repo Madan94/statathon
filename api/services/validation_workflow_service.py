@@ -16,6 +16,7 @@ from services.analysis_query import (
     merge_checkpoint_phase3_overlay,
 )
 from services.analysis_payload_cache import invalidate_analysis_cache
+from services.phase_status_cache import invalidate_phase_status
 from services.phase_audit_service import PhaseAuditService
 from services.phase_snapshot_service import PhaseSnapshotService, refresh_downstream_with_status
 from services.phase_status_service import PhaseStatusService, _candidate_key, _resolve_rule_id
@@ -265,6 +266,7 @@ class ValidationWorkflowService:
             self.db, analysis_id, {"validation_user_decisions": decisions}
         )
         invalidate_analysis_cache(analysis_id)
+        invalidate_phase_status(analysis_id)
         if commit:
             self.db.commit()
         return len(rows)

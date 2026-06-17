@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Truncate all tables in the Postgres public schema (Supabase app data wipe)."""
+"""Truncate all tables in the Postgres public schema (app data wipe)."""
 from __future__ import annotations
 
 import sys
@@ -23,7 +23,7 @@ from database.database import engine, DATABASE_URL
 
 def main() -> int:
     if DATABASE_URL.startswith("sqlite"):
-        print("Refusing to truncate: DATABASE_URL is SQLite. Point .env at Supabase/Postgres.", file=sys.stderr)
+        print("Refusing to truncate: DATABASE_URL is SQLite. Point .env at Xata/Postgres.", file=sys.stderr)
         return 1
 
     with engine.connect() as conn:

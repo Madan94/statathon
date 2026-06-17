@@ -22,7 +22,6 @@ from profiling import (
 from repositories.dataset_repository import DatasetRepository
 from services.phase3_persistence_service import Phase3PersistenceService
 from services.semantic_persistence_service import SemanticPersistenceService
-from weights.survey_weights import compute_survey_weight_profile
 from database.models import Analysis
 
 import os
@@ -122,14 +121,6 @@ def run_pipeline(
         }
 
     run_phase3_intel(df, schema, state)
-    analysis_cfg_row = db.query(Analysis).filter(Analysis.id == analysis_id).first()
-    weight_col = None
-    if analysis_cfg_row and isinstance(analysis_cfg_row.config, dict):
-        weight_col = analysis_cfg_row.config.get("weight_column")
-    # The configured weight column is a raw header — translate to canonical.
-    if weight_col and rename_map:
-        weight_col = rename_map.get(str(weight_col), weight_col)
-    state.weighted_profile = compute_survey_weight_profile(df, schema, weight_column=weight_col)
     SemanticPersistenceService(db).persist_state(state)
     db.commit()
     Phase3PersistenceService(db).persist_state(state)

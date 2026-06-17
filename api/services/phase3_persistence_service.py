@@ -11,7 +11,12 @@ from database.models import (
     Phase3ValidationCandidate,
     ValidationResult,
 )
-from services.analysis_query import VALIDATION_CANDIDATE_PERSIST_LIMIT
+from services.analysis_query import (
+    VALIDATION_CANDIDATE_PERSIST_LIMIT,
+    VALIDATION_DISPLAY_SAMPLE_ENABLED,
+    VALIDATION_DISPLAY_SAMPLE_MIN,
+    build_display_sample_fields,
+)
 
 
 class Phase3PersistenceService:
@@ -51,6 +56,7 @@ class Phase3PersistenceService:
             )
         if batch:
             self.db.add_all(batch)
+            self.db.flush()
 
         val_payload = make_json_safe(state.validation_results or {})
         if total_candidates:
@@ -60,6 +66,27 @@ class Phase3PersistenceService:
                 "candidates_persisted": len(batch),
                 "candidates_truncated": total_candidates > len(batch),
             }
+        if batch:
+            stored_ids = [
+                int(row[0])
+                for row in self.db.query(Phase3ValidationCandidate.id)
+                .filter(Phase3ValidationCandidate.analysis_id == analysis_id)
+                .order_by(Phase3ValidationCandidate.id)
+                .all()
+            ]
+            stored_total = len(stored_ids)
+            if VALIDATION_DISPLAY_SAMPLE_ENABLED and stored_total >= VALIDATION_DISPLAY_SAMPLE_MIN:
+                val_payload = {
+                    **val_payload,
+                    **build_display_sample_fields(stored_ids, stored_total),
+                }
+            else:
+                val_payload = {
+                    **val_payload,
+                    "display_sample_enabled": False,
+                    "display_sample_size": stored_total,
+                    "display_sample_ids": None,
+                }
         self.db.query(ValidationResult).filter(
             ValidationResult.analysis_id == analysis_id
         ).delete(synchronize_session=False)

@@ -55,7 +55,6 @@ def test_get_status_payload_does_not_commit():
         row.rule_validation_completed = False
         row.anomaly_completed = False
         row.missing_value_completed = False
-        row.weight_application_completed = False
         row.dataset_review_completed = False
         row.updated_at = None
         mock_row.return_value = row

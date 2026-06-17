@@ -44,11 +44,16 @@ def _read_excel(source, ext: str) -> pd.DataFrame:
     raise ValueError(f"Unsupported Excel extension: {ext}")
 
 
+def _read_csv(source) -> pd.DataFrame:
+    """Read CSV as strings to avoid mixed-type DtypeWarning and preserve raw values."""
+    return pd.read_csv(source, dtype=str)
+
+
 def load_file(path: str) -> pd.DataFrame:
     """Load CSV or Excel for `pipelines.orchestrator`."""
     ext = os.path.splitext(path)[1].lower()
     if ext == ".csv":
-        return pd.read_csv(path)
+        return _read_csv(path)
     if ext in (".xlsx", ".xls"):
         return _read_excel(path, ext)
     raise ValueError(f"Unsupported file type: {ext}")
@@ -59,7 +64,7 @@ def load_dataframe_from_object_bytes(filename: str, body: bytes) -> pd.DataFrame
     ext = os.path.splitext(filename)[1].lower()
     bio = io.BytesIO(body)
     if ext == ".csv":
-        return pd.read_csv(bio)
+        return _read_csv(bio)
     if ext in (".xlsx", ".xls"):
         return _read_excel(bio, ext)
     raise ValueError(f"Unsupported file type: {ext}")
@@ -130,7 +135,7 @@ async def load_raw_data(f_stream, original_filename: str):
     
     genesis_hash = sha256.hexdigest()
 
-    df = pd.read_csv(file_path, dtype=str)
+    df = _read_csv(file_path)
     
     dynamic_table_name = f'survey_raw_{session_id}'
 

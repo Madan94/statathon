@@ -103,6 +103,19 @@ export default function Step1Summary({ results, onProceed }: Props) {
   const highMissingCols = allColumns.filter(
     (c) => missingCount(c) / Math.max(totalRows, 1) > 0.2
   );
+  const highMissingRows = highMissingCols
+    .map((col) => {
+      const missing = missingCount(col);
+      const ratio = totalRows > 0 ? missing / totalRows : 0;
+      return {
+        col,
+        missing,
+        ratio,
+        type: columnType(col),
+        severity: ratio > 0.3 ? ('critical' as const) : ('elevated' as const),
+      };
+    })
+    .sort((a, b) => b.ratio - a.ratio);
   const numericCols = allColumns.filter(
     (c) =>
       schema[c] === 'numeric' ||
@@ -295,18 +308,87 @@ export default function Step1Summary({ results, onProceed }: Props) {
         </div>
       </Card>
 
-      {/* Health alerts */}
-      {highMissingCols.length > 0 && (
-        <Card className="border-warning/30 bg-warning/5">
-          <div className="flex gap-3">
-            <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-text">High-missing columns detected</p>
-              <p className="text-sm text-text-muted mt-1">
-                {highMissingCols.join(', ')} have &gt;20% missing values. Consider imputation or
-                exclusion in the next steps.
-              </p>
-            </div>
+      {/* High-missing columns */}
+      {highMissingRows.length > 0 && (
+        <Card
+          title="High-missing columns"
+          description={`${highMissingRows.length} column${highMissingRows.length === 1 ? '' : 's'} exceed 20% missing values. Review before normalisation, imputation, or exclusion.`}
+          className="border-warning/40"
+        >
+          <div className="mb-4 flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3">
+            <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" aria-hidden />
+            <p className="text-sm text-text-muted">
+              These columns may reduce analysis quality. Consider imputation or exclusion in later
+              pipeline steps.
+            </p>
+          </div>
+          <div className="overflow-x-auto -mx-6">
+            <table className="w-full text-sm min-w-[640px]">
+              <thead>
+                <tr className="border-b border-border bg-surface/80">
+                  {['Column', 'Type', 'Missing cells', 'Missing %', 'Severity', 'Suggested action'].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted"
+                      >
+                        {h}
+                      </th>
+                    ),
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {highMissingRows.map(({ col, missing, ratio, type, severity }) => (
+                  <tr
+                    key={col}
+                    className={cn(
+                      'border-b border-border/40 transition-colors',
+                      severity === 'critical'
+                        ? 'bg-danger/[0.04] hover:bg-danger/[0.08]'
+                        : 'bg-warning/[0.04] hover:bg-warning/[0.08]',
+                    )}
+                  >
+                    <td className="px-4 py-3 font-mono text-xs font-medium text-text max-w-[220px]">
+                      <span className="block truncate" title={col}>
+                        {col}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={typeVariant(type)}>{type}</Badge>
+                    </td>
+                    <td className="px-4 py-3 tabular-nums text-text">
+                      {missing.toLocaleString()}
+                      <span className="text-text-muted text-xs"> / {totalRows.toLocaleString()}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2 min-w-[120px]">
+                        <div className="w-16 h-1.5 rounded-full bg-border overflow-hidden shrink-0">
+                          <div
+                            className={cn(
+                              'h-full rounded-full',
+                              severity === 'critical' ? 'bg-danger' : 'bg-warning',
+                            )}
+                            style={{ width: `${Math.min(ratio * 100, 100)}%` }}
+                          />
+                        </div>
+                        <Badge variant={severity === 'critical' ? 'danger' : 'warning'}>
+                          {(ratio * 100).toFixed(1)}%
+                        </Badge>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={severity === 'critical' ? 'danger' : 'warning'}>
+                        {severity === 'critical' ? 'Critical' : 'Elevated'}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-text-muted">
+                      {ratio > 0.5 ? 'Strong candidate for exclusion' : 'Review imputation or exclude'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </Card>
       )}

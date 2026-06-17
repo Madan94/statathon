@@ -32,11 +32,16 @@ def test_validation_review_progress_uses_all_db_candidates():
             "validation_candidates_reported_total": 654,
         },
     ), patch(
+        "services.phase_status_service.ensure_validation_display_sample",
+        return_value={
+            "display_sample_enabled": False,
+            "display_sample_size": 300,
+            "display_sample_ids": None,
+            "full_total": 300,
+        },
+    ), patch(
         "services.phase_status_service.count_validation_candidates",
         return_value=300,
-    ), patch(
-        "services.phase_status_service.load_all_validation_candidate_dicts",
-        return_value=db_candidates,
     ), patch(
         "services.phase_status_service.load_checkpoint_phase3_overlay",
         return_value={"validation_acknowledged": True},
@@ -45,7 +50,7 @@ def test_validation_review_progress_uses_all_db_candidates():
         "get_or_create",
         return_value=status_row,
     ):
-        db.query.return_value.filter.return_value.all.return_value = saved_decisions
+        db.query.return_value.filter.return_value.count.return_value = 300
         progress = PhaseStatusService(db).validation_review_progress(42)
 
     assert progress["reviewed"] == 300
