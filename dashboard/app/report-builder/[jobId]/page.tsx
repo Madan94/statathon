@@ -96,7 +96,6 @@ export default function JobCanvasPage() {
                 ...prev,
                 status: job.status,
                 stage: job.stage ?? prev.stage,
-                progress_pct: job.progress_pct ?? prev.progress_pct,
               }
             : prev,
         );
@@ -256,7 +255,7 @@ export default function JobCanvasPage() {
               <MessageSquare className="h-4 w-4 mr-1" />
               {chatOpen ? 'Hide BI' : 'Open BI'}
             </Button>
-            <Button size="sm" variant="secondary" onClick={refresh}>
+            <Button size="sm" variant="secondary" onClick={() => refresh(true)}>
               <RefreshCw className="h-4 w-4 mr-1" /> Refresh
             </Button>
             <Button size="sm" variant="outline" onClick={onReExport}>
