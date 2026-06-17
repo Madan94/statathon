@@ -81,9 +81,12 @@ function rowsOf(block: PageBlock | null): Array<Record<string, unknown>> {
 export function RightPanel({ selectedBlock, messages, busy, onSend, onClose, onRegenerate, onInsert, suggestions = [] }: Props) {
   const [input, setInput] = useState('');
   const [tab, setTab] = useState<Tab>('ask');
+  const [selectedEvidenceIndex, setSelectedEvidenceIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const provenance = useMemo(() => provenanceOf(selectedBlock), [selectedBlock]);
   const dataRows = useMemo(() => rowsOf(selectedBlock), [selectedBlock]);
+  const safeEvidenceIndex = Math.min(selectedEvidenceIndex, Math.max(0, dataRows.length - 1));
+  const selectedEvidenceRow = dataRows[safeEvidenceIndex] || dataRows[0];
 
   useEffect(() => {
     if (tab === 'ask') scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -196,7 +199,35 @@ export function RightPanel({ selectedBlock, messages, busy, onSend, onClose, onR
               <p className="font-semibold text-emerald-800">Evidence attached</p>
               {Object.entries(provenance).map(([k, v]) => <p key={k}><span className="font-medium">{k}:</span> {Array.isArray(v) ? v.join(', ') : String(v)}</p>)}
             </div> : <p className="rounded border border-amber-200 bg-amber-50 p-3 text-amber-700">No provenance payload found on this block yet.</p>}
-            {dataRows.length > 0 && <ResultRows table={{ columns: Object.keys(dataRows[0] || {}), rows: dataRows }} />}
+            {dataRows.length > 0 && (
+              <div className="rounded-lg border border-slate-200 bg-white">
+                <div className="border-b border-slate-100 px-3 py-2">
+                  <p className="font-semibold text-slate-800">Value trace rows</p>
+                  <p className="text-[10px] text-slate-400">Click a row to inspect its key, value and rowIds.</p>
+                </div>
+                <div className="max-h-44 overflow-auto p-2">
+                  {dataRows.slice(0, 30).map((row, i) => {
+                    const key = row.key as Record<string, unknown> | undefined;
+                    const label = key ? Object.values(key).join(' / ') : (row.label as string) || `Row ${i + 1}`;
+                    return (
+                      <button key={i} onClick={() => setSelectedEvidenceIndex(i)} className={`mb-1 flex w-full items-center justify-between rounded px-2 py-1.5 text-left ${i === safeEvidenceIndex ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-50'}`}>
+                        <span className="truncate font-medium">{label}</span>
+                        <span className="ml-2 tabular-nums text-slate-500">{String(row.value ?? '')}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedEvidenceRow && (
+                  <div className="border-t border-slate-100 bg-slate-50 p-3">
+                    <p className="mb-1 font-semibold text-slate-800">Selected trace</p>
+                    <p><span className="font-medium">Key:</span> {JSON.stringify(selectedEvidenceRow.key || {})}</p>
+                    <p><span className="font-medium">Value:</span> {String(selectedEvidenceRow.value ?? '')}</p>
+                    <p><span className="font-medium">Rows:</span> {String(selectedEvidenceRow.n ?? '')}</p>
+                    <p className="break-all"><span className="font-medium">rowIds:</span> {Array.isArray(selectedEvidenceRow.rowIds) ? selectedEvidenceRow.rowIds.join(', ') : '—'}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </>}
         </div>
       )}
