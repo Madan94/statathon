@@ -1,4 +1,4 @@
-import { Home, Upload, FileText, User, History, type LucideIcon } from 'lucide-react';
+import { Home, Upload, FileText, User, History, BarChart3, ScrollText, type LucideIcon } from 'lucide-react';
 
 export type NavLinkItem = {
   type: 'link';
@@ -29,6 +29,8 @@ export const PLATFORM_NAV: PlatformNavItem[] = [
       { href: '/report-builder/canvas', label: 'Report Canvas' },
     ],
   },
+  { type: 'link', href: '/analysis', label: 'Analysis', icon: BarChart3 },
+  { type: 'link', href: '/audit-logs', label: 'Audit Logs', icon: ScrollText },
   { type: 'link', href: '/activity', label: 'All Activity', icon: History },
   { type: 'link', href: '/profile', label: 'Profile', icon: User },
 ];

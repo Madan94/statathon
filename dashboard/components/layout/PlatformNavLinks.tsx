@@ -19,6 +19,8 @@ interface PlatformNavLinksProps {
   pathname: string;
   onNavigate?: () => void;
   linkClassName?: (active: boolean) => string;
+  /** When true, render icon-only (no labels) for a collapsed sidebar. */
+  collapsed?: boolean;
 }
 
 function navLinkClasses(active: boolean, extra?: string) {
@@ -36,10 +38,12 @@ function ReportNavDropdown({
   item,
   pathname,
   onNavigate,
+  collapsed,
 }: {
   item: Extract<PlatformNavItem, { type: 'dropdown' }>;
   pathname: string;
   onNavigate?: () => void;
+  collapsed?: boolean;
 }) {
   const reportSectionActive =
     isReportSectionActive(pathname) || isReportAstSectionActive(pathname);
@@ -64,6 +68,16 @@ function ReportNavDropdown({
     document.addEventListener('mousedown', onPointerDown);
     return () => document.removeEventListener('mousedown', onPointerDown);
   }, [open]);
+
+  // Collapsed sidebar: show only the section icon (centered). Hovering the
+  // sidebar expands it, which swaps back to the full dropdown below.
+  if (collapsed) {
+    return (
+      <div className={cn(navLinkClasses(parentActive), 'w-full cursor-default justify-center px-0')} title={item.label}>
+        <Icon className="h-4 w-4 shrink-0" aria-hidden />
+      </div>
+    );
+  }
 
   return (
     <div ref={rootRef} className="relative">
@@ -123,6 +137,7 @@ export default function PlatformNavLinks({
   pathname,
   onNavigate,
   linkClassName,
+  collapsed,
 }: PlatformNavLinksProps) {
   return (
     <>
@@ -134,6 +149,7 @@ export default function PlatformNavLinks({
               item={item}
               pathname={pathname}
               onNavigate={onNavigate}
+              collapsed={collapsed}
             />
           );
         }
@@ -144,10 +160,16 @@ export default function PlatformNavLinks({
             key={item.href}
             href={item.href}
             onClick={onNavigate}
-            className={linkClassName ? linkClassName(active) : navLinkClasses(active)}
+            title={collapsed ? item.label : undefined}
+            aria-label={collapsed ? item.label : undefined}
+            className={
+              linkClassName
+                ? linkClassName(active)
+                : navLinkClasses(active, collapsed ? 'justify-center px-0' : undefined)
+            }
           >
             <Icon className="h-4 w-4 shrink-0" aria-hidden />
-            <span className="whitespace-nowrap">{item.label}</span>
+            {!collapsed && <span className="whitespace-nowrap">{item.label}</span>}
           </Link>
         );
       })}
