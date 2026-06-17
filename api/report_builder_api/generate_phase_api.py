@@ -1129,6 +1129,352 @@ def generate_single_component(
 
 
 
+# ---------------------------------------------------------------------------
+# Slice-aware section generation (report.section.v1)
+# ---------------------------------------------------------------------------
+#
+# Server-side counterpart of the frontend slice engine: takes a compact
+# ``report.section.v1`` request, filters + groups the *stashed* binding CSV
+# (the same data binding wrote — no re-upload), and returns generated blocks
+# (narrative / table / chart / metric / key_finding) in the exact shape the
+# canvas renders. Deterministic; LLM is only an optional narrative polish.
+
+
+class GenerateSectionIn(BaseModel):
+    request: dict[str, Any]                 # full report.section.v1 request
+    use_llm: Optional[bool] = None          # None ⇒ off (deterministic by default)
+
+
+def _sec_norm(v: Any) -> str:
+    import re as _re
+    return _re.sub(r"[^a-z0-9]+", "", str("" if v is None else v).strip().lower())
+
+
+def _sec_num(v: Any) -> Optional[float]:
+    import pandas as _pd
+    try:
+        if v is None or (isinstance(v, float) and _pd.isna(v)):
+            return None
+        f = float(v)
+        return f if f == f else None  # drop NaN
+    except (TypeError, ValueError):
+        return None
+
+
+def _sec_equals(a: Any, b: Any) -> bool:
+    an, bn = _sec_num(a), _sec_num(b)
+    if an is not None and bn is not None:
+        return an == bn
+    return _sec_norm(a) == _sec_norm(b)
+
+
+def _sec_is_empty(v: Any) -> bool:
+    import pandas as _pd
+    return v is None or (isinstance(v, float) and _pd.isna(v)) or str(v).strip() == ""
+
+
+def _sec_test(actual: Any, op: str, value: Any) -> bool:
+    """Mirror the frontend predicateEngine.testPredicate semantics exactly."""
+    if op == "eq":
+        return _sec_equals(actual, value)
+    if op == "ne":
+        return not _sec_equals(actual, value)
+    if op == "in":
+        return isinstance(value, list) and any(_sec_equals(actual, v) for v in value)
+    if op == "not_in":
+        return isinstance(value, list) and not any(_sec_equals(actual, v) for v in value)
+    if op in ("gt", "ge", "lt", "le"):
+        an, bn = _sec_num(actual), _sec_num(value)
+        if an is None or bn is None:
+            return False
+        return {"gt": an > bn, "ge": an >= bn, "lt": an < bn, "le": an <= bn}[op]
+    if op == "between":
+        if not isinstance(value, list) or len(value) < 2:
+            return False
+        an, lo, hi = _sec_num(actual), _sec_num(value[0]), _sec_num(value[1])
+        return an is not None and lo is not None and hi is not None and lo <= an <= hi
+    if op == "contains":
+        return _sec_norm(value) in _sec_norm(actual)
+    if op == "is_null":
+        return _sec_is_empty(actual)
+    if op == "not_null":
+        return not _sec_is_empty(actual)
+    return False
+
+
+def _sec_apply_filters(df, filters: list[dict[str, Any]]):
+    """Return (kept DataFrame, filtersApplied[str], warnings[dict])."""
+    import pandas as _pd
+
+    warnings: list[dict[str, Any]] = []
+    applied: list[str] = []
+    mask = _pd.Series([True] * len(df), index=df.index)
+    for f in filters or []:
+        col = f.get("col")
+        op = (f.get("op") or "eq")
+        val = f.get("value")
+        applied.append(
+            f"{col} {op} "
+            + (f"({', '.join(map(str, val))})" if isinstance(val, list) else str(val if val is not None else ""))
+        )
+        if not col or col not in df.columns:
+            warnings.append({
+                "severity": "warn" if f.get("required") else "info",
+                "code": "FILTER_COLUMN_MISSING",
+                "message": f"Filter column '{col}' is missing; filter was widened.",
+                "column": col,
+            })
+            continue
+        col_mask = df[col].map(lambda x, _op=op, _v=val: _sec_test(x, _op, _v))
+        mask &= col_mask
+    return df[mask], applied, warnings
+
+
+def _sec_aggregate(values: list[float], agg: str, group_label: str, warnings: list[dict[str, Any]], measure_col: str):
+    """Mirror aggregationEngine.aggregate (reported_value ⇒ no silent mean)."""
+    if agg == "count":
+        return float(len(values))
+    if not values:
+        return None
+    if agg == "sum":
+        return float(sum(values))
+    if agg in ("mean", "weighted_mean", "weighted_ratio"):
+        return float(sum(values) / len(values))
+    if agg == "median":
+        s = sorted(values)
+        mid = len(s) // 2
+        return float(s[mid]) if len(s) % 2 else float((s[mid - 1] + s[mid]) / 2)
+    if agg == "min":
+        return float(min(values))
+    if agg == "max":
+        return float(max(values))
+    # reported_value
+    uniq = sorted({round(v, 6) for v in values})
+    if len(uniq) <= 1:
+        return float(uniq[0]) if uniq else None
+    warnings.append({
+        "severity": "warn",
+        "code": "AMBIGUOUS_REPORTED_VALUE",
+        "message": f"Reported value for {group_label} has {len(uniq)} distinct values; using mean and adding a caveat.",
+        "column": measure_col,
+    })
+    return float(sum(values) / len(values))
+
+
+def _sec_slug(text: str, fallback: str = "section") -> str:
+    import re as _re
+    s = _re.sub(r"_+", "_", _re.sub(r"[^a-z0-9]+", "_", str(text or "").lower())).strip("_")
+    return s or fallback
+
+
+def _sec_label(key: dict[str, Any]) -> str:
+    vals = [str(v) for v in key.values() if v is not None and str(v).strip() != ""]
+    return " / ".join(vals) if vals else "All records"
+
+
+@router.post("/{template_id}/{signature}/generate-section")
+def generate_section(template_id: str, signature: str, body: GenerateSectionIn) -> dict[str, Any]:
+    """Generate a report section from a ``report.section.v1`` request against the
+    stashed binding CSV. Deterministic slice → group → aggregate → blocks.
+    """
+    req = body.request or {}
+    if req.get("version") != "report.section.v1":
+        raise HTTPException(status_code=400, detail="request.version must be 'report.section.v1'")
+
+    _dataset, _blueprint, df = _read_stash(template_id, signature)
+
+    scope = req.get("scope") or {}
+    columns = scope.get("columns") or {}
+    analysis = req.get("analysis") or {}
+    filters = scope.get("filters") or []
+    dimensions = [c for c in (columns.get("dimensions") or []) if c]
+    measures = columns.get("measures") or []
+    group_by = [c for c in (analysis.get("groupBy") or dimensions) if c]
+
+    warnings: list[dict[str, Any]] = []
+    # Validate columns exist (mirror scopeValidator severities).
+    present = set(df.columns)
+    for dim in dimensions:
+        if dim not in present:
+            warnings.append({"severity": "error", "code": "DIMENSION_MISSING",
+                             "message": f"Dimension '{dim}' is missing.", "column": dim})
+    for m in measures:
+        if m.get("col") not in present:
+            warnings.append({"severity": "error", "code": "MEASURE_MISSING",
+                             "message": f"Measure '{m.get('col')}' is missing.", "column": m.get("col")})
+    if any(w["severity"] == "error" for w in warnings):
+        raise HTTPException(status_code=422, detail={"message": "cannot compute section", "issues": warnings})
+
+    rows_scanned = len(df)
+    sliced, filters_applied, filter_warnings = _sec_apply_filters(df, filters)
+    warnings.extend(filter_warnings)
+    rows_after = len(sliced)
+
+    measure = measures[0] if measures else None
+    measure_col = (measure or {}).get("col") or ""
+    measure_label = (measure or {}).get("label") or measure_col or "Value"
+    measure_unit = (measure or {}).get("unit") or ""
+    measure_agg = (measure or {}).get("agg") or "reported_value"
+
+    # Group → aggregate.
+    result_rows: list[dict[str, Any]] = []
+    if group_by and all(g in present for g in group_by):
+        grouped = sliced.groupby(group_by, dropna=False, sort=False)
+        for keys, gdf in grouped:
+            key_tuple = keys if isinstance(keys, tuple) else (keys,)
+            key = {col: (None if _sec_is_empty(val) else val) for col, val in zip(group_by, key_tuple)}
+            vals: list[float] = []
+            if measure_col and measure_col in gdf.columns:
+                for raw in gdf[measure_col].tolist():
+                    n = _sec_num(raw)
+                    if n is not None:
+                        vals.append(n)
+            value = _sec_aggregate(vals, measure_agg, _sec_label(key), warnings, measure_col)
+            result_rows.append({"key": key, "value": value, "n": int(len(gdf)),
+                                "rowIds": [f"r:{_sec_label(key)}"]})
+    else:
+        vals = []
+        if measure_col and measure_col in sliced.columns:
+            for raw in sliced[measure_col].tolist():
+                n = _sec_num(raw)
+                if n is not None:
+                    vals.append(n)
+        value = _sec_aggregate(vals, measure_agg, "all", warnings, measure_col)
+        result_rows.append({"key": {}, "value": value, "n": int(rows_after), "rowIds": ["r:all"]})
+
+    # Sort + limit.
+    sort = analysis.get("sort")
+    if isinstance(sort, dict) and sort.get("by"):
+        order = sort.get("order", "desc")
+        result_rows.sort(key=lambda r: (r["value"] if r["value"] is not None else float("-inf")),
+                         reverse=(order != "asc"))
+    limit = analysis.get("limit")
+    if isinstance(limit, int) and limit > 0:
+        result_rows = result_rows[:limit]
+
+    # ── Build blocks (mirror blockBuilder.ts) ──
+    target = req.get("target") or {}
+    chapter_title = (target.get("chapter") or {}).get("title") or "Generated Section"
+    section_title = (target.get("section") or {}).get("title") or (req.get("description") or {}).get("text") or "Generated Section"
+    section_path = [chapter_title, section_title]
+    request_id = req.get("requestId") or f"req_{_sec_slug(section_title)}"
+    a_type = analysis.get("type") or "comparison"
+
+    def _fmt(v: Any) -> str:
+        if v is None:
+            return "not available"
+        try:
+            n = float(v)
+        except (TypeError, ValueError):
+            return str(v)
+        text = f"{n:,.1f}" if abs(n) >= 1000 else (f"{n:.0f}" if float(n).is_integer() else f"{n:.1f}")
+        if measure_unit:
+            return f"{text}%" if measure_unit == "%" else f"{text} {measure_unit}"
+        return text
+
+    table_payload = {
+        "type": a_type, "questionId": request_id,
+        "items": result_rows, "rows": result_rows, "rankingData": result_rows,
+        "measure": measure_label, "unit": measure_unit,
+        "source": "Section workflow (server)",
+        "provenance": {
+            "requestId": request_id, "filtersApplied": filters_applied,
+            "rowsScanned": rows_scanned, "rowsAfterFilter": rows_after,
+            "sourceColumns": [measure_col, *group_by], "warnings": warnings,
+        },
+    }
+
+    def _narrative(max_words: int = 120) -> str:
+        usable = [r for r in result_rows if r["value"] is not None]
+        if not usable:
+            return f"No computable {measure_label} value was found for the selected data slice."
+        top, tail = usable[0], usable[-1]
+        parts = [f"The selected slice contains {rows_after:,} records after applying {len(filters_applied)} filter(s)."]
+        if a_type == "comparison" and len(usable) >= 2:
+            diff = abs(top["value"] - tail["value"]) if top["value"] is not None and tail["value"] is not None else None
+            parts.append(
+                f"{_sec_label(top['key'])} records the highest {measure_label} at {_fmt(top['value'])}, "
+                f"compared with {_fmt(tail['value'])} for {_sec_label(tail['key'])}"
+                + (f", a difference of {_fmt(diff)}." if diff is not None else ".")
+            )
+        elif a_type == "ranking":
+            parts.append(f"{_sec_label(top['key'])} ranks first for {measure_label} with {_fmt(top['value'])}.")
+        else:
+            parts.append(f"{measure_label} is reported at {_fmt(top['value'])} for {_sec_label(top['key'])}.")
+        caveat = f" Caveat: {warnings[0]['message']}" if warnings else ""
+        return " ".join((" ".join(parts) + caveat).split()[:max_words])
+
+    blocks: list[dict[str, Any]] = []
+    components = [c for c in (req.get("components") or []) if c.get("enabled") is not False]
+    for i, comp in enumerate(components):
+        ctype = comp.get("type") or "narrative"
+        kind = {"chart": "chart", "metric": "metric", "key_finding": "key_finding",
+                "source_note": "source_note", "caveat": "source_note", "table": "table"}.get(ctype, "narrative")
+        block: dict[str, Any] = {
+            "id": f"sectiongen-{request_id}-{i}-{ctype}".replace(r"[^a-zA-Z0-9_-]", "-"),
+            "index": -1, "kind": kind, "title": comp.get("title") or ctype,
+            "content": "", "sectionPath": section_path, "status": "done", "pageIndex": 0,
+        }
+        if ctype == "narrative":
+            text = _narrative(int(comp.get("maxWords") or 120))
+            if body.use_llm:
+                try:
+                    from report_builder.generation.narrator import _default_llm_caller
+                    caller = _default_llm_caller()
+                    if caller:
+                        prompt = (
+                            "You are a MoSPI desk officer writing one concise, factual paragraph for "
+                            "an official statistical report. Use ONLY the figures in the draft; do not "
+                            "invent or re-round numbers.\n\nDRAFT:\n" + text + "\n\nReturn only the improved paragraph."
+                        )
+                        improved = caller(prompt)
+                        if improved and len(improved.strip()) > 20 and not _NUMBER_DRIFT(text, improved):
+                            text = improved.strip()
+                except Exception as _llm_exc:  # noqa: BLE001
+                    logger.info("[generate-section] narrative LLM polish skipped: %s", _llm_exc)
+            block["content"] = text
+        elif ctype == "table":
+            block["tableData"] = table_payload
+        elif ctype == "chart":
+            block["tableData"] = {**table_payload, "chartType": comp.get("chartType") or "bar",
+                                  "x": comp.get("x"), "y": comp.get("y")}
+        elif ctype == "metric":
+            first = result_rows[0] if result_rows else None
+            block["metricValue"] = _fmt(first["value"] if first else None)
+            block["metricUnit"] = measure_unit
+            block["content"] = f"{block['metricValue']}"
+        elif ctype == "key_finding":
+            first = result_rows[0] if result_rows else None
+            block["content"] = (
+                f"{_sec_label(first['key'])} records the leading {measure_label} at {_fmt(first['value'])}."
+                if first else "No key finding could be computed."
+            )
+        else:
+            block["content"] = "; ".join(w["message"] for w in warnings) or f"Filters applied: {'; '.join(filters_applied)}"
+        blocks.append(block)
+
+    if warnings and not any(b["kind"] == "source_note" for b in blocks):
+        blocks.append({
+            "id": f"sectiongen-{request_id}-caveat", "index": -1, "kind": "source_note",
+            "title": "Caveat", "content": " ".join(w["message"] for w in warnings),
+            "sectionPath": section_path, "status": "done", "pageIndex": 0,
+        })
+
+    logger.info("[generate-section] %s — scanned=%d after=%d groups=%d blocks=%d",
+                request_id, rows_scanned, rows_after, len(result_rows), len(blocks))
+
+    return {
+        "requestId": request_id,
+        "datasetId": req.get("datasetId") or "",
+        "sectionPath": section_path,
+        "blocks": blocks,
+        "rowsScanned": rows_scanned,
+        "rowsAfterFilter": rows_after,
+        "groups": len(result_rows),
+        "warnings": warnings,
+    }
+
+
 @router.get("/{template_id}/{signature}/report")
 def get_report(
     template_id: str, signature: str, version: Optional[int] = None

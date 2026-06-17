@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/Badge';
 import { BindingStepper } from '@/components/report-builder/binding/BindingStepper';
 import { DatasetProfileCard } from '@/components/report-builder/binding/DatasetProfileCard';
 import { DatasetWeightTabs } from '@/components/report-builder/binding/DatasetWeightTabs';
-import { QueryIndicatorFilters } from '@/components/report-builder/binding/QueryIndicatorFilters';
+import { SectionLoopWorkspace } from '@/components/report-builder/binding/SectionLoopWorkspace';
 import { defaultSectionConfig, type ReportSectionConfig } from '@/lib/reportSection';
 import { CoveragePanel } from '@/components/report-builder/binding/CoveragePanel';
 import { StructureCanvas, type EntityPropagationRequest } from '@/components/report-builder/binding/StructureCanvas';
@@ -1296,7 +1296,7 @@ export default function BindingWorkflowPage() {
     if (workbenchMode === 'filters') {
       return (
         <div className="space-y-4">
-          <QueryIndicatorFilters
+          <SectionLoopWorkspace
             file={datasetFile}
             columns={session.dataset_ast.columns}
             config={sectionConfig}

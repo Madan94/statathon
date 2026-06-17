@@ -2515,6 +2515,30 @@ export const generatePhaseApi = {
     );
     return data;
   },
+  /**
+   * Generate a report section server-side from a report.section.v1 request,
+   * slicing the stashed binding CSV. Returns canvas-ready blocks.
+   */
+  generateSection: async (
+    templateId: string,
+    signature: string,
+    body: { request: Record<string, unknown>; use_llm?: boolean }
+  ): Promise<{
+    requestId: string;
+    datasetId: string;
+    sectionPath: string[];
+    blocks: import('@/lib/report-section').GeneratedSectionBlock[];
+    rowsScanned: number;
+    rowsAfterFilter: number;
+    groups: number;
+    warnings: import('@/lib/report-section').SectionIssue[];
+  }> => {
+    const { data } = await api.post(
+      `/report-builder/generate-phase/${templateId}/${signature}/generate-section`,
+      body
+    );
+    return data;
+  },
   /** Saved canvas layout (officer's free placement). Empty doc if none saved. */
   getCanvasLayout: async (
     templateId: string,

@@ -10,6 +10,7 @@ import {
   Download,
   Filter,
   Layers,
+  Loader2,
   Play,
   Plus,
   Ruler,
@@ -25,6 +26,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { parseCsv, detectNumericColumns, type ParsedCsv } from '@/lib/csv';
+import { SectionBlockView } from '@/components/report-builder/binding/SectionBlockView';
 import {
   buildReportSectionSpec,
   newId,
@@ -51,6 +53,7 @@ import {
   type SectionIssue,
 } from '@/lib/report-section';
 import type { DatasetColumnProfile } from '@/lib/api';
+import { generatePhaseApi } from '@/lib/api';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Query indicator filters — full section-spec builder + live generation.
@@ -111,11 +114,6 @@ function coerceCell(raw: string | undefined): unknown {
   return v;
 }
 
-function fmtVal(value: number | null): string {
-  if (value == null || Number.isNaN(value)) return '—';
-  return Math.abs(value) >= 1000 ? value.toLocaleString('en-IN', { maximumFractionDigits: 1 }) : value.toFixed(Number.isInteger(value) ? 0 : 2);
-}
-
 interface QueryIndicatorFiltersProps {
   file: File | null;
   columns: DatasetColumnProfile[];
@@ -125,6 +123,8 @@ interface QueryIndicatorFiltersProps {
   signature: string;
   datasetId: string;
   onGenerate?: (blocks: GeneratedSectionBlock[], request: ReportSectionRequest, execution: SectionExecutionResult) => void;
+  hidePreview?: boolean;
+  generateLabel?: string;
   className?: string;
 }
 
@@ -137,6 +137,8 @@ export function QueryIndicatorFilters({
   signature,
   datasetId,
   onGenerate,
+  hidePreview = false,
+  generateLabel = 'Generate report section',
   className,
 }: QueryIndicatorFiltersProps) {
   const [parsed, setParsed] = useState<ParsedCsv | null>(null);
@@ -146,6 +148,8 @@ export function QueryIndicatorFilters({
   const [genIssues, setGenIssues] = useState<SectionIssue[]>([]);
   const [execution, setExecution] = useState<SectionExecutionResult | null>(null);
   const [ackWarnings, setAckWarnings] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [engineUsed, setEngineUsed] = useState<'server' | 'local' | null>(null);
 
   useEffect(() => {
     if (!file) return;
@@ -330,14 +334,59 @@ export function QueryIndicatorFilters({
     URL.revokeObjectURL(url);
   };
 
-  // ── Generate the report section via the team slice engine ───────────────────
-  const generate = () => {
+  // ── Generate the report section: backend endpoint first, local engine fallback ──
+  const generate = async () => {
     if (configIssues.length) {
       toast.error(configIssues[0]);
       return;
     }
+    setGenerating(true);
+    // 1) Try the server-side endpoint (slices the stashed binding CSV).
+    try {
+      const res = await generatePhaseApi.generateSection(templateId, signature, { request: spec as unknown as Record<string, unknown> });
+      const built = res.blocks;
+      const execLike: SectionExecutionResult = {
+        requestId: spec.requestId,
+        datasetId: spec.datasetId,
+        rows: Array.from({ length: res.groups }, () => ({ key: {}, value: null, n: 0, rowIds: [] })),
+        measure: spec.scope.columns.measures[0] ?? null,
+        groupBy: spec.analysis.groupBy ?? [],
+        filtersApplied: [],
+        rowsScanned: res.rowsScanned,
+        rowsAfterFilter: res.rowsAfterFilter,
+        cacheHit: false,
+        sliceSignature: '',
+        warnings: res.warnings ?? [],
+      };
+      setExecution(execLike);
+      setBlocks(built);
+      setGenIssues(res.warnings ?? []);
+      setAckWarnings(false);
+      setEngineUsed('server');
+      onGenerate?.(built, spec, execLike);
+      toast.success(`Generated ${built.length} block(s) on server · ${res.rowsAfterFilter.toLocaleString('en-IN')} rows after filter`);
+      setGenerating(false);
+      return;
+    } catch (err: unknown) {
+      // 422 (cannot compute) is a real backend verdict — surface, don't mask.
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 422) {
+        const detail = (err as { response?: { data?: { detail?: { issues?: SectionIssue[] } } } })?.response?.data?.detail;
+        setBlocks([]);
+        setExecution(null);
+        setGenIssues(detail?.issues ?? [{ severity: 'error', code: 'CANNOT_COMPUTE', message: 'Server could not compute this section.' }]);
+        setEngineUsed('server');
+        setGenerating(false);
+        toast.error('Cannot compute — resolve the errors below.');
+        return;
+      }
+      // Otherwise (offline / 404 / 409 / network) fall back to the in-browser engine.
+    }
+
+    // 2) Local engine fallback (offline-safe).
     if (!dataRows.length) {
-      toast.error('No dataset rows to analyse.');
+      setGenerating(false);
+      toast.error('No dataset rows to analyse and the server is unavailable.');
       return;
     }
     reportSectionDatasetStore.registerRows(spec.datasetId, dataRows);
@@ -347,6 +396,8 @@ export function QueryIndicatorFilters({
       setBlocks([]);
       setExecution(null);
       setGenIssues(validation.issues);
+      setEngineUsed('local');
+      setGenerating(false);
       toast.error('Cannot compute — resolve the errors below.');
       return;
     }
@@ -356,8 +407,10 @@ export function QueryIndicatorFilters({
     setBlocks(built);
     setGenIssues([...validation.issues, ...result.warnings]);
     setAckWarnings(false);
+    setEngineUsed('local');
+    setGenerating(false);
     onGenerate?.(built, spec, result);
-    toast.success(`Generated ${built.length} block(s) · ${result.rowsAfterFilter.toLocaleString('en-IN')} rows after filter`);
+    toast.success(`Generated ${built.length} block(s) locally · ${result.rowsAfterFilter.toLocaleString('en-IN')} rows after filter`);
   };
 
   const genWarnings = genIssues.filter((i) => i.severity !== 'info');
@@ -370,66 +423,6 @@ export function QueryIndicatorFilters({
       {hint && <span className="truncate text-[11px] text-text-muted">· {hint}</span>}
     </div>
   );
-
-  const renderBlock = (block: GeneratedSectionBlock) => {
-    const rows = (block.tableData?.rows as Array<{ key: Record<string, unknown>; value: number | null; n: number }> | undefined) ?? [];
-    const maxVal = rows.reduce((mx, r) => Math.max(mx, Math.abs(r.value ?? 0)), 0) || 1;
-    const keyLabel = (k: Record<string, unknown>) => Object.values(k).filter((v) => v != null && v !== '').map(String).join(' / ') || 'All';
-    return (
-      <div key={block.id} className="rounded-xl border border-border bg-surface-card p-4">
-        <div className="mb-2 flex items-center gap-2">
-          <Badge variant={block.kind === 'chart' ? 'default' : block.kind === 'table' ? 'warning' : block.kind === 'metric' ? 'success' : 'muted'} className="text-[9px] uppercase">
-            {block.kind}
-          </Badge>
-          <span className="text-sm font-semibold text-text">{block.title}</span>
-        </div>
-        {(block.kind === 'narrative' || block.kind === 'key_finding' || block.kind === 'source_note') && (
-          <p className="text-xs leading-relaxed text-text">{block.content || '—'}</p>
-        )}
-        {block.kind === 'metric' && (
-          <p className="text-2xl font-bold text-primary">
-            {block.metricValue}
-            {block.metricUnit ? <span className="ml-1 text-sm font-normal text-text-muted">{block.metricUnit}</span> : null}
-          </p>
-        )}
-        {block.kind === 'table' && (
-          <div className="overflow-auto rounded-lg border border-border">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-border text-left text-[10px] uppercase text-text-muted">
-                  <th className="px-3 py-1.5">Group</th>
-                  <th className="px-3 py-1.5 text-right">{String(block.tableData?.measure ?? 'Value')}</th>
-                  <th className="px-3 py-1.5 text-right">n</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {rows.map((r, i) => (
-                  <tr key={i}>
-                    <td className="px-3 py-1.5 font-medium text-text">{keyLabel(r.key)}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums text-text">{fmtVal(r.value)}{block.tableData?.unit ? ` ${String(block.tableData.unit)}` : ''}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums text-text-muted">{r.n}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {block.kind === 'chart' && (
-          <div className="space-y-1.5">
-            {rows.slice(0, 12).map((r, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span className="w-28 shrink-0 truncate text-[11px] text-text-muted" title={keyLabel(r.key)}>{keyLabel(r.key)}</span>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-border/30">
-                  <div className="h-full rounded-full bg-primary" style={{ width: `${Math.round((Math.abs(r.value ?? 0) / maxVal) * 100)}%` }} />
-                </div>
-                <span className="w-20 shrink-0 text-right text-[11px] tabular-nums text-text">{fmtVal(r.value)}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -923,18 +916,25 @@ export function QueryIndicatorFilters({
         )}
 
         <div className="flex justify-end">
-          <Button type="button" onClick={generate} disabled={configIssues.length > 0}>
-            <Play className="h-4 w-4" /> Generate report section
+          <Button type="button" onClick={generate} disabled={configIssues.length > 0 || generating}>
+            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />} {generateLabel}
           </Button>
         </div>
       </div>
 
       {/* Generated section preview */}
-      {execution && (
+      {!hidePreview && execution && (
         <div className="space-y-3 rounded-2xl border border-success/30 bg-success/5 p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             {sectionLabel(<Sparkles className="h-4 w-4" />, 'Generated section', `${execution.rowsAfterFilter.toLocaleString('en-IN')} of ${execution.rowsScanned.toLocaleString('en-IN')} rows · ${execution.rows.length} group(s)${execution.cacheHit ? ' · cached' : ''}`)}
-            <Badge variant="success" className="text-[9px]">{blocks.length} block(s)</Badge>
+            <div className="flex items-center gap-1.5">
+              {engineUsed && (
+                <Badge variant={engineUsed === 'server' ? 'default' : 'muted'} className="text-[9px] uppercase">
+                  {engineUsed === 'server' ? 'server' : 'local'}
+                </Badge>
+              )}
+              <Badge variant="success" className="text-[9px]">{blocks.length} block(s)</Badge>
+            </div>
           </div>
 
           {genIssues.length > 0 && (
@@ -956,7 +956,7 @@ export function QueryIndicatorFilters({
           )}
 
           <div className="space-y-3">
-            {blocks.map(renderBlock)}
+            {blocks.map((b) => <SectionBlockView key={b.id} block={b} />)}
           </div>
 
           {genWarnings.length > 0 && (
