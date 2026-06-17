@@ -1,13 +1,19 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
   CheckCircle2,
+  ChevronDown,
   Database,
+  Download,
   Info,
   RotateCcw,
+  Scale,
   Sigma,
+  Table2,
   Target,
 } from 'lucide-react';
 
@@ -17,6 +23,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import FileDropzone from '@/components/upload/FileDropzone';
+import { cn } from '@/lib/cn';
 import { parseCsv, toNumber, detectNumericColumns, type ParsedCsv } from '@/lib/csv';
 import {
   computeWeightedMoE,
@@ -70,16 +77,26 @@ const WEIGHT_MODE_META: Record<WeightMode, { label: string; blurb: string }> = {
   },
 };
 
+type Step = 'upload' | 'weights' | 'review';
+
+const STEPS: Array<{ id: Step; label: string; hint: string }> = [
+  { id: 'upload', label: 'Upload dataset', hint: 'CSV with a header row' },
+  { id: 'weights', label: 'Weight application', hint: 'Pick a weight per column' },
+  { id: 'review', label: 'Review & export', hint: 'Weighted table + download' },
+];
+
 export default function MarginOfErrorPage() {
   const [parsed, setParsed] = useState<ParsedCsv | null>(null);
   const [sourceName, setSourceName] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
 
-  const [valueCol, setValueCol] = useState<string>('');
-  const [weightCol, setWeightCol] = useState<string>('');
+  const [step, setStep] = useState<Step>('upload');
   const [confidence, setConfidence] = useState<ConfidenceLevel>(0.95);
   const [mode, setMode] = useState<WeightMode>('frequency');
+  // Per value column → chosen weight column. undefined = use auto default; '' = explicit none.
+  const [weightOverrides, setWeightOverrides] = useState<Record<string, string>>({});
+  const [detailColumn, setDetailColumn] = useState<string | null>(null);
 
   const numericSet = useMemo(() => (parsed ? detectNumericColumns(parsed) : new Set<string>()), [parsed]);
   const numericColumns = useMemo(
@@ -87,46 +104,58 @@ export default function MarginOfErrorPage() {
     [parsed, numericSet],
   );
 
-  // When a new file/example loads, auto-pick sensible weight + value columns.
-  useEffect(() => {
-    if (!parsed) return;
-    const detectedWeight = detectWeightColumn(parsed.headers, numericSet) ?? '';
-    const firstValue = parsed.headers.find((h) => numericSet.has(h) && h !== detectedWeight) ?? '';
-    setWeightCol(detectedWeight);
-    setValueCol(firstValue);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parsed]);
-
   const colIndex = useMemo(() => {
     const map = new Map<string, number>();
     parsed?.headers.forEach((h, i) => map.set(h, i));
     return map;
   }, [parsed]);
 
-  const pairsFor = useMemo(
-    () =>
-      (column: string): MoEPair[] => {
-        if (!parsed) return [];
-        const xi = colIndex.get(column);
-        const wi = colIndex.get(weightCol);
-        if (xi == null || wi == null) return [];
-        return parsed.rows.map((r) => ({ value: toNumber(r[xi]), weight: toNumber(r[wi]) }));
-      },
-    [parsed, colIndex, weightCol],
+  // Auto-detected default weight column (the survey multiplier), applied to every
+  // value column unless the officer overrides it. Derived — no init effect needed.
+  const autoWeight = useMemo(
+    () => (parsed ? detectWeightColumn(parsed.headers, numericSet) ?? '' : ''),
+    [parsed, numericSet],
+  );
+  const weightOf = useCallback(
+    (col: string): string => {
+      const override = weightOverrides[col];
+      const chosen = override !== undefined ? override : autoWeight;
+      return chosen && chosen !== col ? chosen : '';
+    },
+    [weightOverrides, autoWeight],
   );
 
-  const result: MoEResult | null = useMemo(() => {
-    if (!parsed || !valueCol || !weightCol || valueCol === weightCol) return null;
-    return computeWeightedMoE(pairsFor(valueCol), confidence, mode);
-  }, [parsed, valueCol, weightCol, confidence, mode, pairsFor]);
+  const pairsFor = useCallback(
+    (valueCol: string, weightCol: string): MoEPair[] => {
+      if (!parsed) return [];
+      const xi = colIndex.get(valueCol);
+      const wi = colIndex.get(weightCol);
+      if (xi == null || wi == null) return [];
+      return parsed.rows.map((r) => ({ value: toNumber(r[xi]), weight: toNumber(r[wi]) }));
+    },
+    [parsed, colIndex],
+  );
 
-  // Per-column roll-up (every numeric column vs the chosen weight).
-  const columnResults = useMemo(() => {
-    if (!parsed || !weightCol) return [];
-    return numericColumns
-      .filter((c) => c !== weightCol)
-      .map((c) => ({ column: c, res: computeWeightedMoE(pairsFor(c), confidence, mode) }));
-  }, [parsed, weightCol, numericColumns, pairsFor, confidence, mode]);
+  // Per-column weighted result (one MoE per value column against its chosen weight).
+  const weightResults = useMemo(
+    () =>
+      numericColumns.map((column) => {
+        const weightCol = weightOf(column);
+        const res: MoEResult | null = weightCol ? computeWeightedMoE(pairsFor(column, weightCol), confidence, mode) : null;
+        return { column, weightCol, res };
+      }),
+    [numericColumns, weightOf, pairsFor, confidence, mode],
+  );
+
+  const weightedColumns = useMemo(
+    () => weightResults.filter((r) => r.weightCol && r.res?.valid),
+    [weightResults],
+  );
+
+  const setWeightForColumn = (column: string, weight: string) => {
+    setWeightOverrides((prev) => ({ ...prev, [column]: weight }));
+    setDetailColumn(null);
+  };
 
   const readFile = async (file: File) => {
     setReading(true);
@@ -140,6 +169,9 @@ export default function MarginOfErrorPage() {
       } else {
         setParsed(result);
         setSourceName(file.name);
+        setWeightOverrides({});
+        setDetailColumn(null);
+        setStep('weights');
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to read the CSV file.');
@@ -157,37 +189,106 @@ export default function MarginOfErrorPage() {
       truncated: false,
     });
     setSourceName('Worked example (income × survey_weight)');
+    setWeightOverrides({});
+    setDetailColumn(null);
     setError(null);
+    setStep('weights');
   };
 
   const reset = () => {
     setParsed(null);
     setSourceName('');
     setError(null);
-    setValueCol('');
-    setWeightCol('');
+    setWeightOverrides({});
+    setDetailColumn(null);
+    setStep('upload');
+  };
+
+  // Download the weighted summary (one row per weighted column) as CSV.
+  const downloadWeightedTable = () => {
+    if (!weightedColumns.length) return;
+    const headers = [
+      'column', 'weight_column', 'rows_used', 'effective_sample', 'weighted_mean',
+      'margin_of_error', 'ci_lower', 'ci_upper', 'relative_se', 'quality',
+    ];
+    const csvRows = weightedColumns.map(({ column, weightCol, res }) => [
+      column, weightCol,
+      res ? res.rowsUsed : '',
+      res ? res.effectiveSampleSize.toFixed(2) : '',
+      res ? res.weightedMean.toFixed(4) : '',
+      res ? res.marginOfError.toFixed(4) : '',
+      res ? res.lower.toFixed(4) : '',
+      res ? res.upper.toFixed(4) : '',
+      res ? (res.rse * 100).toFixed(2) + '%' : '',
+      res ? res.quality.label : '',
+    ]);
+    const esc = (v: unknown) => {
+      const s = String(v ?? '');
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [headers, ...csvRows].map((r) => r.map(esc).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `weighted-margin-of-error-${CONFIDENCE_LABEL[confidence].replace('%', 'pct')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Margin of Error"
-        description="Weighted survey estimates with their margin of error and confidence interval — one value column against one multiplier (weight) column, using the statsmodels DescrStatsW methodology."
+        description="Apply survey weights to your dataset columns and review each weighted estimate with its margin of error — upload, choose a weight per column, then review and export."
       />
+
+      {/* Step indicator */}
+      <ol className="flex flex-wrap items-center gap-2">
+        {STEPS.map((s, i) => {
+          const active = s.id === step;
+          const done = STEPS.findIndex((x) => x.id === step) > i;
+          return (
+            <li key={s.id} className="flex items-center gap-2">
+              <div
+                className={cn(
+                  'flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors',
+                  active ? 'border-primary bg-primary/5' : done ? 'border-success/40 bg-success/5' : 'border-border bg-surface',
+                )}
+              >
+                <span
+                  className={cn(
+                    'flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold',
+                    active ? 'bg-primary text-white' : done ? 'bg-success text-white' : 'bg-border text-text-muted',
+                  )}
+                >
+                  {done ? <CheckCircle2 className="h-4 w-4" /> : i + 1}
+                </span>
+                <div className="leading-tight">
+                  <p className={cn('text-xs font-semibold', active ? 'text-primary' : 'text-text')}>{s.label}</p>
+                  <p className="text-[10px] text-text-muted">{s.hint}</p>
+                </div>
+              </div>
+              {i < STEPS.length - 1 && <ArrowRight className="h-4 w-4 text-text-muted" aria-hidden />}
+            </li>
+          );
+        })}
+      </ol>
 
       {error && <Alert variant="error">{error}</Alert>}
 
-      {!parsed ? (
+      {/* ── Step 1 · Upload ──────────────────────────────────────────────── */}
+      {step === 'upload' && (
         <Card className="space-y-5">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Target className="h-5 w-5" aria-hidden />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-text">Load a dataset to begin</h3>
+              <h3 className="text-sm font-semibold text-text">Upload a dataset to begin</h3>
               <p className="mt-1 text-sm text-text-muted">
-                Upload a CSV containing your value column (e.g. income) and a multiplier / survey-weight
-                column. Everything is computed in your browser — no data leaves this page.
+                Upload a CSV with your value columns and a multiplier / survey-weight column. Everything is
+                computed in your browser — no data leaves this page.
               </p>
             </div>
           </div>
@@ -200,9 +301,11 @@ export default function MarginOfErrorPage() {
             </Button>
           </div>
         </Card>
-      ) : (
+      )}
+
+      {/* ── Step 2 · Weight application ──────────────────────────────────── */}
+      {step === 'weights' && parsed && (
         <>
-          {/* Source + controls */}
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="flex items-center gap-2 text-sm font-medium text-text">
@@ -218,35 +321,7 @@ export default function MarginOfErrorPage() {
               </Button>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-text-muted">Value column</span>
-                <select
-                  value={valueCol}
-                  onChange={(e) => setValueCol(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-primary/40"
-                >
-                  <option value="" disabled>Select a column…</option>
-                  {numericColumns.filter((c) => c !== weightCol).map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-text-muted">Weight / multiplier column</span>
-                <select
-                  value={weightCol}
-                  onChange={(e) => setWeightCol(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-primary/40"
-                >
-                  <option value="" disabled>Select a column…</option>
-                  {numericColumns.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </label>
-
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-text-muted">Confidence level</span>
                 <div className="flex gap-1.5">
@@ -262,19 +337,18 @@ export default function MarginOfErrorPage() {
                   ))}
                 </div>
               </div>
-
               <div>
                 <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-text-muted">Weights are…</span>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex gap-1.5">
                   {(['frequency', 'sampling'] as WeightMode[]).map((m) => (
                     <button
                       key={m}
                       type="button"
                       onClick={() => setMode(m)}
                       title={WEIGHT_MODE_META[m].blurb}
-                      className={`rounded-lg px-3 py-1.5 text-left text-xs font-medium transition-colors ${mode === m ? 'bg-primary text-white' : 'bg-surface text-text-muted hover:bg-surface-card'}`}
+                      className={`flex-1 rounded-lg px-3 py-1.5 text-center text-xs font-medium transition-colors ${mode === m ? 'bg-primary text-white' : 'bg-surface text-text-muted hover:bg-surface-card'}`}
                     >
-                      {WEIGHT_MODE_META[m].label}
+                      {m === 'frequency' ? 'Frequency / counts' : 'Survey sampling'}
                     </button>
                   ))}
                 </div>
@@ -283,23 +357,200 @@ export default function MarginOfErrorPage() {
             <p className="mt-2 text-xs text-text-muted">{WEIGHT_MODE_META[mode].blurb}</p>
           </Card>
 
-          {!valueCol || !weightCol ? (
-            <Card className="p-8 text-center text-sm text-text-muted">
-              Select a value column and a weight column to compute the margin of error.
-            </Card>
-          ) : valueCol === weightCol ? (
-            <Alert variant="warning">The value column and weight column must be different.</Alert>
-          ) : result && !result.valid ? (
-            <Alert variant="warning">{result.reason}</Alert>
-          ) : result ? (
-            <>
-              <ResultHeadline result={result} valueCol={valueCol} confidence={confidence} />
-              <SecondaryMetrics result={result} />
-              <MitigationsPanel result={result} mode={mode} />
-              <ColumnTable rows={columnResults} weightCol={weightCol} confidence={confidence} />
-              <MethodologyNote />
-            </>
-          ) : null}
+          {/* Per-column weight list */}
+          <Card className="p-0">
+            <div className="flex items-center justify-between border-b border-border px-5 py-3">
+              <div className="flex items-center gap-2">
+                <Scale className="h-4 w-4 text-text-muted" aria-hidden />
+                <h3 className="text-sm font-semibold text-text">Apply a weight to each column</h3>
+              </div>
+              <span className="text-xs text-text-muted">{weightedColumns.length} of {numericColumns.length} weighted</span>
+            </div>
+
+            {numericColumns.length === 0 ? (
+              <p className="px-5 py-8 text-center text-sm text-text-muted">No numeric columns found in this dataset.</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {weightResults.map(({ column, weightCol, res }) => {
+                  const q = res?.valid ? res.quality : null;
+                  const open = detailColumn === column;
+                  return (
+                    <li key={column} className="px-5 py-3">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                        {/* Column */}
+                        <div className="min-w-[10rem] flex-1">
+                          <p className="text-sm font-semibold text-text">{column}</p>
+                          <p className="text-[11px] text-text-muted">Value column</p>
+                        </div>
+
+                        {/* Weight dropdown */}
+                        <label className="flex items-center gap-2">
+                          <span className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">Weight</span>
+                          <select
+                            value={weightCol}
+                            onChange={(e) => setWeightForColumn(column, e.target.value)}
+                            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus:ring-2 focus:ring-primary/40"
+                          >
+                            <option value="">— none —</option>
+                            {numericColumns.filter((c) => c !== column).map((c) => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                          </select>
+                        </label>
+
+                        {/* Margin of error */}
+                        <div className="min-w-[12rem] text-right">
+                          {!weightCol ? (
+                            <span className="text-xs text-text-muted">Select a weight column</span>
+                          ) : res && !res.valid ? (
+                            <span className="text-xs text-warning">{res.reason}</span>
+                          ) : res ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <div>
+                                <p className="text-sm font-semibold text-text">
+                                  {fmt(res.weightedMean)} <span className="text-text-muted">± {fmt(res.marginOfError)}</span>
+                                </p>
+                                <p className="text-[11px] text-text-muted">{CONFIDENCE_LABEL[confidence]} CI · RSE {pct(res.rse)}</p>
+                              </div>
+                              {q && (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-medium" style={{ color: q.color }} title={q.description}>
+                                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: q.color }} />
+                                  {q.label}
+                                </span>
+                              )}
+                            </div>
+                          ) : null}
+                        </div>
+
+                        {/* Detail toggle */}
+                        {res?.valid && (
+                          <button
+                            type="button"
+                            onClick={() => setDetailColumn(open ? null : column)}
+                            className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface hover:text-text"
+                            title={open ? 'Hide detail' : 'Show full statistical detail'}
+                          >
+                            <ChevronDown className={cn('h-4 w-4 transition-transform', open && 'rotate-180')} />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Expanded per-column detail (reuses the rich panels) */}
+                      {open && res?.valid && (
+                        <div className="mt-3 space-y-3 border-t border-border/60 pt-3">
+                          <ResultHeadline result={res} valueCol={column} confidence={confidence} />
+                          <SecondaryMetrics result={res} />
+                          <MitigationsPanel result={res} mode={mode} />
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-3">
+              <p className="text-xs text-text-muted">
+                {weightedColumns.length > 0
+                  ? `${weightedColumns.length} column(s) will be in the weighted table.`
+                  : 'Pick a weight column for at least one column to continue.'}
+              </p>
+              <Button onClick={() => setStep('review')} disabled={weightedColumns.length === 0}>
+                <Table2 className="h-4 w-4" aria-hidden />
+                Compute weighted table
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Button>
+            </div>
+          </Card>
+        </>
+      )}
+
+      {/* ── Step 3 · Review & export ─────────────────────────────────────── */}
+      {step === 'review' && parsed && (
+        <>
+          {/* Weighted columns marked above */}
+          <Card>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
+                <h3 className="text-sm font-semibold text-text">Weighted columns</h3>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setStep('weights')}>
+                <ArrowLeft className="h-4 w-4" aria-hidden />
+                Back to weight application
+              </Button>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {weightedColumns.map(({ column, weightCol }) => (
+                <span key={column} className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-text">
+                  <Scale className="h-3 w-3 text-primary" aria-hidden />
+                  {column} <span className="text-text-muted">←</span> <span className="font-mono text-primary">{weightCol}</span>
+                </span>
+              ))}
+            </div>
+          </Card>
+
+          {/* Weighted table */}
+          <Card className="p-0">
+            <div className="flex items-center justify-between border-b border-border px-5 py-3">
+              <div>
+                <h3 className="text-sm font-semibold text-text">Weighted estimates table</h3>
+                <p className="text-xs text-text-muted">{CONFIDENCE_LABEL[confidence]} confidence · {WEIGHT_MODE_META[mode].label}</p>
+              </div>
+              <Button size="sm" onClick={downloadWeightedTable}>
+                <Download className="h-4 w-4" aria-hidden />
+                Download dataset (CSV)
+              </Button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-text-muted">
+                    <th className="px-5 py-2.5 font-medium">Column</th>
+                    <th className="px-5 py-2.5 font-medium">Weight</th>
+                    <th className="px-5 py-2.5 font-medium text-right">Weighted mean</th>
+                    <th className="px-5 py-2.5 font-medium text-right">± Margin</th>
+                    <th className="px-5 py-2.5 font-medium text-right">{CONFIDENCE_LABEL[confidence]} interval</th>
+                    <th className="px-5 py-2.5 font-medium text-right">RSE</th>
+                    <th className="px-5 py-2.5 font-medium">Quality</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {weightedColumns.map(({ column, weightCol, res }) => (
+                    <tr key={column} className="border-b border-border/40 last:border-0">
+                      <td className="px-5 py-2.5 font-medium text-text">{column}</td>
+                      <td className="px-5 py-2.5 font-mono text-xs text-primary">{weightCol}</td>
+                      <td className="px-5 py-2.5 text-right text-text">{res ? fmt(res.weightedMean) : '—'}</td>
+                      <td className="px-5 py-2.5 text-right text-text">± {res ? fmt(res.marginOfError) : '—'}</td>
+                      <td className="px-5 py-2.5 text-right text-text-muted">{res ? `[${fmt(res.lower)}, ${fmt(res.upper)}]` : '—'}</td>
+                      <td className="px-5 py-2.5 text-right text-text-muted">{res ? pct(res.rse) : '—'}</td>
+                      <td className="px-5 py-2.5">
+                        {res && (
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: res.quality.color }}>
+                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: res.quality.color }} />
+                            {res.quality.label}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          <MethodologyNote />
+
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="sm" onClick={reset}>
+              <RotateCcw className="h-4 w-4" aria-hidden />
+              Start over
+            </Button>
+            <Button size="sm" onClick={downloadWeightedTable}>
+              <Download className="h-4 w-4" aria-hidden />
+              Download dataset (CSV)
+            </Button>
+          </div>
         </>
       )}
     </div>
@@ -492,63 +743,6 @@ function MitigationsPanel({ result, mode }: { result: MoEResult; mode: WeightMod
           <p className="mt-1 text-sm font-semibold text-text">± {fmt(result.tCritical * result.seSampling)}</p>
           <p className="text-[11px] text-text-muted">SE {fmt(result.seSampling)} · Hájek linearization</p>
         </div>
-      </div>
-    </Card>
-  );
-}
-
-function ColumnTable({
-  rows,
-  weightCol,
-  confidence,
-}: {
-  rows: Array<{ column: string; res: MoEResult }>;
-  weightCol: string;
-  confidence: ConfidenceLevel;
-}) {
-  if (rows.length <= 1) return null;
-  return (
-    <Card className="p-0">
-      <div className="border-b border-border px-5 py-3">
-        <h3 className="text-sm font-semibold text-text">Every numeric column × {weightCol}</h3>
-        <p className="text-xs text-text-muted">{CONFIDENCE_LABEL[confidence]} confidence · same weight and interpretation as above</p>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-text-muted">
-              <th className="px-5 py-2.5 font-medium">Column</th>
-              <th className="px-5 py-2.5 font-medium text-right">Estimate</th>
-              <th className="px-5 py-2.5 font-medium text-right">± Margin</th>
-              <th className="px-5 py-2.5 font-medium text-right">95% interval</th>
-              <th className="px-5 py-2.5 font-medium text-right">RSE</th>
-              <th className="px-5 py-2.5 font-medium">Quality</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(({ column, res }) => (
-              <tr key={column} className="border-b border-border/40 last:border-0">
-                <td className="px-5 py-2.5 font-medium text-text">{column}</td>
-                {res.valid ? (
-                  <>
-                    <td className="px-5 py-2.5 text-right text-text">{fmt(res.weightedMean)}</td>
-                    <td className="px-5 py-2.5 text-right text-text">± {fmt(res.marginOfError)}</td>
-                    <td className="px-5 py-2.5 text-right text-text-muted">[{fmt(res.lower)}, {fmt(res.upper)}]</td>
-                    <td className="px-5 py-2.5 text-right text-text-muted">{pct(res.rse)}</td>
-                    <td className="px-5 py-2.5">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: res.quality.color }}>
-                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: res.quality.color }} />
-                        {res.quality.label}
-                      </span>
-                    </td>
-                  </>
-                ) : (
-                  <td colSpan={5} className="px-5 py-2.5 text-text-muted">{res.reason}</td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
     </Card>
   );
