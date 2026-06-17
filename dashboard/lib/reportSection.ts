@@ -216,6 +216,8 @@ export function buildReportSectionSpec(
     label: m.label.trim() || m.col,
     agg: m.weighted ? 'weighted_mean' : m.agg,
     unit: m.unit.trim() || undefined,
+    weightCol: m.weighted ? config.weightCol : null,
+    moe: m.weighted && config.weightCol ? { enabled: true, confidence: 0.95, mode: 'frequency' } : undefined,
   }));
 
   return {

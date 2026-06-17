@@ -1918,6 +1918,18 @@ class CanvasDraftRenameIn(BaseModel):
     name: str
 
 
+class CanvasDraftCommitOut(BaseModel):
+    ok: bool
+    draftId: str
+    reportPath: str
+    htmlPath: str
+    version: int
+    sectionsAdded: int
+    blocksCommitted: int
+    tablesCommitted: int
+    chartsCommitted: int
+
+
 def _empty_canvas_layout() -> dict[str, Any]:
     return {"blocks": {}, "pages": [], "order": [], "updatedAt": None}
 
@@ -1949,6 +1961,204 @@ def _read_canvas_layout_file(path: Path) -> dict[str, Any]:
 
 def _write_canvas_layout_file(path: Path, doc: dict[str, Any]) -> None:
     path.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _safe_ast_id(value: str, prefix: str = "canvas") -> str:
+    import re
+    safe = re.sub(r"[^a-zA-Z0-9_]+", "_", str(value or "").strip()).strip("_").lower()
+    return f"{prefix}_{safe or uuid4().hex[:8]}"
+
+
+def _canvas_block_order(layout: dict[str, Any]) -> list[dict[str, Any]]:
+    blocks = layout.get("blocks") if isinstance(layout.get("blocks"), dict) else {}
+    order = layout.get("order") if isinstance(layout.get("order"), list) else []
+    ordered: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for bid in order:
+        b = blocks.get(bid)
+        if isinstance(b, dict):
+            ordered.append({"id": bid, **b})
+            seen.add(str(bid))
+    for bid, b in blocks.items():
+        if bid in seen or not isinstance(b, dict):
+            continue
+        ordered.append({"id": bid, **b})
+    return ordered
+
+
+def _is_content_canvas_block(block: dict[str, Any]) -> bool:
+    kind = str(block.get("kind") or "")
+    return bool(block.get("id") and kind in {
+        "heading", "narrative", "key_finding", "source_note", "metric", "table", "chart",
+    })
+
+
+def _row_key_columns(rows: list[dict[str, Any]]) -> list[str]:
+    keys: list[str] = []
+    for row in rows:
+        key = row.get("key") if isinstance(row, dict) else None
+        if isinstance(key, dict):
+            for k in key.keys():
+                if k not in keys:
+                    keys.append(str(k))
+    return keys
+
+
+def _canvas_table_from_block(block: dict[str, Any], table_id: str) -> dict[str, Any]:
+    data = block.get("tableData") if isinstance(block.get("tableData"), dict) else {}
+    raw_rows = data.get("items") or data.get("rankingData") or data.get("aggregationData") or data.get("rows") or []
+    raw_rows = raw_rows if isinstance(raw_rows, list) else []
+    key_cols = _row_key_columns(raw_rows)
+    measure_label = str(data.get("measure") or block.get("title") or "Value")
+    unit = data.get("unit")
+    columns = [
+        {"columnId": _safe_ast_id(k, "col"), "header": k, "role": "dimension", "align": "left"}
+        for k in key_cols
+    ]
+    columns.extend([
+        {"columnId": "value", "header": measure_label, "role": "measure", "unit": unit, "format": "#,##,##0.0", "align": "right"},
+        {"columnId": "n", "header": "Records", "role": "metadata", "format": "#,##,##0", "align": "right"},
+    ])
+    rows: list[dict[str, Any]] = []
+    for raw in raw_rows:
+        if not isinstance(raw, dict):
+            continue
+        row: dict[str, Any] = {}
+        key = raw.get("key") if isinstance(raw.get("key"), dict) else {}
+        for k in key_cols:
+            row[_safe_ast_id(k, "col")] = key.get(k)
+        row["value"] = raw.get("value")
+        row["n"] = raw.get("n")
+        row["rowIds"] = list(raw.get("rowIds") or [])
+        rows.append(row)
+    return {
+        "tableId": table_id,
+        "title": block.get("title") or measure_label,
+        "columns": columns,
+        "rows": rows,
+        "footnotes": [
+            {"noteId": f"source_{table_id}", "text": str(data.get("source") or "Canvas draft generated section")}
+        ],
+        "slot": {"status": "filled", "source": "canvas_draft_commit"},
+        "provenance": data.get("provenance") or {},
+    }
+
+
+def _canvas_chart_from_block(block: dict[str, Any], chart_id: str) -> dict[str, Any]:
+    data = block.get("tableData") if isinstance(block.get("tableData"), dict) else {}
+    raw_rows = data.get("items") or data.get("rankingData") or data.get("aggregationData") or data.get("rows") or []
+    raw_rows = raw_rows if isinstance(raw_rows, list) else []
+    x_col = data.get("x") or (block.get("tableData") or {}).get("x")
+    key_cols = _row_key_columns(raw_rows)
+    dim = str(x_col or (key_cols[0] if key_cols else "Category"))
+    points = []
+    for raw in raw_rows:
+        if not isinstance(raw, dict):
+            continue
+        key = raw.get("key") if isinstance(raw.get("key"), dict) else {}
+        points.append({"x": key.get(dim) or next(iter(key.values()), ""), "y": raw.get("value"), "rowIds": list(raw.get("rowIds") or [])})
+    chart_type = str(data.get("chartType") or "bar")
+    return {
+        "chartId": chart_id,
+        "title": block.get("title") or data.get("measure") or "Chart",
+        "chartType": "simple_bar" if chart_type in ("bar", "hbar") else chart_type,
+        "xAxis": {"label": dim},
+        "yAxis": {"label": data.get("measure") or "Value", "unit": data.get("unit")},
+        "series": [{"label": data.get("measure") or block.get("title") or "Series", "points": points}],
+        "slot": {"status": "filled", "source": "canvas_draft_commit"},
+        "provenance": data.get("provenance") or {},
+    }
+
+
+def _commit_canvas_layout_into_report(report: dict[str, Any], layout: dict[str, Any], *, draft_id: str) -> dict[str, int]:
+    content = report.setdefault("contentAST", {}).setdefault("blocks", [])
+    tables = report.setdefault("tableAST", {}).setdefault("tables", [])
+    charts = report.setdefault("chartAST", {}).setdefault("charts", [])
+    figures = report.setdefault("figureAST", {}).setdefault("figures", [])
+    sections = report.setdefault("semanticAST", {}).setdefault("sections", [])
+
+    # Remove prior commit for this draft so repeated commits are idempotent.
+    marker = f"canvas_draft:{_safe_draft_id(draft_id)}"
+    def keep(item: dict[str, Any]) -> bool:
+        return (item.get("provenance") or {}).get("canvasDraftRef") != marker
+    content[:] = [b for b in content if keep(b)]
+    tables[:] = [t for t in tables if keep(t)]
+    charts[:] = [c for c in charts if keep(c)]
+    figures[:] = [f for f in figures if keep(f)]
+    sections[:] = [s for s in sections if (s.get("provenance") or {}).get("canvasDraftRef") != marker]
+
+    current_section: dict[str, Any] | None = None
+    section_count = 0
+    block_count = 0
+    table_count = 0
+    chart_count = 0
+    for block in _canvas_block_order(layout):
+        if not _is_content_canvas_block(block):
+            continue
+        kind = str(block.get("kind") or "")
+        title = str(block.get("title") or block.get("content") or "Canvas section")
+        if kind == "heading" or current_section is None:
+            section_id = _safe_ast_id(block.get("id") or title, "sec")
+            current_section = {
+                "sectionId": section_id,
+                "title": title,
+                "level": 2,
+                "order": len(sections) + 1,
+                "children": [],
+                "provenance": {"canvasDraftRef": marker, "sourceBlockId": block.get("id")},
+            }
+            sections.append(current_section)
+            section_count += 1
+            continue
+        assert current_section is not None
+        ast_id = _safe_ast_id(block.get("id") or title, "canvas")
+        if kind in ("narrative", "key_finding", "source_note", "metric"):
+            text = block.get("content") or block.get("metricValue") or title
+            content.append({
+                "blockId": ast_id,
+                "kind": kind,
+                "title": title,
+                "content": text,
+                "slot": {"status": "filled", "source": "canvas_draft_commit"},
+                "provenance": {"canvasDraftRef": marker, "sourceBlockId": block.get("id")},
+            })
+            current_section["children"].append(ast_id)
+            block_count += 1
+        elif kind == "table":
+            table = _canvas_table_from_block(block, ast_id)
+            table.setdefault("provenance", {})["canvasDraftRef"] = marker
+            table["provenance"]["sourceBlockId"] = block.get("id")
+            tables.append(table)
+            current_section["children"].append(ast_id)
+            table_count += 1
+        elif kind == "chart":
+            chart_id = _safe_ast_id(block.get("id") or title, "chart")
+            figure_id = _safe_ast_id(block.get("id") or title, "fig")
+            chart = _canvas_chart_from_block(block, chart_id)
+            chart.setdefault("provenance", {})["canvasDraftRef"] = marker
+            chart["provenance"]["sourceBlockId"] = block.get("id")
+            charts.append(chart)
+            figures.append({
+                "figureId": figure_id,
+                "title": title,
+                "caption": title,
+                "chartRef": chart_id,
+                "slot": {"status": "filled", "source": "canvas_draft_commit"},
+                "provenance": {"canvasDraftRef": marker, "sourceBlockId": block.get("id")},
+            })
+            current_section["children"].append(figure_id)
+            chart_count += 1
+    audit = report.setdefault("auditAST", {})
+    audit.setdefault("canvasDraftCommits", [])
+    audit["canvasDraftCommits"].append({
+        "draftId": draft_id,
+        "canvasDraftRef": marker,
+        "sectionsAdded": section_count,
+        "blocksCommitted": block_count,
+        "tablesCommitted": table_count,
+        "chartsCommitted": chart_count,
+    })
+    return {"sections": section_count, "blocks": block_count, "tables": table_count, "charts": chart_count}
 
 
 def _draft_summary(template_id: str, signature: str, meta: dict[str, Any]) -> dict[str, Any]:
@@ -2098,6 +2308,60 @@ def put_canvas_draft_layout(template_id: str, signature: str, draft_id: str, bod
     logger.info("[canvas-draft] saved %s__%s draft=%s — %d blocks, %d pages",
                 template_id, signature, did, len(doc["blocks"]), len(doc["pages"]))
     return {"ok": True, "updatedAt": now}
+
+
+@router.post("/{template_id}/{signature}/canvas-drafts/{draft_id}/commit-to-report", response_model=CanvasDraftCommitOut)
+def commit_canvas_draft_to_report(template_id: str, signature: str, draft_id: str) -> CanvasDraftCommitOut:
+    """Merge a named canvas draft into the official report.output.ast.json.
+
+    The canvas draft is the officer's working document. This endpoint makes it
+    official by translating canvas-owned blocks into contentAST/tableAST/chartAST
+    entries and semantic sections, then re-rendering report.html. The merge is
+    idempotent per draft id: prior committed sections for the same draft are
+    replaced on each call.
+    """
+    report_path = _report_path(template_id, signature)
+    if not report_path.exists():
+        raise HTTPException(status_code=404, detail="no report generated yet — call /generate first")
+    did = _safe_draft_id(draft_id)
+    layout = _read_canvas_layout_file(_canvas_draft_layout_path(template_id, signature, did))
+    if not (layout.get("blocks") or layout.get("order")):
+        # Allow the legacy pseudo draft as a convenience in old deployments.
+        if did in ("legacy", "__legacy__"):
+            layout = _read_canvas_layout_file(_canvas_layout_path(template_id, signature))
+        if not (layout.get("blocks") or layout.get("order")):
+            raise HTTPException(status_code=404, detail=f"canvas draft '{draft_id}' has no layout to commit")
+
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    versions = _list_versions(template_id, signature)
+    if not versions:
+        v1 = bump_version(json.loads(json.dumps(report)), 1)
+        _version_path(template_id, signature, 1).write_text(
+            json.dumps(v1, ensure_ascii=False, indent=2), encoding="utf-8")
+        versions = [1]
+
+    counts = _commit_canvas_layout_into_report(report, layout, draft_id=did)
+    n = max(versions) + 1
+    bump_version(report, n)
+    report.setdefault("metadata", {})["status"] = "draft_committed"
+    report["metadata"]["canvasDraftRef"] = did
+    _version_path(template_id, signature, n).write_text(
+        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    _html_path(template_id, signature).write_text(render_html(report), encoding="utf-8")
+    logger.info("[canvas-draft] committed %s__%s draft=%s → report v%d (%s)",
+                template_id, signature, did, n, counts)
+    return CanvasDraftCommitOut(
+        ok=True,
+        draftId=did,
+        reportPath=str(report_path),
+        htmlPath=str(_html_path(template_id, signature)),
+        version=n,
+        sectionsAdded=counts["sections"],
+        blocksCommitted=counts["blocks"],
+        tablesCommitted=counts["tables"],
+        chartsCommitted=counts["charts"],
+    )
 
 
 @router.get("/{template_id}/{signature}/canvas-layout")

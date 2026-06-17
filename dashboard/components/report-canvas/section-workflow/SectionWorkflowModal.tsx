@@ -98,6 +98,41 @@ export function SectionWorkflowModal({ templateId, signature, onClose, onAppendB
   const groupLabel = request?.analysis.groupBy?.join(', ') || request?.scope.columns.dimensions.join(', ') || 'All records';
   const filterLabel = request?.scope.filters.map(f => `${f.col} ${f.op} ${Array.isArray(f.value) ? f.value.join(', ') : String(f.value ?? '')}`).join(' · ') || 'No filters';
 
+  const quickUpdate = (field: 'chapter' | 'section' | 'description' | 'filterCol' | 'filterValue' | 'dimension' | 'measure', value: string) => {
+    updateRequest(req => {
+      const next: ReportSectionRequest = JSON.parse(JSON.stringify(req));
+      if (field === 'chapter' && next.target.chapter) next.target.chapter.title = value;
+      if (field === 'section' && next.target.section) next.target.section.title = value;
+      if (field === 'description') next.description = { text: value, source: 'user' };
+      if (field === 'filterCol') {
+        next.scope.filters[0] = next.scope.filters[0] || { col: value, op: 'eq', value: '', required: true };
+        next.scope.filters[0].col = value;
+      }
+      if (field === 'filterValue') {
+        next.scope.filters[0] = next.scope.filters[0] || { col: '', op: 'eq', value, required: true };
+        next.scope.filters[0].value = value.includes(',') ? value.split(',').map(v => v.trim()).filter(Boolean) : value;
+        next.scope.filters[0].op = Array.isArray(next.scope.filters[0].value) ? 'in' : next.scope.filters[0].op;
+      }
+      if (field === 'dimension') {
+        next.scope.columns.dimensions = value ? [value] : [];
+        next.analysis.groupBy = value ? [value] : [];
+      }
+      if (field === 'measure') {
+        next.scope.columns.measures[0] = next.scope.columns.measures[0] || { col: value, label: value, agg: 'reported_value' };
+        next.scope.columns.measures[0].col = value;
+        next.scope.columns.measures[0].label = next.scope.columns.measures[0].label || value;
+        if (next.analysis.sort) next.analysis.sort.by = value;
+      }
+      next.scope.columns.include = Array.from(new Set([
+        ...next.scope.filters.map(f => f.col).filter(Boolean),
+        ...next.scope.columns.dimensions,
+        ...next.scope.columns.measures.map(m => m.col),
+        ...(next.scope.columns.time ? [next.scope.columns.time] : []),
+      ]));
+      return next;
+    });
+  };
+
   const updateRequest = (patch: (req: ReportSectionRequest) => ReportSectionRequest) => {
     if (!request) return;
     setRequestText(prettyJson(patch(request)));
@@ -204,6 +239,19 @@ export function SectionWorkflowModal({ templateId, signature, onClose, onAppendB
             <div className="rounded-lg border border-slate-200 bg-white p-3">
               <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Data slice</p>
               <p className="mt-1 text-xs text-slate-700">{filterLabel}</p>
+            </div>
+
+            <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3">
+              <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Quick edit</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <input value={request?.target.chapter?.title || ''} onChange={e => quickUpdate('chapter', e.target.value)} placeholder="Chapter title" className="rounded border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-blue-400" />
+                <input value={request?.target.section?.title || ''} onChange={e => quickUpdate('section', e.target.value)} placeholder="Section title" className="rounded border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-blue-400" />
+                <input value={request?.scope.filters[0]?.col || ''} onChange={e => quickUpdate('filterCol', e.target.value)} placeholder="Filter column" className="rounded border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-blue-400" />
+                <input value={Array.isArray(request?.scope.filters[0]?.value) ? request?.scope.filters[0]?.value.join(', ') : String(request?.scope.filters[0]?.value ?? '')} onChange={e => quickUpdate('filterValue', e.target.value)} placeholder="Filter value(s)" className="rounded border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-blue-400" />
+                <input value={request?.scope.columns.dimensions[0] || ''} onChange={e => quickUpdate('dimension', e.target.value)} placeholder="Group/dimension column" className="rounded border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-blue-400" />
+                <input value={request?.scope.columns.measures[0]?.col || ''} onChange={e => quickUpdate('measure', e.target.value)} placeholder="Measure column" className="rounded border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-blue-400" />
+              </div>
+              <textarea value={request?.description.text || ''} onChange={e => quickUpdate('description', e.target.value)} placeholder="Officer description" className="mt-2 h-16 w-full rounded border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-blue-400" />
             </div>
 
             <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50">

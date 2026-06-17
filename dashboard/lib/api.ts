@@ -2353,6 +2353,18 @@ export interface CanvasLayoutPayload {
   updatedAt: string | null;
 }
 
+export interface CanvasDraftCommitResult {
+  ok: boolean;
+  draftId: string;
+  reportPath: string;
+  htmlPath: string;
+  version: number;
+  sectionsAdded: number;
+  blocksCommitted: number;
+  tablesCommitted: number;
+  chartsCommitted: number;
+}
+
 export const generatePhaseApi = {
   /** Run S4→S6 on a finalized binding: analytics → fill → narrate → assemble → render. */
   generate: async (
@@ -2614,6 +2626,16 @@ export const generatePhaseApi = {
     const { data } = await api.put(
       `/report-builder/generate-phase/${templateId}/${signature}/canvas-drafts/${draftId}/layout`,
       body
+    );
+    return data;
+  },
+  commitCanvasDraftToReport: async (
+    templateId: string,
+    signature: string,
+    draftId: string
+  ): Promise<CanvasDraftCommitResult> => {
+    const { data } = await api.post(
+      `/report-builder/generate-phase/${templateId}/${signature}/canvas-drafts/${draftId}/commit-to-report`
     );
     return data;
   },

@@ -83,6 +83,9 @@ export function buildDescriptionSuggestions(request: ReportSectionRequest): Desc
 
 export function buildComponentSuggestions(request: ReportSectionRequest): ComponentSuggestion[] {
   const recommended = baseComponents(request.analysis.type, request);
+  if (request.scope.columns.measures.some(m => m.moe?.enabled)) {
+    recommended.push({ type: 'caveat', title: 'Margin of Error Note' });
+  }
   const existing = new Set((request.components || []).map(c => c.type));
   return recommended.map(component => ({
     component,

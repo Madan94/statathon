@@ -57,7 +57,15 @@ function provenancePayload(result: SectionExecutionResult): Record<string, unkno
     rowsAfterFilter: result.rowsAfterFilter,
     sourceColumns: [result.measure?.col, ...result.groupBy].filter(Boolean),
     warnings: result.warnings,
+    marginOfError: result.marginOfError,
   };
+}
+
+function moeText(result: SectionExecutionResult): string {
+  const moe = result.marginOfError;
+  if (!moe) return '';
+  if (!moe.valid) return moe.reason ? `Margin of error was not computed: ${moe.reason}.` : 'Margin of error was not computed.';
+  return `Margin of error (${Math.round((moe.confidence || 0.95) * 100)}%): ±${fmt(moe.marginOfError ?? null, result.measure?.unit)}; interval ${fmt(moe.lower ?? null, result.measure?.unit)} to ${fmt(moe.upper ?? null, result.measure?.unit)}; quality ${moe.quality || 'not assessed'}.`;
 }
 
 function blockBase(request: ReportSectionRequest, component: SectionComponentConfig, sectionPath: string[], index: number): GeneratedSectionBlock {
@@ -96,7 +104,9 @@ export function buildSectionBlocks(request: ReportSectionRequest, result: Sectio
       const first = result.rows[0];
       block.content = first ? `${labelOf(first)} records the leading ${result.measure?.label || result.measure?.col || 'value'} at ${fmt(first.value, result.measure?.unit)}.` : 'No key finding could be computed.';
     } else {
-      block.content = result.warnings.length ? result.warnings.map(w => w.message).join(' ') : `Filters applied: ${result.filtersApplied.join('; ')}`;
+      const moe = moeText(result);
+      const warnings = result.warnings.length ? result.warnings.map(w => w.message).join(' ') : '';
+      block.content = [moe, warnings, `Filters applied: ${result.filtersApplied.join('; ')}`].filter(Boolean).join(' ');
     }
     blocks.push(block);
   });
@@ -107,6 +117,18 @@ export function buildSectionBlocks(request: ReportSectionRequest, result: Sectio
       kind: 'source_note',
       title: 'Caveat',
       content: result.warnings.map(w => w.message).join(' '),
+      sectionPath,
+      status: 'done',
+      pageIndex: 0,
+    });
+  }
+  if (result.marginOfError && !blocks.some(b => b.title.toLowerCase().includes('margin of error'))) {
+    blocks.push({
+      id: `sectiongen-${request.requestId}-moe`,
+      index: -1,
+      kind: 'source_note',
+      title: 'Margin of Error Note',
+      content: moeText(result),
       sectionPath,
       status: 'done',
       pageIndex: 0,

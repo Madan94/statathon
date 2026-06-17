@@ -1,6 +1,7 @@
 import type { DataRow, ReportSectionRequest, SectionExecutionResult, SectionIssue, SectionMeasure, SectionResultRow } from './types';
 import { stableHash } from './datasetStore';
 import { applyPredicates } from './predicateEngine';
+import { computeWeightedMoE } from '@/lib/marginOfError';
 
 function toNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -81,6 +82,24 @@ export function executeSectionRequest(request: ReportSectionRequest, rows: DataR
 
   const limit = request.analysis.limit;
   const finalRows = limit && limit > 0 ? resultRows.slice(0, limit) : resultRows;
+  let marginOfError: SectionExecutionResult['marginOfError'] = null;
+  if (measure?.moe?.enabled && measure.weightCol) {
+    const pairs = filtered.indexes.map(index => ({
+      value: toNumber(rows[index]?.[measure.col]),
+      weight: toNumber(rows[index]?.[measure.weightCol || '']),
+    }));
+    const moe = computeWeightedMoE(pairs, measure.moe.confidence || 0.95, measure.moe.mode || 'frequency');
+    marginOfError = moe.valid ? {
+      valid: true,
+      estimate: moe.weightedMean,
+      marginOfError: moe.marginOfError,
+      lower: moe.lower,
+      upper: moe.upper,
+      confidence: moe.confidence,
+      quality: moe.quality.label,
+    } : { valid: false, reason: moe.reason };
+    if (!moe.valid) warnings.push({ severity: 'warn', code: 'MOE_NOT_COMPUTED', message: moe.reason || 'Margin of error could not be computed.', column: measure.col });
+  }
   return {
     requestId: request.requestId,
     datasetId: request.datasetId,
@@ -93,5 +112,6 @@ export function executeSectionRequest(request: ReportSectionRequest, rows: DataR
     cacheHit,
     sliceSignature: stableHash({ datasetId: request.datasetId, filters: request.scope.filters, include: request.scope.columns.include }),
     warnings,
+    marginOfError,
   };
 }

@@ -27,8 +27,10 @@ export function CanvasDraftPicker({ templateId, signature, open, currentDraftId,
   const [drafts, setDrafts] = useState<CanvasDraftSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [committing, setCommitting] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [namedDraftsAvailable, setNamedDraftsAvailable] = useState(true);
 
   const defaultName = useMemo(() => {
@@ -100,6 +102,21 @@ export function CanvasDraftPicker({ templateId, signature, open, currentDraftId,
     }
   };
 
+  const commitDraft = async (draftId: string) => {
+    setCommitting(draftId);
+    setError('');
+    setNotice('');
+    try {
+      const result = await generatePhaseApi.commitCanvasDraftToReport(templateId, signature, draftId);
+      setNotice(`Committed to official report v${result.version}: ${result.sectionsAdded} sections, ${result.blocksCommitted + result.tablesCommitted + result.chartsCommitted} blocks.`);
+      void load(sort);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Commit endpoint unavailable. Restart backend to enable official report commit.');
+    } finally {
+      setCommitting(null);
+    }
+  };
+
   if (!open) return null;
 
   return (
@@ -139,12 +156,14 @@ export function CanvasDraftPicker({ templateId, signature, open, currentDraftId,
           </div>
 
           {error && <p className="rounded bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
+          {notice && <p className="rounded bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{notice}</p>}
           {loading ? (
             <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-slate-300" /></div>
           ) : (
             <div className="max-h-80 space-y-2 overflow-auto">
               {drafts.map(draft => (
-                <button key={draft.draftId} onClick={() => onSelect(draft)} className={`flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors ${currentDraftId === draft.draftId ? 'border-blue-300 bg-blue-50 shadow-sm' : 'border-slate-200 hover:border-blue-200 hover:bg-slate-50'}`}>
+                <div key={draft.draftId} className={`rounded-lg border px-4 py-3 transition-colors ${currentDraftId === draft.draftId ? 'border-blue-300 bg-blue-50 shadow-sm' : 'border-slate-200 hover:border-blue-200 hover:bg-slate-50'}`}>
+                  <button onClick={() => onSelect(draft)} className="flex w-full items-center justify-between text-left">
                   <div>
                     <p className="text-sm font-semibold text-slate-800">{draft.name}</p>
                     <p className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500"><Clock className="h-3 w-3" /> Last edited {fmt(draft.updatedAt)}</p>
@@ -153,7 +172,14 @@ export function CanvasDraftPicker({ templateId, signature, open, currentDraftId,
                     <div className="font-medium text-slate-700">{draft.blockCount} blocks</div>
                     <div>{draft.pageCount || 0} pages</div>
                   </div>
-                </button>
+                  </button>
+                  <div className="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-2">
+                    <button onClick={() => commitDraft(draft.draftId)} disabled={committing === draft.draftId}
+                      className="rounded border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40">
+                      {committing === draft.draftId ? 'Committing…' : 'Commit to official report'}
+                    </button>
+                  </div>
+                </div>
               ))}
               {!drafts.length && <p className="rounded border border-dashed border-slate-200 px-3 py-6 text-center text-xs text-slate-500">No drafts yet. Create one to start editing.</p>}
             </div>

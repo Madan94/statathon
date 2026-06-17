@@ -31,6 +31,12 @@ export interface SectionMeasure {
   label?: string;
   agg?: AggregationKind;
   unit?: string;
+  weightCol?: string | null;
+  moe?: {
+    enabled: boolean;
+    confidence?: 0.9 | 0.95 | 0.99;
+    mode?: 'frequency' | 'sampling';
+  };
 }
 
 export interface SectionTargetRef {
@@ -154,6 +160,16 @@ export interface SectionExecutionResult {
   cacheHit: boolean;
   sliceSignature: string;
   warnings: SectionIssue[];
+  marginOfError?: {
+    valid: boolean;
+    estimate?: number;
+    marginOfError?: number;
+    lower?: number;
+    upper?: number;
+    confidence?: number;
+    quality?: string;
+    reason?: string;
+  } | null;
 }
 
 export interface GeneratedSectionBlock {
