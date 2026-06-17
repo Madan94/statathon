@@ -977,11 +977,12 @@ export default function BindingWorkflowPage() {
     ? [
         ...(templatePath === 'loop'
           ? ([{ id: 'filters', label: 'Query indicators', hint: sectionConfig.filters.length ? `${sectionConfig.filters.length} filter${sectionConfig.filters.length > 1 ? 's' : ''} · ${sectionConfig.measures.length} measure${sectionConfig.measures.length === 1 ? '' : 's'}` : 'Build section spec', status: 'Open' }] as const)
-          : []),
-        { id: 'entities', label: 'Dataset mapping', hint: phaseHint('entities', `${undecidedColumnCount} columns pending`), status: phaseStatus('entities', allColumnsDecided ? 'Ready' : remaining === 0 ? 'Review' : 'Review') },
-        { id: 'questions', label: 'Question plan', hint: phaseHint('questions', currentReviewedPlan ? `${currentReviewedPlan.questionCount} questions` : 'Finalize first'), status: phaseStatus('questions', currentReviewedPlan ? 'Ready' : allColumnsDecided ? 'Review' : 'Blocked') },
-        { id: 'issues', label: 'Issues', hint: phaseHint('issues', `${workspaceIssues.length} open`), status: phaseStatus('issues', workspaceIssues.length ? 'Review' : 'Ready') },
-        { id: 'handoff', label: 'S3.5 handoff', hint: handoffHint, status: handoffStatus },
+          : [
+              { id: 'entities', label: 'Dataset mapping', hint: phaseHint('entities', `${undecidedColumnCount} columns pending`), status: phaseStatus('entities', allColumnsDecided ? 'Ready' : remaining === 0 ? 'Review' : 'Review') },
+              { id: 'questions', label: 'Question plan', hint: phaseHint('questions', currentReviewedPlan ? `${currentReviewedPlan.questionCount} questions` : 'Finalize first'), status: phaseStatus('questions', currentReviewedPlan ? 'Ready' : allColumnsDecided ? 'Review' : 'Blocked') },
+              { id: 'issues', label: 'Issues', hint: phaseHint('issues', `${workspaceIssues.length} open`), status: phaseStatus('issues', workspaceIssues.length ? 'Review' : 'Ready') },
+              { id: 'handoff', label: 'S3.5 handoff', hint: handoffHint, status: handoffStatus },
+            ]),
       ]
     : [];
   const workbenchModes = enteredPath ? pathWorkbenchModes : setupWorkbenchModes;
@@ -2049,10 +2050,12 @@ export default function BindingWorkflowPage() {
           </div>
         </div>
         <div className="px-5 pt-4 pb-5">
-          <div className="sticky top-3 z-20 rounded-xl border border-border bg-surface-card/95 p-1.5 shadow-sm backdrop-blur">
-            {renderWorkbenchNav()}
-          </div>
-          <main className="min-w-0 pt-5">{renderWorkbenchPanel()}</main>
+          {templatePath !== 'loop' && (
+            <div className="sticky top-3 z-20 rounded-xl border border-border bg-surface-card/95 p-1.5 shadow-sm backdrop-blur">
+              {renderWorkbenchNav()}
+            </div>
+          )}
+          <main className={`min-w-0${templatePath !== 'loop' ? ' pt-5' : ''}`}>{renderWorkbenchPanel()}</main>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
             <Button variant="outline" size="sm" onClick={resetAll}><ArrowLeft className="h-4 w-4" /> Start over</Button>
             {!enteredPath ? (

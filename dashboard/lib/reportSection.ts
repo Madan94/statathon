@@ -33,6 +33,7 @@ export interface SectionFilterRule {
   op: FilterOp;
   value: string; // raw text; `in/not_in` → comma list, `between` → "lo, hi"
   required: boolean;
+  connector?: 'AND' | 'OR'; // joins THIS rule to the NEXT rule; last rule's connector is ignored
 }
 
 export interface SectionMeasure {
