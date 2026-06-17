@@ -76,12 +76,64 @@ from __future__ import annotations
 import base64
 import logging
 import os
+import time
 from collections.abc import Callable
 from typing import Any
 
 import requests
 
 logger = logging.getLogger(__name__)
+
+# ── Rate-limit aware POST (large-PDF robustness) ────────────────────────────────
+# Cloud providers (Groq free-tier ~30 RPM, Azure, OpenRouter) return HTTP 429/503
+# under burst load — exactly what a large multi-hundred-page PDF generates in pass 2/3.
+# Without backoff every 429 returns None, counts as a hard failure, and trips the
+# pass-2 circuit breaker, silently degrading the rest of the document to pdfplumber.
+# A short, bounded, Retry-After-aware backoff lets transient rate limits self-heal so
+# big PDFs extract fully. Tunable via env; defaults are conservative.
+_RATE_LIMIT_STATUS = frozenset({429, 503})
+
+
+def _rate_limit_retries() -> int:
+    try:
+        return max(0, int(os.getenv("LLM_RATE_LIMIT_RETRIES") or "2"))
+    except (TypeError, ValueError):
+        return 2
+
+
+def _rate_limit_backoff_base() -> float:
+    try:
+        return max(0.0, float(os.getenv("LLM_RATE_LIMIT_BACKOFF_SECONDS") or "8"))
+    except (TypeError, ValueError):
+        return 8.0
+
+
+def _post_with_retry(url: str, *, label: str = "", **kwargs: Any) -> "requests.Response":
+    """``requests.post`` with bounded, Retry-After-aware backoff on HTTP 429/503.
+
+    Returns the final :class:`requests.Response` (caller still inspects status_code).
+    Honors the server ``Retry-After`` header when present, else exponential backoff
+    capped at 30s. Non-rate-limit responses (200, 400, 500, …) return immediately.
+    """
+    retries = _rate_limit_retries()
+    base = _rate_limit_backoff_base()
+    resp = requests.post(url, **kwargs)
+    for attempt in range(retries):
+        if resp.status_code not in _RATE_LIMIT_STATUS:
+            return resp
+        retry_after = (resp.headers or {}).get("Retry-After")
+        try:
+            wait = float(retry_after) if retry_after else base * (2 ** attempt)
+        except (TypeError, ValueError):
+            wait = base * (2 ** attempt)
+        wait = min(max(wait, 0.0), 30.0)
+        logger.warning(
+            "[llm_router]%s HTTP %d (rate limit) — backing off %.1fs (retry %d/%d)",
+            f" [{label}]" if label else "", resp.status_code, wait, attempt + 1, retries,
+        )
+        time.sleep(wait)
+        resp = requests.post(url, **kwargs)
+    return resp
 
 # ── Key Pool System ────────────────────────────────────────────────────────────
 # Loads KEY_1..KEY_10 from env. Each slot has: provider, value (api key), name.
@@ -498,7 +550,7 @@ def _call_azure(prompt: str, image_bytes: bytes | None, max_tokens: int, tempera
     _hard_cap = int(os.getenv("AZURE_OPENAI_MAX_OUTPUT_CAP") or "1024")
     for _attempt in range(_max_retries + 1):
         try:
-            r = requests.post(url, json=payload, headers=headers, timeout=timeout, verify=_SSL_VERIFY)
+            r = _post_with_retry(url, label=key_label or "azure", json=payload, headers=headers, timeout=timeout, verify=_SSL_VERIFY)
         except Exception as exc:
             logger.warning("[llm_router][azure]%s Request failed: %s",
                            f" [{key_label}]" if key_label else "", exc)
@@ -716,8 +768,8 @@ def _call_groq(prompt: str, image_bytes: bytes | None, max_tokens: int, temperat
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
     groq_base = (os.getenv("GROQ_BASE_URL") or "https://api.groq.com/openai/v1").rstrip("/")
     try:
-        r = requests.post(
-            f"{groq_base}/chat/completions",
+        r = _post_with_retry(
+            f"{groq_base}/chat/completions", label=key_label or "groq",
             json=payload, headers=headers, timeout=timeout, verify=_SSL_VERIFY,
         )
         if r.status_code == 200:
@@ -770,7 +822,7 @@ def _call_openai(prompt: str, image_bytes: bytes | None, max_tokens: int, temper
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     try:
-        r = requests.post(f"{base}/chat/completions", json=payload, headers=headers, timeout=timeout, verify=_SSL_VERIFY)
+        r = _post_with_retry(f"{base}/chat/completions", label=key_label or "openai", json=payload, headers=headers, timeout=timeout, verify=_SSL_VERIFY)
         if r.status_code == 200:
             content_out = r.json()["choices"][0]["message"]["content"]
             return content_out.strip() if content_out else None

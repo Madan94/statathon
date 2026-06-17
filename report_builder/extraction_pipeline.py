@@ -1525,8 +1525,12 @@ def pass2_entity_structure_extraction(
     t0 = time.monotonic()
 
     results: list[dict[str, Any]] = []
-    hard_failures = 0
+    hard_failures = 0          # consecutive failures since last success / cooldown
+    total_failures = 0         # cumulative failures across the whole document
+    cooldowns_used = 0         # backoff cooldowns spent so far
     _max_hard_fail = int(os.getenv("VLM_MAX_CONSECUTIVE_FAIL", "3"))
+    _max_cooldowns = int(os.getenv("VLM_MAX_COOLDOWNS", "4"))
+    _cooldown_secs = float(os.getenv("VLM_COOLDOWN_SECONDS", "20"))
     vlm_skipped = False
 
     for i, img_bytes in enumerate(page_images):
@@ -1536,12 +1540,32 @@ def pass2_entity_structure_extraction(
 
         vlm_result = None
 
-        if vlm_skipped:
-            pass
-        elif hard_failures >= _max_hard_fail:
-            logger.warning("[pass2] %d hard VLM failures — skipping VLM for remaining pages", hard_failures)
-            vlm_skipped = True
-        else:
+        # ── Recoverable circuit breaker ──
+        # A burst of consecutive failures on a large PDF is almost always a transient
+        # rate-limit (HTTP 429), NOT a dead provider. Permanently skipping VLM for the
+        # rest of the document (the old behaviour) silently degraded every remaining
+        # page to pdfplumber-only — the root cause of "VLM breaks on big PDFs". Instead,
+        # back off to let the rate-limit window reset, then resume. Only give up for
+        # good after _max_cooldowns are exhausted (provider genuinely unreachable).
+        if not vlm_skipped and hard_failures >= _max_hard_fail:
+            if cooldowns_used < _max_cooldowns:
+                cooldowns_used += 1
+                logger.warning(
+                    "[pass2] %d consecutive VLM failures at page %d/%d — cooldown %.0fs "
+                    "(%d/%d) then resuming", hard_failures, i + 1, total_pages,
+                    _cooldown_secs, cooldowns_used, _max_cooldowns,
+                )
+                if _cooldown_secs > 0:
+                    time.sleep(_cooldown_secs)
+                hard_failures = 0  # reset and retry VLM on this page
+            else:
+                logger.warning(
+                    "[pass2] VLM unrecoverable after %d cooldowns (%d total failures) — "
+                    "pdfplumber-only for remaining pages", _max_cooldowns, total_failures,
+                )
+                vlm_skipped = True
+
+        if not vlm_skipped:
             try:
                 # Concise region hint from LayoutLM
                 region_types = ", ".join(set(r.get("type", "?") for r in regions[:10])) or "none"
@@ -1640,11 +1664,14 @@ def pass2_entity_structure_extraction(
                     else:
                         logger.info("[pass2] Page %d returned text but no valid JSON", i)
                         hard_failures += 1
+                        total_failures += 1
                 else:
                     hard_failures += 1
+                    total_failures += 1
             except Exception as exc:
                 logger.warning("[pass2] Page %d error: %s", i, exc)
                 hard_failures += 1
+                total_failures += 1
 
         # Build result — merge VLM entities with pdfplumber entities
         pdfplumber_entities = _entities_from_pdfplumber(page_text, i)
@@ -3069,12 +3096,22 @@ def pass3_two_loop_ast_building(
     logger.info("[pass3] ── Loop 1: Question extraction ──")
     raw_questions: list[dict[str, Any]] = []
     consecutive_failures = 0
+    _l1_cooldown_secs = float(os.getenv("VLM_COOLDOWN_SECONDS", "20"))
+    _l1_cooldown_done = False  # one backoff before giving up on Loop 1
 
     # Use document_map chapters directly — each chapter gets ONE Qwen call.
     # This guarantees each chapter's questions get the chapter's real page range,
     # producing distinct page values → distinct topic assignments in pass3.
     # Fall back to section_patterns level-1 slice if chapters unavailable.
     chapters_loop1 = document_map.get("chapters") or []
+    # Chapter cap is env-driven (MAX_CHAPTERS_LOOP1, default 20) so large PDFs with
+    # >20 chapters still generate questions for every chapter instead of silently
+    # dropping the tail. The old hard-coded ``[:20]`` ignored the .env setting and
+    # left long government reports with zero questions past chapter 20.
+    try:
+        _max_chapters_l1 = max(1, int(os.getenv("MAX_CHAPTERS_LOOP1", "20")))
+    except (TypeError, ValueError):
+        _max_chapters_l1 = 20
     if chapters_loop1:
         top_level_sections = [
             {
@@ -3086,12 +3123,12 @@ def pass3_two_loop_ast_building(
                 "chapterId": ch["chapterId"],
                 "suggested_components": ["narrative_paragraph"],
             }
-            for ch in chapters_loop1[:20]  # hard cap at 20 chapters
+            for ch in chapters_loop1[:_max_chapters_l1]
         ]
     else:
-        top_level_sections = [sp for sp in section_patterns if sp.get("level", 2) == 1][:20]
-    logger.info("[pass3] L1: Processing %d chapters (of %d chapters total)",
-                len(top_level_sections), len(chapters_loop1))
+        top_level_sections = [sp for sp in section_patterns if sp.get("level", 2) == 1][:_max_chapters_l1]
+    logger.info("[pass3] L1: Processing %d chapters (of %d chapters total, cap=%d)",
+                len(top_level_sections), len(chapters_loop1), _max_chapters_l1)
     if top_level_sections:
         pages = [sp["pageRange"][0] for sp in top_level_sections]
         logger.info("[pass3] L1: Chapter page starts: %s", pages)
@@ -3099,9 +3136,23 @@ def pass3_two_loop_ast_building(
         logger.info("[pass3] L1: First 8 chapter titles: %s", titles)
 
     for sp_idx, sp in enumerate(top_level_sections):
+        # Recoverable breaker: a burst of consecutive failures (usually a transient
+        # 429 on a long PDF) used to hard-``break`` the loop, leaving every later
+        # chapter with zero questions. Instead, back off once to let the rate-limit
+        # window reset, then keep going so the whole document is covered.
         if consecutive_failures >= 3:
-            logger.warning("[pass3] L1: %d consecutive failures — stopping", consecutive_failures)
-            break
+            if not _l1_cooldown_done and _l1_cooldown_secs > 0:
+                logger.warning("[pass3] L1: %d consecutive failures at chapter %d/%d — "
+                               "cooldown %.0fs then resuming", consecutive_failures,
+                               sp_idx + 1, len(top_level_sections), _l1_cooldown_secs)
+                time.sleep(_l1_cooldown_secs)
+                _l1_cooldown_done = True
+                consecutive_failures = 0
+            else:
+                logger.warning("[pass3] L1: still failing after cooldown at chapter %d/%d — "
+                               "stopping Loop 1 with %d questions so far",
+                               sp_idx + 1, len(top_level_sections), len(raw_questions))
+                break
 
         sec_title = sp.get("title", "Section")
         page_range = sp.get("pageRange", [0, 0])
