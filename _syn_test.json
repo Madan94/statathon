@@ -1,0 +1,23 @@
+{
+  "description": "Compare FSU_Serial_No across FOD_Sub_Region over Centre_Round, focusing on the largest differences and the number of source rows.",
+  "tags": ["official", "evidence"],
+  "components": [{"type": "narrative"}, {"type": "table"}, {"type": "key_finding"}],
+  "blocks": [
+    {"kind": "table", "tableData": {"measure": "FSU_Serial_No", "unit": "", "rows": [
+      {"key": {"FOD": "111 / 76 / 1"}, "value": 66547.8, "n": 99},
+      {"key": {"FOD": "110 / 76 / 2"}, "value": 66201.8, "n": 46},
+      {"key": {"FOD": "110 / 76 / 1"}, "value": 65266.6, "n": 47},
+      {"key": {"FOD": "111 / 76 / 2"}, "value": 64990.9, "n": 115}
+    ]}},
+    {"kind": "key_finding", "content": "111 / 76 / 1 records the leading FSU_Serial_No at 66,547.8."}
+  ],
+  "weight_insights": {
+    "weightingApplied": true, "weightColumn": "MULT", "weightScale": 100,
+    "rowsAfterFilter": 307, "rowsScanned": 106894,
+    "measures": [{"col": "FSU_Serial_No", "label": "FSU_Serial_No", "aggregation": "weighted_mean", "weighted": true, "unweightedMean": 68846.5, "weightedMean": 68846.7, "selectedValue": 68846.7, "delta": 0.24, "rowsUsed": 307}],
+    "notes": []
+  },
+  "section_title": "Comparative Summary",
+  "max_words": 160,
+  "use_llm": true
+}

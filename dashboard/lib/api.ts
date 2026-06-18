@@ -2471,6 +2471,42 @@ export const generatePhaseApi = {
     );
     return data;
   },
+  /**
+   * Synthesizer LLM layer: turn the officer's collected description, tags,
+   * components and the weight-insights JSON into grounded report prose.
+   * Routes through llm_router (OpenRouter/etc); LLM_DISABLED ⇒ deterministic.
+   */
+  synthesize: async (
+    templateId: string,
+    signature: string,
+    body: {
+      description?: string;
+      tags?: string[];
+      components?: Array<{ type: string; title?: string }>;
+      measures?: Array<Record<string, unknown>>;
+      weight_insights?: Record<string, unknown> | null;
+      blocks?: Array<Record<string, unknown>>;
+      section_title?: string;
+      chapter_title?: string;
+      dataset_id?: string;
+      analysis_type?: string;
+      max_words?: number;
+      use_llm?: boolean;
+    }
+  ): Promise<{
+    content: string;
+    key_findings: string[];
+    used_llm: boolean;
+    provider: string;
+    figures_used: string[];
+    notes: string[];
+  }> => {
+    const { data } = await api.post(
+      `/report-builder/generate-phase/${templateId}/${signature}/synthesize`,
+      body
+    );
+    return data;
+  },
   /** Saved canvas layout (officer's free placement). Empty doc if none saved. */
   getCanvasLayout: async (
     templateId: string,

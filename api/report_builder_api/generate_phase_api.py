@@ -1480,6 +1480,411 @@ def generate_section(template_id: str, signature: str, body: GenerateSectionIn) 
     }
 
 
+# ---------------------------------------------------------------------------
+# Report synthesizer — LLM layer that turns the officer's collected inputs
+# (description, tags, components) + the weight-insights JSON + computed block
+# figures into cohesive, grounded report prose. Routes through llm_router
+# (OpenRouter/Groq/etc per env); LLM_DISABLED=1 ⇒ deterministic synthesis.
+# ---------------------------------------------------------------------------
+
+
+class SynthesizeIn(BaseModel):
+    description: str = ""                         # officer's report intent
+    tags: list[str] = []                          # evidence/style tags
+    components: list[dict[str, Any]] = []         # [{type,title}] requested blocks
+    measures: list[dict[str, Any]] = []           # [{col,label,agg,weighted,...}]
+    weight_insights: Optional[dict[str, Any]] = None  # weight.insights.v1 JSON
+    blocks: list[dict[str, Any]] = []             # already-generated section blocks (table figures)
+    section_title: str = ""
+    chapter_title: str = ""
+    dataset_id: str = ""
+    analysis_type: str = "comparison"
+    max_words: int = 220
+    use_llm: Optional[bool] = None                # None ⇒ on iff LLM enabled
+
+
+class SynthesizeOut(BaseModel):
+    content: str
+    key_findings: list[str]
+    used_llm: bool
+    provider: str
+    figures_used: list[str]
+    notes: list[str]
+
+
+def _fmt_figure(value: Any, unit: str = "") -> str:
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        return "n/a" if value is None else str(value)
+    if n != n:  # NaN
+        return "n/a"
+    text = f"{n:,.2f}".rstrip("0").rstrip(".") if abs(n) < 1000 else f"{n:,.1f}"
+    if unit:
+        return f"{text}%" if unit == "%" else f"{text} {unit}"
+    return text
+
+
+def _collect_figures(wi: dict[str, Any] | None, measures: list[dict[str, Any]]) -> tuple[list[str], list[str]]:
+    """Return (figure_lines, allowed_number_tokens) from the weight-insights JSON."""
+    lines: list[str] = []
+    tokens: list[str] = []
+    unit_by_col = {m.get("col"): (m.get("unit") or "") for m in (measures or [])}
+    for m in ((wi or {}).get("measures") or []):
+        label = m.get("label") or m.get("col") or "measure"
+        unit = unit_by_col.get(m.get("col"), "")
+        parts = [f"- {label} (agg={m.get('aggregation')}, weighted={bool(m.get('weighted'))}):"]
+        for field, name in (("unweightedMean", "unweighted mean"), ("weightedMean", "weighted mean"),
+                            ("selectedValue", "reported value"), ("delta", "weighted−unweighted Δ"),
+                            ("unweightedTotal", "unweighted total"), ("weightedTotal", "weighted total")):
+            val = m.get(field)
+            if val is not None:
+                parts.append(f"{name}={_fmt_figure(val, unit if field in ('unweightedMean','weightedMean','selectedValue') else '')}")
+                tokens.append(str(val))
+        used = m.get("rowsUsed")
+        if used is not None:
+            parts.append(f"rows_used={used}")
+        lines.append(" ".join(parts))
+    return lines, tokens
+
+
+def _collect_block_evidence(blocks: list[dict[str, Any]]) -> dict[str, Any]:
+    """Extract grounded figures + textual context from already-generated blocks.
+
+    The generate-section blocks carry the real per-group table values, narrative
+    prose and key findings. The synthesizer must use these (not just the weight
+    JSON), and their numbers must be allowed past the number-drift guard.
+
+    Returns dict with:
+      group_lines:   prompt lines "- <group>: <value> (n=<n>)"
+      groups:        structured [{label, value, n}] (sorted as generated)
+      context_lines: prompt lines from narrative/key_finding/metric content
+      tokens:        numeric tokens to add to the allowed set
+      measure:       measure label, unit: measure unit, n_groups: group count
+    """
+    import re as _re
+    num = _re.compile(r"\d[\d,]*\.?\d*")
+    group_lines: list[str] = []
+    groups: list[dict[str, Any]] = []
+    context_lines: list[str] = []
+    tokens: list[str] = []
+    measure_name = ""
+    unit = ""
+
+    for b in blocks or []:
+        if not isinstance(b, dict):
+            continue
+        td = b.get("tableData")
+        if isinstance(td, dict):
+            measure_name = measure_name or str(td.get("measure") or "")
+            unit = unit or str(td.get("unit") or "")
+            rows = td.get("rows") or td.get("items") or td.get("rankingData") or []
+            if isinstance(rows, list) and rows and not groups:
+                for r in rows[:25]:
+                    if not isinstance(r, dict):
+                        continue
+                    key = r.get("key") or {}
+                    label = " / ".join(
+                        str(v) for v in key.values() if v is not None and str(v).strip() != ""
+                    ) or "All records"
+                    val = r.get("value")
+                    if val is None:
+                        continue
+                    n = r.get("n")
+                    groups.append({"label": label, "value": val, "n": n})
+                    line = f"- {label}: {_fmt_figure(val, unit)}"
+                    tokens.append(str(val))
+                    if n is not None:
+                        line += f" (n={n})"
+                        tokens.append(str(n))
+                    group_lines.append(line)
+        else:
+            kind = str(b.get("kind") or b.get("type") or "")
+            content = str(b.get("content") or "").strip()
+            if content and kind in ("narrative", "key_finding", "metric", "source_note"):
+                context_lines.append(f"- ({kind}) {content}")
+                tokens.extend(num.findall(content))
+            mv = b.get("metricValue")
+            if mv:
+                tokens.extend(num.findall(str(mv)))
+
+    return {
+        "group_lines": group_lines,
+        "groups": groups,
+        "context_lines": context_lines,
+        "tokens": tokens,
+        "measure": measure_name,
+        "unit": unit,
+        "n_groups": len(groups),
+    }
+
+
+def _deterministic_synthesis(payload: "SynthesizeIn", figure_lines: list[str],
+                             evidence: dict[str, Any] | None = None) -> str:
+    wi = payload.weight_insights or {}
+    ev = evidence or {}
+    bits: list[str] = []
+    if payload.description.strip():
+        bits.append(payload.description.strip().rstrip(".") + ".")
+    rows_after = wi.get("rowsAfterFilter")
+    if rows_after:
+        weighting = (
+            f"survey weighting via multiplier '{wi.get('weightColumn')}' (scale {wi.get('weightScale')})"
+            if wi.get("weightingApplied") else "unweighted aggregation"
+        )
+        bits.append(f"The analysis covers {int(rows_after):,} filtered records using {weighting}.")
+
+    # Table relationships + cardinality — the actual per-group breakdown.
+    groups = ev.get("groups") or []
+    measure = ev.get("measure") or ((wi.get("measures") or [{}])[0].get("label") if wi.get("measures") else "the measure")
+    unit = ev.get("unit") or ""
+    if groups:
+        valued = [g for g in groups if g.get("value") is not None]
+        if valued:
+            top, bottom = valued[0], valued[-1]
+            n_groups = len(valued)
+            bits.append(
+                f"Across {n_groups} group{'s' if n_groups != 1 else ''}, {top['label']} records the "
+                f"highest {measure} at {_fmt_figure(top['value'], unit)}"
+            )
+            if n_groups >= 2 and bottom.get("value") is not None:
+                try:
+                    spread = abs(float(top["value"]) - float(bottom["value"]))
+                    bits[-1] += (
+                        f", compared with {_fmt_figure(bottom['value'], unit)} for {bottom['label']}, "
+                        f"a spread of {_fmt_figure(spread, unit)}."
+                    )
+                except (TypeError, ValueError):
+                    bits[-1] += "."
+            else:
+                bits[-1] += "."
+            covered = sum(int(g.get("n") or 0) for g in valued)
+            if covered:
+                bits.append(f"These groups are computed from {covered:,} source records in total.")
+
+    # Weighted vs unweighted comparison for the headline measure.
+    measures = (wi.get("measures") or [])
+    if measures:
+        top_m = measures[0]
+        rep = top_m.get("selectedValue")
+        if rep is not None and top_m.get("weighted") and top_m.get("unweightedMean") is not None:
+            bits.append(
+                f"On a weighted basis the overall {top_m.get('label') or top_m.get('col')} is "
+                f"{_fmt_figure(rep)} (unweighted comparison {_fmt_figure(top_m.get('unweightedMean'))})."
+            )
+    for note in (wi.get("notes") or [])[:1]:
+        bits.append(str(note))
+    return " ".join(bits) or "No synthesizable figures were provided for this section."
+
+
+def _derive_key_findings(wi: dict[str, Any] | None, evidence: dict[str, Any] | None = None) -> list[str]:
+    out: list[str] = []
+    ev = evidence or {}
+    groups = [g for g in (ev.get("groups") or []) if g.get("value") is not None]
+    measure = ev.get("measure") or "value"
+    unit = ev.get("unit") or ""
+    if groups:
+        top = groups[0]
+        out.append(f"{top['label']} leads {measure} at {_fmt_figure(top['value'], unit)}.")
+        if len(groups) >= 2:
+            bottom = groups[-1]
+            out.append(f"{bottom['label']} is lowest at {_fmt_figure(bottom['value'], unit)}.")
+    for m in ((wi or {}).get("measures") or [])[:2]:
+        label = m.get("label") or m.get("col")
+        rep = m.get("selectedValue")
+        if rep is None:
+            continue
+        if m.get("weighted") and m.get("delta") is not None:
+            out.append(f"{label}: {_fmt_figure(rep)} (weighting shifts the mean by {_fmt_figure(m.get('delta'))}).")
+        else:
+            out.append(f"{label}: {_fmt_figure(rep)}.")
+    return out[:5]
+
+
+def _drifted_numbers(allowed_text: str, candidate: str) -> list[str]:
+    """Return numeric tokens in ``candidate`` not grounded (even by rounding) in
+    ``allowed_text``. Empty list ⇒ every number is grounded.
+    """
+    import re as _re
+    num = _re.compile(r"\d[\d,]*\.?\d*")
+
+    def _floats(text: str) -> list[float]:
+        out: list[float] = []
+        for tok in num.findall(text):
+            try:
+                out.append(float(tok.replace(",", "")))
+            except ValueError:
+                continue
+        return out
+
+    allowed = _floats(allowed_text)
+    if not allowed:
+        return []
+    allowed_set: set[float] = set()
+    for a in allowed:
+        for k in (0, 1, 2):
+            allowed_set.add(round(a, k))
+    drifted: list[str] = []
+    for tok in num.findall(candidate):
+        try:
+            c = float(tok.replace(",", ""))
+        except ValueError:
+            continue
+        if not any(round(c, k) in allowed_set for k in (0, 1, 2)):
+            drifted.append(tok)
+    return drifted
+
+
+def _numbers_within_allowed(allowed_text: str, candidate: str) -> bool:
+    """True iff every numeric token in ``candidate`` is grounded in ``allowed_text``.
+
+    A candidate number is grounded if it matches an allowed number exactly OR is a
+    natural rounding of one (they agree when both are rounded to integer / 1dp /
+    2dp). This lets the synthesizer rephrase "1,556.9" as "1,557" without being
+    flagged, while still rejecting genuinely invented numbers (e.g. 99,999) that do
+    not round-match any grounded figure. Commas are stripped before comparison.
+    """
+    return not _drifted_numbers(allowed_text, candidate)
+
+
+
+@router.post("/{template_id}/{signature}/synthesize", response_model=SynthesizeOut)
+def synthesize_report(template_id: str, signature: str, body: SynthesizeIn) -> SynthesizeOut:
+    """Synthesize grounded report prose from the officer's collected inputs.
+
+    The description, tags, requested components, measures and the weight-insights
+    JSON (weighted + unweighted figures) are composed into a single system prompt
+    for the LLM (OpenRouter/etc via ``llm_router``). The model may ONLY use the
+    figures supplied — a number-drift guard rejects any output that introduces or
+    alters numeric tokens, falling back to a deterministic synthesis.
+    ``LLM_DISABLED=1`` ⇒ deterministic synthesis (no network).
+    """
+    figure_lines, _allowed = _collect_figures(body.weight_insights, body.measures)
+    evidence = _collect_block_evidence(body.blocks)
+    deterministic = _deterministic_synthesis(body, figure_lines, evidence)
+    key_findings = _derive_key_findings(body.weight_insights, evidence)
+    notes: list[str] = list((body.weight_insights or {}).get("notes") or [])
+
+    from report_builder.llm_router import llm_disabled
+
+    want_llm = body.use_llm if body.use_llm is not None else (not llm_disabled())
+    if not want_llm or llm_disabled():
+        return SynthesizeOut(content=deterministic, key_findings=key_findings, used_llm=False,
+                             provider="deterministic", figures_used=figure_lines + evidence["group_lines"], notes=notes)
+
+    wi = body.weight_insights or {}
+    comp_lines = [f"- {c.get('type')}: {c.get('title') or c.get('type')}" for c in (body.components or [])]
+    filters = wi.get("filters") or []
+    filter_lines = [
+        f"- {f.get('col')} {f.get('op')} {f.get('value')}" for f in filters if f.get("col")
+    ]
+    section_label = body.section_title or (wi.get("sectionTitle") or "Generated section")
+    group_lines = evidence["group_lines"]
+    context_lines = evidence["context_lines"]
+    measure_label = evidence.get("measure") or (body.measures[0].get("label") if body.measures else "the measure")
+
+    prompt = (
+        "You are a Ministry of Statistics (MoSPI) desk officer writing one cohesive, "
+        "factual section of an official statistical report. Write in formal, neutral, "
+        "publication-grade English suitable for a government publication.\n\n"
+        "STRICT RULES:\n"
+        "1. Use ONLY the numbers under FIGURES and GROUP BREAKDOWN. Do NOT invent, infer, "
+        "extrapolate, or re-round any number. Every numeric value in your output must appear "
+        "in those sections.\n"
+        "2. Write a flowing analytical paragraph (or two) like an official report: describe the "
+        "relationship across groups — which group leads, which trails, the spread/gap between "
+        "them, how many groups and how many source records (cardinality) underlie the result, "
+        "and any notable pattern. Then state the headline measure.\n"
+        "3. When a measure is weighted, prefer the weighted figure and may note the unweighted "
+        "comparison; never present them as independent results.\n"
+        "4. No bullet lists, no headings, no markdown — return 1 to 3 flowing paragraphs.\n"
+        f"5. Keep the whole section under {max(60, int(body.max_words))} words.\n\n"
+        f"SECTION: {section_label}\n"
+        f"CHAPTER: {body.chapter_title or '—'}\n"
+        f"ANALYSIS TYPE: {body.analysis_type}\n"
+        f"HEADLINE MEASURE: {measure_label}\n"
+        f"OFFICER INTENT (description): {body.description.strip() or '—'}\n"
+        f"STYLE TAGS: {', '.join(body.tags) or '—'}\n"
+        f"REQUESTED COMPONENTS:\n" + ("\n".join(comp_lines) or "- narrative") + "\n"
+        f"FILTERS APPLIED:\n" + ("\n".join(filter_lines) or "- none") + "\n"
+        f"WEIGHTING: " + (
+            f"applied — multiplier '{wi.get('weightColumn')}', scale {wi.get('weightScale')}, "
+            f"formula {((wi.get('formula') or {}).get('weightedMean')) or 'Σ(x·w)/Σw'}"
+            if wi.get("weightingApplied") else "not applied (unweighted)"
+        ) + "\n"
+        f"ROWS: {wi.get('rowsAfterFilter') or 'n/a'} after filter of {wi.get('rowsScanned') or 'n/a'} scanned; "
+        f"{evidence.get('n_groups', 0)} group(s) in the breakdown\n\n"
+        "GROUP BREAKDOWN (per-group table values, n = source rows per group):\n"
+        + ("\n".join(group_lines) or "- none provided") + "\n\n"
+        "WEIGHT FIGURES (overall weighted/unweighted aggregates):\n"
+        + ("\n".join(figure_lines) or "- none provided") + "\n\n"
+        + ("EXISTING DRAFT BLOCKS (context — do not copy verbatim, do not add new numbers):\n"
+           + "\n".join(context_lines) + "\n\n" if context_lines else "")
+        + "DRAFT (deterministic, grounded — rewrite into polished report prose without changing any number):\n"
+        + deterministic + "\n\n"
+        "Return only the improved report section prose."
+    )
+
+    provider = "deterministic"
+    content = deterministic
+    used_llm = False
+    max_out = min(1200, max(160, int(body.max_words) * 3))
+    # Allowed numbers span the weight figures, the per-group table values, the
+    # block context text and the deterministic draft — so the synthesizer may cite
+    # any real table figure, but nothing invented.
+    allowed_text = " ".join(
+        figure_lines + group_lines + context_lines + evidence["tokens"]
+    ) + " " + deterministic
+
+    def _accept(raw: str | None) -> str | None:
+        """Return cleaned prose if it passes the number-drift guard, else None."""
+        if not raw or len(raw.strip()) <= 30:
+            return None
+        cleaned = raw.strip()
+        drifted = _drifted_numbers(allowed_text, cleaned)
+        if drifted:
+            notes.append("Synthesizer output rejected for number drift; using grounded draft.")
+            logger.info("[synthesize] %s — number drift rejected (offending=%s)",
+                        section_label, ", ".join(drifted[:8]))
+            return None
+        return cleaned
+
+    # ── Primary: configured provider via llm_router (OpenRouter on this laptop). ──
+    try:
+        from report_builder.llm_router import _resolve_provider, llm_text_call  # type: ignore
+        try:
+            primary_label = _resolve_provider("report_narrative")
+        except Exception:  # noqa: BLE001
+            primary_label = "llm"
+        out = llm_text_call(prompt, task="report_narrative", max_tokens=max_out, temperature=0.25)
+        accepted = _accept(out)
+        if accepted:
+            content, used_llm, provider = accepted, True, primary_label
+    except Exception as exc:  # noqa: BLE001
+        notes.append(f"Primary synthesizer provider unavailable: {exc}")
+        logger.info("[synthesize] primary LLM skipped: %s", exc)
+
+    # ── Fallback: Azure OpenAI — laptop-only (AZURE_OPENAI_* live only in the
+    #    company-laptop .env). Engaged when OpenRouter is blocked/unreachable here. ──
+    if not used_llm and os.getenv("AZURE_OPENAI_API_KEY") and os.getenv("AZURE_OPENAI_ENDPOINT"):
+        try:
+            from report_builder.llm_router import _call_azure  # type: ignore
+            azure_out = _call_azure(prompt, None, max_out, 0.25, task="report_narrative")
+            accepted = _accept(azure_out)
+            if accepted:
+                content, used_llm, provider = accepted, True, "azure"
+                logger.info("[synthesize] %s — Azure fallback succeeded", section_label)
+            elif azure_out is None:
+                notes.append("Azure fallback returned no content.")
+        except Exception as exc:  # noqa: BLE001
+            notes.append(f"Azure fallback unavailable: {exc}")
+            logger.info("[synthesize] Azure fallback skipped: %s", exc)
+
+    return SynthesizeOut(content=content, key_findings=key_findings, used_llm=used_llm,
+                         provider=provider if used_llm else "deterministic",
+                         figures_used=figure_lines + group_lines, notes=notes)
+
+
 @router.get("/{template_id}/{signature}/report")
 def get_report(
     template_id: str, signature: str, version: Optional[int] = None

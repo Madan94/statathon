@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Check, Loader2, Play, ShieldCheck, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Loader2, Play, ShieldCheck, Sparkles, X } from 'lucide-react';
 
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -71,6 +71,10 @@ export default function QueryFlowPage() {
   const [flowStep, setFlowStep] = useState<FlowStep>(isFlowStep(routeStep) ? routeStep : 'scope');
   const [selectedTags, setSelectedTags] = useState<string[]>(['official', 'evidence']);
   const [acceptedPreview, setAcceptedPreview] = useState<AcceptedPreviewMetadata | null>(null);
+  // Synthesizer (LLM layer) — grounds report prose in the accepted weight JSON
+  // plus the officer's description/components.
+  const [synthesizing, setSynthesizing] = useState(false);
+  const [synthesis, setSynthesis] = useState<{ content: string; keyFindings: string[]; usedLlm: boolean; provider: string; notes: string[] } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -258,6 +262,7 @@ export default function QueryFlowPage() {
     }
     setPreviewGenerating(true);
     setError(null);
+    setSynthesis(null);
     try {
       const request = buildReportSectionSpec(
         {
@@ -277,6 +282,32 @@ export default function QueryFlowPage() {
     }
   };
 
+  const synthesizeReport = async () => {
+    if (!workspace) return;
+    setSynthesizing(true);
+    setError(null);
+    try {
+      const out = await generatePhaseApi.synthesize(workspace.template_id, workspace.signature, {
+        description: sectionConfig.descriptionText || suggestedDescription,
+        tags: selectedTags,
+        components: selectedComponents.map((type) => ({ type })),
+        measures: sectionConfig.measures.map((m) => ({ col: m.col, label: m.label, agg: m.agg, weighted: m.weighted, unit: m.unit })),
+        weight_insights: (acceptedPreview?.weightInsights ?? null) as Record<string, unknown> | null,
+        blocks: blocks as unknown as Array<Record<string, unknown>>,
+        section_title: sectionConfig.sectionTitle,
+        chapter_title: sectionConfig.chapterTitle,
+        dataset_id: workspace.dataset_id,
+        analysis_type: sectionConfig.analysisType,
+        max_words: 220,
+      });
+      setSynthesis({ content: out.content, keyFindings: out.key_findings || [], usedLlm: out.used_llm, provider: out.provider, notes: out.notes || [] });
+    } catch (err: unknown) {
+      setError(executeErrorMessage(err));
+    } finally {
+      setSynthesizing(false);
+    }
+  };
+
   const sendToCanvas = () => {
     if (!workspace || !blocks.length) return;
     const request = buildReportSectionSpec(
@@ -287,6 +318,19 @@ export default function QueryFlowPage() {
       },
       { templateId: workspace.template_id, signature: workspace.signature, datasetId: workspace.dataset_id },
     );
+    // Prepend the AI-synthesized, weight-grounded narrative as the lead block.
+    const synthesizedBlocks: GeneratedSectionBlock[] = synthesis
+      ? [{
+          id: `${request.requestId}-synthesis`,
+          index: -1,
+          kind: 'narrative',
+          title: 'Synthesized summary',
+          content: synthesis.content,
+          sectionPath: [sectionConfig.chapterTitle, sectionConfig.sectionTitle],
+          status: 'done',
+          pageIndex: 0,
+        }, ...blocks]
+      : blocks;
     const bundle: ReportCanvasHandoffBundle = {
       version: 'report.canvas.handoff.v1',
       templateId: workspace.template_id,
@@ -296,7 +340,7 @@ export default function QueryFlowPage() {
       sections: [{
         id: request.requestId,
         request,
-        blocks,
+        blocks: synthesizedBlocks,
         meta: {
           rowsAfterFilter: execution?.rowsAfterFilter,
           rowsScanned: execution?.rowsScanned,
@@ -589,6 +633,53 @@ export default function QueryFlowPage() {
                   <button type="button" onClick={() => { setBlocks([]); goToStep('components'); }} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs text-text-muted hover:text-text"><X className="h-3.5 w-3.5" /> Close preview</button>
                 </div>
                 {blocks.length > 0 ? <div className="space-y-3">{blocks.map((block) => <SectionBlockView key={block.id} block={block} />)}</div> : <Alert variant="warning">Generate the report preview from the Components step first.</Alert>}
+
+                {/* Synthesizer LLM layer — composes description + components +
+                    weight-insights JSON into grounded report prose. */}
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <h3 className="flex items-center gap-1.5 text-sm font-semibold text-text"><Sparkles className="h-4 w-4 text-primary" /> AI report synthesizer</h3>
+                      <p className="mt-1 text-xs text-text-muted">
+                        Feeds your description, tags, components and the accepted weight-insights JSON to the LLM to draft grounded section prose.
+                        {acceptedPreview?.weightInsights?.weightingApplied ? ' Weighted figures included.' : ''}
+                      </p>
+                    </div>
+                    <Button type="button" size="sm" onClick={synthesizeReport} disabled={synthesizing}>
+                      {synthesizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                      {synthesis ? 'Re-synthesize' : 'Synthesize content'}
+                    </Button>
+                  </div>
+                  {synthesis && (
+                    <div className="mt-3 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant={synthesis.usedLlm ? 'success' : 'muted'} className="text-[10px] uppercase">
+                          {synthesis.usedLlm ? `LLM · ${synthesis.provider}` : 'deterministic'}
+                        </Badge>
+                        {acceptedPreview?.weightInsights && (
+                          <Badge variant="default" className="text-[10px] uppercase">grounded in weight.insights.v1</Badge>
+                        )}
+                      </div>
+                      <div className="rounded-lg border border-border bg-surface-card p-4">
+                        <p className="whitespace-pre-line text-sm leading-relaxed text-text">{synthesis.content}</p>
+                      </div>
+                      {synthesis.keyFindings.length > 0 && (
+                        <div className="rounded-lg border border-border bg-surface-card p-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Key findings</p>
+                          <ul className="mt-1 list-disc space-y-0.5 pl-5 text-xs text-text">
+                            {synthesis.keyFindings.map((finding) => <li key={finding}>{finding}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      {synthesis.notes.length > 0 && (
+                        <ul className="list-disc space-y-0.5 pl-5 text-[11px] text-text-muted">
+                          {synthesis.notes.map((note) => <li key={note}>{note}</li>)}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex flex-wrap justify-between gap-2">
                   <Button type="button" variant="outline" onClick={() => goToStep('components')}>Back to components</Button>
                   <Button type="button" onClick={sendToCanvas} disabled={!blocks.length}>Send to canvas <ArrowRight className="h-4 w-4" /></Button>

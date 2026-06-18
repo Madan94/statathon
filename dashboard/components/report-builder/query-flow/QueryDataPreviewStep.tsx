@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Database, Edit3, Filter, Scale, Table2 } from 'lucide-react';
+import { Calculator, Check, Database, Edit3, Filter, Scale, Table2 } from 'lucide-react';
 
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
@@ -19,7 +19,7 @@ import {
   type ReportSectionRequest,
   type SectionExecutionResult,
 } from '@/lib/report-section';
-import type { AcceptedPreviewMetadata } from '@/lib/report-section/canvasHandoff';
+import type { AcceptedPreviewMetadata, WeightInsights, WeightMeasureInsight } from '@/lib/report-section/canvasHandoff';
 
 type PreviewAggregation = 'sum' | 'mean' | 'weighted_mean' | 'count' | 'median' | 'min' | 'max';
 type PreviewTab = 'data' | 'weight';
@@ -135,6 +135,100 @@ function effectiveAggregation(measure: SectionMeasure): PreviewAggregation {
     return measure.agg as PreviewAggregation;
   }
   return measure.weighted ? 'weighted_mean' : 'mean';
+}
+
+/**
+ * Compute weighted vs unweighted aggregates per measure from the accepted
+ * filtered slice. Produces the `weight.insights.v1` JSON that travels with the
+ * accepted preview into description / components / preview and grounds the
+ * report synthesizer. Weighted figures use fᵢ = wᵢ / scale (NSS multiplier).
+ */
+function buildWeightInsights(
+  rows: DataRow[],
+  measures: SectionMeasure[],
+  weightCol: string | null,
+  scale: number,
+  filters: AcceptedPreviewMetadata['filters'],
+  rowCounts: { rowsScanned?: number; rowsAfterFilter?: number },
+): WeightInsights {
+  const weightingApplied = measures.some((m) => m.weighted || m.agg === 'weighted_mean');
+  let nonPositiveWeightRows = 0;
+  if (weightCol) {
+    for (const row of rows) {
+      const w = toNumber(row[weightCol]);
+      if (w == null || w <= 0) nonPositiveWeightRows += 1;
+    }
+  }
+
+  const measureInsights: WeightMeasureInsight[] = measures.map((measure) => {
+    const aggregation = effectiveAggregation(measure);
+    const isWeighted = measure.weighted || aggregation === 'weighted_mean';
+    let rowsUsed = 0;
+    let rowsSkipped = 0;
+    let unweightedTotal = 0;
+    let weightSum = 0;
+    let weightedTotal = 0;
+    for (const row of rows) {
+      const x = toNumber(row[measure.col]);
+      if (x == null) { rowsSkipped += 1; continue; }
+      unweightedTotal += x;
+      rowsUsed += 1;
+      if (weightCol) {
+        const w = toNumber(row[weightCol]);
+        if (w != null && w > 0) {
+          const f = w / scale;
+          weightSum += f;
+          weightedTotal += x * f;
+        }
+      }
+    }
+    const unweightedMean = rowsUsed > 0 ? unweightedTotal / rowsUsed : null;
+    const weightedMean = weightSum > 0 ? weightedTotal / weightSum : null;
+    const selectedValue =
+      aggregation === 'sum' ? unweightedTotal
+      : aggregation === 'count' ? rowsUsed
+      : aggregation === 'weighted_mean' ? weightedMean
+      : unweightedMean;
+    return {
+      col: measure.col,
+      label: measure.label || measure.col,
+      aggregation,
+      weighted: isWeighted,
+      rowsUsed,
+      rowsSkipped,
+      weightSum: weightCol ? Number(weightSum.toFixed(6)) : null,
+      weightedTotal: weightCol ? Number(weightedTotal.toFixed(6)) : null,
+      weightedMean: weightedMean != null ? Number(weightedMean.toFixed(6)) : null,
+      unweightedTotal: Number(unweightedTotal.toFixed(6)),
+      unweightedMean: unweightedMean != null ? Number(unweightedMean.toFixed(6)) : null,
+      selectedValue: selectedValue != null ? Number(selectedValue.toFixed(6)) : null,
+      delta: weightedMean != null && unweightedMean != null ? Number((weightedMean - unweightedMean).toFixed(6)) : null,
+    };
+  });
+
+  const notes: string[] = [];
+  if (!weightCol) notes.push('No multiplier column selected — all figures are unweighted.');
+  else if (!weightingApplied) notes.push(`Multiplier '${weightCol}' is available but no measure is weighted; figures shown are unweighted.`);
+  else notes.push(`Survey weighting applied with multiplier '${weightCol}' at scale ${scale} (fᵢ = wᵢ/${scale}).`);
+  if (nonPositiveWeightRows > 0) notes.push(`${nonPositiveWeightRows} row(s) had missing/zero/negative weights and were excluded from weighted sums.`);
+
+  return {
+    version: 'weight.insights.v1',
+    weightColumn: weightCol,
+    weightScale: scale,
+    weightingApplied,
+    rowsScanned: rowCounts.rowsScanned,
+    rowsAfterFilter: rowCounts.rowsAfterFilter,
+    nonPositiveWeightRows,
+    filters,
+    measures: measureInsights,
+    formula: {
+      weightedValue: `xᵢ × wᵢ / ${scale}`,
+      weightedTotal: `Σ(xᵢ × wᵢ / ${scale})`,
+      weightedMean: `Σ(xᵢ × wᵢ / ${scale}) ÷ Σ(wᵢ / ${scale})`,
+    },
+    notes,
+  };
 }
 
 function roleVariant(role: DatasetColumnProfile['role']): 'default' | 'success' | 'warning' | 'muted' {
@@ -284,6 +378,20 @@ export function QueryDataPreviewStep({
   }, [execution.warnings, missingWeightForWeightedMeasure, nonPositiveWeightCount, predicateResult.warnings, previewMode]);
   const accepted = acceptedPreview?.acceptanceKey === acceptanceKey;
 
+  // Live weight-insights JSON for this slice — shown for review and attached on
+  // accept so description / components / preview and the synthesizer all share it.
+  const liveWeightInsights = useMemo(
+    () => buildWeightInsights(
+      filteredRows,
+      config.measures,
+      weightCol,
+      WEIGHT_SCALE,
+      request.scope.filters.map((filter) => ({ col: filter.col, op: filter.op, value: filter.value, connector: filter.connector })),
+      { rowsScanned: execution.rowsScanned, rowsAfterFilter: execution.rowsAfterFilter },
+    ),
+    [filteredRows, config.measures, weightCol, request.scope.filters, execution.rowsScanned, execution.rowsAfterFilter],
+  );
+
   const updateMeasure = (measureId: string, patch: Partial<SectionMeasure>) => {
     onConfigChange({
       ...config,
@@ -310,6 +418,19 @@ export function QueryDataPreviewStep({
   };
 
   const acceptPreview = () => {
+    const weightInsights = buildWeightInsights(
+      filteredRows,
+      config.measures,
+      weightCol,
+      WEIGHT_SCALE,
+      request.scope.filters.map((filter) => ({
+        col: filter.col,
+        op: filter.op,
+        value: filter.value,
+        connector: filter.connector,
+      })),
+      { rowsScanned: execution.rowsScanned, rowsAfterFilter: execution.rowsAfterFilter },
+    );
     const metadata: AcceptedPreviewMetadata = {
       acceptedAt: new Date().toISOString(),
       acceptanceKey,
@@ -339,6 +460,7 @@ export function QueryDataPreviewStep({
         weighted: measure.weighted || measure.agg === 'weighted_mean',
         weightCol: measure.weighted || measure.agg === 'weighted_mean' ? weightCol : null,
       })),
+      weightInsights,
       warnings: warningMessages,
     };
     onAccept(metadata);
@@ -571,6 +693,58 @@ export function QueryDataPreviewStep({
           </div>
         </div>
       )}
+
+      {/* Weight insights — the weight.insights.v1 JSON that travels into the
+          description / components / preview steps and grounds the synthesizer.
+          Weighted and unweighted measures are shown together; weighted carries
+          the extra Σw / weighted-total / weighted-mean figures. */}
+      <details className="rounded-xl border border-border bg-surface">
+        <summary className="flex cursor-pointer items-center justify-between gap-2 px-4 py-3 text-sm font-semibold text-text">
+          <span className="flex items-center gap-2">
+            <Calculator className="h-4 w-4 text-primary" /> Weight insights (passed to description, components &amp; report)
+          </span>
+          <Badge variant={liveWeightInsights.weightingApplied ? 'success' : 'muted'} className="text-[10px] uppercase">
+            {liveWeightInsights.weightingApplied ? 'weighted' : 'unweighted'}
+          </Badge>
+        </summary>
+        <div className="space-y-3 border-t border-border px-4 py-3">
+          <div className="overflow-auto rounded-lg border border-border bg-surface-card">
+            <table className="w-full min-w-[680px] text-xs">
+              <thead>
+                <tr className="border-b border-border text-left text-[10px] uppercase text-text-muted">
+                  <th className="px-3 py-2">Measure</th>
+                  <th className="px-3 py-2">Aggregation</th>
+                  <th className="px-3 py-2 text-right">Unweighted mean</th>
+                  <th className="px-3 py-2 text-right">Weighted mean</th>
+                  <th className="px-3 py-2 text-right">Δ (w − unw)</th>
+                  <th className="px-3 py-2 text-right">Reported</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {liveWeightInsights.measures.map((m) => (
+                  <tr key={m.col}>
+                    <td className="px-3 py-2 font-medium text-text">{m.label}</td>
+                    <td className="px-3 py-2 text-text-muted">{m.aggregation.replace('_', ' ')}{m.weighted ? ' · weighted' : ''}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-text-muted">{fmtNum(m.unweightedMean, 3)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-primary">{m.weightedMean != null ? fmtNum(m.weightedMean, 3) : '—'}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-text-muted">{m.delta != null ? fmtNum(m.delta, 3) : '—'}</td>
+                    <td className="px-3 py-2 text-right font-semibold tabular-nums text-text">{fmtNum(m.selectedValue, 3)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {liveWeightInsights.notes.length > 0 && (
+            <ul className="list-disc space-y-0.5 pl-5 text-[11px] text-text-muted">
+              {liveWeightInsights.notes.map((note) => <li key={note}>{note}</li>)}
+            </ul>
+          )}
+          <details className="rounded-lg border border-border bg-surface-card">
+            <summary className="cursor-pointer px-3 py-2 text-[11px] font-medium text-text-muted">Raw weight.insights.v1 JSON</summary>
+            <pre className="max-h-72 overflow-auto px-3 py-2 text-[10px] leading-relaxed text-text">{JSON.stringify(liveWeightInsights, null, 2)}</pre>
+          </details>
+        </div>
+      </details>
 
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4">
         <Button type="button" variant="outline" onClick={onBack}>Back to scope</Button>
