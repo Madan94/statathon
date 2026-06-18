@@ -211,6 +211,15 @@ def profile_column(
             final_dtype = "string_like"
 
     profile["datatype"] = final_dtype
+    profile["is_auxiliary"] = bool(n > 0 and missing_ratio <= 0 and cardinality == 1)
+    if profile["is_auxiliary"]:
+        top = profile.get("top_values") or []
+        if top:
+            first = top[0]
+            if isinstance(first, dict):
+                profile["constant_value"] = first.get("value")
+            elif isinstance(first, (list, tuple)) and first:
+                profile["constant_value"] = first[0]
     # #region agent log
     if column_name == "year" or (
         isinstance(profile.get("skewness"), float) and math.isnan(profile["skewness"])

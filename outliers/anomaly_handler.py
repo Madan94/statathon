@@ -18,13 +18,19 @@ MethodChoice = Literal["Z_SCORE", "IQR"]
 def build_outlier_method_analysis(
     df: pd.DataFrame,
     schema: dict[str, str],
+    *,
+    column_roles: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Step 1+2: goodness-of-fit and confidence scores — no detection."""
+    from core.column_roles import is_identifier_column
+
     gof = build_goodness_of_fit_bundle(df, schema)
     gof_by_col = {g["column"]: g for g in gof}
 
     per_column: list[dict[str, Any]] = []
     for col in df.columns:
+        if is_identifier_column(str(col), column_roles):
+            continue
         if not is_numeric_column(schema.get(col), df[col]):
             continue
         pick = method_recommendation(df[col])
@@ -160,5 +166,10 @@ def merge_column_detection(
 
 
 # Backward-compatible alias used by smoke tests
-def build_anomaly_intelligence(df: pd.DataFrame, schema: dict[str, str]) -> dict[str, Any]:
-    return build_outlier_method_analysis(df, schema)
+def build_anomaly_intelligence(
+    df: pd.DataFrame,
+    schema: dict[str, str],
+    *,
+    column_roles: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    return build_outlier_method_analysis(df, schema, column_roles=column_roles)

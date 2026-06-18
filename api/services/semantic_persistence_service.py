@@ -53,6 +53,10 @@ class SemanticPersistenceService:
                         "signals": meta.get("signals"),
                         "candidates": meta.get("candidates"),
                         "explanation": meta.get("explanation"),
+                        "analysis_role": meta.get("analysis_role"),
+                        "role_confidence": meta.get("role_confidence"),
+                        "role_source": meta.get("role_source"),
+                        "role_reason": meta.get("role_reason"),
                     },
                 }
             )

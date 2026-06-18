@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import type { AnalysisResult, AnomalyCandidate, ImputationCandidate, ColumnProfile } from '@/lib/api';
+import type { AnalysisResult, AnomalyCandidate, ImputationCandidate } from '@/lib/api';
+import { orderedVariableColumns, skippedColumnSummary } from '@/lib/columnAnalysisUtils';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/cn';
 import { Search, ChevronLeft, TrendingUp, Minus, CheckCircle2 } from 'lucide-react';
@@ -56,27 +57,33 @@ export default function ColumnNav({ results, selectedColumn, onSelectColumn, onB
     dtypes?: Record<string, string>;
   } | undefined;
 
-  const columnProfiles = results.column_profiles as Record<string, ColumnProfile> | undefined;
-  const schema = results.schema ?? {};
-  const allColumns = Object.keys(columnProfiles ?? schema);
+  const variableColumns = orderedVariableColumns(results);
+  const skipped = skippedColumnSummary(results);
+  const variableSet = new Set(variableColumns);
 
   const anomalyCandidates = (
     (results.phase3 as { anomaly_candidates?: AnomalyCandidate[] } | undefined)
       ?.anomaly_candidates ?? []
-  );
+  ).filter((c) => variableSet.has(c.column));
   const imputationCandidates = (
     (results.phase3 as { imputation_candidates?: ImputationCandidate[] } | undefined)
       ?.imputation_candidates ?? []
-  );
+  ).filter((c) => variableSet.has(c.column));
 
-  const filteredColumns = allColumns.filter((c) =>
+  const filteredColumns = variableColumns.filter((c) =>
     c.toLowerCase().includes(query.toLowerCase())
   );
 
   // Group by semantic domain
   const domainMap: Record<string, string> = {};
   results.semantic_mapping?.forEach((row) => {
-    if (row.domain) domainMap[row.column] = row.domain;
+    if (row.domain) {
+      for (const col of variableColumns) {
+        if (col === row.column || col.toLowerCase() === row.column.toLowerCase()) {
+          domainMap[col] = row.domain;
+        }
+      }
+    }
   });
 
   const domains = [...new Set(Object.values(domainMap))].sort();
@@ -209,7 +216,11 @@ export default function ColumnNav({ results, selectedColumn, onSelectColumn, onB
 
       {/* Footer counts */}
       <div className="p-3 border-t border-border text-[10px] text-text-muted">
-        {allColumns.length} column{allColumns.length !== 1 ? 's' : ''} total ·{' '}
+        {variableColumns.length} variable column{variableColumns.length !== 1 ? 's' : ''}
+        {skipped.skippedCount > 0 && (
+          <> · {skipped.skippedCount} skipped (identifiers + auxiliary)</>
+        )}
+        {' · '}
         {anomalyCandidates.length} anomal{anomalyCandidates.length !== 1 ? 'ies' : 'y'} ·{' '}
         {imputationCandidates.length} missing
       </div>

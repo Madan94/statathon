@@ -334,6 +334,15 @@ def enrich_payload_for_dashboard(
         merged_meta = {**merged_meta, **payload["meta"]}
     if merged_meta:
         enriched["meta"] = {**(enriched.get("meta") or {}), **merged_meta}
+    try:
+        from core.feature_flags import validation_demo_noise_enabled
+
+        enriched["meta"] = {
+            **(enriched.get("meta") or {}),
+            "demo_noise_enabled": validation_demo_noise_enabled(),
+        }
+    except Exception:
+        pass
     if payload.get("column_profiles"):
         enriched["column_profiles"] = payload["column_profiles"]
 

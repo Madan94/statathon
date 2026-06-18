@@ -196,6 +196,11 @@ CLUSTER_PURITY_THRESHOLD = float(os.getenv("SEMV2_CLUSTER_PURITY", "0.75"))
 # Feature sampling.
 MAX_SAMPLE_VALUES = int(os.getenv("SEMV2_MAX_SAMPLES", "8"))
 
+# Column role classification (identifier vs variable)
+SEMV2_ROLE_LLM_ENABLED = os.getenv("SEMV2_ROLE_LLM_ENABLED", "1")
+SEMV2_ROLE_HEURISTIC_ONLY = os.getenv("SEMV2_ROLE_HEURISTIC_ONLY", "0")
+SEMV2_ROLE_LLM_MODEL = os.getenv("SEMV2_ROLE_LLM_MODEL") or os.getenv("SEMV2_OPENROUTER_MODEL")
+
 
 def validate_weights() -> dict[str, float]:
     """Return any weight groups whose totals deviate from 1.0 (diagnostics)."""

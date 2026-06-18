@@ -23,6 +23,7 @@ from services.analysis_query import (
     load_checkpoint_phase3_overlay,
     merge_checkpoint_phase3_overlay,
 )
+from core.json_safe import make_json_safe
 from services.analysis_payload_cache import invalidate_analysis_cache
 from services.phase_audit_service import PhaseAuditService
 from services.phase_snapshot_service import refresh_downstream_with_status
@@ -151,6 +152,7 @@ class ImputationWorkflowService:
         method: str,
         decisions: list[dict[str, Any]] | None = None,
         user_id: int | None = None,
+        bulk: bool = False,
     ) -> dict[str, Any]:
         self._load(analysis_id)
         self.db.query(ImputationRowDecision).filter(
@@ -186,16 +188,27 @@ class ImputationWorkflowService:
                     created_at=datetime.utcnow(),
                 )
             )
+            if not bulk:
+                audit.record(
+                    analysis_id=analysis_id,
+                    phase="imputation",
+                    action=audit_action,
+                    user_id=user_id,
+                    entity_type="row" if d.get("row_index") is not None else "column",
+                    entity_id=f"{column}:{d.get('row_index')}" if d.get("row_index") is not None else column,
+                    old_value=d.get("original_value"),
+                    new_value=d.get("imputed_value"),
+                    payload={"method": d.get("method") or method, "decision": decision},
+                )
+        if bulk and rows:
             audit.record(
                 analysis_id=analysis_id,
                 phase="imputation",
-                action=audit_action,
+                action=f"APPLY_{method.upper()}_BULK",
                 user_id=user_id,
-                entity_type="row" if d.get("row_index") is not None else "column",
-                entity_id=f"{column}:{d.get('row_index')}" if d.get("row_index") is not None else column,
-                old_value=d.get("original_value"),
-                new_value=d.get("imputed_value"),
-                payload={"method": d.get("method") or method, "decision": decision},
+                entity_type="column",
+                entity_id=column,
+                payload={"method": method.lower(), "decision": "ACCEPT", "rows": len(payload_decisions)},
             )
         if rows:
             self.db.add_all(rows)
@@ -204,7 +217,20 @@ class ImputationWorkflowService:
         method_selections = dict(overlay.get("imputation_method_selections") or {})
         method_selections[column] = method.lower()
         user_decisions = dict(overlay.get("imputation_user_decisions") or {})
-        user_decisions[column] = {"method": method.lower(), "decisions": payload_decisions}
+        if bulk or len(payload_decisions) > 200:
+            user_decisions[column] = make_json_safe(
+                {
+                    "method": method.lower(),
+                    "decision": "ACCEPT",
+                    "bulk": True,
+                    "row_count": len(payload_decisions),
+                }
+            )
+        else:
+            user_decisions[column] = {
+                "method": method.lower(),
+                "decisions": make_json_safe(payload_decisions),
+            }
         merge_checkpoint_phase3_overlay(
             self.db,
             analysis_id,

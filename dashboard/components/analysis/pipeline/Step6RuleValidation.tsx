@@ -14,7 +14,19 @@ import Card from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
-import { Shield, ShieldAlert, ShieldCheck, ArrowRight, AlertTriangle, Loader2, CheckCircle2, Database } from 'lucide-react';
+import {
+  Shield,
+  ShieldAlert,
+  ShieldCheck,
+  ArrowRight,
+  AlertTriangle,
+  Loader2,
+  CheckCircle2,
+  Database,
+  FlaskConical,
+  RefreshCw,
+  Trash2,
+} from 'lucide-react';
 import { toast } from '@/lib/toast';
 
 interface Props {
@@ -24,10 +36,22 @@ interface Props {
   loadError?: string | null;
   onProceed: () => void;
   onBack: () => void;
+  onRefresh?: () => void | Promise<void>;
 }
 
 type ProceedPhase = 'idle' | 'saving' | 'saved' | 'moving' | 'error';
 type ApplyPhase = 'idle' | 'applying' | 'done' | 'error';
+type DemoPhase = 'idle' | 'injecting' | 'refreshing' | 'removing';
+
+interface DemoNoiseStatus {
+  enabled: boolean;
+  active: boolean;
+  rows_added: number;
+  baseline_row_count: number | null;
+  current_row_count: number | null;
+  candidate_count: number;
+  pending_refresh: boolean;
+}
 
 function countBySeverity(candidates: ValidationCandidate[]) {
   const counts: Record<string, number> = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
@@ -46,6 +70,7 @@ export default function Step6RuleValidation({
   loadError,
   onProceed,
   onBack,
+  onRefresh,
 }: Props) {
   const tableRef = useRef<ValidationTableHandle>(null);
   const [acknowledged, setAcknowledged] = useState(
@@ -67,6 +92,11 @@ export default function Step6RuleValidation({
     displaySampleSize: null as number | null,
     fullTotal: null as number | null,
   });
+  const [demoPhase, setDemoPhase] = useState<DemoPhase>('idle');
+  const [tableRefreshKey, setTableRefreshKey] = useState(0);
+  const [demoStatus, setDemoStatus] = useState<DemoNoiseStatus | null>(null);
+
+  const demoNoiseEnabled = Boolean(results.meta?.demo_noise_enabled);
 
   const phase3 = results.phase3 ?? {};
   const candidates = (phase3.validation_candidates as ValidationCandidate[] | undefined) ?? [];
@@ -98,22 +128,107 @@ export default function Step6RuleValidation({
       ?? 0,
   ) || null;
 
+  const loadReviewProgress = () => {
+    analysisApi
+      .getValidationReviewProgress(analysisId)
+      .then((p) => {
+        setValidationProgress({
+          reviewed: p.reviewed,
+          total: p.total,
+          reportedTotal: p.reported_total ?? null,
+          reviewComplete: p.review_complete ?? (p.total > 0 && p.reviewed >= p.total),
+          phaseComplete: p.phase_complete ?? p.complete,
+          complete: p.complete,
+          displaySampleEnabled: Boolean(p.display_sample_enabled),
+          displaySampleSize: p.display_sample_size ?? null,
+          fullTotal: p.full_total ?? null,
+        });
+        if (p.acknowledged) setAcknowledged(true);
+      })
+      .catch(() => {});
+  };
+
+  const loadDemoStatus = () => {
+    if (!demoNoiseEnabled) return;
+    analysisApi
+      .getValidationDemoNoiseStatus(analysisId)
+      .then(setDemoStatus)
+      .catch(() => setDemoStatus(null));
+  };
+
   useEffect(() => {
-    analysisApi.getValidationReviewProgress(analysisId).then((p) => {
-      setValidationProgress({
-        reviewed: p.reviewed,
-        total: p.total,
-        reportedTotal: p.reported_total ?? null,
-        reviewComplete: p.review_complete ?? (p.total > 0 && p.reviewed >= p.total),
-        phaseComplete: p.phase_complete ?? p.complete,
-        complete: p.complete,
-        displaySampleEnabled: Boolean(p.display_sample_enabled),
-        displaySampleSize: p.display_sample_size ?? null,
-        fullTotal: p.full_total ?? null,
-      });
-      if (p.acknowledged) setAcknowledged(true);
-    }).catch(() => {});
+    loadReviewProgress();
   }, [analysisId, totalCandidates]);
+
+  useEffect(() => {
+    loadDemoStatus();
+  }, [analysisId, demoNoiseEnabled, tableRefreshKey]);
+
+  const resetReviewStateAfterDemo = () => {
+    setAcknowledged(false);
+    setEmptyReviewAck(false);
+    setSavedDecisionCount(0);
+    loadReviewProgress();
+  };
+
+  const afterDemoMutation = async () => {
+    resetReviewStateAfterDemo();
+    setTableRefreshKey((k) => k + 1);
+    await onRefresh?.();
+    loadDemoStatus();
+  };
+
+  const handleInjectDemoNoise = async () => {
+    setDemoPhase('injecting');
+    try {
+      const res = await analysisApi.injectValidationDemoNoise(analysisId);
+      toast.success(
+        res.message ?? `${res.rows_added} demo row(s) appended — click Refresh validation`,
+      );
+      await afterDemoMutation();
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+        ?? (err instanceof Error ? err.message : 'Failed to inject demo noise');
+      toast.error(String(msg));
+    } finally {
+      setDemoPhase('idle');
+    }
+  };
+
+  const handleRefreshDemoValidation = async () => {
+    setDemoPhase('refreshing');
+    try {
+      const res = await analysisApi.refreshValidationDemoNoise(analysisId);
+      toast.success(
+        `Validation refreshed — ${res.candidate_count} violation(s) detected`,
+      );
+      await afterDemoMutation();
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+        ?? (err instanceof Error ? err.message : 'Failed to refresh validation');
+      toast.error(String(msg));
+    } finally {
+      setDemoPhase('idle');
+    }
+  };
+
+  const handleRemoveDemoNoise = async () => {
+    setDemoPhase('removing');
+    try {
+      const res = await analysisApi.removeValidationDemoNoise(analysisId);
+      toast.success(res.message ?? 'Demo noise removed');
+      await afterDemoMutation();
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+        ?? (err instanceof Error ? err.message : 'Failed to remove demo noise');
+      toast.error(String(msg));
+    } finally {
+      setDemoPhase('idle');
+    }
+  };
 
   const reportedCandidateTotal = Number(
     (phase3 as { validation_candidates_reported_total?: number }).validation_candidates_reported_total
@@ -158,6 +273,11 @@ export default function Step6RuleValidation({
   const multiCount = (validationResults.multi_column ?? []).length;
   const approved = gateSummary.approved !== false && criticalCount === 0;
   const needsEmptyReviewAck = totalCandidates === 0;
+  const identifierColumns = (gateSummary.identifier_columns as string[] | undefined) ?? [];
+  const variableColumns = (gateSummary.variable_columns as string[] | undefined) ?? [];
+  const variableColumnsWithRules = Number(gateSummary.variable_columns_with_rules ?? 0);
+  const missingByColumn = (results.health as { missing_per_column?: Record<string, number> } | undefined)
+    ?.missing_per_column ?? {};
   const isLoading = loadState === 'loading' || loadState === 'idle';
 
   const canProceed =
@@ -281,6 +401,82 @@ export default function Step6RuleValidation({
         </Card>
       </div>
 
+      {!isLoading && demoNoiseEnabled && (
+        <Card className="border-accent/30 bg-accent/5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <FlaskConical className="h-4 w-4 text-accent" />
+                <p className="text-sm font-semibold text-text">Jury demo — live validation</p>
+              </div>
+              <p className="text-xs text-text-muted max-w-xl">
+                Append rows with rule-breaking values, refresh validation to detect violations
+                dynamically, then review in the table below. Remove demo noise to restore the
+                baseline dataset.
+              </p>
+              {demoStatus && (
+                <p className="text-xs text-text-muted">
+                  {demoStatus.active ? (
+                    <>
+                      Demo noise: <strong>{demoStatus.rows_added}</strong> row(s) injected
+                      {demoStatus.pending_refresh
+                        ? ' · refresh validation to scan'
+                        : ` · ${demoStatus.candidate_count} violation(s) in review`}
+                    </>
+                  ) : (
+                    <>No demo noise active · baseline {demoStatus.baseline_row_count ?? '—'} rows</>
+                  )}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={demoPhase !== 'idle' || Boolean(demoStatus?.active)}
+                onClick={() => void handleInjectDemoNoise()}
+                className="gap-1.5"
+              >
+                {demoPhase === 'injecting' ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <FlaskConical className="h-3.5 w-3.5" />
+                )}
+                Add noise data
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={demoPhase !== 'idle' || !demoStatus?.active}
+                onClick={() => void handleRefreshDemoValidation()}
+                className="gap-1.5"
+              >
+                {demoPhase === 'refreshing' ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" />
+                )}
+                Refresh validation
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={demoPhase !== 'idle' || !demoStatus?.active}
+                onClick={() => void handleRemoveDemoNoise()}
+                className="gap-1.5 text-danger hover:text-danger"
+              >
+                {demoPhase === 'removing' ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" />
+                )}
+                Remove demo noise
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {!isLoading && (
         <Card>
           <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -347,10 +543,14 @@ export default function Step6RuleValidation({
       {!isLoading && needsEmptyReviewAck && (
         <Alert variant="warning" title="No violation rows — confirm before proceeding">
           <p className="text-sm">
-            The table below has no cells to review
-            {rulesInventory.length === 0
-              ? ' because no rules matched your column names.'
-              : ` — ${rulesInventory.filter((r) => r.status === 'passed').length} rule check(s) passed cleanly.`}
+            {variableColumns.length > 0 && variableColumnsWithRules === 0
+              ? 'No rule-based validations for variable columns.'
+              : 'The table below has no cells to review'}
+            {variableColumns.length > 0 && variableColumnsWithRules === 0
+              ? ' Identifier columns were excluded from rule validation; only missing-value checks apply to those.'
+              : rulesInventory.length === 0
+                ? ' because no rules matched your column names.'
+                : ` — ${rulesInventory.filter((r) => r.status === 'passed').length} rule check(s) passed cleanly.`}
             {' '}You must still review the rules inventory and apply decisions before column analysis.
           </p>
           <label className="flex items-center gap-2 mt-3 text-sm cursor-pointer">
@@ -366,6 +566,7 @@ export default function Step6RuleValidation({
       )}
 
       <ValidationTable
+        key={tableRefreshKey}
         ref={tableRef}
         candidates={candidates}
         analysisId={analysisId}
@@ -458,16 +659,6 @@ export default function Step6RuleValidation({
         <Alert variant="error" title="Failed to save rule decisions">
           <p className="text-sm">Your decisions were not saved. Fix any errors and try again — you will stay on this step.</p>
         </Alert>
-      )}
-
-      {!isLoading && (
-        <Card className="p-4 bg-surface/40">
-          <p className="text-sm text-text-muted">
-            <strong className="text-text">Apply to dataset</strong> rebuilds working snapshots from saved validation
-            decisions. <strong className="text-text">Proceed</strong> saves your review, marks this phase complete,
-            and unlocks column analysis.
-          </p>
-        </Card>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border">

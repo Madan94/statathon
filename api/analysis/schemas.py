@@ -81,6 +81,11 @@ class ImputationDecisionsRequest(BaseModel):
     decisions: list[dict[str, Any]] = Field(default_factory=list)
 
 
+class ColumnAutoNormalizeRequest(BaseModel):
+    column: str
+    phases: list[Literal["anomaly", "imputation"]] | None = None
+
+
 class NormalizationColumnUpdate(BaseModel):
     original_name: str = Field(..., max_length=512)
     normalized_name: str | None = Field(None, max_length=512)

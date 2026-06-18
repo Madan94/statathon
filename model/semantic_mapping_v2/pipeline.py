@@ -37,6 +37,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from semantic_mapping_v2.column_role_classifier import classify_column_roles
 from semantic_mapping_v2.clustering import DomainClusteringEngine
 from semantic_mapping_v2.column_enricher import enrich_column_features
 from semantic_mapping_v2.config import validate_weights
@@ -169,6 +170,15 @@ class SemanticPipelineV2:
             m.signals.setdefault("_dtype", 0.0)
         column_domains = {c: m.domain for c, m in mappings.items()}
 
+        # STEP 7b — identifier vs variable role classification (LLM + heuristics)
+        role_results, role_stats = classify_column_roles(
+            features=features,
+            mappings=mappings,
+            usecase=uc.usecase,
+            dataset_name=dataset_name,
+            use_llm=self.use_llm,
+        )
+
         # STEP 9-11 — clustering, labeling, validation ----------------------
         clusters, column_clusters = self.clusterer.cluster(
             features=features,
@@ -204,6 +214,8 @@ class SemanticPipelineV2:
             knowledge_graph=knowledge_graph,
             elapsed=time.time() - t0,
             enrich_stats=enrich_stats,
+            role_results=role_results,
+            role_stats=role_stats,
         )
 
     # -- output assembly -----------------------------------------------------
@@ -228,6 +240,8 @@ class SemanticPipelineV2:
         knowledge_graph: dict[str, Any],
         elapsed: float,
         enrich_stats: dict[str, int] | None = None,
+        role_results: dict[str, Any] | None = None,
+        role_stats: dict[str, int] | None = None,
     ) -> dict[str, Any]:
         semantic_mapping: dict[str, Any] = {}
         for col, m in mappings.items():
@@ -236,6 +250,9 @@ class SemanticPipelineV2:
             # Carry identity provenance + UI label on every mapping entry.
             d["original_name"] = features[col].original_name
             d["display_name"] = features[col].display_name
+            role = (role_results or {}).get(col)
+            if role is not None:
+                d.update(role.to_dict() if hasattr(role, "to_dict") else role)
             semantic_mapping[col] = d
 
         # Raw header -> corrected identity map, persisted for the API/UI overlay.
@@ -260,6 +277,7 @@ class SemanticPipelineV2:
             cluster_confidence[cd["cluster_id"]] = cd["cluster_confidence"]
 
         stats = enrich_stats or {}
+        role_meta = role_stats or {}
         llm_fallback_count = sum(1 for m in mappings.values() if m.source == "llm")
         uncorrelated_count = sum(1 for m in mappings.values() if m.source == "uncorrelated")
         embedding_count = sum(1 for m in mappings.values() if m.source == "embedding")
@@ -293,6 +311,10 @@ class SemanticPipelineV2:
                 "llm_domain_fallback_count": llm_fallback_count,
                 "domain_source_embedding": embedding_count,
                 "domain_source_uncorrelated": uncorrelated_count,
+                "role_heuristic_count": int(role_meta.get("role_heuristic_count") or 0),
+                "role_llm_count": int(role_meta.get("role_llm_count") or 0),
+                "role_identifier_count": int(role_meta.get("role_identifier_count") or 0),
+                "role_variable_count": int(role_meta.get("role_variable_count") or 0),
                 "qdrant_static_ready": synth.get("static_ready", False),
                 "qdrant_dynamic_ready": synth.get("dynamic_ready", False),
                 "elapsed_sec": round(elapsed, 3),

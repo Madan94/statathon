@@ -24,6 +24,46 @@ from services.analysis_query import (
 )
 from services.phase_status_cache import get_cached_phase_status, invalidate_phase_status, set_cached_phase_status
 from services.analysis_dataframe_service import column_identity_aliases
+from core.column_roles import build_column_roles, should_review_column_analysis
+
+
+def _columns_meta_from_checkpoint(checkpoint: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    sp = checkpoint.get("semantic_profile")
+    if isinstance(sp, dict):
+        cols = sp.get("columns")
+        if isinstance(cols, dict) and cols:
+            return {str(k): dict(v) if isinstance(v, dict) else {} for k, v in cols.items()}
+
+    out: dict[str, dict[str, Any]] = {}
+    for row in checkpoint.get("semantic_mapping") or []:
+        if not isinstance(row, dict):
+            continue
+        col = str(row.get("column") or "")
+        if col:
+            out[col] = dict(row)
+    return out
+
+
+def _column_profiles_from_checkpoint(checkpoint: dict[str, Any]) -> dict[str, Any]:
+    sp = checkpoint.get("semantic_profile")
+    if isinstance(sp, dict):
+        profiles = sp.get("column_profiles")
+        if isinstance(profiles, dict):
+            return profiles
+    profiling = checkpoint.get("profiling_summary")
+    if isinstance(profiling, dict):
+        profiles = profiling.get("column_profiles")
+        if isinstance(profiles, dict):
+            return profiles
+    return {}
+
+
+def _column_analysis_context(db: Session, analysis_id: int) -> tuple[dict[str, dict[str, Any]], dict[str, Any], dict[str, str]]:
+    checkpoint = load_analysis_checkpoint(db, analysis_id) or {}
+    columns_meta = _columns_meta_from_checkpoint(checkpoint)
+    column_profiles = _column_profiles_from_checkpoint(checkpoint)
+    column_roles = build_column_roles(columns_meta)
+    return columns_meta, column_profiles, column_roles
 
 
 def _alias_groups(db: Session, analysis_id: int) -> dict[str, set[str]]:
@@ -267,6 +307,7 @@ class PhaseStatusService:
             c for c in (phase3.get("anomaly_candidates") or []) if isinstance(c, dict)
         ]
         groups = _alias_groups(self.db, analysis_id)
+        columns_meta, column_profiles, column_roles = _column_analysis_context(self.db, analysis_id)
         saved = self.db.query(OutlierDecision).filter(
             OutlierDecision.analysis_id == analysis_id
         ).all()
@@ -285,6 +326,24 @@ class PhaseStatusService:
                 continue
             col = str(block.get("column") or "")
             if not col or not block.get("detection_run"):
+                continue
+            alias_names = _all_names(col, groups)
+            if not should_review_column_analysis(
+                col,
+                columns_meta=columns_meta,
+                column_profiles=column_profiles,
+                column_roles=column_roles,
+                alias_names=alias_names,
+            ):
+                if persist:
+                    self._upsert_column_review(
+                        analysis_id,
+                        "anomaly",
+                        col,
+                        status="auto_reviewed",
+                        item_count=0,
+                        reviewed_count=0,
+                    )
                 continue
             columns_total += 1
             col_cands = [
@@ -339,6 +398,7 @@ class PhaseStatusService:
         overlay = load_checkpoint_phase3_overlay(self.db, analysis_id)
         user_decisions = overlay.get("imputation_user_decisions") or {}
         groups = _alias_groups(self.db, analysis_id)
+        columns_meta, column_profiles, column_roles = _column_analysis_context(self.db, analysis_id)
         saved_keys: set[str] = set()
         for key in user_decisions.keys():
             saved_keys |= _all_names(str(key), groups)
@@ -365,12 +425,31 @@ class PhaseStatusService:
         }
         review_cols = sorted(all_cols | set(needing.keys()))
 
-        columns_total = len(review_cols)
+        columns_total = 0
         columns_reviewed = 0
         auto_reviewed = 0
         pending_cols: list[str] = []
 
         for col in review_cols:
+            alias_names = _all_names(col, groups)
+            if not should_review_column_analysis(
+                col,
+                columns_meta=columns_meta,
+                column_profiles=column_profiles,
+                column_roles=column_roles,
+                alias_names=alias_names,
+            ):
+                if persist:
+                    self._upsert_column_review(
+                        analysis_id,
+                        "imputation",
+                        col,
+                        status="auto_reviewed",
+                        item_count=0,
+                        reviewed_count=0,
+                    )
+                continue
+            columns_total += 1
             miss = needing.get(col, 0)
             col_saved = bool(_all_names(col, groups) & saved_keys)
             if miss == 0:

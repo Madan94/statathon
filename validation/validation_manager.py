@@ -11,6 +11,7 @@ from validation.single_column.rule_engine import run_single_column_rules
 from validation.context_aware_engine import _build_column_alias_map
 from validation.single_column.rule_repository import load_rule_library, rules_for_column
 from validation.violation_engine import build_validation_candidates
+from core.column_roles import build_column_roles, is_identifier_column
 
 
 def run_validation_intelligence(
@@ -21,6 +22,7 @@ def run_validation_intelligence(
     dataset_context_hint: dict[str, Any] | None = None,
     rule_library_path: Any = None,
     column_normalization: list[dict[str, Any]] | None = None,
+    column_roles: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """
     Detect explain store **candidates**. Never mutates dataframe.
@@ -28,11 +30,14 @@ def run_validation_intelligence(
 
     compiled = load_rule_library(rule_library_path)
     alias_map = _build_column_alias_map([str(c) for c in df.columns], column_normalization)
+    roles = column_roles or build_column_roles(semantic_columns)
 
     singles: list[dict[str, Any]] = []
     meta_ctx = dataset_context_hint or {}
     seen_rule_pairs: set[tuple[str, str]] = set()
     for col in df.columns:
+        if is_identifier_column(str(col), roles, semantic_columns):
+            continue
         meta_base = semantic_columns.get(str(col))
         meta = dict(meta_base) if isinstance(meta_base, dict) else {}
 

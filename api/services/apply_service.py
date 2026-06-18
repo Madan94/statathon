@@ -24,6 +24,7 @@ from core.multiplier_column import (
     row_indices_after_drops,
     validation_drop_indices,
 )
+from core.column_roles import build_column_roles, is_identifier_column
 from core.rule_validator import normalize_schema
 from database.models import (
     Analysis,
@@ -286,10 +287,25 @@ def _validation_decisions(db: Session, analysis_id: int) -> list[dict[str, Any]]
     ]
 
 
+def _load_column_roles(db: Session, analysis_id: int) -> dict[str, str]:
+    from database.models import SemanticProfile
+
+    meta: dict[str, dict[str, Any]] = {}
+    for p in db.query(SemanticProfile).filter(SemanticProfile.analysis_id == analysis_id).all():
+        tags = p.contextual_tags if isinstance(p.contextual_tags, dict) else {}
+        meta[p.column_name] = {
+            "analysis_role": tags.get("analysis_role"),
+            **tags,
+        }
+    return build_column_roles(meta)
+
+
 def _apply_outlier_decisions(
     df: pd.DataFrame,
     decisions: list[OutlierDecision],
     ui_to_physical: dict[str, str],
+    *,
+    column_roles: dict[str, str] | None = None,
 ) -> tuple[pd.DataFrame, dict[str, int]]:
     out = df.copy()
     rows_to_drop: set[int] = set()
@@ -297,6 +313,9 @@ def _apply_outlier_decisions(
 
     for d in decisions:
         action = str(d.decision).upper()
+        if is_identifier_column(str(d.column_name), column_roles):
+            stats["keep"] += 1
+            continue
         col = _resolve_column(out, d.column_name, ui_to_physical)
         row_idx = int(d.row_index)
 
@@ -492,7 +511,9 @@ def materialize_processed_dataframe(db: Session, analysis_id: int) -> pd.DataFra
         sidecar = _sync_sidecar_after_row_drops(
             sidecar, len(df), outlier_drop_indices(outlier_rows)
         )
-        df, _ = _apply_outlier_decisions(df, outlier_rows, ui_to_physical)
+        df, _ = _apply_outlier_decisions(
+            df, outlier_rows, ui_to_physical, column_roles=_load_column_roles(db, analysis_id)
+        )
 
     imputation_rows = (
         db.query(ImputationRowDecision)
@@ -638,7 +659,12 @@ def apply_analysis_decisions(
         sidecar = _sync_sidecar_after_row_drops(
             sidecar, len(df_validated), outlier_drop_indices(outlier_rows)
         )
-    df_anomaly, outlier_stats = _apply_outlier_decisions(df_validated, outlier_rows, ui_to_physical)
+    df_anomaly, outlier_stats = _apply_outlier_decisions(
+        df_validated,
+        outlier_rows,
+        ui_to_physical,
+        column_roles=_load_column_roles(db, analysis_id),
+    )
     lineage.append(
         _persist_snapshot(
             db,

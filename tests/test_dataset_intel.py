@@ -32,3 +32,19 @@ def test_column_profile_embedding_snippet():
         {"datatype": "float", "cardinality": 3, "semantic_hints": ["income"]},
     )
     assert "float" in s and "income" in s
+
+
+def test_auxiliary_column_flagged_when_constant():
+    from profiling.dataset_intel import build_dataset_intelligence_profiles, load_default_ontology
+
+    df = pd.DataFrame(
+        {
+            "survey_round": [68, 68, 68, 68],
+            "state_code": ["DL", "HR", "UP", "PB"],
+        }
+    )
+    cols, _ = build_dataset_intelligence_profiles(df, load_default_ontology())
+    assert cols["survey_round"]["is_auxiliary"] is True
+    assert cols["survey_round"]["constant_value"] in (68, 68.0, "68")
+    assert cols["survey_round"]["cardinality"] == 1
+    assert cols["state_code"].get("is_auxiliary") is not True

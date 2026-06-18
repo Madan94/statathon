@@ -121,6 +121,9 @@ export interface ColumnProfile {
   missing_ratio: number;
   missing_count?: number;
   cardinality: number;
+  /** True when every row holds the same non-missing value (dataset metadata / constants). */
+  is_auxiliary?: boolean;
+  constant_value?: unknown;
   unique_ratio?: number;
   entropy?: number;
   skewness?: number;
@@ -389,6 +392,10 @@ export interface SemanticMappingRow {
   dynamic_cohesion?: number;
   cluster_support?: number;
   graph_consistency?: number;
+  analysis_role?: 'identifier' | 'variable';
+  role_confidence?: number;
+  role_source?: string;
+  role_reason?: string;
   explainability?: {
     matching_reason?: string;
     dataset_archetype?: string;
@@ -515,6 +522,8 @@ export interface AnalysisResult {
   content_hash?: string;
   effective_schema?: string[];
   normalization_version?: number | null;
+  /** Pipeline / feature flags from checkpoint meta. */
+  meta?: Record<string, unknown> & { demo_noise_enabled?: boolean };
   /** Optional profiling snapshot folded in by some result builders. */
   dataset_profile?: Record<string, unknown>;
 }
@@ -1161,6 +1170,49 @@ export const analysisApi = {
     const { data } = await api.post(`/analysis/${id}/validation/decisions`, { decisions });
     return data;
   },
+  getValidationDemoNoiseStatus: async (id: number) => {
+    const { data } = await api.get(`/analysis/${id}/validation/demo-noise/status`);
+    return data as {
+      enabled: boolean;
+      active: boolean;
+      rows_added: number;
+      baseline_row_count: number | null;
+      current_row_count: number | null;
+      candidate_count: number;
+      pending_refresh: boolean;
+    };
+  },
+  injectValidationDemoNoise: async (id: number) => {
+    const { data } = await api.post(`/analysis/${id}/validation/demo-noise/inject`);
+    return data as {
+      success: boolean;
+      rows_added: number;
+      baseline_row_count: number;
+      current_row_count: number;
+      pending_refresh: boolean;
+      message?: string;
+    };
+  },
+  refreshValidationDemoNoise: async (id: number) => {
+    const { data } = await api.post(`/analysis/${id}/validation/demo-noise/refresh`);
+    return data as {
+      success: boolean;
+      candidate_count: number;
+      rules_fired: number;
+      severity_breakdown?: Record<string, number>;
+      current_row_count: number;
+      rows_added: number;
+    };
+  },
+  removeValidationDemoNoise: async (id: number) => {
+    const { data } = await api.post(`/analysis/${id}/validation/demo-noise/remove`);
+    return data as {
+      success: boolean;
+      restored_row_count: number;
+      candidate_count: number;
+      message?: string;
+    };
+  },
   saveImputationDecisions: async (
     id: number,
     column: string,
@@ -1173,6 +1225,40 @@ export const analysisApi = {
       decisions: decisions ?? [],
     });
     return data as { success?: boolean; saved: number; column: string; method: string };
+  },
+  autoNormalizeColumn: async (
+    id: number,
+    column: string,
+    phases?: Array<'anomaly' | 'imputation'>,
+  ) => {
+    const { data } = await api.post(`/analysis/${id}/column-review/auto-normalize`, {
+      column,
+      phases,
+    });
+    return data as {
+      success: boolean;
+      column: string;
+      normalized: boolean;
+      anomaly?: {
+        applied?: boolean;
+        saved?: number;
+        candidate_count?: number;
+        decision?: string;
+        method?: string;
+        normalized?: boolean;
+        already_applied?: boolean;
+        reason?: string;
+      };
+      imputation?: {
+        applied?: boolean;
+        saved?: number;
+        missing_count?: number;
+        method?: string | null;
+        decision?: string;
+        normalized?: boolean;
+        already_applied?: boolean;
+      };
+    };
   },
   applyLineage: async (id: number) => {
     const { data } = await api.post(`/analysis/${id}/apply`);
@@ -1193,6 +1279,38 @@ export const analysisApi = {
   getDomains: async (id: number): Promise<DomainsPayload> => {
     const { data } = await api.get(`/analysis/${id}/domains`);
     return data;
+  },
+  getColumnRoles: async (id: number) => {
+    const { data } = await api.get(`/analysis/${id}/column-roles`);
+    return data as {
+      analysis_id: number;
+      roles: Array<{
+        column: string;
+        analysis_role?: 'identifier' | 'variable';
+        role_confidence?: number;
+        role_source?: string;
+        role_reason?: string;
+        domain?: string;
+        original_name?: string;
+      }>;
+      identifier_count: number;
+      variable_count: number;
+      column_roles_confirmed: boolean;
+    };
+  },
+  confirmColumnRoles: async (
+    id: number,
+    overrides: Record<string, 'identifier' | 'variable'>,
+  ) => {
+    const { data } = await api.post(`/analysis/${id}/column-roles/confirm`, { overrides });
+    return data as {
+      success: boolean;
+      analysis_id: number;
+      column_roles_confirmed: boolean;
+      validation_candidates: number;
+      identifier_count: number;
+      variable_count: number;
+    };
   },
   getClusters: async (id: number): Promise<ClustersPayload> => {
     const { data } = await api.get(`/analysis/${id}/clusters`);

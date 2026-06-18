@@ -33,7 +33,7 @@ const STEP_HEADERS: Record<number, { title: string; description: string }> = {
   3: {
     title: 'Semantic mapping',
     description:
-      'Review how columns are mapped to statistical domains. Override any assignment and confirm before clustering.',
+      '',
   },
   4: {
     title: 'Column clustering',

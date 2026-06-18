@@ -44,6 +44,12 @@ from validation.candidate_display import format_expected, format_reason
 from validation.violation_classifier import (
     classify_violation, relative_magnitude, severity_summary,
 )
+from core.column_roles import (
+    build_column_roles,
+    identifier_columns,
+    is_identifier_column,
+    variable_columns,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -352,6 +358,7 @@ def run_context_aware_validation(
     archetypes: list[dict[str, Any]] | None = None,
     library_path: Any = None,
     column_normalization: list[dict[str, Any]] | None = None,
+    column_roles: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Execute the validation gate.
 
@@ -371,6 +378,9 @@ def run_context_aware_validation(
     """
     columns = list(df.columns)
     alias_map = _build_column_alias_map(columns, column_normalization)
+    roles = column_roles or build_column_roles(columns_meta)
+    id_cols = identifier_columns(columns, roles, columns_meta)
+    var_cols = variable_columns(columns, roles, columns_meta)
     rules = discover_all_rules(
         columns=columns,
         columns_meta=columns_meta,
@@ -380,6 +390,7 @@ def run_context_aware_validation(
         unified_domains=unified_domains,
         archetypes=archetypes,
         library_path=library_path,
+        column_roles=roles,
     )
 
     single_results: list[dict[str, Any]] = []
@@ -392,6 +403,8 @@ def run_context_aware_validation(
             # explicit column name (from ontology / statistical / kg).
             target = rule.columns[0] if rule.columns else None
             if target and target in df.columns:
+                if is_identifier_column(target, roles, columns_meta):
+                    continue
                 hit = execute_single_column_rule(df, rule, target_column=target)
                 inv = _inventory_row(
                     rule, target, alias_map, hit, matched_via="canonical"
@@ -402,6 +415,8 @@ def run_context_aware_validation(
             elif target:
                 # Treat as regex pattern — match canonical or original names
                 for col in columns:
+                    if is_identifier_column(col, roles, columns_meta):
+                        continue
                     matched, matched_via = _pattern_matches_column(target, col, alias_map)
                     if not matched:
                         continue
@@ -412,6 +427,8 @@ def run_context_aware_validation(
                     if hit:
                         single_results.append(_finalize(hit, rule, columns_meta))
         else:
+            if any(is_identifier_column(str(c), roles, columns_meta) for c in (rule.columns or []) if str(c) in df.columns):
+                continue
             hit = execute_multi_column_rule(df, rule)
             if hit:
                 multi_results.append(_finalize(hit, rule, columns_meta))
@@ -431,6 +448,9 @@ def run_context_aware_validation(
     matched_count = len(rules_inventory)
     passed_count = sum(1 for r in rules_inventory if r.get("status") == "passed")
 
+    variable_cols_with_rules = len(
+        {str(r.get("column")) for r in rules_inventory if str(r.get("column") or "") in var_cols}
+    )
     return {
         "rules_discovered": len(rules),
         "single_column": single_results,
@@ -445,6 +465,10 @@ def run_context_aware_validation(
             "candidate_count": len(candidates),
             "approved": approved,
             "source_breakdown": _source_counts(rules),
+            "identifier_columns": id_cols,
+            "variable_columns": var_cols,
+            "variable_columns_with_rules": variable_cols_with_rules,
+            "validation_skipped_reason": "identifier_column" if id_cols else None,
         },
         "validation_candidates": candidates,
     }

@@ -221,6 +221,14 @@ export default function Step2Normalize({
   const excludedCount = planCols.filter((c) => !c.included && !c.isDeleted).length;
   const deletedCount = planCols.filter((c) => c.isDeleted).length;
   const renamedCount = planCols.filter((c) => c.displayName !== c.suggestedName).length;
+  const auxiliaryCount = useMemo(
+    () =>
+      plan.filter((p) => {
+        const stats = resolveColumnProfileStats(p.originalName, p.profileKey, results);
+        return stats.isAuxiliary;
+      }).length,
+    [plan, results],
+  );
   const dictionaryMatchedCount =
     dictionaryStats?.matched_count ??
     planCols.filter((c) => c.dictionaryMapped).length;
@@ -270,6 +278,9 @@ export default function Step2Normalize({
         {excludedCount > 0 && <Badge variant="warning">{excludedCount} excluded</Badge>}
         {deletedCount > 0 && <Badge variant="danger">{deletedCount} deleted</Badge>}
         {renamedCount > 0 && <Badge variant="default">{renamedCount} renamed</Badge>}
+        {auxiliaryCount > 0 && (
+          <Badge variant="warning">{auxiliaryCount} auxiliary</Badge>
+        )}
       </div>
 
       <Card
@@ -303,11 +314,14 @@ export default function Step2Normalize({
               {plan.map((p) => {
                 const col = cols[p.originalName];
                 if (!col) return null;
-                const { type: colType, missingRatio: ratio, missingCount } = resolveColumnProfileStats(
-                  p.originalName,
-                  p.profileKey,
-                  results,
-                );
+                const {
+                  type: colType,
+                  isAuxiliary,
+                  constantValue,
+                  storageType,
+                  missingRatio: ratio,
+                  missingCount,
+                } = resolveColumnProfileStats(p.originalName, p.profileKey, results);
                 const isEditing = editingKey === p.originalName;
                 const edited = col.displayName !== col.suggestedName;
 
@@ -374,17 +388,29 @@ export default function Step2Normalize({
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge
-                        variant={
-                          colType.includes('int') ||
-                          colType.includes('float') ||
-                          colType === 'numeric'
-                            ? 'default'
-                            : 'muted'
+                      <span
+                        title={
+                          isAuxiliary
+                            ? `Same value in every row${
+                                constantValue !== undefined ? `: ${String(constantValue)}` : ''
+                              }${storageType && storageType !== '—' ? ` · stored as ${storageType}` : ''}`
+                            : undefined
                         }
                       >
-                        {colType}
-                      </Badge>
+                        <Badge
+                          variant={
+                            isAuxiliary
+                              ? 'warning'
+                              : colType.includes('int') ||
+                                colType.includes('float') ||
+                                colType === 'numeric'
+                              ? 'default'
+                              : 'muted'
+                          }
+                        >
+                          {isAuxiliary ? 'Auxiliary' : colType}
+                        </Badge>
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">

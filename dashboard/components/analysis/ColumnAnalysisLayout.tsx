@@ -6,6 +6,11 @@ import { useRouter } from 'next/navigation';
 import type { AnalysisResult, ColumnProfile } from '@/lib/api';
 import { analysisApi } from '@/lib/api';
 import { analysisRoutes } from '@/lib/analysisPipeline';
+import {
+  isVariableAnalysisColumn,
+  orderedVariableColumns,
+  skippedColumnSummary,
+} from '@/lib/columnAnalysisUtils';
 import { isNumericColumn, resolveAnomalyBlock, resolveMissingCount } from '@/lib/outlierColumnUtils';
 import ColumnNav from './columns/ColumnNav';
 import MethodSelectionPanel from './columns/MethodSelectionPanel';
@@ -31,25 +36,6 @@ interface Props {
 
 type PhaseStatus = Awaited<ReturnType<typeof analysisApi.getPhaseStatus>>;
 
-function orderedColumns(results: AnalysisResult): string[] {
-  const columnProfiles = results.column_profiles as Record<string, ColumnProfile> | undefined;
-  const schema = results.schema ?? {};
-  const allColumns = Object.keys(columnProfiles ?? schema);
-
-  const domainMap: Record<string, string> = {};
-  results.semantic_mapping?.forEach((row) => {
-    if (row.domain) domainMap[row.column] = row.domain;
-  });
-
-  const domains = [...new Set(Object.values(domainMap))].sort();
-  const ordered: string[] = [];
-  for (const domain of domains) {
-    ordered.push(...allColumns.filter((c) => domainMap[c] === domain));
-  }
-  ordered.push(...allColumns.filter((c) => !domainMap[c]));
-  return ordered.length ? ordered : allColumns;
-}
-
 function columnNeedsReview(col: string, results: AnalysisResult): boolean {
   if (!isNumericColumn(col, results)) {
     const health = results.health as { missing_per_column?: Record<string, number> } | undefined;
@@ -67,7 +53,8 @@ export default function ColumnAnalysisLayout({
   const [results, setResults] = useState(initialResults);
   const [phaseStatus, setPhaseStatus] = useState<PhaseStatus | null>(null);
   const [validationApplied, setValidationApplied] = useState(false);
-  const columns = useMemo(() => orderedColumns(results), [results]);
+  const columns = useMemo(() => orderedVariableColumns(results), [results]);
+  const skipped = useMemo(() => skippedColumnSummary(results), [results]);
   const [selectedColumn, setSelectedColumn] = useState<string | null>(columns[0] ?? null);
   const [reviewedColumns, setReviewedColumns] = useState<Set<string>>(new Set());
   const [columnDecisionsComplete, setColumnDecisionsComplete] = useState<Set<string>>(new Set());
@@ -147,6 +134,12 @@ export default function ColumnAnalysisLayout({
     void refreshPhaseStatus().catch(() => {});
   }, [refreshPhaseStatus]);
 
+  useEffect(() => {
+    if (selectedColumn && !columns.includes(selectedColumn)) {
+      setSelectedColumn(columns[0] ?? null);
+    }
+  }, [columns, selectedColumn]);
+
   const canProceedToDatasetReview = Boolean(
     phaseStatus?.rule_validation_completed &&
     phaseStatus?.anomaly_completed &&
@@ -156,14 +149,16 @@ export default function ColumnAnalysisLayout({
   const pendingAnomaly = useMemo(
     () => (phaseStatus?.column_reviews?.anomaly ?? [])
       .filter((r) => r.status === 'pending')
-      .map((r) => r.column),
-    [phaseStatus],
+      .map((r) => r.column)
+      .filter((col) => isVariableAnalysisColumn(col, results)),
+    [phaseStatus, results],
   );
   const pendingImputation = useMemo(
     () => (phaseStatus?.column_reviews?.imputation ?? [])
       .filter((r) => r.status === 'pending')
-      .map((r) => r.column),
-    [phaseStatus],
+      .map((r) => r.column)
+      .filter((col) => isVariableAnalysisColumn(col, results)),
+    [phaseStatus, results],
   );
 
   const markColumnReviewed = () => {
@@ -265,6 +260,28 @@ export default function ColumnAnalysisLayout({
                 </Alert>
               )}
 
+              {skipped.skippedCount > 0 && (
+                <p className="text-sm text-text-muted rounded-lg border border-border/60 bg-surface/40 px-3 py-2">
+                  {skipped.identifiers.length > 0 && (
+                    <>
+                      <strong>{skipped.identifiers.length}</strong> identifier
+                      {skipped.identifiers.length !== 1 ? 's' : ''}
+                    </>
+                  )}
+                  {skipped.identifiers.length > 0 && skipped.auxiliary.length > 0 && ' and '}
+                  {skipped.auxiliary.length > 0 && (
+                    <>
+                      <strong>{skipped.auxiliary.length}</strong> auxiliary
+                      {skipped.auxiliary.length !== 1 ? ' columns' : ' column'}
+                    </>
+                  )}
+                  {skipped.identifiers.length > 0 && skipped.auxiliary.length === 0 && (
+                    skipped.identifiers.length !== 1 ? ' columns' : ' column'
+                  )}
+                  {' '}excluded from column analysis — only variable columns are reviewed here.
+                </p>
+              )}
+
               {phaseStatus && (
                 <div className="rounded-lg border border-border p-3 text-sm space-y-1">
                   <p className="text-text-muted">
@@ -284,24 +301,6 @@ export default function ColumnAnalysisLayout({
                 </div>
               )}
 
-              {phaseStatus && !canProceedToDatasetReview && (pendingAnomaly.length > 0 || pendingImputation.length > 0) && (
-                <Alert variant="warning" title="Review still pending">
-                  {pendingAnomaly.length > 0 && (
-                    <p className="text-sm">
-                      Anomaly: save decisions for{' '}
-                      <strong>{pendingAnomaly.slice(0, 8).join(', ')}</strong>
-                      {pendingAnomaly.length > 8 ? ` (+${pendingAnomaly.length - 8} more)` : ''}
-                    </p>
-                  )}
-                  {pendingImputation.length > 0 && (
-                    <p className="text-sm mt-1">
-                      Missing values: save decisions for{' '}
-                      <strong>{pendingImputation.slice(0, 8).join(', ')}</strong>
-                      {pendingImputation.length > 8 ? ` (+${pendingImputation.length - 8} more)` : ''}
-                    </p>
-                  )}
-                </Alert>
-              )}
 
               {isNumeric && validationComplete ? (
                 <>
@@ -360,9 +359,21 @@ export default function ColumnAnalysisLayout({
           ) : (
             <div className="h-full flex flex-col items-center justify-center py-24 text-center">
               <LayoutList className="h-12 w-12 text-text-muted mb-4" aria-hidden />
-              <p className="font-semibold text-text text-lg">Select a column</p>
+              <p className="font-semibold text-text text-lg">
+                {columns.length === 0 ? 'No variable columns to review' : 'Select a column'}
+              </p>
               <p className="mt-2 text-sm text-text-muted max-w-md">
-                {columns.length} columns available. Choose a method, review outliers, then missing values.
+                {columns.length === 0 ? (
+                  <>
+                    All columns are identifiers or auxiliary — nothing requires anomaly or missing-value
+                    review here. Complete rule validation, then proceed to dataset review.
+                  </>
+                ) : (
+                  <>
+                    {columns.length} variable column{columns.length !== 1 ? 's' : ''} available.
+                    Choose a method, review outliers, then missing values.
+                  </>
+                )}
               </p>
               {columns[0] && (
                 <Button className="mt-4" onClick={() => setSelectedColumn(columns[0])}>

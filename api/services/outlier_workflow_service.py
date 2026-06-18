@@ -420,6 +420,7 @@ class OutlierWorkflowService:
         decisions: list[dict[str, Any]],
         *,
         user_id: int | None = None,
+        bulk: bool = False,
     ) -> dict[str, Any]:
         an = self._load_analysis(analysis_id)
         self.db.query(OutlierDecision).filter(
@@ -460,30 +461,48 @@ class OutlierWorkflowService:
                     created_at=datetime.utcnow(),
                 )
             )
+            if not bulk:
+                audit.record(
+                    analysis_id=analysis_id,
+                    phase="anomaly",
+                    action=audit_action,
+                    user_id=user_id,
+                    entity_type="row",
+                    entity_id=f"{column}:{d['row_index']}",
+                    old_value=d.get("old_value"),
+                    new_value=d.get("new_value"),
+                    payload={
+                        "column": column,
+                        "row_index": d.get("row_index"),
+                        "method": d.get("method"),
+                        "methodology": d.get("method"),
+                        "severity": d.get("severity"),
+                        "confidence": d.get("confidence"),
+                    },
+                )
+        if bulk and rows:
             audit.record(
                 analysis_id=analysis_id,
                 phase="anomaly",
-                action=audit_action,
+                action="KEEP_BULK",
                 user_id=user_id,
-                entity_type="row",
-                entity_id=f"{column}:{d['row_index']}",
-                old_value=d.get("old_value"),
-                new_value=d.get("new_value"),
-                payload={
-                    "column": column,
-                    "row_index": d.get("row_index"),
-                    "method": d.get("method"),
-                    "methodology": d.get("method"),
-                    "severity": d.get("severity"),
-                    "confidence": d.get("confidence"),
-                },
+                entity_type="column",
+                entity_id=column,
+                payload={"column": column, "rows": len(rows), "decision": "KEEP"},
             )
         if rows:
             self.db.add_all(rows)
 
         phase3 = self._get_phase3(analysis_id)
         col_decisions = dict(phase3.get("outlier_row_decisions") or {})
-        col_decisions[column] = decisions
+        if bulk or len(decisions) > 200:
+            col_decisions[column] = {
+                "bulk": True,
+                "decision": "KEEP",
+                "row_count": len(decisions),
+            }
+        else:
+            col_decisions[column] = make_json_safe(decisions)
         phase3["outlier_row_decisions"] = col_decisions
         if converted_missing:
             handoff = list(phase3.get("converted_to_missing") or [])

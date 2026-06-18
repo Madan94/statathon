@@ -47,6 +47,7 @@ def run_validation_gate(
     column_normalization: list[dict[str, Any]] | None = None,
     library_path: Any = None,
     analysis_id: int | None = None,
+    column_roles: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Run the validation gate. Returns:
 
@@ -75,6 +76,7 @@ def run_validation_gate(
         archetypes=archetypes,
         library_path=library_path,
         column_normalization=column_normalization,
+        column_roles=column_roles,
     )
     summary = out.get("summary") or {}
     sev = summary.get("severity_breakdown") or {}

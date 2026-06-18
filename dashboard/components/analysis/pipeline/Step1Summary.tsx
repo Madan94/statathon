@@ -1,6 +1,7 @@
 'use client';
 
 import { AnalysisResult, ColumnProfile } from '@/lib/api';
+import { isAuxiliaryProfile } from '@/lib/columnNormalization';
 import { Button } from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -37,7 +38,8 @@ function missingVariant(ratio: number): 'success' | 'muted' | 'warning' | 'dange
   return 'success';
 }
 
-function typeVariant(t: string): 'default' | 'muted' {
+function typeVariant(t: string): 'default' | 'muted' | 'warning' {
+  if (t === 'auxiliary') return 'warning';
   return t === 'numeric' || t === 'float64' || t === 'int64' ? 'default' : 'muted';
 }
 
@@ -152,6 +154,9 @@ export default function Step1Summary({ results, onProceed }: Props) {
 
   function columnType(col: string): string {
     const profile = resolveProfile(col);
+    const missing = missingCount(col);
+    const ratio = totalRows > 0 ? missing / totalRows : Number(profile?.missing_ratio ?? 0);
+    if (isAuxiliaryProfile(profile, ratio, totalRows)) return 'auxiliary';
     return (
       lookupBySnake(schema, col) ??
       profile?.datatype ??
@@ -317,6 +322,7 @@ export default function Step1Summary({ results, onProceed }: Props) {
                 const ratio =
                   totalRows > 0 ? missing / totalRows : profile?.missing_ratio ?? 0;
                 const colType = columnType(col);
+                const auxiliary = colType === 'auxiliary';
 
                 // Human-readable stats
                 let sampleStr = '—';
@@ -347,7 +353,23 @@ export default function Step1Summary({ results, onProceed }: Props) {
                   >
                     <td className="px-4 py-3 font-mono text-xs font-medium text-text">{col}</td>
                     <td className="px-4 py-3">
-                      <Badge variant={typeVariant(colType)}>{colType}</Badge>
+                      <span
+                        title={
+                          auxiliary
+                            ? `Same value in every row${
+                                profile?.constant_value !== undefined
+                                  ? `: ${String(profile.constant_value)}`
+                                  : profile?.top_values?.length
+                                    ? `: ${formatTopValues(profile.top_values).split(',')[0]}`
+                                    : ''
+                              }`
+                            : undefined
+                        }
+                      >
+                        <Badge variant={typeVariant(colType)}>
+                          {auxiliary ? 'Auxiliary' : colType}
+                        </Badge>
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">

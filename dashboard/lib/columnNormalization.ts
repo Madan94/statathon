@@ -17,6 +17,32 @@ export interface ColumnProfileStats {
   type: string;
   missingCount: number;
   missingRatio: number;
+  isAuxiliary: boolean;
+  constantValue?: unknown;
+  /** Underlying storage type when `isAuxiliary` (e.g. numeric, string). */
+  storageType?: string;
+}
+
+function extractConstantValue(profile: ColumnProfile | undefined): unknown {
+  if (!profile) return undefined;
+  if (profile.constant_value !== undefined) return profile.constant_value;
+  const top = profile.top_values?.[0];
+  if (!top) return undefined;
+  if (Array.isArray(top)) return top[0];
+  if (typeof top === 'object' && top && 'value' in top) return top.value;
+  return undefined;
+}
+
+/** Column holds one distinct value across all rows (no missing). */
+export function isAuxiliaryProfile(
+  profile: ColumnProfile | undefined,
+  missingRatio: number,
+  totalRows: number,
+): boolean {
+  if (!profile || totalRows <= 0) return false;
+  if (profile.is_auxiliary === true) return true;
+  const missing = missingRatio > 0 ? missingRatio : Number(profile.missing_ratio ?? 0);
+  return missing <= 0 && profile.cardinality === 1;
 }
 
 const MATCH_METHOD_LABELS: Record<string, string> = {
@@ -31,6 +57,25 @@ const MATCH_METHOD_LABELS: Record<string, string> = {
 export function formatMatchMethod(method?: string): string {
   if (!method) return 'Pipeline inference';
   return MATCH_METHOD_LABELS[method] ?? method.replace(/_/g, ' ');
+}
+
+function snakeKey(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+}
+
+function lookupBySnake<T>(map: Record<string, T> | undefined, col: string): T | undefined {
+  if (!map) return undefined;
+  if (map[col] != null) return map[col];
+  const target = snakeKey(col);
+  for (const [key, value] of Object.entries(map)) {
+    if (snakeKey(key) === target) return value;
+  }
+  return undefined;
 }
 
 /** Map DB/API column name (often canonical) back to plan `original_name`. */
@@ -63,7 +108,9 @@ function profileLookupKeys(originalName: string, profileKey: string, results: An
   };
 
   const normRow = (results.column_normalization ?? []).find(
-    (r) => r.original_name === originalName,
+    (r) =>
+      r.original_name === originalName
+      || snakeKey(String(r.original_name ?? '')) === snakeKey(originalName),
   );
 
   add(normRow?.canonical_name as string | undefined);
@@ -82,14 +129,14 @@ function resolveMissingCount(
   totalRows: number,
 ): { missingCount: number; profile?: ColumnProfile } {
   for (const key of keys) {
-    const fromHealth = missingPerCol?.[key];
+    const fromHealth = lookupBySnake(missingPerCol, key);
     if (fromHealth != null && fromHealth > 0) {
-      return { missingCount: Number(fromHealth), profile: columnProfiles?.[key] };
+      return { missingCount: Number(fromHealth), profile: lookupBySnake(columnProfiles, key) };
     }
   }
 
   for (const key of keys) {
-    const profile = columnProfiles?.[key];
+    const profile = lookupBySnake(columnProfiles, key);
     if (profile?.missing_ratio != null && totalRows > 0) {
       return {
         missingCount: Math.round(Number(profile.missing_ratio) * totalRows),
@@ -102,10 +149,11 @@ function resolveMissingCount(
   }
 
   for (const key of keys) {
-    if (missingPerCol?.[key] != null) {
+    const fromHealth = lookupBySnake(missingPerCol, key);
+    if (fromHealth != null) {
       return {
-        missingCount: Number(missingPerCol[key]),
-        profile: columnProfiles?.[key],
+        missingCount: Number(fromHealth),
+        profile: lookupBySnake(columnProfiles, key),
       };
     }
   }
@@ -119,38 +167,79 @@ export function resolveColumnProfileStats(
   profileKey: string,
   results: AnalysisResult,
 ): ColumnProfileStats {
-  const health = results.health as {
+  const profilingSummary = results.profiling_summary as
+    | {
+        health?: {
+          rows?: number;
+          missing_per_column?: Record<string, number>;
+          dtypes?: Record<string, string>;
+        };
+        schema?: Record<string, string>;
+        column_profiles?: Record<string, ColumnProfile>;
+      }
+    | undefined;
+
+  const health = (results.health ?? profilingSummary?.health) as {
     rows?: number;
     missing_per_column?: Record<string, number>;
     dtypes?: Record<string, string>;
   } | undefined;
-  const schema = results.schema ?? {};
-  const columnProfiles = results.column_profiles as Record<string, ColumnProfile> | undefined;
+  const schema = {
+    ...(profilingSummary?.schema ?? {}),
+    ...(results.schema ?? {}),
+  };
+  const columnProfiles = (results.column_profiles ??
+    profilingSummary?.column_profiles) as Record<string, ColumnProfile> | undefined;
   const totalRows = health?.rows ?? 0;
   const keys = profileLookupKeys(originalName, profileKey, results);
   const missingPerCol = health?.missing_per_column ?? {};
+  const dtypes = health?.dtypes ?? {};
 
   let typeFromSchema: string | undefined;
   let typeFromDtypes: string | undefined;
+  let profile: ColumnProfile | undefined;
 
   for (const key of keys) {
-    if (!typeFromSchema && schema[key]) typeFromSchema = schema[key];
-    if (!typeFromDtypes && health?.dtypes?.[key]) typeFromDtypes = health.dtypes[key];
+    if (!typeFromSchema) typeFromSchema = lookupBySnake(schema, key);
+    if (!typeFromDtypes) typeFromDtypes = lookupBySnake(dtypes, key);
+    if (!profile) profile = lookupBySnake(columnProfiles, key);
+  }
+
+  if (!profile) {
+    for (const row of results.column_normalization ?? []) {
+      if (!row || typeof row !== 'object') continue;
+      const orig = String(row.original_name ?? '');
+      const canon = String(row.canonical_name ?? row.normalized_name ?? '');
+      profile =
+        lookupBySnake(columnProfiles, orig)
+        ?? lookupBySnake(columnProfiles, canon)
+        ?? undefined;
+      if (profile) break;
+      if (snakeKey(orig) === snakeKey(originalName)) {
+        profile = lookupBySnake(columnProfiles, orig);
+        if (profile) break;
+      }
+      if (snakeKey(canon) === snakeKey(profileKey)) {
+        profile = lookupBySnake(columnProfiles, canon);
+        if (profile) break;
+      }
+    }
   }
 
   const mapRow = results.semantic_mapping?.find(
     (r) =>
-      keys.includes(r.column)
-      || (r as { original_name?: string }).original_name === originalName,
+      keys.some((k) => snakeKey(k) === snakeKey(String(r.column ?? '')))
+      || snakeKey(String((r as { original_name?: string }).original_name ?? '')) === snakeKey(originalName),
   );
   const typeFromMapping = (mapRow as { dtype?: string } | undefined)?.dtype;
 
-  const { missingCount, profile } = resolveMissingCount(
+  const { missingCount, profile: resolvedProfile } = resolveMissingCount(
     keys,
     columnProfiles,
     missingPerCol,
     totalRows,
   );
+  profile = profile ?? resolvedProfile;
 
   const missingRatio =
     totalRows > 0
@@ -159,14 +248,24 @@ export function resolveColumnProfileStats(
         ? Number(profile.missing_ratio)
         : 0;
 
-  const type =
+  const storageType =
     typeFromSchema
     ?? profile?.datatype
     ?? typeFromDtypes
     ?? typeFromMapping
     ?? '—';
 
-  return { type, missingCount, missingRatio };
+  const isAuxiliary = isAuxiliaryProfile(profile, missingRatio, totalRows);
+  const constantValue = isAuxiliary ? extractConstantValue(profile) : undefined;
+
+  return {
+    type: isAuxiliary ? 'auxiliary' : storageType,
+    missingCount,
+    missingRatio,
+    isAuxiliary,
+    constantValue,
+    storageType: isAuxiliary ? storageType : undefined,
+  };
 }
 
 function mapApiRow(row: ColumnNormalizationRow): NormalizationPlanRow {

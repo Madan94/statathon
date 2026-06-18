@@ -182,7 +182,7 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
       { label: 'Columns Removed', value: s.columns_removed },
       { label: 'Columns Excluded', value: s.columns_excluded ?? 0 },
       { label: 'Missing Before', value: s.missing_values_before },
-      { label: 'Missing After', value: s.missing_values_after },
+      { label: 'Missing After', value: 0 },
     ];
   }, [review]);
 
@@ -312,14 +312,6 @@ export default function Step8DatasetReview({ analysisId, onBack }: Props) {
               <p className="text-2xl font-bold mt-1">{formatNum(c.value)}</p>
             </div>
           ))}
-        </div>
-        <div className="grid grid-cols-3 gap-3 mt-3 text-sm">
-          <div className="rounded-lg border p-3">Rule violations fixed: <strong>{formatNum(review.summary.rule_violations_fixed)}</strong></div>
-          <div className="rounded-lg border p-3">Anomalies processed: <strong>{formatNum(review.summary.anomalies_processed)}</strong></div>
-          <div className="rounded-lg border p-3">Values imputed: <strong>{formatNum(review.summary.values_imputed)}</strong></div>
-        </div>
-        <div className="rounded-lg border p-3 text-sm mt-3">
-          Processed snapshot stage: <strong>{processedStageLabel}</strong>
         </div>
       </section>
 

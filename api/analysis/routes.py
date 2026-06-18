@@ -18,6 +18,7 @@ from services.analysis_runner import (
 from services.apply_service import apply_analysis_decisions, get_lineage
 from analysis.schemas import (
     AnalysisDecisionsRequest,
+    ColumnAutoNormalizeRequest,
     ImputationDecisionsRequest,
     ImputationMethodRequest,
     NormalizationSaveRequest,
@@ -50,9 +51,11 @@ from services.analysis_payload_cache import (
     set_cached_enriched_results,
 )
 from services.normalization_service import NormalizationService
+from services.column_role_service import ColumnRoleService
 from services.outlier_workflow_service import OutlierWorkflowService
 from services.validation_workflow_service import ValidationWorkflowService
 from services.imputation_workflow_service import ImputationWorkflowService
+from services.column_review_auto_service import ColumnReviewAutoService
 from services.phase_audit_service import PhaseAuditService
 from services.phase_status_service import PhaseStatusService
 from review.dataset_review_service import DatasetReviewService
@@ -439,6 +442,74 @@ def save_validation_decisions(
     )
 
 
+def _demo_noise_or_http(exc: Exception) -> HTTPException:
+    if isinstance(exc, PermissionError):
+        return HTTPException(status_code=403, detail=str(exc))
+    if isinstance(exc, ValueError):
+        return HTTPException(status_code=400, detail=str(exc))
+    return HTTPException(status_code=500, detail=str(exc))
+
+
+@router.get("/{analysis_id}/validation/demo-noise/status")
+def validation_demo_noise_status(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    from services.validation_demo_noise_service import ValidationDemoNoiseService
+
+    try:
+        return ValidationDemoNoiseService(db).status(analysis_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.post("/{analysis_id}/validation/demo-noise/inject")
+def validation_demo_noise_inject(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    from services.validation_demo_noise_service import ValidationDemoNoiseService
+
+    try:
+        return ValidationDemoNoiseService(db).inject(analysis_id)
+    except (PermissionError, ValueError) as e:
+        raise _demo_noise_or_http(e) from e
+
+
+@router.post("/{analysis_id}/validation/demo-noise/refresh")
+def validation_demo_noise_refresh(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    from services.validation_demo_noise_service import ValidationDemoNoiseService
+
+    try:
+        return ValidationDemoNoiseService(db).refresh(analysis_id)
+    except (PermissionError, ValueError) as e:
+        raise _demo_noise_or_http(e) from e
+
+
+@router.post("/{analysis_id}/validation/demo-noise/remove")
+def validation_demo_noise_remove(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    from services.validation_demo_noise_service import ValidationDemoNoiseService
+
+    try:
+        return ValidationDemoNoiseService(db).remove(analysis_id)
+    except (PermissionError, ValueError) as e:
+        raise _demo_noise_or_http(e) from e
+
+
 @router.post("/{analysis_id}/imputation/method")
 def select_imputation_method(
     analysis_id: int,
@@ -465,6 +536,27 @@ def save_imputation_decisions(
         decisions=body.decisions if body.decisions else None,
         user_id=user_id,
     )
+
+
+@router.post("/{analysis_id}/column-review/auto-normalize")
+def auto_normalize_column_review(
+    analysis_id: int,
+    body: ColumnAutoNormalizeRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return ColumnReviewAutoService(db).auto_normalize_column(
+            analysis_id,
+            body.column,
+            phases=body.phases,
+            user_id=user_id,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/{analysis_id}/anomaly/review-progress")
@@ -610,6 +702,40 @@ def save_analysis_normalization(
     try:
         updates = [c.model_dump() for c in body.columns]
         return NormalizationService(db).save_normalization(analysis_id, user_id, updates)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/{analysis_id}/column-roles")
+def get_column_roles(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    try:
+        return ColumnRoleService(db).get_roles(analysis_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+
+
+@router.post("/{analysis_id}/column-roles/confirm")
+def confirm_column_roles(
+    analysis_id: int,
+    body: dict,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    _analysis_meta_or_raise(analysis_id, db, user_id)
+    overrides = body.get("overrides") if isinstance(body, dict) else {}
+    if not isinstance(overrides, dict):
+        overrides = {}
+    try:
+        return ColumnRoleService(db).confirm_roles(
+            analysis_id,
+            overrides,
+            user_id=user_id,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 

@@ -261,6 +261,8 @@ def _discover_aggregation_triplets(columns: list[str], rule_idx_start: int = 0
 def discover_from_ontology(
     columns_meta: dict[str, dict[str, Any]],
     unified_domains: list[dict[str, Any]] | None = None,
+    *,
+    column_roles: dict[str, str] | None = None,
 ) -> list[DiscoveredRule]:
     """For each column with a mapped domain, generate the bound rules implied
     by the domain's `expected_range` / `expected_kind` / `expected_dtype`."""
@@ -271,8 +273,12 @@ def discover_from_ontology(
 
     rules: list[DiscoveredRule] = []
     idx = 0
+    from core.column_roles import is_identifier_column
+
     for col, meta in (columns_meta or {}).items():
         if not isinstance(meta, dict):
+            continue
+        if is_identifier_column(str(col), column_roles, columns_meta):
             continue
         domain = meta.get("domain") or meta.get("semantic_domain")
         if not domain:
@@ -385,6 +391,8 @@ def discover_from_statistics(
     column_profiles: dict[str, Any],
     *,
     expand_factor: float = 1.5,
+    column_roles: dict[str, str] | None = None,
+    columns_meta: dict[str, dict[str, Any]] | None = None,
 ) -> list[DiscoveredRule]:
     """Generate empirical-range guard rails from observed distributions.
 
@@ -393,7 +401,11 @@ def discover_from_statistics(
     """
     rules: list[DiscoveredRule] = []
     idx = 0
+    from core.column_roles import is_identifier_column
+
     for col, profile in (column_profiles or {}).items():
+        if is_identifier_column(str(col), column_roles, columns_meta):
+            continue
         if isinstance(profile, dict):
             mn = profile.get("min")
             mx = profile.get("max")
@@ -449,6 +461,8 @@ def _normalize_archetypes(
 def discover_from_archetype(
     archetypes: list[dict[str, Any] | str] | None,
     columns_meta: dict[str, dict[str, Any]],
+    *,
+    column_roles: dict[str, str] | None = None,
 ) -> list[DiscoveredRule]:
     """Archetype-level defaults — e.g. dataset is a labour survey, so any
     column matching `*_rate` should be 0..100."""
@@ -459,7 +473,11 @@ def discover_from_archetype(
     rules: list[DiscoveredRule] = []
     idx = 0
     if top_archetype in ("labour", "economic"):
+        from core.column_roles import is_identifier_column
+
         for col, meta in (columns_meta or {}).items():
+            if is_identifier_column(str(col), column_roles, columns_meta):
+                continue
             if re.search(r"_rate$|_pct$|_percentage$|^rate_", str(col), re.IGNORECASE):
                 idx += 1
                 rules.append(DiscoveredRule(
@@ -494,9 +512,15 @@ def discover_all_rules(
     unified_domains: list[dict[str, Any]] | None = None,
     archetypes: list[dict[str, Any]] | None = None,
     library_path: str | Path | None = None,
+    column_roles: dict[str, str] | None = None,
 ) -> list[DiscoveredRule]:
     """Run all five discovery sources and return the merged rule set."""
     columns_meta = columns_meta or {}
+    roles = column_roles or {}
+    from core.column_roles import build_column_roles, is_identifier_column
+
+    if not roles:
+        roles = build_column_roles(columns_meta)
     column_domains = {
         col: (meta.get("domain") or meta.get("semantic_domain") or "")
         for col, meta in columns_meta.items()
@@ -505,10 +529,26 @@ def discover_all_rules(
 
     rules: list[DiscoveredRule] = []
     rules += discover_from_library(library_path)
-    rules += discover_from_ontology(columns_meta, unified_domains)
+    rules += discover_from_ontology(columns_meta, unified_domains, column_roles=roles)
     rules += discover_from_kg(schema_graph, priority_dependencies, column_domains)
-    rules += discover_from_statistics(column_profiles or {})
-    rules += discover_from_archetype(archetypes, columns_meta)
+    rules += discover_from_statistics(column_profiles or {}, column_roles=roles, columns_meta=columns_meta)
+    rules += discover_from_archetype(archetypes, columns_meta, column_roles=roles)
+
+    filtered: list[DiscoveredRule] = []
+    for r in rules:
+        if r.kind == "single_column" and r.columns:
+            target = str(r.columns[0])
+            if target in columns and is_identifier_column(target, roles, columns_meta):
+                continue
+        if r.kind != "single_column" and r.columns:
+            if all(
+                str(c) in columns and is_identifier_column(str(c), roles, columns_meta)
+                for c in r.columns
+                if str(c) in columns
+            ):
+                continue
+        filtered.append(r)
+    rules = filtered
 
     # De-dupe: same (kind, rule_type, columns, params) is one rule; keep highest-source-priority
     source_rank = {"library": 5, "ontology": 4, "kg": 3, "archetype": 2, "statistical": 1}

@@ -14,7 +14,7 @@ export default function ValidationPage() {
   const analysisId = Number(params.id);
   const routes = analysisRoutes(analysisId);
 
-  const { results, loading, error } = useAnalysisResults(analysisId, {
+  const { results, loading, error, reload } = useAnalysisResults(analysisId, {
     includePhase3: true,
   });
 
@@ -46,6 +46,7 @@ export default function ValidationPage() {
         results={results}
         analysisId={analysisId}
         loadState="loaded"
+        onRefresh={reload}
         onProceed={() => router.push(routes.columns)}
         onBack={() => router.push(routes.hubStep(5))}
       />
