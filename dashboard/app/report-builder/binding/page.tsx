@@ -1231,7 +1231,7 @@ export default function BindingWorkflowPage() {
       const chooseWorkflowMode = (mode: WorkflowMode) => {
         setWorkflowMode(mode);
         if (mode === 'guided_query') {
-          router.push(`/report-builder/query-flow/${encodeURIComponent(session.template_id)}/${encodeURIComponent(session.signature)}?workflowMode=guided_query&returnTo=binding`);
+          router.push(`/report-builder/guided-query-contract/${encodeURIComponent(session.template_id)}/${encodeURIComponent(session.signature)}`);
           return;
         }
         setTemplatePath('pre_existing');
