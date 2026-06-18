@@ -254,6 +254,13 @@ class WorkspaceOut(BaseModel):
     phase_statuses: dict[str, Any]
 
 
+class PreviewRowsOut(BaseModel):
+    columns: list[str]
+    rows: list[dict[str, Any]]
+    total_rows: int
+    returned_rows: int
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -1270,6 +1277,43 @@ def get_workspace(template_id: str, signature: str) -> WorkspaceOut:
         dependency_graph=dependency_graph,
         issues=issues,
         phase_statuses=_workspace_phase_statuses(record, dataset, binding, ownership, reviewed_plan, issues),
+    )
+
+
+@router.get("/{template_id}/{signature}/preview-rows", response_model=PreviewRowsOut)
+def get_preview_rows(template_id: str, signature: str, limit: int = 100) -> PreviewRowsOut:
+    """Return up to ``limit`` rows from the stashed dataset CSV for client-side preview.
+
+    The query-flow data/weight preview has no uploaded CSV in the browser (it works
+    off the backend stash), so without this it can only show the few ``sampleValues``
+    carried on each column profile. This streams real rows from the stashed ``data.csv``
+    so the officer can preview/weight up to ``limit`` rows of the actual slice source.
+    """
+    import pandas as pd
+
+    from core.json_safe import make_json_safe
+
+    csv_path = _stash_path(template_id, signature, "data.csv")
+    if not csv_path.exists():
+        raise HTTPException(
+            status_code=409,
+            detail="binding session data expired — please re-run 'start' for this dataset",
+        )
+    capped = max(1, min(int(limit or 100), 5000))
+    head = pd.read_csv(csv_path, nrows=capped)
+    columns = [str(c) for c in head.columns]
+    rows = [make_json_safe(rec) for rec in head.to_dict(orient="records")]
+    # Cheap total-row estimate (line count minus header); informational only.
+    try:
+        with csv_path.open("rb") as fh:
+            total_rows = max(0, sum(1 for _ in fh) - 1)
+    except OSError:
+        total_rows = len(rows)
+    return PreviewRowsOut(
+        columns=columns,
+        rows=rows,
+        total_rows=total_rows,
+        returned_rows=len(rows),
     )
 
 

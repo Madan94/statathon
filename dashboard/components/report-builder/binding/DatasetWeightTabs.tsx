@@ -13,36 +13,93 @@ import type { DatasetColumnProfile } from '@/lib/api';
 // Dataset weight tabs
 //   Tab 1 "Data table"   — the raw uploaded CSV, no weighting.
 //   Tab 2 "Weight table"  — same rows, with a small "w" toggle on each numeric
-//                           column header. Toggling applies the survey multiplier
-//                           wᵢ via the weighted formula:
-//                               weighted mean  = Σ(xᵢ · wᵢ/100) / Σ(wᵢ/100)
-//                               weighted total = Σ(xᵢ · wᵢ/100)
-//   The multiplier column (wᵢ) is auto-detected from the dataset and can be
-//   re-selected by the officer. A results panel is shown at the bottom once one
-//   or more columns are weighted.
+//                           column header. Toggling weights that column with a
+//                           survey estimator the officer picks per column:
+//                               Total       Ŷ = Σ(valueᵢ · wᵢ)
+//                               Proportion  p̂ = Σ(wᵢ · Iᵢ) / Σwᵢ
+//                               Ratio       R̂ = Σ(wᵢ · yᵢ) / Σ(wᵢ · xᵢ)
+//   wᵢ is the per-row weight read from the auto-detected (re-selectable) weight
+//   column, optionally ÷100 (NSS/PLFS multipliers are stored ×100). Proportion
+//   needs a category value (Iᵢ = 1 when the cell equals it); Ratio needs a
+//   denominator column x. A results panel summarises every estimate.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const COMPUTE_CAP = 100_000; // hard cap on rows parsed for aggregation (browser safety)
 const PREVIEW_ROWS = 100; // rows rendered in the on-screen table
 const COLUMN_LIMIT_OPTIONS: Array<number | 'all'> = [10, 25, 50, 100, 'all']; // officer-selectable column counts
 
+// Survey estimators the officer can apply to a weighted column. wᵢ is the
+// per-row design weight (optionally ÷100, see WeightScale).
+//   total       → Ŷ  = Σ(valueᵢ · wᵢ)                 weighted total
+//   proportion  → p̂  = Σ(wᵢ · Iᵢ) / Σwᵢ   Iᵢ∈{0,1}    weighted proportion
+//   ratio       → R̂  = Σ(wᵢ · yᵢ) / Σ(wᵢ · xᵢ)       weighted ratio (y over x)
+type Estimator = 'total' | 'proportion' | 'ratio';
+const ESTIMATOR_ORDER: Estimator[] = ['total', 'proportion', 'ratio'];
+const ESTIMATORS: Record<Estimator, { label: string; symbol: string; expr: string; help: string }> = {
+  total: {
+    label: 'Total',
+    symbol: 'Ŷ',
+    expr: 'Σ(valueᵢ × wᵢ)',
+    help: 'Weighted total — Ŷ = Σ(valueᵢ × weightᵢ).',
+  },
+  proportion: {
+    label: 'Proportion',
+    symbol: 'p̂',
+    expr: 'Σ(wᵢ·Iᵢ) ÷ Σwᵢ',
+    help: 'Weighted proportion of rows whose value equals a chosen category — p̂ = Σ(wᵢ·Iᵢ) ÷ Σwᵢ.',
+  },
+  ratio: {
+    label: 'Ratio',
+    symbol: 'R̂',
+    expr: 'Σ(wᵢ·yᵢ) ÷ Σ(wᵢ·xᵢ)',
+    help: 'Weighted ratio of this column (y) to a denominator column (x) — R̂ = Σ(wᵢ·yᵢ) ÷ Σ(wᵢ·xᵢ).',
+  },
+};
+
+// How the raw weight column is read into wᵢ. ÷100 is the NSS/PLFS multiplier
+// convention; it cancels in Proportion/Ratio but scales the Total.
+type WeightScale = 'raw' | 'percent';
+const WEIGHT_SCALES: Record<WeightScale, { label: string; expr: string }> = {
+  raw: { label: 'Raw wᵢ', expr: 'wᵢ' },
+  percent: { label: 'wᵢ ÷ 100', expr: 'wᵢ/100' },
+};
+
+// Per weighted column: which estimator and its required inputs.
+interface ColumnConfig {
+  estimator: Estimator;
+  indicatorValue?: string; // proportion: Iᵢ = 1 when the cell equals this value
+  denominatorCol?: string; // ratio: the x (denominator) column
+}
+
 interface WeightResult {
   column: string;
+  estimator: Estimator;
+  detail?: string; // category value (proportion) or denominator column (ratio)
   rowsUsed: number;
   rowsSkipped: number;
-  weightSum: number; // Σ wᵢ/100
-  weightedTotal: number; // Σ xᵢ·wᵢ/100
-  weightedMean: number; // weightedTotal / weightSum
-  unweightedMean: number; // Σ xᵢ / n
-  unweightedTotal: number; // Σ xᵢ
+  weightSum: number; // Σwᵢ over used rows
+  numerator: number; // Σ(wᵢ·yᵢ) | Σ(wᵢ·Iᵢ) | Σ(wᵢ·yᵢ)
+  denominator: number; // Σwᵢ (proportion) | Σ(wᵢ·xᵢ) (ratio)
+  value: number; // Ŷ | p̂ | R̂
+  unweightedMean: number; // plain mean / proportion / ratio for comparison
   valid: boolean;
+  warning?: string; // set when required config is missing
 }
 
 interface DatasetWeightTabsProps {
-  file: File | null;
+  /** CSV file to parse client-side. Provide this OR `rows`. */
+  file?: File | null;
+  /** Pre-parsed slice (object rows keyed by column name) — alternative to `file`. */
+  rows?: Array<Record<string, unknown>>;
+  /** Column order when `rows` is provided (defaults to `columns` order). */
+  headers?: string[];
   columns: DatasetColumnProfile[];
   datasetName?: string;
   rowCount?: number;
+  /** Weight-only view: hide the Raw/Weight tab switcher and show the weight table. */
+  embedded?: boolean;
+  /** Fired when the officer changes the weight (multiplier) column in the selector. */
+  onMultiplierColumnChange?: (column: string | null) => void;
   className?: string;
 }
 
@@ -73,23 +130,34 @@ function fmtNum(n: number, maxFrac = 2): string {
 
 export function DatasetWeightTabs({
   file,
+  rows,
+  headers: providedHeaders,
   columns,
   datasetName,
   rowCount,
+  embedded = false,
+  onMultiplierColumnChange,
   className,
 }: DatasetWeightTabsProps) {
-  const [tab, setTab] = useState<'raw' | 'weight'>('raw');
-  const [parsed, setParsed] = useState<ParsedCsv | null>(null);
+  const [tab, setTab] = useState<'raw' | 'weight'>(embedded ? 'weight' : 'raw');
+  const [fileParsed, setFileParsed] = useState<ParsedCsv | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [multiplierOverride, setMultiplierOverride] = useState<string | null | undefined>(undefined);
-  const [weightedCols, setWeightedCols] = useState<Set<string>>(new Set());
+  // Each weighted column → its estimator config. Columns are independent, so any
+  // column may use any of the three survey estimators with its own inputs.
+  const [weightedCols, setWeightedCols] = useState<Map<string, ColumnConfig>>(new Map());
   // How many columns the data/weight tables render (officer-selectable).
   const [columnLimit, setColumnLimit] = useState<number | 'all'>(25);
+  // Estimator a column starts with when first switched on (editable per column).
+  const [defaultEstimator, setDefaultEstimator] = useState<Estimator>('total');
+  // How the raw weight column is read into wᵢ (raw, or ÷100 for NSS/PLFS).
+  const [weightScale, setWeightScale] = useState<WeightScale>('percent');
 
-  // Parse the uploaded CSV file client-side whenever it changes. All state
-  // updates happen inside async callbacks (never synchronously in the effect).
+  // Parse the uploaded CSV file client-side whenever it changes. Skipped when
+  // pre-parsed `rows` are supplied. All state updates happen inside async
+  // callbacks (never synchronously in the effect).
   useEffect(() => {
-    if (!file) return;
+    if (!file || rows) return;
     let cancelled = false;
     file
       .text()
@@ -98,23 +166,39 @@ export function DatasetWeightTabs({
         const result = parseCsv(text, COMPUTE_CAP);
         if (!result.headers.length) {
           setError('Could not read any columns from this file.');
-          setParsed(null);
+          setFileParsed(null);
         } else {
           setError(null);
-          setParsed(result);
+          setFileParsed(result);
         }
       })
       .catch((err: unknown) => {
         if (cancelled) return;
         setError(err instanceof Error ? err.message : 'Failed to read the CSV file.');
-        setParsed(null);
+        setFileParsed(null);
       });
     return () => {
       cancelled = true;
     };
-  }, [file]);
+  }, [file, rows]);
 
-  const loading = Boolean(file) && !parsed && !error;
+  // Build a ParsedCsv-shaped view from the provided object rows (filtered slice).
+  const providedParsed = useMemo<ParsedCsv | null>(() => {
+    if (!rows) return null;
+    const hdrs = providedHeaders && providedHeaders.length ? providedHeaders : columns.map((c) => c.name);
+    const stringRows = rows.slice(0, COMPUTE_CAP).map((row) =>
+      hdrs.map((h) => {
+        const v = row[h];
+        return v == null ? '' : String(v);
+      }),
+    );
+    return { headers: hdrs, rows: stringRows, totalDataRows: rows.length, truncated: rows.length > COMPUTE_CAP };
+  }, [rows, providedHeaders, columns]);
+
+  // Effective parsed dataset: provided rows take precedence over the file parse.
+  const parsed = providedParsed ?? fileParsed;
+
+  const loading = Boolean(file) && !rows && !parsed && !error;
 
   const numericSet = useMemo(() => (parsed ? detectNumericColumns(parsed) : new Set<string>()), [parsed]);
 
@@ -137,61 +221,117 @@ export function DatasetWeightTabs({
     return map;
   }, [parsed]);
 
-  // Compute weighted aggregates for every toggled-on column.
-  const results = useMemo<WeightResult[]>(() => {
+  // Per-row design weight wᵢ from the weight column, scaled per WeightScale.
+  // Indexed by position in parsed.rows so it lines up with rendered rows.
+  const baseWeights = useMemo<(number | null)[]>(() => {
     if (!parsed || !multiplierCol) return [];
     const wIdx = colIndex.get(multiplierCol);
     if (wIdx == null) return [];
-    return Array.from(weightedCols)
-      .filter((column) => column !== multiplierCol)
-      .map((column) => {
-        const xIdx = colIndex.get(column);
+    const div = weightScale === 'percent' ? 100 : 1;
+    return parsed.rows.map((row) => {
+      const wi = toNumber(row[wIdx]);
+      return wi !== null && wi > 0 ? wi / div : null;
+    });
+  }, [parsed, multiplierCol, weightScale, colIndex]);
+
+  // Compute the chosen survey estimator for every toggled-on column.
+  const results = useMemo<WeightResult[]>(() => {
+    if (!parsed || !multiplierCol) return [];
+    return Array.from(weightedCols.entries())
+      .filter(([column]) => column !== multiplierCol)
+      .map(([column, cfg]) => {
+        const yIdx = colIndex.get(column);
         const res: WeightResult = {
           column,
+          estimator: cfg.estimator,
           rowsUsed: 0,
           rowsSkipped: 0,
           weightSum: 0,
-          weightedTotal: 0,
-          weightedMean: NaN,
+          numerator: 0,
+          denominator: 0,
+          value: NaN,
           unweightedMean: NaN,
-          unweightedTotal: 0,
           valid: false,
         };
-        if (xIdx == null) return res;
-        let rawSum = 0;
-        for (const row of parsed.rows) {
-          const xi = toNumber(row[xIdx]);
-          const wi = toNumber(row[wIdx]);
-          if (xi === null || wi === null || wi <= 0) {
-            res.rowsSkipped += 1;
-            continue;
+        if (yIdx == null) return res;
+
+        if (cfg.estimator === 'proportion') {
+          res.detail = cfg.indicatorValue;
+          if (!cfg.indicatorValue) {
+            res.warning = 'Pick the category value that counts as 1.';
+            return res;
           }
-          const w = wi / 100;
-          res.weightSum += w;
-          res.weightedTotal += xi * w;
-          rawSum += xi;
-          res.rowsUsed += 1;
+          let matches = 0;
+          parsed.rows.forEach((row, i) => {
+            const w = baseWeights[i];
+            if (w === null) {
+              res.rowsSkipped += 1;
+              return;
+            }
+            const ind = (row[yIdx] ?? '').trim() === cfg.indicatorValue ? 1 : 0;
+            res.weightSum += w;
+            res.numerator += w * ind; // Σ(wᵢ·Iᵢ)
+            matches += ind;
+            res.rowsUsed += 1;
+          });
+          res.denominator = res.weightSum; // Σwᵢ
+          res.value = res.weightSum > 0 ? res.numerator / res.weightSum : NaN; // p̂
+          res.unweightedMean = res.rowsUsed > 0 ? matches / res.rowsUsed : NaN;
+          res.valid = res.rowsUsed > 0 && res.weightSum > 0;
+          return res;
         }
-        res.unweightedTotal = rawSum;
+
+        if (cfg.estimator === 'ratio') {
+          res.detail = cfg.denominatorCol;
+          const xIdx = cfg.denominatorCol ? colIndex.get(cfg.denominatorCol) : undefined;
+          if (xIdx == null) {
+            res.warning = 'Pick a denominator column (x).';
+            return res;
+          }
+          let ySum = 0;
+          let xSum = 0;
+          parsed.rows.forEach((row, i) => {
+            const w = baseWeights[i];
+            const yi = toNumber(row[yIdx]);
+            const xi = toNumber(row[xIdx]);
+            if (w === null || yi === null || xi === null) {
+              res.rowsSkipped += 1;
+              return;
+            }
+            res.weightSum += w;
+            res.numerator += w * yi; // Σ(wᵢ·yᵢ)
+            res.denominator += w * xi; // Σ(wᵢ·xᵢ)
+            ySum += yi;
+            xSum += xi;
+            res.rowsUsed += 1;
+          });
+          res.value = res.denominator !== 0 ? res.numerator / res.denominator : NaN; // R̂
+          res.unweightedMean = xSum !== 0 ? ySum / xSum : NaN; // unweighted ratio
+          res.valid = res.rowsUsed > 0 && res.denominator !== 0;
+          return res;
+        }
+
+        // total → Ŷ = Σ(valueᵢ · wᵢ)
+        let rawSum = 0;
+        parsed.rows.forEach((row, i) => {
+          const w = baseWeights[i];
+          const yi = toNumber(row[yIdx]);
+          if (w === null || yi === null) {
+            res.rowsSkipped += 1;
+            return;
+          }
+          res.weightSum += w;
+          res.numerator += w * yi;
+          rawSum += yi;
+          res.rowsUsed += 1;
+        });
+        res.denominator = res.weightSum;
+        res.value = res.numerator; // Ŷ
         res.unweightedMean = res.rowsUsed > 0 ? rawSum / res.rowsUsed : NaN;
-        res.weightedMean = res.weightSum > 0 ? res.weightedTotal / res.weightSum : NaN;
-        res.valid = res.rowsUsed > 0 && res.weightSum > 0;
+        res.valid = res.rowsUsed > 0;
         return res;
       });
-  }, [parsed, multiplierCol, weightedCols, colIndex]);
-
-  // Σ(wᵢ/100) across every row with a valid multiplier — the shared denominator.
-  const multiplierWeightSum = useMemo(() => {
-    if (!parsed || !multiplierCol) return 0;
-    const wIdx = colIndex.get(multiplierCol);
-    if (wIdx == null) return 0;
-    let s = 0;
-    for (const row of parsed.rows) {
-      const wi = toNumber(row[wIdx]);
-      if (wi !== null && wi > 0) s += wi / 100;
-    }
-    return s;
-  }, [parsed, multiplierCol, colIndex]);
+  }, [parsed, multiplierCol, weightedCols, colIndex, baseWeights]);
 
   const resultByColumn = useMemo(() => {
     const map = new Map<string, WeightResult>();
@@ -200,22 +340,48 @@ export function DatasetWeightTabs({
   }, [results]);
 
   const validResults = useMemo(() => results.filter((r) => r.valid), [results]);
-  const combinedWeightedTotal = useMemo(
-    () => validResults.reduce((acc, r) => acc + r.weightedTotal, 0),
-    [validResults],
+  // Combined total only sums Total (Ŷ) columns — adding proportions/ratios is
+  // not meaningful.
+  const totalResults = useMemo(() => validResults.filter((r) => r.estimator === 'total'), [validResults]);
+  const combinedTotal = useMemo(
+    () => totalResults.reduce((acc, r) => acc + r.value, 0),
+    [totalResults],
   );
 
   const toggleWeight = (column: string) => {
     setWeightedCols((prev) => {
-      const next = new Set(prev);
+      const next = new Map(prev);
       if (next.has(column)) next.delete(column);
-      else next.add(column);
+      else next.set(column, { estimator: defaultEstimator });
       return next;
     });
   };
 
+  const setColumnConfig = (column: string, patch: Partial<ColumnConfig>) => {
+    setWeightedCols((prev) => {
+      const next = new Map(prev);
+      const cur = next.get(column) ?? { estimator: defaultEstimator };
+      next.set(column, { ...cur, ...patch });
+      return next;
+    });
+  };
+
+  // Distinct values of a column (for the Proportion indicator picker). Capped
+  // so the dropdown stays usable on high-cardinality columns.
+  const distinctValuesFor = (colName: string): string[] => {
+    const idx = colIndex.get(colName);
+    if (idx == null || !parsed) return [];
+    const seen = new Set<string>();
+    for (const row of parsed.rows) {
+      const v = (row[idx] ?? '').trim();
+      if (v) seen.add(v);
+      if (seen.size >= 200) break;
+    }
+    return Array.from(seen).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  };
+
   // ── Empty / loading / error states ────────────────────────────────────────
-  if (!file) {
+  if (!file && !rows) {
     return (
       <div className={className}>
         <Alert variant="info" title="No CSV in this session">
@@ -241,10 +407,12 @@ export function DatasetWeightTabs({
     );
   }
 
-  const { headers, rows, totalDataRows, truncated } = parsed;
-  const previewRows = rows.slice(0, PREVIEW_ROWS);
+  const { headers, rows: parsedRows, totalDataRows, truncated } = parsed;
+  const previewRows = parsedRows.slice(0, PREVIEW_ROWS);
   const numericColumnCount = headers.filter((h) => numericSet.has(h) && h !== multiplierCol).length;
   const effectiveColLimit = columnLimit === 'all' ? headers.length : Math.min(columnLimit, headers.length);
+  // The weight column wᵢ must be numeric — it is read as the per-row design weight.
+  const weightSourceColumns = headers.filter((h) => numericSet.has(h));
 
   const renderColumnLimitControl = () => (
     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -278,13 +446,12 @@ export function DatasetWeightTabs({
     </div>
   );
 
-  const renderTable = (weightMode: boolean) => {
-    const wIdx = multiplierCol ? colIndex.get(multiplierCol) ?? null : null;
-    const showFooter = weightMode && weightedCols.size > 0;
+  const renderTable = (weightView: boolean) => {
+    const showFooter = weightView && weightedCols.size > 0;
     // Slice columns to the officer-selected limit. In weight mode always keep the
     // multiplier column visible (so its wᵢ source / footer stays in view).
     const baseDisplayed = headers.slice(0, effectiveColLimit);
-    const displayedHeaders = weightMode && multiplierCol && !baseDisplayed.includes(multiplierCol)
+    const displayedHeaders = weightView && multiplierCol && !baseDisplayed.includes(multiplierCol)
       ? [...baseDisplayed, multiplierCol]
       : baseDisplayed;
     return (
@@ -297,47 +464,102 @@ export function DatasetWeightTabs({
               const isMultiplier = h === multiplierCol;
               const isNumeric = numericSet.has(h);
               const isActive = weightedCols.has(h);
+              const cfg = weightedCols.get(h);
               const role = roleByName.get(h);
               return (
                 <th key={h} className={cn('px-3 py-2 align-bottom', isMultiplier && 'bg-accent/5')}>
                   <div className="flex items-center gap-1.5">
                     <span className="whitespace-nowrap font-semibold text-text">{h}</span>
-                    {weightMode && isMultiplier && (
+                    {weightView && isMultiplier && (
                       <Badge variant="default" className="text-[8px]">
                         wᵢ source
                       </Badge>
                     )}
-                    {weightMode && !isMultiplier && (
+                    {weightView && !isMultiplier && !isActive && (
                       <button
                         type="button"
                         onClick={() => isNumeric && toggleWeight(h)}
                         disabled={!isNumeric}
                         title={
                           isNumeric
-                            ? isActive
-                              ? `Weighting ON for ${h} — click to turn off`
-                              : `Apply the multiplier to ${h}`
+                            ? `Estimate ${h} with the ${ESTIMATORS[defaultEstimator].label} estimator`
                             : 'Weights apply to numeric columns only'
                         }
-                        aria-pressed={isActive}
+                        aria-pressed={false}
                         className={cn(
                           'inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-bold lowercase transition-colors',
-                          isActive
-                            ? 'border-primary bg-primary text-white shadow-sm'
-                            : 'border-border bg-surface text-text-muted hover:border-primary hover:text-primary',
+                          'border-border bg-surface text-text-muted hover:border-primary hover:text-primary',
                           !isNumeric && 'cursor-not-allowed opacity-30 hover:border-border hover:text-text-muted',
                         )}
                       >
                         w
                       </button>
                     )}
-                  </div>
-                  <div className="mt-0.5 flex items-center gap-1">
-                    {role && (
-                      <span className="text-[9px] uppercase tracking-wide text-text-muted">{role}</span>
+                    {weightView && !isMultiplier && isActive && cfg && (
+                      <div className="flex items-center gap-1">
+                        <select
+                          value={cfg.estimator}
+                          onChange={(e) => setColumnConfig(h, { estimator: e.target.value as Estimator })}
+                          title={`Estimator for ${h}`}
+                          aria-label={`Estimator for ${h}`}
+                          className="rounded-md border border-primary/40 bg-primary/10 px-1 py-0.5 text-[10px] font-medium text-primary outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                        >
+                          {ESTIMATOR_ORDER.map((est) => (
+                            <option key={est} value={est}>
+                              {ESTIMATORS[est].label}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => toggleWeight(h)}
+                          title={`Turn off weighting for ${h}`}
+                          aria-label={`Turn off weighting for ${h}`}
+                          className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border bg-surface text-[9px] text-text-muted transition-colors hover:border-warning hover:text-warning"
+                        >
+                          ×
+                        </button>
+                      </div>
                     )}
-                    {weightMode && isActive && (
-                      <span className="text-[9px] font-medium text-primary">weighted</span>
+                  </div>
+                  <div className="mt-0.5 flex flex-col gap-1">
+                    <div className="flex items-center gap-1">
+                      {role && (
+                        <span className="text-[9px] uppercase tracking-wide text-text-muted">{role}</span>
+                      )}
+                      {weightView && isActive && cfg && (
+                        <span className="text-[9px] font-medium text-primary">{ESTIMATORS[cfg.estimator].symbol} {ESTIMATORS[cfg.estimator].label}</span>
+                      )}
+                    </div>
+                    {weightView && isActive && cfg?.estimator === 'proportion' && (
+                      <select
+                        value={cfg.indicatorValue ?? ''}
+                        onChange={(e) => setColumnConfig(h, { indicatorValue: e.target.value || undefined })}
+                        title={`Category that counts as 1 for ${h}`}
+                        aria-label={`Indicator category for ${h}`}
+                        className="max-w-[8rem] rounded border border-border bg-surface-card px-1 py-0.5 text-[9px] text-text outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                      >
+                        <option value="">= value…</option>
+                        {distinctValuesFor(h).map((v) => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
+                      </select>
+                    )}
+                    {weightView && isActive && cfg?.estimator === 'ratio' && (
+                      <select
+                        value={cfg.denominatorCol ?? ''}
+                        onChange={(e) => setColumnConfig(h, { denominatorCol: e.target.value || undefined })}
+                        title={`Denominator column (x) for ${h}`}
+                        aria-label={`Denominator column for ${h}`}
+                        className="max-w-[8rem] rounded border border-border bg-surface-card px-1 py-0.5 text-[9px] text-text outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                      >
+                        <option value="">÷ column…</option>
+                        {weightSourceColumns
+                          .filter((c) => c !== h && c !== multiplierCol)
+                          .map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                      </select>
                     )}
                   </div>
                 </th>
@@ -347,25 +569,36 @@ export function DatasetWeightTabs({
         </thead>
         <tbody className="divide-y divide-border">
           {previewRows.map((row, rIdx) => {
-            const wi = wIdx != null ? toNumber(row[wIdx]) : null;
             return (
             <tr key={rIdx} className="hover:bg-primary/[0.03]">
               <td className="px-3 py-1.5 text-[10px] tabular-nums text-text-muted">{rIdx + 1}</td>
               {displayedHeaders.map((h) => {
                 const cIdx = colIndex.get(h) ?? -1;
                 const isMultiplier = h === multiplierCol;
-                const isActive = weightMode && weightedCols.has(h);
+                const isActive = weightView && weightedCols.has(h);
                 const raw = cIdx >= 0 ? (row[cIdx] ?? '') : '';
                 if (isActive) {
-                  const xi = toNumber(raw);
-                  const factor = wi !== null && wi > 0 ? wi / 100 : null;
-                  const weighted = xi !== null && factor !== null ? xi * factor : null;
+                  const cfg = weightedCols.get(h);
+                  const w = baseWeights[rIdx] ?? null;
+                  const yi = toNumber(raw);
+                  let contrib: number | null = null;
+                  let sub = '';
+                  if (w !== null && Number.isFinite(w)) {
+                    if (cfg?.estimator === 'proportion') {
+                      const ind = cfg.indicatorValue != null && raw.trim() === cfg.indicatorValue ? 1 : 0;
+                      contrib = w * ind;
+                      sub = `${fmtNum(w, 3)} × ${ind}`;
+                    } else if (yi !== null) {
+                      contrib = w * yi;
+                      sub = `${raw} × ${fmtNum(w, 3)}`;
+                    }
+                  }
                   return (
                     <td key={h} className="whitespace-nowrap bg-primary/5 px-3 py-1.5 text-right">
-                      {weighted !== null ? (
+                      {contrib !== null ? (
                         <span className="flex flex-col items-end leading-tight">
-                          <span className="font-semibold tabular-nums text-primary">{fmtNum(weighted, 3)}</span>
-                          <span className="text-[9px] tabular-nums text-text-muted">{raw} × {fmtNum(factor as number, 2)}</span>
+                          <span className="font-semibold tabular-nums text-primary">{fmtNum(contrib, 3)}</span>
+                          <span className="text-[9px] tabular-nums text-text-muted">{sub}</span>
                         </span>
                       ) : (
                         <span className="text-text-muted">—</span>
@@ -379,7 +612,7 @@ export function DatasetWeightTabs({
                     className={cn(
                       'whitespace-nowrap px-3 py-1.5 text-text',
                       numericSet.has(h) && 'text-right tabular-nums',
-                      weightMode && isMultiplier && 'bg-accent/5 font-medium text-accent',
+                      weightView && isMultiplier && 'bg-accent/5 font-medium text-accent',
                     )}
                   >
                     {raw}
@@ -400,10 +633,7 @@ export function DatasetWeightTabs({
                 if (isMultiplier) {
                   return (
                     <td key={h} className="whitespace-nowrap px-3 py-2 text-right align-bottom">
-                      <span className="flex flex-col items-end leading-tight">
-                        <span className="font-bold tabular-nums text-accent">{fmtNum(multiplierWeightSum)}</span>
-                        <span className="text-[9px] text-text-muted">Σ(wᵢ/100)</span>
-                      </span>
+                      <span className="text-[9px] text-text-muted">wᵢ source</span>
                     </td>
                   );
                 }
@@ -411,8 +641,10 @@ export function DatasetWeightTabs({
                   return (
                     <td key={h} className="whitespace-nowrap px-3 py-2 text-right align-bottom">
                       <span className="flex flex-col items-end leading-tight">
-                        <span className="font-bold tabular-nums text-primary">{fmtNum(r.weightedTotal)}</span>
-                        <span className="text-[9px] text-text-muted">weighted total</span>
+                        <span className="font-bold tabular-nums text-primary">
+                          {r.estimator === 'proportion' ? `${fmtNum(r.value * 100, 2)}%` : fmtNum(r.value, r.estimator === 'ratio' ? 4 : 2)}
+                        </span>
+                        <span className="text-[9px] text-text-muted">{ESTIMATORS[r.estimator].symbol} {ESTIMATORS[r.estimator].label}</span>
                       </span>
                     </td>
                   );
@@ -445,8 +677,10 @@ export function DatasetWeightTabs({
           <button
             type="button"
             onClick={() => setTab('raw')}
+            hidden={embedded}
             className={cn(
               'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+              embedded && 'hidden',
               tab === 'raw' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text',
             )}
           >
@@ -457,6 +691,7 @@ export function DatasetWeightTabs({
             onClick={() => setTab('weight')}
             className={cn(
               'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+              embedded && 'pointer-events-none',
               tab === 'weight' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text',
             )}
           >
@@ -482,41 +717,100 @@ export function DatasetWeightTabs({
 
         {tab === 'weight' && (
           <>
-            {/* Multiplier selector */}
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3">
-              <div className="flex items-center gap-2 text-xs">
-                <Scale className="h-4 w-4 text-accent" aria-hidden />
-                <span className="font-medium text-text">Multiplier column (wᵢ)</span>
-                <select
-                  value={multiplierCol ?? ''}
-                  onChange={(e) => {
-                    const val = e.target.value || null;
-                    setMultiplierOverride(val);
-                    if (val) {
-                      setWeightedCols((prev) => {
-                        const next = new Set(prev);
-                        next.delete(val);
-                        return next;
-                      });
-                    }
-                  }}
-                  className="rounded-md border border-border bg-surface-card px-2 py-1 text-xs text-text outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
-                >
-                  <option value="">— select —</option>
-                  {headers
-                    .filter((h) => numericSet.has(h))
-                    .map((h) => (
+            {/* Weight column + formula selector */}
+            <div className="space-y-3 rounded-lg border border-border bg-surface px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-xs">
+                  <Scale className="h-4 w-4 text-accent" aria-hidden />
+                  <span className="font-medium text-text">Weight column (wᵢ)</span>
+                  <select
+                    value={multiplierCol ?? ''}
+                    onChange={(e) => {
+                      const val = e.target.value || null;
+                      setMultiplierOverride(val);
+                      onMultiplierColumnChange?.(val);
+                      if (val) {
+                        setWeightedCols((prev) => {
+                          const next = new Map(prev);
+                          next.delete(val);
+                          return next;
+                        });
+                      }
+                    }}
+                    className="rounded-md border border-border bg-surface-card px-2 py-1 text-xs text-text outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  >
+                    <option value="">— select —</option>
+                    {weightSourceColumns.map((h) => (
                       <option key={h} value={h}>
                         {h}
                       </option>
                     ))}
-                </select>
+                  </select>
+                </div>
+                {weightedCols.size > 0 && (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setWeightedCols(new Map())}>
+                    Clear weights
+                  </Button>
+                )}
               </div>
-              {weightedCols.size > 0 && (
-                <Button type="button" variant="ghost" size="sm" onClick={() => setWeightedCols(new Set())}>
-                  Clear weights
-                </Button>
-              )}
+
+              {/* Weight scale — how the raw weight column is read into wᵢ. */}
+              <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+                <span className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-text-muted">
+                  <Scale className="h-3.5 w-3.5 text-accent" aria-hidden /> Weight scale
+                </span>
+                <div className="inline-flex rounded-lg border border-border bg-surface-card p-0.5">
+                  {(['raw', 'percent'] as WeightScale[]).map((scale) => {
+                    const active = weightScale === scale;
+                    return (
+                      <button
+                        key={scale}
+                        type="button"
+                        onClick={() => setWeightScale(scale)}
+                        title={scale === 'percent' ? 'Divide each weight by 100 (NSS/PLFS multipliers are stored ×100).' : 'Use the weight column value directly.'}
+                        className={cn(
+                          'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                          active ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text',
+                        )}
+                      >
+                        {WEIGHT_SCALES[scale].label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <code className="rounded bg-surface px-1.5 py-0.5 text-[10px] text-text-muted">wᵢ = {WEIGHT_SCALES[weightScale].expr}</code>
+              </div>
+
+              {/* Default estimator — applied the moment a column is switched on.
+                  Each column's estimator (and its inputs) is then editable from
+                  its table header, so columns can use different estimators. */}
+              <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+                <span className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-text-muted">
+                  <Sigma className="h-3.5 w-3.5 text-accent" aria-hidden /> New-column estimator
+                </span>
+                <div className="inline-flex flex-wrap rounded-lg border border-border bg-surface-card p-0.5">
+                  {ESTIMATOR_ORDER.map((est) => {
+                    const active = defaultEstimator === est;
+                    return (
+                      <button
+                        key={est}
+                        type="button"
+                        title={ESTIMATORS[est].help}
+                        onClick={() => setDefaultEstimator(est)}
+                        className={cn(
+                          'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                          active ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text',
+                        )}
+                      >
+                        {ESTIMATORS[est].label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <span className="text-[10px] text-text-muted">
+                  Applied when you switch a column on — change any column&apos;s estimator in its header.
+                </span>
+              </div>
             </div>
 
             {!multiplierCol ? (
@@ -531,9 +825,12 @@ export function DatasetWeightTabs({
             ) : (
               <p className="text-xs text-text-muted">
                 Click the <span className="font-semibold text-primary">w</span> button on any numeric
-                column header to weight it. Each cell then shows{' '}
-                <span className="font-mono">xᵢ × wᵢ/100</span> and the column is totalled below; weighted
-                mean = <span className="font-mono">Σ(xᵢ·wᵢ/100) ÷ Σ(wᵢ/100)</span>.
+                column to estimate it with the{' '}
+                <span className="font-medium text-text">{ESTIMATORS[defaultEstimator].label}</span> estimator,
+                then change that column&apos;s estimator (and its inputs) from its header. Total ={' '}
+                <span className="font-mono">Σ(yᵢ·wᵢ)</span>, Proportion ={' '}
+                <span className="font-mono">Σ(wᵢ·Iᵢ)÷Σwᵢ</span>, Ratio ={' '}
+                <span className="font-mono">Σ(wᵢ·yᵢ)÷Σ(wᵢ·xᵢ)</span>.
               </p>
             )}
 
@@ -552,15 +849,23 @@ export function DatasetWeightTabs({
                   <h4 className="text-sm font-semibold text-text">Weighted results</h4>
                 </div>
 
-                {/* Formula reminder */}
-                <div className="rounded-lg border border-border bg-surface-card px-4 py-3 font-mono text-xs text-text">
+                {/* Estimator formulas */}
+                <div className="space-y-1 rounded-lg border border-border bg-surface-card px-4 py-3 font-mono text-xs text-text">
                   <div className="flex items-center gap-2">
                     <Sigma className="h-3.5 w-3.5 text-accent" aria-hidden />
-                    weighted&nbsp;mean = Σ(xᵢ · wᵢ/100) ÷ Σ(wᵢ/100)
+                    Total&nbsp;Ŷ = Σ(valueᵢ · wᵢ)
                   </div>
-                  <div className="mt-1 flex items-center gap-2 text-text-muted">
+                  <div className="flex items-center gap-2 text-text-muted">
                     <Sigma className="h-3.5 w-3.5" aria-hidden />
-                    weighted&nbsp;total = Σ(xᵢ · wᵢ/100)
+                    Proportion&nbsp;p̂ = Σ(wᵢ · Iᵢ) ÷ Σwᵢ
+                  </div>
+                  <div className="flex items-center gap-2 text-text-muted">
+                    <Sigma className="h-3.5 w-3.5" aria-hidden />
+                    Ratio&nbsp;R̂ = Σ(wᵢ · yᵢ) ÷ Σ(wᵢ · xᵢ)
+                  </div>
+                  <div className="flex items-center gap-2 text-text-muted">
+                    <Calculator className="h-3.5 w-3.5" aria-hidden />
+                    wᵢ = {WEIGHT_SCALES[weightScale].expr} · each column uses its own estimator
                   </div>
                 </div>
 
@@ -569,17 +874,28 @@ export function DatasetWeightTabs({
                     <thead>
                       <tr className="border-b border-border text-left text-[10px] uppercase text-text-muted">
                         <th className="px-3 py-2">Column</th>
+                        <th className="px-3 py-2">Estimator</th>
+                        <th className="px-3 py-2">Inputs</th>
                         <th className="px-3 py-2 text-right">Rows used</th>
-                        <th className="px-3 py-2 text-right">Σ(wᵢ/100)</th>
-                        <th className="px-3 py-2 text-right">Weighted total</th>
-                        <th className="px-3 py-2 text-right">Weighted mean</th>
-                        <th className="px-3 py-2 text-right">Unweighted mean</th>
+                        <th className="px-3 py-2 text-right">Σwᵢ</th>
+                        <th className="px-3 py-2 text-right">Estimate</th>
+                        <th className="px-3 py-2 text-right">Unweighted</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {results.map((r) => (
                         <tr key={r.column}>
                           <td className="px-3 py-2 font-medium text-text">{r.column}</td>
+                          <td className="px-3 py-2">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary">
+                              {ESTIMATORS[r.estimator].symbol} {ESTIMATORS[r.estimator].label}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-[10px] text-text-muted">
+                            {r.estimator === 'proportion' && (r.detail ? `= ${r.detail}` : '—')}
+                            {r.estimator === 'ratio' && (r.detail ? `÷ ${r.detail}` : '—')}
+                            {r.estimator === 'total' && '—'}
+                          </td>
                           {r.valid ? (
                             <>
                               <td className="px-3 py-2 text-right tabular-nums text-text-muted">
@@ -592,40 +908,40 @@ export function DatasetWeightTabs({
                               </td>
                               <td className="px-3 py-2 text-right tabular-nums">{fmtNum(r.weightSum)}</td>
                               <td className="px-3 py-2 text-right font-semibold tabular-nums text-primary">
-                                {fmtNum(r.weightedTotal)}
-                              </td>
-                              <td className="px-3 py-2 text-right font-semibold tabular-nums text-text">
-                                {fmtNum(r.weightedMean, 3)}
+                                {r.estimator === 'proportion'
+                                  ? `${fmtNum(r.value * 100, 2)}%`
+                                  : fmtNum(r.value, r.estimator === 'ratio' ? 4 : 2)}
                               </td>
                               <td className="px-3 py-2 text-right tabular-nums text-text-muted">
-                                {fmtNum(r.unweightedMean, 3)}
+                                {r.estimator === 'proportion'
+                                  ? `${fmtNum(r.unweightedMean * 100, 2)}%`
+                                  : fmtNum(r.unweightedMean, r.estimator === 'ratio' ? 4 : 3)}
                               </td>
                             </>
                           ) : (
-                            <td colSpan={5} className="px-3 py-2 text-warning">
+                            <td colSpan={4} className="px-3 py-2 text-warning">
                               <span className="flex items-center gap-1.5">
                                 <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-                                No valid (xᵢ, wᵢ) pairs — check the multiplier and column values.
+                                {r.warning ?? 'No valid (value, weight) rows — check the weight column and values.'}
                               </span>
                             </td>
                           )}
                         </tr>
                       ))}
                     </tbody>
-                    {validResults.length > 1 && (
+                    {totalResults.length > 1 && (
                       <tfoot>
                         <tr className="border-t-2 border-primary/30 bg-primary/5">
                           <td className="px-3 py-2 text-xs font-bold text-text">
-                            Combined ({validResults.length} columns)
+                            Combined total ({totalResults.length} columns)
                           </td>
+                          <td className="px-3 py-2 text-text-muted">—</td>
+                          <td className="px-3 py-2 text-text-muted">—</td>
                           <td className="px-3 py-2 text-right text-text-muted">—</td>
-                          <td className="px-3 py-2 text-right tabular-nums text-text-muted">
-                            {fmtNum(multiplierWeightSum)}
-                          </td>
+                          <td className="px-3 py-2 text-right text-text-muted">—</td>
                           <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">
-                            {fmtNum(combinedWeightedTotal)}
+                            {fmtNum(combinedTotal)}
                           </td>
-                          <td className="px-3 py-2 text-right text-text-muted">—</td>
                           <td className="px-3 py-2 text-right text-text-muted">—</td>
                         </tr>
                       </tfoot>

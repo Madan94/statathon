@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Calculator, Check, ChevronDown, Database, Edit3, Filter, Scale, Table2 } from 'lucide-react';
+import { Check, Database, Edit3, Filter, Scale, Table2 } from 'lucide-react';
 
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { cn } from '@/lib/cn';
-import type { DatasetColumnProfile } from '@/lib/api';
+import { DatasetWeightTabs } from '@/components/report-builder/binding/DatasetWeightTabs';
+import { bindingPhaseApi, type DatasetColumnProfile } from '@/lib/api';
 import type { AggregationKind, ReportSectionConfig, SectionMeasure } from '@/lib/reportSection';
 import {
   applyPredicates,
@@ -23,11 +24,14 @@ import type { AcceptedPreviewMetadata } from '@/lib/report-section/canvasHandoff
 type PreviewAggregation = 'sum' | 'mean' | 'weighted_mean' | 'count' | 'median' | 'min' | 'max';
 type PreviewTab = 'data' | 'weight';
 type PreviewColumnLimit = 10 | 25 | 50 | 100 | 'all';
+type PreviewRowLimit = 5 | 10 | 25 | 50 | 100;
 
 const WEIGHT_SCALE = 100;
-const ROW_PREVIEW_LIMIT = 100;
-const SAMPLE_ROW_LIMIT = 12;
+const ROW_PREVIEW_CAP = 100; // hard upper bound on rendered preview rows
+const ROW_FETCH_LIMIT = 1000; // real rows pulled from the backend stash for the preview
+const SAMPLE_ROW_LIMIT = 100;
 const COLUMN_LIMITS: PreviewColumnLimit[] = [10, 25, 50, 100, 'all'];
+const ROW_LIMITS: PreviewRowLimit[] = [5, 10, 25, 50, 100];
 
 const AGGREGATION_OPTIONS: Array<{ value: PreviewAggregation; label: string }> = [
   { value: 'sum', label: 'Sum' },
@@ -62,21 +66,6 @@ interface QueryDataPreviewStepProps {
   onBack: () => void;
 }
 
-interface MeasureStats {
-  measure: SectionMeasure;
-  aggregation: PreviewAggregation;
-  rowsUsed: number;
-  rowsSkipped: number;
-  rawValues: number[];
-  unweightedSum: number;
-  unweightedMean: number | null;
-  weightSum: number;
-  weightedTotal: number;
-  weightedMean: number | null;
-  selectedValue: number | null;
-  valid: boolean;
-}
-
 function toNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string' && value.trim() !== '') {
@@ -96,13 +85,6 @@ function cellText(value: unknown): string {
   if (typeof value === 'number') return fmtNum(value, 3);
   if (typeof value === 'boolean') return value ? 'true' : 'false';
   return String(value);
-}
-
-function median(values: number[]): number | null {
-  if (!values.length) return null;
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
 function isNumericColumn(column: DatasetColumnProfile): boolean {
@@ -155,75 +137,6 @@ function effectiveAggregation(measure: SectionMeasure): PreviewAggregation {
   return measure.weighted ? 'weighted_mean' : 'mean';
 }
 
-function computeMeasureStats(rows: DataRow[], measure: SectionMeasure, weightCol: string | null): MeasureStats {
-  const aggregation = effectiveAggregation(measure);
-  const stats: MeasureStats = {
-    measure,
-    aggregation,
-    rowsUsed: 0,
-    rowsSkipped: 0,
-    rawValues: [],
-    unweightedSum: 0,
-    unweightedMean: null,
-    weightSum: 0,
-    weightedTotal: 0,
-    weightedMean: null,
-    selectedValue: null,
-    valid: false,
-  };
-
-  for (const row of rows) {
-    const value = aggregation === 'count' ? 1 : toNumber(row[measure.col]);
-    const weight = weightCol ? toNumber(row[weightCol]) : null;
-    if (aggregation !== 'count' && value == null) {
-      stats.rowsSkipped += 1;
-      continue;
-    }
-    stats.rowsUsed += 1;
-    if (aggregation !== 'count' && value != null) {
-      stats.rawValues.push(value);
-      stats.unweightedSum += value;
-    }
-    if (value != null && weight != null && weight > 0) {
-      const scaledWeight = weight / WEIGHT_SCALE;
-      stats.weightSum += scaledWeight;
-      stats.weightedTotal += value * scaledWeight;
-    } else if (aggregation === 'weighted_mean' || measure.weighted) {
-      stats.rowsSkipped += 1;
-    }
-  }
-
-  stats.unweightedMean = stats.rawValues.length ? stats.unweightedSum / stats.rawValues.length : null;
-  stats.weightedMean = stats.weightSum > 0 ? stats.weightedTotal / stats.weightSum : null;
-  switch (aggregation) {
-    case 'count':
-      stats.selectedValue = stats.rowsUsed;
-      break;
-    case 'sum':
-      stats.selectedValue = stats.rawValues.length ? stats.unweightedSum : null;
-      break;
-    case 'mean':
-      stats.selectedValue = stats.unweightedMean;
-      break;
-    case 'weighted_mean':
-      stats.selectedValue = stats.weightedMean;
-      break;
-    case 'median':
-      stats.selectedValue = median(stats.rawValues);
-      break;
-    case 'min':
-      stats.selectedValue = stats.rawValues.length ? Math.min(...stats.rawValues) : null;
-      break;
-    case 'max':
-      stats.selectedValue = stats.rawValues.length ? Math.max(...stats.rawValues) : null;
-      break;
-    default:
-      stats.selectedValue = null;
-  }
-  stats.valid = stats.selectedValue != null && Number.isFinite(stats.selectedValue);
-  return stats;
-}
-
 function roleVariant(role: DatasetColumnProfile['role']): 'default' | 'success' | 'warning' | 'muted' {
   if (role === 'measure') return 'success';
   if (role === 'time') return 'warning';
@@ -252,12 +165,61 @@ export function QueryDataPreviewStep({
 }: QueryDataPreviewStepProps) {
   const [tab, setTab] = useState<PreviewTab>('data');
   const [columnLimit, setColumnLimit] = useState<PreviewColumnLimit>(25);
+  const [rowLimit, setRowLimit] = useState<PreviewRowLimit>(25);
   const [editingMeasureId, setEditingMeasureId] = useState<string | null>(null);
+  // Real rows pulled from the backend stash (query-flow has no client-side CSV).
+  const [fetchedRows, setFetchedRows] = useState<DataRow[] | null>(null);
+  const [rowsLoading, setRowsLoading] = useState(false);
+  const [rowsError, setRowsError] = useState<string | null>(null);
+  const [retryTick, setRetryTick] = useState(0);
 
   const headers = useMemo(() => columns.map((column) => column.name), [columns]);
   const numericColumns = useMemo(() => new Set(columns.filter(isNumericColumn).map((column) => column.name)), [columns]);
   const sampleRows = useMemo(() => buildSampleRows(columns), [columns]);
-  const cachedRows = useMemo(() => reportSectionDatasetStore.getRows(request.datasetId), [request.datasetId]);
+  // Fetch up to ROW_FETCH_LIMIT real rows from the stashed dataset CSV once per
+  // dataset/session, registering them in the shared store. On failure the preview
+  // falls back to schema-only sample rows and surfaces a retry-able error.
+  useEffect(() => {
+    const { templateId, signature } = request.target;
+    if (!templateId || !signature) return;
+    if (reportSectionDatasetStore.getRows(request.datasetId).length) {
+      setFetchedRows(reportSectionDatasetStore.getRows(request.datasetId));
+      return;
+    }
+    let cancelled = false;
+    setRowsLoading(true);
+    setRowsError(null);
+    bindingPhaseApi
+      .previewRows(templateId, signature, ROW_FETCH_LIMIT)
+      .then((preview) => {
+        if (cancelled) return;
+        if (!preview.rows?.length) {
+          setRowsError('The backend returned no rows for this dataset slice.');
+          return;
+        }
+        const rows = preview.rows as DataRow[];
+        reportSectionDatasetStore.registerRows(request.datasetId, rows);
+        setFetchedRows(rows);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        setRowsError(
+          status === 404
+            ? 'Preview-rows API not found — restart the FastAPI backend to load the new route.'
+            : status
+              ? `Could not load dataset rows (HTTP ${status}). Showing sample preview only.`
+              : 'Could not reach the backend for dataset rows. Showing sample preview only.',
+        );
+      })
+      .finally(() => { if (!cancelled) setRowsLoading(false); });
+    return () => { cancelled = true; };
+  }, [request.datasetId, request.target, retryTick]);
+
+  const cachedRows = useMemo(() => {
+    if (fetchedRows && fetchedRows.length) return fetchedRows;
+    return reportSectionDatasetStore.getRows(request.datasetId);
+  }, [fetchedRows, request.datasetId]);
   const sourceRows = cachedRows.length ? cachedRows : sampleRows;
   const previewMode: AcceptedPreviewMetadata['previewMode'] = cachedRows.length ? 'frontend_rows' : 'schema_only';
   const predicateResult = useMemo(
@@ -277,7 +239,10 @@ export function QueryDataPreviewStep({
     });
     if (changed) onConfigChange({ ...config, measures: normalizedMeasures });
   }, [config, onConfigChange]);
-  const selectedCols = useMemo(() => {
+  // Columns relevant to this query (filters, dimensions, time, multiplier,
+  // measures and any explicit scope includes) — the "filtered" column set. The
+  // data and weight tables show only these, never the whole dataset.
+  const scopedCols = useMemo(() => {
     const pinned = uniqueList([
       ...config.filters.map((filter) => filter.col),
       ...config.dimensions,
@@ -286,14 +251,22 @@ export function QueryDataPreviewStep({
       ...config.measures.map((measure) => measure.col),
       ...request.scope.columns.include,
     ]);
-    const ordered = uniqueList([...pinned.filter((column) => headers.includes(column)), ...headers]);
-    return columnLimit === 'all' ? ordered : ordered.slice(0, columnLimit);
-  }, [columnLimit, config.dimensions, config.filters, config.measures, config.timeCol, headers, request.scope.columns.include, weightCol]);
-  const visibleRows = filteredRows.slice(0, ROW_PREVIEW_LIMIT);
-  const measureStats = useMemo(
-    () => config.measures.map((measure) => computeMeasureStats(filteredRows, measure, weightCol)),
-    [config.measures, filteredRows, weightCol],
+    const scoped = pinned.filter((column) => headers.includes(column));
+    return scoped.length ? scoped : headers;
+  }, [config.dimensions, config.filters, config.measures, config.timeCol, headers, request.scope.columns.include, weightCol]);
+  const selectedCols = useMemo(
+    () => (columnLimit === 'all' ? scopedCols : scopedCols.slice(0, columnLimit)),
+    [columnLimit, scopedCols],
   );
+  // Column profiles for the scoped columns, preserving scope order — fed to the
+  // embedded weight table so it only sees the filtered columns.
+  const scopedColumnProfiles = useMemo(
+    () => scopedCols
+      .map((name) => columns.find((column) => column.name === name))
+      .filter((column): column is DatasetColumnProfile => Boolean(column)),
+    [scopedCols, columns],
+  );
+  const visibleRows = filteredRows.slice(0, Math.min(rowLimit, ROW_PREVIEW_CAP));
   const missingWeightForWeightedMeasure = config.measures.some((measure) => (measure.weighted || measure.agg === 'weighted_mean') && !weightCol);
   const nonPositiveWeightCount = useMemo(() => {
     if (!weightCol || previewMode !== 'frontend_rows') return 0;
@@ -398,8 +371,12 @@ export function QueryDataPreviewStep({
         </div>
         <div className="rounded-lg border border-border bg-surface px-3 py-2">
           <p className="text-[10px] uppercase tracking-wide text-text-muted">Visible preview</p>
-          <p className="mt-1 text-lg font-semibold text-text">{visibleRows.length.toLocaleString('en-IN')}</p>
-          <p className="text-[10px] text-text-muted">from {filteredRows.length.toLocaleString('en-IN')} available row(s)</p>
+          <p className="mt-1 text-lg font-semibold text-text">{rowsLoading ? '…' : visibleRows.length.toLocaleString('en-IN')}</p>
+          <p className="text-[10px] text-text-muted">
+            {rowsLoading
+              ? 'loading rows…'
+              : `showing ${Math.min(rowLimit, filteredRows.length)} of ${filteredRows.length.toLocaleString('en-IN')} available row(s)`}
+          </p>
         </div>
         <div className="rounded-lg border border-border bg-surface px-3 py-2">
           <p className="text-[10px] uppercase tracking-wide text-text-muted">Measures</p>
@@ -412,6 +389,17 @@ export function QueryDataPreviewStep({
           <p className="text-[10px] text-text-muted">scale {WEIGHT_SCALE}</p>
         </div>
       </div>
+
+      {rowsError && (
+        <Alert variant="warning" title="Dataset rows unavailable">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span>{rowsError}</span>
+            <Button type="button" variant="outline" size="sm" onClick={() => setRetryTick((t) => t + 1)} disabled={rowsLoading}>
+              {rowsLoading ? 'Retrying…' : 'Retry'}
+            </Button>
+          </div>
+        </Alert>
+      )}
 
       {warningMessages.length > 0 && (
         <Alert variant={missingWeightForWeightedMeasure ? 'error' : 'warning'} title="Preview checks">
@@ -441,7 +429,17 @@ export function QueryDataPreviewStep({
             </button>
           ))}
         </div>
-        <label className="flex items-center gap-2 text-xs text-text-muted">
+        <label className="flex items-center gap-2 text-xs text-text-muted" hidden={tab !== 'data'}>
+          Rows
+          <select
+            value={rowLimit}
+            onChange={(event) => setRowLimit(Number(event.target.value) as PreviewRowLimit)}
+            className="rounded-md border border-border bg-surface px-2 py-1 text-xs text-text outline-none"
+          >
+            {ROW_LIMITS.map((limit) => <option key={limit} value={limit}>{limit}</option>)}
+          </select>
+        </label>
+        <label className="flex items-center gap-2 text-xs text-text-muted" hidden={tab !== 'data'}>
           Columns
           <select
             value={columnLimit}
@@ -501,137 +499,76 @@ export function QueryDataPreviewStep({
 
       {tab === 'weight' && (
         <div className="space-y-4">
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
-            <div className="rounded-xl border border-border bg-surface p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-text">Multiplier and measure aggregation</p>
-                  <p className="mt-1 text-xs text-text-muted">Apply survey weighting at column level and set the final aggregation per measure.</p>
-                </div>
-                <label className="flex min-w-[14rem] items-center gap-2 text-xs text-text-muted">
-                  <Scale className="h-3.5 w-3.5" />
-                  <select
-                    value={weightCol || ''}
-                    onChange={(event) => onConfigChange({ ...config, weightCol: event.target.value || null })}
-                    className="w-full rounded-md border border-border bg-surface-card px-2 py-1.5 text-xs text-text outline-none"
-                  >
-                    <option value="">No multiplier</option>
-                    {headers.filter((header) => numericColumns.has(header)).map((header) => <option key={header} value={header}>{header}</option>)}
-                  </select>
-                </label>
-              </div>
-              <div className="mt-4 grid gap-2">
-                {config.measures.map((measure) => {
-                  const aggregation = effectiveAggregation(measure);
-                  const weighted = measure.weighted || measure.agg === 'weighted_mean';
-                  return (
-                    <div key={measure.id} className="rounded-lg border border-border bg-surface-card p-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => toggleWeight(measure)}
-                          aria-pressed={weighted}
-                          className={cn(
-                            'inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-bold transition-colors',
-                            weighted ? 'border-primary bg-primary text-white' : 'border-border bg-surface text-text-muted hover:text-primary',
-                          )}
-                          title={weighted ? 'Weighted measure' : 'Apply multiplier'}
-                        >
-                          W
-                        </button>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-text">{measure.label || measure.col}</p>
-                          <p className="truncate text-[11px] text-text-muted">{measure.col}</p>
-                        </div>
-                        <Badge variant={weighted ? 'success' : 'muted'} className="text-[10px]">{aggregation.replace('_', ' ')}</Badge>
-                        <button
-                          type="button"
-                          onClick={() => setEditingMeasureId((current) => current === measure.id ? null : measure.id)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border text-text-muted hover:text-primary"
-                          title="Edit aggregation"
-                        >
-                          <Edit3 className="h-3.5 w-3.5" />
-                        </button>
+          {/* Column-level survey weighting — identical to the data-profiling weight
+              table. Runs on the accepted filtered slice and only the query-scoped
+              columns; the multiplier chosen here also drives the per-measure
+              aggregation below. */}
+          <DatasetWeightTabs
+            embedded
+            rows={filteredRows}
+            headers={scopedCols}
+            columns={scopedColumnProfiles}
+            datasetName={request.datasetId}
+            rowCount={filteredRows.length}
+            onMultiplierColumnChange={(col) => onConfigChange({ ...config, weightCol: col })}
+          />
+
+          {/* Final aggregation per measure — drives the generated report blocks. */}
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <div>
+              <p className="text-sm font-semibold text-text">Final aggregation per measure</p>
+              <p className="mt-1 text-xs text-text-muted">Set the aggregation each measure uses in the generated report. Weighted mean applies the multiplier selected above at scale {WEIGHT_SCALE}.</p>
+            </div>
+            <div className="mt-4 grid gap-2">
+              {config.measures.map((measure) => {
+                const aggregation = effectiveAggregation(measure);
+                const weighted = measure.weighted || measure.agg === 'weighted_mean';
+                return (
+                  <div key={measure.id} className="rounded-lg border border-border bg-surface-card p-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleWeight(measure)}
+                        aria-pressed={weighted}
+                        className={cn(
+                          'inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs font-bold transition-colors',
+                          weighted ? 'border-primary bg-primary text-white' : 'border-border bg-surface text-text-muted hover:text-primary',
+                        )}
+                        title={weighted ? 'Weighted measure' : 'Apply multiplier'}
+                      >
+                        W
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-text">{measure.label || measure.col}</p>
+                        <p className="truncate text-[11px] text-text-muted">{measure.col}</p>
                       </div>
-                      {editingMeasureId === measure.id && (
-                        <div className="mt-3 flex flex-wrap items-center gap-2 pl-10">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Aggregation</span>
-                          <select
-                            value={aggregation}
-                            onChange={(event) => setAggregation(measure, event.target.value as PreviewAggregation)}
-                            className="rounded-md border border-border bg-surface px-2 py-1.5 text-xs text-text outline-none"
-                          >
-                            {AGGREGATION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                          </select>
-                        </div>
-                      )}
+                      <Badge variant={weighted ? 'success' : 'muted'} className="text-[10px]">{aggregation.replace('_', ' ')}</Badge>
+                      <button
+                        type="button"
+                        onClick={() => setEditingMeasureId((current) => current === measure.id ? null : measure.id)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border text-text-muted hover:text-primary"
+                        title="Edit aggregation"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
-              <div className="flex items-center gap-2">
-                <Calculator className="h-4 w-4 text-primary" />
-                <p className="text-sm font-semibold text-text">Formula</p>
-              </div>
-              <div className="mt-3 rounded-lg border border-border bg-surface-card p-3 font-mono text-xs text-text">
-                <p>weighted_value = x_i * w_i / {WEIGHT_SCALE}</p>
-                <p className="mt-1">weighted_total = sum(x_i * w_i / {WEIGHT_SCALE})</p>
-                <p className="mt-1">weighted_mean = weighted_total / sum(w_i / {WEIGHT_SCALE})</p>
-              </div>
-              <details className="mt-3 rounded-lg border border-border bg-surface-card p-3 text-xs text-text-muted">
-                <summary className="flex cursor-pointer items-center gap-2 font-semibold text-text">
-                  <ChevronDown className="h-3.5 w-3.5" /> MOSPI walkthrough
-                </summary>
-                <div className="mt-3 space-y-2 leading-relaxed">
-                  <p>1. Start with the accepted filtered slice, not the full dataset.</p>
-                  <p>2. Read x_i from the selected measure column and w_i from the multiplier column.</p>
-                  <p>3. Use scale 100 for NSS-style multipliers so every row contributes x_i * w_i / 100.</p>
-                  <p>4. Compare weighted and unweighted values before moving to report language.</p>
-                  <p>5. Treat skipped rows as a method warning when values or multipliers are missing or non-positive.</p>
-                </div>
-              </details>
+                    {editingMeasureId === measure.id && (
+                      <div className="mt-3 flex flex-wrap items-center gap-2 pl-10">
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Aggregation</span>
+                        <select
+                          value={aggregation}
+                          onChange={(event) => setAggregation(measure, event.target.value as PreviewAggregation)}
+                          className="rounded-md border border-border bg-surface px-2 py-1.5 text-xs text-text outline-none"
+                        >
+                          {AGGREGATION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
-
-          <div className="overflow-auto rounded-xl border border-border bg-surface-card">
-            <table className="w-full min-w-[860px] text-xs">
-              <thead>
-                <tr className="border-b border-border text-left text-[10px] uppercase text-text-muted">
-                  <th className="px-3 py-2">Measure</th>
-                  <th className="px-3 py-2">Aggregation</th>
-                  <th className="px-3 py-2 text-right">Rows used</th>
-                  <th className="px-3 py-2 text-right">Skipped</th>
-                  <th className="px-3 py-2 text-right">sum(w_i/100)</th>
-                  <th className="px-3 py-2 text-right">Weighted total</th>
-                  <th className="px-3 py-2 text-right">Weighted mean</th>
-                  <th className="px-3 py-2 text-right">Selected result</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {measureStats.map((stats) => (
-                  <tr key={stats.measure.id}>
-                    <td className="px-3 py-2 font-medium text-text">{stats.measure.label || stats.measure.col}</td>
-                    <td className="px-3 py-2 text-text-muted">{stats.aggregation.replace('_', ' ')}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{stats.rowsUsed.toLocaleString('en-IN')}</td>
-                    <td className="px-3 py-2 text-right tabular-nums text-text-muted">{stats.rowsSkipped.toLocaleString('en-IN')}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{fmtNum(stats.weightSum, 3)}</td>
-                    <td className="px-3 py-2 text-right tabular-nums text-primary">{fmtNum(stats.weightedTotal, 3)}</td>
-                    <td className="px-3 py-2 text-right tabular-nums text-text">{fmtNum(stats.weightedMean, 3)}</td>
-                    <td className="px-3 py-2 text-right font-semibold tabular-nums text-text">{fmtNum(stats.selectedValue, 3)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {measureStats.some((stats) => !stats.valid) && (
-            <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
-              <AlertTriangle className="h-3.5 w-3.5" /> Some selected results could not be computed from the cached/sample preview rows.
-            </div>
-          )}
         </div>
       )}
 

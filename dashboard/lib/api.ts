@@ -2084,6 +2084,18 @@ export const bindingPhaseApi = {
     );
     return data;
   },
+  /** Real rows from the stashed dataset CSV for the query-flow data/weight preview. */
+  previewRows: async (
+    templateId: string,
+    signature: string,
+    limit = 100
+  ): Promise<{ columns: string[]; rows: Record<string, unknown>[]; total_rows: number; returned_rows: number }> => {
+    const { data } = await api.get(
+      `/report-builder/binding-phase/${templateId}/${signature}/preview-rows`,
+      { params: { limit } }
+    );
+    return data;
+  },
   /** Record one human decision (confirm / override-with-columns / reject). */
   confirm: async (
     templateId: string,
