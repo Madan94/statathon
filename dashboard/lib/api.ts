@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { isAuthRoute, PUBLIC_ROUTES } from './authConfig';
-import { redirectToLogin } from './authSession';
+import { redirectToLogin, clearStaleSession } from './authSession';
 import { getCsrfToken } from './csrf';
 import type { EditInput } from './report/types';
 
@@ -61,6 +61,7 @@ api.interceptors.response.use(
         await refreshInFlight;
         return api(original);
       } catch {
+        await clearStaleSession();
         if (typeof window !== 'undefined') {
           const path = window.location.pathname;
           const isPublic = (PUBLIC_ROUTES as readonly string[]).includes(path);
@@ -135,6 +136,7 @@ export interface AnalysisSummaryPayload {
   dataset_context: Record<string, unknown>;
   dataset_profile: Record<string, unknown>;
   dataset_name: string;
+  column_profiles?: Record<string, ColumnProfile>;
   column_profiles_keys: string[];
   profiling_summary: {
     health?: {
@@ -144,6 +146,7 @@ export interface AnalysisSummaryPayload {
       dtypes?: Record<string, string>;
     };
     schema?: Record<string, string>;
+    column_profiles?: Record<string, ColumnProfile>;
   };
 }
 

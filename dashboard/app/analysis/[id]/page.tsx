@@ -77,6 +77,12 @@ function mergeSummaryIntoResults(
   const prof = summary.profiling_summary ?? {};
   const healthFromSummary = prof.health;
   const schemaFromSummary = prof.schema;
+  const profilesFromSummary =
+    summary.column_profiles ?? prof.column_profiles ?? {};
+  const mergedProfiles =
+    Object.keys(profilesFromSummary).length > 0
+      ? profilesFromSummary
+      : (results.column_profiles ?? {});
   return {
     ...results,
     health: {
@@ -86,6 +92,22 @@ function mergeSummaryIntoResults(
     schema: {
       ...(results.schema ?? {}),
       ...(schemaFromSummary ?? {}),
+    },
+    column_profiles: mergedProfiles,
+    profiling_summary: {
+      ...(typeof results.profiling_summary === 'object' && results.profiling_summary
+        ? results.profiling_summary
+        : {}),
+      ...prof,
+      column_profiles: mergedProfiles,
+      health: {
+        ...(typeof results.health === 'object' && results.health ? results.health : {}),
+        ...(healthFromSummary ?? {}),
+      },
+      schema: {
+        ...(results.schema ?? {}),
+        ...(schemaFromSummary ?? {}),
+      },
     },
     dataset_context: {
       ...(results.dataset_context ?? {}),

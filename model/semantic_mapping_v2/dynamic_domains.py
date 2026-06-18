@@ -24,7 +24,7 @@ import time
 from typing import Any
 
 from semantic_mapping_v2.domain_loader import Domain
-from semantic_mapping_v2.llm_client import _gemini_key, _groq_key, generate_json
+from semantic_mapping_v2.llm_client import generate_json, llm_configured
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +58,8 @@ class DynamicDomainGenerator:
         sample_values: dict[str, list[Any]] | None = None,
         max_domains: int = 15,
     ) -> list[Domain]:
-        if not (_gemini_key() or _groq_key()):
-            logger.info("No LLM key (Gemini/Groq); skipping dynamic domain generation.")
+        if not llm_configured():
+            logger.info("No LLM key (OpenRouter/Gemini/Groq); skipping dynamic domain generation.")
             return []
 
         static_names = {_norm(d.domain_name) for d in static_domains}

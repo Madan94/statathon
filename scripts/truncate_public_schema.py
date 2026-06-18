@@ -33,15 +33,16 @@ def main() -> int:
                 text("SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename")
             ).fetchall()
         ]
-        if not tables:
-            print("No tables in public schema.")
-            return 0
 
-        print(f"Truncating {len(tables)} table(s) in public schema...")
-        with conn.begin():
-            for name in tables:
-                conn.execute(text(f'TRUNCATE TABLE public."{name}" RESTART IDENTITY CASCADE'))
-                print(f"  truncated {name}")
+    if not tables:
+        print("No tables in public schema.")
+        return 0
+
+    print(f"Truncating {len(tables)} table(s) in public schema...")
+    with engine.begin() as conn:
+        for name in tables:
+            conn.execute(text(f'TRUNCATE TABLE public."{name}" RESTART IDENTITY CASCADE'))
+            print(f"  truncated {name}")
 
     print("Done. All public tables emptied.")
     return 0

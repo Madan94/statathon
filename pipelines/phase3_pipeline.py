@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from core.multiplier_column import filter_candidate_rows, is_multiplier_column
 from core.rule_validator import normalize_schema
 from core.state import AnalysisState
 from imputation.imputation_manager import run_imputation_intelligence
@@ -88,28 +89,55 @@ def run_phase3_intel(df: pd.DataFrame, schema: dict[str, str], state: AnalysisSt
         anomaly_column_blocks=None,
     )
 
-    # ---- Persist results ----
+    # ---- Persist results (exclude survey multiplier columns) ----
     state.validation_results = {
-        "single_column": (gate.get("single_column") or []) + (val.get("single_column") or []),
-        "multi_column": (gate.get("multi_column") or []) + (val.get("multi_column") or []),
+        "single_column": filter_candidate_rows(
+            (gate.get("single_column") or []) + (val.get("single_column") or [])
+        ),
+        "multi_column": filter_candidate_rows(
+            (gate.get("multi_column") or []) + (val.get("multi_column") or [])
+        ),
         "rules_inventory": gate.get("rules_inventory") or [],
         "summary": {
             **(val.get("summary") or {}),
             "gate": gate.get("summary"),
         },
     }
-    # Validation gate's candidates (KG-driven) take precedence; fall back to legacy.
-    state.validation_candidates = (
-        gate.get("validation_candidates")
-        or val.get("validation_candidates")
-        or []
+    state.validation_candidates = filter_candidate_rows(
+        gate.get("validation_candidates") or val.get("validation_candidates") or []
     )
-    state.anomaly_results = anomaly_bundle.get("anomaly_results") or []
-    state.anomaly_candidates = anomaly_bundle.get("anomaly_candidates") or []
-    state.goodness_of_fit = anomaly_bundle.get("goodness_of_fit") or []
-    state.method_selections = anomaly_bundle.get("method_selections") or {}
-    state.imputation_results = imb.get("imputation_results") or []
-    state.imputation_candidates = imb.get("imputation_candidates") or []
+    state.anomaly_results = [
+        row
+        for row in (anomaly_bundle.get("anomaly_results") or [])
+        if isinstance(row, dict) and not is_multiplier_column(str(row.get("column") or ""))
+    ]
+    state.anomaly_candidates = [
+        row
+        for row in (anomaly_bundle.get("anomaly_candidates") or [])
+        if isinstance(row, dict) and not is_multiplier_column(str(row.get("column") or ""))
+    ]
+    state.goodness_of_fit = [
+        row
+        for row in (anomaly_bundle.get("goodness_of_fit") or [])
+        if isinstance(row, dict) and not is_multiplier_column(str(row.get("column") or ""))
+    ]
+    state.method_selections = {
+        k: v
+        for k, v in (anomaly_bundle.get("method_selections") or {}).items()
+        if not is_multiplier_column(str(k))
+    }
+    imb_results = imb.get("imputation_results") or []
+    imb_candidates = imb.get("imputation_candidates") or []
+    state.imputation_results = [
+        row
+        for row in imb_results
+        if isinstance(row, dict) and not is_multiplier_column(str(row.get("column") or ""))
+    ]
+    state.imputation_candidates = [
+        row
+        for row in imb_candidates
+        if isinstance(row, dict) and not is_multiplier_column(str(row.get("column") or ""))
+    ]
     if not isinstance(getattr(state, "user_decisions", None), dict):
         state.user_decisions = {}
     state.touch()

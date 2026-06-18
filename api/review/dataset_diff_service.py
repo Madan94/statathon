@@ -7,6 +7,7 @@ import pandas as pd
 from sqlalchemy.orm import Session
 
 from database.models import ImputationRowDecision, OutlierDecision, ValidationDecision
+from core.multiplier_column import is_multiplier_column
 from services.analysis_query import (
     build_phase3_from_relational,
     load_analysis_checkpoint,
@@ -133,43 +134,41 @@ class DatasetDiffService:
         bucket.append(entry)
 
     def _normalization_changes(self, analysis_id: int) -> dict[str, Any]:
-        renamed: list[dict[str, str]] = []
-        removed: list[str] = []
-        excluded: list[str] = []
-        seen_renames: set[tuple[str, str]] = set()
-        seen_removed: set[str] = set()
-        seen_excluded: set[str] = set()
+        """Collect normalization deltas — one rename per original column, DB wins over checkpoint."""
+        renames_by_orig: dict[str, str] = {}
+        removed: set[str] = set()
+        excluded: set[str] = set()
+        seen_checkpoint_orig: set[str] = set()
 
-        def _add_rename(orig: str, norm: str) -> None:
+        def _add_rename(orig: str, norm: str, *, authoritative: bool = False) -> None:
             if not orig or not norm or orig == norm:
                 return
-            key = (orig, norm)
-            if key in seen_renames:
+            if is_multiplier_column(orig) or is_multiplier_column(norm):
                 return
-            seen_renames.add(key)
-            renamed.append({"from": orig, "to": norm})
+            if authoritative or orig not in renames_by_orig:
+                renames_by_orig[orig] = norm
 
         def _add_removed(name: str) -> None:
-            if name and name not in seen_removed:
-                seen_removed.add(name)
-                removed.append(name)
+            if name and not is_multiplier_column(name):
+                removed.add(name)
 
         def _add_excluded(name: str) -> None:
-            if name and name not in seen_excluded:
-                seen_excluded.add(name)
-                excluded.append(name)
+            if name and not is_multiplier_column(name):
+                excluded.add(name)
 
         try:
             records = NormalizationService(self.db)._ensure_columns_seeded(analysis_id)
             for col in records:
                 orig = str(col.name)
+                if is_multiplier_column(orig):
+                    continue
                 norm = str(col.normalized_name or col.name)
                 if col.is_deleted:
                     _add_removed(orig)
                 elif col.is_excluded:
                     _add_excluded(orig)
                 elif norm != orig:
-                    _add_rename(orig, norm)
+                    _add_rename(orig, norm, authoritative=True)
         except Exception:
             pass
 
@@ -183,13 +182,24 @@ class DatasetDiffService:
                 if not isinstance(row, dict):
                     continue
                 orig = str(row.get("original_name") or row.get("column") or "")
-                norm = str(row.get("normalized_name") or row.get("canonical_name") or row.get("display_name") or orig)
+                if not orig or is_multiplier_column(orig):
+                    continue
+                if orig in seen_checkpoint_orig:
+                    continue
+                seen_checkpoint_orig.add(orig)
+                norm = str(
+                    row.get("normalized_name")
+                    or row.get("canonical_name")
+                    or row.get("display_name")
+                    or orig
+                )
                 if row.get("is_deleted"):
                     _add_removed(orig)
                 elif row.get("is_excluded"):
                     _add_excluded(orig)
-                elif norm and orig and norm != orig:
+                elif norm and norm != orig:
                     _add_rename(orig, norm)
+        renamed = [{"from": orig, "to": norm} for orig, norm in sorted(renames_by_orig.items())]
         return {
             "columns_renamed": renamed,
             "columns_removed": sorted(removed),

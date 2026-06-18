@@ -151,7 +151,7 @@ class DatasetSnapshotService:
         raise ValueError("Working dataset snapshot unavailable — complete missing value review first")
 
     def load_processed_dataframe(self, analysis_id: int) -> tuple[pd.DataFrame, DatasetLineageSnapshot | None]:
-        """Canonical processed dataset — approved final snapshot when present, else working."""
+        """Canonical processed dataset — approved final snapshot when present, else materialized preview."""
         stage = resolve_processed_stage(self.db, analysis_id)
         if stage == FINAL_STAGE:
             snap = self._latest_snapshot(analysis_id, FINAL_STAGE)
@@ -159,7 +159,12 @@ class DatasetSnapshotService:
                 df = self._read_snapshot_df(snap)
                 if df is not None:
                     return df, snap
-        return self.load_working_processed_dataframe(analysis_id)
+
+        from services.apply_service import materialize_processed_dataframe
+
+        df = materialize_processed_dataframe(self.db, analysis_id)
+        snap = self._latest_snapshot(analysis_id, resolve_working_stage(self.db, analysis_id))
+        return df, snap
 
     def persist_final_approved_snapshot(
         self,
@@ -192,7 +197,10 @@ class DatasetSnapshotService:
                     "already_exists": True,
                 }
 
-        df, source_snap = self.load_working_processed_dataframe(analysis_id)
+        _, source_snap = self.load_working_processed_dataframe(analysis_id)
+        from services.apply_service import materialize_processed_dataframe
+
+        df = materialize_processed_dataframe(self.db, analysis_id)
         from database.models import Dataset
 
         ds = self.db.query(Dataset).filter(Dataset.id == an.dataset_id).first()

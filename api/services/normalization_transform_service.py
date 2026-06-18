@@ -9,6 +9,12 @@ import pandas as pd
 from sqlalchemy.orm import Session
 
 from core.ingestion import dataframe_for_uploaded_dataset, infer_schema
+from core.multiplier_column import (
+    detach_multiplier_columns,
+    filter_rename_map,
+    find_multiplier_columns,
+    is_multiplier_column,
+)
 from core.rule_validator import normalize_schema
 from database.models import Dataset
 from object_storage.object_store import try_build_default_store
@@ -37,7 +43,9 @@ def load_raw_upload_dataframe(db: Session, analysis_id: int) -> tuple[pd.DataFra
         else:
             raise
     schema = infer_schema(df)
-    return normalize_schema(df, schema), ds, store
+    mult_cols = set(find_multiplier_columns(df))
+    work_schema = {k: v for k, v in schema.items() if k not in mult_cols}
+    return normalize_schema(df, work_schema), ds, store
 
 
 def apply_pipeline_column_rename(df: pd.DataFrame, checkpoint: dict[str, Any]) -> pd.DataFrame:
@@ -50,6 +58,7 @@ def apply_pipeline_column_rename(df: pd.DataFrame, checkpoint: dict[str, Any]) -
         canon = str(row.get("canonical_name") or row.get("normalized_name") or "")
         if raw and canon and raw != canon and raw in df.columns:
             rename[raw] = canon
+    rename = filter_rename_map(rename)
     if rename:
         return df.rename(columns=rename)
     return df
@@ -71,6 +80,8 @@ def apply_user_normalization(
         is_excluded = bool(getattr(col, "is_excluded", False))
         is_active = getattr(col, "is_active", True)
         if not physical:
+            continue
+        if is_multiplier_column(physical):
             continue
         if is_deleted or is_excluded or is_active is False:
             if physical in out.columns:
@@ -135,6 +146,7 @@ def load_working_dataframe(
 
     df, _, _ = load_raw_upload_dataframe(db, analysis_id)
     checkpoint = load_analysis_checkpoint(db, analysis_id) or {}
+    df, _ = detach_multiplier_columns(df)
     df = apply_pipeline_column_rename(df, checkpoint)
 
     norm = NormalizationService(db)
@@ -189,6 +201,7 @@ def persist_normalized_snapshot(db: Session, analysis_id: int) -> dict[str, Any]
         df, ds, store = load_raw_upload_dataframe(db, analysis_id)
 
     checkpoint = load_analysis_checkpoint(db, analysis_id) or {}
+    df, _ = detach_multiplier_columns(df)
     df = apply_pipeline_column_rename(df, checkpoint)
     records = NormalizationService(db)._ensure_columns_seeded(analysis_id)
     df = apply_user_normalization(df, records)

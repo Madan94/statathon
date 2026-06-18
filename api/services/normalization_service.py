@@ -11,6 +11,7 @@ from analysis_state.schema_state import (
     build_effective_schema,
 )
 from core.json_safe import make_json_safe
+from core.multiplier_column import is_multiplier_column
 from repositories.column_audit_repository import ColumnAuditRepository
 from repositories.dataset_column_repository import DatasetColumnRepository
 from database.models import SemanticProfile
@@ -290,6 +291,8 @@ class NormalizationService:
             if not orig or orig not in by_name:
                 continue
             col = by_name[orig]
+            if is_multiplier_column(col.name):
+                continue
             old_norm = col.normalized_name or col.name
             new_norm = str(upd.get("normalized_name") or upd.get("display_name") or old_norm).strip()
             if not new_norm:

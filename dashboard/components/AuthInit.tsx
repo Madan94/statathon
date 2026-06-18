@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import api from '@/lib/api';
 import { isProtectedRoute } from '@/lib/authConfig';
+import { clearStaleSession } from '@/lib/authSession';
 
 /**
  * On platform routes, proactively refresh the session so access cookies
@@ -22,7 +23,7 @@ export default function AuthInit() {
         try {
           await api.post('/auth/refresh');
         } catch {
-          // SessionGuard / middleware will send user to login
+          await clearStaleSession();
         }
       }
     };

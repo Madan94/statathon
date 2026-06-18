@@ -44,8 +44,15 @@ class SemanticPersistenceService:
                         "explainability": meta.get("explainability"),
                         "top_domain_scores": meta.get("top_domain_scores"),
                         "normalized_name": meta.get("normalized_name"),
+                        "original_name": meta.get("original_name"),
+                        "display_name": meta.get("display_name"),
                         "cluster_support": meta.get("cluster_support"),
                         "graph_consistency": meta.get("graph_consistency"),
+                        "source": meta.get("source"),
+                        "domain_type": meta.get("domain_type"),
+                        "signals": meta.get("signals"),
+                        "candidates": meta.get("candidates"),
+                        "explanation": meta.get("explanation"),
                     },
                 }
             )

@@ -2,6 +2,39 @@ import type { AnalysisResult, AnomalyColumnBlock, ImputationCandidate } from '@/
 
 const NUMERIC_DTYPE_HINTS = ['numeric', 'float', 'int', 'integer', 'number', 'decimal', 'double', 'long'];
 
+function snakeKey(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+}
+
+function columnNamesMatch(a: string | undefined | null, b: string | undefined | null): boolean {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if (a.toLowerCase() === b.toLowerCase()) return true;
+  return snakeKey(a) === snakeKey(b);
+}
+
+function columnAliases(column: string, results: AnalysisResult): string[] {
+  const aliases = new Set<string>([column]);
+  for (const row of results.column_normalization ?? []) {
+    const names = [
+      row.original_name,
+      row.normalized_name,
+      row.canonical_name as string | undefined,
+    ].filter(Boolean) as string[];
+    if (names.some((name) => columnNamesMatch(name, column))) {
+      names.forEach((name) => aliases.add(name));
+    }
+  }
+  const original = resolveOriginalColumnName(column, results);
+  if (original) aliases.add(original);
+  return [...aliases];
+}
+
 export function isNumericDtype(dtype: string | undefined | null): boolean {
   if (!dtype) return false;
   const key = dtype.toLowerCase();
@@ -34,25 +67,21 @@ export function resolveAnomalyBlock(column: string, results: AnalysisResult): An
     anomaly_results?: AnomalyColumnBlock[];
   } | undefined;
   const blocks = phase3?.anomaly_results ?? [];
-  const direct = blocks.find((b) => b.column === column);
+  const aliases = columnAliases(column, results);
+
+  const direct = blocks.find((b) => aliases.some((alias) => columnNamesMatch(b.column, alias)));
   if (direct) return direct;
 
-  const original = resolveOriginalColumnName(column, results);
-  if (original !== column) {
-    const byOriginal = blocks.find((b) => b.column === original);
-    if (byOriginal) return byOriginal;
-  }
-
-  return blocks.find(
-    (b) => (b as AnomalyColumnBlock & { original_column?: string }).original_column === column
-      || (b as AnomalyColumnBlock & { original_column?: string }).original_column === original,
-  );
+  return blocks.find((b) => {
+    const original = (b as AnomalyColumnBlock & { original_column?: string }).original_column;
+    return aliases.some((alias) => columnNamesMatch(original, alias));
+  });
 }
 
 function matchColumnName(target: string, candidate: string, results: AnalysisResult): boolean {
-  if (target === candidate) return true;
+  if (columnNamesMatch(target, candidate)) return true;
   const original = resolveOriginalColumnName(target, results);
-  return candidate === original;
+  return columnNamesMatch(original, candidate);
 }
 
 export function resolveImputationCandidate(

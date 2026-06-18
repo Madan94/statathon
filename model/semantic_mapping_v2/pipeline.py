@@ -30,6 +30,7 @@ FINAL OUTPUT:
 from __future__ import annotations
 
 import logging
+import os
 import time
 from typing import Any
 
@@ -114,7 +115,7 @@ class SemanticPipelineV2:
         # STEP 5b — LLM column name enrichment (cryptic codes → readable text) -
         # Runs AFTER usecase detection (needs usecase context) and BEFORE
         # embedding (so enriched representations are used for vector search).
-        enrich_column_features(
+        features, enrich_stats = enrich_column_features(
             features,
             usecase=uc.usecase,
             dataset_name=dataset_name,
@@ -202,6 +203,7 @@ class SemanticPipelineV2:
             schema=schema,
             knowledge_graph=knowledge_graph,
             elapsed=time.time() - t0,
+            enrich_stats=enrich_stats,
         )
 
     # -- output assembly -----------------------------------------------------
@@ -225,6 +227,7 @@ class SemanticPipelineV2:
         schema: SchemaGraphV2,
         knowledge_graph: dict[str, Any],
         elapsed: float,
+        enrich_stats: dict[str, int] | None = None,
     ) -> dict[str, Any]:
         semantic_mapping: dict[str, Any] = {}
         for col, m in mappings.items():
@@ -256,6 +259,15 @@ class SemanticPipelineV2:
             clusters_out[cd["cluster_id"]] = cd
             cluster_confidence[cd["cluster_id"]] = cd["cluster_confidence"]
 
+        stats = enrich_stats or {}
+        llm_fallback_count = sum(1 for m in mappings.values() if m.source == "llm")
+        uncorrelated_count = sum(1 for m in mappings.values() if m.source == "uncorrelated")
+        embedding_count = sum(1 for m in mappings.values() if m.source == "embedding")
+
+        from semantic_mapping_v2.llm_client import resolve_llm_provider
+
+        llm_provider = resolve_llm_provider() if self.use_llm else "none"
+
         return {
             "semantic_mapping": semantic_mapping,
             "column_normalization": column_normalization,
@@ -274,6 +286,13 @@ class SemanticPipelineV2:
                 "dynamic_domains": synth.get("dynamic_count", 0),
                 "unified_domains": synth.get("unified_count", 0),
                 "llm_used": synth.get("llm_used", False),
+                "llm_provider_used": llm_provider,
+                "llm_columns_enriched": int(stats.get("llm_enriched") or 0),
+                "llm_lookup_enriched": int(stats.get("lookup_enriched") or 0),
+                "llm_dynamic_domains": int(synth.get("dynamic_count") or 0),
+                "llm_domain_fallback_count": llm_fallback_count,
+                "domain_source_embedding": embedding_count,
+                "domain_source_uncorrelated": uncorrelated_count,
                 "qdrant_static_ready": synth.get("static_ready", False),
                 "qdrant_dynamic_ready": synth.get("dynamic_ready", False),
                 "elapsed_sec": round(elapsed, 3),

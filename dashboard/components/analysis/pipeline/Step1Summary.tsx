@@ -41,6 +41,24 @@ function typeVariant(t: string): 'default' | 'muted' {
   return t === 'numeric' || t === 'float64' || t === 'int64' ? 'default' : 'muted';
 }
 
+function snakeKey(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+}
+
+function lookupBySnake<T>(map: Record<string, T>, col: string): T | undefined {
+  if (map[col] != null) return map[col];
+  const target = snakeKey(col);
+  for (const [key, value] of Object.entries(map)) {
+    if (snakeKey(key) === target) return value;
+  }
+  return undefined;
+}
+
 /** Backend sends [{ value, count }] — tolerate legacy [value, count] tuples too. */
 function formatTopValues(raw: ColumnProfile['top_values']): string {
   if (!raw?.length) return '—';
@@ -60,35 +78,84 @@ function formatTopValues(raw: ColumnProfile['top_values']): string {
 }
 
 export default function Step1Summary({ results, onProceed }: Props) {
-  const health = results.health as {
+  const profilingSummary = results.profiling_summary as
+    | {
+        health?: {
+          rows?: number;
+          columns?: number;
+          missing_per_column?: Record<string, number>;
+          dtypes?: Record<string, string>;
+        };
+        schema?: Record<string, string>;
+        column_profiles?: Record<string, ColumnProfile>;
+      }
+    | undefined;
+
+  const health = (results.health ??
+    profilingSummary?.health) as {
     rows?: number;
     columns?: number;
     missing_per_column?: Record<string, number>;
     dtypes?: Record<string, string>;
   } | undefined;
 
-  const columnProfiles = results.column_profiles as Record<string, ColumnProfile> | undefined;
-  const schema = results.schema ?? {};
-  const allColumns = Object.keys(columnProfiles ?? schema);
+  const columnProfiles = (results.column_profiles ??
+    profilingSummary?.column_profiles) as Record<string, ColumnProfile> | undefined;
+  const schema = results.schema ?? profilingSummary?.schema ?? {};
   const missingPerCol = health?.missing_per_column ?? {};
+  const dtypes = (health?.dtypes as Record<string, string> | undefined) ?? {};
+  const allColumns = Array.from(
+    new Set([
+      ...Object.keys(columnProfiles ?? {}),
+      ...Object.keys(schema),
+      ...Object.keys(missingPerCol),
+      ...Object.keys(dtypes),
+    ])
+  ).sort((a, b) => a.localeCompare(b));
   const totalRows = health?.rows ?? 0;
   const totalCols = health?.columns ?? allColumns.length;
 
+  function resolveProfile(col: string): ColumnProfile | undefined {
+    const direct = lookupBySnake(columnProfiles ?? {}, col);
+    if (direct) return direct;
+    const normRows = results.column_normalization ?? [];
+    for (const row of normRows) {
+      if (!row || typeof row !== 'object') continue;
+      const orig = String(row.original_name ?? '');
+      const canon = String(row.canonical_name ?? row.normalized_name ?? '');
+      if (orig && lookupBySnake(columnProfiles ?? {}, orig)) {
+        return lookupBySnake(columnProfiles ?? {}, orig);
+      }
+      if (canon && lookupBySnake(columnProfiles ?? {}, canon)) {
+        return lookupBySnake(columnProfiles ?? {}, canon);
+      }
+      if (snakeKey(orig) === snakeKey(col) && lookupBySnake(columnProfiles ?? {}, orig)) {
+        return lookupBySnake(columnProfiles ?? {}, orig);
+      }
+      if (snakeKey(canon) === snakeKey(col) && lookupBySnake(columnProfiles ?? {}, canon)) {
+        return lookupBySnake(columnProfiles ?? {}, canon);
+      }
+    }
+    return undefined;
+  }
+
   function missingCount(col: string): number {
-    const fromHealth = missingPerCol[col];
-    if (fromHealth != null && fromHealth > 0) return fromHealth;
-    const profile = columnProfiles?.[col];
+    const fromHealth = lookupBySnake(missingPerCol, col);
+    if (fromHealth != null && fromHealth >= 0) return fromHealth;
+    const profile = resolveProfile(col);
+    if (profile?.missing_count != null) return Number(profile.missing_count);
     if (profile?.missing_ratio != null && totalRows > 0) {
       return Math.round(Number(profile.missing_ratio) * totalRows);
     }
-    return fromHealth ?? 0;
+    return 0;
   }
 
   function columnType(col: string): string {
+    const profile = resolveProfile(col);
     return (
-      schema[col] ??
-      columnProfiles?.[col]?.datatype ??
-      (health?.dtypes as Record<string, string> | undefined)?.[col] ??
+      lookupBySnake(schema, col) ??
+      profile?.datatype ??
+      lookupBySnake(dtypes, col) ??
       '—'
     );
   }
@@ -117,10 +184,15 @@ export default function Step1Summary({ results, onProceed }: Props) {
     })
     .sort((a, b) => b.ratio - a.ratio);
   const numericCols = allColumns.filter(
-    (c) =>
-      schema[c] === 'numeric' ||
-      columnProfiles?.[c]?.datatype?.includes('int') ||
-      columnProfiles?.[c]?.datatype?.includes('float')
+    (c) => {
+      const profile = resolveProfile(c);
+      return (
+        schema[c] === 'numeric' ||
+        profile?.datatype?.includes('int') ||
+        profile?.datatype?.includes('float') ||
+        profile?.datatype === 'numeric'
+      );
+    }
   );
   const datasetType =
     (results.dataset_context as { dataset_type?: string; usecase?: string } | undefined)
@@ -240,7 +312,7 @@ export default function Step1Summary({ results, onProceed }: Props) {
             </thead>
             <tbody>
               {allColumns.map((col) => {
-                const profile = columnProfiles?.[col];
+                const profile = resolveProfile(col);
                 const missing = missingCount(col);
                 const ratio =
                   totalRows > 0 ? missing / totalRows : profile?.missing_ratio ?? 0;
@@ -261,6 +333,11 @@ export default function Step1Summary({ results, onProceed }: Props) {
                   }
                 } else if (profile?.top_values?.length) {
                   sampleStr = formatTopValues(profile.top_values);
+                } else if (profile?.sample_values?.length) {
+                  sampleStr = profile.sample_values
+                    .slice(0, 3)
+                    .map((v) => String(v))
+                    .join(', ');
                 }
 
                 return (

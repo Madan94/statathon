@@ -37,7 +37,7 @@ from semantic_mapping_v2.domain_loader import Domain
 from semantic_mapping_v2.domain_synthesis import UnifiedDomainRegistry
 from semantic_mapping_v2.embedder import SemanticEmbedder
 from semantic_mapping_v2.feature_extraction import ColumnFeature
-from semantic_mapping_v2.llm_client import _gemini_key, _groq_key, generate_text, strip_json_fence
+from semantic_mapping_v2.llm_client import generate_text, llm_configured, strip_json_fence
 
 logger = logging.getLogger(__name__)
 
@@ -339,7 +339,7 @@ class MatchingEngine:
         candidates: dict[str, list[dict[str, Any]]],
     ) -> dict[str, ColumnMapping | None]:
         out: dict[str, ColumnMapping | None] = {c: None for c in pending}
-        if not (_gemini_key() or _groq_key()):
+        if not llm_configured():
             return out
 
         chunk_size = max(1, int(os.getenv("SEMV2_LLM_BATCH_SIZE", "8")))

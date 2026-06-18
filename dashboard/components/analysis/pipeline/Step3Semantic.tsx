@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { analysisApi, DomainsPayload, SemanticMappingRow, DomainRegistry } from '@/lib/api';
 import type { AnalysisResult } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
@@ -26,12 +26,16 @@ const ROUTING_LABELS: Record<string, { label: string; icon: React.ReactNode; var
   rapidfuzz_ontology: { label: 'RapidFuzz', icon: <Zap className="h-3 w-3" />, variant: 'success' },
   schema_ontology_lock: { label: 'Ontology lock', icon: <Database className="h-3 w-3" />, variant: 'success' },
   embedding_similarity: { label: 'Embedding', icon: <Cpu className="h-3 w-3" />, variant: 'default' },
+  embedding: { label: 'Embedding', icon: <Cpu className="h-3 w-3" />, variant: 'default' },
+  llm: { label: 'LLM', icon: <Zap className="h-3 w-3" />, variant: 'warning' },
+  uncorrelated: { label: 'Uncorrelated', icon: <Info className="h-3 w-3" />, variant: 'muted' },
   dynamic_cluster: { label: 'Dynamic', icon: <GitBranch className="h-3 w-3" />, variant: 'warning' },
 };
 
 function routingInfo(method?: string) {
-  if (!method) return ROUTING_LABELS.embedding_similarity;
-  return ROUTING_LABELS[method] ?? { label: method.replace(/_/g, ' '), icon: <Cpu className="h-3 w-3" />, variant: 'muted' as const };
+  if (!method) return ROUTING_LABELS.embedding;
+  const key = method.toLowerCase();
+  return ROUTING_LABELS[key] ?? ROUTING_LABELS[method] ?? { label: method.replace(/_/g, ' '), icon: <Cpu className="h-3 w-3" />, variant: 'muted' as const };
 }
 
 function confVariant(c?: number): 'success' | 'warning' | 'danger' | 'muted' {
@@ -53,6 +57,45 @@ function confBar(val: number, label: string, color: string) {
   );
 }
 
+// ── Domain registry helpers ───────────────────────────────────────────────────
+function normalizeDomainKey(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function isUiDomainRegistry(value: unknown): value is DomainRegistry {
+  if (!value || typeof value !== 'object') return false;
+  const dr = value as DomainRegistry;
+  return Boolean(dr.static_ontology || dr.dynamic_domains || dr.universal_domains);
+}
+
+function normalizeMappingRows(raw: AnalysisResult['semantic_mapping']): SemanticMappingRow[] {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === 'object') {
+    return Object.entries(raw as Record<string, unknown>).map(([column, meta]) => {
+      if (meta && typeof meta === 'object') {
+        return { column, ...(meta as SemanticMappingRow) };
+      }
+      return { column, domain: String(meta ?? '') };
+    });
+  }
+  return [];
+}
+
+function columnsForDomain(
+  domainKey: string,
+  colsByDomain: Map<string, string[]>,
+  spec?: { members?: string[]; columns?: string[] }
+): string[] {
+  const key = normalizeDomainKey(domainKey);
+  const mapped = colsByDomain.get(key) ?? [];
+  const members = [...(spec?.members ?? []), ...(spec?.columns ?? [])];
+  const merged = [...mapped];
+  for (const col of members) {
+    if (col && !merged.includes(col)) merged.push(col);
+  }
+  return merged;
+}
+
 // ── Domain registry panel ─────────────────────────────────────────────────────
 function DomainRegistryPanel({ registry, mappingRows, localOverrides }: {
   registry: DomainRegistry;
@@ -64,7 +107,7 @@ function DomainRegistryPanel({ registry, mappingRows, localOverrides }: {
 
   const colsByDomain = new Map<string, string[]>();
   for (const r of mappingRows) {
-    const d = localOverrides[r.column] ?? r.domain ?? 'unknown';
+    const d = normalizeDomainKey(localOverrides[r.column] ?? r.domain ?? 'unknown');
     if (!colsByDomain.has(d)) colsByDomain.set(d, []);
     colsByDomain.get(d)!.push(r.column);
   }
@@ -114,7 +157,7 @@ function DomainRegistryPanel({ registry, mappingRows, localOverrides }: {
 
       <div className="max-h-[420px] overflow-y-auto space-y-1 pr-1">
         {activeTab === 'static' && staticDomains.map((domain) => {
-          const cols = colsByDomain.get(domain) ?? [];
+          const cols = columnsForDomain(domain, colsByDomain);
           const kwSample = archetypeEntry?.keywords_sample?.[domain];
           return (
             <div key={domain} className="rounded-lg border border-border overflow-hidden">
@@ -155,9 +198,11 @@ function DomainRegistryPanel({ registry, mappingRows, localOverrides }: {
         })}
 
         {activeTab === 'dynamic' && (Object.keys(dynamicDomains).length === 0 ? (
-          <p className="text-xs text-text-muted px-1 py-3">No dynamic domains generated (all columns matched static ontology).</p>
+          <p className="text-xs text-text-muted px-1 py-3">
+            No dynamic domains yet. Re-run analysis with OpenRouter enabled, or columns may all map to static ontology domains.
+          </p>
         ) : Object.entries(dynamicDomains).map(([key, spec]) => {
-          const cols = spec.members ?? [];
+          const cols = columnsForDomain(key, colsByDomain, spec);
           return (
             <div key={key} className="rounded-lg border border-warning/30 bg-warning/5 overflow-hidden">
               <button
@@ -167,6 +212,7 @@ function DomainRegistryPanel({ registry, mappingRows, localOverrides }: {
               >
                 <span className="font-mono text-xs text-warning truncate">{key}</span>
                 <div className="flex items-center gap-1.5 shrink-0">
+                  {cols.length > 0 && <Badge variant="warning">{cols.length}</Badge>}
                   {spec.cohesion != null && (
                     <span className="text-[10px] text-text-muted">cohesion {(spec.cohesion * 100).toFixed(0)}%</span>
                   )}
@@ -175,7 +221,12 @@ function DomainRegistryPanel({ registry, mappingRows, localOverrides }: {
               </button>
               {expandedDomain === key && (
                 <div className="px-3 pb-3 space-y-2">
-                  <p className="text-[10px] text-text-muted">Parent theme: <strong className="text-text">{spec.parent_theme}</strong></p>
+                  {spec.description && (
+                    <p className="text-[10px] text-text-muted">{spec.description}</p>
+                  )}
+                  {spec.parent_theme && (
+                    <p className="text-[10px] text-text-muted">Parent theme: <strong className="text-text">{spec.parent_theme}</strong></p>
+                  )}
                   {cols.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {cols.map(c => <span key={c} className="text-[10px] font-mono bg-warning/10 text-warning px-2 py-0.5 rounded">{c}</span>)}
@@ -193,7 +244,7 @@ function DomainRegistryPanel({ registry, mappingRows, localOverrides }: {
         }))}
 
         {activeTab === 'universal' && universalDomains.map((domain) => {
-          const cols = colsByDomain.get(domain) ?? [];
+          const cols = columnsForDomain(domain, colsByDomain);
           return (
             <div key={domain} className="flex items-center justify-between px-3 py-2 rounded-lg border border-border hover:bg-border/30 transition-colors">
               <span className="text-sm text-text">{domain}</span>
@@ -229,14 +280,19 @@ export default function Step3Semantic({
       .finally(() => setDomainsLoading(false));
   }, [analysisId]);
 
-  const mappingRows: SemanticMappingRow[] = results.semantic_mapping ?? [];
+  const mappingRows: SemanticMappingRow[] = useMemo(
+    () => normalizeMappingRows(results.semantic_mapping),
+    [results.semantic_mapping]
+  );
+  const pipelineMeta = (results.meta ?? {}) as Record<string, unknown>;
 
-  const registry: DomainRegistry = (() => {
-    if (domainsPayload?.domain_registry) {
-      return domainsPayload.domain_registry;
+  const baseRegistry: DomainRegistry = useMemo(() => {
+    const fromDomainsApi = domainsPayload?.domain_registry;
+    if (isUiDomainRegistry(fromDomainsApi)) {
+      return fromDomainsApi;
     }
-    if (results.domain_registry) {
-      return results.domain_registry;
+    if (isUiDomainRegistry(results.domain_registry)) {
+      return results.domain_registry as DomainRegistry;
     }
     const archetype =
       domainsPayload?.ontology_macro_type_best_hint ??
@@ -266,7 +322,32 @@ export default function Step3Semantic({
         : {},
       dynamic_domains: {},
     } as DomainRegistry;
-  })();
+  }, [domainsPayload, results.domain_registry, results.dataset_context]);
+
+  const registry: DomainRegistry = useMemo(() => {
+    const staticNames = new Set([
+      ...Object.values(baseRegistry.static_ontology ?? {}).flatMap((e) => e.domains ?? []).map(normalizeDomainKey),
+      ...(baseRegistry.universal_domains ?? []).map(normalizeDomainKey),
+    ]);
+    const dynamic = { ...(baseRegistry.dynamic_domains ?? {}) };
+    for (const row of mappingRows) {
+      const domain = normalizeDomainKey(localOverrides[row.column] ?? row.domain ?? '');
+      if (!domain || domain === 'uncorrelated') continue;
+      const domainType = String((row as { domain_type?: string }).domain_type ?? '').toLowerCase();
+      const source = String((row as { source?: string }).source ?? '').toLowerCase();
+      const isDynamic = domainType === 'dynamic' || source === 'llm' || !staticNames.has(domain);
+      if (!isDynamic) continue;
+      const prev = dynamic[domain] ?? {};
+      const members = [...(prev.members ?? [])];
+      if (!members.includes(row.column)) members.push(row.column);
+      dynamic[domain] = {
+        ...prev,
+        members,
+        description: prev.description ?? `Dynamic domain: ${domain}`,
+      };
+    }
+    return { ...baseRegistry, dynamic_domains: dynamic };
+  }, [baseRegistry, mappingRows, localOverrides]);
 
   // Flat domain name list for the Override dropdown
   const allDomainNames = [
@@ -357,7 +438,11 @@ export default function Step3Semantic({
                 {mappingRows.map((row, rowIdx) => {
                   const effective = localOverrides[row.column] ?? row.domain ?? '—';
                   const isOverridden = !!localOverrides[row.column];
-                  const info = routingInfo(row.routing_path ?? (row.explainability as { match_method?: string } | undefined)?.match_method);
+                  const routingKey =
+                    row.source ??
+                    row.routing_path ??
+                    (row.explainability as { match_method?: string } | undefined)?.match_method;
+                  const info = routingInfo(routingKey);
                   const conf = row.confidence ?? 0;
                   const clusterSupport = row.cluster_support ?? 0;
                   const graphConsistency = row.graph_consistency ?? 0;
@@ -369,6 +454,9 @@ export default function Step3Semantic({
                     <tr key={`mapping-${rowIdx}-${row.column}`} className={cn('border-b border-border/30 hover:bg-surface/60 transition-colors align-top', isOverridden && 'bg-warning/5')}>
                       <td className="px-4 py-3">
                         <div className="font-mono text-xs font-medium text-text">{row.column}</div>
+                        {row.original_name && row.original_name !== row.column && (
+                          <div className="text-[10px] text-text-muted mt-0.5">upload: {row.original_name}</div>
+                        )}
                         {row.matched_keyword && (
                           <div className="text-[10px] text-text-muted mt-0.5">kw: <span className="italic">{row.matched_keyword}</span></div>
                         )}
@@ -447,6 +535,9 @@ export default function Step3Semantic({
                     {key === 'rapidfuzz_ontology' && '→ lexical ≥85% match'}
                     {key === 'schema_ontology_lock' && '→ exact ontology keyword'}
                     {key === 'embedding_similarity' && '→ bi-encoder cosine routing'}
+                    {key === 'embedding' && '→ Qdrant embedding match'}
+                    {key === 'llm' && '→ LLM fallback for low-confidence columns'}
+                    {key === 'uncorrelated' && '→ no domain above confidence floor'}
                     {key === 'dynamic_cluster' && '→ agglomerative cluster fallback'}
                   </span>
                 </div>
@@ -456,7 +547,18 @@ export default function Step3Semantic({
 
           <div className="mt-3 flex items-start gap-2 text-xs text-text-muted">
             <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-            <span>{mappingRows.length} columns mapped · {overrideCount} session override{overrideCount !== 1 ? 's' : ''} (not persisted to server).</span>
+            <span>
+              {mappingRows.length} columns mapped · {overrideCount} session override{overrideCount !== 1 ? 's' : ''} (not persisted to server).
+              {typeof pipelineMeta.llm_domain_fallback_count === 'number' && (
+                <> · LLM domain assignments: {String(pipelineMeta.llm_domain_fallback_count)}</>
+              )}
+              {typeof pipelineMeta.llm_columns_enriched === 'number' && Number(pipelineMeta.llm_columns_enriched) > 0 && (
+                <> · LLM column enrich: {String(pipelineMeta.llm_columns_enriched)}</>
+              )}
+              {typeof pipelineMeta.llm_provider_used === 'string' && pipelineMeta.llm_provider_used !== 'none' && (
+                <> · provider: {String(pipelineMeta.llm_provider_used)}</>
+              )}
+            </span>
           </div>
         </Card>
       </div>

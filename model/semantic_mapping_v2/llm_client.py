@@ -1,4 +1,4 @@
-"""LLM client for Semantic V2 — Gemini primary, Groq fallback."""
+"""LLM client for Semantic V2 — OpenRouter primary, Gemini/Groq fallback."""
 from __future__ import annotations
 
 import json
@@ -6,7 +6,9 @@ import logging
 import os
 import re
 import time
-from typing import Any
+import urllib.error
+import urllib.request
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +39,47 @@ def _groq_key() -> str | None:
     )
 
 
+def _openrouter_base_url() -> str:
+    return (
+        os.getenv("OPENROUTER_BASE_URL")
+        or os.getenv("OPENAI_BASE_URL")
+        or "https://openrouter.ai/api/v1"
+    ).rstrip("/")
+
+
+def _openrouter_key() -> str | None:
+    explicit = os.getenv("OPENROUTER_API_KEY")
+    if explicit:
+        return explicit
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if not openai_key:
+        return None
+    base = _openrouter_base_url().lower()
+    if "openrouter" in base or os.getenv("SEMV2_USE_OPENROUTER", "").lower() in ("1", "true", "yes"):
+        return openai_key
+    return None
+
+
+def llm_configured() -> bool:
+    """True when any Semantic V2 LLM backend has credentials."""
+    return bool(_openrouter_key() or _gemini_key() or _groq_key())
+
+
 def _groq_model() -> str:
     return os.getenv("GROQ_MODEL") or os.getenv("SCRIBE_MODEL") or "llama-3.1-8b-instant"
 
 
 def _gemini_model() -> str:
     return os.getenv("GEMINI_SEMANTIC_MODEL", "gemini-2.5-flash")
+
+
+def _openrouter_model() -> str:
+    return (
+        os.getenv("SEMV2_OPENROUTER_MODEL")
+        or os.getenv("OPENROUTER_MODEL")
+        or os.getenv("OPENAI_MODEL")
+        or "google/gemini-2.5-flash"
+    )
 
 
 def _is_retriable(exc: Exception) -> bool:
@@ -71,7 +108,7 @@ def strip_json_fence(text: str) -> str:
 
 
 def generate_json(prompt: str, *, system: str = "") -> Any:
-    """Return parsed JSON from Gemini; on failure retry with Groq."""
+    """Return parsed JSON from the configured LLM chain."""
     raw = generate_text(prompt, system=system)
     if not raw:
         raise RuntimeError("LLM returned empty response")
@@ -79,33 +116,119 @@ def generate_json(prompt: str, *, system: str = "") -> Any:
 
 
 def generate_text(prompt: str, *, system: str = "") -> str:
-    """Gemini first, Groq fallback (or Groq first if SEMV2_LLM_PRIMARY=groq)."""
+    """OpenRouter first (when configured), then Gemini, then Groq."""
     errors: list[str] = []
-    primary = (os.getenv("SEMV2_LLM_PRIMARY", "gemini") or "gemini").lower()
+    primary = (os.getenv("SEMV2_LLM_PRIMARY", "openrouter") or "openrouter").lower()
 
-    def _try_gemini() -> str:
-        gkey = _gemini_key()
-        if not gkey:
-            raise RuntimeError("GEMINI_API_KEY not set")
-        return _call_gemini(prompt, system=system, api_key=gkey)
+    providers: list[tuple[str, Callable[[], str]]] = [
+        ("openrouter", lambda: _call_openrouter(prompt, system=system, api_key=_openrouter_key() or "")),
+        ("gemini", lambda: _call_gemini(prompt, system=system, api_key=_gemini_key() or "")),
+        ("groq", lambda: _call_groq(prompt, system=system, api_key=_groq_key() or "")),
+    ]
+    by_name = {name: fn for name, fn in providers}
 
-    def _try_groq() -> str:
-        gqkey = _groq_key()
-        if not gqkey:
-            raise RuntimeError("GROQ_API_KEY not set")
-        return _call_groq(prompt, system=system, api_key=gqkey)
+    order_names: list[str]
+    if primary in by_name:
+        order_names = [primary] + [n for n in by_name if n != primary]
+    else:
+        order_names = ["openrouter", "gemini", "groq"]
 
-    order = (_try_groq, _try_gemini) if primary == "groq" else (_try_gemini, _try_groq)
-    names = ("groq", "gemini") if primary == "groq" else ("gemini", "groq")
-
-    for fn, name in zip(order, names):
+    for name in order_names:
+        fn = by_name[name]
+        if name == "openrouter" and not _openrouter_key():
+            continue
+        if name == "gemini" and not _gemini_key():
+            continue
+        if name == "groq" and not _groq_key():
+            continue
         try:
             return fn()
         except Exception as exc:  # noqa: BLE001
             errors.append(f"{name}: {exc}")
             logger.warning("%s LLM failed, trying fallback: %s", name, exc)
 
-    raise RuntimeError("; ".join(errors) or "No LLM API key configured (GEMINI_API_KEY or GROQ_API_KEY)")
+    raise RuntimeError(
+        "; ".join(errors)
+        or "No LLM API key configured (OPENROUTER/OPENAI, GEMINI_API_KEY, or GROQ_API_KEY)"
+    )
+
+
+def _call_openrouter(prompt: str, *, system: str, api_key: str) -> str:
+    if not api_key:
+        raise RuntimeError("OPENROUTER_API_KEY / OPENAI_API_KEY not set")
+
+    model = _openrouter_model()
+    base = _openrouter_base_url()
+    timeout = int(os.getenv("OPENROUTER_REQUEST_TIMEOUT_SEC", os.getenv("OPENAI_TIMEOUT", "120")))
+    retries = int(os.getenv("OPENROUTER_LLM_MAX_RETRIES", "3"))
+    delay = float(os.getenv("OPENROUTER_LLM_RETRY_BASE", "4"))
+
+    messages: list[dict[str, str]] = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+
+    referer = os.getenv("OPENROUTER_HTTP_REFERER", "http://localhost:3000")
+    title = os.getenv("OPENROUTER_APP_TITLE", "Statathon Semantic V2")
+
+    last: Exception | None = None
+    for json_mode in (True, False):
+        payload: dict[str, Any] = {
+            "model": model,
+            "messages": messages,
+            "temperature": float(os.getenv("SEMV2_LLM_TEMPERATURE", "0.1")),
+            "max_tokens": int(os.getenv("SEMV2_LLM_MAX_TOKENS", os.getenv("OPENAI_MAX_TOKENS", "4096"))),
+        }
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
+
+        body = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            f"{base}/chat/completions",
+            data=body,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": referer,
+                "X-Title": title,
+                "User-Agent": "statathon-semantic-v2/1.0",
+                "Accept": "application/json",
+            },
+            method="POST",
+        )
+        for attempt in range(retries):
+            try:
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                text = (
+                    data.get("choices", [{}])[0]
+                    .get("message", {})
+                    .get("content", "")
+                    .strip()
+                )
+                if text:
+                    return text
+                raise RuntimeError("empty OpenRouter response")
+            except urllib.error.HTTPError as exc:
+                err_body = exc.read().decode("utf-8", errors="replace")[:400]
+                last = RuntimeError(f"OpenRouter HTTP {exc.code}: {err_body}")
+                if exc.code in (400, 403, 422) and json_mode:
+                    break
+                if _is_retriable(str(exc)) and attempt < retries - 1:
+                    time.sleep(_retry_seconds(exc, delay))
+                    delay = min(delay * 1.5, 45)
+                    continue
+                raise last from exc
+            except Exception as exc:
+                last = exc
+                if _is_retriable(exc) and attempt < retries - 1:
+                    time.sleep(_retry_seconds(exc, delay))
+                    delay = min(delay * 1.5, 45)
+                    continue
+                if json_mode:
+                    break
+                raise
+    raise last or RuntimeError("OpenRouter failed")
 
 
 def _call_gemini(prompt: str, *, system: str, api_key: str) -> str:
@@ -141,9 +264,6 @@ def _call_gemini(prompt: str, *, system: str, api_key: str) -> str:
 
 
 def _call_groq(prompt: str, *, system: str, api_key: str) -> str:
-    import urllib.error
-    import urllib.request
-
     model = _groq_model()
     timeout = int(os.getenv("GROQ_REQUEST_TIMEOUT_SEC", "90"))
     retries = int(os.getenv("GROQ_LLM_MAX_RETRIES", "3"))
@@ -194,7 +314,7 @@ def _call_groq(prompt: str, *, system: str, api_key: str) -> str:
                 err_body = exc.read().decode("utf-8", errors="replace")[:300]
                 last = RuntimeError(f"Groq HTTP {exc.code}: {err_body}")
                 if exc.code in (400, 403, 422) and json_mode:
-                    break  # retry without json_mode
+                    break
                 if _is_retriable(str(exc)) and attempt < retries - 1:
                     time.sleep(delay)
                     delay = min(delay * 1.5, 45)
@@ -212,11 +332,35 @@ def _call_groq(prompt: str, *, system: str, api_key: str) -> str:
     raise last or RuntimeError("Groq failed")
 
 
+def resolve_llm_provider() -> str:
+    """Non-secret label for pipeline meta (openrouter | gemini | groq | none)."""
+    if not llm_configured():
+        return "none"
+    primary = (os.getenv("SEMV2_LLM_PRIMARY", "openrouter") or "openrouter").lower()
+    if primary == "openrouter" and _openrouter_key():
+        return "openrouter"
+    if primary == "groq" and _groq_key():
+        return "groq"
+    if primary == "gemini" and _gemini_key():
+        return "gemini"
+    if _openrouter_key():
+        return "openrouter"
+    if _gemini_key():
+        return "gemini"
+    if _groq_key():
+        return "groq"
+    return "none"
+
+
 def llm_status() -> dict[str, Any]:
     """Non-secret summary for test reports."""
     return {
+        "openrouter_configured": bool(_openrouter_key()),
         "gemini_configured": bool(_gemini_key()),
         "groq_configured": bool(_groq_key()),
+        "primary": os.getenv("SEMV2_LLM_PRIMARY", "openrouter"),
+        "openrouter_model": _openrouter_model(),
         "gemini_model": _gemini_model(),
         "groq_model": _groq_model(),
+        "resolved_provider": resolve_llm_provider(),
     }

@@ -24,12 +24,7 @@ import re
 from typing import Any
 
 from semantic_mapping_v2.feature_extraction import ColumnFeature
-from semantic_mapping_v2.llm_client import (
-    _gemini_key,
-    _groq_key,
-    generate_text,
-    strip_json_fence,
-)
+from semantic_mapping_v2.llm_client import generate_text, llm_configured, strip_json_fence
 
 logger = logging.getLogger(__name__)
 
@@ -192,7 +187,7 @@ def _enrich_via_llm(
 ) -> dict[str, str]:
     """Call LLM to get one-line English descriptions for cryptic columns.
     Returns {col_name: description}."""
-    if not (_gemini_key() or _groq_key()):
+    if not llm_configured():
         return {}
 
     out: dict[str, str] = {}
@@ -235,7 +230,7 @@ def enrich_column_features(
     usecase: str,
     dataset_name: str,
     use_llm: bool = True,
-) -> dict[str, ColumnFeature]:
+) -> tuple[dict[str, ColumnFeature], dict[str, int]]:
     """
     Mutate ColumnFeature.normalized and .representation in-place for columns
     that are cryptic or known survey codes.
@@ -254,11 +249,11 @@ def enrich_column_features(
         if _is_cryptic(col, feat.normalized) or _lookup(col) is not None
     ]
     if not candidates:
-        return features
+        return features, {"llm_enriched": 0, "lookup_enriched": 0, "enriched_total": 0}
 
     # PRIMARY — LLM enrichment (works for any dataset, not just known codes).
     llm_desc: dict[str, str] = {}
-    if use_llm and (_gemini_key() or _groq_key()):
+    if use_llm and llm_configured():
         llm_desc = _enrich_via_llm(candidates, usecase, dataset_name)
 
     # Apply: prefer the LLM description, fall back to the static lookup table.
@@ -286,7 +281,11 @@ def enrich_column_features(
             llm_used,
             lookup_used,
         )
-    return features
+    return features, {
+        "llm_enriched": llm_used,
+        "lookup_enriched": lookup_used,
+        "enriched_total": enriched_count,
+    }
 
 
 def _apply(feat: ColumnFeature, description: str, source: str) -> None:

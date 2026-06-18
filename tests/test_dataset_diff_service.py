@@ -97,3 +97,59 @@ def test_normalization_dedupes_renames():
 
     assert len(result["columns_renamed"]) == 1
     assert result["columns_removed"] == []
+
+
+def test_normalization_prefers_db_rename_over_checkpoint_alias():
+    svc = DatasetDiffService(_FakeDb())
+    db = MagicMock()
+    svc.db = db
+
+    col = MagicMock()
+    col.name = "person_id"
+    col.normalized_name = "Person Identifier"
+    col.is_deleted = False
+    col.is_excluded = False
+
+    with patch(
+        "review.dataset_diff_service.NormalizationService"
+    ) as norm_cls, patch(
+        "services.analysis_query.load_checkpoint_top_keys",
+        return_value={"column_normalization": [
+            {"original_name": "person_id", "canonical_name": "person_identifier"},
+        ]},
+    ), patch(
+        "review.dataset_diff_service.load_analysis_checkpoint",
+        return_value={},
+    ):
+        norm_cls.return_value._ensure_columns_seeded.return_value = [col]
+        result = svc._normalization_changes(1)
+
+    assert len(result["columns_renamed"]) == 1
+    assert result["columns_renamed"][0] == {"from": "person_id", "to": "Person Identifier"}
+
+
+def test_normalization_skips_multiplier_renames():
+    svc = DatasetDiffService(_FakeDb())
+    db = MagicMock()
+    svc.db = db
+
+    mult = MagicMock()
+    mult.name = "MULT"
+    mult.normalized_name = "survey_weight"
+    mult.is_deleted = False
+    mult.is_excluded = True
+
+    with patch(
+        "review.dataset_diff_service.NormalizationService"
+    ) as norm_cls, patch(
+        "services.analysis_query.load_checkpoint_top_keys",
+        return_value={},
+    ), patch(
+        "review.dataset_diff_service.load_analysis_checkpoint",
+        return_value={},
+    ):
+        norm_cls.return_value._ensure_columns_seeded.return_value = [mult]
+        result = svc._normalization_changes(1)
+
+    assert result["columns_renamed"] == []
+    assert result["columns_excluded"] == []

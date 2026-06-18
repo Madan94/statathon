@@ -5,6 +5,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from core.multiplier_column import is_multiplier_column
 from database.models import DatasetColumn
 
 
@@ -42,11 +43,11 @@ class DatasetColumnRepository:
                 dataset_id=dataset_id,
                 analysis_id=analysis_id,
                 name=name,
-                normalized_name=suggested.get(name, name),
+                normalized_name=name if is_multiplier_column(name) else suggested.get(name, name),
                 inferred_type=types.get(name),
                 is_deleted=False,
-                is_excluded=False,
-                is_active=True,
+                is_excluded=is_multiplier_column(name),
+                is_active=not is_multiplier_column(name),
                 last_modified=datetime.utcnow(),
             )
             self.db.add(row)

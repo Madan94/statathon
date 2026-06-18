@@ -232,6 +232,9 @@ def resolve_semantic_analysis_payload(
         domain_registry = load_checkpoint_json_key(db, analysis_id, "domain_registry")
         if isinstance(domain_registry, dict):
             payload["domain_registry"] = domain_registry
+        checkpoint_meta = load_checkpoint_json_key(db, analysis_id, "meta")
+        if isinstance(checkpoint_meta, dict) and checkpoint_meta:
+            payload["meta"] = {**(payload.get("meta") or {}), **checkpoint_meta}
         if include_phase3:
             payload["phase3"] = build_phase3_from_relational(db, analysis_id)
         payload.setdefault("meta", {"analysis_id": analysis_id})
@@ -305,14 +308,34 @@ def enrich_payload_for_dashboard(
     profiling = payload.get("profiling_summary") if isinstance(payload.get("profiling_summary"), dict) else {}
     enriched["health"] = profiling.get("health") or payload.get("health")
     enriched["schema"] = profiling.get("schema")
-    if payload.get("domain_registry"):
-        enriched["domain_registry"] = payload["domain_registry"]
+    try:
+        from services.analysis_light_service import resolve_domain_registry_for_ui
+
+        enriched["domain_registry"] = resolve_domain_registry_for_ui(db, analysis_id)
+    except Exception:
+        if payload.get("domain_registry"):
+            enriched["domain_registry"] = payload["domain_registry"]
     if payload.get("column_normalization"):
         enriched["column_normalization"] = payload["column_normalization"]
     if payload.get("effective_schema"):
         enriched["effective_schema"] = payload["effective_schema"]
     if payload.get("normalization_version") is not None:
         enriched["normalization_version"] = payload["normalization_version"]
+    from services.analysis_query import load_checkpoint_json_key
+
+    cp_meta = load_checkpoint_json_key(db, analysis_id, "meta")
+    v2_meta = load_checkpoint_json_key(db, analysis_id, "semantic_v2_meta")
+    merged_meta: dict[str, Any] = {}
+    if isinstance(cp_meta, dict):
+        merged_meta.update(cp_meta)
+    if isinstance(v2_meta, dict):
+        merged_meta.update(v2_meta)
+    if isinstance(payload.get("meta"), dict):
+        merged_meta = {**merged_meta, **payload["meta"]}
+    if merged_meta:
+        enriched["meta"] = {**(enriched.get("meta") or {}), **merged_meta}
+    if payload.get("column_profiles"):
+        enriched["column_profiles"] = payload["column_profiles"]
 
     mapping = payload.get("semantic_mapping") or []
     semantic: dict[str, str] = {}

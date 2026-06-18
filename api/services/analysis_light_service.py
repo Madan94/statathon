@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, load_only
 from analysis_state.cluster_utils import cluster_from_db_row, normalize_domain_distribution
 from analysis_state.schema_graph_utils import enrich_schema_graph_edges
 from database.models import (
+    ColumnIntelligenceProfile,
     DatasetContextRecord,
     DatasetIntelligenceRecord,
     PriorityDependency,
@@ -74,7 +75,7 @@ _UNIVERSAL_DOMAIN_DEFAULTS = [
 
 def _coerce_domain_registry_for_ui(raw: dict[str, Any], archetype: str) -> dict[str, Any]:
     """Normalize V2 unified ``domains`` map or legacy registry into step-3 UI shape."""
-    if raw.get("static_ontology") or raw.get("dynamic_domains") is not None:
+    if raw.get("static_ontology"):
         if not raw.get("active_archetype"):
             raw = {**raw, "active_archetype": archetype}
         return raw
@@ -115,7 +116,129 @@ def _coerce_domain_registry_for_ui(raw: dict[str, Any], archetype: str) -> dict[
     }
 
 
-def build_domains_response(db: Session, analysis_id: int) -> dict[str, Any]:
+def _collect_static_domain_names(domain_registry: dict[str, Any]) -> set[str]:
+    names: set[str] = set()
+    for tier in (domain_registry.get("static_ontology") or {}).values():
+        if isinstance(tier, dict):
+            names.update(str(d).lower() for d in tier.get("domains") or [])
+    names.update(str(d).lower() for d in domain_registry.get("universal_domains") or [])
+    return names
+
+
+def _append_domain_member(entry: dict[str, Any], column: str) -> None:
+    col = str(column or "").strip()
+    if not col:
+        return
+    members = list(entry.get("members") or entry.get("columns") or [])
+    if col not in members:
+        members.append(col)
+    entry["members"] = members
+
+
+def _load_semantic_mapping_for_domains(db: Session, analysis_id: int) -> list[dict[str, Any]]:
+    profiles = (
+        db.query(SemanticProfile)
+        .options(
+            load_only(
+                SemanticProfile.column_name,
+                SemanticProfile.semantic_domain,
+                SemanticProfile.contextual_tags,
+            )
+        )
+        .filter(SemanticProfile.analysis_id == analysis_id)
+        .order_by(SemanticProfile.column_name)
+        .all()
+    )
+    if profiles:
+        rows: list[dict[str, Any]] = []
+        for p in profiles:
+            row: dict[str, Any] = {
+                "column": p.column_name,
+                "domain": p.semantic_domain,
+            }
+            tags = p.contextual_tags or {}
+            if isinstance(tags, dict):
+                row.update(tags)
+            rows.append(row)
+    else:
+        raw = load_checkpoint_json_key(db, analysis_id, "semantic_mapping")
+        if isinstance(raw, list):
+            rows = [dict(r) for r in raw if isinstance(r, dict)]
+        elif isinstance(raw, dict):
+            rows = [{"column": k, **(v if isinstance(v, dict) else {})} for k, v in raw.items()]
+        else:
+            rows = []
+
+    from services.analysis_query import get_normalization_version
+    from services.normalization_service import NormalizationService
+
+    version = get_normalization_version(db, analysis_id)
+    if not version:
+        return rows
+
+    records = NormalizationService(db)._ensure_columns_seeded(analysis_id)
+    if not records:
+        return rows
+
+    from analysis_state.schema_state import filter_semantic_mapping
+
+    col_norm = load_checkpoint_json_key(db, analysis_id, "column_normalization") or []
+    return filter_semantic_mapping(rows, records, column_normalization=col_norm)
+
+
+def _merge_dynamic_domains_from_mapping(
+    domain_registry: dict[str, Any],
+    mapping: list[dict[str, Any]],
+    *,
+    extra_dynamic: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Populate dynamic_domains with columns assigned via LLM / non-static domains."""
+    registry = dict(domain_registry)
+    dynamic: dict[str, Any] = dict(registry.get("dynamic_domains") or {})
+    static_names = _collect_static_domain_names(registry)
+
+    for name, meta in (extra_dynamic or {}).items():
+        if not isinstance(meta, dict):
+            continue
+        key = str(name).strip().lower()
+        if not key:
+            continue
+        entry = dict(dynamic.get(key) or {})
+        entry.setdefault(
+            "description",
+            meta.get("description") or meta.get("definition") or f"LLM-proposed domain: {key}",
+        )
+        if meta.get("confidence") is not None:
+            entry["cohesion"] = meta.get("confidence")
+        entry["domain_type"] = "dynamic"
+        for col in meta.get("members") or meta.get("columns") or []:
+            _append_domain_member(entry, str(col))
+        dynamic[key] = entry
+
+    for row in mapping:
+        if not isinstance(row, dict):
+            continue
+        domain = str(row.get("domain") or "").strip().lower()
+        column = str(row.get("column") or "").strip()
+        if not domain or not column or domain == "uncorrelated":
+            continue
+        domain_type = str(row.get("domain_type") or "").lower()
+        source = str(row.get("source") or "").lower()
+        is_dynamic = domain_type == "dynamic" or source == "llm" or domain not in static_names
+        if not is_dynamic:
+            continue
+        entry = dict(dynamic.get(domain) or {})
+        _append_domain_member(entry, column)
+        entry.setdefault("description", entry.get("description") or f"Dynamic domain: {domain}")
+        entry["domain_type"] = entry.get("domain_type") or "derived"
+        dynamic[domain] = entry
+
+    registry["dynamic_domains"] = dynamic
+    return registry
+
+
+def resolve_domain_registry_for_ui(db: Session, analysis_id: int) -> dict[str, Any]:
+    """Build Step-3 domain registry: static ontology + dynamic domains with column members."""
     ctx = _context_row(db, analysis_id)
     summary = _semantic_summary(ctx)
     ctx_payload = _dataset_context(ctx)
@@ -125,7 +248,6 @@ def build_domains_response(db: Session, analysis_id: int) -> dict[str, Any]:
         or ctx_payload.get("ontology_macro_type_best_hint")
         or "unknown"
     )
-    ontology_macro = ctx_payload.get("ontology_macro_type_best_hint")
 
     domain_registry = load_checkpoint_json_key(db, analysis_id, "domain_registry") or {}
     if not isinstance(domain_registry, dict):
@@ -135,8 +257,20 @@ def build_domains_response(db: Session, analysis_id: int) -> dict[str, Any]:
     if coerced:
         domain_registry = coerced
 
+    v2_dynamic = load_checkpoint_json_key(db, analysis_id, "semantic_v2_dynamic_domains")
+    if not isinstance(v2_dynamic, dict):
+        v2_dynamic = {}
+
+    mapping = _load_semantic_mapping_for_domains(db, analysis_id)
+    if mapping or v2_dynamic:
+        domain_registry = _merge_dynamic_domains_from_mapping(
+            domain_registry,
+            mapping,
+            extra_dynamic=v2_dynamic,
+        )
+
     static_domains = summary.get("static_domains") or {}
-    if not domain_registry.get("static_ontology") and static_domains:
+    if not domain_registry.get("static_ontology") and static_domains and not domain_registry.get("dynamic_domains"):
         archetype_entry = static_domains.get(archetype) or static_domains.get("dataset_types", {}).get(
             archetype, {}
         )
@@ -162,6 +296,29 @@ def build_domains_response(db: Session, analysis_id: int) -> dict[str, Any]:
             },
             "dynamic_domains": {},
         }
+        if mapping or v2_dynamic:
+            domain_registry = _merge_dynamic_domains_from_mapping(
+                domain_registry,
+                mapping,
+                extra_dynamic=v2_dynamic,
+            )
+
+    return domain_registry
+
+
+def build_domains_response(db: Session, analysis_id: int) -> dict[str, Any]:
+    ctx = _context_row(db, analysis_id)
+    summary = _semantic_summary(ctx)
+    ctx_payload = _dataset_context(ctx)
+
+    archetype = (
+        ctx_payload.get("dataset_type")
+        or ctx_payload.get("ontology_macro_type_best_hint")
+        or "unknown"
+    )
+    ontology_macro = ctx_payload.get("ontology_macro_type_best_hint")
+
+    domain_registry = resolve_domain_registry_for_ui(db, analysis_id)
 
     static_taxonomy: dict[str, Any] = {}
     for tier_name, tier_data in (domain_registry.get("static_ontology") or {}).items():
@@ -339,6 +496,22 @@ def build_summary_response(db: Session, analysis_id: int) -> dict[str, Any]:
     column_profiles = summary.get("column_profiles") or profiling.get("column_profiles") or {}
     dataset_profile = summary.get("dataset_profile") or profiling.get("dataset_profile")
 
+    intel_col_map = {
+        r.column_name: r.profile_json if isinstance(r.profile_json, dict) else {}
+        for r in db.query(ColumnIntelligenceProfile)
+        .options(load_only(ColumnIntelligenceProfile.column_name, ColumnIntelligenceProfile.profile_json))
+        .filter(ColumnIntelligenceProfile.analysis_id == analysis_id)
+        .order_by(ColumnIntelligenceProfile.column_name)
+        .all()
+    }
+    if intel_col_map:
+        column_profiles = intel_col_map
+
+    if not profiling.get("health") or not profiling.get("schema"):
+        checkpoint_prof = load_checkpoint_json_key(db, analysis_id, "profiling_summary")
+        if isinstance(checkpoint_prof, dict):
+            profiling = {**checkpoint_prof, **profiling}
+
     if not dataset_profile:
         intel = (
             db.query(DatasetIntelligenceRecord)
@@ -355,6 +528,7 @@ def build_summary_response(db: Session, analysis_id: int) -> dict[str, Any]:
         "dataset_context": _dataset_context(ctx),
         "dataset_profile": dataset_profile or {},
         "dataset_name": meta.get("filename") if isinstance(meta, dict) else None,
+        "column_profiles": column_profiles if isinstance(column_profiles, dict) else {},
         "column_profiles_keys": sorted(column_profiles.keys()) if isinstance(column_profiles, dict) else [],
         "profiling_summary": profiling,
         "embedding_cache_refs": load_checkpoint_json_key(db, analysis_id, "embedding_cache_refs"),

@@ -3,7 +3,8 @@ Configuration for Semantic Mapping & Domain Clustering V2.
 
 Vector backbone: Qdrant (embedded-local by default via on-disk path; an external
 Qdrant server/cloud is used automatically when QDRANT_URL is set). Embeddings:
-BGE-M3. Clustering: scikit-learn native HDBSCAN. LLM: Gemini.
+BGE-M3. Clustering: scikit-learn native HDBSCAN. LLM: OpenRouter (primary),
+Gemini/Groq fallback via ``SEMV2_LLM_PRIMARY``.
 
 Independent of model/semantic_mapping/ — reads env and repo paths only.
 """

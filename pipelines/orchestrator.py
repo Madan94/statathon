@@ -4,6 +4,7 @@ ensure_paths()
 
 from core.ingestion import dataframe_for_uploaded_dataset, infer_schema, health_summary
 from core.json_safe import make_json_safe
+from core.multiplier_column import detach_multiplier_columns, find_multiplier_columns, is_multiplier_column
 from services.analysis_query import slim_checkpoint_payload
 from core.rule_validator import normalize_schema
 from reports.ingestion_reporter import write_ingestion_report
@@ -72,12 +73,11 @@ def run_pipeline(
         dataset_domain=None,
     )
 
+    mult_cols = find_multiplier_columns(df)
+    raw_schema = [str(c) for c in df.columns]
+    df, _ = detach_multiplier_columns(df)
+
     # --- Adopt the normalized identity for the rest of the pipeline ----------
-    # The semantic pipeline corrected/expanded every header into a canonical
-    # name. Rename the DataFrame (and the schema/health/profiles derived from
-    # it) so phase-3 (validation, z-score, IQR, missing) and persistence all
-    # run on the normalized columns instead of the raw/cryptic ones. The raw
-    # headers are preserved in semantic_bundle['column_normalization'].
     rename_map: dict[str, str] = {}
     for row in semantic_bundle.get("column_normalization") or []:
         if not isinstance(row, dict):
@@ -86,6 +86,11 @@ def run_pipeline(
         canon = str(row.get("canonical_name") or row.get("normalized_name") or "")
         if raw and canon and raw in df.columns and raw != canon:
             rename_map[raw] = canon
+    rename_map = {
+        k: v
+        for k, v in rename_map.items()
+        if not is_multiplier_column(k) and not is_multiplier_column(v)
+    }
     if rename_map:
         df = df.rename(columns=rename_map)
         schema = {rename_map.get(str(k), str(k)): v for k, v in schema.items()}
@@ -97,6 +102,14 @@ def run_pipeline(
         column_profiles = {
             rename_map.get(str(k), str(k)): v for k, v in (column_profiles or {}).items()
         }
+
+    pipeline_columns = [str(c) for c in df.columns]
+    if mult_cols:
+        health = dict(health or {})
+        for key in ("missing_per_column", "dtypes"):
+            sub = health.get(key)
+            if isinstance(sub, dict):
+                health[key] = {k: v for k, v in sub.items() if k not in mult_cols}
 
     state = build_analysis_state(
         dataset_id=dataset_id,
@@ -129,7 +142,16 @@ def run_pipeline(
     analysis_row = db.query(Analysis).filter(Analysis.id == analysis_id).first()
     if analysis_row:
         cp = slim_checkpoint_payload(make_json_safe(state.to_api_payload()))
-        cp["raw_schema"] = [str(c) for c in df.columns]
+        cp["raw_schema"] = raw_schema
+        if mult_cols:
+            cp["multiplier_columns"] = mult_cols
+        v2_meta = semantic_bundle.get("semantic_v2_meta") or {}
+        if isinstance(v2_meta, dict) and v2_meta:
+            cp["meta"] = {**(cp.get("meta") or {}), **v2_meta}
+            cp["semantic_v2_meta"] = v2_meta
+        v2_dynamic = semantic_bundle.get("semantic_v2_dynamic_domains") or {}
+        if isinstance(v2_dynamic, dict):
+            cp["semantic_v2_dynamic_domains"] = v2_dynamic
         analysis_row.checkpoint = cp
 
     from services.normalization_service import NormalizationService
@@ -137,7 +159,7 @@ def run_pipeline(
     NormalizationService(db).seed_from_analysis_payload(
         dataset_id=dataset_id,
         analysis_id=analysis_id,
-        raw_columns=[str(c) for c in df.columns],
+        raw_columns=raw_schema,
         payload=analysis_row.checkpoint if analysis_row and isinstance(analysis_row.checkpoint, dict) else state.to_api_payload(),
     )
 

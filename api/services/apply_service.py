@@ -14,6 +14,16 @@ from sqlalchemy.orm import Session
 
 from core.ingestion import dataframe_for_uploaded_dataset, infer_schema
 from core.json_safe import make_json_safe
+from core.multiplier_column import (
+    detach_multiplier_columns,
+    extract_multiplier_sidecar,
+    filter_sidecar_rows,
+    is_multiplier_column,
+    outlier_drop_indices,
+    reattach_multiplier_columns,
+    row_indices_after_drops,
+    validation_drop_indices,
+)
 from core.rule_validator import normalize_schema
 from database.models import (
     Analysis,
@@ -78,6 +88,48 @@ def _column_maps(db: Session, analysis_id: int) -> tuple[dict[str, str], dict[st
         ui_to_physical[orig] = orig
         physical_to_ui[orig] = norm
     return ui_to_physical, physical_to_ui
+
+
+def _upload_to_processed_column_map(
+    records: list[Any],
+    column_normalization: list[dict[str, Any]] | None = None,
+) -> dict[str, str]:
+    """Map upload headers to processed dataframe column names (multipliers unchanged)."""
+    canon_by_orig: dict[str, str] = {}
+    for row in column_normalization or []:
+        if not isinstance(row, dict):
+            continue
+        orig = str(row.get("original_name") or row.get("column") or "")
+        if not orig:
+            continue
+        if is_multiplier_column(orig):
+            canon_by_orig[orig] = orig
+            continue
+        canon = str(
+            row.get("canonical_name")
+            or row.get("normalized_name")
+            or row.get("display_name")
+            or ""
+        )
+        if canon:
+            canon_by_orig[orig] = canon
+
+    mapping: dict[str, str] = {}
+    for col in records:
+        orig = str(col.name)
+        if is_multiplier_column(orig):
+            mapping[orig] = orig
+            continue
+        if col.is_deleted or col.is_excluded:
+            continue
+        mapping[orig] = canon_by_orig.get(orig) or str(col.normalized_name or orig)
+
+    for orig, proc in canon_by_orig.items():
+        if is_multiplier_column(orig):
+            mapping[orig] = orig
+        elif orig not in mapping:
+            mapping[orig] = proc
+    return mapping
 
 
 def _coerce_cell_value(series: pd.Series, value: Any) -> Any:
@@ -337,6 +389,22 @@ def _apply_imputation(
     return out, applied
 
 
+def _build_multiplier_sidecar(df_raw: pd.DataFrame, _checkpoint: dict[str, Any]) -> pd.DataFrame | None:
+    """Extract multiplier columns from upload — exact header names, no pipeline rename."""
+    return extract_multiplier_sidecar(df_raw)
+
+
+def _sync_sidecar_after_row_drops(
+    sidecar: pd.DataFrame | None,
+    n_rows: int,
+    drop_indices: set[int],
+) -> pd.DataFrame | None:
+    if sidecar is None or not drop_indices:
+        return sidecar
+    keep = row_indices_after_drops(n_rows, drop_indices)
+    return filter_sidecar_rows(sidecar, keep)
+
+
 def materialize_processed_dataframe(db: Session, analysis_id: int) -> pd.DataFrame:
     """Rebuild the final processed dataset from persisted decisions (source of truth)."""
     from services.analysis_dataframe_service import load_snapshot_dataframe
@@ -359,6 +427,14 @@ def materialize_processed_dataframe(db: Session, analysis_id: int) -> pd.DataFra
         df, _, _ = load_working_dataframe(db, analysis_id, apply_user_norm=True)
 
     ui_to_physical, _ = _column_maps(db, analysis_id)
+    norm_records = NormalizationService(db)._ensure_columns_seeded(analysis_id)
+    upload_to_processed = _upload_to_processed_column_map(
+        norm_records,
+        checkpoint.get("column_normalization") if isinstance(checkpoint.get("column_normalization"), list) else None,
+    )
+
+    df_raw, _, _ = load_raw_upload_dataframe(db, analysis_id)
+    sidecar = _build_multiplier_sidecar(df_raw, checkpoint)
 
     val_decisions = _validation_decisions(db, analysis_id)
     if not val_decisions:
@@ -378,14 +454,15 @@ def materialize_processed_dataframe(db: Session, analysis_id: int) -> pd.DataFra
     resolver = build_column_resolver(df, ui_to_physical)
     val_resolved = resolve_validation_decisions(val_decisions, resolver) if val_decisions else []
     if val_resolved:
+        sidecar = _sync_sidecar_after_row_drops(
+            sidecar, len(df), validation_drop_indices(val_resolved)
+        )
         df = apply_user_decisions(df, val_resolved)
 
     outlier_rows = (
         db.query(OutlierDecision).filter(OutlierDecision.analysis_id == analysis_id).all()
     )
-    if outlier_rows:
-        df, _ = _apply_outlier_decisions(df, outlier_rows, ui_to_physical)
-    else:
+    if not outlier_rows:
         raw = phase3.get("outlier_row_decisions") or {}
         pseudo: list[OutlierDecision] = []
         if isinstance(raw, dict):
@@ -409,8 +486,13 @@ def materialize_processed_dataframe(db: Session, analysis_id: int) -> pd.DataFra
                             new_value=str(d.get("new_value")) if d.get("new_value") is not None else None,
                         )
                     )
-        if pseudo:
-            df, _ = _apply_outlier_decisions(df, pseudo, ui_to_physical)
+        outlier_rows = pseudo
+
+    if outlier_rows:
+        sidecar = _sync_sidecar_after_row_drops(
+            sidecar, len(df), outlier_drop_indices(outlier_rows)
+        )
+        df, _ = _apply_outlier_decisions(df, outlier_rows, ui_to_physical)
 
     imputation_rows = (
         db.query(ImputationRowDecision)
@@ -420,7 +502,12 @@ def materialize_processed_dataframe(db: Session, analysis_id: int) -> pd.DataFra
     if imputation_rows or phase3.get("imputation_method_selections"):
         df, _ = _apply_imputation(df, phase3, imputation_rows, ui_to_physical)
 
-    return df
+    return reattach_multiplier_columns(
+        df,
+        sidecar,
+        original_column_order=list(df_raw.columns),
+        upload_to_processed=upload_to_processed,
+    )
 
 
 def persist_processed_snapshot(db: Session, analysis_id: int) -> dict[str, Any]:
@@ -448,7 +535,9 @@ def apply_analysis_decisions(
 
     df_raw, ds, store = load_raw_upload_dataframe(db, analysis_id)
     checkpoint = an.checkpoint if isinstance(an.checkpoint, dict) else {}
+    sidecar = _build_multiplier_sidecar(df_raw, checkpoint)
     df_pipeline = apply_pipeline_column_rename(df_raw, checkpoint)
+    df_pipeline, _ = detach_multiplier_columns(df_pipeline)
 
     norm_service = NormalizationService(db)
     norm_records = norm_service._ensure_columns_seeded(analysis_id)
@@ -502,6 +591,10 @@ def apply_analysis_decisions(
 
     resolver = build_column_resolver(df, ui_to_physical)
     val_resolved = resolve_validation_decisions(val_decisions, resolver) if val_decisions else []
+    if val_resolved:
+        sidecar = _sync_sidecar_after_row_drops(
+            sidecar, len(df), validation_drop_indices(val_resolved)
+        )
     df_validated = apply_user_decisions(df, val_resolved) if val_resolved else df.copy()
     lineage.append(
         _persist_snapshot(
@@ -518,6 +611,33 @@ def apply_analysis_decisions(
     outlier_rows = (
         db.query(OutlierDecision).filter(OutlierDecision.analysis_id == analysis_id).all()
     )
+    if not outlier_rows:
+        raw_outliers = phase3.get("outlier_row_decisions") or {}
+        if isinstance(raw_outliers, dict):
+            for column, decisions in raw_outliers.items():
+                if not isinstance(decisions, list):
+                    continue
+                for d in decisions:
+                    if not isinstance(d, dict):
+                        continue
+                    row_index = d.get("row_index")
+                    if row_index is None:
+                        continue
+                    outlier_rows.append(
+                        OutlierDecision(
+                            analysis_id=analysis_id,
+                            column_name=str(column),
+                            row_index=int(row_index),
+                            decision=str(d.get("decision") or "KEEP"),
+                            method=str(d.get("method") or d.get("methodology") or "") or None,
+                            old_value=str(d.get("old_value")) if d.get("old_value") is not None else None,
+                            new_value=str(d.get("new_value")) if d.get("new_value") is not None else None,
+                        )
+                    )
+    if outlier_rows:
+        sidecar = _sync_sidecar_after_row_drops(
+            sidecar, len(df_validated), outlier_drop_indices(outlier_rows)
+        )
     df_anomaly, outlier_stats = _apply_outlier_decisions(df_validated, outlier_rows, ui_to_physical)
     lineage.append(
         _persist_snapshot(
@@ -549,7 +669,15 @@ def apply_analysis_decisions(
         )
     )
 
-    df_final = df_imputed.copy()
+    df_final = reattach_multiplier_columns(
+        df_imputed,
+        sidecar,
+        original_column_order=list(df_raw.columns),
+        upload_to_processed=_upload_to_processed_column_map(
+            norm_records,
+            checkpoint.get("column_normalization") if isinstance(checkpoint.get("column_normalization"), list) else None,
+        ),
+    )
     final_path = _derived_dir() / f"analysis_{analysis_id}_final.csv"
     df_final.to_csv(final_path, index=False)
     lineage.append(
