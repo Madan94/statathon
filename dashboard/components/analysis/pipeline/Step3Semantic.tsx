@@ -104,7 +104,7 @@ function normalizeMappingRows(raw: AnalysisResult['semantic_mapping']): Semantic
   if (raw && typeof raw === 'object') {
     return Object.entries(raw as Record<string, unknown>).map(([column, meta]) => {
       if (meta && typeof meta === 'object') {
-        return { column, ...(meta as SemanticMappingRow) };
+        return { ...(meta as SemanticMappingRow), column };
       }
       return { column, domain: String(meta ?? '') };
     });

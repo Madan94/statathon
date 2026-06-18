@@ -1215,7 +1215,7 @@ export default function GuidedQueryContractPage() {
         tags: ['cross-tabulation', 'guided-query', selectedCats[0], weightOp],
         components: [{ type: 'narrative', title: 'Analysis' }, { type: 'key_finding', title: 'Key Findings' }],
         measures: [{ col: valueCol, label: valueCol, agg: weightCol ? 'weighted_mean' : 'sum', weighted: !!weightCol }],
-        blocks: blocks as Array<Record<string, unknown>>,
+        blocks: blocks as unknown as Array<Record<string, unknown>>,
         section_title: sectionTitle,
         chapter_title: chapterTitle,
         dataset_id: workspace.dataset_id,
@@ -1268,7 +1268,7 @@ export default function GuidedQueryContractPage() {
           filterCombinator: 'AND',
           columns: {
             dimensions: selectedCats,
-            measures: [{ col: valueCol, agg: weightCol ? 'weighted_mean' : 'sum', weighted: !!weightCol, label: valueCol, weightCol: weightCol || null }],
+            measures: [{ col: valueCol, agg: weightCol ? 'weighted_mean' : 'sum', label: valueCol, weightCol: weightCol || null }],
             include: [...selectedCats, valueCol, ...(weightCol ? [weightCol] : [])],
           },
         },

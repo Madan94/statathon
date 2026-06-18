@@ -383,6 +383,7 @@ export interface AnalysisStatus {
 
 export interface SemanticMappingRow {
   column: string;
+  original_name?: string;
   domain?: string;
   confidence?: number;
   cluster_id?: string;
@@ -411,6 +412,7 @@ export interface DomainRegistryEntry {
   domains?: string[];
   keywords_sample?: Record<string, string[]>;
   parent_theme?: string;
+  description?: string;
   members?: string[];
   cohesion?: number;
   keywords?: string[];

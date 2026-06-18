@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Info, Loader2, Lock, Plus, Share2, Sparkles, Upload as UploadIcon, X, type LucideIcon } from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, FileText, Info, Loader2, Lock, Plus, Share2, Sparkles, Upload as UploadIcon, X, type LucideIcon } from 'lucide-react';
 
 import PageHeader from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
@@ -39,7 +39,7 @@ import {
 type Decision = EntityDecision;
 type WorkbenchMode = 'overview' | 'dataset' | 'pathway' | 'filters' | 'entities' | 'questions' | 'issues' | 'handoff';
 type TemplatePath = 'pre_existing' | 'loop';
-type WorkflowMode = 'legacy_binding' | 'guided_query';
+type WorkflowMode = 'legacy_binding' | 'guided_query' | 'use_case_report';
 
 const PROFILE_TEMPLATE_ID = 'tpl_plfs_annual_v1';
 
@@ -1234,6 +1234,10 @@ export default function BindingWorkflowPage() {
           router.push(`/report-builder/guided-query-contract/${encodeURIComponent(session.template_id)}/${encodeURIComponent(session.signature)}`);
           return;
         }
+        if (mode === 'use_case_report') {
+          router.push(`/report-builder/use-case-report/${encodeURIComponent(session.template_id)}/${encodeURIComponent(session.signature)}`);
+          return;
+        }
         setTemplatePath('pre_existing');
       };
       const workflowCards: Array<{
@@ -1269,6 +1273,18 @@ export default function BindingWorkflowPage() {
           icon: Sparkles,
           iconWrap: 'bg-primary/10 text-primary',
           cta: 'Build query contract',
+          badge: 'new',
+        },
+        {
+          id: 'use_case_report',
+          title: 'Use Case Report Builder',
+          tagline: 'Paste scenarios · auto query · canvas',
+          description: 'Paste numbered use case scenarios. The system auto-detects filters, runs real data queries, generates LLM narratives, and bundles all sections into a complete Report Canvas draft.',
+          phases: ['Paste scenarios', 'Review filters', 'Run data queries', 'LLM synthesis', 'Canvas draft'],
+          shortPhases: ['paste', 'review', 'query', 'synthesize', 'canvas'],
+          icon: FileText,
+          iconWrap: 'bg-amber-500/10 text-amber-600',
+          cta: 'Build from use cases',
           badge: 'new',
         },
       ];
