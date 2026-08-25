@@ -170,6 +170,14 @@ $env:PYTHONPATH = (Resolve-Path "..").Path
 python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 
+Linux or macOS:
+
+```bash
+cd api
+export PYTHONPATH="$(cd .. && pwd)"
+python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+```
+
 Useful endpoints:
 
 - Health: `http://127.0.0.1:8000/health`
@@ -186,6 +194,28 @@ npm run dev
 ```
 
 Open `http://localhost:3000`. Set `NEXT_PUBLIC_API_URL` in `dashboard/.env.local` when the API is not running at `http://localhost:8000`.
+
+### Local extraction and report generation
+
+For PDF template extraction, use the detailed [GUIDE.md](GUIDE.md). It documents offline, local-GPU, cloud-provider, and hybrid modes. The shortest deterministic extraction check is:
+
+```powershell
+$env:PYTHONPATH = (Get-Location).Path
+& .\.venv\Scripts\python.exe scripts\simulate_offline.py "test_data\Stat reports.pdf"
+```
+
+For the configurable V2 runner:
+
+```powershell
+$env:PYTHONPATH = (Get-Location).Path
+$env:PDF_INPUT_PATH = "test_data\Stat reports.pdf"
+$env:TEMPLATE_NAME = "Stat reports"
+$env:OUTPUT_DIR = "outputs"
+$env:EXTRACTION_PIPELINE = "v2"
+& .\.venv\Scripts\python.exe scripts\run_pipeline.py
+```
+
+Successful extraction writes a value-free `template.ast.json` and `template.blueprint.json` below `outputs/<document-title>/`. A filled report is produced later by binding a ready analysis to a template; do not treat extraction output as a report containing source values.
 
 ### 4. Start optional services
 
@@ -368,6 +398,128 @@ Production checklist:
 - Monitor API errors, job failures, queue depth, database health, and p95 latency.
 
 Deployment runbooks are in [docs/deploy/aws/README.md](docs/deploy/aws/README.md). Object storage setup is documented in [docs/R2_STEP_BY_STEP.md](docs/R2_STEP_BY_STEP.md).
+
+### AWS deployment: end to end
+
+The repository includes an ECS Fargate deployment pack. The following sequence is the operational order; the linked runbooks contain console-specific fields and security details.
+
+#### Phase 1: prepare the AWS account
+
+Install and authenticate the AWS CLI and Docker, select one region, and create or identify:
+
+- An ECR repository for `bharatstat-api` and one for `bharatstat-dashboard`.
+- A VPC with two public subnets for the ALB and two private subnets for ECS, RDS, Redis, and the optional GPU worker.
+- An ECS cluster, task execution role, API task role, and dashboard task role.
+- CloudWatch log groups named `/ecs/bharatstat-api` and `/ecs/bharatstat-dashboard`.
+- An ACM certificate for the production hostname and a Route 53 hosted zone.
+
+Keep RDS, Redis, and the GPU worker private. The ALB is the only internet-facing application entry point.
+
+#### Phase 2: provision data services
+
+1. Create encrypted PostgreSQL RDS in private subnets with automated backups.
+2. Create an encrypted S3 bucket with Block Public Access enabled. Grant the API task role only the required bucket and KMS actions.
+3. Create private Redis, such as ElastiCache, when queues, sessions, or checkpoints are enabled.
+4. Configure security groups: ALB to ports 8000/3000, API to RDS/Redis/S3, and GPU worker access only from the API security group.
+5. Run the schema bootstrap against the production `DATABASE_URL` using `scripts/aws/bootstrap_rds_schema.ps1`.
+
+#### Phase 3: store runtime configuration
+
+Create Secrets Manager entries for `SECRET_KEY`, `MAIL_INTERNAL_SECRET`, SMTP credentials, and any provider credentials. Prefer ECS task roles over static AWS access keys. Set the API environment to:
+
+```text
+APP_ENV=production
+AUTH_REQUIRED=true
+COOKIE_SECURE=true
+CSRF_ENABLED=true
+DATABASE_URL=postgresql://...
+STORAGE_PROVIDER=s3
+S3_BUCKET=<bucket>
+AWS_REGION=<region>
+REDIS_URL=redis://<private-redis-endpoint>:6379/0
+INFERENCE_MODE=remote
+GPU_WORKER_ENDPOINT=http://<private-gpu-worker>:8080
+CORS_ORIGINS=https://<frontend-domain>
+NEXT_INTERNAL_URL=https://<frontend-domain>
+```
+
+For the dashboard, set `NODE_ENV=production`, `API_INTERNAL_URL` to the private API service address, and `NEXT_PUBLIC_API_URL` to the public API path exposed by the ALB, normally `https://<domain>/api/backend`. `MAIL_INTERNAL_SECRET` must match the API value.
+
+#### Phase 4: build and push release images
+
+From the repository root, run the checked-in helper with an immutable release tag:
+
+```powershell
+.\scripts\aws\build_and_push_ecr.ps1 -AwsRegion <region> -AwsAccountId <account-id> -ImageTag <release-tag>
+```
+
+The helper builds `docker/Dockerfile.api.fargate` and `docker/Dockerfile.dashboard`, tags both images, logs in to ECR, and pushes them. Record the exact image URIs and avoid using `latest` for a production cutover when rollback traceability matters.
+
+#### Phase 5: render and register ECS tasks
+
+Render the checked-in templates with deployment values:
+
+```powershell
+.\scripts\aws\render_taskdefs.ps1 `
+    -AwsRegion <region> `
+    -ApiImageUri <account-id>.dkr.ecr.<region>.amazonaws.com/bharatstat-api:<release-tag> `
+    -DashboardImageUri <account-id>.dkr.ecr.<region>.amazonaws.com/bharatstat-dashboard:<release-tag> `
+    -ExecutionRoleArn <ecs-execution-role-arn> `
+    -ApiTaskRoleArn <api-task-role-arn> `
+    -DashboardTaskRoleArn <dashboard-task-role-arn> `
+    -DatabaseUrl <database-url> `
+    -CorsOrigins https://<frontend-domain> `
+    -NextInternalUrl https://<frontend-domain> `
+    -S3Bucket <bucket> `
+    -RedisUrl redis://<private-redis-endpoint>:6379/0 `
+    -GpuWorkerEndpoint http://<private-gpu-worker>:8080 `
+    -SecretsArnPrefix arn:aws:secretsmanager:<region>:<account-id>:secret/bharatstat/ `
+    -ApiInternalUrl http://bharatstat-api:8000 `
+    -ApiPublicUrl https://<frontend-domain>/api/backend `
+    -MailInternalSecret <shared-secret>
+```
+
+Review the rendered JSON for unresolved placeholders and secrets exposure. Register both task definitions:
+
+```powershell
+aws ecs register-task-definition --cli-input-json file://deploy/ecs/taskdef-api.rendered.json --region <region>
+aws ecs register-task-definition --cli-input-json file://deploy/ecs/taskdef-dashboard.rendered.json --region <region>
+```
+
+The rendered files are generated artifacts. Keep them out of source control and remove them after registration if they contain inline values.
+
+#### Phase 6: create services and route traffic
+
+Create two ECS services with at least two tasks distributed across availability zones. Attach:
+
+| Target group | Container | Health path |
+| --- | --- | --- |
+| `tg-dashboard` | Port 3000 | `/` |
+| `tg-api` | Port 8000 | `/health` |
+
+Configure the ALB listener to redirect HTTP to HTTPS, route `/api/*` and `/auth/*` to the API target group, and route the default path to the dashboard. The dashboard's internal API URL may use service discovery or an internal load balancer; its browser-facing URL must use the public HTTPS API path.
+
+#### Phase 7: deploy optional GPU inference
+
+Provision the GPU worker using [03-gpu-worker.md](docs/deploy/aws/03-gpu-worker.md) and [06-colpali-sglang-remote.md](docs/deploy/aws/06-colpali-sglang-remote.md). Put it in a private subnet, restrict inbound access to the API security group, configure `GPU_WORKER_ENDPOINT`, and verify it with:
+
+```powershell
+.\scripts\aws\verify_gpu_endpoints.ps1
+```
+
+If GPU services are unavailable, use a deliberate fallback configuration such as `LLM_DISABLED=1` for deterministic operation. Do not hide readiness failures for report generation behind an apparently successful deployment.
+
+#### Phase 8: verify, observe, and cut over
+
+Run the public smoke test after the ALB target groups are healthy:
+
+```powershell
+python scripts/aws/smoke_production.py --base-url https://<frontend-domain>
+```
+
+Then verify signup/login, dataset upload, analysis completion, template extraction, report generation, PDF download, and database health. Confirm CloudWatch logs, alarms, task replacement, RDS backups, S3 encryption, and no sustained ALB 5xx responses. Cut DNS over only after these checks pass; retain the previous ECS task definition and ALB target for rollback.
+
+For the full security, observability, and rollback checklist, see [04-security-observability.md](docs/deploy/aws/04-security-observability.md) and [05-cutover-checklist.md](docs/deploy/aws/05-cutover-checklist.md). The source-of-truth variable mapping is [02-env-secrets-matrix.md](docs/deploy/aws/02-env-secrets-matrix.md).
 
 ## Security and operational notes
 
